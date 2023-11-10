@@ -84,6 +84,7 @@ import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 import { GAUZY_ENV } from '../constants';
+import {TasksComponent} from "../tasks/tasks.component";
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -2148,6 +2149,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.selectedTimeSlot = this.lastTimeSlot;
 			this._dialog = this.dialogService.open(dialog, {
 				context: this.dialogType[option.type].message,
+				backdropClass: 'backdrop-blur'
 			});
 			this._dialog.onClose.subscribe(async (selectedOption) => {
 				if (selectedOption) {
@@ -2604,9 +2606,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public addTask(): void {
 		this.isAddTask = !this._isOffline && this._hasTaskPermission;
+		if (!this.isAddTask) {
+			return;
+		}
+		this.dialogService
+			.open(TasksComponent, {
+				context: {
+					employee: this.userData,
+					hasProjectPermission: this.hasProjectPermission$.getValue(),
+					selected: {
+						projectId: this.projectSelect,
+						teamId: this.teamSelect,
+						contactId: this.organizationContactId
+					},
+					userData: this.argFromMain
+				},
+				backdropClass: 'backdrop-blur'
+			})
+			.onClose.pipe(
+				tap(() => this.closeAddTask()),
+				filter((result) => !!result),
+				tap((result) => this.callbackNewTask(result)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	public closeAddTask(e): void {
+	public closeAddTask(): void {
 		this.isAddTask = false;
 		this.electronService.ipcRenderer.send('refresh-timer');
 	}
