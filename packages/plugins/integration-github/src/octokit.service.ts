@@ -111,8 +111,8 @@ export class OctokitService {
 			});
 		} catch (error) {
 			// Handle errors, log the error message, and throw a new error
-			this.logger.error('Failed to fetch GitHub installation metadata', error.message);
-			throw new Error('Failed to fetch GitHub installation metadata');
+			this.logger.error('Failed to delete GitHub installation', error.message);
+			throw new Error('Failed to delete GitHub installation');
 		}
 	}
 
