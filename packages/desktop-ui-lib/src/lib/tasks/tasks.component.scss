@@ -2,22 +2,32 @@
 
 :host {
   nb-card {
-    width: 565px;
+    width: 1015px;
     margin: auto;
 
     nb-card-body {
       background-color: var(--gauzy-card-2);
-      @include nb-rtl(padding, 0.5rem 1rem 0.5rem 0.3125rem);
-      @include nb-ltr(padding, 0.5rem 0.3125rem 0.5rem 1rem);
+      @include nb-rtl(padding, 0.5rem 1rem 0.5rem 0.5rem);
+      @include nb-ltr(padding, 0.5rem 0.5rem 0.5rem 1rem);
 
       .body {
-        height: 70vh;
+        height: 59vh;
         overflow: auto;
         overflow-x: hidden;
-        @include nb-rtl(padding, 0 0 0 0.3125rem);
-        @include nb-ltr(padding, 0 0.3125rem 0 0);
+        @include nb-rtl(padding, 0 0 0 0.5rem);
+        @include nb-ltr(padding, 0 0.5rem 0 0);
+        flex-direction: row;
+        display: flex;
+        gap: 0.3125rem;
 
         .selector-container {
+          width: 60%;
+          height: 59vh;
+          overflow: overlay;
+          overflow-x: hidden;
+          @include nb-rtl(padding, 0 0 0 0.6875rem);
+          @include nb-ltr(padding, 0 0.6875rem 0 0);
+
           .col-sm-6,
           .col-sm-12 {
             padding-left: 0.5rem !important;
@@ -166,7 +176,7 @@ input {
   }
 
   .cke_contents {
-    height: 102px !important;
+    height: 309px !important;
   }
 }
 
@@ -185,6 +195,7 @@ input {
   nb-card-footer {
     display: flex;
     gap: 1rem;
+    justify-content: flex-end;
   }
 
   ::ng-deep {
