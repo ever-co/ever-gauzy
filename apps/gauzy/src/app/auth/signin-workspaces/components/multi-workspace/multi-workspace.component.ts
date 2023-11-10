@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { tap } from 'rxjs/operators';
-import { IWorkspaceReponse } from '@gauzy/contracts';
+import { IWorkspaceResponse } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 
 @Component({
@@ -15,19 +14,19 @@ export class MultiWorkspaceOnboardingComponent extends TranslationBaseComponent 
 	/**
 	 * Private property to store the workspaces.
 	 */
-	_workspaces: IWorkspaceReponse[] = [];
+	_workspaces: IWorkspaceResponse[] = [];
 	/**
 	 * Getter for the workspaces property.
 	 * @returns The value of the workspaces.
 	 */
-	get workspaces(): IWorkspaceReponse[] {
+	get workspaces(): IWorkspaceResponse[] {
 		return this._workspaces;
 	}
 	/**
 	 * Setter for the workspaces property.
 	 * @param workspaces - The value to set for the workspaces.
 	 */
-	@Input() set workspaces(workspaces: IWorkspaceReponse[]) {
+	@Input() set workspaces(workspaces: IWorkspaceResponse[]) {
 		this._workspaces = workspaces;
 	}
 
@@ -54,7 +53,7 @@ export class MultiWorkspaceOnboardingComponent extends TranslationBaseComponent 
 	 * An @Output property that emits a workspace value when an event occurs.
 	 *
 	 */
-	@Output() selectedWorkspace: EventEmitter<IWorkspaceReponse> = new EventEmitter();
+	@Output() selectedWorkspace: EventEmitter<IWorkspaceResponse> = new EventEmitter();
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -69,7 +68,7 @@ export class MultiWorkspaceOnboardingComponent extends TranslationBaseComponent 
 	 * @param workspace
 	 * @returns
 	 */
-	selectWorkspace(workspace: IWorkspaceReponse) {
+	selectWorkspace(workspace: IWorkspaceResponse) {
 		if (!workspace) {
 			return; // Exit if the no workspace
 		}

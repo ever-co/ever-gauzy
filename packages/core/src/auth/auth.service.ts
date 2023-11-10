@@ -22,7 +22,7 @@ import {
 	IUserLoginInput as IUserWorkspaceSigninInput,
 	IUserTokenInput,
 	IOrganizationTeam,
-	IWorkspaceReponse,
+	IWorkspaceResponse,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -162,7 +162,7 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Create an array of user objects with relevant data
-		const workspaces: IWorkspaceReponse[] = users.map((user: IUser) => ({
+		const workspaces: IWorkspaceResponse[] = users.map((user: IUser) => ({
 			user: new User({
 				name: user.name,
 				imageUrl: user.imageUrl,
@@ -674,7 +674,7 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
-			const workspaces: IWorkspaceReponse[] = [];
+			const workspaces: IWorkspaceResponse[] = [];
 			// Create an array of user objects with relevant data
 			for await (const user of users) {
 				const userId = user.id;

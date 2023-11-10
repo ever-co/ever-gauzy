@@ -4,7 +4,7 @@ import { Router } from "@angular/router";
 import { EMPTY, filter } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
 import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
-import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceReponse } from "@gauzy/contracts";
+import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from "@gauzy/contracts";
 import { AuthService, ErrorHandlingService, Store } from "./../../../../@core/services";
 import { PasswordFormFieldComponent } from "./../../../../@shared/user/forms/fields/password";
 
@@ -20,7 +20,7 @@ export class WorkspaceSigninWithEmailComponent implements OnInit {
     public total_workspaces: number;
     public show_popup: boolean = false;
     public loading: boolean = false; // Flag to indicate if data loading is in progress
-    public workspaces: IWorkspaceReponse[] = []; // Array of workspace users
+    public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
 
     /** The FormGroup for the sign-in form */
     public form: FormGroup = WorkspaceSigninWithEmailComponent.buildForm(this._fb);
@@ -103,7 +103,7 @@ export class WorkspaceSigninWithEmailComponent implements OnInit {
     /**
      * Continue the workspace sign-in process.
      */
-    signInWorkspace(workspace: IWorkspaceReponse) {
+    signInWorkspace(workspace: IWorkspaceResponse) {
         if (!workspace || !this.confirmed_email) {
             return; // Exit if the no workspace
         }
