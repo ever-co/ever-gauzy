@@ -314,8 +314,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			this.timeTrackerService.openAndStartTimer();
 		});
 		// -- Stop timer
-		this.registerShortcut(this.defaultShortcuts.stopTimer, () => {
-			if (this.timeTrackerService.running) this.timeTrackerService.toggle();
+		this.registerShortcut(this.defaultShortcuts.stopTimer, async () => {
+			if (this.timeTrackerService.running) await this.timeTrackerService.toggle();
 		});
 	}
 

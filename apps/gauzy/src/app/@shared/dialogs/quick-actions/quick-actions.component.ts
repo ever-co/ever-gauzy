@@ -116,7 +116,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 		this.nbMenuService
 			.onItemClick()
 			.pipe()
-			.subscribe((e) => {
+			.subscribe(async (e) => {
 				if (e.item.data?.action && !e.item.link) {
 					switch (e.item.data.action) {
 						case this.actions.START_TIMER:
@@ -125,7 +125,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 							this.timeTrackerService.openAndStartTimer();
 							break;
 						case this.actions.STOP_TIMER:
-							if (this.timeTrackerService.running) this.timeTrackerService.toggle();
+							if (this.timeTrackerService.running) await this.timeTrackerService.toggle();
 							break;
 					}
 				}
