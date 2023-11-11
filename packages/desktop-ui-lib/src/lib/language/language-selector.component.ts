@@ -175,7 +175,7 @@ export class LanguageSelectorComponent implements OnInit, AfterViewInit {
 	}
 
 	private async changePreferredLanguage(payload: IUserUpdateInput) {
-		if (!this._user) {
+		if (!this._user || !this._user.tenantId) {
 			return;
 		}
 		try {
