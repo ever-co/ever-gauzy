@@ -857,7 +857,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TASK_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasPermission(PermissionsEnum.ORG_TASK_ADD)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_TASK'),
