@@ -2709,9 +2709,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Crear factura",
+		"RECEIVED_INVOICES": "Facturas recibidas",
 		"CREATE_INCOME": "Crear ingreso",
 		"CREATE_EXPENSE": "Crear gasto",
 		"CREATE_ESTIMATE": "Crear estimación",
+		"RECEIVED_ESTIMATES": "Estimaciones recibidas",
 		"CREATE_PAYMENT": "Crear pago",
 		"ADD_EMPLOYEE": "Agregar empleado",
 		"ADD_INVENTORY": "Agregar inventario",
@@ -2731,7 +2733,9 @@
 		"CREATE_CLIENT": "Crear cliente",
 		"START_TIMER": "Iniciar temporizador",
 		"STOP_TIMER": "Detener temporizador",
-		"TIME_LOG": "Registro de tiempo"
+		"TIME_LOG": "Registro de tiempo",
+		"VIEW_APPOINTMENTS": "Ver citas",
+		"VIEW_TIME_ACTIVITY": "Ver actividad de tiempo"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilidad",

@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import {
-	NbMenuService,
 	NbSidebarService,
 	NbThemeService,
 	NbMenuItem,
@@ -52,7 +51,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { ChangeDetectorRef } from '@angular/core';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
-import hotkeys from 'hotkeys-js';
+import hotkeys, { HotkeysEvent } from 'hotkeys-js';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -91,34 +90,41 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	isCollapse: boolean = true;
 	@Input() expanded: boolean = true;
+
+	private shortcutsMap = new Map<string, () => void>();
+
 	quickActionsRef: NbDialogRef<QuickActionsComponent> | null;
 
-	shortcuts = {
+	defaultShortcuts = {
 		quickActions: 'ctrl+Q',
-		createInvoice: 'shift+I',
-		createEstimate: 'shift+E',
-		createPayment: 'shift+P',
-		createIncome: 'shift+C',
-		createExpense: 'shift+X',
-		createTeam: 'shift+T',
-		createTask: 'shift+K',
-		createProject: 'shift+J',
-		viewTasks: 'shift+V+K',
-		viewTeamTasks: 'shift+V+S',
-		addEmployee: 'shift+A+E',
-		addInventory: 'shift+A+I',
-		addEquipment: 'shift+A+Q',
-		addVendor: 'shift+A+V',
-		addDepartment: 'shift+A+D',
+		createInvoice: 'I',
+		receivedInvoices: 'shift+I',
+		createEstimate: 'E',
+		receivedEstimates: 'shift+E',
+		createPayment: 'P',
+		createIncome: 'C',
+		createExpense: 'X',
+		createTeam: 'G',
+		createTask: 'T',
+		createProject: 'J',
+		viewTasks: 'shift+T',
+		viewTeamTasks: 'shift+G',
+		addEmployee: 'A+E',
+		addInventory: 'A+I',
+		addEquipment: 'A+Q',
+		addVendor: 'A+V',
+		addDepartment: 'A+D',
 		timeLog: 'shift+L',
-		startTimer: 'shift+S',
-		stopTimer: 'shift+O',
-		createCandidate: 'shift+U',
-		createProposal: 'shift+R',
-		createContract: 'shift+G',
-		createLead: 'shift+D',
-		createCustomer: 'shift+M',
-		createClient: 'shift+N'
+		viewAppointments: 'shift+A',
+		viewTimeActivity: 'shift+S',
+		startTimer: 'S',
+		stopTimer: 'O',
+		createCandidate: 'U',
+		createProposal: 'R',
+		createContract: 'K',
+		createLead: 'D',
+		createCustomer: 'M',
+		createClient: 'N'
 	};
 
 	constructor(
@@ -220,111 +226,108 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			});
 		this._applyTranslationOnContextMenu();
 		this._loadContextMenus();
-		// -- enable shorcuts keyboards
-		this.enableShortcuts();
+		// -- setup shortcuts keyboards
+		this.setupShortcuts();
 	}
 
-	private enableShortcuts() {
-		const shortcutsKeysString = Object.values(this.shortcuts).join(', ');
-		hotkeys(shortcutsKeysString, (event, handler) => {
-			// -- Close Dialog (QuickActions) in case it is open and shortcut used
-			this.quickActionsRef && handler.key !== this.shortcuts.quickActions ? this.quickActionsRef.close() : null;
-			switch (handler.key) {
-				// -- Toggle QuickActions
-				case this.shortcuts.quickActions:
-					if (!this.quickActionsRef) {
-						this.openQuickActions();
-						return;
+	private setupShortcuts() {
+		// -- register the default shortcuts
+		this.registerDefaultShortcuts();
+
+		hotkeys(
+			'*',
+			{
+				scope: 'defaultShortcuts'
+			},
+			(event: KeyboardEvent, handler: HotkeysEvent) => {
+				const pressedKeys: string = this.pressedKeysToString(handler);
+				if (this.shortcutsMap.has(pressedKeys)) {
+					// -- close dialog if open when using shortcuts and prevent closing dialog by pressing unregistered keys
+					this.quickActionsRef &&
+					pressedKeys !== this.defaultShortcuts.quickActions.toLowerCase() &&
+					this.shortcutsMap.has(pressedKeys)
+						? this.quickActionsRef.close()
+						: null;
+					if (handler.scope === 'defaultShortcuts' && this.shortcutsMap.has(pressedKeys)) {
+						this.shortcutsMap.get(pressedKeys)();
 					}
-					if (this.quickActionsRef) {
-						this.quickActionsRef.close();
-						return;
-					}
-					break;
-				// -- Acounting
-				case this.shortcuts.createInvoice:
-					this.navigateTo('createInvoice');
-					break;
-				case this.shortcuts.createIncome:
-					this.navigateTo('createIncome');
-					break;
-				case this.shortcuts.createExpense:
-					this.navigateTo('createExpense');
-					break;
-				case this.shortcuts.createEstimate:
-					this.navigateTo('createEstimate');
-					break;
-				case this.shortcuts.createPayment:
-					this.navigateTo('createPayment');
-					break;
-				// -- project management
-				case this.shortcuts.createTeam:
-					this.navigateTo('createTeam');
-					break;
-				case this.shortcuts.createTask:
-					this.navigateTo('createTask');
-					break;
-				case this.shortcuts.createProject:
-					this.navigateTo('createProject');
-					break;
-				case this.shortcuts.viewTasks:
-					this.navigateTo('viewTasks');
-					break;
-				case this.shortcuts.viewTeamTasks:
-					this.navigateTo('viewTeamTasks');
-					break;
-				// Organization
-				case this.shortcuts.addEmployee:
-					this.navigateTo('addEmployee');
-					break;
-				case this.shortcuts.addInventory:
-					this.navigateTo('addInventory');
-					break;
-				case this.shortcuts.addEquipment:
-					this.navigateTo('addEquipment');
-					break;
-				case this.shortcuts.addVendor:
-					this.navigateTo('addVendor');
-					break;
-				case this.shortcuts.addDepartment:
-					this.navigateTo('addDepartment');
-					break;
-				// Time Tracking
-				case this.shortcuts.timeLog:
-					this.navigateTo('timeLog');
-					break;
-				case this.shortcuts.startTimer:
-					if (this.timeTrackerService.running) return;
-					this.timeTrackerService.setTimeLogType(TimeLogType.TRACKED);
-					this.timeTrackerService.openAndStartTimer();
-					break;
-				case this.shortcuts.stopTimer:
-					if (this.timeTrackerService.running) this.timeTrackerService.toggle();
-					break;
-				// Jobs
-				case this.shortcuts.createCandidate:
-					this.navigateTo('createCandidate');
-					break;
-				case this.shortcuts.createProposal:
-					this.navigateTo('createProposal');
-					break;
-				case this.shortcuts.createContract:
-					this.navigateTo('createContract');
-					break;
-				// Contacts
-				case this.shortcuts.createLead:
-					this.navigateTo('createLead');
-					break;
-				case this.shortcuts.createCustomer:
-					this.navigateTo('createCustomer');
-					break;
-				case this.shortcuts.createClient:
-					this.navigateTo('createClient');
-					break;
-				default:
-					return;
+				}
 			}
+		);
+	}
+
+	private pressedKeysToString(handler: HotkeysEvent): string {
+		return handler.keys
+			.map((keyNum) => {
+				return hotkeys.modifierMap[keyNum]
+					? hotkeys.modifierMap[keyNum].toString().replace('Key', '')
+					: String.fromCharCode(keyNum).toLowerCase();
+			})
+			.join('+');
+	}
+
+	private registerShortcut(keys: string, action: () => void) {
+		this.shortcutsMap.set(keys.toLowerCase(), action);
+		hotkeys(keys, 'defaultShortcuts', () => {});
+		hotkeys.setScope('defaultShortcuts');
+	}
+
+	private registerDefaultShortcuts() {
+		// -- Toggle QuickActions Dialog
+		this.registerShortcut(this.defaultShortcuts.quickActions, () => this.toggleQuickActionsDialog());
+		// -- Accounting
+		this.registerShortcut(this.defaultShortcuts.createInvoice, () => this.navigateTo('createInvoice'));
+		this.registerShortcut(this.defaultShortcuts.receivedInvoices, () => this.navigateTo('receivedInvoices'));
+		this.registerShortcut(this.defaultShortcuts.createIncome, () => this.navigateTo('createIncome'));
+		this.registerShortcut(this.defaultShortcuts.receivedEstimates, () => this.navigateTo('receivedEstimates'));
+		this.registerShortcut(this.defaultShortcuts.createExpense, () => this.navigateTo('createExpense'));
+		this.registerShortcut(this.defaultShortcuts.createEstimate, () => this.navigateTo('createEstimate'));
+		this.registerShortcut(this.defaultShortcuts.createPayment, () => this.navigateTo('createPayment'));
+		// -- project management
+		this.registerShortcut(this.defaultShortcuts.createTeam, () => this.navigateTo('createTeam'));
+		this.registerShortcut(this.defaultShortcuts.createTask, () => this.navigateTo('createTask'));
+		this.registerShortcut(this.defaultShortcuts.createProject, () => this.navigateTo('createProject'));
+		this.registerShortcut(this.defaultShortcuts.viewTasks, () => this.navigateTo('viewTasks'));
+		this.registerShortcut(this.defaultShortcuts.viewTeamTasks, () => this.navigateTo('viewTeamTasks'));
+		// -- Organization
+		this.registerShortcut(this.defaultShortcuts.addEmployee, () => this.navigateTo('addEmployee'));
+		this.registerShortcut(this.defaultShortcuts.addInventory, () => this.navigateTo('addInventory'));
+		this.registerShortcut(this.defaultShortcuts.addEquipment, () => this.navigateTo('addEquipment'));
+		this.registerShortcut(this.defaultShortcuts.addVendor, () => this.navigateTo('addVendor'));
+		this.registerShortcut(this.defaultShortcuts.addDepartment, () => this.navigateTo('addDepartment'));
+		// -- Jobs
+		this.registerShortcut(this.defaultShortcuts.createCandidate, () => this.navigateTo('createCandidate'));
+		this.registerShortcut(this.defaultShortcuts.createProposal, () => this.navigateTo('createProposal'));
+		this.registerShortcut(this.defaultShortcuts.createContract, () => this.navigateTo('createContract'));
+		// -- contact
+		this.registerShortcut(this.defaultShortcuts.createLead, () => this.navigateTo('createLead'));
+		this.registerShortcut(this.defaultShortcuts.createCustomer, () => this.navigateTo('createCustomer'));
+		this.registerShortcut(this.defaultShortcuts.createClient, () => this.navigateTo('createClient'));
+		// -- Time Tracking
+		this.registerShortcut(this.defaultShortcuts.timeLog, () => this.navigateTo('timeLog'));
+		this.registerShortcut(this.defaultShortcuts.viewAppointments, () => this.navigateTo('viewAppointments'));
+		this.registerShortcut(this.defaultShortcuts.viewTimeActivity, () => this.navigateTo('viewTimeActivity'));
+		// -- Start timer
+		this.registerShortcut(this.defaultShortcuts.startTimer, () => {
+			if (this.timeTrackerService.running) return;
+			this.timeTrackerService.setTimeLogType(TimeLogType.TRACKED);
+			this.timeTrackerService.openAndStartTimer();
 		});
+		// -- Stop timer
+		this.registerShortcut(this.defaultShortcuts.stopTimer, () => {
+			if (this.timeTrackerService.running) this.timeTrackerService.toggle();
+		});
+	}
+
+	private toggleQuickActionsDialog() {
+		if (!this.quickActionsRef) {
+			this.openQuickActions();
+			return;
+		}
+		if (this.quickActionsRef) {
+			this.quickActionsRef.close();
+			return;
+		}
 	}
 
 	private formatShortcut(value: string): string {
@@ -335,15 +338,15 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	}
 
 	private navigateTo(action: string) {
-		const itemMenu = this.createQuickActionsMenu.find((item: NbMenuItem) => item.data?.action === action);
-		this.router.navigate([itemMenu.link], { queryParams: { ...itemMenu.queryParams } });
+		const itemMenu = this.createQuickActionsMenu.find((item: NbMenuItem) => item?.data?.action === action);
+		itemMenu ? this.router.navigate([itemMenu.link], { queryParams: { ...itemMenu.queryParams } }) : null;
 	}
 
 	openQuickActions() {
 		this.quickActionsRef = this.dialogService.open(QuickActionsComponent, {
 			context: {
 				items: this.createQuickActionsMenu,
-				shortcutDialog: this.shortcuts.quickActions
+				shortcutDialog: this.defaultShortcuts.quickActions
 			}
 		});
 		// -- subscribe to reset (quickActionsRef) to null onDialogClose
@@ -621,7 +624,26 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'createInvoice'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createInvoice),
+								text: this.formatShortcut(this.defaultShortcuts.createInvoice),
+								status: 'control'
+							}
+						}
+				  ]
+				: []),
+			...(!!this.user.employee
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.RECEIVED_INVOICES'),
+							icon: {
+								icon: 'file-invoice-dollar',
+								pack: 'font-awesome'
+							},
+							link: 'pages/accounting/invoices/received-invoices',
+							data: {
+								action: 'receivedInvoices'
+							},
+							badge: {
+								text: this.formatShortcut(this.defaultShortcuts.receivedInvoices),
 								status: 'control'
 							}
 						}
@@ -640,7 +662,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createIncome),
+								text: this.formatShortcut(this.defaultShortcuts.createIncome),
 								status: 'control'
 							}
 						}
@@ -659,7 +681,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createExpense),
+								text: this.formatShortcut(this.defaultShortcuts.createExpense),
 								status: 'control'
 							}
 						}
@@ -676,7 +698,26 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'createEstimate'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createEstimate),
+								text: this.formatShortcut(this.defaultShortcuts.createEstimate),
+								status: 'control'
+							}
+						}
+				  ]
+				: []),
+			...(!!this.user.employee
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.RECEIVED_ESTIMATES'),
+							icon: {
+								icon: 'file-invoice',
+								pack: 'font-awesome'
+							},
+							link: 'pages/accounting/invoices/received-estimates',
+							data: {
+								action: 'receivedEstimates'
+							},
+							badge: {
+								text: this.formatShortcut(this.defaultShortcuts.receivedEstimates),
 								status: 'control'
 							}
 						}
@@ -695,7 +736,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createPayment),
+								text: this.formatShortcut(this.defaultShortcuts.createPayment),
 								status: 'control'
 							}
 						}
@@ -715,7 +756,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.addEmployee),
+								text: this.formatShortcut(this.defaultShortcuts.addEmployee),
 								status: 'control'
 							}
 						}
@@ -731,13 +772,14 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'addInventory'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.addInventory),
+								text: this.formatShortcut(this.defaultShortcuts.addInventory),
 								status: 'control'
 							}
 						}
 				  ]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EQUIPMENT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_EQUIPMENT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ||
+			!!this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.ADD_EQUIPMENT'),
@@ -750,7 +792,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.addEquipment),
+								text: this.formatShortcut(this.defaultShortcuts.addEquipment),
 								status: 'control'
 							}
 						}
@@ -769,7 +811,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.addVendor),
+								text: this.formatShortcut(this.defaultShortcuts.addVendor),
 								status: 'control'
 							}
 						}
@@ -788,7 +830,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.addDepartment),
+								text: this.formatShortcut(this.defaultShortcuts.addDepartment),
 								status: 'control'
 							}
 						}
@@ -796,7 +838,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				: []),
 
 			// Divider (Project Management)
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_TEAM_ADD, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_TEAM'),
@@ -809,7 +851,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createTeam),
+								text: this.formatShortcut(this.defaultShortcuts.createTeam),
 								status: 'control'
 							}
 						}
@@ -828,7 +870,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createTask),
+								text: this.formatShortcut(this.defaultShortcuts.createTask),
 								status: 'control'
 							}
 						}
@@ -844,7 +886,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'createProject'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createProject),
+								text: this.formatShortcut(this.defaultShortcuts.createProject),
 								status: 'control'
 							}
 						}
@@ -860,7 +902,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'viewTasks'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.viewTasks),
+								text: this.formatShortcut(this.defaultShortcuts.viewTasks),
 								status: 'control'
 							}
 						}
@@ -876,7 +918,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'viewTeamTasks'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.viewTeamTasks),
+								text: this.formatShortcut(this.defaultShortcuts.viewTeamTasks),
 								status: 'control'
 							}
 						}
@@ -897,7 +939,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createCandidate),
+								text: this.formatShortcut(this.defaultShortcuts.createCandidate),
 								status: 'control'
 							}
 						}
@@ -913,7 +955,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'createProposal'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createProposal),
+								text: this.formatShortcut(this.defaultShortcuts.createProposal),
 								status: 'control'
 							}
 						}
@@ -929,7 +971,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'createContract'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createContract),
+								text: this.formatShortcut(this.defaultShortcuts.createContract),
 								status: 'control'
 							}
 						}
@@ -949,7 +991,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createLead),
+								text: this.formatShortcut(this.defaultShortcuts.createLead),
 								status: 'control'
 							}
 						}
@@ -968,13 +1010,14 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createCustomer),
+								text: this.formatShortcut(this.defaultShortcuts.createCustomer),
 								status: 'control'
 							}
 						}
 				  ]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ||
+			!!this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_CLIENT'),
@@ -987,7 +1030,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								openAddDialog: true
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.createClient),
+								text: this.formatShortcut(this.defaultShortcuts.createClient),
 								status: 'control'
 							}
 						}
@@ -1004,13 +1047,45 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: 'timeLog'
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.timeLog),
+								text: this.formatShortcut(this.defaultShortcuts.timeLog),
 								status: 'control'
 							}
 						}
 				  ]
 				: []),
 			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.VIEW_APPOINTMENTS'),
+							icon: 'calendar-outline',
+							link: 'pages/employees/appointments',
+							data: {
+								action: 'viewAppointments'
+							},
+							badge: {
+								text: this.formatShortcut(this.defaultShortcuts.viewAppointments),
+								status: 'control'
+							}
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.VIEW_TIME_ACTIVITY'),
+							icon: 'activity-outline',
+							link: 'pages/employees/activity/time-activities',
+							data: {
+								action: 'viewTimeActivity'
+							},
+							badge: {
+								text: this.formatShortcut(this.defaultShortcuts.viewTimeActivity),
+								status: 'control'
+							}
+						}
+				  ]
+				: []),
+			...(!!this.user.employee
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.START_TIMER'),
@@ -1020,13 +1095,13 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: this.actions.START_TIMER // -- Start the timer
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.startTimer),
+								text: this.formatShortcut(this.defaultShortcuts.startTimer),
 								status: 'control'
 							}
 						}
 				  ]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.TIME_TRACKER)
+			...(!this.store.hasAnyPermission(PermissionsEnum.TIMESHEET_EDIT_TIME)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.STOP_TIMER'),
@@ -1036,7 +1111,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 								action: this.actions.STOP_TIMER // -- Stop the timer
 							},
 							badge: {
-								text: this.formatShortcut(this.shortcuts.stopTimer),
+								text: this.formatShortcut(this.defaultShortcuts.stopTimer),
 								status: 'control'
 							}
 						}

@@ -2707,9 +2707,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Rechnung erstellen",
+		"RECEIVED_INVOICES": "Erhaltene Rechnungen",
 		"CREATE_INCOME": "Einnahme erstellen",
 		"CREATE_EXPENSE": "Ausgabe erstellen",
 		"CREATE_ESTIMATE": "Kostenvoranschlag erstellen",
+		"RECEIVED_ESTIMATES": "Erhaltene Kostenvoranschläge",
 		"CREATE_PAYMENT": "Zahlung erstellen",
 		"ADD_EMPLOYEE": "Mitarbeiter hinzufügen",
 		"ADD_INVENTORY": "Inventar hinzufügen",
@@ -2729,7 +2731,9 @@
 		"CREATE_CLIENT": "Kunde erstellen",
 		"START_TIMER": "Timer starten",
 		"STOP_TIMER": "Timer stoppen",
-		"TIME_LOG": "Zeiterfassung"
+		"TIME_LOG": "Zeiterfassung",
+		"VIEW_APPOINTMENTS": "Termine anzeigen",
+		"VIEW_TIME_ACTIVITY": "Zeitaktivität anzeigen"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Buchhaltung",

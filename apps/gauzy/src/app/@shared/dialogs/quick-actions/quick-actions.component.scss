@@ -9,7 +9,7 @@
     div {
         display: flex;
         justify-content: space-between;
-        width: 25%;
+        width: 27%;
         @include nb-rtl(flex-direction, row-reverse);
 
         nb-tag {
@@ -41,17 +41,18 @@
             color: var(--gauzy-text-color-2);
             margin-top: 0.5rem;
         }
-
-        .group-content {
-            width: 105%;
-        }
     }
 }
 
 :host nb-menu {
     ::ng-deep ul.menu-items li.menu-item a {
+        padding-inline: 2px;
         @include nb-rtl(flex-direction, row-reverse);
         transition: all;
+
+        .fas {
+            font-size: 1.1rem;
+        }
 
         &:hover {
             nb-badge {
@@ -63,6 +64,12 @@
         nb-icon {
             @include nb-rtl(margin-left, 0.5rem);
             @include nb-rtl(margin-right, 0);
+        }
+
+        nb-badge {
+            margin-left: 1rem;
+            @include nb-rtl(margin-right, 1rem);
+            @include nb-rtl(margin-left, 0);
         }
     }
 }

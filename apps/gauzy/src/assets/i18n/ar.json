@@ -2707,9 +2707,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "إنشاء فاتورة",
+		"RECEIVED_INVOICES": "الفواتير المستلمة",
 		"CREATE_INCOME": "إنشاء إيراد",
 		"CREATE_EXPENSE": "إنشاء مصروف",
 		"CREATE_ESTIMATE": "إنشاء تقدير",
+		"RECEIVED_ESTIMATES": "التقديرات المستلمة",
 		"CREATE_PAYMENT": "إنشاء دفعة",
 		"ADD_EMPLOYEE": "إضافة موظف",
 		"ADD_INVENTORY": "إضافة مخزون",
@@ -2729,7 +2731,9 @@
 		"CREATE_CLIENT": "إنشاء زبون",
 		"START_TIMER": "بدء المؤقت",
 		"STOP_TIMER": "إيقاف المؤقت",
-		"TIME_LOG": "سجل الوقت"
+		"TIME_LOG": "سجل الوقت",
+		"VIEW_APPOINTMENTS": "عرض المواعيد",
+		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "المحاسبة",

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { NbDialogRef, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbDialogRef, NbIconLibraries, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { TimeTrackerService } from '../../time-tracker/time-tracker.service';
 import { TimeLogType } from 'packages/contracts/dist';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,9 +40,12 @@ type GroupQuickActionsType = {
 const quickActionsCollection = {
 	accounting: [
 		'QUICK_ACTIONS_MENU.CREATE_INVOICE',
+		'QUICK_ACTIONS_MENU.VIEW_INVOICE',
+		'QUICK_ACTIONS_MENU.RECEIVED_INVOICES',
 		'QUICK_ACTIONS_MENU.CREATE_INCOME',
 		'QUICK_ACTIONS_MENU.CREATE_EXPENSE',
 		'QUICK_ACTIONS_MENU.CREATE_ESTIMATE',
+		'QUICK_ACTIONS_MENU.RECEIVED_ESTIMATES',
 		'QUICK_ACTIONS_MENU.CREATE_PAYMENT'
 	],
 	organization: [
@@ -69,7 +72,13 @@ const quickActionsCollection = {
 		'QUICK_ACTIONS_MENU.CREATE_CUSTOMER',
 		'QUICK_ACTIONS_MENU.CREATE_CLIENT'
 	],
-	time_tracking: ['QUICK_ACTIONS_MENU.START_TIMER', 'QUICK_ACTIONS_MENU.STOP_TIMER', 'QUICK_ACTIONS_MENU.TIME_LOG']
+	time_tracking: [
+		'QUICK_ACTIONS_MENU.START_TIMER',
+		'QUICK_ACTIONS_MENU.STOP_TIMER',
+		'QUICK_ACTIONS_MENU.TIME_LOG',
+		'QUICK_ACTIONS_MENU.VIEW_APPOINTMENTS',
+		'QUICK_ACTIONS_MENU.VIEW_TIME_ACTIVITY'
+	]
 };
 
 @Component({
@@ -91,9 +100,14 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 		private readonly dialogRef: NbDialogRef<QuickActionsComponent>,
 		private readonly nbMenuService: NbMenuService,
 		private readonly timeTrackerService: TimeTrackerService,
-		private readonly translate: TranslateService
+		private readonly translate: TranslateService,
+		private iconLibraries: NbIconLibraries
 	) {
 		super(translate);
+		this.iconLibraries.registerFontPack('font-awesome', {
+			packClass: 'fas',
+			iconClassPrefix: 'fa'
+		});
 	}
 
 	ngOnInit(): void {

@@ -2707,9 +2707,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Crea fattura",
+		"RECEIVED_INVOICES": "Fatture ricevute",
 		"CREATE_INCOME": "Crea entrata",
 		"CREATE_EXPENSE": "Crea spesa",
 		"CREATE_ESTIMATE": "Crea preventivo",
+		"RECEIVED_ESTIMATES": "Preventivi ricevuti",
 		"CREATE_PAYMENT": "Crea pagamento",
 		"ADD_EMPLOYEE": "Aggiungi dipendente",
 		"ADD_INVENTORY": "Aggiungi inventario",
@@ -2729,7 +2731,9 @@
 		"CREATE_CLIENT": "Crea cliente",
 		"START_TIMER": "Avvia timer",
 		"STOP_TIMER": "Arresta timer",
-		"TIME_LOG": "Registro del tempo"
+		"TIME_LOG": "Registro del tempo",
+		"VIEW_APPOINTMENTS": "Visualizza appuntamenti",
+		"VIEW_TIME_ACTIVITY": "Visualizza attività temporale"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Contabilità",

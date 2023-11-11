@@ -2707,9 +2707,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "创建发票",
+		"RECEIVED_INVOICES": "收到的发票",
 		"CREATE_INCOME": "创建收入",
 		"CREATE_EXPENSE": "创建支出",
 		"CREATE_ESTIMATE": "创建估算",
+		"RECEIVED_ESTIMATES": "收到的估算",
 		"CREATE_PAYMENT": "创建付款",
 		"ADD_EMPLOYEE": "添加员工",
 		"ADD_INVENTORY": "添加库存",
@@ -2729,7 +2731,9 @@
 		"CREATE_CLIENT": "创建客户",
 		"START_TIMER": "开始计时器",
 		"STOP_TIMER": "停止计时器",
-		"TIME_LOG": "时间记录"
+		"TIME_LOG": "时间记录",
+		"VIEW_APPOINTMENTS": "查看预约",
+		"VIEW_TIME_ACTIVITY": "查看时间活动"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "会计",

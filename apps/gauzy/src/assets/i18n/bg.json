@@ -2659,9 +2659,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Създаване на фактура",
+		"RECEIVED_INVOICES": "Получени фактури",
 		"CREATE_INCOME": "Създаване на приход",
 		"CREATE_EXPENSE": "Създаване на разход",
 		"CREATE_ESTIMATE": "Създаване на оценка",
+		"RECEIVED_ESTIMATES": "Получени оценки",
 		"CREATE_PAYMENT": "Създаване на плащане",
 		"ADD_EMPLOYEE": "Добавяне на служител",
 		"ADD_INVENTORY": "Добавяне на инвентар",
@@ -2681,7 +2683,9 @@
 		"CREATE_CLIENT": "Създаване на клиент",
 		"START_TIMER": "Стартиране на таймер",
 		"STOP_TIMER": "Спиране на таймер",
-		"TIME_LOG": "Запис на времето"
+		"TIME_LOG": "Запис на времето",
+		"VIEW_APPOINTMENTS": "Преглед на срещи",
+		"VIEW_TIME_ACTIVITY": "Преглед на активността по време"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Счетоводство",

@@ -2707,9 +2707,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Maak factuur",
+		"RECEIVED_INVOICES": "Ontvangen facturen",
 		"CREATE_INCOME": "Maak inkomsten",
 		"CREATE_EXPENSE": "Maak kosten",
 		"CREATE_ESTIMATE": "Maak schatting",
+		"RECEIVED_ESTIMATES": "Ontvangen schattingen",
 		"CREATE_PAYMENT": "Maak betaling",
 		"ADD_EMPLOYEE": "Voeg medewerker toe",
 		"ADD_INVENTORY": "Voeg voorraad toe",
@@ -2729,7 +2731,9 @@
 		"CREATE_CLIENT": "Maak klant",
 		"START_TIMER": "Start timer",
 		"STOP_TIMER": "Stop timer",
-		"TIME_LOG": "Tijdregistratie"
+		"TIME_LOG": "Tijdregistratie",
+		"VIEW_APPOINTMENTS": "Afspraken bekijken",
+		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Boekhouding",

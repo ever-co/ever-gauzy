@@ -2770,9 +2770,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Create Invoice",
+		"RECEIVED_INVOICES": "Received Invoices",
 		"CREATE_INCOME": "Create Income",
 		"CREATE_EXPENSE": "Create Expense",
 		"CREATE_ESTIMATE": "Create Estimate",
+		"RECEIVED_ESTIMATES": "Received Estimates",
 		"CREATE_PAYMENT": "Create Payment",
 		"ADD_EMPLOYEE": "Add Employee",
 		"ADD_INVENTORY": "Add Inventory",
@@ -2792,7 +2794,9 @@
 		"CREATE_CLIENT": "Create Client",
 		"START_TIMER": "Start Timer",
 		"STOP_TIMER": "Stop Timer",
-		"TIME_LOG": "Time Log"
+		"TIME_LOG": "Time Log",
+		"VIEW_APPOINTMENTS": "View Appointments",
+		"VIEW_TIME_ACTIVITY": "View Time Activity"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Accounting",

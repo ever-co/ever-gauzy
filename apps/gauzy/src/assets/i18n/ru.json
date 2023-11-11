@@ -2659,9 +2659,11 @@
 	},
 	"QUICK_ACTIONS_MENU": {
 		"CREATE_INVOICE": "Создать счет",
+		"RECEIVED_INVOICES": "Полученные счета",
 		"CREATE_INCOME": "Создать доход",
 		"CREATE_EXPENSE": "Создать расход",
 		"CREATE_ESTIMATE": "Создать смету",
+		"RECEIVED_ESTIMATES": "Полученные сметы",
 		"CREATE_PAYMENT": "Создать платеж",
 		"ADD_EMPLOYEE": "Добавить сотрудника",
 		"ADD_INVENTORY": "Добавить инвентарь",
@@ -2681,7 +2683,9 @@
 		"CREATE_CLIENT": "Создать клиента",
 		"START_TIMER": "Начать таймер",
 		"STOP_TIMER": "Остановить таймер",
-		"TIME_LOG": "Журнал времени"
+		"TIME_LOG": "Журнал времени",
+		"VIEW_APPOINTMENTS": "Просмотреть встречи",
+		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени"
 	},
 	"QUICK_ACTIONS_GROUP": {
 		"ACCOUNTING": "Бухгалтерия",
