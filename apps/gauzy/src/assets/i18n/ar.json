@@ -2705,6 +2705,44 @@
 		"FAQ": "أسئلة متكررة",
 		"HELP": "مساعدة"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "إنشاء فاتورة",
+		"RECEIVED_INVOICES": "الفواتير المستلمة",
+		"CREATE_INCOME": "إنشاء إيراد",
+		"CREATE_EXPENSE": "إنشاء مصروف",
+		"CREATE_ESTIMATE": "إنشاء تقدير",
+		"RECEIVED_ESTIMATES": "التقديرات المستلمة",
+		"CREATE_PAYMENT": "إنشاء دفعة",
+		"ADD_EMPLOYEE": "إضافة موظف",
+		"ADD_INVENTORY": "إضافة مخزون",
+		"ADD_EQUIPMENT": "إضافة معدات",
+		"ADD_VENDOR": "إضافة مورد",
+		"ADD_DEPARTMENT": "إضافة قسم",
+		"CREATE_TEAM": "إنشاء فريق",
+		"CREATE_TASK": "إنشاء مهمة",
+		"CREATE_PROJECT": "إنشاء مشروع",
+		"VIEW_TASKS": "عرض المهام",
+		"VIEW_TEAM_TASKS": "عرض مهام الفريق",
+		"CREATE_CANDIDATE": "إنشاء مرشح",
+		"CREATE_PROPOSAL": "إنشاء اقتراح",
+		"CREATE_CONTRACT": "إنشاء عقد",
+		"CREATE_LEAD": "إنشاء عميل محتمل",
+		"CREATE_CUSTOMER": "إنشاء عميل",
+		"CREATE_CLIENT": "إنشاء زبون",
+		"START_TIMER": "بدء المؤقت",
+		"STOP_TIMER": "إيقاف المؤقت",
+		"TIME_LOG": "سجل الوقت",
+		"VIEW_APPOINTMENTS": "عرض المواعيد",
+		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "المحاسبة",
+		"ORGANIZATION": "التنظيم",
+		"PROJECT_MANAGEMENT": "إدارة المشروع",
+		"JOBS": "الوظائف",
+		"CONTACTS": "جهات الاتصال",
+		"TIME_TRACKING": "تتبع الوقت"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "الاسم الأول",
 		"LAST_NAME": "الاسم الأخير",
@@ -4235,7 +4273,8 @@
 	"DIALOG": {
 		"CONFIRM": "تأكيد",
 		"ALERT": "تنبيه",
-		"DELETE_CONFIRM": "تنبيه"
+		"DELETE_CONFIRM": "تنبيه",
+		"QUICK_ACTIONS": "إجراءات سريعة"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "مزود الملفات",

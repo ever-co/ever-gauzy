@@ -2768,6 +2768,44 @@
 		"FAQ": "FAQ",
 		"HELP": "Help"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Create Invoice",
+		"RECEIVED_INVOICES": "Received Invoices",
+		"CREATE_INCOME": "Create Income",
+		"CREATE_EXPENSE": "Create Expense",
+		"CREATE_ESTIMATE": "Create Estimate",
+		"RECEIVED_ESTIMATES": "Received Estimates",
+		"CREATE_PAYMENT": "Create Payment",
+		"ADD_EMPLOYEE": "Add Employee",
+		"ADD_INVENTORY": "Add Inventory",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"ADD_VENDOR": "Add Vendor",
+		"ADD_DEPARTMENT": "Add Department",
+		"CREATE_TEAM": "Create Team",
+		"CREATE_TASK": "Create Task",
+		"CREATE_PROJECT": "Create Project",
+		"VIEW_TASKS": "View Tasks",
+		"VIEW_TEAM_TASKS": "View Teams's Tasks",
+		"CREATE_CANDIDATE": "Create Candidate",
+		"CREATE_PROPOSAL": "Create Proposal",
+		"CREATE_CONTRACT": "Create Contract",
+		"CREATE_LEAD": "Create Lead",
+		"CREATE_CUSTOMER": "Create Customer",
+		"CREATE_CLIENT": "Create Client",
+		"START_TIMER": "Start Timer",
+		"STOP_TIMER": "Stop Timer",
+		"TIME_LOG": "Time Log",
+		"VIEW_APPOINTMENTS": "View Appointments",
+		"VIEW_TIME_ACTIVITY": "View Time Activity"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Accounting",
+		"ORGANIZATION": "Organization",
+		"PROJECT_MANAGEMENT": "Project Management",
+		"JOBS": "Jobs",
+		"CONTACTS": "Contacts",
+		"TIME_TRACKING": "Time Tracking"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
 		"LAST_NAME": "Last Name",
@@ -4300,7 +4338,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirm",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Quick Actions"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "File provider",

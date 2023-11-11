@@ -2705,6 +2705,44 @@
 		"FAQ": "Domande frequenti",
 		"HELP": "Aiuto"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Crea fattura",
+		"RECEIVED_INVOICES": "Fatture ricevute",
+		"CREATE_INCOME": "Crea entrata",
+		"CREATE_EXPENSE": "Crea spesa",
+		"CREATE_ESTIMATE": "Crea preventivo",
+		"RECEIVED_ESTIMATES": "Preventivi ricevuti",
+		"CREATE_PAYMENT": "Crea pagamento",
+		"ADD_EMPLOYEE": "Aggiungi dipendente",
+		"ADD_INVENTORY": "Aggiungi inventario",
+		"ADD_EQUIPMENT": "Aggiungi attrezzatura",
+		"ADD_VENDOR": "Aggiungi fornitore",
+		"ADD_DEPARTMENT": "Aggiungi reparto",
+		"CREATE_TEAM": "Crea squadra",
+		"CREATE_TASK": "Crea attività",
+		"CREATE_PROJECT": "Crea progetto",
+		"VIEW_TASKS": "Visualizza attività",
+		"VIEW_TEAM_TASKS": "Visualizza attività della squadra",
+		"CREATE_CANDIDATE": "Crea candidato",
+		"CREATE_PROPOSAL": "Crea proposta",
+		"CREATE_CONTRACT": "Crea contratto",
+		"CREATE_LEAD": "Crea potenziale cliente",
+		"CREATE_CUSTOMER": "Crea cliente",
+		"CREATE_CLIENT": "Crea cliente",
+		"START_TIMER": "Avvia timer",
+		"STOP_TIMER": "Arresta timer",
+		"TIME_LOG": "Registro del tempo",
+		"VIEW_APPOINTMENTS": "Visualizza appuntamenti",
+		"VIEW_TIME_ACTIVITY": "Visualizza attività temporale"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Contabilità",
+		"ORGANIZATION": "Organizzazione",
+		"PROJECT_MANAGEMENT": "Gestione del progetto",
+		"JOBS": "Lavori",
+		"CONTACTS": "Contatti",
+		"TIME_TRACKING": "Monitoraggio del tempo"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome",
 		"LAST_NAME": "Cognome",
@@ -4235,7 +4273,8 @@
 	"DIALOG": {
 		"CONFIRM": "Conferma",
 		"ALERT": "Avviso",
-		"DELETE_CONFIRM": "Avviso"
+		"DELETE_CONFIRM": "Avviso",
+		"QUICK_ACTIONS": "Azioni rapide"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fornitore di file",

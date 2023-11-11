@@ -2705,6 +2705,44 @@
 		"FAQ": "Perguntas Frequentes (FAQ)",
 		"HELP": "Ajuda"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Criar Fatura",
+		"RECEIVED_INVOICES": "Faturas recebidas",
+		"CREATE_INCOME": "Criar Rendimento",
+		"CREATE_EXPENSE": "Criar Despesa",
+		"CREATE_ESTIMATE": "Criar Estimativa",
+		"RECEIVED_ESTIMATES": "Estimativas recebidas",
+		"CREATE_PAYMENT": "Criar Pagamento",
+		"ADD_EMPLOYEE": "Adicionar Empregado",
+		"ADD_INVENTORY": "Adicionar Inventário",
+		"ADD_EQUIPMENT": "Adicionar Equipamento",
+		"ADD_VENDOR": "Adicionar Fornecedor",
+		"ADD_DEPARTMENT": "Adicionar Departamento",
+		"CREATE_TEAM": "Criar Equipe",
+		"CREATE_TASK": "Criar Tarefa",
+		"CREATE_PROJECT": "Criar Projeto",
+		"VIEW_TASKS": "Ver Tarefas",
+		"VIEW_TEAM_TASKS": "Ver Tarefas da Equipe",
+		"CREATE_CANDIDATE": "Criar Candidato",
+		"CREATE_PROPOSAL": "Criar Proposta",
+		"CREATE_CONTRACT": "Criar Contrato",
+		"CREATE_LEAD": "Criar Cliente Potencial",
+		"CREATE_CUSTOMER": "Criar Cliente",
+		"CREATE_CLIENT": "Criar Cliente",
+		"START_TIMER": "Iniciar Temporizador",
+		"STOP_TIMER": "Parar Temporizador",
+		"TIME_LOG": "Registo de Tempo",
+		"VIEW_APPOINTMENTS": "Ver compromissos",
+		"VIEW_TIME_ACTIVITY": "Ver atividade de tempo"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Contabilidade",
+		"ORGANIZATION": "Organização",
+		"PROJECT_MANAGEMENT": "Gestão de Projetos",
+		"JOBS": "Empregos",
+		"CONTACTS": "Contatos",
+		"TIME_TRACKING": "Rastreamento de Tempo"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome próprio",
 		"LAST_NAME": "Sobrenome",
@@ -4235,7 +4273,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirmar",
 		"ALERT": "Alerta",
-		"DELETE_CONFIRM": "Alerta"
+		"DELETE_CONFIRM": "Alerta",
+		"QUICK_ACTIONS": "Ações rápidas"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fornecedor de arquivos",

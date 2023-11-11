@@ -2705,6 +2705,44 @@
 		"FAQ": "Najczęściej zadawane pytania (FAQ)",
 		"HELP": "Pomoc"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Utwórz fakturę",
+		"RECEIVED_INVOICES": "Otrzymane faktury",
+		"CREATE_INCOME": "Utwórz przychód",
+		"CREATE_EXPENSE": "Utwórz wydatek",
+		"CREATE_ESTIMATE": "Utwórz wycenę",
+		"RECEIVED_ESTIMATES": "Otrzymane szacunki",
+		"CREATE_PAYMENT": "Utwórz płatność",
+		"ADD_EMPLOYEE": "Dodaj pracownika",
+		"ADD_INVENTORY": "Dodaj inwentarz",
+		"ADD_EQUIPMENT": "Dodaj sprzęt",
+		"ADD_VENDOR": "Dodaj dostawcę",
+		"ADD_DEPARTMENT": "Dodaj dział",
+		"CREATE_TEAM": "Utwórz zespół",
+		"CREATE_TASK": "Utwórz zadanie",
+		"CREATE_PROJECT": "Utwórz projekt",
+		"VIEW_TASKS": "Zobacz zadania",
+		"VIEW_TEAM_TASKS": "Zobacz zadania zespołu",
+		"CREATE_CANDIDATE": "Utwórz kandydata",
+		"CREATE_PROPOSAL": "Utwórz propozycję",
+		"CREATE_CONTRACT": "Utwórz umowę",
+		"CREATE_LEAD": "Utwórz potencjalnego klienta",
+		"CREATE_CUSTOMER": "Utwórz klienta",
+		"CREATE_CLIENT": "Utwórz klienta",
+		"START_TIMER": "Rozpocznij pomiar czasu",
+		"STOP_TIMER": "Zatrzymaj pomiar czasu",
+		"TIME_LOG": "Rejestracja czasu",
+		"VIEW_APPOINTMENTS": "Wyświetl spotkania",
+		"VIEW_TIME_ACTIVITY": "Wyświetl aktywność czasu"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Księgowość",
+		"ORGANIZATION": "Organizacja",
+		"PROJECT_MANAGEMENT": "Zarządzanie projektami",
+		"JOBS": "Praca",
+		"CONTACTS": "Kontakty",
+		"TIME_TRACKING": "Śledzenie czasu"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Imię",
 		"LAST_NAME": "Nazwisko",
@@ -4235,7 +4273,8 @@
 	"DIALOG": {
 		"CONFIRM": "Potwierdź",
 		"ALERT": "Alarm",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Szybkie działania"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Dostawca plików",

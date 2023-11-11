@@ -2657,6 +2657,44 @@
 		"FAQ": "Въпроси и Отговори",
 		"HELP": "עזרה"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "יצירת חשבונית",
+		"RECEIVED_INVOICES": "חשבוניות שהתקבלו",
+		"CREATE_INCOME": "יצירת הכנסה",
+		"CREATE_EXPENSE": "יצירת הוצאה",
+		"CREATE_ESTIMATE": "יצירת אומדן",
+		"RECEIVED_ESTIMATES": "הערכות שהתקבלו",
+		"CREATE_PAYMENT": "יצירת תשלום",
+		"ADD_EMPLOYEE": "הוסף עובד",
+		"ADD_INVENTORY": "הוסף מלאי",
+		"ADD_EQUIPMENT": "הוסף ציוד",
+		"ADD_VENDOR": "הוסף ספק",
+		"ADD_DEPARTMENT": "הוסף מחלקה",
+		"CREATE_TEAM": "יצירת צוות",
+		"CREATE_TASK": "יצירת משימה",
+		"CREATE_PROJECT": "יצירת פרויקט",
+		"VIEW_TASKS": "צפייה במשימות",
+		"VIEW_TEAM_TASKS": "צפייה במשימות הצוות",
+		"CREATE_CANDIDATE": "יצירת מועמד",
+		"CREATE_PROPOSAL": "יצירת הצעה",
+		"CREATE_CONTRACT": "יצירת חוזה",
+		"CREATE_LEAD": "יצירת ליד",
+		"CREATE_CUSTOMER": "יצירת לקוח",
+		"CREATE_CLIENT": "יצירת לקוח",
+		"START_TIMER": "התחל טיימר",
+		"STOP_TIMER": "עצור טיימר",
+		"TIME_LOG": "יומן זמן",
+		"VIEW_APPOINTMENTS": "צפייה בפגישות",
+		"VIEW_TIME_ACTIVITY": "צפייה בפעילות זמן"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "חשבונאות",
+		"ORGANIZATION": "ארגון",
+		"PROJECT_MANAGEMENT": "ניהול פרויקטים",
+		"JOBS": "משרות",
+		"CONTACTS": "אנשי קשר",
+		"TIME_TRACKING": "מעקב זמן"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
 		"LAST_NAME": "שם משפחה",
@@ -4177,7 +4215,8 @@
 	"DIALOG": {
 		"CONFIRM": "אשר",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Quick Actions"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "ספק קבצים",
