@@ -1,16 +1,46 @@
 <div class="logo">
 	<ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
-	<h4>Welcome back! You look nice today.</h4>
-	<h6>Choose a workspace below to get back to working with your team.</h6>
+	<h4><strong>Welcome back!</strong> You look nice today!</h4>
+	<h6>The email associated with multiple workspaces, please select one to continue</h6>
 </div>
-<div class="row">
-	<nb-card>
-		<nb-card-body>
-			<nb-list>
-				<nb-list-item></nb-list-item>
-				<nb-list-item></nb-list-item>
-				<nb-list-item></nb-list-item>
-			</nb-list>
-		</nb-card-body>
-	</nb-card>
-</div>
+<nb-card>
+	<nb-card-header class="text-start">
+		<span class="title">
+			Select Workspace for <span class="sub-title">{{ confirmed_email }}</span>
+		</span>
+	</nb-card-header>
+	<nb-card-body>
+		<nb-list>
+			<nb-list-item *ngFor="let workspace of workspaces" debounceClick (throttledClick)="selectWorkspace(workspace)">
+				<div class="workspace-container">
+					<div class="workspace-image">
+						<img
+							[src]="workspace.user?.tenant?.logo"
+						/>
+					</div>
+					<div class="workspace-info">
+						<div class="workspace-name">
+							{{ workspace.user?.tenant?.name }}
+						</div>
+						<div class="workspace-user">
+							<ngx-avatar
+								[name]="workspace.user?.name"
+								[src]="workspace.user?.imageUrl"
+								class="workspace"
+							></ngx-avatar>
+						</div>
+					</div>
+				</div>
+				<div class="continue-icon">
+					<span class="label-primary">Open</span>
+					<nb-icon
+						status="primary"
+						icon="arrow-forward-outline"
+						[options]="{ animation: { type: 'shake' } }"
+					>
+					</nb-icon>
+				</div>
+			</nb-list-item>
+		</nb-list>
+	</nb-card-body>
+</nb-card>

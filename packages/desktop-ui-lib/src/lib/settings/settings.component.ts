@@ -788,14 +788,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._selectedMenu$.next(menu);
 	}
 
-	updateSetting(value, type: string) {
+	updateSetting(value, type: string, showNotification = true) {
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
 			values: this.appSetting
 		});
-		this._notifier.success(
-			'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
-		);
+		if (showNotification) {
+			this._notifier.success(
+				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
+			);
+		}
 	}
 
 	selectPeriod(value) {
@@ -810,18 +812,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	toggleNotificationChange(value) {
-		this.updateSetting(value, 'screenshotNotification');
+		const isUpdateTwice = value && this.simpleScreenshotNotification;
+		this.updateSetting(value, 'screenshotNotification', !isUpdateTwice);
 		this.screenshotNotification = value;
-		if (value && this.simpleScreenshotNotification) {
+		if (isUpdateTwice) {
 			this.updateSetting(false, 'simpleScreenshotNotification');
 			this._simpleScreenshotNotification$.next(false);
 		}
 	}
 
 	toggleSimpleNotificationChange(value) {
-		this.updateSetting(value, 'simpleScreenshotNotification');
+		const isUpdateTwice = value && this.screenshotNotification;
+		this.updateSetting(value, 'simpleScreenshotNotification', !isUpdateTwice);
 		this._simpleScreenshotNotification$.next(value);
-		if (value && this.screenshotNotification) {
+		if (isUpdateTwice) {
 			this.updateSetting(false, 'screenshotNotification');
 			this.screenshotNotification = false;
 		}

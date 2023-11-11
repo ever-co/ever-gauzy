@@ -395,7 +395,9 @@
 		"chetan",
 		"Yostorono",
 		"sarif",
-		"SARIF"
+		"SARIF",
+		"gridcell",
+		"scrollgrid"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
