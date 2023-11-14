@@ -7,6 +7,7 @@
 		"CREATE": "Créer",
 		"REGISTER": "S'inscrire",
 		"LOGIN": "Se connecter",
+		"SIGN_IN_WITH_EMAIL": "Se connecter avec un e-mail",
 		"ADD_NOTE": "Ajouter une note",
 		"EDIT": "Éditer",
 		"MANAGE": "Gérer",
@@ -4388,6 +4389,11 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",
 		"OR_SIGN_IN_WITH": "Ou connectez-vous avec",
+		"FORGOT_EMAIL_TITLE": "Mot de passe oublié ?",
+		"LOGIN_MAGIC": {
+			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour une connexion sans mot de passe. Ou vous pouvez ",
+			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place."
+		},
 		"LABELS": {
 			"EMAIL": "Adresse e-mail:",
 			"PASSWORD": "Mot de passe:"

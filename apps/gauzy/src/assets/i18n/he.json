@@ -7,6 +7,7 @@
 		"CREATE": "צור",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
+		"SIGN_IN_WITH_EMAIL": "התחבר עם דואר אלקטרוני",
 		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
 		"MANAGE": "Управление",
@@ -4311,6 +4312,11 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
+		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
+		"LOGIN_MAGIC": {
+			"DESCRIPTION_TITLE": "נשלח לך קוד קסום להתחברות ללא סיסמה. או ניתן ",
+			"OR_SIGN_IN_WITH_PASSWORD": "להתחבר באמצעות סיסמה במקום זאת."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password:"

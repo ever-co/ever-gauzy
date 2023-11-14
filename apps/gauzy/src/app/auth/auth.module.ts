@@ -18,18 +18,20 @@ import {
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
 import { TranslateModule } from '../@shared/translate/translate.module';
-import { NgxWhatsNewComponent } from "./login/whats-new/whats-new.component";
-import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component";
-import { NgxRegisterSideFeaturesComponent } from "./register/register-side-features/register-side-features.component";
-import { NgxRegisterSideSingleFeatureComponent, } from "./register/register-side-features/register-side-single-feature/register-side-single-feature.component";
-import { NgxAuthComponent } from "./auth/auth.component";
+import { NgxWhatsNewComponent } from './@shared/whats-new/whats-new.component';
+import { NgxForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { NgxRegisterSideFeaturesComponent } from './register/register-side-features/register-side-features.component';
+import { NgxRegisterSideSingleFeatureComponent } from './register/register-side-features/register-side-single-feature/register-side-single-feature.component';
+import { NgxAuthComponent } from './auth/auth.component';
 import { ThemeModule } from '../@theme/theme.module';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
-import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
+import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { NgxFaqModule } from '../@shared/faq';
 import { ConfirmEmailModule } from './confirm-email';
 import { ElectronService } from '../@core/auth/electron.service';
 import { SharedModule } from '../@shared/shared.module';
+import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
+import { SocialLinksComponent } from './@shared/social-links/social-links.component';
 
 @NgModule({
 	imports: [
@@ -53,7 +55,7 @@ import { SharedModule } from '../@shared/shared.module';
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ConfirmEmailModule,
-		SharedModule,
+		SharedModule
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -64,7 +66,9 @@ import { SharedModule } from '../@shared/shared.module';
 		NgxAuthComponent,
 		NgxRegisterComponent,
 		NgxResetPasswordComponent,
+		NgxLoginMagicComponent,
+		SocialLinksComponent
 	],
-	providers: [ElectronService],
+	providers: [ElectronService]
 })
 export class NgxAuthModule {}

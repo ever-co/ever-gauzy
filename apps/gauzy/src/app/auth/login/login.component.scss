@@ -110,14 +110,6 @@
       }
     }
   }
-  & .links {
-    margin-top: 21px;
-    @include social-links-style;
-    & .socials {
-      margin-top: 15px;
-      margin-bottom: 25px;
-    }
-  }
   & .another-action {
     @include another-action;
     margin-top: 10px;

@@ -7,6 +7,7 @@
 		"CREATE": "Stwórz",
 		"REGISTER": "Rejestracja",
 		"LOGIN": "Zaloguj się",
+		"SIGN_IN_WITH_EMAIL": "Zaloguj się za pomocą e-maila",
 		"ADD_NOTE": "Dodaj notatkę",
 		"EDIT": "Edytuj",
 		"MANAGE": "Zarządzaj",
@@ -4387,6 +4388,11 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Nie masz konta?",
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",
 		"OR_SIGN_IN_WITH": "Albo zaloguj się korzystając z",
+		"FORGOT_EMAIL_TITLE": "Zapomniałeś e-maila?",
+		"LOGIN_MAGIC": {
+			"DESCRIPTION_TITLE": "Wyślemy ci magiczny kod do logowania bez hasła. Lub możesz ",
+			"OR_SIGN_IN_WITH_PASSWORD": "zalogować się za pomocą hasła."
+		},
 		"LABELS": {
 			"EMAIL": "Adres email:",
 			"PASSWORD": "Hasło:"

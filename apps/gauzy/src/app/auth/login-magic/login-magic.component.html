@@ -101,114 +101,14 @@
           </p>
         </ng-container>
       </div>
-      <div class="form-control-group">
-			<span class="label-with-link">
-				<label class="label" for="input-password">
-					{{ 'LOGIN_PAGE.LABELS.PASSWORD' | translate }}
-				</label>
-			</span>
-        <nb-form-field>
-          <input
-            nbInput
-            fullWidth
-            [(ngModel)]="user.password"
-            #password="ngModel"
-            [pattern]="passwordNoSpaceEdges"
-            name="password"
-            [type]="showPassword ? 'text' : 'password'"
-            id="input-password"
-            [placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
-            fieldSize="large"
-            [status]="
-					password.dirty
-						? password.invalid
-							? 'danger'
-							: 'success'
-						: 'basic'
-				"
-            [required]="
-					getConfigValue('forms.validation.password.required')
-				"
-            [minlength]="
-					getConfigValue('forms.validation.password.minLength')
-				"
-            [maxlength]="
-					getConfigValue('forms.validation.password.maxLength')
-				"
-            [attr.aria-invalid]="
-					password.invalid && password.touched ? true : null
-				"
-            autocomplete="off"
-          />
-          <a
-            nbSuffix
-            nbButton
-            size="small"
-            ghost
-            (click)="showPassword = !showPassword"
-            class="show-password-icon"
-          >
-            <nb-icon
-              [icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
-              pack="eva"
-              [attr.aria-label]="showPassword ? 'hide password' : 'show password'"
-            ></nb-icon>
-          </a>
-        </nb-form-field>
-        <ng-container *ngIf="password.invalid && password.touched">
-          <p class="caption status-danger" *ngIf="password.errors?.pattern">
-            {{ 'LOGIN_PAGE.VALIDATION.PASSWORD_NO_SPACE_EDGES' | translate }}
-          </p>
-          <p
-            class="caption status-danger"
-            *ngIf="password.errors?.required"
-          >
-            {{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
-          </p>
-          <p
-            class="caption status-danger"
-            *ngIf="
-						password.errors?.minlength || password.errors?.maxlength
-					"
-          >
-            {{
-            'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN'
-              | translate
-              : {
-                minLength: getConfigValue(
-                  'forms.validation.password.minLength'
-                ),
-                maxLength: getConfigValue(
-                  'forms.validation.password.maxLength'
-                )
-              }
-            }}
-          </p>
-        </ng-container>
-      </div>
-      <div class="form-control-group accept-group">
-        <nb-checkbox
-          name="rememberMe"
-          [(ngModel)]="user.rememberMe"
-          class="remember-me"
-          *ngIf="rememberMe"
-        >{{ 'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate }}</nb-checkbox
-        >
-      </div>
       <div class="submit-btn-wrapper">
         <a
-          class="forgot-password caption-2 forgot-password-big"
-          routerLink="/auth/request-password"
+          class="forgot-email caption-2 forgot-email-big"
+          href='mailto:forgot@gauzy.co'
         >
-          {{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
+          {{ 'LOGIN_PAGE.FORGOT_EMAIL_TITLE' | translate }}
         </a>
         <div class="submit-inner-wrapper">
-          <a
-            class="forgot-password caption-2 forgot-password-small"
-            routerLink="/auth/request-password"
-          >
-            {{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
-          </a>
           <button
             type="submit"
             nbButton
@@ -216,20 +116,27 @@
             class="submit-btn"
             [disabled]="submitted || !form.valid"
             [class.btn-pulse]="submitted"
+            [disabled]="isSendingEmail"
           >
-            {{ 'BUTTONS.LOGIN' | translate }}
+            <span class="btn-text">{{ 'BUTTONS.SIGN_IN_WITH_EMAIL' | translate }}</span>
+            <nb-icon *ngIf="isSendingEmail" class="btn-icon" [ngClass]="isSendingEmail ? 'spinner' : ''"  icon="loader-outline" ></nb-icon>
           </button>
-
         </div>
+      </div>
+      <div class="magic-description">
+        <p class="sub-title">
+            {{ 'LOGIN_PAGE.LOGIN_MAGIC.DESCRIPTION_TITLE' | translate }}
+            <span class="sub-title">
+                <a routerLink="/auth/login">
+                    {{ 'LOGIN_PAGE.LOGIN_MAGIC.OR_SIGN_IN_WITH_PASSWORD' | translate }}
+                </a>
+            </span>
+        </p>
       </div>
     </form>
     <div class="hr-div-soft"></div>
     <ngx-social-links></ngx-social-links>
     <div class="hr-div-soft"></div>
-    <section class="another-action" aria-label="Sign In Workspace">
-        Don’t know your workspace?
-        <a class="text-link" routerLink="/auth/signin/workspace">Find your workspaces</a>
-    </section>
 
     <section class="another-action" aria-label="Register">
       {{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}

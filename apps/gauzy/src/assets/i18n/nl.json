@@ -7,6 +7,7 @@
 		"CREATE": "Creëer",
 		"REGISTER": "Registreren",
 		"LOGIN": "Inloggen",
+		"SIGN_IN_WITH_EMAIL": "Inloggen met e-mail",
 		"ADD_NOTE": "Voeg een opmerking toe",
 		"EDIT": "Bewerken",
 		"MANAGE": "Beheren",
@@ -4387,6 +4388,11 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Heeft u geen account?",
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
+		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
+		"LOGIN_MAGIC": {
+			"DESCRIPTION_TITLE": "We sturen u een magische code voor een wachtwoordloze aanmelding. Of u kunt ",
+			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan."
+		},
 		"LABELS": {
 			"EMAIL": "E-mailadres:",
 			"PASSWORD": "Wachtwoord:"
