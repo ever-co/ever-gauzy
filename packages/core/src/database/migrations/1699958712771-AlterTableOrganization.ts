@@ -37,7 +37,10 @@ export class AlterTableOrganization1699958712771 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+        await queryRunner.query(`ALTER TABLE "organization" ADD "randomScreenshotTime" boolean DEFAULT false`);
+        await queryRunner.query(`ALTER TABLE "organization" ADD "trackOnPcSleep" boolean DEFAULT false`);
+        await queryRunner.query(`ALTER TABLE "organization" ADD "updatePeriod" numeric NOT NULL DEFAULT '10'`);
+        await queryRunner.query(`ALTER TABLE "organization" ADD "enforced" boolean DEFAULT false`);
     }
 
     /**
@@ -46,7 +49,10 @@ export class AlterTableOrganization1699958712771 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "enforced"`);
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "updatePeriod"`);
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "trackOnPcSleep"`);
+        await queryRunner.query(`ALTER TABLE "organization" DROP COLUMN "randomScreenshotTime"`);
     }
 
     /**
