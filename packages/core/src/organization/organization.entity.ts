@@ -9,8 +9,8 @@ import {
 	OneToMany,
 	RelationId
 } from 'typeorm';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
+import {IsBoolean, IsNumber, IsOptional, IsString, IsUUID} from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -53,7 +53,6 @@ import {
 
 @Entity('organization')
 export class Organization extends TenantBaseEntity implements IOrganization {
-
 	@Index()
 	@Column()
 	name: string;
@@ -104,7 +103,6 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		default: DefaultValueDateTypeEnum.TODAY
 	})
 	defaultValueDateType: DefaultValueDateTypeEnum;
-
 
 	@Column({ nullable: true })
 	defaultAlignmentType?: string;
@@ -203,7 +201,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	inactivityTimeLimit?: number;
 
 	@Column({ default: 1 })
-	activityProofDuration?: number
+	activityProofDuration?: number;
 
 	@Column({ default: false })
 	requireReason?: boolean;
@@ -387,4 +385,26 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		onDelete: 'CASCADE'
 	})
 	skills: ISkill[];
+	@ApiProperty({ type: () => Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true, default: false })
+	randomScreenshotTime?: boolean;
+	@ApiProperty({ type: () => Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true, default: false })
+	trackOnPcSleep?: boolean;
+	@ApiProperty({ type: () => Number })
+	@IsNumber()
+	@Column({
+		type: 'numeric',
+		default: 10
+	})
+	updatePeriod?: number;
+	@ApiProperty({ type: () => Boolean })
+	@IsBoolean()
+	@IsOptional()
+	@Column({ nullable: true, default: false })
+	enforced?: boolean;
 }
