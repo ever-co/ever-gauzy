@@ -286,6 +286,7 @@
 												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_TO_SET_DEFAULT_ORGANIZATION'
 													| translate
 											"
+											class="p-0"
 										>
 											<nb-icon icon="info"></nb-icon>
 										</button>
@@ -814,9 +815,9 @@
 						}}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
-						<div class="fields">
+						<div class="fields time-tracker">
 							<div class="row">
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -831,7 +832,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -846,7 +847,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -861,36 +862,35 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
-									<div class="form-group invite-toggle">
-										<nb-toggle
+								<div class="col-xl-6 col-12 pt-2 form-group invite-toggle">
+									<nb-toggle
 											class="d-block"
-											formControlName="allowTrackInactivity"
-											labelPosition="start"
+											formControlName="allowScreenshotCapture"
 											status="primary"
-										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY'
-													| translate
-											}}
-											<button
+											labelPosition="start"
+									>
+										{{
+										'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE'
+												| translate
+										}}
+										<button
 												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY_INFO'
-														| translate
-												"
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE_INFO'
+													| translate
+											"
 												ghost
 												nbButton
 												size="small"
 												status="info"
-											>
-												<nb-icon icon="info"></nb-icon>
-											</button>
-										</nb-toggle>
-									</div>
+												class="p-0"
+										>
+											<nb-icon icon="info"></nb-icon>
+										</button>
+									</nb-toggle>
 								</div>
 							</div>
-							<div class="row mt-4">
-								<div class="col-6">
+							<div class="row">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -905,7 +905,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -920,7 +920,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -935,7 +935,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -950,7 +950,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6">
+								<div class="col-xl-6 col-12 pt-2">
 									<div class="form-group invite-toggle">
 										<nb-toggle
 											class="d-block"
@@ -965,7 +965,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6 form-group invite-toggle">
+								<div class="col-xl-6 col-12 pt-2 form-group invite-toggle">
 									<nb-toggle
 										class="d-block"
 										formControlName="isRemoveIdleTime"
@@ -985,114 +985,123 @@
 											nbButton
 											size="small"
 											status="info"
+											class="p-0"
 										>
 											<nb-icon icon="info"></nb-icon>
 										</button>
 									</nb-toggle>
 								</div>
-								<div class="col-6 form-group invite-toggle">
-									<nb-toggle
-										class="d-block"
-										formControlName="allowScreenshotCapture"
-										status="primary"
-										labelPosition="start"
-									>
-										{{
-											'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE'
-												| translate
-										}}
-										<button
-											[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_SCREEN_CAPTURE_INFO'
-													| translate
-											"
-											ghost
-											nbButton
-											size="small"
-											status="info"
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+												class="d-block"
+												formControlName="allowTrackInactivity"
+												labelPosition="start"
+												status="primary"
+												[ngClass]="{start: isTrackInactivity}"
 										>
-											<nb-icon icon="info"></nb-icon>
-										</button>
-									</nb-toggle>
-								</div>
-							</div>
-							<div *ngIf="isTrackInactivity" class="mt-4">
-								<div class="row">
-									<div class="col-6">
-										<label class="label">
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
-													| translate
-											}}
-										</label>
-										<button
-											[nbTooltip]="
+											<div class="row">
+												<div class="col-12">
+													{{
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY'
+															| translate
+													}}
+													<button
+															[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY_INFO'
+														| translate
+												"
+															ghost
+															nbButton
+															size="small"
+															status="info"
+															class="p-0"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+												</div>
+											</div>
+											<div *ngIf="isTrackInactivity" class="row">
+												<div class="col-xl-6 col-12">
+													<label class="label">
+														{{
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
+																| translate
+														}}
+													</label>
+													<button
+															[nbTooltip]="
 												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT_INFO'
 													| translate
 											"
-											ghost
-											nbButton
-											size="small"
-											status="info"
-										>
-											<nb-icon icon="info"></nb-icon>
-										</button>
-										<nb-select
-											[placeholder]="
+															ghost
+															nbButton
+															size="small"
+															status="info"
+															class="p-0"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+													<nb-select
+															[placeholder]="
 												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
 													| translate
 											"
-											formControlName="inactivityTimeLimit"
-											fullWidth
-											size="medium"
-										>
-											<nb-option
-												*ngFor="
+															formControlName="inactivityTimeLimit"
+															fullWidth
+															size="medium"
+													>
+														<nb-option
+																*ngFor="
 													let inactivity of listOfInactivityLimits
 												"
-												[value]="inactivity"
-											>
-												{{ inactivity }}
-											</nb-option>
-										</nb-select>
-									</div>
-									<div class="col-6">
-										<label class="label">
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
-													| translate
-											}}
-										</label>
-										<button
-											[nbTooltip]="
+																[value]="inactivity"
+														>
+															{{ inactivity }}
+														</nb-option>
+													</nb-select>
+												</div>
+												<div class="col-xl-6 col-12">
+													<label class="label">
+														{{
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
+																| translate
+														}}
+													</label>
+													<button
+															[nbTooltip]="
 												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION_INFO'
 													| translate
 											"
-											ghost
-											nbButton
-											size="small"
-											status="info"
-										>
-											<nb-icon icon="info"></nb-icon>
-										</button>
-										<nb-select
-											[placeholder]="
+															ghost
+															nbButton
+															size="small"
+															status="info"
+															class="p-0"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+													<nb-select
+															[placeholder]="
 												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACTIVITY_PROOF_DURATION'
 													| translate
 											"
-											formControlName="activityProofDuration"
-											fullWidth
-											size="medium"
-										>
-											<nb-option
-												*ngFor="
+															formControlName="activityProofDuration"
+															fullWidth
+															size="medium"
+													>
+														<nb-option
+																*ngFor="
 													let proof of listOfActivityProofDuration
 												"
-												[value]="proof"
-											>
-												{{ proof }}
-											</nb-option>
-										</nb-select>
+																[value]="proof"
+														>
+															{{ proof }}
+														</nb-option>
+													</nb-select>
+												</div>
+											</div>
+										</nb-toggle>
 									</div>
 								</div>
 							</div>
