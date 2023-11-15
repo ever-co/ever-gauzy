@@ -109,6 +109,13 @@
         justify-content: center;
       }
     }
+    .login-magic-wrapper {
+      margin: 3rem 0 0 0;
+
+      & a {
+        font-weight: bold;
+      }
+    }
   }
   & .another-action {
     @include another-action;

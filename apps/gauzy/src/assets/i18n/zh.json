@@ -4390,6 +4390,7 @@
 		"OR_SIGN_IN_WITH": "或用以下方式登录",
 		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
 		"LOGIN_MAGIC": {
+			"TITLE": "使用魔法代码登录",
 			"DESCRIPTION_TITLE": "我们将向您发送一组用于无密码登录的魔术代码。或者您可以 ",
 			"OR_SIGN_IN_WITH_PASSWORD": "使用密码登录。"
 		},

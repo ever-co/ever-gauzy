@@ -4390,6 +4390,7 @@
 		"OR_SIGN_IN_WITH": "Of meld je aan met",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
+			"TITLE": "Inloggen met een magische code",
 			"DESCRIPTION_TITLE": "We sturen u een magische code voor een wachtwoordloze aanmelding. Of u kunt ",
 			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan."
 		},

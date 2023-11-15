@@ -4392,6 +4392,7 @@
 		"OR_SIGN_IN_WITH": "O inicie sesión con",
 		"FORGOT_EMAIL_TITLE": "¿Olvidó su correo electrónico?",
 		"LOGIN_MAGIC": {
+			"TITLE": "Iniciar sesión con un código mágico",
 			"DESCRIPTION_TITLE": "Le enviaremos un código mágico para iniciar sesión sin contraseña. O puede ",
 			"OR_SIGN_IN_WITH_PASSWORD": "iniciar sesión con contraseña en su lugar."
 		},

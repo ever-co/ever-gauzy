@@ -4455,6 +4455,7 @@
 		"OR_SIGN_IN_WITH": "Or Sign In with",
 		"FORGOT_EMAIL_TITLE": "Forgot Email?",
 		"LOGIN_MAGIC": {
+			"TITLE": "Log in with a magic code.",
 			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
 			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead."
 		},

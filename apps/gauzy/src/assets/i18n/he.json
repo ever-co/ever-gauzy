@@ -4314,6 +4314,7 @@
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
+			"TITLE": "התחברות עם קוד קסם",
 			"DESCRIPTION_TITLE": "נשלח לך קוד קסום להתחברות ללא סיסמה. או ניתן ",
 			"OR_SIGN_IN_WITH_PASSWORD": "להתחבר באמצעות סיסמה במקום זאת."
 		},

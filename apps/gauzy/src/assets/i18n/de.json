@@ -4390,6 +4390,7 @@
 		"OR_SIGN_IN_WITH": "Oder mit anmelden",
 		"FORGOT_EMAIL_TITLE": "E-Mail vergessen?",
 		"LOGIN_MAGIC": {
+			"TITLE": "Einloggen mit einem magischen Code",
 			"DESCRIPTION_TITLE": "Wir senden Ihnen einen magischen Code für eine kennwortfreie Anmeldung. Oder Sie können ",
 			"OR_SIGN_IN_WITH_PASSWORD": "sich stattdessen mit einem Passwort anmelden."
 		},

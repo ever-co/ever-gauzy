@@ -4316,6 +4316,7 @@
 		"OR_SIGN_IN_WITH": "Или влезте с",
 		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
 		"LOGIN_MAGIC": {
+			"TITLE": "Вход с магически код",
 			"DESCRIPTION_TITLE": "Ще ви изпратим магически код за вход без парола. Или можете да ",
 			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола."
 		},

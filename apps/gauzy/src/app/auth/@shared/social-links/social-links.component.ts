@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 

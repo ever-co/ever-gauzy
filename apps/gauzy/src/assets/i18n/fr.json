@@ -4391,6 +4391,7 @@
 		"OR_SIGN_IN_WITH": "Ou connectez-vous avec",
 		"FORGOT_EMAIL_TITLE": "Mot de passe oublié ?",
 		"LOGIN_MAGIC": {
+			"TITLE": "Connexion avec un code magique",
 			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour une connexion sans mot de passe. Ou vous pouvez ",
 			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place."
 		},
