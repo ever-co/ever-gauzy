@@ -291,7 +291,7 @@
 								placeholder="Select Period"
 								[(ngModel)]="selectedPeriod"
 								(ngModelChange)="selectPeriod($event)"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced"
 							>
 								<nb-option
 									*ngFor="let item of periodOption"
@@ -303,7 +303,7 @@
 								[(ngModel)]="appSetting.randomScreenshotTime"
 								(ngModelChange)="toggleRandomScreenshot($event)"
 								status="basic"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced"
 								>{{
 									'TIMER_TRACKER.SETTINGS.RANDOM_SCREENSHOT_TIME'
 										| translate
@@ -312,7 +312,7 @@
 							<nb-toggle
 								[(ngModel)]="appSetting.trackOnPcSleep"
 								(ngModelChange)="toggleTrackOnPcSleep($event)"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="appSetting?.timerStarted || appSetting?.enforced"
 								status="basic"
 								>{{
 									'TIMER_TRACKER.SETTINGS.TRACK_TIME_PC_LOCKED'

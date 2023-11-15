@@ -2127,6 +2127,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						allowScreenshotCapture: isAllowScreenCapture,
 					}
 				);
+				const enforced = res.employee.organization.enforced;
+				const settings = {
+					timer: { updatePeriod: res.employee.organization.updatePeriod },
+					trackOnPcSleep: res.employee.organization.trackOnPcSleep,
+					randomScreenshotTime: res.employee.organization.randomScreenshotTime
+				};
+				this.electronService.ipcRenderer.send('update_app_setting', {
+					values: {
+						enforced,
+						...(enforced && settings)
+					}
+				});
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined'
 						? res.employee.isTrackingEnabled
