@@ -205,23 +205,9 @@
 			</div>
         </form>
         <div class="hr-div-soft"></div>
-		<ng-container *ngIf="socialLinks && socialLinks.length > 0">
-			<section class="links" aria-label="Social sign in">
-				or enter with:
-				<div class="socials">
-					<ng-container *ngFor="let socialLink of socialLinks">
-						<a *ngIf="socialLink.link" [routerLink]="socialLink.link" [attr.target]="socialLink.target" class="social-link">
-							<nb-icon *ngIf="socialLink.icon; else title" [icon]="socialLink.icon"></nb-icon>
-							<ng-template #title>{{ socialLink.title }}</ng-template>
-						</a>
-						<a *ngIf="socialLink.url" [attr.href]="socialLink.url" [attr.target]="socialLink.target" class="social-link">
-							<nb-icon *ngIf="socialLink.icon; else title" [icon]="socialLink.icon"></nb-icon>
-							<ng-template #title>{{ socialLink.title }}</ng-template>
-						</a>
-					</ng-container>
-				</div>
-			</section>
-		</ng-container>
+		<section>
+			<ngx-social-links></ngx-social-links>
+		</section>
         <div class="hr-div-soft"></div>
 
 		<section class="another-action" aria-label="Sign In Workspace">

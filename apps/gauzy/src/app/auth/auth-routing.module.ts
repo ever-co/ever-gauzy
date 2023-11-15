@@ -12,6 +12,7 @@ import { EstimateEmailComponent, EstimateEmailResolver } from './estimate-email'
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
 import { ConfirmEmailComponent } from './confirm-email';
 import { ConfirmEmailResolver } from './confirm-email/confirm-email.resolver';
+import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 
 export const routes: Routes = [
 	{
@@ -42,6 +43,11 @@ export const routes: Routes = [
 			{
 				path: 'logout',
 				component: NbLogoutComponent
+			},
+			{
+				path: 'login-magic',
+				component: NgxLoginMagicComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'request-password',
@@ -77,10 +83,10 @@ export const routes: Routes = [
 				canActivate: [NoAuthGuard],
 				resolve: {
 					estimate: EstimateEmailResolver
-				},
+				}
 			}
-		],
-	},
+		]
+	}
 ];
 
 @NgModule({

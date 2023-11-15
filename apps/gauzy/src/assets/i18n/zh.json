@@ -7,6 +7,7 @@
 		"CREATE": "创建",
 		"REGISTER": "注册",
 		"LOGIN": "登录",
+		"SIGN_IN_WITH_EMAIL": "使用电子邮件登录",
 		"ADD_NOTE": "添加笔记",
 		"EDIT": "编辑",
 		"MANAGE": "管理",
@@ -4387,6 +4388,12 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "没有账号吗？",
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",
 		"OR_SIGN_IN_WITH": "或用以下方式登录",
+		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
+		"LOGIN_MAGIC": {
+			"TITLE": "使用魔法代码登录",
+			"DESCRIPTION_TITLE": "我们将向您发送一组用于无密码登录的魔术代码。或者您可以 ",
+			"OR_SIGN_IN_WITH_PASSWORD": "使用密码登录。"
+		},
 		"LABELS": {
 			"EMAIL": "邮箱地址：",
 			"PASSWORD": "密码："
