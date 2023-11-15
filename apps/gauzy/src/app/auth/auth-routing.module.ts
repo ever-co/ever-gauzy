@@ -24,7 +24,7 @@ export const routes: Routes = [
 				pathMatch: 'full'
 			},
 			{
-				path: 'signin',
+				path: '',
 				loadChildren: () => import('./signin-workspaces/signin-workspaces.module').then(
 					(m) => m.SignInWorkspacesLayoutModule
 				)
