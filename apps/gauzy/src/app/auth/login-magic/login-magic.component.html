@@ -8,31 +8,6 @@
       <div class="headings-inner">
         <h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
         <p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
-        <nb-accordion *ngIf="!electronService?.isElectron && isDemo" class="demo-credentials-select">
-          <nb-accordion-item class="demo-credentials-select-item">
-            <nb-accordion-item-header class="demo-credentials-header">
-              <div class="demo-credentials-head-text">
-                <div><span class="demo-text-span">Demo </span>Credentials</div>
-              </div>
-            </nb-accordion-item-header>
-            <nb-accordion-item-body class="demo-credentials-body">
-              <div>Super Admin</div>
-              <br/>
-              <div>Email: admin@ever.co</div>
-              <div>Password: admin</div>
-              <br/>
-              <div>Admin</div>
-              <br/>
-              <div>Email: local.admin@ever.co</div>
-              <div>Password: admin</div>
-              <br/>
-              <div>Employee</div>
-              <br/>
-              <div>Email: employee@ever.co</div>
-              <div>Password: 123456</div>
-            </nb-accordion-item-body>
-          </nb-accordion-item>
-        </nb-accordion>
       </div>
     </div>
     <nb-alert
@@ -139,7 +114,6 @@
       <ngx-social-links></ngx-social-links>
     </section>
     <div class="hr-div-soft"></div>
-
     <section class="another-action" aria-label="Register">
       {{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
       <a class="text-link" routerLink="/auth/register">
