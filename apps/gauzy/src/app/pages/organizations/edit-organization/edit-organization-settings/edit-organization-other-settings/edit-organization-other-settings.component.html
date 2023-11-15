@@ -1104,6 +1104,132 @@
 										</nb-toggle>
 									</div>
 								</div>
+								<div class="col-xl-6 col-12 pt-2">
+									<div class="form-group invite-toggle">
+										<nb-toggle
+												[ngClass]="{start: isEnforced}"
+												class="d-block"
+												formControlName="enforced"
+												labelPosition="start"
+												status="primary"
+										>
+											<div class="row">
+												<div class="col-12">
+													{{
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENFORCED'
+															| translate
+													}}
+													<button
+															[nbTooltip]="
+													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENFORCED_INFO'
+														| translate
+												"
+															class="p-0"
+															ghost
+															nbButton
+															size="small"
+															status="info"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+												</div>
+											</div>
+											<div *ngIf="isEnforced" class="row">
+												<div class="col-12 mt-2">
+													<nb-toggle
+															class="d-block"
+															formControlName="randomScreenshotTime"
+															labelPosition="start"
+															status="primary"
+													>
+														{{
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_TIME'
+																| translate
+														}}
+														<button
+																[nbTooltip]="
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_TIME_INFO'
+													| translate
+											"
+																class="p-0"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+														>
+															<nb-icon icon="info"></nb-icon>
+														</button>
+													</nb-toggle>
+												</div>
+												<div class="col-12 mt-2">
+													<nb-toggle
+															class="d-block"
+															formControlName="trackOnPcSleep"
+															labelPosition="start"
+															status="primary"
+													>
+														{{
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_PC_SLEEP'
+																| translate
+														}}
+														<button
+																[nbTooltip]="
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_PC_SLEEP_INFO'
+													| translate
+											"
+																class="p-0"
+																ghost
+																nbButton
+																size="small"
+																status="info"
+														>
+															<nb-icon icon="info"></nb-icon>
+														</button>
+													</nb-toggle>
+												</div>
+												<div class="col-6 mt-2">
+													<label class="label">
+														{{
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.UPDATE_PERIOD'
+																| translate
+														}}
+													</label>
+													<button
+															[nbTooltip]="
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.UPDATE_PERIOD_INFO'
+													| translate
+											"
+															class="p-0"
+															ghost
+															nbButton
+															size="small"
+															status="info"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+													<nb-select
+															[placeholder]="
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
+													| translate
+											"
+															formControlName="updatePeriod"
+															fullWidth
+															size="medium"
+													>
+														<nb-option
+																*ngFor="
+													let updatePeriod of updatePeriodOptions
+												"
+																[value]="updatePeriod"
+														>
+															{{ updatePeriod }}
+														</nb-option>
+													</nb-select>
+												</div>
+											</div>
+										</nb-toggle>
+									</div>
+								</div>
 							</div>
 						</div>
 					</nb-accordion-item-body>
