@@ -1919,7 +1919,6 @@
 				"ACTIVITY_PROOF_DURATION": "مدة إثبات النشاط",
 				"ACTIVITY_PROOF_DURATION_INFO": "مدة عداد تناقص إثبات النشاط، يمثل عدد الدقائق المعطى لإثبات النشاط",
 				"ENABLE_DETECTION_INACTIVITY": "تمكين اكتشاف عدم نشاط الموظف",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "تمكين - سيتم اكتشاف عدم النشاط في النظام وعرض تحذير.\nتعطيل - لن يتم عرض أي تحذير عندما يكون الموظف غير نشط.",
 				"DELETE_IDLE_TIME": "تمكين حذف وقت الخمول",
 				"DELETE_IDLE_TIME_INFO": "تفعيل - ستقوم النظام بحذف الوقت الخامل.\nتعطيل - لن يقوم النظام بحذف الوقت الخامل.",
 				"ALLOW_SCREEN_CAPTURE": "السماح بالتقاط الشاشة",
@@ -1949,7 +1948,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "فترة إغلاق التقرير التلقائي (بالأيام)",
 				"AUTO_ARCHIVE_ISSUE": "مشكلة الأرشفة التلقائية",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "فترة مسألة الأرشفة التلقائية (بالأيام)",
-				"AUTO_STATUS": "حالة تلقائية"
+				"AUTO_STATUS": "حالة تلقائية",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "تمكين - سيتم اكتشاف عدم النشاط في النظام وعرض تحذير.\nتعطيل - لن يتم عرض أي تحذير عندما يكون الموظف غير نشط.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "المديرين",

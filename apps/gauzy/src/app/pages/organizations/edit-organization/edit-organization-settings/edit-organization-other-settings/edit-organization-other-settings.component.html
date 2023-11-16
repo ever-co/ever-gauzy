@@ -460,7 +460,7 @@
 								</div>
 							</div>
 							<div class="row toggles">
-								<div class="form-group invite-toggle">
+								<div class="form-group toggle-switch">
 									<label class="label">
 										{{
 											'FORM.LABELS.TAX_AND_DISCOUNT_INVOICE_ITEMS_SEPARATELY'
@@ -479,7 +479,7 @@
 										}}
 									</nb-toggle>
 								</div>
-								<div class="form-group invite-toggle">
+								<div class="form-group toggle-switch">
 									<label class="label">
 										{{
 											'FORM.LABELS.DISCOUNT_AFTER_TAX'
@@ -498,7 +498,7 @@
 										}}
 									</nb-toggle>
 								</div>
-								<div class="form-group invite-toggle">
+								<div class="form-group toggle-switch">
 									<label class="label">
 										{{
 											'FORM.LABELS.CONVERT_ESTIMATES'
@@ -724,7 +724,7 @@
 						<div class="fields">
 							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<label class="label">
 											{{
 												'FORM.LABELS.ENABLE_DISABLE_INVITES'
@@ -783,7 +783,7 @@
 					<nb-accordion-item-body>
 						<div class="fields">
 							<div class="row">
-								<div class="form-group invite-toggle">
+								<div class="form-group toggle-switch">
 									<label class="label">
 										{{
 											'FORM.LABELS.ENABLE_DISABLE_FUTURE_DATE'
@@ -808,76 +808,85 @@
 				</nb-accordion-item>
 				<nb-accordion-item #timer>
 					<nb-accordion-item-header>
-						{{
-							'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS'
-								| translate
-						}}
+						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TIMER_SETTINGS' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
 						<div class="fields">
 							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="allowManualTime"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MANUAL_TIME'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MANUAL_TIME' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_MANUAL_TIME_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="allowModifyTime"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MODIFY_TIME'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_MODIFY_TIME' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_MODIFY_TIME_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="allowDeleteTime"
 											labelPosition="start"
 											status="primary"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ALLOW_DELETE_TIME' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ALLOW_DELETE_TIME_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="allowTrackInactivity"
 											labelPosition="start"
 											status="primary"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY' | translate }}
 											<button
-												[nbTooltip]="
-													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ENABLE_DETECTION_INACTIVITY_INFO'
-														| translate
-												"
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.ENABLE_DETECTION_INACTIVITY_INFO' | translate"
 												ghost
 												nbButton
 												size="small"
@@ -891,7 +900,7 @@
 							</div>
 							<div class="row mt-4">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="requireReason"
@@ -906,7 +915,7 @@
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="requireDescription"
@@ -921,7 +930,7 @@
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="requireProject"
@@ -936,7 +945,7 @@
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="requireTask"
@@ -951,7 +960,7 @@
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="requireClient"
@@ -965,7 +974,7 @@
 										</nb-toggle>
 									</div>
 								</div>
-								<div class="col-6 form-group invite-toggle">
+								<div class="col-6 form-group toggle-switch">
 									<nb-toggle
 										class="d-block"
 										formControlName="isRemoveIdleTime"
@@ -990,7 +999,7 @@
 										</button>
 									</nb-toggle>
 								</div>
-								<div class="col-6 form-group invite-toggle">
+								<div class="col-6 form-group toggle-switch">
 									<nb-toggle
 										class="d-block"
 										formControlName="allowScreenshotCapture"
@@ -1101,317 +1110,426 @@
 				</nb-accordion-item>
                 <nb-accordion-item #taskSetting [formGroup]="taskSettingForm">
 					<nb-accordion-item-header>
-						{{
-							'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING'
-								| translate
-						}}
+						{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_SETTING' | translate }}
 					</nb-accordion-item-header>
 					<nb-accordion-item-body>
 						<div class="fields">
 							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksPrivacyEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_PRIVACY'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TASK_PRIVACY' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_PRIVACY_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksMultipleAssigneesEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.MULTIPLE_ASSIGNEE'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.MULTIPLE_ASSIGNEE' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_MULTIPLE_ASSIGNEE_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
+							</div>
+							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksManualTimeEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.MANUAL_TIME'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.MANUAL_TIME' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_MANUAL_TIME_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksGroupEstimationEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.GROUP_ESTIMATION'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.GROUP_ESTIMATION' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_GROUP_ESTIMATION_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
+							</div>
+							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksEstimationInHoursEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ESTIMATION_IN_HOUR'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ESTIMATION_IN_HOUR' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_ESTIMATION_IN_HOUR_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksEstimationInStoryPointsEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ESTIMATION_IN_STORY_POINT'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ESTIMATION_IN_STORY_POINT' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_ESTIMATION_IN_STORY_POINT_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
-                                <div class="col-12 row">
-                                    <div class="col-6">
-                                        <div class="form-group invite-toggle">
-                                            <nb-toggle class="d-block" formControlName="isTasksProofOfCompletionEnabled" status="primary"
-                                                labelPosition="start">
-                                                {{
-                                                'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION'
-                                                | translate
-                                                }}
-                                            </nb-toggle>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <nb-select class="d-block" size="medium" formControlName="tasksProofOfCompletionType" [placeholder]="
-                                    													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE'
-                                    														| translate
-                                    												" fullWidth>
-                                                <nb-option [value]="null">
-                                                    {{
-                                                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.NONE'
-                                                    | translate
-                                                    }}
-                                                </nb-option>
-                                                <nb-option *ngFor="
-                                    														let type of defaultTaskProofOfCompletionTypes
-                                    													" [value]="type">
-                                                    {{
-                                                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.' +
-                                                    type | translate
-                                                    }}
-                                                </nb-option>
-                                            </nb-select>
-                                        </div>
-                                    </div>
-                                    </div>
-
+							</div>
+							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
+										<nb-toggle
+											class="d-block"
+											formControlName="isTasksProofOfCompletionEnabled"
+											status="primary"
+											labelPosition="start"
+										>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_PROOF_OF_COMPLETION_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="form-group">
+										<nb-select
+											class="d-block"
+											size="medium"
+											formControlName="tasksProofOfCompletionType"
+											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE' | translate"
+											fullWidth
+										>
+											<nb-option [value]="null">
+												{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.NONE' | translate }}
+											</nb-option>
+											<nb-option *ngFor=" let type of defaultTaskProofOfCompletionTypes " [value]="type">
+												{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.PROOF_OF_COMPLETION_TYPE_DROPDOWN.' + type | translate }}
+											</nb-option>
+										</nb-select>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksLinkedEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.LINKED_ISSUE'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.LINKED_ISSUE' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_LINKED_ISSUE_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksCommentsEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.COMMENT'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.COMMENT' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_COMMENTS_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
+							</div>
+							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksHistoryEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.HISTORY'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.HISTORY' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_HISTORY_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksAcceptanceCriteriaEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACCEPTANCE_CRITERIA'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.ACCEPTANCE_CRITERIA' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_ACCEPTANCE_CRITERIA_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-
+							</div>
+							<div class="row">
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksDraftsEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.DRAFT_ISSUE'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.DRAFT_ISSUE' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_DRAFT_ISSUE_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
 									</div>
 								</div>
-                                <div class="col-12 row">
-                                    <div class="col-6">
-                                        <div class="form-group invite-toggle">
-                                            <nb-toggle class="d-block" formControlName="isTasksNotifyLeftEnabled" status="primary"
-                                                labelPosition="start">
-                                                {{
-                                                'ORGANIZATIONS_PAGE.EDIT.SETTINGS.NOTIFY_TASK_LEFT'
-                                                | translate
-                                                }}
-                                            </nb-toggle>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <input nbInput type="number" [min]="0" formControlName="tasksNotifyLeftPeriodDays" [placeholder]="
-                                													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.NOTIFY_TASK_LEFT_PERIOD'
-                                														| translate
-                                												" fullWidth class="d-block" [ngClass]="{
-                                													'status-danger':
-                                														taskSettingForm.get(
-                                															'tasksNotifyLeftPeriodDays'
-                                														).invalid
-                                												}" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-12 row">
-                                    <div class="col-6">
-                                        <div class="form-group invite-toggle">
-                                            <nb-toggle class="d-block" formControlName="isTasksAutoCloseEnabled" status="primary" labelPosition="start">
-                                                {{
-                                                'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE'
-                                                | translate
-                                                }}
-                                            </nb-toggle>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="form-group">
-                                            <input nbInput type="number" [min]="0" formControlName="tasksAutoClosePeriodDays" [placeholder]="
-                                    													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE_PERIOD'
-                                    														| translate
-                                    												" fullWidth class="d-block" [ngClass]="{
-                                    													'status-danger':
-                                    														taskSettingForm.get(
-                                    															'tasksAutoClosePeriodDays'
-                                    														).invalid
-                                    												}" />
-                                        </div>
-                                    </div>
-                                    </div>
-
-                                <div class="col-12 row">
-                                    <div class="col-6">
-                                        <div class="form-group invite-toggle">
-                                            <nb-toggle class="d-block" formControlName="isTasksAutoArchiveEnabled" status="primary" labelPosition="start">
-                                                {{
-                                                    'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIVE_ISSUE'
-                                                    | translate
-                                                    }}
-                                                    </nb-toggle>
-                                        </div>
-                                        </div>
-
-                                        <div class="col-6">
-                                            <div class="form-group">
-                                                <input nbInput type="number" [min]="0" formControlName="tasksAutoArchivePeriodDays" [placeholder]="
-                                        													'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIVE_ISSUE_PERIOD'
-                                        														| translate
-                                        												" fullWidth class="d-block" [ngClass]="{
-                                        													'status-danger':
-                                        														taskSettingForm.get(
-                                        															'tasksAutoArchivePeriodDays'
-                                        														).invalid
-                                        												}" />
-                                            </div>
-									</div>
-								</div>
-
 								<div class="col-6">
-									<div class="form-group invite-toggle">
+									<div class="form-group toggle-switch">
 										<nb-toggle
 											class="d-block"
 											formControlName="isTasksAutoStatusEnabled"
 											status="primary"
 											labelPosition="start"
 										>
-											{{
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_STATUS'
-													| translate
-											}}
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_STATUS' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_AUTO_STATUS_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
 										</nb-toggle>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group toggle-switch">
+										<nb-toggle
+											class="d-block"
+											formControlName="isTasksNotifyLeftEnabled"
+											status="primary"
+											labelPosition="start"
+										>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.NOTIFY_TASK_LEFT' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_NOTIFY_LEFT_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="form-group">
+										<input
+											nbInput
+											type="number"
+											[min]="0"
+											formControlName="tasksNotifyLeftPeriodDays"
+											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.NOTIFY_TASK_LEFT_PERIOD' | translate"
+											fullWidth
+											class="d-block"
+											[ngClass]="{
+												'status-danger': taskSettingForm.get('tasksNotifyLeftPeriodDays').invalid
+											}" />
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group toggle-switch">
+										<nb-toggle
+											class="d-block"
+											formControlName="isTasksAutoCloseEnabled"
+											status="primary"
+											labelPosition="start"
+										>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_AUTO_CLOSE_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+								<div class="col-6">
+									<div class="form-group">
+										<input
+											nbInput
+											type="number"
+											[min]="0"
+											formControlName="tasksAutoClosePeriodDays"
+											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_CLOSE_ISSUE_PERIOD' | translate"
+											fullWidth
+											class="d-block"
+											[ngClass]="{ 'status-danger': taskSettingForm.get( 'tasksAutoClosePeriodDays' ).invalid }"
+										/>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<div class="form-group toggle-switch">
+										<nb-toggle
+											class="d-block"
+											formControlName="isTasksAutoArchiveEnabled"
+											status="primary"
+											labelPosition="start"
+										>
+											{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIVE_ISSUE' | translate }}
+											<button
+												[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TOOLTIP.TASK_AUTO_ARCHIVE_ENABLED_INFO' | translate"
+												ghost
+												nbButton
+												size="small"
+												status="info"
+											>
+												<nb-icon icon="info"></nb-icon>
+											</button>
+										</nb-toggle>
+									</div>
+								</div>
+								 <div class="col-6">
+									<div class="form-group">
+										<input
+											nbInput
+											type="number"
+											[min]="0"
+											formControlName="tasksAutoArchivePeriodDays"
+											[placeholder]="'ORGANIZATIONS_PAGE.EDIT.SETTINGS.AUTO_ARCHIVE_ISSUE_PERIOD' | translate"
+											fullWidth
+											class="d-block"
+											[ngClass]="{
+												'status-danger': taskSettingForm.get( 'tasksAutoArchivePeriodDays' ).invalid
+											}"
+										/>
 									</div>
 								</div>
 							</div>

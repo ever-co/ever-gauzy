@@ -1919,7 +1919,6 @@
 				"ACTIVITY_PROOF_DURATION": "活动凭证持续时间",
 				"ACTIVITY_PROOF_DURATION_INFO": "活动持续时间证明倒计时对话框，它表示给予证明活动的分钟数。",
 				"ENABLE_DETECTION_INACTIVITY": "使员工的不活动能够被检测到",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
 				"DELETE_IDLE_TIME": "启用删除空闲时间",
 				"DELETE_IDLE_TIME_INFO": "启用 - 系统将删除空闲时间。禁用 - 系统将不删除空闲时间。",
 				"ALLOW_SCREEN_CAPTURE": "允许屏幕捕捉",
@@ -1949,7 +1948,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "自动关闭问题期限（以天为单位）",
 				"AUTO_ARCHIVE_ISSUE": "自动归档问题",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "自动归档问题期限（以天为单位）",
-				"AUTO_STATUS": "汽车状态"
+				"AUTO_STATUS": "汽车状态",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",

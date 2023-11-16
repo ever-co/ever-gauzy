@@ -1,9 +1,10 @@
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { IOrganizationTaskSetting, IOrganizationTaskSettingFindInput } from '@gauzy/contracts';
+import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { IOrganizationTaskSetting } from '@gauzy/contracts';
 
 @Injectable()
 export class OrganizationTaskSettingService extends TenantAwareCrudService<OrganizationTaskSetting> {
@@ -15,24 +16,29 @@ export class OrganizationTaskSettingService extends TenantAwareCrudService<Organ
     }
 
     /**
-     * Find organization task setting
+     * Find organization task setting.
      *
-     * @param organizationId
-     * @param options
-     * @returns
+     * @param options - The options to filter the organization task setting.
+     * @returns A Promise resolving to the found organization task setting.
      */
-    async findByOrganizationId(
-        organizationId: IOrganizationTaskSetting['id'],
+    async findByOrganization(
+        options: IOrganizationTaskSettingFindInput
     ): Promise<IOrganizationTaskSetting> {
-        const {
-            record
-        } = await this.findOneOrFailByOptions({
-            where: {
-                organizationId
-            }
-        });
+        try {
+            const tenantId = RequestContext.currentTenantId();
+            const { organizationId } = options;
 
-        return record;
+            const whereConditions: FindOptionsWhere<IOrganizationTaskSettingFindInput> = {
+                organizationId,
+                tenantId,
+                isActive: true,
+                isArchived: false,
+            };
+
+            return await this.findOneByOptions({ where: whereConditions });
+        } catch (error) {
+            // Handle errors during the retrieving operation.
+            console.error('Error during organization task settings retrieval:', error);
+        }
     }
-
 }

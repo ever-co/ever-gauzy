@@ -1919,7 +1919,6 @@
 				"ACTIVITY_PROOF_DURATION": "Aktivitätsnachweis Dauer",
 				"ACTIVITY_PROOF_DURATION_INFO": "Dauer des Aktivitätsnachweises für den Countdown-Dialog; es repräsentiert die Anzahl an Minuten, die gegeben werden, um die Aktivität zu beweisen.",
 				"ENABLE_DETECTION_INACTIVITY": "Aktiviere die Erkennung von Inaktivität bei Mitarbeitern.",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist.",
 				"DELETE_IDLE_TIME": "Aktiviere die Löschung der Leerlaufzeit.",
 				"DELETE_IDLE_TIME_INFO": "Aktivieren - das System wird die Leerlaufzeit löschen. Deaktivieren - das System wird die Leerlaufzeit nicht löschen.",
 				"ALLOW_SCREEN_CAPTURE": "Bildschirmaufnahme zulassen",
@@ -1949,7 +1948,10 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto-Schließen des Problemzeitraums (in Tagen)",
 				"AUTO_ARCHIVE_ISSUE": "Automatische Archivierung Problem",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto-Archivierungszeitraum (in Tagen)",
-				"AUTO_STATUS": "Fahrzeugstatus."
+				"AUTO_STATUS": "Fahrzeugstatus.",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",

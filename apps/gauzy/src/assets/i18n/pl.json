@@ -1919,7 +1919,6 @@
 				"ACTIVITY_PROOF_DURATION": "Czas trwania dowodu aktywności",
 				"ACTIVITY_PROOF_DURATION_INFO": "Czas trwania dialogu odliczania próby aktywności, reprezentuje liczbę minut, które zostały przypisane do udowodnienia aktywności",
 				"ENABLE_DETECTION_INACTIVITY": "Włącz wykrywanie bezczynności pracownika",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Włączone - system wykryje brak aktywności i wyświetli ostrzeżenie. Wyłączone - nie będzie wyświetlane żadne ostrzeżenie, gdy pracownik jest nieaktywny",
 				"DELETE_IDLE_TIME": "Włącz usuwanie bezczynności",
 				"DELETE_IDLE_TIME_INFO": "Włącz - system usunie czas bezczynności. Wyłącz - system nie będzie usuwać czasu bezczynności",
 				"ALLOW_SCREEN_CAPTURE": "Zezwól na przechwytywanie ekranu",
@@ -1949,7 +1948,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Okres automatycznego zamknięcia zgłoszenia (w dniach)",
 				"AUTO_ARCHIVE_ISSUE": "Problem archiwizacji automatycznej",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Okres automatycznego archiwizowania (w dniach)",
-				"AUTO_STATUS": "Status automatyczny"
+				"AUTO_STATUS": "Status automatyczny",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Włączone - system wykryje brak aktywności i wyświetli ostrzeżenie. Wyłączone - nie będzie wyświetlane żadne ostrzeżenie, gdy pracownik jest nieaktywny",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",

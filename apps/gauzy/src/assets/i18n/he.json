@@ -1919,7 +1919,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "תקופת סגירה אוטומטית (בימים)",
 				"AUTO_ARCHIVE_ISSUE": "בעיה בארכיון אוטומטי",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "תקופת הנפקת ארכיון אוטומטי (בימים)",
-				"AUTO_STATUS": "מצב אוטומטי"
+				"AUTO_STATUS": "מצב אוטומטי",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "מופעל - המערכת תזהה חוסר פעילות ותציג אזהרה. מושבת - לא תוצג אזהרה כאשר עובד אינו פעיל.",
+					"ALLOW_MANUAL_TIME_INFO": "מציין אם הזנת זמן ידנית מותרת למעקב אחר זמן.",
+					"ALLOW_MODIFY_TIME_INFO": "מציין אם מותר לשנות את כניסות הזמן למעקב אחר זמן.",
+					"ALLOW_DELETE_TIME_INFO": "מציין אם מחיקת ערכי זמן מותרת למעקב אחר זמן."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
