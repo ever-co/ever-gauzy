@@ -1138,17 +1138,17 @@
 												<div class="col-12 mt-2">
 													<nb-toggle
 															class="d-block"
-															formControlName="randomScreenshotTime"
+															formControlName="randomScreenshot"
 															labelPosition="start"
 															status="primary"
 													>
 														{{
-														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_TIME'
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT'
 																| translate
 														}}
 														<button
 																[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_TIME_INFO'
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.RANDOM_SCREENSHOT_INFO'
 													| translate
 											"
 																class="p-0"
@@ -1164,17 +1164,17 @@
 												<div class="col-12 mt-2">
 													<nb-toggle
 															class="d-block"
-															formControlName="trackOnPcSleep"
+															formControlName="trackOnSleep"
 															labelPosition="start"
 															status="primary"
 													>
 														{{
-														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_PC_SLEEP'
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_SLEEP'
 																| translate
 														}}
 														<button
 																[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_PC_SLEEP_INFO'
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.TRACK_ON_SLEEP_INFO'
 													| translate
 											"
 																class="p-0"
@@ -1190,13 +1190,13 @@
 												<div class="col-6 mt-2">
 													<label class="label">
 														{{
-														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.UPDATE_PERIOD'
+														'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY'
 																| translate
 														}}
 													</label>
 													<button
 															[nbTooltip]="
-												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.UPDATE_PERIOD_INFO'
+												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREENSHOT_FREQUENCY_INFO'
 													| translate
 											"
 															class="p-0"
@@ -1212,17 +1212,17 @@
 												'ORGANIZATIONS_PAGE.EDIT.SETTINGS.INACTIVITY_TIME_LIMIT'
 													| translate
 											"
-															formControlName="updatePeriod"
+															formControlName="screenshotFrequency"
 															fullWidth
 															size="medium"
 													>
 														<nb-option
 																*ngFor="
-													let updatePeriod of updatePeriodOptions
+													let screenshotFrequency of screenshotFrequencyOptions
 												"
-																[value]="updatePeriod"
+																[value]="screenshotFrequency"
 														>
-															{{ updatePeriod }}
+															{{ screenshotFrequency }}
 														</nb-option>
 													</nb-select>
 												</div>

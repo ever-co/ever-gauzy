@@ -1,16 +1,6 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	JoinTable,
-	ManyToMany,
-	ManyToOne,
-	OneToMany,
-	RelationId
-} from 'typeorm';
-import {ApiProperty, ApiPropertyOptional} from '@nestjs/swagger';
-import {IsBoolean, IsNumber, IsOptional, IsString, IsUUID} from 'class-validator';
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -385,24 +375,28 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		onDelete: 'CASCADE'
 	})
 	skills: ISkill[];
-	@ApiProperty({ type: () => Boolean })
+
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true, default: false })
-	randomScreenshotTime?: boolean;
-	@ApiProperty({ type: () => Boolean })
+	randomScreenshot?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true, default: false })
-	trackOnPcSleep?: boolean;
-	@ApiProperty({ type: () => Number })
+	trackOnSleep?: boolean;
+
+	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@Column({
 		type: 'numeric',
 		default: 10
 	})
-	updatePeriod?: number;
-	@ApiProperty({ type: () => Boolean })
+	screenshotFrequency?: number;
+
+	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
 	@Column({ nullable: true, default: false })

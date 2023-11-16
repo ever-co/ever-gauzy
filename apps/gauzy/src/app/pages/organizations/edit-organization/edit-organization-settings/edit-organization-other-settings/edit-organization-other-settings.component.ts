@@ -41,7 +41,7 @@ import {
     TaskProofOfCompletionTypeEnum,
     DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
     DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
-    DEFAULT_UPDATE_PERIOD_OPTIONS,
+    DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS,
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -104,7 +104,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     regionCodes = Object.keys(RegionsEnum);
     regionCode: string;
     regions = Object.values(RegionsEnum);
-    updatePeriodOptions = DEFAULT_UPDATE_PERIOD_OPTIONS
+    screenshotFrequencyOptions = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS
 
     /*
      * Organization Mutation Form
@@ -200,9 +200,9 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
             allowScreenshotCapture: [true],
             upworkOrganizationId: [null],
             upworkOrganizationName: [null],
-            randomScreenshotTime: [false],
-            trackOnPcSleep: [false],
-            updatePeriod: [10],
+            randomScreenshot: [false],
+            trackOnSleep: [false],
+            screenshotFrequency: [10],
             enforced: [false]
         });
     }
@@ -817,9 +817,9 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
             allowScreenshotCapture: this.organization.allowScreenshotCapture,
             upworkOrganizationId: this.organization.upworkOrganizationId,
             upworkOrganizationName: this.organization.upworkOrganizationName,
-            randomScreenshotTime: this.organization.randomScreenshotTime,
-            trackOnPcSleep: this.organization.trackOnPcSleep,
-            updatePeriod: this.organization.updatePeriod,
+            randomScreenshot: this.organization.randomScreenshot,
+            trackOnSleep: this.organization.trackOnSleep,
+            screenshotFrequency: this.organization.screenshotFrequency,
             enforced: this.organization.enforced
         });
         this.form.updateValueAndValidity();

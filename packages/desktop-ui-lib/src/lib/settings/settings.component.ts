@@ -19,7 +19,7 @@ import * as moment from 'moment';
 import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
-import { DEFAULT_UPDATE_PERIOD_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
+import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { GAUZY_ENV } from '../constants';
@@ -353,7 +353,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		preferredLanguage: LanguagesEnum.ENGLISH,
 		enforced: false
 	};
-	periodOption = DEFAULT_UPDATE_PERIOD_OPTIONS;
+	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
 	screenshotNotification = null;
 	config = {

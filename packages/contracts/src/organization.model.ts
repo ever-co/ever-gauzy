@@ -282,7 +282,7 @@ export interface IKeyValuePair {
 export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];
 export const DEFAULT_ACTIVITY_PROOF_DURATIONS: number[] = [1, 3, 5, 10];
 
-export const DEFAULT_UPDATE_PERIOD_OPTIONS: number[] = [1, 3, 5, 10];
+export const DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS: number[] = [1, 3, 5, 10];
 
 
 
@@ -292,8 +292,8 @@ export interface IOrganizationTimerSetting {
 	activityProofDuration?: number;
 	isRemoveIdleTime?: boolean;
 	allowScreenshotCapture?: boolean;
-	randomScreenshotTime?: boolean;
-	trackOnPcSleep?: boolean;
-	updatePeriod?: number;
+	randomScreenshot?: boolean;
+	trackOnSleep?: boolean;
+	screenshotFrequency?: number;
 	enforced?: boolean;
 }

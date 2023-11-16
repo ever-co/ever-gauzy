@@ -2129,9 +2129,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				);
 				const enforced = res.employee.organization.enforced;
 				const settings = {
-					timer: { updatePeriod: res.employee.organization.updatePeriod },
-					trackOnPcSleep: res.employee.organization.trackOnPcSleep,
-					randomScreenshotTime: res.employee.organization.randomScreenshotTime
+					timer: { updatePeriod: res.employee.organization.screenshotFrequency },
+					trackOnPcSleep: res.employee.organization.trackOnSleep,
+					randomScreenshotTime: res.employee.organization.randomScreenshot
 				};
 				this.electronService.ipcRenderer.send('update_app_setting', {
 					values: {
