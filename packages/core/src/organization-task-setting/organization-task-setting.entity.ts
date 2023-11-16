@@ -23,7 +23,7 @@ import {
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
 
 	/**
-	 * Indicates whether tasks' privacy features are enabled.
+	 * Indicates whether tasks privacy features are enabled.
 	 * When true, tasks have privacy features such as restricted visibility.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean })

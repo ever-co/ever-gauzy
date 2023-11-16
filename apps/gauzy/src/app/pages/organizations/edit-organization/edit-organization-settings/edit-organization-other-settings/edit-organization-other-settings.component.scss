@@ -201,7 +201,7 @@ nb-accordion {
 					@include respond(md) {
 						width: 100%;
 					}
-					& .invite-toggle {
+					& .toggle-switch {
 						margin-bottom: 5px;
 					}
 				}
