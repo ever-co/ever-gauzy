@@ -1958,7 +1958,7 @@
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto-Archivierungszeitraum (in Tagen)",
 				"AUTO_STATUS": "Fahrzeugstatus.",
 				"TOOLTIP": {
-					"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist.",
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist."
 				}
 			},
 			"TEAMS_PAGE": {
