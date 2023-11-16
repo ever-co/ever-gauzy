@@ -7,6 +7,7 @@
 		"CREATE": "Crear",
 		"REGISTER": "Registrar",
 		"LOGIN": "Iniciar sesión",
+		"SIGN_IN_WITH_EMAIL": "Iniciar sesión con correo electrónico",
 		"ADD_NOTE": "Añadir nota",
 		"EDIT": "Editar",
 		"MANAGE": "Administrar.",
@@ -4397,6 +4398,12 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "¿No tienes una cuenta?",
 		"FORGOT_PASSWORD_TITLE": "¿Olvidaste tu contraseña?",
 		"OR_SIGN_IN_WITH": "O inicie sesión con",
+		"FORGOT_EMAIL_TITLE": "¿Olvidó su correo electrónico?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Iniciar sesión con un código mágico",
+			"DESCRIPTION_TITLE": "Le enviaremos un código mágico para iniciar sesión sin contraseña. O puede ",
+			"OR_SIGN_IN_WITH_PASSWORD": "iniciar sesión con contraseña en su lugar."
+		},
 		"LABELS": {
 			"EMAIL": "Dirección de correo electrónico:",
 			"PASSWORD": "Contraseña:"

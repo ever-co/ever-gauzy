@@ -7,6 +7,7 @@
 		"CREATE": "Erstellen",
 		"REGISTER": "Registrieren",
 		"LOGIN": "Einloggen",
+		"SIGN_IN_WITH_EMAIL": "Mit E-Mail anmelden",
 		"ADD_NOTE": "Notiz hinzufügen",
 		"EDIT": "Bearbeiten",
 		"MANAGE": "Verwalten",
@@ -4395,6 +4396,12 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Hast du kein Konto?",
 		"FORGOT_PASSWORD_TITLE": "Passwort vergessen?",
 		"OR_SIGN_IN_WITH": "Oder mit anmelden",
+		"FORGOT_EMAIL_TITLE": "E-Mail vergessen?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Einloggen mit einem magischen Code",
+			"DESCRIPTION_TITLE": "Wir senden Ihnen einen magischen Code für eine kennwortfreie Anmeldung. Oder Sie können ",
+			"OR_SIGN_IN_WITH_PASSWORD": "sich stattdessen mit einem Passwort anmelden."
+		},
 		"LABELS": {
 			"EMAIL": "E-Mail-Adresse:",
 			"PASSWORD": "Passwort:"

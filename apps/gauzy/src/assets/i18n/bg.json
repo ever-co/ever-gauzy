@@ -7,6 +7,7 @@
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
 		"LOGIN": "Log In",
+		"SIGN_IN_WITH_EMAIL": "Вход с имейл",
 		"ADD_NOTE": "Добави бележка",
 		"EDIT": "Редактиране",
 		"MANAGE": "Управление",
@@ -4321,6 +4322,12 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Или влезте с",
+		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Вход с магически код",
+			"DESCRIPTION_TITLE": "Ще ви изпратим магически код за вход без парола. Или можете да ",
+			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password:"

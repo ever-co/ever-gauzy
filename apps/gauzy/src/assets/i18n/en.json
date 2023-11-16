@@ -9,6 +9,7 @@
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
+		"SIGN_IN_WITH_EMAIL": "Sign in with email",
 		"ADD_NOTE": "Add note",
 		"EDIT": "Edit",
 		"MANAGE": "Manage",
@@ -4460,6 +4461,12 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Or Sign In with",
+		"FORGOT_EMAIL_TITLE": "Forgot Email?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Log in with a magic code.",
+			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
+			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password:"
