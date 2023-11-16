@@ -1978,7 +1978,6 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
 				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
 				"DELETE_IDLE_TIME": "Enable deletion of idle time",
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
@@ -2008,7 +2007,29 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
 				"AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
-				"AUTO_STATUS": "Auto Status"
+				"AUTO_STATUS": "Auto Status",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"TASK_PRIVACY_ENABLED_INFO": "Indicates whether tasks privacy features are enabled.",
+					"TASK_MULTIPLE_ASSIGNEE_ENABLED_INFO": "Indicates whether tasks allow multiple assignees.",
+					"TASK_MANUAL_TIME_ENABLED_INFO": "Indicates whether manual time tracking is enabled for tasks.",
+					"TASK_GROUP_ESTIMATION_ENABLED_INFO": "Indicates whether group estimation is enabled for tasks.",
+					"TASK_ESTIMATION_IN_HOUR_ENABLED_INFO": "Indicates whether task estimation in hours is enabled.",
+					"TASK_ESTIMATION_IN_STORY_POINT_ENABLED_INFO": "Indicates whether task estimation in story points is enabled.",
+					"TASK_PROOF_OF_COMPLETION_ENABLED_INFO": "Indicates whether proof of completion is enabled for tasks.",
+					"TASK_LINKED_ISSUE_ENABLED_INFO": "Indicates whether the linking of tasks is enabled.",
+					"TASK_COMMENTS_ENABLED_INFO": "Indicates whether comments on tasks are enabled.",
+					"TASK_HISTORY_ENABLED_INFO": "Indicates whether the tracking of task history is enabled.",
+					"TASK_ACCEPTANCE_CRITERIA_ENABLED_INFO": "Indicates whether the use of acceptance criteria for tasks is enabled.",
+					"TASK_DRAFT_ISSUE_ENABLED_INFO": "Indicates whether the use of drafts for tasks is enabled.",
+					"TASK_AUTO_STATUS_ENABLED_INFO": "Indicates whether automatic status updates are enabled for tasks.",
+					"TASK_NOTIFY_LEFT_ENABLED_INFO": "Indicates whether notifications about tasks approaching their due date are enabled.",
+					"TASK_AUTO_CLOSE_ENABLED_INFO": "Indicates whether tasks may automatically close after a specified period.",
+					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",

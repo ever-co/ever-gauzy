@@ -1919,7 +1919,6 @@
 				"ACTIVITY_PROOF_DURATION": "Durata della prova dell'attività",
 				"ACTIVITY_PROOF_DURATION_INFO": "Durata del dialogo di conto alla rovescia di prova dell'attività, rappresenta un determinato numero di minuti dati per dimostrare l'attività",
 				"ENABLE_DETECTION_INACTIVITY": "Abilita il rilevamento dell'inattività dei dipendenti",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
 				"DELETE_IDLE_TIME": "Abilita l'eliminazione del tempo di inattività",
 				"DELETE_IDLE_TIME_INFO": "Abilita: Il sistema eliminerà il tempo di inattività. Disabilita: Il sistema non eliminerà il tempo di inattività",
 				"ALLOW_SCREEN_CAPTURE": "Consenti cattura schermo",
@@ -1949,7 +1948,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Periodo di chiusura automatica dell'issue (in giorni)",
 				"AUTO_ARCHIVE_ISSUE": "Problema di archiviazione automatica",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Periodo di problema di archiviazione automatica (in giorni)",
-				"AUTO_STATUS": "Stato dell'auto"
+				"AUTO_STATUS": "Stato dell'auto",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
