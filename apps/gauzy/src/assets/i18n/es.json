@@ -1925,7 +1925,7 @@
 				"SCREENSHOT_FREQUENCY": "Frecuencia de capturas de pantalla",
 				"SCREENSHOT_FREQUENCY_INFO": "Especifique la frecuencia de actualización o los intervalos de sincronización de tiempo.",
 				"RANDOM_SCREENSHOT": "Captura de pantalla aleatoria",
-				"RANDOM_SCREENSHOT_TIME_INFO": "Habilitar - Tomar capturas de pantalla en intervalos aleatorios. Deshabilitar - Tomar capturas de pantalla en intervalos regulares.",
+				"RANDOM_SCREENSHOT_INFO": "Habilitar - Tomar capturas de pantalla en intervalos aleatorios. Deshabilitar - Tomar capturas de pantalla en intervalos regulares.",
 				"TRACK_ON_SLEEP": "Seguir en el sueño",
 				"TRACK_ON_SLEEP_INFO": "Habilitar - Seguimiento cuando el dispositivo entra en modo de sueño. Deshabilitar - Temporizador que detiene el seguimiento cuando el dispositivo entra en modo de sueño.",
 				"ENFORCED": "Forzado",

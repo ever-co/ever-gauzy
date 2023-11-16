@@ -1917,7 +1917,7 @@
 				"SCREENSHOT_FREQUENCY": "Frequentie schermafbeeldingen",
 				"SCREENSHOT_FREQUENCY_INFO": "Geef de updatefrequentie of tijdintervallen voor synchronisatie op.",
 				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",
-				"RANDOM_SCREENSHOT_TIME_INFO": "Inschakelen - Willekeurig schermafbeeldingen maken. Uitschakelen - Schermafbeeldingen maken op regelmatige tijdsintervallen",
+				"RANDOM_SCREENSHOT_INFO": "Inschakelen - Willekeurig schermafbeeldingen maken. Uitschakelen - Schermafbeeldingen maken op regelmatige tijdsintervallen",
 				"TRACK_ON_SLEEP": "Verfolgung im Schlaf",
 				"TRACK_ON_SLEEP_INFO": "Aktivieren - Verfolgung, wenn das Gerät schläft. Deaktivieren - Timer stoppt die Verfolgung, wenn das Gerät schläft.",
 				"ENFORCED": "Erzwungen",

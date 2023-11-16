@@ -1923,7 +1923,7 @@
 				"SCREENSHOT_FREQUENCY": "Częstotliwość zrzutów ekranu",
 				"SCREENSHOT_FREQUENCY_INFO": "Określ częstotliwość aktualizacji lub interwały czasowe synchronizacji.",
 				"RANDOM_SCREENSHOT": "Losowy zrzut ekranu",
-				"RANDOM_SCREENSHOT_TIME_INFO": "Włącz - Wykonywanie zrzutów ekranu w losowych odstępach czasu. Wyłącz - Wykonywanie zrzutów ekranu w regularnych odstępach czasu",
+				"RANDOM_SCREENSHOT_INFO": "Włącz - Wykonywanie zrzutów ekranu w losowych odstępach czasu. Wyłącz - Wykonywanie zrzutów ekranu w regularnych odstępach czasu",
 				"TRACK_ON_SLEEP": "Śledź podczas snu",
 				"TRACK_ON_SLEEP_INFO": "Włącz - Śledzenie, gdy urządzenie przechodzi w stan snu. Wyłącz - Zatrzymaj licznik śledzenia czasu, gdy urządzenie przechodzi w stan snu.",
 				"ENFORCED": "Wymuszone",

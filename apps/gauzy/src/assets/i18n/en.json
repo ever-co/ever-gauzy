@@ -1985,7 +1985,7 @@
 				"SCREENSHOT_FREQUENCY": "Screenshot Frequency",
 				"SCREENSHOT_FREQUENCY_INFO": "Specify the update frequency or time intervals synchronization.",
 				"RANDOM_SCREENSHOT": "Random Screenshot",
-				"RANDOM_SCREENSHOT_TIME_INFO": "Enable - Taking screenshots at random intervals. Disable - Taking screenshots at regular intervals",
+				"RANDOM_SCREENSHOT_INFO": "Enable - Taking screenshots at random intervals. Disable - Taking screenshots at regular intervals",
 				"TRACK_ON_SLEEP": "Track On Sleep",
 				"TRACK_ON_SLEEP_INFO": "Enable - Tracking when the device goes to sleep. Disable - Timer Stop tracking time when device goes sleep.",
 				"ENFORCED": "Enforced",

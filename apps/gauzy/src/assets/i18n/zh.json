@@ -1923,7 +1923,7 @@
 				"SCREENSHOT_FREQUENCY": "截图频率",
 				"SCREENSHOT_FREQUENCY_INFO": "指定更新频率或时间间隔同步。",
 				"RANDOM_SCREENSHOT": "随机截图",
-				"RANDOM_SCREENSHOT_TIME_INFO": "启用 - 在随机间隔拍摄截图。禁用 - 在固定间隔拍摄截图",
+				"RANDOM_SCREENSHOT_INFO": "启用 - 在随机间隔拍摄截图。禁用 - 在固定间隔拍摄截图",
 				"TRACK_ON_SLEEP": "睡眠跟踪",
 				"TRACK_ON_SLEEP_INFO": "启用 - 在设备进入睡眠模式时跟踪。禁用 - 计时器停止在设备进入睡眠时跟踪时间。",
 				"ENFORCED": "强制",

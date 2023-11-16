@@ -1923,7 +1923,7 @@
 				"SCREENSHOT_FREQUENCY": "Frequenza degli screenshot",
 				"SCREENSHOT_FREQUENCY_INFO": "Specificare la frequenza di aggiornamento o gli intervalli di sincronizzazione temporale.",
 				"RANDOM_SCREENSHOT": "Screenshot casuale",
-				"RANDOM_SCREENSHOT_TIME_INFO": "Abilita - Scattare screenshot a intervalli casuali. Disabilita - Scattare screenshot a intervalli regolari.",
+				"RANDOM_SCREENSHOT_INFO": "Abilita - Scattare screenshot a intervalli casuali. Disabilita - Scattare screenshot a intervalli regolari.",
 				"TRACK_ON_SLEEP": "Traccia durante il sonno",
 				"TRACK_ON_SLEEP_INFO": "Abilita - Tracciamento quando il dispositivo va in modalità sonno. Disabilita - Arresta il timer di tracciamento quando il dispositivo va in modalità sonno.",
 				"ENFORCED": "Obbligatorio",
