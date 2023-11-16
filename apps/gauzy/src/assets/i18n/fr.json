@@ -4393,22 +4393,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Connexion avec un code magique",
 			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour une connexion sans mot de passe. Ou vous pouvez ",
-			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place."
+			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place.",
+			"RESEND_CODE_TITLE": "Renvoyer le code",
+			"CODE_SUB_TITLE": "Entrez le code envoyé par e-mail pour vous connecter."
 		},
 		"LABELS": {
 			"EMAIL": "Adresse e-mail:",
-			"PASSWORD": "Mot de passe:"
+			"PASSWORD": "Mot de passe:",
+			"CODE": "Code :"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Adresse e-mail",
-			"PASSWORD": "Mot de passe"
+			"PASSWORD": "Mot de passe",
+			"CODE": "Entrez le code"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'e-mail est requis !",
 			"EMAIL_REAL_REQUIRED": "L'e-mail devrait être une vraie adresse !",
 			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
 			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir de {{ minLength }} à {{ maxLength }} caractères!",
-			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces."
+			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces.",
+			"CODE_REQUIRED": "Un code est nécessaire pour se connecter.",
+			"CODE_REQUIRED_LENGTH": "Le code doit contenir {{ requiredLength }} caractères."
 		},
 		"DEMO": {
 			"TITLE": "Connectez-vous automatiquement aux comptes de démonstration",

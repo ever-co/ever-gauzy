@@ -4318,22 +4318,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магически код",
 			"DESCRIPTION_TITLE": "Ще ви изпратим магически код за вход без парола. Или можете да ",
-			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола."
+			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола.",
+			"RESEND_CODE_TITLE": "Изпрати отново кода",
+			"CODE_SUB_TITLE": "Въведете кода, изпратен на имейла, за да влезете."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "Код:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email address",
-			"PASSWORD": "Парола"
+			"PASSWORD": "Парола",
+			"CODE": "Въведете код"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED": "Изисква се код за влизане.",
+			"CODE_REQUIRED_LENGTH": "Кода трябва да съдържа {{ requiredLength }} знака."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

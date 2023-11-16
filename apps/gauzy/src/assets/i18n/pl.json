@@ -4392,22 +4392,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Zaloguj się za pomocą magicznego kodu",
 			"DESCRIPTION_TITLE": "Wyślemy ci magiczny kod do logowania bez hasła. Lub możesz ",
-			"OR_SIGN_IN_WITH_PASSWORD": "zalogować się za pomocą hasła."
+			"OR_SIGN_IN_WITH_PASSWORD": "zalogować się za pomocą hasła.",
+			"RESEND_CODE_TITLE": "Wyślij kod ponownie",
+			"CODE_SUB_TITLE": "Wprowadź kod wysłany na adres e-mail, aby się zalogować."
 		},
 		"LABELS": {
 			"EMAIL": "Adres email:",
-			"PASSWORD": "Hasło:"
+			"PASSWORD": "Hasło:",
+			"CODE": "Kod:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Adres e-mail",
-			"PASSWORD": "Hasło"
+			"PASSWORD": "Hasło",
+			"CODE": "Wprowadź kod"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Email powinien być prawdziwy!",
 			"PASSWORD_REQUIRED": "Hasło jest wymagane!",
 			"PASSWORD_SHOULD_CONTAIN": "Hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków!",
-			"PASSWORD_NO_SPACE_EDGES": "Hasła nie mogą zaczynać się ani kończyć spacjami."
+			"PASSWORD_NO_SPACE_EDGES": "Hasła nie mogą zaczynać się ani kończyć spacjami.",
+			"CODE_REQUIRED": "Do zalogowania wymagany jest kod.",
+			"CODE_REQUIRED_LENGTH": "Kod powinien zawierać {{ requiredLength }} znaków."
 		},
 		"DEMO": {
 			"TITLE": "Logowanie automatyczne do kont demo",

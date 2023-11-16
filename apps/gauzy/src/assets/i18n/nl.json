@@ -4392,22 +4392,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Inloggen met een magische code",
 			"DESCRIPTION_TITLE": "We sturen u een magische code voor een wachtwoordloze aanmelding. Of u kunt ",
-			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan."
+			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan.",
+			"RESEND_CODE_TITLE": "Stuur code opnieuw",
+			"CODE_SUB_TITLE": "Voer de code in die naar je e-mail is gestuurd om in te loggen."
 		},
 		"LABELS": {
 			"EMAIL": "E-mailadres:",
-			"PASSWORD": "Wachtwoord:"
+			"PASSWORD": "Wachtwoord:",
+			"CODE": "Code:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "E-mailadres",
-			"PASSWORD": "Wachtwoord"
+			"PASSWORD": "Wachtwoord",
+			"CODE": "Voer de code in"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet echt zijn!",
 			"PASSWORD_REQUIRED": "Wachtwoord is verplicht!",
 			"PASSWORD_SHOULD_CONTAIN": "Het wachtwoord moet bestaan uit {{ minLength }} tot {{ maxLength }} tekens!",
-			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties."
+			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties.",
+			"CODE_REQUIRED": "Een code is vereist om in te loggen.",
+			"CODE_REQUIRED_LENGTH": "De code moet {{ requiredLength }} tekens bevatten."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch inloggen op demorekeningen",

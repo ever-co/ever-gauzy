@@ -4394,22 +4394,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Iniciar sesión con un código mágico",
 			"DESCRIPTION_TITLE": "Le enviaremos un código mágico para iniciar sesión sin contraseña. O puede ",
-			"OR_SIGN_IN_WITH_PASSWORD": "iniciar sesión con contraseña en su lugar."
+			"OR_SIGN_IN_WITH_PASSWORD": "iniciar sesión con contraseña en su lugar.",
+			"RESEND_CODE_TITLE": "Reenviar código",
+			"CODE_SUB_TITLE": "Ingrese el código enviado por correo electrónico para iniciar sesión."
 		},
 		"LABELS": {
 			"EMAIL": "Dirección de correo electrónico:",
-			"PASSWORD": "Contraseña:"
+			"PASSWORD": "Contraseña:",
+			"CODE": "Código:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Dirección de correo electrónico",
-			"PASSWORD": "Contraseña"
+			"PASSWORD": "Contraseña",
+			"CODE": "Ingrese el código"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "¡El correo electrónico es obligatorio!",
 			"EMAIL_REAL_REQUIRED": "¡El correo electrónico debería ser el auténtico!",
 			"PASSWORD_REQUIRED": "¡Se requiere contraseña!",
 			"PASSWORD_SHOULD_CONTAIN": "¡La contraseña debe contener de {{ minLength }} a {{ maxLength }} caracteres!",
-			"PASSWORD_NO_SPACE_EDGES": "Las contraseñas no deben comenzar ni terminar con espacios."
+			"PASSWORD_NO_SPACE_EDGES": "Las contraseñas no deben comenzar ni terminar con espacios.",
+			"CODE_REQUIRED": "Se requiere un código para iniciar sesión.",
+			"CODE_REQUIRED_LENGTH": "El código debe contener {{ requiredLength }} caracteres."
 		},
 		"DEMO": {
 			"TITLE": "Iniciar sesión automáticamente en cuentas de demostración",
