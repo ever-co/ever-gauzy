@@ -1957,7 +1957,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Periodo di chiusura automatica dell'issue (in giorni)",
 				"AUTO_ARCHIVE_ISSUE": "Problema di archiviazione automatica",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Periodo di problema di archiviazione automatica (in giorni)",
-				"AUTO_STATUS": "Stato dell'auto"
+				"AUTO_STATUS": "Stato dell'auto",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",

@@ -7,7 +7,6 @@ import {
 } from '@angular/common/http';
 import { Observable, combineLatest, switchMap, take, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { isNotEmpty } from '@gauzy/common-angular';
 import { RequestMethodEnum } from '@gauzy/contracts';
 import { Store } from './../services';
 
@@ -47,12 +46,12 @@ export class TenantInterceptor implements HttpInterceptor {
 						...(request.method === RequestMethodEnum.DELETE) ? {
 							setParams: {
 								tenantId,
-								...(isNotEmpty(organization) ? { organizationId: organization.id } : {}),
+								...(organization ? { organizationId: organization.id } : {}),
 							},
 						} : {},
 						setHeaders: {
 							'Tenant-Id': `${tenantId}`,
-							...(isNotEmpty(organization) ? { 'Organization-Id': `${organization.id}` } : {}),
+							...(organization ? { 'Organization-Id': `${organization.id}` } : {}),
 						}
 					});
 				}

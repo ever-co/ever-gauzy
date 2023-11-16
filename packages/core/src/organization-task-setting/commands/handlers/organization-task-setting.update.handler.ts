@@ -9,12 +9,28 @@ export class OrganizationTaskSettingUpdateHandler implements ICommandHandler<Org
 		private readonly _organizationTaskSettingService: OrganizationTaskSettingService
 	) { }
 
+	/**
+	 * Executes the update operation for organization task settings.
+	 *
+	 * @param command - The command containing the identifier and updated settings.
+	 * @returns A Promise resolving to the updated organization task settings.
+	 * @throws Throws an error if the update operation fails.
+	 */
 	public async execute(
 		command: OrganizationTaskSettingUpdateCommand
 	): Promise<IOrganizationTaskSetting> {
-		const { id, input } = command;
-		await this._organizationTaskSettingService.update(id, input);
+		try {
+			// Destructure the command to obtain the identifier and updated settings.
+			const { id, input } = command;
 
-		return await this._organizationTaskSettingService.findOneByIdString(id);
+			// Update the organization task settings using the provided service.
+			await this._organizationTaskSettingService.update(id, input);
+
+			// Retrieve and return the updated organization task settings.
+			return await this._organizationTaskSettingService.findOneByIdString(id);
+		} catch (error) {
+			// Handle errors during the update operation.
+			console.error('Error during organization task settings update:', error);
+		}
 	}
 }

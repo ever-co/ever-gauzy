@@ -1957,7 +1957,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "自动关闭问题期限（以天为单位）",
 				"AUTO_ARCHIVE_ISSUE": "自动归档问题",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "自动归档问题期限（以天为单位）",
-				"AUTO_STATUS": "汽车状态"
+				"AUTO_STATUS": "汽车状态",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",

@@ -175,12 +175,33 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ nullable: true })
 	futureDateAllowed?: boolean;
 
+	/**
+	 * Indicates whether manual time entry is allowed for time tracking.
+	 *
+	 * @column
+	 * @default true
+	 * @type boolean
+	 */
 	@Column({ default: true })
 	allowManualTime?: boolean;
 
+	/**
+	 * Indicates whether modification of time entries is allowed for time tracking.
+	 *
+	 * @column
+	 * @default true
+	 * @type boolean
+	 */
 	@Column({ default: true })
 	allowModifyTime?: boolean;
 
+	/**
+	 * Indicates whether deletion of time entries is allowed for time tracking.
+	 *
+	 * @column
+	 * @default true
+	 * @type boolean
+	 */
 	@Column({ default: true })
 	allowDeleteTime?: boolean;
 

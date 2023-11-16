@@ -1957,7 +1957,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Sluitingstermijn probleem (in dagen)",
 				"AUTO_ARCHIVE_ISSUE": "Automatische archiveringsprobleem",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Periode voor het automatisch archiveren (in dagen)",
-				"AUTO_STATUS": "Autostatus"
+				"AUTO_STATUS": "Autostatus",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Ingeschakeld - het systeem detecteert inactiviteit en geeft een waarschuwing weer. Uitgeschakeld - er wordt geen waarschuwing weergegeven wanneer een werknemer inactief is.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",

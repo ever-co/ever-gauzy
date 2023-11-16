@@ -491,26 +491,38 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     }
 
     /**
-    * Update organization task settings
-    */
+     * Update organization task settings.
+     *
+     * @returns A subscription for the create or update operation.
+     *
+     * @throws Throws an error and displays a toastr message if the operation fails.
+     */
     updateOrganizationTaskSetting() {
+        // Check if the organization is available.
         if (!this.organization) {
             return;
         }
-        let taskSettingInputFormObj: IOrganizationTaskSetting = {
+
+        // Extract organization information from the current organization.
+        const { id: organizationId, tenantId } = this.organization;
+
+        let input: IOrganizationTaskSetting = {
             ...this.taskSettingForm.value,
-            organizationId: this.organization.id,
+            organizationId,
+            tenantId
         };
 
-        if (this.organizationTaskSetting) {
-            taskSettingInputFormObj.id = this.organizationTaskSetting.id;
-        }
+        // Determine the service method based on the existence of organizationTaskSetting.
+        const method$ = this.organizationTaskSetting
+            ? this.organizationTaskSettingService.update(this.organizationTaskSetting.id, input)
+            : this.organizationTaskSettingService.create(input);
 
-        return (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
+        // Perform the create or update operation and subscribe to the result.
+        return method$.subscribe({
+            // Handle errors during the create or update operation.
             error: () => {
-                this.toastrService.error(
-                    `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
-                );
+                // Display a toastr error message if the operation fails.
+                this.toastrService.error(`TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`);
             }
         });
     }
