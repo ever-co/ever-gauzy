@@ -306,7 +306,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({ nullable: true, type: 'numeric', default: 10 })
+	@Column({ type: 'numeric', default: 10 })
 	screenshotFrequency?: number;
 
 	/**
