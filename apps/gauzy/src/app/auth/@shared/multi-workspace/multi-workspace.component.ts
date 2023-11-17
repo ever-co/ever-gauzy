@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from './../../../@shared/language-base';
 
 @Component({
 	selector: 'ngx-multi-workspace-onboarding',

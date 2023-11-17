@@ -16,7 +16,7 @@ import { SignInWorkspacesLayoutComponent } from './signin-workspaces.component';
 import { SignInWorkspacesLayoutRoutingModule } from './signin-workspaces-routing.module';
 import { WorkspaceSigninWithEmailComponent } from './components/signin-with-email/signin-with-email.component';
 import { SharedModule } from '../../@shared/shared.module';
-import { MultiWorkspaceModule } from './components/multi-workspace/multi-workspace.module';
+import { MultiWorkspaceModule } from '../@shared/multi-workspace/multi-workspace.module';
 
 @NgModule({
 	imports: [
