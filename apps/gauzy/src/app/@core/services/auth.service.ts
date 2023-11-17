@@ -63,7 +63,7 @@ export class AuthService {
 			// Send a POST request to the server endpoint with the provided input
 			return this.http.post<IUserEmailInput>(`${API_PREFIX}/auth/signin.email`, input);
 		} catch (error) {
-			console.log('Error while sending magic passcode: %s', error?.message);
+			console.log('Error while sending magic code: %s', error?.message);
 			// Handle errors appropriately (e.g., log, throw, etc.)
 			throw error;
 		}
@@ -77,7 +77,7 @@ export class AuthService {
 			// Send a POST request to the server endpoint with the provided input
 			return this.http.post<IUserSigninWorkspaceResponse>(`${API_PREFIX}/auth/signin.email/confirm`, input);
 		} catch (error) {
-			console.log('Error while confirm signin by email & magic passcode: %s', error?.message);
+			console.log('Error while confirm signin by email & magic code: %s', error?.message);
 			// Handle errors appropriately (e.g., log, throw, etc.)
 			throw error;
 		}
