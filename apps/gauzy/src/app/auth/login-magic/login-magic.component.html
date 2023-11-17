@@ -12,7 +12,8 @@
 			<div class="headings" [class]="isDemo ? 'headings-demo' : ''">
 				<div class="headings-inner">
 					<h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
-					<p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
+					<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.TITLE' | translate }}</p>
+					<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.CODE_SUB_TITLE' | translate }}</p>
 				</div>
 			</div>
 			<div class="hr-div-strong"></div>
@@ -20,9 +21,9 @@
 			<ng-template [ngIf]="isCodeSent">
 				<div class="row">
 					<p class="text-center mt-4">
-						We have sent the magic code.
+						We’ve sent a 6-character code to <b class="title">{{ email.value }}</b>
 						<br />
-						Please check your email at <b class="title">{{ email.value }}</b>
+						The code expires shortly, so please enter it soon.
 					</p>
 				</div>
 			</ng-template>
@@ -65,14 +66,32 @@
 							[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
 							[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
 							[attr.aria-invalid]="code.invalid && code.touched ? true : null"
+							maxlength="6"
 							autofocus
 							autocomplete-off
 						/>
-						<ng-container *ngIf="code.invalid && code.touched && !code.pristine">
-							<p class="caption status-danger" *ngIf="code?.errors?.required">
-								{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
+						<ng-container *ngIf="code.invalid && code.touched">
+							<p class="caption status-danger" *ngIf="code.errors?.required">
+							  	{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
+							</p>
+							<p class="caption status-danger" *ngIf="code.errors?.minlength">
+							  	{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH' | translate : { requiredLength: code.errors?.minlength?.requiredLength } }}
 							</p>
 						</ng-container>
+						<!-- Resend Code Button & Text -->
+						<ng-template [ngIf]="isCodeSent">
+							<p class="text-right mt-2">
+								<ng-template [ngIf]="isCodeResent" [ngIfElse]="resendButton">
+									<span>Request new code in {{ countdown }} seconds</span>
+								</ng-template>
+
+								<ng-template #resendButton>
+									<a class="resend-code" debounceClick (throttledClick)="onResendCode()" >
+										{{ "LOGIN_PAGE.LOGIN_MAGIC.RESEND_CODE_TITLE" | translate }}
+									</a>
+								</ng-template>
+							</p>
+						</ng-template>
 					</div>
 				</ng-container>
 				<!--  -->
@@ -153,6 +172,7 @@
 		<ngx-multi-workspace-onboarding
 			[workspaces]="workspaces"
 			[confirmed_email]="confirmed_email"
+			(selectedWorkspace)="signInWorkspace($event)"
 		></ngx-multi-workspace-onboarding>
 	</ng-container>
 </ng-template>

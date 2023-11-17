@@ -4,6 +4,7 @@ import { NbCardModule, NbIconModule, NbListModule } from '@nebular/theme';
 import { MultiWorkspaceOnboardingComponent } from './multi-workspace.component';
 import { TranslateModule } from './../../../../@shared/translate/translate.module';
 import { ThemeModule } from './../../../../@theme/theme.module';
+import { SharedModule } from './../../../../@shared/shared.module';
 
 @NgModule({
     imports: [
@@ -13,6 +14,7 @@ import { ThemeModule } from './../../../../@theme/theme.module';
         NbListModule,
         TranslateModule,
         ThemeModule,
+        SharedModule
     ],
     declarations: [
         MultiWorkspaceOnboardingComponent
