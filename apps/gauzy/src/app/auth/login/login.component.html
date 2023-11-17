@@ -222,44 +222,22 @@
 
         </div>
       </div>
+      <div class="login-magic-wrapper">
+        <a routerLink="/auth/login-magic">
+          {{ "LOGIN_PAGE.LOGIN_MAGIC.TITLE" | translate }}
+        </a>
+      </div>
     </form>
     <div class="hr-div-soft"></div>
-    <section
-      *ngIf="socialLinks && socialLinks.length > 0"
-      class="links"
-      aria-label="Social sign in"
-    >
-      {{ 'LOGIN_PAGE.OR_SIGN_IN_WITH' | translate }}
-      <div class="socials">
-        <ng-container *ngFor="let socialLink of socialLinks">
-          <a
-            *ngIf="socialLink.link"
-            [routerLink]="socialLink.link"
-            [attr.target]="socialLink.target"
-            class="social-link"
-          >
-            <nb-icon
-              *ngIf="socialLink.icon; else title"
-              [icon]="socialLink.icon"
-            ></nb-icon>
-            <ng-template #title>{{ socialLink.title }}</ng-template>
-          </a>
-          <a
-            *ngIf="socialLink.url"
-            [attr.href]="socialLink.url"
-            [attr.target]="socialLink.target"
-            class="social-link"
-          >
-            <nb-icon
-              *ngIf="socialLink.icon; else title"
-              [icon]="socialLink.icon"
-            ></nb-icon>
-            <ng-template #title>{{ socialLink.title }}</ng-template>
-          </a>
-        </ng-container>
-      </div>
+    <section>
+      <ngx-social-links></ngx-social-links>
     </section>
     <div class="hr-div-soft"></div>
+    <section class="another-action" aria-label="Sign In Workspace">
+		Don’t know your workspace?
+		<a class="text-link" routerLink="/auth/login-workspace">Find your workspaces</a>
+    </section>
+
     <section class="another-action" aria-label="Register">
       {{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
       <a class="text-link" routerLink="/auth/register">

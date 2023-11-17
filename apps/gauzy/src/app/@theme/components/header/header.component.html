@@ -12,7 +12,7 @@
 	></div>
 
 <div class="header-container">
-	<ng-template [ngIf]="createContextMenu?.length > 0">
+	<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
 		<nb-action
 			size="small"
 			[class.left]="position === 'normal'"
@@ -24,9 +24,7 @@
 				class="button create"
 				status="warning"
 				size="small"
-				[nbContextMenu]="createContextMenu"
-				nbContextMenuTag="create-context-menu"
-				nbContextMenuPlacement="right"
+				(click)="openQuickActions()"
 			>
 				+ {{ 'BUTTONS.CREATE' | translate }}
 			</button>

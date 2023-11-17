@@ -54,6 +54,6 @@ import { TaskDetailComponent } from './task-detail/task-detail.component';
 		NbBadgeModule,
 		NbCardModule,
 	],
-	exports: [ReplacePipe],
+	exports: [TaskBadgeViewComponent, ReplacePipe],
 })
-export class TaskRenderModule {}
+export class TaskRenderModule { }
