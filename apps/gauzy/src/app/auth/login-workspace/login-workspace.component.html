@@ -1,0 +1,84 @@
+<ng-container
+	*ngIf="show_popup; then workspacesTemplate; else singInTemplate">
+</ng-container>
+
+<ng-template #singInTemplate>
+	<section class="section-wrapper">
+		<div class="-wrapper">
+			<div class="svg-wrapper">
+				<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+			</div>
+
+			<h1 class="title">Sign in to Workspace</h1>
+
+			<div class="hr-div-strong"></div>
+
+			<ng-container [ngTemplateOutlet]="singInForm"></ng-container>
+
+			<div class="hr-div-soft"></div>
+
+			<section class="sign-in-or-up" aria-label="Sign in or sign up">
+				<p class="redirect-link-p">
+					<span>Back to </span>
+					<a class="text-link" [routerLink]="['/auth/login']">
+						<span>Log In</span>
+					</a>
+				</p>
+				<p class="redirect-link-p">
+					<a [routerLink]="['/auth/register']" class="text-link">Register</a>
+				</p>
+			</section>
+		</div>
+	</section>
+</ng-template>
+
+<ng-template #singInForm>
+	<form [formGroup]="form" class="form" (ngSubmit)="onSubmit()" autocomplete-off>
+		<div style="height: 0; overflow: hidden;">
+			<input style="opacity:0;" type="email" value="" class="" />
+			<input style="opacity:0;" type="password" value=""  class="d-" />
+		</div>
+		<div class="row">
+			<div class="col">
+				<div class="form-group">
+					<label class="label" for="email">
+						Enter your email address:
+					</label>
+					<input
+						nbInput
+						id="email"
+						name="email"
+						type="email"
+						placeholder="name@workspace-email.com"
+						fullWidth
+						fieldSize="large"
+						formControlName="email"
+						#email
+					>
+				</div>
+				<ngx-password-form-field
+					id="password"
+					label="Enter your password:"
+					placeholder="Password"
+					autocomplete="password"
+					formControlName="password"
+				></ngx-password-form-field>
+			</div>
+		</div>
+		<div class="submit-btn-wrapper">
+			<button nbButton size="small" class="submit-btn" type="submit">
+				Sign In
+			</button>
+		</div>
+	</form>
+</ng-template>
+
+<ng-template #workspacesTemplate>
+	<ng-container *ngIf="workspaces.length > 0">
+		<ngx-workspace-selection
+			[workspaces]="workspaces"
+			[confirmed_email]="confirmed_email"
+			(selectedWorkspace)="signInWorkspace($event)"
+		></ngx-workspace-selection>
+	</ng-container>
+</ng-template>

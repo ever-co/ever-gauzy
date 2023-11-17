@@ -9,6 +9,8 @@
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
+		"SEND_CODE": "Send code",
+		"SENDING_CODE": "Sending code...",
 		"ADD_NOTE": "Add note",
 		"EDIT": "Edit",
 		"MANAGE": "Manage",
@@ -1977,11 +1979,18 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
 				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
 				"DELETE_IDLE_TIME": "Enable deletion of idle time",
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
+				"SCREENSHOT_FREQUENCY": "Screenshot Frequency",
+				"SCREENSHOT_FREQUENCY_INFO": "Specify the update frequency or time intervals synchronization.",
+				"RANDOM_SCREENSHOT": "Random Screenshot",
+				"RANDOM_SCREENSHOT_INFO": "Enable - Taking screenshots at random intervals. Disable - Taking screenshots at regular intervals",
+				"TRACK_ON_SLEEP": "Track On Sleep",
+				"TRACK_ON_SLEEP_INFO": "Enable - Tracking when the device goes to sleep. Disable - Timer Stop tracking time when device goes sleep.",
+				"ENFORCED": "Enforced",
+				"ENFORCED_INFO": "Enabled - Ensures that track on sleep, random screenshot and screenshot frequency settings, specify by the admin are mandatory and cannot be overridden or ignored by users.",
 				"TASK_SETTING": "Task Settings",
 				"TASK_PRIVACY": "Task Privacy",
 				"MULTIPLE_ASSIGNEE": "Multiple Assignees",
@@ -2007,7 +2016,29 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
 				"AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
-				"AUTO_STATUS": "Auto Status"
+				"AUTO_STATUS": "Auto Status",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"TASK_PRIVACY_ENABLED_INFO": "Indicates whether tasks privacy features are enabled.",
+					"TASK_MULTIPLE_ASSIGNEE_ENABLED_INFO": "Indicates whether tasks allow multiple assignees.",
+					"TASK_MANUAL_TIME_ENABLED_INFO": "Indicates whether manual time tracking is enabled for tasks.",
+					"TASK_GROUP_ESTIMATION_ENABLED_INFO": "Indicates whether group estimation is enabled for tasks.",
+					"TASK_ESTIMATION_IN_HOUR_ENABLED_INFO": "Indicates whether task estimation in hours is enabled.",
+					"TASK_ESTIMATION_IN_STORY_POINT_ENABLED_INFO": "Indicates whether task estimation in story points is enabled.",
+					"TASK_PROOF_OF_COMPLETION_ENABLED_INFO": "Indicates whether proof of completion is enabled for tasks.",
+					"TASK_LINKED_ISSUE_ENABLED_INFO": "Indicates whether the linking of tasks is enabled.",
+					"TASK_COMMENTS_ENABLED_INFO": "Indicates whether comments on tasks are enabled.",
+					"TASK_HISTORY_ENABLED_INFO": "Indicates whether the tracking of task history is enabled.",
+					"TASK_ACCEPTANCE_CRITERIA_ENABLED_INFO": "Indicates whether the use of acceptance criteria for tasks is enabled.",
+					"TASK_DRAFT_ISSUE_ENABLED_INFO": "Indicates whether the use of drafts for tasks is enabled.",
+					"TASK_AUTO_STATUS_ENABLED_INFO": "Indicates whether automatic status updates are enabled for tasks.",
+					"TASK_NOTIFY_LEFT_ENABLED_INFO": "Indicates whether notifications about tasks approaching their due date are enabled.",
+					"TASK_AUTO_CLOSE_ENABLED_INFO": "Indicates whether tasks may automatically close after a specified period.",
+					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2767,6 +2798,44 @@
 		"CHAT": "Support Chat",
 		"FAQ": "FAQ",
 		"HELP": "Help"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Create Invoice",
+		"RECEIVED_INVOICES": "Received Invoices",
+		"CREATE_INCOME": "Create Income",
+		"CREATE_EXPENSE": "Create Expense",
+		"CREATE_ESTIMATE": "Create Estimate",
+		"RECEIVED_ESTIMATES": "Received Estimates",
+		"CREATE_PAYMENT": "Create Payment",
+		"ADD_EMPLOYEE": "Add Employee",
+		"ADD_INVENTORY": "Add Inventory",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"ADD_VENDOR": "Add Vendor",
+		"ADD_DEPARTMENT": "Add Department",
+		"CREATE_TEAM": "Create Team",
+		"CREATE_TASK": "Create Task",
+		"CREATE_PROJECT": "Create Project",
+		"VIEW_TASKS": "View Tasks",
+		"VIEW_TEAM_TASKS": "View Teams's Tasks",
+		"CREATE_CANDIDATE": "Create Candidate",
+		"CREATE_PROPOSAL": "Create Proposal",
+		"CREATE_CONTRACT": "Create Contract",
+		"CREATE_LEAD": "Create Lead",
+		"CREATE_CUSTOMER": "Create Customer",
+		"CREATE_CLIENT": "Create Client",
+		"START_TIMER": "Start Timer",
+		"STOP_TIMER": "Stop Timer",
+		"TIME_LOG": "Time Log",
+		"VIEW_APPOINTMENTS": "View Appointments",
+		"VIEW_TIME_ACTIVITY": "View Time Activity"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Accounting",
+		"ORGANIZATION": "Organization",
+		"PROJECT_MANAGEMENT": "Project Management",
+		"JOBS": "Jobs",
+		"CONTACTS": "Contacts",
+		"TIME_TRACKING": "Time Tracking"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -4300,7 +4369,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirm",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Quick Actions"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "File provider",
@@ -4413,20 +4483,32 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Or Sign In with",
+		"FORGOT_EMAIL_TITLE": "Forgot Email?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Log in with a magic code.",
+			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
+			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead.",
+			"RESEND_CODE_TITLE": "Resend code",
+			"CODE_SUB_TITLE": "Enter code sent to email to log in."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "Code:"
 		},
 		"PLACEHOLDERS": {
-			"EMAIL": "Email address",
-			"PASSWORD": "Password"
+			"EMAIL": "Enter your email address...",
+			"PASSWORD": "Enter password...",
+			"CODE": "Enter magic code..."
 		},
 		"VALIDATION": {
-			"EMAIL_REQUIRED": "Email is required!",
-			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
+			"EMAIL_REQUIRED": "Email address is required!",
+			"CODE_REQUIRED": "Code is required to log in.",
+			"EMAIL_REAL_REQUIRED": "Email address should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED_LENGTH": "Code should contain {{ requiredLength }} characters."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

@@ -7,6 +7,7 @@
 		"CREATE": "צור",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
+		"SEND_CODE": "התחבר עם דואר אלקטרוני",
 		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
 		"MANAGE": "Управление",
@@ -1900,6 +1901,14 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"SCREENSHOT_FREQUENCY": "תדירות צילומי מסך",
+				"SCREENSHOT_FREQUENCY_INFO": "ציין את תדירות העדכון או המרווחים הזמניים לסנכרון.",
+				"RANDOM_SCREENSHOT": "צילום מסך אקראי",
+				"RANDOM_SCREENSHOT_INFO": "אפשר - לקחת צילומי מסך במרווחים אקראיים. בטל - לקחת צילומי מסך במרווחים קבועים.",
+				"TRACK_ON_SLEEP": "מעקב בשינה",
+				"TRACK_ON_SLEEP_INFO": "הפעל - מעקב כאשר המכשיר נכנס למצב שינה. השבת - עצירת הטיימר שמעקב אחרי הזמן כאשר המכשיר נכנס למצב שינה.",
+				"ENFORCED": "אוכף",
+				"ENFORCED_INFO": "מופעל - מבטיח שהגדרות המעקב בשינה, צילום מסך אקראי ותדירות הצילום המסך, המפורטות על ידי המנהל, הן חובה ואינן יכולות להיעדר או להיתעלם על ידי המשתמשים.",
 				"PROOF_OF_COMPLETION": "הוכחת השלמה",
 				"PROOF_OF_COMPLETION_TYPE": "סוג הוכחת השלמה",
 				"LINKED_ISSUE": "בעיה מקושרת",
@@ -1918,7 +1927,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "תקופת סגירה אוטומטית (בימים)",
 				"AUTO_ARCHIVE_ISSUE": "בעיה בארכיון אוטומטי",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "תקופת הנפקת ארכיון אוטומטי (בימים)",
-				"AUTO_STATUS": "מצב אוטומטי"
+				"AUTO_STATUS": "מצב אוטומטי",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "מופעל - המערכת תזהה חוסר פעילות ותציג אזהרה. מושבת - לא תוצג אזהרה כאשר עובד אינו פעיל.",
+					"ALLOW_MANUAL_TIME_INFO": "מציין אם הזנת זמן ידנית מותרת למעקב אחר זמן.",
+					"ALLOW_MODIFY_TIME_INFO": "מציין אם מותר לשנות את כניסות הזמן למעקב אחר זמן.",
+					"ALLOW_DELETE_TIME_INFO": "מציין אם מחיקת ערכי זמן מותרת למעקב אחר זמן."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2656,6 +2671,44 @@
 		"CHAT": "Чат с нас",
 		"FAQ": "Въпроси и Отговори",
 		"HELP": "עזרה"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "יצירת חשבונית",
+		"RECEIVED_INVOICES": "חשבוניות שהתקבלו",
+		"CREATE_INCOME": "יצירת הכנסה",
+		"CREATE_EXPENSE": "יצירת הוצאה",
+		"CREATE_ESTIMATE": "יצירת אומדן",
+		"RECEIVED_ESTIMATES": "הערכות שהתקבלו",
+		"CREATE_PAYMENT": "יצירת תשלום",
+		"ADD_EMPLOYEE": "הוסף עובד",
+		"ADD_INVENTORY": "הוסף מלאי",
+		"ADD_EQUIPMENT": "הוסף ציוד",
+		"ADD_VENDOR": "הוסף ספק",
+		"ADD_DEPARTMENT": "הוסף מחלקה",
+		"CREATE_TEAM": "יצירת צוות",
+		"CREATE_TASK": "יצירת משימה",
+		"CREATE_PROJECT": "יצירת פרויקט",
+		"VIEW_TASKS": "צפייה במשימות",
+		"VIEW_TEAM_TASKS": "צפייה במשימות הצוות",
+		"CREATE_CANDIDATE": "יצירת מועמד",
+		"CREATE_PROPOSAL": "יצירת הצעה",
+		"CREATE_CONTRACT": "יצירת חוזה",
+		"CREATE_LEAD": "יצירת ליד",
+		"CREATE_CUSTOMER": "יצירת לקוח",
+		"CREATE_CLIENT": "יצירת לקוח",
+		"START_TIMER": "התחל טיימר",
+		"STOP_TIMER": "עצור טיימר",
+		"TIME_LOG": "יומן זמן",
+		"VIEW_APPOINTMENTS": "צפייה בפגישות",
+		"VIEW_TIME_ACTIVITY": "צפייה בפעילות זמן"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "חשבונאות",
+		"ORGANIZATION": "ארגון",
+		"PROJECT_MANAGEMENT": "ניהול פרויקטים",
+		"JOBS": "משרות",
+		"CONTACTS": "אנשי קשר",
+		"TIME_TRACKING": "מעקב זמן"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "שם פרטי",
@@ -4177,7 +4230,8 @@
 	"DIALOG": {
 		"CONFIRM": "אשר",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Quick Actions"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "ספק קבצים",
@@ -4272,20 +4326,32 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "או להתחבר עם",
+		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
+		"LOGIN_MAGIC": {
+			"TITLE": "התחברות עם קוד קסם",
+			"DESCRIPTION_TITLE": "נשלח לך קוד קסום להתחברות ללא סיסמה. או ניתן ",
+			"OR_SIGN_IN_WITH_PASSWORD": "להתחבר באמצעות סיסמה במקום זאת.",
+			"RESEND_CODE_TITLE": "שלח שוב קוד",
+			"CODE_SUB_TITLE": "הזן את הקוד שנשלח לדואר האלקטרוני כדי להתחבר."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "קוד:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email address",
-			"PASSWORD": "סיסמה"
+			"PASSWORD": "סיסמה",
+			"CODE": "הזן קוד"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED": "נדרש קוד להתחברות.",
+			"CODE_REQUIRED_LENGTH": "הקוד צריך להכיל {{ requiredLength }} תווים."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

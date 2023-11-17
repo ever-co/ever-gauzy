@@ -17,14 +17,16 @@ import {
 	NbTabsetModule,
 	NbToastrService,
 	NbAccordionModule,
-    NbDatepickerModule,
-	NbBadgeModule
+	NbDatepickerModule,
+	NbBadgeModule,
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { TranslateModule } from '@ngx-translate/core';
+import { CKEditorModule } from 'ckeditor4-angular';
+import { TaskRenderModule } from '../time-tracker/task-render';
 
 @NgModule({
 	declarations: [TasksComponent],
@@ -45,17 +47,16 @@ import { TranslateModule } from '@ngx-translate/core';
 		NbProgressBarModule,
 		NbTabsetModule,
 		NbAccordionModule,
-        NbDatepickerModule,
-        NgSelectModule,
-        ReactiveFormsModule,
+		NbDatepickerModule,
+		NgSelectModule,
+		ReactiveFormsModule,
 		NbBadgeModule,
 		DesktopDirectiveModule,
-		TranslateModule
+		TranslateModule,
+		CKEditorModule,
+		TaskRenderModule,
 	],
-	providers: [
-		NbToastrService,
-		TimeTrackerService
-	],
-	exports: [TasksComponent]
+	providers: [NbToastrService, TimeTrackerService],
+	exports: [TasksComponent],
 })
 export class TasksModule {}

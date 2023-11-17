@@ -4,6 +4,11 @@ $button-color: #fa754e;
 $wrapper-padding: 30px;
 $register-background-light-color: nb-theme(gauzy-card-1);
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .card{
   background: nb-theme(gauzy-card-1);
 }

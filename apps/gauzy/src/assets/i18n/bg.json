@@ -7,6 +7,7 @@
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
 		"LOGIN": "Log In",
+		"SEND_CODE": "Вход с имейл",
 		"ADD_NOTE": "Добави бележка",
 		"EDIT": "Редактиране",
 		"MANAGE": "Управление",
@@ -1900,6 +1901,14 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of seconds given to prove activity",
 				"ALLOW_TRACK_INACTIVITY": "Allow to track inactivity",
+				"SCREENSHOT_FREQUENCY": "Честота на снимки",
+				"SCREENSHOT_FREQUENCY_INFO": "Посочете честотата на актуализация или интервали на време за синхронизация.",
+				"RANDOM_SCREENSHOT": "Случайна снимка",
+				"RANDOM_SCREENSHOT_INFO": "Активиране - Правене на снимки на случайни интервали. Деактивиране - Правене на снимки на редовни интервали.",
+				"TRACK_ON_SLEEP": "Следене по време на сън",
+				"TRACK_ON_SLEEP_INFO": "Активиране - Следене, когато устройството заспива. Деактивиране - Спиране на таймера за проследяване, когато устройството заспива.",
+				"ENFORCED": "Задължителен",
+				"ENFORCED_INFO": "Активиране - Гарантира, че настройките за следене по време на сън, случайни снимки и честота на снимките, зададени от администратора, са задължителни и не могат да бъдат пренебрегвани или пренебрегвани от потребителите.",
 				"PROOF_OF_COMPLETION": "Доказателство за завършване",
 				"PROOF_OF_COMPLETION_TYPE": "Тип доказателство за завършване",
 				"LINKED_ISSUE": "Свързан проблем",
@@ -1918,7 +1927,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Период на издаване на автоматично затваряне (в дни)",
 				"AUTO_ARCHIVE_ISSUE": "Проблем с автоматичното архивиране",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Период на издаване на автоматично архивиране (в дни)",
-				"AUTO_STATUS": "Автоматично състояние"
+				"AUTO_STATUS": "Автоматично състояние",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Активирано - системата ще открие неактивност и ще покаже предупреждение. Деактивирано - няма да се показва предупреждение, когато служител е неактивен.",
+					"ALLOW_MANUAL_TIME_INFO": "Показва дали ръчното въвеждане на време е разрешено за проследяване на времето.",
+					"ALLOW_MODIFY_TIME_INFO": "Показва дали промяната на записите за време е разрешена за проследяване на времето.",
+					"ALLOW_DELETE_TIME_INFO": "Показва дали изтриването на записи за време е разрешено за проследяване на времето."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2656,6 +2671,44 @@
 		"CHAT": "Чат за поддръжка",
 		"FAQ": "FAQ",
 		"HELP": "Помощ"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Създаване на фактура",
+		"RECEIVED_INVOICES": "Получени фактури",
+		"CREATE_INCOME": "Създаване на приход",
+		"CREATE_EXPENSE": "Създаване на разход",
+		"CREATE_ESTIMATE": "Създаване на оценка",
+		"RECEIVED_ESTIMATES": "Получени оценки",
+		"CREATE_PAYMENT": "Създаване на плащане",
+		"ADD_EMPLOYEE": "Добавяне на служител",
+		"ADD_INVENTORY": "Добавяне на инвентар",
+		"ADD_EQUIPMENT": "Добавяне на оборудване",
+		"ADD_VENDOR": "Добавяне на доставчик",
+		"ADD_DEPARTMENT": "Добавяне на отдел",
+		"CREATE_TEAM": "Създаване на екип",
+		"CREATE_TASK": "Създаване на задача",
+		"CREATE_PROJECT": "Създаване на проект",
+		"VIEW_TASKS": "Преглед на задачи",
+		"VIEW_TEAM_TASKS": "Преглед на задачи на екипа",
+		"CREATE_CANDIDATE": "Създаване на кандидат",
+		"CREATE_PROPOSAL": "Създаване на предложение",
+		"CREATE_CONTRACT": "Създаване на договор",
+		"CREATE_LEAD": "Създаване на клиент-потенциал",
+		"CREATE_CUSTOMER": "Създаване на клиент",
+		"CREATE_CLIENT": "Създаване на клиент",
+		"START_TIMER": "Стартиране на таймер",
+		"STOP_TIMER": "Спиране на таймер",
+		"TIME_LOG": "Запис на времето",
+		"VIEW_APPOINTMENTS": "Преглед на срещи",
+		"VIEW_TIME_ACTIVITY": "Преглед на активността по време"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Счетоводство",
+		"ORGANIZATION": "Организация",
+		"PROJECT_MANAGEMENT": "Управление на проекти",
+		"JOBS": "Работи",
+		"CONTACTS": "Контакти",
+		"TIME_TRACKING": "Следене на времето"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Име",
@@ -4179,7 +4232,8 @@
 	"DIALOG": {
 		"CONFIRM": "Потвърждение",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "БЪРЗИ ДЕЙСТВИЯ"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Доставчик на файлове",
@@ -4274,20 +4328,32 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
 		"OR_SIGN_IN_WITH": "Или влезте с",
+		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Вход с магически код",
+			"DESCRIPTION_TITLE": "Ще ви изпратим магически код за вход без парола. Или можете да ",
+			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола.",
+			"RESEND_CODE_TITLE": "Изпрати отново кода",
+			"CODE_SUB_TITLE": "Въведете кода, изпратен на имейла, за да влезете."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "Код:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email address",
-			"PASSWORD": "Парола"
+			"PASSWORD": "Парола",
+			"CODE": "Въведете код"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED": "Изисква се код за влизане.",
+			"CODE_REQUIRED_LENGTH": "Кода трябва да съдържа {{ requiredLength }} знака."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
