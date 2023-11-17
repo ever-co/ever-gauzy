@@ -674,36 +674,27 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
+			// Create an array of user objects with relevant data
 			const workspaces: IWorkspaceResponse[] = [];
+
 			// Create an array of user objects with relevant data
 			for await (const user of users) {
 				const userId = user.id;
 				const tenantId = user.tenant ? user.tenantId : null;
 				const employeeId = user.employee ? user.employeeId : null;
 
-				const payload: JwtPayload = {
-					userId: user.id,
-					email: user.email,
-					tenantId: user.tenant ? user.tenantId : null,
-					code
-				};
-
-				const token = sign(payload, environment.JWT_SECRET, {
-					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
-				});
-
-				const workspace = {
+				const workspace: IWorkspaceResponse = {
 					user: new User({
-						email: user.email || '',
-						name: user.name || '',
-						imageUrl: user.imageUrl || '',
+						email: user.email || null,
+						name: user.name || null,
+						imageUrl: user.imageUrl || null,
 						tenant: new Tenant({
 							id: user.tenant ? user.tenantId : null,
-							name: user.tenant?.name || '',
-							logo: user.tenant?.logo || ''
+							name: user.tenant?.name || null,
+							logo: user.tenant?.logo || null
 						}),
 					}),
-					token
+					token: this.generateToken(user, code),
 				};
 
 				try {
@@ -735,9 +726,8 @@ export class AuthService extends SocialAuthService {
 			// Return the response if there are matching users
 			if (workspaces.length > 0) {
 				return response;
-			} else {
-				throw new UnauthorizedException();
 			}
+			throw new UnauthorizedException();
 		} catch (error) {
 			console.log('Error while verifying email & code for multi-tenant workspace signin: %s', error?.message);
 			throw new UnauthorizedException();

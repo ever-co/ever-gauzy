@@ -9,7 +9,8 @@
 		"CREATE": "Create",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
-		"SIGN_IN_WITH_EMAIL": "Sign in with email",
+		"SEND_CODE": "Send code",
+		"SENDING_CODE": "Sending code...",
 		"ADD_NOTE": "Add note",
 		"EDIT": "Edit",
 		"MANAGE": "Manage",
@@ -4488,17 +4489,17 @@
 			"CODE": "Code:"
 		},
 		"PLACEHOLDERS": {
-			"EMAIL": "Email address",
-			"PASSWORD": "Password",
-			"CODE": "Enter code"
+			"EMAIL": "Enter your email address...",
+			"PASSWORD": "Enter password...",
+			"CODE": "Enter magic code..."
 		},
 		"VALIDATION": {
-			"EMAIL_REQUIRED": "Email is required!",
-			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
+			"EMAIL_REQUIRED": "Email address is required!",
+			"CODE_REQUIRED": "Code is required to log in.",
+			"EMAIL_REAL_REQUIRED": "Email address should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
-			"CODE_REQUIRED": "Code is required to log in.",
 			"CODE_REQUIRED_LENGTH": "Code should contain {{ requiredLength }} characters."
 		},
 		"DEMO": {

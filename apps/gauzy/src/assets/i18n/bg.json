@@ -7,7 +7,7 @@
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
 		"LOGIN": "Log In",
-		"SIGN_IN_WITH_EMAIL": "Вход с имейл",
+		"SEND_CODE": "Вход с имейл",
 		"ADD_NOTE": "Добави бележка",
 		"EDIT": "Редактиране",
 		"MANAGE": "Управление",

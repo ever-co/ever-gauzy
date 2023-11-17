@@ -7,7 +7,7 @@
 		"CREATE": "Stwórz",
 		"REGISTER": "Rejestracja",
 		"LOGIN": "Zaloguj się",
-		"SIGN_IN_WITH_EMAIL": "Zaloguj się za pomocą e-maila",
+		"SEND_CODE": "Zaloguj się za pomocą e-maila",
 		"ADD_NOTE": "Dodaj notatkę",
 		"EDIT": "Edytuj",
 		"MANAGE": "Zarządzaj",

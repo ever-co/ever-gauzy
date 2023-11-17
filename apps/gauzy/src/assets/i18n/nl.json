@@ -7,7 +7,7 @@
 		"CREATE": "Creëer",
 		"REGISTER": "Registreren",
 		"LOGIN": "Inloggen",
-		"SIGN_IN_WITH_EMAIL": "Inloggen met e-mail",
+		"SEND_CODE": "Inloggen met e-mail",
 		"ADD_NOTE": "Voeg een opmerking toe",
 		"EDIT": "Bewerken",
 		"MANAGE": "Beheren",
