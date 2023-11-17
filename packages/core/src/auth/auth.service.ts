@@ -230,7 +230,7 @@ export class AuthService extends SocialAuthService {
 				isActive: true
 			});
 		} catch (error) {
-			throw new BadRequestException(`No account is registered with email ${email}`);
+			throw new BadRequestException('Forgot password request failed!');
 		}
 
 		try {
