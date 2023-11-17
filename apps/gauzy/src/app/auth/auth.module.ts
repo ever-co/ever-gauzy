@@ -30,7 +30,7 @@ import { ElectronService } from '../@core/auth/electron.service';
 import { SharedModule } from '../@shared/shared.module';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
-import { MultiWorkspaceModule } from './@shared/multi-workspace/multi-workspace.module';
+import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
 
 @NgModule({
 	imports: [
@@ -55,7 +55,7 @@ import { MultiWorkspaceModule } from './@shared/multi-workspace/multi-workspace.
 		NgxFaqModule,
 		ConfirmEmailModule,
 		SharedModule,
-		MultiWorkspaceModule
+		WorkspaceSelectionModule
 	],
 	declarations: [
 		NgxLoginComponent,
