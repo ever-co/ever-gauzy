@@ -11,8 +11,7 @@ import {
 	IUserTokenInput,
 	IUserSigninWorkspaceResponse,
 	IUserLoginInput,
-	IUserCodeInput,
-	IWorkspaceResponse
+	IUserCodeInput
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
