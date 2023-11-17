@@ -1,20 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-
-import { NgxAuthRoutingModule } from './auth-routing.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbAuthModule } from '@nebular/auth';
 import {
-  NbAlertModule,
-  NbButtonModule,
-  NbCardModule,
-  NbCheckboxModule,
-  NbIconModule,
-  NbInputModule,
-  NbAccordionModule,
-  NbFormFieldModule, NbSelectModule, NbLayoutModule,
+	NbAlertModule,
+	NbButtonModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbIconModule,
+	NbInputModule,
+	NbAccordionModule,
+	NbFormFieldModule, NbSelectModule, NbLayoutModule,
 } from '@nebular/theme';
+import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
 import { TranslateModule } from '../@shared/translate/translate.module';
@@ -32,12 +30,13 @@ import { ElectronService } from '../@core/auth/electron.service';
 import { SharedModule } from '../@shared/shared.module';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
+import { MultiWorkspaceModule } from './signin-workspaces/components/multi-workspace/multi-workspace.module';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		FormsModule,
-		RouterModule,
+		ReactiveFormsModule,
 		NgxAuthRoutingModule,
 		NbAlertModule,
 		NbInputModule,
@@ -55,7 +54,8 @@ import { SocialLinksComponent } from './@shared/social-links/social-links.compon
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ConfirmEmailModule,
-		SharedModule
+		SharedModule,
+		MultiWorkspaceModule
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -71,4 +71,4 @@ import { SocialLinksComponent } from './@shared/social-links/social-links.compon
 	],
 	providers: [ElectronService]
 })
-export class NgxAuthModule {}
+export class NgxAuthModule { }

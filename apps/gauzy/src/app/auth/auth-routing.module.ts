@@ -28,7 +28,8 @@ export const routes: Routes = [
 				path: '',
 				loadChildren: () => import('./signin-workspaces/signin-workspaces.module').then(
 					(m) => m.SignInWorkspacesLayoutModule
-				)
+				),
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'login',

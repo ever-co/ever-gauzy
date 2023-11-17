@@ -7,7 +7,7 @@
 		"CREATE": "创建",
 		"REGISTER": "注册",
 		"LOGIN": "登录",
-		"SIGN_IN_WITH_EMAIL": "使用电子邮件登录",
+		"SEND_CODE": "使用电子邮件登录",
 		"ADD_NOTE": "添加笔记",
 		"EDIT": "编辑",
 		"MANAGE": "管理",

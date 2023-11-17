@@ -7,7 +7,7 @@
 		"CREATE": "צור",
 		"REGISTER": "Register",
 		"LOGIN": "Log In",
-		"SIGN_IN_WITH_EMAIL": "התחבר עם דואר אלקטרוני",
+		"SEND_CODE": "התחבר עם דואר אלקטרוני",
 		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
 		"MANAGE": "Управление",
