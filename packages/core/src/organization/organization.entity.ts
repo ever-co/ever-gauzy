@@ -282,6 +282,42 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@Column({ nullable: true })
 	upworkOrganizationName?: string;
 
+	/**
+	 * Indicates whether random screenshots are enabled. Defaults to false if not provided.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	randomScreenshot?: boolean;
+
+	/**
+	 * Indicates whether tracking is enabled during sleep.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	trackOnSleep?: boolean;
+
+	/**
+	 * Specifies the frequency of capturing screenshots. Defaults to 10 if not provided.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@Column({ nullable: true, type: 'numeric', default: 10 })
+	screenshotFrequency?: number;
+
+	/**
+	 * Indicates whether a certain rule or behavior is enforced. Defaults to false if not provided.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	enforced?: boolean;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
@@ -396,30 +432,4 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		onDelete: 'CASCADE'
 	})
 	skills: ISkill[];
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
-	@IsOptional()
-	@Column({ nullable: true, default: false })
-	randomScreenshot?: boolean;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
-	@IsOptional()
-	@Column({ nullable: true, default: false })
-	trackOnSleep?: boolean;
-
-	@ApiPropertyOptional({ type: () => Number })
-	@IsNumber()
-	@Column({
-		type: 'numeric',
-		default: 10
-	})
-	screenshotFrequency?: number;
-
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsBoolean()
-	@IsOptional()
-	@Column({ nullable: true, default: false })
-	enforced?: boolean;
 }
