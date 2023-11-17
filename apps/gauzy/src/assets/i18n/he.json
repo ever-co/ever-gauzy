@@ -4322,22 +4322,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",
 			"DESCRIPTION_TITLE": "נשלח לך קוד קסום להתחברות ללא סיסמה. או ניתן ",
-			"OR_SIGN_IN_WITH_PASSWORD": "להתחבר באמצעות סיסמה במקום זאת."
+			"OR_SIGN_IN_WITH_PASSWORD": "להתחבר באמצעות סיסמה במקום זאת.",
+			"RESEND_CODE_TITLE": "שלח שוב קוד",
+			"CODE_SUB_TITLE": "הזן את הקוד שנשלח לדואר האלקטרוני כדי להתחבר."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "קוד:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email address",
-			"PASSWORD": "סיסמה"
+			"PASSWORD": "סיסמה",
+			"CODE": "הזן קוד"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED": "נדרש קוד להתחברות.",
+			"CODE_REQUIRED_LENGTH": "הקוד צריך להכיל {{ requiredLength }} תווים."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

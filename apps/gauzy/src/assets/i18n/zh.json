@@ -4397,22 +4397,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "使用魔法代码登录",
 			"DESCRIPTION_TITLE": "我们将向您发送一组用于无密码登录的魔术代码。或者您可以 ",
-			"OR_SIGN_IN_WITH_PASSWORD": "使用密码登录。"
+			"OR_SIGN_IN_WITH_PASSWORD": "使用密码登录。",
+			"RESEND_CODE_TITLE": "重新发送代码",
+			"CODE_SUB_TITLE": "输入发送到电子邮件的代码以登录。"
 		},
 		"LABELS": {
 			"EMAIL": "邮箱地址：",
-			"PASSWORD": "密码："
+			"PASSWORD": "密码：",
+			"CODE": "代码："
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "电子邮件地址",
-			"PASSWORD": "密码"
+			"PASSWORD": "密码",
+			"CODE": "输入代码"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！",
 			"PASSWORD_REQUIRED": "密码是必需的！",
 			"PASSWORD_SHOULD_CONTAIN": "密码应包含{{ minLength }}到{{ maxLength }}个字符！",
-			"PASSWORD_NO_SPACE_EDGES": "密码不得以空格开头或结尾。"
+			"PASSWORD_NO_SPACE_EDGES": "密码不得以空格开头或结尾。",
+			"CODE_REQUIRED": "登录需要代码。",
+			"CODE_REQUIRED_LENGTH": "代码应包含 {{ requiredLength }} 个字符。"
 		},
 		"DEMO": {
 			"TITLE": "自动登录到演示账户。",

@@ -90,6 +90,11 @@
           display: none;
         }
       }
+      & .resend-code {
+        &:hover {
+          cursor: pointer;
+        }
+      }
       & .submit-inner-wrapper {
         display: inline-flex;
         flex-direction: column;
