@@ -1,16 +1,6 @@
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	JoinTable,
-	ManyToMany,
-	ManyToOne,
-	OneToMany,
-	RelationId
-} from 'typeorm';
+import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	DefaultValueDateTypeEnum,
 	IOrganization,
@@ -53,7 +43,6 @@ import {
 
 @Entity('organization')
 export class Organization extends TenantBaseEntity implements IOrganization {
-
 	@Index()
 	@Column()
 	name: string;
@@ -104,7 +93,6 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		default: DefaultValueDateTypeEnum.TODAY
 	})
 	defaultValueDateType: DefaultValueDateTypeEnum;
-
 
 	@Column({ nullable: true })
 	defaultAlignmentType?: string;
@@ -224,7 +212,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	inactivityTimeLimit?: number;
 
 	@Column({ default: 1 })
-	activityProofDuration?: number
+	activityProofDuration?: number;
 
 	@Column({ default: false })
 	requireReason?: boolean;
@@ -293,6 +281,42 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsString()
 	@Column({ nullable: true })
 	upworkOrganizationName?: string;
+
+	/**
+	 * Indicates whether random screenshots are enabled. Defaults to false if not provided.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	randomScreenshot?: boolean;
+
+	/**
+	 * Indicates whether tracking is enabled during sleep.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	trackOnSleep?: boolean;
+
+	/**
+	 * Specifies the frequency of capturing screenshots. Defaults to 10 if not provided.
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@Column({ type: 'numeric', default: 10 })
+	screenshotFrequency?: number;
+
+	/**
+	 * Indicates whether a certain rule or behavior is enforced. Defaults to false if not provided.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@Column({ nullable: true, default: false })
+	enforced?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------

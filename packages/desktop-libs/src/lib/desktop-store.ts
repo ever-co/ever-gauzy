@@ -115,7 +115,8 @@ export const LocalStore = {
 					preferredLanguage: 'en',
 					zone: 'local',
 					autoStart: true,
-					alwaysOn: true
+					alwaysOn: true,
+					enforced: false
 				};
 				store.set({
 					appSetting: defaultAppSetting

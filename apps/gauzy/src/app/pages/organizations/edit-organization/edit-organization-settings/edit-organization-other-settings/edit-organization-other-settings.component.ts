@@ -41,6 +41,7 @@ import {
     TaskProofOfCompletionTypeEnum,
     DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
     DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
+    DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS,
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -103,6 +104,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     regionCodes = Object.keys(RegionsEnum);
     regionCode: string;
     regions = Object.values(RegionsEnum);
+    screenshotFrequencyOptions = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS
 
     /*
      * Organization Mutation Form
@@ -198,6 +200,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
             allowScreenshotCapture: [true],
             upworkOrganizationId: [null],
             upworkOrganizationName: [null],
+            randomScreenshot: [false],
+            trackOnSleep: [false],
+            screenshotFrequency: [10],
+            enforced: [false]
         });
     }
 
@@ -823,6 +829,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
             allowScreenshotCapture: this.organization.allowScreenshotCapture,
             upworkOrganizationId: this.organization.upworkOrganizationId,
             upworkOrganizationName: this.organization.upworkOrganizationName,
+            randomScreenshot: this.organization.randomScreenshot,
+            trackOnSleep: this.organization.trackOnSleep,
+            screenshotFrequency: this.organization.screenshotFrequency,
+            enforced: this.organization.enforced
         });
         this.form.updateValueAndValidity();
 
@@ -917,6 +927,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
                 }
             );
         }
+    }
+
+    public get isEnforced(): boolean {
+        return this.form.get('enforced').value;
     }
 
     ngOnDestroy(): void { }
