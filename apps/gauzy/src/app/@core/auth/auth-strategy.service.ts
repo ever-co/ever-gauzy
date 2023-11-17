@@ -288,7 +288,11 @@ export class AuthStrategy extends NbAuthStrategy {
 		//remove time tracking/timesheet filter just before logout
 		if (this.store.user && this.store.user.employeeId) {
 			if (this.timeTrackerService.running) {
-				this.timeTrackerService.toggle();
+				if (this.timeTrackerService.timerSynced.isExternalSource) {
+					this.timeTrackerService.remoteToggle();
+				} else {
+					await this.timeTrackerService.toggle();
+				}
 			}
 
 			this.timeTrackerService.clearTimeTracker();
