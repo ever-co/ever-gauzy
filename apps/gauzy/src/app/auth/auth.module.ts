@@ -31,6 +31,8 @@ import { SharedModule } from '../@shared/shared.module';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
+import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
+import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
 
 @NgModule({
 	imports: [
@@ -55,7 +57,8 @@ import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspac
 		NgxFaqModule,
 		ConfirmEmailModule,
 		SharedModule,
-		WorkspaceSelectionModule
+		WorkspaceSelectionModule,
+		PasswordFormFieldModule
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -67,6 +70,7 @@ import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspac
 		NgxRegisterComponent,
 		NgxResetPasswordComponent,
 		NgxLoginMagicComponent,
+		NgxLoginWorkspaceComponent,
 		SocialLinksComponent
 	],
 	providers: [ElectronService]

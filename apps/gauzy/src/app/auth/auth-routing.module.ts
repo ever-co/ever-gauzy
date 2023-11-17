@@ -13,6 +13,7 @@ import { NgxResetPasswordComponent } from "./reset-password/reset-password.compo
 import { ConfirmEmailComponent } from './confirm-email';
 import { ConfirmEmailResolver } from './confirm-email/confirm-email.resolver';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
+import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
 
 export const routes: Routes = [
 	{
@@ -23,13 +24,6 @@ export const routes: Routes = [
 				path: '',
 				redirectTo: 'login',
 				pathMatch: 'full'
-			},
-			{
-				path: '',
-				loadChildren: () => import('./signin-workspaces/signin-workspaces.module').then(
-					(m) => m.SignInWorkspacesLayoutModule
-				),
-				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'login',
@@ -44,6 +38,10 @@ export const routes: Routes = [
 			{
 				path: 'logout',
 				component: NbLogoutComponent
+			},
+			{
+				path: 'login-workspace',
+				component: NgxLoginWorkspaceComponent
 			},
 			{
 				path: 'login-magic',

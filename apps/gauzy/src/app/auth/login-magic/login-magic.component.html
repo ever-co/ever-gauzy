@@ -169,10 +169,10 @@
 
 <ng-template #workspacesTemplate>
 	<ng-container *ngIf="workspaces.length > 0">
-		<ngx-multi-workspace-onboarding
+		<ngx-workspace-selection
 			[workspaces]="workspaces"
 			[confirmed_email]="confirmed_email"
 			(selectedWorkspace)="signInWorkspace($event)"
-		></ngx-multi-workspace-onboarding>
+		></ngx-workspace-selection>
 	</ng-container>
 </ng-template>
