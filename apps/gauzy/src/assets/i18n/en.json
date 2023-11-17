@@ -4479,7 +4479,9 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Log in with a magic code.",
 			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
-			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead."
+			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead.",
+			"RESEND_CODE_TITLE": "Resend code",
+			"CODE_SUB_TITLE": "Enter code sent to email to log in."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
@@ -4493,11 +4495,12 @@
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email address is required!",
-			"CODE_REQUIRED": "Code is required!",
+			"CODE_REQUIRED": "Code is required to log in.",
 			"EMAIL_REAL_REQUIRED": "Email address should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED_LENGTH": "Code should contain {{ requiredLength }} characters."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",

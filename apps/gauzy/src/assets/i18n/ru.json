@@ -4323,22 +4323,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магическим кодом",
 			"DESCRIPTION_TITLE": "Мы отправим вам магический код для входа без пароля. Или вы можете ",
-			"OR_SIGN_IN_WITH_PASSWORD": "войти с паролем вместо этого."
+			"OR_SIGN_IN_WITH_PASSWORD": "войти с паролем вместо этого.",
+			"RESEND_CODE_TITLE": "Повторно отправить код",
+			"CODE_SUB_TITLE": "Введите код, отправленный на электронную почту, чтобы войти."
 		},
 		"LABELS": {
 			"EMAIL": "Email адрес:",
-			"PASSWORD": "Пароль:"
+			"PASSWORD": "Пароль:",
+			"CODE": "Код:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email адрес",
-			"PASSWORD": "Пароль"
+			"PASSWORD": "Пароль",
+			"CODE": "Введите код"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!",
 			"PASSWORD_REQUIRED": "Требуется пароль!",
 			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!",
-			"PASSWORD_NO_SPACE_EDGES": "Пароли не должны начинаться или заканчиваться пробелами."
+			"PASSWORD_NO_SPACE_EDGES": "Пароли не должны начинаться или заканчиваться пробелами.",
+			"CODE_REQUIRED": "Для входа необходим код.",
+			"CODE_REQUIRED_LENGTH": "Код должен содержать {{ requiredLength }} символов."
 		},
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",

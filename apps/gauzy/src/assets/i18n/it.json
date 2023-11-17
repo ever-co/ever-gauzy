@@ -4397,22 +4397,28 @@
 		"LOGIN_MAGIC": {
 			"TITLE": "Accedi con un codice magico",
 			"DESCRIPTION_TITLE": "Ti invieremo un codice magico per accedere senza password. Oppure puoi ",
-			"OR_SIGN_IN_WITH_PASSWORD": "accedere con la password al suo posto."
+			"OR_SIGN_IN_WITH_PASSWORD": "accedere con la password al suo posto.",
+			"RESEND_CODE_TITLE": "Rinvia codice",
+			"CODE_SUB_TITLE": "Inserisci il codice inviato via email per accedere."
 		},
 		"LABELS": {
 			"EMAIL": "Indirizzo email:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "Codice:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Indirizzo email",
-			"PASSWORD": "Password"
+			"PASSWORD": "Password",
+			"CODE": "Inserisci il codice"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email è richiesta!",
 			"EMAIL_REAL_REQUIRED": "L'email deve essere quella reale!",
 			"PASSWORD_REQUIRED": "Password è richiesta!",
 			"PASSWORD_SHOULD_CONTAIN": "La password deve contenere da {{ minLength }} a {{ maxLength }} caratteri!",
-			"PASSWORD_NO_SPACE_EDGES": "Le password non devono iniziare o terminare con spazi."
+			"PASSWORD_NO_SPACE_EDGES": "Le password non devono iniziare o terminare con spazi.",
+			"CODE_REQUIRED": "È necessario un codice per accedere.",
+			"CODE_REQUIRED_LENGTH": "Il codice deve contenere {{ requiredLength }} caratteri."
 		},
 		"DEMO": {
 			"TITLE": "Accedi automaticamente agli account di prova",
