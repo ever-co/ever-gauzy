@@ -23,6 +23,7 @@ import {
 	IUserTokenInput,
 	IOrganizationTeam,
 	IWorkspaceResponse,
+	ITenant,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -102,7 +103,6 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
-			console.log('Error while authenticating user: %s', error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -267,13 +267,15 @@ export class AuthService extends SocialAuthService {
 				const [user] = users;
 				const [tenantUserMap] = tenantUsersMap;
 
-				// this.emailService.requestPassword(
-				// 	user,
-				// 	organizationMap[0].url,
-				// 	languageCode,
-				// 	organizationMap[0].organizationId,
-				// 	originUrl
-				// );
+				if (tenantUserMap) {
+					const { resetLink } = tenantUserMap;
+					this.emailService.requestPassword(
+						user,
+						resetLink,
+						languageCode,
+						originUrl
+					);
+				}
 			} else {
 				this.emailService.multiTenantResetPassword(
 					email,

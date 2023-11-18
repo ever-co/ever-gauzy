@@ -569,43 +569,38 @@ export class EmailService {
 	 */
 	async requestPassword(
 		user: IUser,
-		url: string,
+		resetLink: string,
 		languageCode: LanguagesEnum,
-		organizationId: string,
 		originUrl?: string
 	) {
-		let organization: Organization;
-		if (organizationId) {
-			organization = await this.organizationRepository.findOneBy({
-				id: organizationId
-			});
-		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const integration = Object.assign({}, env.appIntegrationConfig);
+		const tenantId = user.tenantId || RequestContext.currentTenantId();
+
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_RESET,
 			message: {
-				to: `${user.email}`,
-				subject: 'Forgotten Password'
+				to: `${user.email}`
 			},
 			locals: {
+				...integration,
+				userName: user.name,
+				tenantName: user.tenant.name,
 				locale: languageCode,
-				generatedUrl: url,
-				host: originUrl || env.clientBaseUrl,
-				organizationId,
-				tenantId
+				generatedUrl: resetLink,
+				host: originUrl || env.clientBaseUrl
 			}
 		};
+
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode,
-			organization,
 			message: '',
 		}
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this._emailSendService.getEmailInstance({ organizationId: null, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -630,8 +625,10 @@ export class EmailService {
 		languageCode: LanguagesEnum,
 		originUrl: string
 	) {
+		const integration = Object.assign({}, env.appIntegrationConfig);
+
 		/** */
-		const resetLinks: {
+		const items: {
 			resetLink: string,
 			tenantName: ITenant['name'],
 			tenantId: ITenant['id'],
@@ -644,7 +641,7 @@ export class EmailService {
 			const tenantId = tenant ? tenant.id : RequestContext.currentTenantId();
 
 			/** */
-			resetLinks.push({
+			items.push({
 				tenantName: tenant ? tenant.name : user.name,
 				userName: user.name,
 				resetLink,
@@ -658,9 +655,10 @@ export class EmailService {
 				to: `${email}`
 			},
 			locals: {
+				...integration,
 				locale: languageCode,
 				host: originUrl || env.clientBaseUrl,
-				resetLinks: resetLinks
+				items
 			}
 		};
 

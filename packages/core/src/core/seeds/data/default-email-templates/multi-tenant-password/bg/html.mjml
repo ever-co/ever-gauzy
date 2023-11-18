@@ -2,34 +2,56 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				<mj-image width="100px" src="{{host}}/assets/images/logos/logo_Gauzy.png"></mj-image>
-				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
-				<mj-text font-size="16px" font-family="helvetica">
+				<mj-image width="100px" src="{{appLogo}}"></mj-image>
+				<mj-divider class="section-divider"></mj-divider>
+				<mj-text>
 					<p>Здравейте!</p>
-					<p>Получихме заявка за смяна на паролата.</p>
-					<p>Ако сте поискали да нулирате паролата си:</p>
+					<p><strong>Multi-Tenant Забравена парола:</strong></p>
+					<p>
+						Това гарантира, че можете да нулирате паролата си за желания клиент. Кликнете върху съответното
+						връзка за клиента, за който искате да нулирате паролата си.
+					</p>
 				</mj-text>
-			</mj-column>
-		</mj-section>
-		<mj-section padding="0px" padding-bottom="0">
-			<mj-column>
-				{% for link in var:resetLinks %}
-				<mj-text font-size="16px" font-family="helvetica">
-					{{ link.tenantName }} |
-					<a href="{{ link.resetLink }}" style="color: #598bff">Reset Password</a>
-				</mj-text>
-				{% endfor %}
 			</mj-column>
 		</mj-section>
 		<mj-section>
 			<mj-column>
-				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica"
-					>© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff">Gauzy</a>
+				<mj-table>
+					<tr
+						style="
+							background-color: #1b005d;
+							color: #ffffff;
+							text-align: center;
+							font-weight: bold;
+							padding: 15px;
+						"
+					>
+						<th>Наемател</th>
+						<th>Потребител</th>
+						<th>Връзка за нулиране на парола</th>
+					</tr>
+					{{#each items}}
+					<tr style="border-bottom: 1px solid #ecedee; text-align: center; padding: 15px 0">
+						<td>{{ this.tenantName }}</td>
+						<td>{{ this.userName }}</td>
+						<td>
+							<a href="{{ this.resetLink }}" style="color: #598bff; text-decoration: none"
+								>Нулиране на парола</a
+							>
+						</td>
+					</tr>
+					{{/each}}
+				</mj-table>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-divider class="section-divider"></mj-divider>
+				<mj-text style="color: #598bff; font-size: 12px; text-align: center">
+					© 2019, <a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
 					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
-					All rights reserved.
+					Всички права запазени.
 				</mj-text>
 			</mj-column>
 		</mj-section>
