@@ -774,9 +774,9 @@ export class PagesComponent extends TranslationBaseComponent
 							...(this.store.hasAnyPermission(
 								PermissionsEnum.ALL_ORG_EDIT,
 								PermissionsEnum.ORG_CONTACT_EDIT
-							)
-								? { add: '/pages/contacts/leads?openAddDialog=true' }
-								: {})
+							) ? {
+								add: '/pages/contacts/leads?openAddDialog=true'
+							} : {}),
 						}
 					},
 					{
@@ -785,9 +785,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/contacts/customers`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS',
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_EDIT)
-								? { add: '/pages/contacts/customers?openAddDialog=true' }
-								: {})
+							...(this.store.hasAnyPermission(
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_CONTACT_EDIT
+							) ? {
+								add: '/pages/contacts/customers?openAddDialog=true'
+							} : {}),
 						}
 					},
 					{
@@ -796,9 +799,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/contacts/clients`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CLIENTS',
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_EDIT)
-								? {add: '/pages/contacts/clients?openAddDialog=true'}
-								: {})
+							...(this.store.hasAnyPermission(
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_CONTACT_EDIT
+							) ? {
+								add: '/pages/contacts/clients?openAddDialog=true'
+							} : {}),
 						}
 					}
 				]
