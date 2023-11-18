@@ -4299,6 +4299,7 @@
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
 			"password-less-authentication": "Password Less Authentication",
+			"multi-tenant-password": "Multi-Tenant Forgot Password",
 			"welcome-user": "Welcome User",
 			"email-verification": "Email Confirmation",
 			"invite-organization-client": "Invite Organization Client",
