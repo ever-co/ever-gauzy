@@ -19,7 +19,7 @@ import * as moment from 'moment';
 import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
-import { LanguagesEnum } from 'packages/contracts/dist';
+import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { GAUZY_ENV } from '../constants';
@@ -350,9 +350,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		preventDisplaySleep: false,
 		visibleAwOption: true,
 		visibleWakatimeOption: false,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		enforced: false
 	};
-	periodOption = [1, 3, 5, 10];
+	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
 	screenshotNotification = null;
 	config = {
@@ -788,14 +789,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._selectedMenu$.next(menu);
 	}
 
-	updateSetting(value, type: string) {
+	updateSetting(value, type: string, showNotification = true) {
 		this.appSetting[type] = value;
 		this.electronService.ipcRenderer.send('update_app_setting', {
 			values: this.appSetting
 		});
-		this._notifier.success(
-			'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
-		);
+		if (showNotification) {
+			this._notifier.success(
+				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
+			);
+		}
 	}
 
 	selectPeriod(value) {
@@ -810,18 +813,20 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	toggleNotificationChange(value) {
-		this.updateSetting(value, 'screenshotNotification');
+		const isUpdateTwice = value && this.simpleScreenshotNotification;
+		this.updateSetting(value, 'screenshotNotification', !isUpdateTwice);
 		this.screenshotNotification = value;
-		if (value && this.simpleScreenshotNotification) {
+		if (isUpdateTwice) {
 			this.updateSetting(false, 'simpleScreenshotNotification');
 			this._simpleScreenshotNotification$.next(false);
 		}
 	}
 
 	toggleSimpleNotificationChange(value) {
-		this.updateSetting(value, 'simpleScreenshotNotification');
+		const isUpdateTwice = value && this.screenshotNotification;
+		this.updateSetting(value, 'simpleScreenshotNotification', !isUpdateTwice);
 		this._simpleScreenshotNotification$.next(value);
-		if (value && this.screenshotNotification) {
+		if (isUpdateTwice) {
 			this.updateSetting(false, 'screenshotNotification');
 			this.screenshotNotification = false;
 		}

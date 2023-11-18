@@ -7,6 +7,7 @@
 		"CREATE": "Creare",
 		"REGISTER": "Registrazione",
 		"LOGIN": "Accedi",
+		"SEND_CODE": "Accedi con l'email",
 		"ADD_NOTE": "Aggiungi nota",
 		"EDIT": "Modifica",
 		"MANAGE": "Gestire",
@@ -1919,6 +1920,14 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durata del dialogo di conto alla rovescia di prova dell'attività, rappresenta un determinato numero di minuti dati per dimostrare l'attività",
 				"ENABLE_DETECTION_INACTIVITY": "Abilita il rilevamento dell'inattività dei dipendenti",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
+				"SCREENSHOT_FREQUENCY": "Frequenza degli screenshot",
+				"SCREENSHOT_FREQUENCY_INFO": "Specificare la frequenza di aggiornamento o gli intervalli di sincronizzazione temporale.",
+				"RANDOM_SCREENSHOT": "Screenshot casuale",
+				"RANDOM_SCREENSHOT_INFO": "Abilita - Scattare screenshot a intervalli casuali. Disabilita - Scattare screenshot a intervalli regolari.",
+				"TRACK_ON_SLEEP": "Traccia durante il sonno",
+				"TRACK_ON_SLEEP_INFO": "Abilita - Tracciamento quando il dispositivo va in modalità sonno. Disabilita - Arresta il timer di tracciamento quando il dispositivo va in modalità sonno.",
+				"ENFORCED": "Obbligatorio",
+				"ENFORCED_INFO": "Abilitato - Garantisce che le impostazioni di tracciamento durante il sonno, screenshot casuali e frequenza degli screenshot specificate dall'amministratore siano obbligatorie e non possano essere annullate o ignorate dagli utenti.",
 				"DELETE_IDLE_TIME": "Abilita l'eliminazione del tempo di inattività",
 				"DELETE_IDLE_TIME_INFO": "Abilita: Il sistema eliminerà il tempo di inattività. Disabilita: Il sistema non eliminerà il tempo di inattività",
 				"ALLOW_SCREEN_CAPTURE": "Consenti cattura schermo",
@@ -1948,7 +1957,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Periodo di chiusura automatica dell'issue (in giorni)",
 				"AUTO_ARCHIVE_ISSUE": "Problema di archiviazione automatica",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Periodo di problema di archiviazione automatica (in giorni)",
-				"AUTO_STATUS": "Stato dell'auto"
+				"AUTO_STATUS": "Stato dell'auto",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Abilitato: il sistema rileverà l'inattività e mostrerà un avviso. Disabilitato: non verrà mostrato alcun avviso quando un dipendente è inattivo",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
@@ -2704,6 +2719,44 @@
 		"CHAT": "Supporto Chat",
 		"FAQ": "Domande frequenti",
 		"HELP": "Aiuto"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Crea fattura",
+		"RECEIVED_INVOICES": "Fatture ricevute",
+		"CREATE_INCOME": "Crea entrata",
+		"CREATE_EXPENSE": "Crea spesa",
+		"CREATE_ESTIMATE": "Crea preventivo",
+		"RECEIVED_ESTIMATES": "Preventivi ricevuti",
+		"CREATE_PAYMENT": "Crea pagamento",
+		"ADD_EMPLOYEE": "Aggiungi dipendente",
+		"ADD_INVENTORY": "Aggiungi inventario",
+		"ADD_EQUIPMENT": "Aggiungi attrezzatura",
+		"ADD_VENDOR": "Aggiungi fornitore",
+		"ADD_DEPARTMENT": "Aggiungi reparto",
+		"CREATE_TEAM": "Crea squadra",
+		"CREATE_TASK": "Crea attività",
+		"CREATE_PROJECT": "Crea progetto",
+		"VIEW_TASKS": "Visualizza attività",
+		"VIEW_TEAM_TASKS": "Visualizza attività della squadra",
+		"CREATE_CANDIDATE": "Crea candidato",
+		"CREATE_PROPOSAL": "Crea proposta",
+		"CREATE_CONTRACT": "Crea contratto",
+		"CREATE_LEAD": "Crea potenziale cliente",
+		"CREATE_CUSTOMER": "Crea cliente",
+		"CREATE_CLIENT": "Crea cliente",
+		"START_TIMER": "Avvia timer",
+		"STOP_TIMER": "Arresta timer",
+		"TIME_LOG": "Registro del tempo",
+		"VIEW_APPOINTMENTS": "Visualizza appuntamenti",
+		"VIEW_TIME_ACTIVITY": "Visualizza attività temporale"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Contabilità",
+		"ORGANIZATION": "Organizzazione",
+		"PROJECT_MANAGEMENT": "Gestione del progetto",
+		"JOBS": "Lavori",
+		"CONTACTS": "Contatti",
+		"TIME_TRACKING": "Monitoraggio del tempo"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Nome",
@@ -4236,7 +4289,8 @@
 	"DIALOG": {
 		"CONFIRM": "Conferma",
 		"ALERT": "Avviso",
-		"DELETE_CONFIRM": "Avviso"
+		"DELETE_CONFIRM": "Avviso",
+		"QUICK_ACTIONS": "Azioni rapide"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fornitore di file",
@@ -4349,20 +4403,32 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Non hai un account?",
 		"FORGOT_PASSWORD_TITLE": "Password dimenticata?",
 		"OR_SIGN_IN_WITH": "O accedi con",
+		"FORGOT_EMAIL_TITLE": "Hai dimenticato l'email?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Accedi con un codice magico",
+			"DESCRIPTION_TITLE": "Ti invieremo un codice magico per accedere senza password. Oppure puoi ",
+			"OR_SIGN_IN_WITH_PASSWORD": "accedere con la password al suo posto.",
+			"RESEND_CODE_TITLE": "Rinvia codice",
+			"CODE_SUB_TITLE": "Inserisci il codice inviato via email per accedere."
+		},
 		"LABELS": {
 			"EMAIL": "Indirizzo email:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "Codice:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Indirizzo email",
-			"PASSWORD": "Password"
+			"PASSWORD": "Password",
+			"CODE": "Inserisci il codice"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email è richiesta!",
 			"EMAIL_REAL_REQUIRED": "L'email deve essere quella reale!",
 			"PASSWORD_REQUIRED": "Password è richiesta!",
 			"PASSWORD_SHOULD_CONTAIN": "La password deve contenere da {{ minLength }} a {{ maxLength }} caratteri!",
-			"PASSWORD_NO_SPACE_EDGES": "Le password non devono iniziare o terminare con spazi."
+			"PASSWORD_NO_SPACE_EDGES": "Le password non devono iniziare o terminare con spazi.",
+			"CODE_REQUIRED": "È necessario un codice per accedere.",
+			"CODE_REQUIRED_LENGTH": "Il codice deve contenere {{ requiredLength }} caratteri."
 		},
 		"DEMO": {
 			"TITLE": "Accedi automaticamente agli account di prova",

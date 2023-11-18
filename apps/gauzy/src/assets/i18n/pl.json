@@ -7,6 +7,7 @@
 		"CREATE": "Stwórz",
 		"REGISTER": "Rejestracja",
 		"LOGIN": "Zaloguj się",
+		"SEND_CODE": "Zaloguj się za pomocą e-maila",
 		"ADD_NOTE": "Dodaj notatkę",
 		"EDIT": "Edytuj",
 		"MANAGE": "Zarządzaj",
@@ -1919,6 +1920,14 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Czas trwania dialogu odliczania próby aktywności, reprezentuje liczbę minut, które zostały przypisane do udowodnienia aktywności",
 				"ENABLE_DETECTION_INACTIVITY": "Włącz wykrywanie bezczynności pracownika",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Włączone - system wykryje brak aktywności i wyświetli ostrzeżenie. Wyłączone - nie będzie wyświetlane żadne ostrzeżenie, gdy pracownik jest nieaktywny",
+				"SCREENSHOT_FREQUENCY": "Częstotliwość zrzutów ekranu",
+				"SCREENSHOT_FREQUENCY_INFO": "Określ częstotliwość aktualizacji lub interwały czasowe synchronizacji.",
+				"RANDOM_SCREENSHOT": "Losowy zrzut ekranu",
+				"RANDOM_SCREENSHOT_INFO": "Włącz - Wykonywanie zrzutów ekranu w losowych odstępach czasu. Wyłącz - Wykonywanie zrzutów ekranu w regularnych odstępach czasu",
+				"TRACK_ON_SLEEP": "Śledź podczas snu",
+				"TRACK_ON_SLEEP_INFO": "Włącz - Śledzenie, gdy urządzenie przechodzi w stan snu. Wyłącz - Zatrzymaj licznik śledzenia czasu, gdy urządzenie przechodzi w stan snu.",
+				"ENFORCED": "Wymuszone",
+				"ENFORCED_INFO": "Włączone - Zapewnia, że ​​ustawienia śledzenia podczas snu, losowe zrzuty ekranu i częstotliwość zrzutów ekranu określone przez administratora są obowiązkowe i nie mogą być zignorowane ani pominięte przez użytkowników.",
 				"DELETE_IDLE_TIME": "Włącz usuwanie bezczynności",
 				"DELETE_IDLE_TIME_INFO": "Włącz - system usunie czas bezczynności. Wyłącz - system nie będzie usuwać czasu bezczynności",
 				"ALLOW_SCREEN_CAPTURE": "Zezwól na przechwytywanie ekranu",
@@ -1948,7 +1957,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Okres automatycznego zamknięcia zgłoszenia (w dniach)",
 				"AUTO_ARCHIVE_ISSUE": "Problem archiwizacji automatycznej",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Okres automatycznego archiwizowania (w dniach)",
-				"AUTO_STATUS": "Status automatyczny"
+				"AUTO_STATUS": "Status automatyczny",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Włączone - system wykryje brak aktywności i wyświetli ostrzeżenie. Wyłączone - nie będzie wyświetlane żadne ostrzeżenie, gdy pracownik jest nieaktywny",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Menedżerowie",
@@ -2704,6 +2719,44 @@
 		"CHAT": "Czat wsparcia",
 		"FAQ": "Najczęściej zadawane pytania (FAQ)",
 		"HELP": "Pomoc"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Utwórz fakturę",
+		"RECEIVED_INVOICES": "Otrzymane faktury",
+		"CREATE_INCOME": "Utwórz przychód",
+		"CREATE_EXPENSE": "Utwórz wydatek",
+		"CREATE_ESTIMATE": "Utwórz wycenę",
+		"RECEIVED_ESTIMATES": "Otrzymane szacunki",
+		"CREATE_PAYMENT": "Utwórz płatność",
+		"ADD_EMPLOYEE": "Dodaj pracownika",
+		"ADD_INVENTORY": "Dodaj inwentarz",
+		"ADD_EQUIPMENT": "Dodaj sprzęt",
+		"ADD_VENDOR": "Dodaj dostawcę",
+		"ADD_DEPARTMENT": "Dodaj dział",
+		"CREATE_TEAM": "Utwórz zespół",
+		"CREATE_TASK": "Utwórz zadanie",
+		"CREATE_PROJECT": "Utwórz projekt",
+		"VIEW_TASKS": "Zobacz zadania",
+		"VIEW_TEAM_TASKS": "Zobacz zadania zespołu",
+		"CREATE_CANDIDATE": "Utwórz kandydata",
+		"CREATE_PROPOSAL": "Utwórz propozycję",
+		"CREATE_CONTRACT": "Utwórz umowę",
+		"CREATE_LEAD": "Utwórz potencjalnego klienta",
+		"CREATE_CUSTOMER": "Utwórz klienta",
+		"CREATE_CLIENT": "Utwórz klienta",
+		"START_TIMER": "Rozpocznij pomiar czasu",
+		"STOP_TIMER": "Zatrzymaj pomiar czasu",
+		"TIME_LOG": "Rejestracja czasu",
+		"VIEW_APPOINTMENTS": "Wyświetl spotkania",
+		"VIEW_TIME_ACTIVITY": "Wyświetl aktywność czasu"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Księgowość",
+		"ORGANIZATION": "Organizacja",
+		"PROJECT_MANAGEMENT": "Zarządzanie projektami",
+		"JOBS": "Praca",
+		"CONTACTS": "Kontakty",
+		"TIME_TRACKING": "Śledzenie czasu"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Imię",
@@ -4236,7 +4289,8 @@
 	"DIALOG": {
 		"CONFIRM": "Potwierdź",
 		"ALERT": "Alarm",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Szybkie działania"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Dostawca plików",
@@ -4349,20 +4403,32 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Nie masz konta?",
 		"FORGOT_PASSWORD_TITLE": "Zapomniałeś hasła?",
 		"OR_SIGN_IN_WITH": "Albo zaloguj się korzystając z",
+		"FORGOT_EMAIL_TITLE": "Zapomniałeś e-maila?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Zaloguj się za pomocą magicznego kodu",
+			"DESCRIPTION_TITLE": "Wyślemy ci magiczny kod do logowania bez hasła. Lub możesz ",
+			"OR_SIGN_IN_WITH_PASSWORD": "zalogować się za pomocą hasła.",
+			"RESEND_CODE_TITLE": "Wyślij kod ponownie",
+			"CODE_SUB_TITLE": "Wprowadź kod wysłany na adres e-mail, aby się zalogować."
+		},
 		"LABELS": {
 			"EMAIL": "Adres email:",
-			"PASSWORD": "Hasło:"
+			"PASSWORD": "Hasło:",
+			"CODE": "Kod:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Adres e-mail",
-			"PASSWORD": "Hasło"
+			"PASSWORD": "Hasło",
+			"CODE": "Wprowadź kod"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Email powinien być prawdziwy!",
 			"PASSWORD_REQUIRED": "Hasło jest wymagane!",
 			"PASSWORD_SHOULD_CONTAIN": "Hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków!",
-			"PASSWORD_NO_SPACE_EDGES": "Hasła nie mogą zaczynać się ani kończyć spacjami."
+			"PASSWORD_NO_SPACE_EDGES": "Hasła nie mogą zaczynać się ani kończyć spacjami.",
+			"CODE_REQUIRED": "Do zalogowania wymagany jest kod.",
+			"CODE_REQUIRED_LENGTH": "Kod powinien zawierać {{ requiredLength }} znaków."
 		},
 		"DEMO": {
 			"TITLE": "Logowanie automatyczne do kont demo",
