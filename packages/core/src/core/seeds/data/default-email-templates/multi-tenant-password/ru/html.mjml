@@ -2,8 +2,14 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				<mj-image width="100px" src="{{appLogo}}"></mj-image>
-				<mj-divider class="section-divider"></mj-divider>
+				<mj-image
+					width="100px"
+					src="{{appLogo}}"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
 				<mj-text>
 					<p>Привет!</p>
 					<p><strong>Забыли пароль для мультитенанта:</strong></p>
@@ -35,8 +41,8 @@
 						<td>{{ this.tenantName }}</td>
 						<td>{{ this.userName }}</td>
 						<td>
-							<a href="{{ this.resetLink }}" style="color: #598bff; text-decoration: none"
-								>Сброс пароля
+							<a href="{{ this.resetLink }}" style="color: #598bff; text-decoration: none">
+								Сброс пароля
 							</a>
 						</td>
 					</tr>
@@ -46,9 +52,17 @@
 		</mj-section>
 		<mj-section>
 			<mj-column>
-				<mj-divider class="section-divider"></mj-divider>
-				<mj-text style="color: #598bff; font-size: 12px; text-align: center">
-					© 2019, <a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text
+					align="center"
+					font-size="12px"
+					font-family="helvetica"
+				>
+				  	© 2019,
+					<a href="https://app.gauzy.co/." style="color: #598bff">Gauzy</a>
 					by
 					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
 					Все права защищены.
