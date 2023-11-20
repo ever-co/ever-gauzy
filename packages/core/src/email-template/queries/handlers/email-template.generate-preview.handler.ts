@@ -87,6 +87,13 @@ export class EmailTemplateGeneratePreviewHandler
 			appLogo: appLogo,
 			appSignature: appSignature,
 			appLink: appLink,
+			items: [
+				{
+					tenantName: "Default",
+					userName: "Default",
+					resetLink: "https://github.com/ever-co/ever-gauzy"
+				}
+			]
 		});
 		return { html };
 	}
