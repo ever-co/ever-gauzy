@@ -72,9 +72,15 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		// Send a request to sign in to workspaces using the authentication service
 		await firstValueFrom(
 			this._authService.confirmSignInByCode({ email, code }).pipe(
-				tap((response: any) => {
+				tap(async (response: any) => {
 					if (response['status'] === HttpStatus.UNAUTHORIZED) {
 						this.error = true;
+
+						// Sleeps for 2 seconds before Redirecting you to the app
+						const sleepDelay = 2000;
+						await sleep(sleepDelay);
+
+						this.router.navigate(['/auth/login-magic']);
 					}
 				}),
 				// Update component state with the fetched workspaces
