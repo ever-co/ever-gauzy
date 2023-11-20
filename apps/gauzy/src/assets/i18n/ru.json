@@ -6,6 +6,7 @@
 		"ADD": "Добавить",
 		"CREATE": "Создать",
 		"REGISTER": "Регистрация",
+		"CHANGE_PASSWORD": "Изменить пароль",
 		"LOGIN": "Войти",
 		"SEND_CODE": "Войти по электронной почте",
 		"ADD_NOTE": "Добавить заметку",
@@ -4378,6 +4379,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Изменить пароль",
+		"SUB_TITLE": "Пожалуйста, установите новый пароль",
+		"LABELS": {
+			"NEW_PASSWORD": "Новый пароль:",
+			"CONFIRM_PASSWORD": "Подтвердить пароль:",
+			"BACK_TO": "Назад к"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Новый пароль",
+			"CONFIRM_PASSWORD": "Подтвердить пароль"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Требуется новый пароль!",
+			"CONFIRM_PASSWORD_REQUIRED": "Требуется подтверждение пароля!",
+			"PASSWORDS_NOT_MATCH": "Пароль не совпадает с подтверждением пароля!",
+			"PASSWORD_SHOULD_CONTAIN": "Новый пароль должен содержать от {{ minLength }} до {{ maxLength }} символов."
 		}
 	},
 	"PAGINATION": {

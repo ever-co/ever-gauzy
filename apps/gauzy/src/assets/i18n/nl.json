@@ -6,6 +6,7 @@
 		"ADD": "Toevoegen",
 		"CREATE": "Creëer",
 		"REGISTER": "Registreren",
+		"CHANGE_PASSWORD": "Wachtwoord wijzigen",
 		"LOGIN": "Inloggen",
 		"SEND_CODE": "Inloggen met e-mail",
 		"ADD_NOTE": "Voeg een opmerking toe",
@@ -4453,6 +4454,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet de juiste zijn!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Wachtwoord wijzigen",
+		"SUB_TITLE": "Stel een nieuw wachtwoord in, alstublieft",
+		"LABELS": {
+			"NEW_PASSWORD": "Nieuw wachtwoord:",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord:",
+			"BACK_TO": "Terug naar"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nieuw wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Nieuw wachtwoord is verplicht!",
+			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van het wachtwoord is verplicht!",
+			"PASSWORDS_NOT_MATCH": "Het wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
+			"PASSWORD_SHOULD_CONTAIN": "Het nieuwe wachtwoord moet tussen de {{ minLength }} en {{ maxLength }} tekens bevatten."
 		}
 	},
 	"PAGINATION": {

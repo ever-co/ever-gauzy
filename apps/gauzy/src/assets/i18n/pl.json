@@ -6,6 +6,7 @@
 		"ADD": "Dodaj",
 		"CREATE": "Stwórz",
 		"REGISTER": "Rejestracja",
+		"CHANGE_PASSWORD": "Zmień hasło",
 		"LOGIN": "Zaloguj się",
 		"SEND_CODE": "Zaloguj się za pomocą e-maila",
 		"ADD_NOTE": "Dodaj notatkę",
@@ -4453,6 +4454,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Adres e-mail powinien być prawdziwy!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Zmień hasło",
+		"SUB_TITLE": "Proszę ustawić nowe hasło",
+		"LABELS": {
+			"NEW_PASSWORD": "Nowe hasło:",
+			"CONFIRM_PASSWORD": "Potwierdź hasło:",
+			"BACK_TO": "Powrót do"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nowe hasło",
+			"CONFIRM_PASSWORD": "Potwierdź hasło"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Nowe hasło jest wymagane!",
+			"CONFIRM_PASSWORD_REQUIRED": "Potwierdzenie hasła jest wymagane!",
+			"PASSWORDS_NOT_MATCH": "Hasło nie pasuje do potwierdzenia hasła!",
+			"PASSWORD_SHOULD_CONTAIN": "Nowe hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków."
 		}
 	},
 	"PAGINATION": {

@@ -6,6 +6,7 @@
 		"ADD": "Aggiungi",
 		"CREATE": "Creare",
 		"REGISTER": "Registrazione",
+		"CHANGE_PASSWORD": "Cambia password",
 		"LOGIN": "Accedi",
 		"SEND_CODE": "Accedi con l'email",
 		"ADD_NOTE": "Aggiungi nota",
@@ -4453,6 +4454,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email è obbligatoria!",
 			"EMAIL_REAL_REQUIRED": "L'email deve essere quella vera!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Cambia password",
+		"SUB_TITLE": "Si prega di impostare una nuova password",
+		"LABELS": {
+			"NEW_PASSWORD": "Nuova password:",
+			"CONFIRM_PASSWORD": "Conferma password:",
+			"BACK_TO": "Torna a"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nuova password",
+			"CONFIRM_PASSWORD": "Conferma password"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "È richiesta una nuova password!",
+			"CONFIRM_PASSWORD_REQUIRED": "È richiesta la conferma della password!",
+			"PASSWORDS_NOT_MATCH": "La password non corrisponde alla conferma della password!",
+			"PASSWORD_SHOULD_CONTAIN": "La nuova password dovrebbe contenere tra {{ minLength }} e {{ maxLength }} caratteri."
 		}
 	},
 	"PAGINATION": {
