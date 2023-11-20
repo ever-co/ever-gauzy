@@ -164,6 +164,8 @@ export class AuthService extends SocialAuthService {
 		// Create an array of user objects with relevant data
 		const workspaces: IWorkspaceResponse[] = users.map((user: IUser) => ({
 			user: new User({
+				id: user.id,
+				email: user.email || null,
 				name: user.name,
 				imageUrl: user.imageUrl,
 				tenant: new Tenant({
