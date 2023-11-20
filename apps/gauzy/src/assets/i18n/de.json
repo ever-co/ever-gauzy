@@ -6,6 +6,7 @@
 		"ADD": "Hinzufügen",
 		"CREATE": "Erstellen",
 		"REGISTER": "Registrieren",
+		"CHANGE_PASSWORD": "Passwort ändern",
 		"LOGIN": "Einloggen",
 		"SEND_CODE": "Mit E-Mail anmelden",
 		"ADD_NOTE": "Notiz hinzufügen",
@@ -4448,6 +4449,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Passwort ändern",
+		"SUB_TITLE": "Bitte setzen Sie ein neues Passwort",
+		"LABELS": {
+			"NEW_PASSWORD": "Neues Passwort:",
+			"CONFIRM_PASSWORD": "Passwort bestätigen:",
+			"BACK_TO": "Zurück zu"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Neues Passwort",
+			"CONFIRM_PASSWORD": "Passwort bestätigen"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Neues Passwort ist erforderlich!",
+			"CONFIRM_PASSWORD_REQUIRED": "Passwortbestätigung ist erforderlich!",
+			"PASSWORDS_NOT_MATCH": "Passwort stimmt nicht mit der Passwortbestätigung überein!",
+			"PASSWORD_SHOULD_CONTAIN": "Das neue Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
 		}
 	},
 	"PAGINATION": {

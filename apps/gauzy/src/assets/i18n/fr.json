@@ -6,6 +6,7 @@
 		"ADD": "Ajouter",
 		"CREATE": "Créer",
 		"REGISTER": "S'inscrire",
+		"CHANGE_PASSWORD": "Changer le mot de passe",
 		"LOGIN": "Se connecter",
 		"SEND_CODE": "Se connecter avec un e-mail",
 		"ADD_NOTE": "Ajouter une note",
@@ -4453,6 +4454,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email est requis !",
 			"EMAIL_REAL_REQUIRED": "L'email doit être le véritable !"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Changer le mot de passe",
+		"SUB_TITLE": "Veuillez définir un nouveau mot de passe",
+		"LABELS": {
+			"NEW_PASSWORD": "Nouveau mot de passe :",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe :",
+			"BACK_TO": "Retour à"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nouveau mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Un nouveau mot de passe est requis !",
+			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
+			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
+			"PASSWORD_SHOULD_CONTAIN": "Le nouveau mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères."
 		}
 	},
 	"PAGINATION": {

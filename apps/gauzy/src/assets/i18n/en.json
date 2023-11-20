@@ -8,6 +8,7 @@
 		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
+		"CHANGE_PASSWORD": "Change password",
 		"LOGIN": "Log In",
 		"SEND_CODE": "Send code",
 		"SENDING_CODE": "Sending code...",
@@ -4533,6 +4534,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Change Password",
+		"SUB_TITLE": "Please set a new password",
+		"LABELS": {
+			"NEW_PASSWORD": "New Password:",
+			"CONFIRM_PASSWORD": "Confirm Password:",
+			"BACK_TO": "Back to"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "New Password",
+			"CONFIRM_PASSWORD": "Confirm Password"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "New password is required!",
+			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
+			"PASSWORDS_NOT_MATCH": "Password does not match with the confirm password!",
+			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!"
 		}
 	},
 	"PAGINATION": {

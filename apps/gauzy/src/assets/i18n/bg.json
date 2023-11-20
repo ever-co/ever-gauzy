@@ -6,6 +6,7 @@
 		"ADD": "Добавяне",
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
+		"CHANGE_PASSWORD": "Промяна на паролата",
 		"LOGIN": "Log In",
 		"SEND_CODE": "Вход с имейл",
 		"ADD_NOTE": "Добави бележка",
@@ -4378,6 +4379,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Промяна на паролата",
+		"SUB_TITLE": "Моля, задайте нова парола",
+		"LABELS": {
+			"NEW_PASSWORD": "Нова парола:",
+			"CONFIRM_PASSWORD": "Потвърдете паролата:",
+			"BACK_TO": "Обратно към"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Нова парола",
+			"CONFIRM_PASSWORD": "Потвърдете паролата"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Изисква се нова парола!",
+			"CONFIRM_PASSWORD_REQUIRED": "Изисква се потвърждение на паролата!",
+			"PASSWORDS_NOT_MATCH": "Паролата не съвпада с потвърдената парола!",
+			"PASSWORD_SHOULD_CONTAIN": "Новата парола трябва да съдържа от {{ minLength }} до {{ maxLength }} знака!"
 		}
 	},
 	"PAGINATION": {

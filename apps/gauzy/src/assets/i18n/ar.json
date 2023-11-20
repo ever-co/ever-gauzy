@@ -6,6 +6,7 @@
 		"ADD": "إضافة",
 		"CREATE": "أنشئ",
 		"REGISTER": "تسجيل",
+		"CHANGE_PASSWORD": "تغيير كلمة المرور",
 		"LOGIN": "تسجيل الدخول",
 		"SEND_CODE": "تسجيل الدخول بالبريد الإلكتروني",
 		"ADD_NOTE": "أضف ملاحظة",
@@ -4451,6 +4452,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "تغيير كلمة المرور",
+		"SUB_TITLE": "يرجى تعيين كلمة مرور جديدة",
+		"LABELS": {
+			"NEW_PASSWORD": "كلمة المرور الجديدة:",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور:",
+			"BACK_TO": "العودة إلى"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "كلمة المرور الجديدة",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "كلمة المرور الجديدة مطلوبة!",
+			"CONFIRM_PASSWORD_REQUIRED": "تأكيد كلمة المرور مطلوب!",
+			"PASSWORDS_NOT_MATCH": "كلمة المرور غير متطابقة مع تأكيد كلمة المرور!",
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور الجديدة على عدد من {{ minLength }} إلى {{ maxLength }} أحرف!"
 		}
 	},
 	"PAGINATION": {
