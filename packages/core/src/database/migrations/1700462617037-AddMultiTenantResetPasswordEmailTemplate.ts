@@ -28,6 +28,13 @@ export class AddMultiTenantResetPasswordEmailTemplate1700462617037 implements Mi
         } catch (error) {
             console.log(`Error while migrating missing email templates for ${EmailTemplateEnum.PASSWORD_RESET}`, error);
         }
+
+        // Migrate email templates for regular password less authentication
+        try {
+            await EmailTemplateUtils.migrateEmailTemplates(queryRunner, EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION);
+        } catch (error) {
+            console.log(`Error while migrating missing email templates for ${EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION}`, error);
+        }
     }
 
     /**
