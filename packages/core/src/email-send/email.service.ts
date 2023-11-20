@@ -842,51 +842,68 @@ export class EmailService {
 	}
 
 	/**
-	 * Password Less Authentication
+	 * Sends a magic login code to the user's email for password-less authentication.
 	 *
-	 * @param user
-	 * @param languageCode
+	 * @param email - User's email address.
+	 * @param magicCode - Generated magic code for login.
+	 * @param magicLink - Link for password-less authentication.
+	 * @param locale - Language/locale for email content.
+	 * @param integration - App integration configuration.
+	 * @param expireMinutes - Number of minutes until the magic code expires.
+	 * @returns {Promise<void>} - A promise indicating the completion of the operation.
 	 */
-	async passwordLessAuthentication(
-		email: IUser['email'],
-		code: IUser['code'],
-		locale: LanguagesEnum,
-		integration?: IAppIntegrationConfig
-	) {
-		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
-		deepMerge(integration, env.appIntegrationConfig);
-
+	async sendMagicLoginCode({
+		email,
+		magicCode,
+		magicLink,
+		locale,
+		integration
+	}: {
+		email: IUser['email'];
+		magicCode: IUser['code'];
+		magicLink: IAppIntegrationConfig['appMagicSignUrl'];
+		locale: LanguagesEnum;
+		integration: IAppIntegrationConfig;
+	}): Promise<void> {
+		/** */
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
-				to: `${email}`
+				to: `${email}`,
 			},
 			locals: {
 				locale,
 				email,
-				host: env.clientBaseUrl,
-				inviteCode: code,
-				...integration
-			}
+				magicCode,
+				magicLink,
+				...integration,
+			},
 		};
+
+		/** */
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode: locale,
-			message: ''
-		}
+			message: '',
+		};
+
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+
+		// Check if the email domain is disallowed
 		if (!match) {
 			try {
+				// Get the email sending service instance
 				const instance = await this._emailSendService.getInstance();
+
+				// Send the email
 				const send = await instance.send(sendOptions);
 
+				// Update the body with the original message
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log('Error while sending password less authentication code: %s', error);
+				// Handle errors during email sending
+				console.log('Error while sending password-less authentication code: %s', error);
 			}
 		}
 	}

@@ -27,7 +27,7 @@ import {
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
@@ -144,7 +144,7 @@ export class AuthService extends SocialAuthService {
 
 		/** */
 		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
-		const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
+		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 		/** */
 		for await (const user of users) {
@@ -640,47 +640,57 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Sends a unique authentication code to the user's email for workspace sign-in.
 	 *
-	 * @param input
-	 * @param locale
-	 * @returns
+	 * @param input - User email input along with partial app integration configuration.
+	 * @param locale - Language/locale for email content.
+	 * @returns {Promise<void>} - A promise indicating the completion of the operation.
 	 */
 	async sendWorkspaceSigninCode(
 		input: IUserEmailInput & Partial<IAppIntegrationConfig>,
 		locale: LanguagesEnum
-	) {
+	): Promise<void> {
 		const { email } = input;
+
+		// Check if the email is provided
 		if (!email) {
 			return;
 		}
+
 		try {
+			// Count the number of users with the given email
 			const count = await this.userRepository.countBy({
 				email
 			});
+
+			// If no user found with the email, return
 			if (count === 0) {
 				return;
 			}
 
-			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
-			const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
+			// Generate a random alphanumeric code
+			const magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 
-			await this.userRepository.update({ email }, { code, codeExpireAt });
-			/**
-			 * Send password less authentication email
-			 */
-			let { appName, appLogo, appSignature, appLink, callbackUrl } = input;
-			if (callbackUrl) {
-				callbackUrl = `${callbackUrl}?email=${email}&code=${code}`;
+			// Calculate the expiration time for the code
+			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+			// Update the user record with the generated code and expiration time
+			await this.userRepository.update({ email }, { code: magicCode, codeExpireAt });
+
+			// Override the default config by merging in the provided values.
+			const integration = deepMerge(input, environment.appIntegrationConfig);
+
+			/** */
+			let magicLink: string;
+			if (integration.appMagicSignUrl) {
+				magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
 			}
-			this.emailService.passwordLessAuthentication(email, code, locale, {
-				appName,
-				appLogo,
-				appSignature,
-				appLink,
-				callbackUrl
-			});
+
+			// Send the magic code to the user's email
+			this.emailService.sendMagicLoginCode({ email, magicCode, magicLink, locale, integration });
 		} catch (error) {
-			console.log('Error while sending authentication code', error?.message);
+			// Handle errors during the process
+			console.log('Error while sending workspace magic login code', error?.message);
 		}
 	}
 
@@ -728,6 +738,7 @@ export class AuthService extends SocialAuthService {
 
 				const workspace: IWorkspaceResponse = {
 					user: new User({
+						id: user.id,
 						email: user.email || null,
 						name: user.name || null,
 						imageUrl: user.imageUrl || null,
