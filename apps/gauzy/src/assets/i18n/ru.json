@@ -4164,6 +4164,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Сброс пароля",
+			"multi-tenant-password": "Сброс пароля мультитенанта",
 			"welcome-user": "Приветствуем пользователя",
 			"invite-organization-client": "Пригласить клиента организации",
 			"email-estimate": "Почтовый расчет",

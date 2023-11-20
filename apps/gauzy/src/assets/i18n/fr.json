@@ -4219,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Réinitialisation de mot de passe",
+			"multi-tenant-password": "Réinitialisation du mot de passe multi-locataire",
 			"password-less-authentication": "Authentification sans mot de passe",
 			"welcome-user": "Bienvenue, utilisateur.",
 			"email-verification": "Confirmation par email",

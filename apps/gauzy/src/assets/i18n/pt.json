@@ -4218,6 +4218,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Redefinir senha.",
+			"multi-tenant-password": "Resetowanie hasła dla wielu dzierżawców",
 			"password-less-authentication": "Autenticação sem senha",
 			"welcome-user": "Bem-vindo Usuário",
 			"email-verification": "Confirmação de Email",

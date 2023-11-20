@@ -4218,6 +4218,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "密码重置",
+			"multi-tenant-password": "多租户密码重置",
 			"password-less-authentication": "无密码验证",
 			"welcome-user": "欢迎用户",
 			"email-verification": "电子邮件确认",

@@ -21,6 +21,7 @@ export interface IEmailTemplateFindInput extends IBasePerTenantAndOrganizationEn
 
 export enum EmailTemplateEnum {
 	PASSWORD_RESET = 'password',
+	MULTI_TENANT_PASSWORD_RESET = 'multi-tenant-password',
 	PASSWORD_LESS_AUTHENTICATION = 'password-less-authentication',
 	APPOINTMENT_CONFIRMATION = 'appointment-confirmation',
 	APPOINTMENT_CANCELLATION = 'appointment-cancellation',

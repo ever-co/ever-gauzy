@@ -4218,6 +4218,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Wachtwoord resetten",
+			"multi-tenant-password": "Wachtwoord opnieuw instellen voor meerdere tenants",
 			"password-less-authentication": "Wachtwoordloze authenticatie",
 			"welcome-user": "Welkom gebruiker",
 			"email-verification": "E-mailbevestiging",

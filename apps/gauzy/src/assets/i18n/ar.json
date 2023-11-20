@@ -4217,6 +4217,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "إعادة تعيين كلمة السر",
+			"multi-tenant-password": "إعادة تعيين كلمة المرور للمستأجرين المتعددين",
 			"password-less-authentication": "المصادقة بدون كلمة مرور",
 			"welcome-user": "مرحبًا بك، مستخدم.",
 			"email-verification": "تأكيد البريد الإلكتروني",
