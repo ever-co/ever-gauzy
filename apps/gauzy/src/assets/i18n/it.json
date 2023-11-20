@@ -4217,6 +4217,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Ripristino della password",
+			"multi-tenant-password": "Reimpostazione della password multi-tenant",
 			"password-less-authentication": "Autenticazione senza password",
 			"welcome-user": "Benvenuto Utente",
 			"email-verification": "Conferma email",

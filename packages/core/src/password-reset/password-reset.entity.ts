@@ -2,22 +2,29 @@ import { Entity, Index, Column, AfterLoad } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { IPasswordReset } from '@gauzy/contracts';
-import { BaseEntity } from './../core/entities/base.entity';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { TenantBaseEntity } from './../core/entities/tenant-base.entity';
 
 @Entity('password_reset')
-export class PasswordReset extends BaseEntity
-	implements IPasswordReset {
+export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 
+	/** */
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsEmail()
 	@Index()
 	@Column()
 	email: string;
 
+	/** */
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@Index()
 	@Column()
 	token: string;
 
+	/** */
 	expired?: boolean;
 
 	/**

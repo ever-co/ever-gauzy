@@ -4162,6 +4162,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
+			"multi-tenant-password": "איפוס סיסמת ריבוי דיירים",
 			"welcome-user": "Welcome User",
 			"invite-organization-client": "Invite Organization Client",
 			"email-estimate": "Email Estimate",

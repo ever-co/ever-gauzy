@@ -23,6 +23,7 @@ import {
 	IUserTokenInput,
 	IOrganizationTeam,
 	IWorkspaceResponse,
+	ITenant,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -102,7 +103,6 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
-			console.log('Error while authenticating user: %s', error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -210,67 +210,96 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Request Reset Password
+	 * Initiates the process to request a password reset.
 	 *
-	 * @param request
-	 * @param languageCode
-	 * @param originUrl
-	 * @returns
+	 * @param request - The reset password request object containing the email address.
+	 * @param languageCode - The language code used for email communication.
+	 * @param originUrl - Optional parameter representing the origin URL of the request.
+	 * @returns A Promise that resolves to a boolean indicating the success of the password reset request
+	 *          or throws a BadRequestException in case of failure.
 	 */
-	async requestPassword(
+	async requestResetPassword(
 		request: IResetPasswordRequest,
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<boolean | BadRequestException> {
-		const { email } = request;
-
 		try {
-			await this.userRepository.findOneByOrFail({
-				email,
-				isActive: true
-			});
-		} catch (error) {
-			throw new BadRequestException('Forgot password request failed!');
-		}
+			const { email } = request;
 
-		try {
-			const user = await this.userService.findOneByOptions({
-				where: {
-					email,
-					isActive: true
-				},
-				relations: {
-					role: true,
-					employee: true
-				}
-			});
-			/**
-			 * Create password reset request
-			 */
-			const token = await this.getJwtAccessToken(user);
-			if (token) {
-				await this.commandBus.execute(
-					new PasswordResetCreateCommand({
-						email: user.email,
-						token
-					})
-				);
-
-				const { id: userId, tenantId } = user;
-
-				const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
-				const { organizationId } = await this.userOrganizationService.findOneByOptions({
-					where: {
-						userId,
-						tenantId
-					}
-				});
-				this.emailService.requestPassword(user, url, languageCode, organizationId, originUrl);
-				return true;
+			// Fetch users with specific criteria
+			const users = await this.fetchUsers(email);
+			// Throw an exception if no matching users are found
+			if (users.length === 0) {
+				throw new BadRequestException('Forgot password request failed!');
 			}
+
+			// Initialize an array to store reset links along with tenant and user information
+			const tenantUsersMap: { resetLink: string; tenant: ITenant; user: IUser }[] = [];
+
+			// Iterate through users and generate reset links
+			for await (const user of users) {
+				const { email, tenantId } = user;
+				const token = await this.getJwtAccessToken(user);
+
+				// Proceed if a valid token and email are obtained
+				if (!!token && !!email) {
+					try {
+						// Create a password reset request and generate a reset link
+						const request = await this.commandBus.execute(
+							new PasswordResetCreateCommand({
+								email,
+								tenantId,
+								token
+							})
+						);
+						const resetLink = `${environment.clientBaseUrl}/#/auth/reset-password?token=${request.token}&tenantId=${tenantId}&email=${email}`;
+						tenantUsersMap.push({ resetLink, tenant: user.tenant, user });
+					} catch (error) {
+						throw new BadRequestException('Forgot password request failed!');
+					}
+				}
+			}
+
+			// If there is only one user, send a password reset email
+			if (users.length === 1) {
+				const [user] = users;
+				const [tenantUserMap] = tenantUsersMap;
+
+				if (tenantUserMap) {
+					const { resetLink } = tenantUserMap;
+					this.emailService.requestPassword(user, resetLink, languageCode, originUrl);
+				}
+			} else {
+				// If multiple users are found, send a multi-tenant password reset email
+				this.emailService.multiTenantResetPassword(email, tenantUsersMap, languageCode, originUrl);
+			}
+
+			// Return success status
+			return true;
 		} catch (error) {
+			// Throw a BadRequestException in case of failure
 			throw new BadRequestException('Forgot password request failed!');
 		}
+	}
+
+	/**
+	 * Fetch users from the repository based on specific criteria.
+	 *
+	 * @param {string} email - The user's email address.
+	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
+	 */
+	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
+		return await this.userRepository.find({
+			where: {
+				email,
+				isActive: true,
+				isArchived: false,
+			},
+			relations: {
+				tenant: true,
+				role: true
+			},
+		});
 	}
 
 	/**
@@ -378,7 +407,7 @@ export class AuthService extends SocialAuthService {
 		const { isImporting = false, sourceId = null } = input;
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
-			await this.commandBus.execute(
+			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
 					entityType: this.userRepository.metadata.tableName,
 					sourceId,
@@ -392,7 +421,7 @@ export class AuthService extends SocialAuthService {
 		 */
 		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl } = input;
 		if (!user.emailVerifiedAt) {
-			await this.emailConfirmationService.sendEmailVerification(user, {
+			this.emailConfirmationService.sendEmailVerification(user, {
 				appName,
 				appLogo,
 				appSignature,
@@ -521,7 +550,10 @@ export class AuthService extends SocialAuthService {
 	 */
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
+			// Extract the user ID from the request
 			const userId = request.id;
+
+			// Retrieve the user's data from the userService
 			const user = await this.userService.findOneByIdString(userId, {
 				relations: {
 					employee: true,
@@ -533,13 +565,19 @@ export class AuthService extends SocialAuthService {
 					createdAt: 'DESC'
 				}
 			});
+
+			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId,
 				employeeId: user.employee ? user.employee.id : null
 			};
+
+			// Check if the user has a role
 			if (user.role) {
 				payload.role = user.role.name;
+
+				// Check if the role has rolePermissions
 				if (user.role.rolePermissions) {
 					payload.permissions = user.role.rolePermissions
 						.filter((rolePermission: IRolePermission) => rolePermission.enabled)
@@ -550,9 +588,14 @@ export class AuthService extends SocialAuthService {
 			} else {
 				payload.role = null;
 			}
+
+			// Generate an access token using the payload and a secret
 			const accessToken = sign(payload, environment.JWT_SECRET, {});
+
+			// Return the generated access token
 			return accessToken;
 		} catch (error) {
+			// Handle any errors that occur during the process
 			console.log('Error while getting jwt access token', error);
 		}
 	}
