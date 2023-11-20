@@ -28,6 +28,7 @@
     & .headings {
       display: flex;
       justify-content: space-between;
+      flex-direction: column;
       position: relative;
       & .headings-inner {
         & .title {
@@ -51,6 +52,26 @@
           text-align: start;
         }
       }
+      & .sent-code-container {
+          margin-bottom: 1rem;
+          margin-right: -20px;
+          & .normal-text {
+            font-size: 0.8rem;
+          }
+          & .minimum-text {
+            font-size: 0.75rem;
+          }
+          & p {
+            margin-bottom: 0;
+          }
+          & b {
+            font-size: 0.8rem;
+          }
+          & span {
+            font-size: 0.7rem;
+            color: var(--text-hint-color);
+          }
+        }
     }
     & .hr-div-strong {
       @include hr-div-strong;
@@ -130,10 +151,7 @@
             text-align: left;
             font-size: 14px;
             & a {
-                color: var(--text-basic-color);
-                &:hover {
-                    color: var(--link-text-color);
-                }
+                color: var(--link-text-color);
             }
         }
     }

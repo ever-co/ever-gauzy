@@ -8,20 +8,21 @@
 			<div class="headings-inner">
 				<h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
 				<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.TITLE' | translate }}</p>
-				<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.CODE_SUB_TITLE' | translate }}</p>
 			</div>
+			<ng-template [ngIf]="isCodeSent">
+				<div class="sent-code-container">
+					<p [ngClass]= "{
+						'normal-text': email?.value.length < 30,
+						'minimum-text': email?.value.length >= 30
+					}">
+						A 6-character code sent to: <b class="title">{{ email?.value }}</b>
+						<br />
+						<span>The code expires shortly, so please enter it soon.</span>
+					</p>
+				</div>
+			</ng-template>
 		</div>
 		<div class="hr-div-strong"></div>
-		<!--  -->
-		<ng-template [ngIf]="isCodeSent">
-			<div class="row">
-				<p class="text-center mt-4">
-					We’ve sent a 6-character code to <b class="title">{{ email.value }}</b>
-					<br />
-					The code expires shortly, so please enter it soon.
-				</p>
-			</div>
-		</ng-template>
 		<!--  -->
 		<form #formDirective="ngForm" [formGroup]="form" (ngSubmit)="confirmSignInCode()">
 			<!--  -->
