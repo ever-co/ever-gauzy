@@ -2,7 +2,7 @@
 
 Copyright © 2019-present, Ever Co. LTD. All rights reserved.
 
-This document represent official information about our licensing, make sure you read and understand it before start using software and source code.
+This document represents official information about our licensing, make sure you read and understand it before start using software and source code.
 
 - Check more detailed information about licensing in our [Wiki](https://github.com/ever-co/ever-gauzy/wiki/Licensing).
 - You can also ask any questions in the [Issue](https://github.com/ever-co/ever-gauzy/issues/3686) or [Contact Us](https://github.com/ever-co/ever-gauzy#contact-us).
