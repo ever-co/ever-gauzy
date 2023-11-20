@@ -574,8 +574,6 @@ export class EmailService {
 		originUrl?: string
 	) {
 		const integration = Object.assign({}, env.appIntegrationConfig);
-		const tenantId = user.tenantId || RequestContext.currentTenantId();
-
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_RESET,
 			message: {
@@ -600,7 +598,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId: null, tenantId });
+				const instance = await this._emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -673,7 +671,7 @@ export class EmailService {
 		if (!match) {
 			try {
 				// TODO : Which Organization to prefer while sending email
-				const instance = await this._emailSendService.getEmailInstance({ organizationId: null, tenantId: null });
+				const instance = await this._emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
