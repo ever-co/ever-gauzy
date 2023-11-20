@@ -25,7 +25,7 @@
 				<mj-table>
 					<tr
 						style="
-							background-color: #1b005d;
+							background-color: #1b005d !important;
 							color: #ffffff;
 							text-align: center;
 							font-weight: bold;

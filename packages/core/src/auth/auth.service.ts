@@ -210,12 +210,13 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Request Reset Password
+	 * Initiates the process to request a password reset.
 	 *
-	 * @param {IResetPasswordRequest} request - The request object containing user's email.
-	 * @param {LanguagesEnum} languageCode - The language code for email communication.
-	 * @param {string} [originUrl] - An optional origin URL for the reset request.
-	 * @returns {Promise<boolean | BadRequestException>} A Promise that resolves to a boolean indicating success or rejects with a BadRequestException in case of an error.
+	 * @param request - The reset password request object containing the email address.
+	 * @param languageCode - The language code used for email communication.
+	 * @param originUrl - Optional parameter representing the origin URL of the request.
+	 * @returns A Promise that resolves to a boolean indicating the success of the password reset request
+	 *          or throws a BadRequestException in case of failure.
 	 */
 	async requestResetPassword(
 		request: IResetPasswordRequest,
@@ -225,28 +226,25 @@ export class AuthService extends SocialAuthService {
 		try {
 			const { email } = request;
 
-			/** Fetch users with specific criteria */
+			// Fetch users with specific criteria
 			const users = await this.fetchUsers(email);
-			/** */
+			// Throw an exception if no matching users are found
 			if (users.length === 0) {
 				throw new BadRequestException('Forgot password request failed!');
 			}
 
-			/** */
+			// Initialize an array to store reset links along with tenant and user information
 			const tenantUsersMap: { resetLink: string; tenant: ITenant; user: IUser }[] = [];
 
-			/** Send email based on the number of users */
+			// Iterate through users and generate reset links
 			for await (const user of users) {
 				const { email, tenantId } = user;
 				const token = await this.getJwtAccessToken(user);
 
-				/** */
+				// Proceed if a valid token and email are obtained
 				if (!!token && !!email) {
 					try {
-						/** */
-						const tenant = user.tenant;
-
-						/** */
+						// Create a password reset request and generate a reset link
 						const request = await this.commandBus.execute(
 							new PasswordResetCreateCommand({
 								email,
@@ -255,37 +253,31 @@ export class AuthService extends SocialAuthService {
 							})
 						);
 						const resetLink = `${environment.clientBaseUrl}/#/auth/reset-password?token=${request.token}&tenantId=${tenantId}&email=${email}`;
-						tenantUsersMap.push({ resetLink, tenant, user });
+						tenantUsersMap.push({ resetLink, tenant: user.tenant, user });
 					} catch (error) {
 						throw new BadRequestException('Forgot password request failed!');
 					}
 				}
 			}
 
-			// If Only one user
+			// If there is only one user, send a password reset email
 			if (users.length === 1) {
 				const [user] = users;
 				const [tenantUserMap] = tenantUsersMap;
 
 				if (tenantUserMap) {
 					const { resetLink } = tenantUserMap;
-					this.emailService.requestPassword(
-						user,
-						resetLink,
-						languageCode,
-						originUrl
-					);
+					this.emailService.requestPassword(user, resetLink, languageCode, originUrl);
 				}
 			} else {
-				this.emailService.multiTenantResetPassword(
-					email,
-					tenantUsersMap,
-					languageCode,
-					originUrl
-				);
+				// If multiple users are found, send a multi-tenant password reset email
+				this.emailService.multiTenantResetPassword(email, tenantUsersMap, languageCode, originUrl);
 			}
+
+			// Return success status
 			return true;
 		} catch (error) {
+			// Throw a BadRequestException in case of failure
 			throw new BadRequestException('Forgot password request failed!');
 		}
 	}

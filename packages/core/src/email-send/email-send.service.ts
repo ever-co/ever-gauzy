@@ -31,7 +31,7 @@ export class EmailSendService {
             const smtpConfig: ISMTPConfig = SMTPUtils.defaultSMTPTransporter();
             const transport: IVerifySMTPTransport = SMTPUtils.convertSmtpToTransporter(smtpConfig);
 
-            console.log('Default SMTP configuration: %s', transport);
+            // console.log('Default SMTP configuration: %s', transport);
 
             /** Verifies SMTP configuration */
             if (!!await SMTPUtils.verifyTransporter(transport)) {
