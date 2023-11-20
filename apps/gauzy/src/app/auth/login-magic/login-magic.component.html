@@ -1,178 +1,162 @@
-<ng-container
-	*ngIf="show_popup; then workspacesTemplate; else singInTemplate">
-</ng-container>
-
-<ng-template #singInTemplate>
-	<section class="login-container">
-		<div class="login-wrapper">
-			<div class="svg-wrapper">
-				<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
-				<gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
+<section class="login-container">
+	<div class="login-wrapper">
+		<div class="svg-wrapper">
+			<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+			<gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
+		</div>
+		<div class="headings" [class]="isDemo ? 'headings-demo' : ''">
+			<div class="headings-inner">
+				<h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
+				<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.TITLE' | translate }}</p>
+				<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.CODE_SUB_TITLE' | translate }}</p>
 			</div>
-			<div class="headings" [class]="isDemo ? 'headings-demo' : ''">
-				<div class="headings-inner">
-					<h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
-					<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.TITLE' | translate }}</p>
-					<p class="sub-title">{{ 'LOGIN_PAGE.LOGIN_MAGIC.CODE_SUB_TITLE' | translate }}</p>
-				</div>
+		</div>
+		<div class="hr-div-strong"></div>
+		<!--  -->
+		<ng-template [ngIf]="isCodeSent">
+			<div class="row">
+				<p class="text-center mt-4">
+					We’ve sent a 6-character code to <b class="title">{{ email.value }}</b>
+					<br />
+					The code expires shortly, so please enter it soon.
+				</p>
 			</div>
-			<div class="hr-div-strong"></div>
+		</ng-template>
+		<!--  -->
+		<form #formDirective="ngForm" [formGroup]="form" (ngSubmit)="confirmSignInCode()">
 			<!--  -->
-			<ng-template [ngIf]="isCodeSent">
-				<div class="row">
-					<p class="text-center mt-4">
-						We’ve sent a 6-character code to <b class="title">{{ email.value }}</b>
-						<br />
-						The code expires shortly, so please enter it soon.
+			<div class="form-control-group">
+				<input
+					name="input-email"
+					id="input-email"
+					nbInput
+					fullWidth
+					formControlName="email"
+					noSpaceEdges
+					[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
+					[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
+					[attr.aria-invalid]="email.invalid && email.touched ? true : null"
+					autofocus
+					autocomplete-off
+				/>
+				<ng-container *ngIf="email.invalid && email.touched && !email.pristine">
+					<p class="caption status-danger" *ngIf="email?.errors?.required">
+						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
 					</p>
-				</div>
-			</ng-template>
+					<p class="caption status-danger" *ngIf="email?.errors?.pattern">
+						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
+					</p>
+				</ng-container>
+			</div>
 			<!--  -->
-			<form #formDirective="ngForm" [formGroup]="form" (ngSubmit)="confirmSingInCode()">
-				<!--  -->
+			<ng-container *ngIf="isCodeSent">
 				<div class="form-control-group">
 					<input
-						name="input-email"
-						id="input-email"
+						name="input-code"
+						id="input-code"
 						nbInput
 						fullWidth
-						formControlName="email"
+						formControlName="code"
 						noSpaceEdges
-						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
-						[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
-						[attr.aria-invalid]="email.invalid && email.touched ? true : null"
+						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
+						[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
+						[attr.aria-invalid]="code.invalid && code.touched ? true : null"
+						maxlength="6"
 						autofocus
 						autocomplete-off
 					/>
-					<ng-container *ngIf="email.invalid && email.touched && !email.pristine">
-						<p class="caption status-danger" *ngIf="email?.errors?.required">
-							{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
+					<ng-container *ngIf="code.invalid && code.touched">
+						<p class="caption status-danger" *ngIf="code.errors?.required">
+							  {{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
 						</p>
-						<p class="caption status-danger" *ngIf="email?.errors?.pattern">
-							{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
+						<p class="caption status-danger" *ngIf="code.errors?.minlength">
+							  {{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH' | translate : { requiredLength: code.errors?.minlength?.requiredLength } }}
 						</p>
 					</ng-container>
-				</div>
-				<!--  -->
-				<ng-container *ngIf="isCodeSent">
-					<div class="form-control-group">
-						<input
-							name="input-code"
-							id="input-code"
-							nbInput
-							fullWidth
-							formControlName="code"
-							noSpaceEdges
-							[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.CODE' | translate"
-							[status]="code.dirty ? (code.invalid ? 'danger' : 'success') : 'basic'"
-							[attr.aria-invalid]="code.invalid && code.touched ? true : null"
-							maxlength="6"
-							autofocus
-							autocomplete-off
-						/>
-						<ng-container *ngIf="code.invalid && code.touched">
-							<p class="caption status-danger" *ngIf="code.errors?.required">
-							  	{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED' | translate }}
-							</p>
-							<p class="caption status-danger" *ngIf="code.errors?.minlength">
-							  	{{ 'LOGIN_PAGE.VALIDATION.CODE_REQUIRED_LENGTH' | translate : { requiredLength: code.errors?.minlength?.requiredLength } }}
-							</p>
-						</ng-container>
-						<!-- Resend Code Button & Text -->
-						<ng-template [ngIf]="isCodeSent">
-							<p class="text-right mt-2">
-								<ng-template [ngIf]="isCodeResent" [ngIfElse]="resendButton">
-									<span>Request new code in {{ countdown }} seconds</span>
-								</ng-template>
+					<!-- Resend Code Button & Text -->
+					<ng-template [ngIf]="isCodeSent">
+						<p class="text-right mt-2">
+							<ng-template [ngIf]="isCodeResent" [ngIfElse]="resendButton">
+								<span>Request new code in {{ countdown }} seconds</span>
+							</ng-template>
 
-								<ng-template #resendButton>
-									<a class="resend-code" debounceClick (throttledClick)="onResendCode()" >
-										{{ "LOGIN_PAGE.LOGIN_MAGIC.RESEND_CODE_TITLE" | translate }}
-									</a>
-								</ng-template>
-							</p>
-						</ng-template>
-					</div>
-				</ng-container>
-				<!--  -->
-				<div class="submit-btn-wrapper">
-					<a class="forgot-email caption-2 forgot-email-big" href="mailto:forgot@gauzy.co">
-						{{ 'LOGIN_PAGE.FORGOT_EMAIL_TITLE' | translate }}
-					</a>
-					<div class="submit-inner-wrapper">
-						<ng-template [ngIf]="isCodeSent" [ngIfElse]="sendCodeButtonTemplate">
-							<button
-								type="submit"
-								nbButton
-								size="tiny"
-								class="submit-btn"
-								[disabled]="form.invalid"
-							>
-								<span class="btn-text">
-									{{ 'BUTTONS.LOGIN' | translate }}
-								</span>
-							</button>
-						</ng-template>
-						<ng-template #sendCodeButtonTemplate>
-							<button
-								type="button"
-								nbButton
-								size="tiny"
-								class="submit-btn"
-								[disabled]="email.invalid"
-								(click)="sendLoginCode()"
-							>
-								<span class="btn-text">
-									{{ 'BUTTONS.SEND_CODE' | translate }}
-								</span>
-								<ng-template [ngIf]="isLoading">
-									<nb-icon
-										class="btn-icon"
-										[ngClass]="isLoading ? 'spinner' : ''"
-										icon="loader-outline"
-									></nb-icon>
-								</ng-template>
-							</button>
-						</ng-template>
-					</div>
+							<ng-template #resendButton>
+								<a class="resend-code" debounceClick (throttledClick)="onResendCode()" >
+									{{ "LOGIN_PAGE.LOGIN_MAGIC.RESEND_CODE_TITLE" | translate }}
+								</a>
+							</ng-template>
+						</p>
+					</ng-template>
 				</div>
-				<div class="magic-description">
-					<p class="sub-title">
-						{{ 'LOGIN_PAGE.LOGIN_MAGIC.DESCRIPTION_TITLE' | translate }}
-						<span class="sub-title">
-							<a routerLink="/auth/login">
-								{{ 'LOGIN_PAGE.LOGIN_MAGIC.OR_SIGN_IN_WITH_PASSWORD' | translate }}
-							</a>
-						</span>
-					</p>
-				</div>
-			</form>
-			<div class="hr-div-soft"></div>
-			<section>
-				<ngx-social-links></ngx-social-links>
-			</section>
-			<div class="hr-div-soft"></div>
-			<section class="another-action" aria-label="Register">
-				{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
-				<a class="text-link" routerLink="/auth/register">
-					{{ 'BUTTONS.REGISTER' | translate }}
+			</ng-container>
+			<!--  -->
+			<div class="submit-btn-wrapper">
+				<a class="forgot-email caption-2 forgot-email-big" href="mailto:forgot@gauzy.co">
+					{{ 'LOGIN_PAGE.FORGOT_EMAIL_TITLE' | translate }}
 				</a>
-			</section>
-		</div>
-		<div class="features-wrapper">
-			<div>
-				<ngx-whats-new></ngx-whats-new>
+				<div class="submit-inner-wrapper">
+					<ng-template [ngIf]="isCodeSent" [ngIfElse]="sendCodeButtonTemplate">
+						<button
+							type="submit"
+							nbButton
+							size="tiny"
+							class="submit-btn"
+							[disabled]="form.invalid"
+						>
+							<span class="btn-text">
+								{{ 'BUTTONS.LOGIN' | translate }}
+							</span>
+						</button>
+					</ng-template>
+					<ng-template #sendCodeButtonTemplate>
+						<button
+							type="button"
+							nbButton
+							size="tiny"
+							class="submit-btn"
+							[disabled]="email.invalid"
+							(click)="sendLoginCode()"
+						>
+							<span class="btn-text">
+								{{ 'BUTTONS.SEND_CODE' | translate }}
+							</span>
+							<ng-template [ngIf]="isLoading">
+								<nb-icon
+									class="btn-icon"
+									[ngClass]="isLoading ? 'spinner' : ''"
+									icon="loader-outline"
+								></nb-icon>
+							</ng-template>
+						</button>
+					</ng-template>
+				</div>
 			</div>
+			<div class="magic-description">
+				<p class="sub-title">
+					{{ 'LOGIN_PAGE.LOGIN_MAGIC.DESCRIPTION_TITLE' | translate }}
+					<span class="sub-title">
+						<a routerLink="/auth/login">
+							{{ 'LOGIN_PAGE.LOGIN_MAGIC.OR_SIGN_IN_WITH_PASSWORD' | translate }}
+						</a>
+					</span>
+				</p>
+			</div>
+		</form>
+		<div class="hr-div-soft"></div>
+		<section>
+			<ngx-social-links></ngx-social-links>
+		</section>
+		<div class="hr-div-soft"></div>
+		<section class="another-action" aria-label="Register">
+			{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
+			<a class="text-link" routerLink="/auth/register">
+				{{ 'BUTTONS.REGISTER' | translate }}
+			</a>
+		</section>
+	</div>
+	<div class="features-wrapper">
+		<div>
+			<ngx-whats-new></ngx-whats-new>
 		</div>
-	</section>
-</ng-template>
-
-<ng-template #workspacesTemplate>
-	<ng-container *ngIf="workspaces.length > 0">
-		<ngx-workspace-selection
-			[workspaces]="workspaces"
-			[confirmed_email]="confirmed_email"
-			(selectedWorkspace)="signInWorkspace($event)"
-		></ngx-workspace-selection>
-	</ng-container>
-</ng-template>
+	</div>
+</section>

@@ -706,7 +706,6 @@ export class AuthService extends SocialAuthService {
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
 		try {
-			console.time('confirm signin for multi-tenant workspaces');
 			const { email, code } = payload;
 
 			// Check for missing email or code
@@ -777,15 +776,12 @@ export class AuthService extends SocialAuthService {
 				total_workspaces: workspaces.length
 			};
 
-			console.timeEnd('confirm signin for multi-tenant workspaces');
-
 			// Return the response if there are matching users
 			if (workspaces.length > 0) {
 				return response;
 			}
 			throw new UnauthorizedException();
 		} catch (error) {
-			console.log('Error while verifying email & code for multi-tenant workspace signin: %s', error?.message);
 			throw new UnauthorizedException();
 		}
 	}
@@ -814,7 +810,7 @@ export class AuthService extends SocialAuthService {
 						email,
 						tenantId,
 						code,
-						// codeExpireAt: MoreThanOrEqual(new Date()),
+						codeExpireAt: MoreThanOrEqual(new Date()),
 						isActive: true,
 						isArchived: false
 					},
