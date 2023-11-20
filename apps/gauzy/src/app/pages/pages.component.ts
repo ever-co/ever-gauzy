@@ -114,11 +114,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/accounting/invoices/estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ESTIMATES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_ESTIMATE,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.INVOICES_EDIT)
-								? { add: '/pages/accounting/invoices/estimates/add' }
-								: {})
+							add: '/pages/accounting/invoices/estimates/add'
 						}
 					},
 					{
@@ -127,7 +128,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/accounting/invoices/received-estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES_RECEIVED',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ESTIMATES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_ESTIMATE_RECEIVED
 						}
 					},
@@ -138,11 +142,12 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.INVOICES',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.INVOICES_EDIT)
-								? { add: '/pages/accounting/invoices/add' }
-								: {})
+							add: '/pages/accounting/invoices/add'
 						}
 					},
 					{
@@ -152,7 +157,10 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_INVOICE_RECURRING
 						}
 					},
@@ -163,7 +171,10 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.INVOICES_RECEIVED',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_INVOICE_RECEIVED
 						}
 					},
@@ -175,12 +186,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.INCOME',
 							permissionKeys: [PermissionsEnum.ORG_INCOMES_VIEW],
 							featureKey: FeatureEnum.FEATURE_INCOME,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_INCOMES_EDIT
-							)
-								? { add: '/pages/accounting/income?openAddDialog=true' }
-								: {})
+							add: '/pages/accounting/income?openAddDialog=true'
 						}
 					},
 					{
@@ -191,12 +197,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.EXPENSES',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
 							featureKey: FeatureEnum.FEATURE_EXPENSE,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_EXPENSES_EDIT
-							)
-								? { add: '/pages/accounting/expenses?openAddDialog=true' }
-								: {})
+							add: '/pages/accounting/expenses?openAddDialog=true'
 						}
 					},
 					{
@@ -204,15 +205,12 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/accounting/expense-recurring',
 						data: {
-							translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
+							translationKey:
+								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_EXPENSES_EDIT
-							)
-								? { add: '/pages/accounting/expense-recurring?openAddDialog=true' }
-								: {})
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
+							add: '/pages/accounting/expense-recurring?openAddDialog=true'
 						}
 					},
 					{
@@ -223,12 +221,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.PAYMENTS',
 							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW],
 							featureKey: FeatureEnum.FEATURE_PAYMENT,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PAYMENT_ADD_EDIT
-							)
-								? { add: '/pages/accounting/payments?openAddDialog=true' }
-								: {})
+							add: '/pages/accounting/payments?openAddDialog=true'
 						}
 					}
 				]
@@ -248,14 +241,11 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/proposals',
 						data: {
 							translationKey: 'MENU.PROPOSALS',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ORG_PROPOSALS_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_PROPOSAL,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROPOSALS_EDIT
-							)
-								? { add: '/pages/sales/proposals/register' }
-								: {})
+							add: '/pages/sales/proposals/register'
 						}
 					},
 					{
@@ -264,14 +254,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/invoices/estimates',
 						data: {
 							translationKey: 'MENU.ESTIMATES',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ESTIMATES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_PROPOSAL,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ESTIMATES_EDIT
-							)
-								? { add: '/pages/sales/invoices/estimates/add' }
-								: {})
+							add: '/pages/sales/invoices/estimates/add'
 						}
 					},
 					{
@@ -280,11 +268,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/invoices',
 						data: {
 							translationKey: 'MENU.INVOICES',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_INVOICE,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.INVOICES_EDIT)
-								? { add: '/pages/sales/invoices/add' }
-								: {})
+							add: '/pages/sales/invoices/add'
 						}
 					},
 					{
@@ -293,7 +282,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/invoices/recurring',
 						data: {
 							translationKey: 'MENU.RECURRING_INVOICES',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.INVOICES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_INVOICE_RECURRING
 						}
 					},
@@ -305,12 +297,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.PAYMENTS',
 							permissionKeys: [PermissionsEnum.ORG_PAYMENT_VIEW],
 							featureKey: FeatureEnum.FEATURE_PAYMENT,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PAYMENT_ADD_EDIT
-							)
-								? { add: '/pages/sales/payments?openAddDialog=true' }
-								: {})
+							add: '/pages/sales/payments?openAddDialog=true'
 						}
 					},
 					{
@@ -319,14 +306,11 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/sales/pipelines',
 						data: {
 							translationKey: 'MENU.PIPELINES',
-							permissionKeys: [PermissionsEnum.VIEW_SALES_PIPELINES],
+							permissionKeys: [
+								PermissionsEnum.VIEW_SALES_PIPELINES
+							],
 							featureKey: FeatureEnum.FEATURE_PIPELINE,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.EDIT_SALES_PIPELINES
-							)
-								? { add: '/pages/sales/pipelines?openAddDialog=true' }
-								: {})
+							add: '/pages/sales/pipelines?openAddDialog=true'
 						}
 					}
 				]
@@ -345,11 +329,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/dashboard',
 						data: {
 							translationKey: 'MENU.DASHBOARD',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TASK_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_DASHBOARD_TASK,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
-								? { add: '/pages/tasks/dashboard?openAddDialog=true' }
-								: {})
+							add: '/pages/tasks/dashboard?openAddDialog=true'
 						}
 					},
 					{
@@ -359,11 +344,12 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.MY_TASKS',
 							hide: () => !this.isEmployee,
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TASK_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_MY_TASK,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
-								? { add: '/pages/tasks/me?openAddDialog=true' }
-								: {})
+							add: '/pages/tasks/me?openAddDialog=true'
 						}
 					},
 					{
@@ -372,11 +358,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/tasks/team',
 						data: {
 							translationKey: 'MENU.TEAM_TASKS',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TASK_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_TEAM_TASK,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
-								? { add: '/pages/tasks/team?openAddDialog=true' }
-								: {})
+							add: '/pages/tasks/team?openAddDialog=true'
 						}
 					}
 				]
@@ -396,7 +383,9 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/jobs/employee',
 						data: {
 							translationKey: 'MENU.EMPLOYEES',
-							permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW]
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW
+							]
 						}
 					},
 					{
@@ -417,7 +406,9 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/jobs/matching',
 						data: {
 							translationKey: 'MENU.JOBS_MATCHING',
-							permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW]
+							permissionKeys: [
+								PermissionsEnum.ORG_JOB_MATCHING_VIEW
+							]
 						}
 					},
 					{
@@ -426,13 +417,10 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/jobs/proposal-template',
 						data: {
 							translationKey: 'MENU.PROPOSAL_TEMPLATE',
-							permissionKeys: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT
-							)
-								? { add: '/pages/jobs/proposal-template?openAddDialog=true' }
-								: {})
+							permissionKeys: [
+								PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
+							],
+							add: '/pages/jobs/proposal-template?openAddDialog=true'
 						}
 					}
 				]
@@ -451,7 +439,9 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'full',
 						data: {
 							translationKey: 'MENU.MANAGE',
-							permissionKeys: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ORG_EMPLOYEES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEES
 						}
 					},
@@ -462,7 +452,10 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIME_ACTIVITY',
-							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
+							permissionKeys: [
+								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+								PermissionsEnum.TIME_TRACKER
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIME_ACTIVITY
 						}
 					},
@@ -473,7 +466,10 @@ export class PagesComponent extends TranslationBaseComponent
 						pathMatch: 'prefix',
 						data: {
 							translationKey: 'MENU.TIMESHEETS',
-							permissionKeys: [PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TIME_TRACKER],
+							permissionKeys: [
+								PermissionsEnum.ADMIN_DASHBOARD_VIEW,
+								PermissionsEnum.TIME_TRACKER
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMESHEETS
 						}
 					},
@@ -493,14 +489,11 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/approvals',
 						data: {
 							translationKey: 'MENU.APPROVALS',
-							permissionKeys: [PermissionsEnum.REQUEST_APPROVAL_VIEW],
+							permissionKeys: [
+								PermissionsEnum.REQUEST_APPROVAL_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_APPROVAL,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.REQUEST_APPROVAL_EDIT
-							)
-								? { add: '/pages/employees/approvals?openAddDialog=true' }
-								: {})
+							add: '/pages/employees/approvals?openAddDialog=true'
 						}
 					},
 					{
@@ -531,12 +524,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'MENU.TIME_OFF',
 							permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_TIME_OFF_VIEW
-							)
-								? { add: '/pages/employees/time-off?openAddDialog=true' }
-								: {})
+							add: '/pages/employees/time-off?openAddDialog=true'
 						}
 					},
 					{
@@ -545,14 +533,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/recurring-expenses',
 						data: {
 							translationKey: 'MENU.RECURRING_EXPENSE',
-							permissionKeys: [PermissionsEnum.EMPLOYEE_EXPENSES_VIEW],
-							featureKey: FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.EMPLOYEE_EXPENSES_EDIT
-							)
-								? { add: '/pages/employees/recurring-expenses?openAddDialog=true' }
-								: {})
+							permissionKeys: [
+								PermissionsEnum.EMPLOYEE_EXPENSES_VIEW
+							],
+							featureKey:
+								FeatureEnum.FEATURE_EMPLOYEE_RECURRING_EXPENSE,
+							add: '/pages/employees/recurring-expenses?openAddDialog=true'
 						}
 					},
 					{
@@ -561,14 +547,11 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/employees/candidates',
 						data: {
 							translationKey: 'MENU.CANDIDATES',
-							permissionKeys: [PermissionsEnum.ORG_CANDIDATES_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ORG_CANDIDATES_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_CANDIDATE,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CANDIDATES_EDIT
-							)
-								? { add: '/pages/employees/candidates?openAddDialog=true' }
-								: {})
+							add: '/pages/employees/candidates?openAddDialog=true'
 						}
 					}
 				]
@@ -599,15 +582,13 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-border-all',
 						link: '/pages/organization/equipment',
 						data: {
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EQUIPMENT_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_EQUIPMENT_VIEW
+							],
 							translationKey: 'MENU.EQUIPMENT',
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EQUIPMENT,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_EQUIPMENT_EDIT
-							)
-								? { add: '/pages/organization/equipment?openAddDialog=true' }
-								: {})
+							add: '/pages/organization/equipment?openAddDialog=true'
 						}
 					},
 					{
@@ -618,13 +599,9 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'MENU.INVENTORY',
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.INVENTORY_GALLERY_ADD
-							)
-								? { add: '/pages/organization/inventory/create' }
-								: {})
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_INVENTORY,
+							add: '/pages/organization/inventory/create'
 						}
 					},
 					{
@@ -633,11 +610,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/organization/tags',
 						data: {
 							translationKey: 'MENU.TAGS',
-							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAGS_ADD],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.ORG_TAGS_ADD
+							],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TAG,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
-								? { add: '/pages/organization/tags?openAddDialog=true' }
-								: {})
+							add: '/pages/organization/tags?openAddDialog=true'
 						}
 					},
 					{
@@ -648,9 +626,7 @@ export class PagesComponent extends TranslationBaseComponent
 							translationKey: 'ORGANIZATIONS_PAGE.VENDORS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_VENDOR,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
-								? { add: '/pages/organization/vendors?openAddDialog=true' }
-								: {})
+							add: '/pages/organization/vendors?openAddDialog=true'
 						}
 					},
 					{
@@ -659,14 +635,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/organization/projects`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.PROJECTS',
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_VIEW],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
-							...(this.store.hasAnyPermission(
+							permissionKeys: [
 								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_PROJECT_ADD
-							)
-								? { add: '/pages/organization/projects/create' }
-								: {})
+								PermissionsEnum.ORG_PROJECT_VIEW
+							],
+							featureKey: FeatureEnum.FEATURE_ORGANIZATION_PROJECT,
+							add: '/pages/organization/projects/create'
 						}
 					},
 					{
@@ -676,10 +650,9 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DEPARTMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
-								? { add: '/pages/organization/departments?openAddDialog=true' }
-								: {})
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_DEPARTMENT,
+							add: '/pages/organization/departments?openAddDialog=true'
 						}
 					},
 					{
@@ -688,11 +661,12 @@ export class PagesComponent extends TranslationBaseComponent
 						link: `/pages/organization/teams`,
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.EDIT.TEAMS',
-							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_VIEW],
+							permissionKeys: [
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.ORG_TEAM_VIEW
+							],
 							featureKey: FeatureEnum.FEATURE_ORGANIZATION_TEAM,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
-								? { add: '/pages/organization/teams?openAddDialog=true' }
-								: {})
+							add: '/pages/organization/teams?openAddDialog=true'
 						}
 					},
 					{
@@ -702,10 +676,9 @@ export class PagesComponent extends TranslationBaseComponent
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.DOCUMENTS',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
-								? { add: '/pages/organization/documents?openAddDialog=true' }
-								: {})
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_DOCUMENT,
+							add: '/pages/organization/documents?openAddDialog=true'
 						}
 					},
 					{
@@ -713,12 +686,12 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-layer-group',
 						link: `/pages/organization/employment-types`,
 						data: {
-							translationKey: 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES',
+							translationKey:
+								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPES',
 							permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
-							...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT)
-								? { add: '/pages/organization/employment-types?openAddDialog=true' }
-								: {})
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_EMPLOYMENT_TYPE,
+							add: '/pages/organization/employment-types?openAddDialog=true'
 						}
 					},
 					{
@@ -726,15 +699,12 @@ export class PagesComponent extends TranslationBaseComponent
 						icon: 'fas fa-exchange-alt fa-rotate-90',
 						link: '/pages/organization/expense-recurring',
 						data: {
-							translationKey: 'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
+							translationKey:
+								'ORGANIZATIONS_PAGE.EXPENSE_RECURRING',
 							permissionKeys: [PermissionsEnum.ORG_EXPENSES_VIEW],
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
-							...(this.store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_EXPENSES_EDIT
-							)
-								? { add: '/pages/organization/expense-recurring?openAddDialog=true' }
-								: {})
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_RECURRING_EXPENSE,
+							add: '/pages/organization/expense-recurring?openAddDialog=true'
 						}
 					},
 					{
@@ -743,7 +713,8 @@ export class PagesComponent extends TranslationBaseComponent
 						link: '/pages/organization/help-center',
 						data: {
 							translationKey: 'ORGANIZATIONS_PAGE.HELP_CENTER',
-							featureKey: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
+							featureKey:
+								FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER
 						}
 					}
 				]
@@ -753,7 +724,10 @@ export class PagesComponent extends TranslationBaseComponent
 				icon: 'far fa-address-book',
 				data: {
 					translationKey: 'MENU.CONTACTS',
-					permissionKeys: [PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ALL_ORG_VIEW],
+					permissionKeys: [
+						PermissionsEnum.ORG_CONTACT_VIEW,
+						PermissionsEnum.ALL_ORG_VIEW
+					],
 					featureKey: FeatureEnum.FEATURE_CONTACT
 				},
 				children: [
