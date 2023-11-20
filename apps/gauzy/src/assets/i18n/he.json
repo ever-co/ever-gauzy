@@ -6,6 +6,7 @@
 		"ADD": "הוסף",
 		"CREATE": "צור",
 		"REGISTER": "Register",
+		"CHANGE_PASSWORD": "שנה סיסמה",
 		"LOGIN": "Log In",
 		"SEND_CODE": "התחבר עם דואר אלקטרוני",
 		"ADD_NOTE": "Add note",
@@ -4162,6 +4163,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
+			"multi-tenant-password": "איפוס סיסמת ריבוי דיירים",
 			"welcome-user": "Welcome User",
 			"invite-organization-client": "Invite Organization Client",
 			"email-estimate": "Email Estimate",
@@ -4376,6 +4378,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "שנה סיסמה",
+		"SUB_TITLE": "אנא הגדר סיסמה חדשה",
+		"LABELS": {
+			"NEW_PASSWORD": "סיסמה חדשה:",
+			"CONFIRM_PASSWORD": "אימות סיסמה:",
+			"BACK_TO": "חזרה ל"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "סיסמה חדשה",
+			"CONFIRM_PASSWORD": "אימות סיסמה"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "סיסמה חדשה נדרשת!",
+			"CONFIRM_PASSWORD_REQUIRED": "אימות סיסמה נדרש!",
+			"PASSWORDS_NOT_MATCH": "הסיסמה אינה תואמת לאימות הסיסמה!",
+			"PASSWORD_SHOULD_CONTAIN": "הסיסמה החדשה צריכה לכלול בין {{ minLength }} ל-{{ maxLength }} תווים."
 		}
 	},
 	"PAGINATION": {

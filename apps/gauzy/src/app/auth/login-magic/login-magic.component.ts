@@ -6,9 +6,8 @@ import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
-import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { patterns } from '../../@shared/regex/regex-patterns.const';
-import { AuthService, ErrorHandlingService, Store } from '../../@core/services';
+import { AuthService, ErrorHandlingService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,15 +25,16 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	public isCodeResent: boolean = false;
 	public isDemo: boolean = environment.DEMO;
 
-	public confirmed_email: string;
-	public total_workspaces: number;
-	public show_popup: boolean = false;
-	public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
-
 	/**
-	 * Magic Login Form
+	 * FormGroup instance representing the magic login form.
 	 */
 	public form: FormGroup = NgxLoginMagicComponent.buildForm(this._fb);
+	/**
+	 * Static method to build the magic login form using Angular's FormBuilder.
+	 *
+	 * @param fb - Angular FormBuilder instance.
+	 * @returns {FormGroup} - The built magic login form.
+	 */
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			email: [
@@ -52,14 +52,18 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	}
 
 	/**
+	 * Gets the 'email' AbstractControl from the form.
 	 *
+	 * @returns {AbstractControl} - The 'email' form control.
 	 */
 	get email(): AbstractControl {
 		return this.form.get('email');
 	}
 
 	/**
+	 * Gets the 'code' AbstractControl from the form.
 	 *
+	 * @returns {AbstractControl} - The 'code' form control.
 	 */
 	get code(): AbstractControl {
 		return this.form.get('code');
@@ -71,7 +75,6 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
-		private readonly _store: Store,
 		private readonly _authService: AuthService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		@Inject(NB_AUTH_OPTIONS) options
@@ -91,11 +94,10 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 			// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
 			tap(({ email }: Params) => {
 				if (email) {
-					this.form.setValue({ email });
+					this.form.patchValue({ email });
 					this.form.updateValueAndValidity();
 				}
 			}),
-
 			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
 			untilDestroyed(this)
 		).subscribe();
@@ -149,78 +151,67 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	}
 
 	/**
-	 *
+	 * Resend the sign-in code.
 	 */
-	async onResendCode() {
+	async onResendCode(): Promise<void> {
+		// Start the timer
 		this.startTimer();
 
 		// Get the email value from the form
 		const email = this.form.get('email').value;
+
+		// Check if email is present
 		if (!email) {
 			return;
 		}
 
-		// Send a request to sign in to workspaces using the authentication service
-		await firstValueFrom(
-			this._authService.sendSigninCode({ email }).pipe(
-				catchError((error) => {
-					// Handle and log errors using the error handling service
-					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this)
-			)
-		); // Wait for the login request to complete
+		try {
+			// Send a request to sign in to workspaces using the authentication service
+			await firstValueFrom(
+				this._authService.sendSigninCode({ email }).pipe(
+					catchError((error) => {
+						// Handle and log errors using the error handling service
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Handle component lifecycle to avoid memory leaks
+					untilDestroyed(this)
+				)
+			); // Wait for the login request to complete
+		} catch (error) {
+			// Handle errors
+			console.error('Error while resending sign-in code:', error);
+		}
 	}
 
 	/**
-	 *
+	 * Confirms the sign-in code.
 	 */
-	async confirmSingInCode() {
+	async confirmSignInCode(): Promise<void> {
+		// Check if the form is invalid
 		if (this.form.invalid) {
 			return;
 		}
-		// Get the email &code value from the form
+
+		// Get the email and code values from the form
 		const { email, code } = this.form.getRawValue();
+
+		// Check if both email and code are present
 		if (!email || !code) {
 			return;
 		}
 
-		// Send a request to sign in to workspaces using the authentication service
-		await firstValueFrom(
-			this._authService.confirmSignInByCode({ email, code }).pipe(
-				tap((response: any) => {
-					if (response['status'] === HttpStatus.UNAUTHORIZED) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				catchError((error) => {
-					// Handle and log errors using the error handling service
-					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				// Update component state with the fetched workspaces
-				tap(({ workspaces, show_popup, total_workspaces, confirmed_email }: IUserSigninWorkspaceResponse) => {
-					this.workspaces = workspaces;
-					this.show_popup = show_popup;
-					this.confirmed_email = confirmed_email;
-					this.total_workspaces = total_workspaces;
-
-					/** */
-					if (total_workspaces == 1) {
-						const [workspace] = this.workspaces;
-						this.signInWorkspace(workspace);
-					}
-				}),
-				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this)
-			)
-		); // Wait for the login request to complete
+		// Navigate to the 'auth/magic-sign-in' route with email and code as query parameters
+		this.router.navigate(['auth/magic-sign-in'], {
+			queryParams: {
+				email,
+				code
+			}
+		});
 	}
 
 	/**
-	 *
+	 * Starts a timer for a countdown.
 	 */
 	startTimer() {
 		this.isCodeResent = true;
@@ -239,57 +230,12 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	}
 
 	/**
-	 *
+	 * Stops the timer and resets the code resent flag.
 	 */
 	stopTimer() {
 		this.isCodeResent = false;
 		if (this.timer) {
 			this.timer.unsubscribe();
 		}
-	}
-
-	/**
-	 * Continue the workspace sign-in process.
-	 */
-	signInWorkspace(workspace: IWorkspaceResponse) {
-		if (!workspace || !this.confirmed_email) {
-			return; // Exit if the no workspace
-		}
-
-		// Extract workspace, email, and token from the parameter and component state
-		const email = this.confirmed_email;
-		const token = workspace.token;
-
-		// Send a request to sign in to the workspace using the authentication service
-		this._authService.signinWorkspaceByToken({ email, token }).pipe(
-			tap((response: any) => {
-				if (response['status'] === HttpStatus.UNAUTHORIZED) {
-					throw new Error(`${response['message']}`);
-				}
-			}),
-			filter(({ user, token }: IAuthResponse) => !!user && !!token),
-			tap((response: IAuthResponse) => {
-				const user: IUser = response.user;
-				const token: string = response.token;
-				const refresh_token: string = response.refresh_token;
-
-				/** */
-				this._store.userId = user.id;
-				this._store.user = user;
-				this._store.token = token;
-				this._store.refresh_token = refresh_token;
-				this._store.organizationId = user.employee?.organizationId;
-				this._store.tenantId = user.tenantId;
-
-				this.router.navigate(['/']);
-			}),
-			catchError((error) => {
-				// Handle and log errors using the error handling service
-				this._errorHandlingService.handleError(error);
-				return EMPTY;
-			}),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
 	}
 }

@@ -6,6 +6,7 @@
 		"ADD": "添加",
 		"CREATE": "创建",
 		"REGISTER": "注册",
+		"CHANGE_PASSWORD": "更改密码",
 		"LOGIN": "登录",
 		"SEND_CODE": "使用电子邮件登录",
 		"ADD_NOTE": "添加笔记",
@@ -4217,6 +4218,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "密码重置",
+			"multi-tenant-password": "多租户密码重置",
 			"password-less-authentication": "无密码验证",
 			"welcome-user": "欢迎用户",
 			"email-verification": "电子邮件确认",
@@ -4452,6 +4454,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "更改密码",
+		"SUB_TITLE": "请设置一个新密码",
+		"LABELS": {
+			"NEW_PASSWORD": "新密码：",
+			"CONFIRM_PASSWORD": "确认密码：",
+			"BACK_TO": "返回"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "新密码",
+			"CONFIRM_PASSWORD": "确认密码"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "新密码是必需的！",
+			"CONFIRM_PASSWORD_REQUIRED": "需要密码确认！",
+			"PASSWORDS_NOT_MATCH": "密码与确认密码不匹配！",
+			"PASSWORD_SHOULD_CONTAIN": "新密码应包含{{ minLength }}到{{ maxLength }}个字符。"
 		}
 	},
 	"PAGINATION": {

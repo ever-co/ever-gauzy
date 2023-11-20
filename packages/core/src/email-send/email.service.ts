@@ -18,9 +18,10 @@ import {
 	IOrganizationTeamJoinRequest,
 	EmailTemplateEnum,
 	IResendEmailInput,
-	EmailStatusEnum
+	EmailStatusEnum,
+	ITenant
 } from '@gauzy/contracts';
-import { ConfigService, environment as env } from '@gauzy/config';
+import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
@@ -32,17 +33,10 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 export class EmailService {
 
 	constructor(
-		@InjectRepository(EmailHistory)
-		private readonly emailHistoryRepository: Repository<EmailHistory>,
-
-		@InjectRepository(EmailTemplate)
-		private readonly emailTemplateRepository: Repository<EmailTemplate>,
-
-		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>,
-
-		private readonly _emailSendService: EmailSendService,
-		private readonly configService: ConfigService
+		@InjectRepository(EmailHistory) private readonly emailHistoryRepository: Repository<EmailHistory>,
+		@InjectRepository(EmailTemplate) private readonly emailTemplateRepository: Repository<EmailTemplate>,
+		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+		private readonly _emailSendService: EmailSendService
 	) { }
 
 	/**
@@ -575,43 +569,109 @@ export class EmailService {
 	 */
 	async requestPassword(
 		user: IUser,
-		url: string,
+		resetLink: string,
 		languageCode: LanguagesEnum,
-		organizationId: string,
 		originUrl?: string
 	) {
-		let organization: Organization;
-		if (organizationId) {
-			organization = await this.organizationRepository.findOneBy({
-				id: organizationId
-			});
-		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const integration = Object.assign({}, env.appIntegrationConfig);
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_RESET,
 			message: {
-				to: `${user.email}`,
-				subject: 'Forgotten Password'
+				to: `${user.email}`
 			},
 			locals: {
+				...integration,
+				userName: user.name,
+				tenantName: user.tenant.name,
 				locale: languageCode,
-				generatedUrl: url,
-				host: originUrl || env.clientBaseUrl,
-				organizationId,
-				tenantId
+				generatedUrl: resetLink,
+				host: originUrl || env.clientBaseUrl
 			}
 		};
+
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode,
-			organization,
 			message: '',
 		}
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this._emailSendService.getInstance();
+				const send = await instance.send(sendOptions);
+
+				body['message'] = send.originalMessage;
+			} catch (error) {
+				console.error(error);
+			} finally {
+				await this.createEmailRecord(body);
+			}
+		}
+	}
+
+	/**
+	 *
+	 * @param email
+	 * @param tenantUsersMap
+	 * @param languageCode
+	 * @param originUrl
+	 */
+	async multiTenantResetPassword(
+		email: string,
+		tenants: { resetLink: string; tenant: ITenant; user: IUser }[],
+		languageCode: LanguagesEnum,
+		originUrl: string
+	) {
+		const integration = Object.assign({}, env.appIntegrationConfig);
+
+		/** */
+		const items: {
+			resetLink: string,
+			tenantName: ITenant['name'],
+			tenantId: ITenant['id'],
+			userName: IUser['name']
+		}[] = [];
+
+		/** */
+		for await (const { resetLink, tenant, user } of tenants) {
+			/** */
+			const tenantId = tenant ? tenant.id : RequestContext.currentTenantId();
+
+			/** */
+			items.push({
+				tenantName: tenant ? tenant.name : user.name,
+				userName: user.name,
+				resetLink,
+				tenantId
+			});
+		}
+
+		const sendOptions = {
+			template: EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET,
+			message: {
+				to: `${email}`
+			},
+			locals: {
+				...integration,
+				locale: languageCode,
+				host: originUrl || env.clientBaseUrl,
+				items
+			}
+		};
+
+		const body = {
+			templateName: sendOptions.template,
+			email: sendOptions.message.to,
+			languageCode,
+			message: '',
+		}
+
+		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+		if (!match) {
+			try {
+				// TODO : Which Organization to prefer while sending email
+				const instance = await this._emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -780,51 +840,68 @@ export class EmailService {
 	}
 
 	/**
-	 * Password Less Authentication
+	 * Sends a magic login code to the user's email for password-less authentication.
 	 *
-	 * @param user
-	 * @param languageCode
+	 * @param email - User's email address.
+	 * @param magicCode - Generated magic code for login.
+	 * @param magicLink - Link for password-less authentication.
+	 * @param locale - Language/locale for email content.
+	 * @param integration - App integration configuration.
+	 * @param expireMinutes - Number of minutes until the magic code expires.
+	 * @returns {Promise<void>} - A promise indicating the completion of the operation.
 	 */
-	async passwordLessAuthentication(
-		email: IUser['email'],
-		code: IUser['code'],
-		locale: LanguagesEnum,
-		integration?: IAppIntegrationConfig
-	) {
-		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
-		deepMerge(integration, env.appIntegrationConfig);
-
+	async sendMagicLoginCode({
+		email,
+		magicCode,
+		magicLink,
+		locale,
+		integration
+	}: {
+		email: IUser['email'];
+		magicCode: IUser['code'];
+		magicLink: IAppIntegrationConfig['appMagicSignUrl'];
+		locale: LanguagesEnum;
+		integration: IAppIntegrationConfig;
+	}): Promise<void> {
+		/** */
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
-				to: `${email}`
+				to: `${email}`,
 			},
 			locals: {
 				locale,
 				email,
-				host: env.clientBaseUrl,
-				inviteCode: code,
-				...integration
-			}
+				magicCode,
+				magicLink,
+				...integration,
+			},
 		};
+
+		/** */
 		const body = {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode: locale,
-			message: ''
-		}
+			message: '',
+		};
+
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
+
+		// Check if the email domain is disallowed
 		if (!match) {
 			try {
+				// Get the email sending service instance
 				const instance = await this._emailSendService.getInstance();
+
+				// Send the email
 				const send = await instance.send(sendOptions);
 
+				// Update the body with the original message
 				body['message'] = send.originalMessage;
 			} catch (error) {
-				console.log('Error while sending password less authentication code: %s', error);
+				// Handle errors during email sending
+				console.log('Error while sending password-less authentication code: %s', error);
 			}
 		}
 	}

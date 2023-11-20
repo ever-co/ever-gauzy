@@ -33,6 +33,7 @@ import { SocialLinksComponent } from './@shared/social-links/social-links.compon
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
 import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
 import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
+import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
 
 @NgModule({
 	imports: [
@@ -70,6 +71,7 @@ import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
 		NgxRegisterComponent,
 		NgxResetPasswordComponent,
 		NgxLoginMagicComponent,
+		NgxMagicSignInWorkspaceComponent,
 		NgxLoginWorkspaceComponent,
 		SocialLinksComponent
 	],

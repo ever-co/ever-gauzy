@@ -1,0 +1,31 @@
+
+<ng-container
+  	*ngIf="show_popup; then showWorkspacesTemplate; else showMessagesTemplate">
+</ng-container>
+
+<ng-template #showWorkspacesTemplate>
+	<ngx-workspace-selection
+		[workspaces]="workspaces"
+		[confirmed_email]="confirmed_email"
+		(selectedWorkspace)="signInWorkspace($event)"
+	></ngx-workspace-selection>
+</ng-template>
+
+<ng-template #showMessagesTemplate>
+	<div class="message-container">
+		<!-- Error Message -->
+		<div *ngIf="error" class="message-container error">
+			<div class="text">
+				<h3 class="title">Error</h3>
+				<p class="sub-title">The magic code or link you provided has expired or is invalid. Please initiate the process again.</p>
+			</div>
+		</div>
+		<!-- Success Message -->
+		<div *ngIf="success" class="message-container success">
+			<div class="text">
+				<h3 class="title">Success</h3>
+				<p class="sub-title">Congratulations! You've successfully signed in to the workspace. Please hold on for a moment while we prepare your workspace. We appreciate your patience and thank you for choosing us!</p>
+			</div>
+		</div>
+	</div>
+</ng-template>

@@ -86,7 +86,7 @@ export interface IEnvironment {
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME?: number;
+	MAGIC_CODE_EXPIRATION_TIME?: number;
 
 	/** Organization Team Join Request Configuration */
 	TEAM_JOIN_REQUEST_EXPIRATION_TIME?: number;
