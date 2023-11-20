@@ -14,6 +14,7 @@ import { ConfirmEmailComponent } from './confirm-email';
 import { ConfirmEmailResolver } from './confirm-email/confirm-email.resolver';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
+import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
 
 export const routes: Routes = [
 	{
@@ -46,6 +47,11 @@ export const routes: Routes = [
 			{
 				path: 'login-magic',
 				component: NgxLoginMagicComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'magic-sign-in',
+				component: NgxMagicSignInWorkspaceComponent,
 				canActivate: [NoAuthGuard]
 			},
 			{

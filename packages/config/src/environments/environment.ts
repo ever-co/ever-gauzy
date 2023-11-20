@@ -54,8 +54,7 @@ export const environment: IEnvironment = {
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME:
-		parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 86400 * 1, // default password less authentication code expire time (1 day)
+	MAGIC_CODE_EXPIRATION_TIME: parseInt(process.env.MAGIC_CODE_EXPIRATION_TIME) || 60 * 30, // default magic code expire time (30 minutes)
 
 	/** Organization Team Join Request Configuration **/
 	TEAM_JOIN_REQUEST_EXPIRATION_TIME:
@@ -148,9 +147,9 @@ export const environment: IEnvironment = {
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
 		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
 			? Buffer.from(
-					process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
-					'base64'
-			  ).toString('ascii')
+				process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+				'base64'
+			).toString('ascii')
 			: '',
 
 		/** Github App Post Install Configuration */
@@ -287,14 +286,11 @@ export const environment: IEnvironment = {
 	 */
 	appIntegrationConfig: {
 		appName: process.env.APP_NAME || 'Gauzy',
-		appLogo:
-			process.env.APP_LOGO ||
-			`${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
+		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
-		appEmailConfirmationUrl:
-			process.env.APP_EMAIL_CONFIRMATION_URL ||
-			'http://localhost:4200/#/auth/confirm-email',
+		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
+		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,
