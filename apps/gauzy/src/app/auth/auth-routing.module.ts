@@ -37,12 +37,9 @@ export const routes: Routes = [
 				canActivate: [NoAuthGuard]
 			},
 			{
-				path: 'logout',
-				component: NbLogoutComponent
-			},
-			{
 				path: 'login-workspace',
-				component: NgxLoginWorkspaceComponent
+				component: NgxLoginWorkspaceComponent,
+				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'login-magic',
@@ -54,6 +51,7 @@ export const routes: Routes = [
 				component: NgxMagicSignInWorkspaceComponent,
 				canActivate: [NoAuthGuard]
 			},
+
 			{
 				path: 'request-password',
 				component: NgxForgotPasswordComponent,
@@ -89,7 +87,11 @@ export const routes: Routes = [
 				resolve: {
 					estimate: EstimateEmailResolver
 				}
-			}
+			},
+			{
+				path: 'logout',
+				component: NbLogoutComponent
+			},
 		]
 	}
 ];
