@@ -151,7 +151,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	}
 
 	/**
-	 * Resends the sign-in code.
+	 * Resend the sign-in code.
 	 */
 	async onResendCode(): Promise<void> {
 		// Start the timer
