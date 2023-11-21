@@ -166,10 +166,6 @@ export default class TimerHandler {
 
 				if (appSetting.randomScreenshotTime) {
 					const elapsedTime = Math.floor(moment.duration(this.timeRecordSecond, 'second').asMinutes());
-					console.log({
-						nextScreenshot: this.nextScreenshot,
-						elapsedTime
-					});
 					if (this.nextScreenshot === elapsedTime && !nextScreenShootLock) {
 						nextScreenShootLock = true;
 						this.nextScreenshot = elapsedTime;
