@@ -4406,7 +4406,9 @@
 			"DESCRIPTION_TITLE": "Wir senden Ihnen einen magischen Code für eine kennwortfreie Anmeldung. Oder Sie können ",
 			"OR_SIGN_IN_WITH_PASSWORD": "sich stattdessen mit einem Passwort anmelden.",
 			"RESEND_CODE_TITLE": "Code erneut senden",
-			"CODE_SUB_TITLE": "Geben Sie den per E-Mail gesendeten Code ein, um sich anzumelden."
+			"SUCCESS_SENT_CODE_TITLE": "Ein 6-stelliger Code wurde gesendet an: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Der Code läuft bald ab, bitte geben Sie ihn bald ein.",
+			"REQUEST_NEW_CODE_TITLE": "Neuen Code anfordern in {{ countdown }} Sekunden."
 		},
 		"LABELS": {
 			"EMAIL": "E-Mail-Adresse:",

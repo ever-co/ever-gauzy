@@ -4410,7 +4410,9 @@
 			"DESCRIPTION_TITLE": "Wyślemy ci magiczny kod do logowania bez hasła. Lub możesz ",
 			"OR_SIGN_IN_WITH_PASSWORD": "zalogować się za pomocą hasła.",
 			"RESEND_CODE_TITLE": "Wyślij kod ponownie",
-			"CODE_SUB_TITLE": "Wprowadź kod wysłany na adres e-mail, aby się zalogować."
+			"SUCCESS_SENT_CODE_TITLE": "6-znakowy kod został wysłany do: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Kod wygasa wkrótce, więc wprowadź go szybko.",
+			"REQUEST_NEW_CODE_TITLE": "Poproś o nowy kod za {{ countdown }} sekundy."
 		},
 		"LABELS": {
 			"EMAIL": "Adres email:",

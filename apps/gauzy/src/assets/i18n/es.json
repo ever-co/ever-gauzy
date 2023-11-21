@@ -4412,7 +4412,9 @@
 			"DESCRIPTION_TITLE": "Le enviaremos un código mágico para iniciar sesión sin contraseña. O puede ",
 			"OR_SIGN_IN_WITH_PASSWORD": "iniciar sesión con contraseña en su lugar.",
 			"RESEND_CODE_TITLE": "Reenviar código",
-			"CODE_SUB_TITLE": "Ingrese el código enviado por correo electrónico para iniciar sesión."
+			"SUCCESS_SENT_CODE_TITLE": "Se envió un código de 6 caracteres a: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "El código expira pronto, así que ingréselo pronto.",
+			"REQUEST_NEW_CODE_TITLE": "Solicitar un nuevo código en {{ countdown }} segundos."
 		},
 		"LABELS": {
 			"EMAIL": "Dirección de correo electrónico:",

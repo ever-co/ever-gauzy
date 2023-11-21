@@ -83,6 +83,34 @@
   & form {
     margin-top: 29px;
     margin-bottom: 42px;
+    & .form-control-group {
+
+      .edit-email {
+        transition: all;
+        &:hover {
+          color: var(--text-basic-color);
+        }
+      }
+    }
+
+    & .new-code-wrapper {
+      font-size: 0.75rem;
+      text-align: right;
+      @include nb-rtl(text-align, left);
+      margin-top: 0.4rem;
+      margin-right: 0.4rem;
+      @include nb-rtl(margin-right, 0);
+      @include nb-rtl(margin-left, 0.4rem);
+      & .resend-code {
+        margin-bottom: 0.4rem;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+      & .request-new-code {
+        color: var(--text-hint-color);
+      }
+    }
     & .submit-btn-wrapper {
       display: flex;
       justify-content: space-between;
@@ -111,11 +139,7 @@
           display: none;
         }
       }
-      & .resend-code {
-        &:hover {
-          cursor: pointer;
-        }
-      }
+
       & .submit-inner-wrapper {
         display: inline-flex;
         flex-direction: column;
@@ -149,7 +173,7 @@
     & .magic-description {
         & p {
             text-align: left;
-            font-size: 14px;
+            font-size: 0.85rem;
             & a {
                 color: var(--link-text-color);
             }
