@@ -2745,6 +2745,7 @@
 		"CREATE_LEAD": "创建潜在客户",
 		"CREATE_CUSTOMER": "创建客户",
 		"CREATE_CLIENT": "创建客户",
+		"VIEW_CLIENTS": "查看客户",
 		"START_TIMER": "开始计时器",
 		"STOP_TIMER": "停止计时器",
 		"TIME_LOG": "时间记录",
