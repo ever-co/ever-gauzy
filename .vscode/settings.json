@@ -6,7 +6,7 @@
 	"npm.packageManager": "yarn",
 	"prettier.trailingComma": "none",
 	"prettier.singleQuote": true,
-	"editor.formatOnSave": false,
+	"editor.formatOnSave": true,
 	"eslint.format.enable": true,
 	"editor.tabSize": 4,
 	"files.insertFinalNewline": true,
