@@ -173,7 +173,7 @@ export default class TimerHandler {
 					}
 				}
 			} catch (error) {
-				console.log('error', error);
+				console.error('error', error);
 			}
 		}, 1000);
 	}
