@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { ConfigService, IEnvironment } from '@gauzy/config';
+import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-github2';
-import { IApiServerOptions } from '@gauzy/common';
+
+export const GITHUB = 'github';
 
 @Injectable()
-export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
-	constructor(private readonly configService: ConfigService) {
+export class GithubStrategy extends PassportStrategy(Strategy, GITHUB) {
+	constructor(protected readonly configService: ConfigService) {
 		super(config(configService));
 	}
 
@@ -31,19 +32,15 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 }
 
 /**
+ * Creates a configuration object for GitHub OAuth based on the provided ConfigService.
  *
- * @param configService
- * @returns
+ * @param configService - An instance of the ConfigService to retrieve configuration values.
+ * @returns An object containing GitHub OAuth configuration.
  */
-export const config = (configService: ConfigService) => {
-	const github = configService.get('github') as IEnvironment['github'];
-	const { baseUrl } = configService.apiConfigOptions as IApiServerOptions;
-
-	return {
-		clientID: github.clientId || 'disabled',
-		clientSecret: github.clientSecret || 'disabled',
-		callbackURL: github.callbackUrl || `${baseUrl}/api/auth/github/callback`,
-		passReqToCallback: true,
-		scope: ['user:email']
-	};
-};
+export const config = (configService: ConfigService) => ({
+	clientID: <string>configService.get<string>('github.clientId') || 'disabled',
+	clientSecret: <string>configService.get<string>('github.clientSecret') || 'disabled',
+	callbackURL: <string>configService.get<string>('github.callbackAPIUrl'),
+	passReqToCallback: true,
+	scope: ['read:user', 'user:email']
+});

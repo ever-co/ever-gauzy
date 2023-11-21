@@ -215,7 +215,7 @@ export class AuthController {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async signinWorkspaceByToken(
 		@Body() input: WorkspaceSigninDTO
-	): Promise<any> {
+	): Promise<IAuthResponse | null> {
 		return await this.commandBus.execute(
 			new WorkspaceSigninVerifyTokenCommand(input)
 		);
@@ -252,7 +252,7 @@ export class AuthController {
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum,
 	): Promise<boolean | BadRequestException> {
-		return await this.authService.requestPassword(
+		return await this.authService.requestResetPassword(
 			body,
 			languageCode,
 			origin

@@ -6,7 +6,9 @@
 		"ADD": "添加",
 		"CREATE": "创建",
 		"REGISTER": "注册",
+		"CHANGE_PASSWORD": "更改密码",
 		"LOGIN": "登录",
+		"SEND_CODE": "使用电子邮件登录",
 		"ADD_NOTE": "添加笔记",
 		"EDIT": "编辑",
 		"MANAGE": "管理",
@@ -1919,6 +1921,14 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "活动持续时间证明倒计时对话框，它表示给予证明活动的分钟数。",
 				"ENABLE_DETECTION_INACTIVITY": "使员工的不活动能够被检测到",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
+				"SCREENSHOT_FREQUENCY": "截图频率",
+				"SCREENSHOT_FREQUENCY_INFO": "指定更新频率或时间间隔同步。",
+				"RANDOM_SCREENSHOT": "随机截图",
+				"RANDOM_SCREENSHOT_INFO": "启用 - 在随机间隔拍摄截图。禁用 - 在固定间隔拍摄截图",
+				"TRACK_ON_SLEEP": "睡眠跟踪",
+				"TRACK_ON_SLEEP_INFO": "启用 - 在设备进入睡眠模式时跟踪。禁用 - 计时器停止在设备进入睡眠时跟踪时间。",
+				"ENFORCED": "强制",
+				"ENFORCED_INFO": "启用 - 确保由管理员指定的睡眠跟踪、随机截屏和截屏频率设置是强制性的，并且用户无法覆盖或忽略。",
 				"DELETE_IDLE_TIME": "启用删除空闲时间",
 				"DELETE_IDLE_TIME_INFO": "启用 - 系统将删除空闲时间。禁用 - 系统将不删除空闲时间。",
 				"ALLOW_SCREEN_CAPTURE": "允许屏幕捕捉",
@@ -1948,7 +1958,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "自动关闭问题期限（以天为单位）",
 				"AUTO_ARCHIVE_ISSUE": "自动归档问题",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "自动归档问题期限（以天为单位）",
-				"AUTO_STATUS": "汽车状态"
+				"AUTO_STATUS": "汽车状态",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "启用 - 系统将检测到不活动状态并显示警告。停用 - 当员工处于不活动状态时，不会显示任何警告。",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "经理们",
@@ -2704,6 +2720,45 @@
 		"CHAT": "支持聊天",
 		"FAQ": "常见问题解答.",
 		"HELP": "帮助"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "创建发票",
+		"RECEIVED_INVOICES": "收到的发票",
+		"CREATE_INCOME": "创建收入",
+		"CREATE_EXPENSE": "创建支出",
+		"CREATE_ESTIMATE": "创建估算",
+		"RECEIVED_ESTIMATES": "收到的估算",
+		"CREATE_PAYMENT": "创建付款",
+		"ADD_EMPLOYEE": "添加员工",
+		"ADD_INVENTORY": "添加库存",
+		"ADD_EQUIPMENT": "添加设备",
+		"ADD_VENDOR": "添加供应商",
+		"ADD_DEPARTMENT": "添加部门",
+		"CREATE_TEAM": "创建团队",
+		"CREATE_TASK": "创建任务",
+		"CREATE_PROJECT": "创建项目",
+		"VIEW_TASKS": "查看任务",
+		"VIEW_TEAM_TASKS": "查看团队任务",
+		"CREATE_CANDIDATE": "创建候选人",
+		"CREATE_PROPOSAL": "创建提案",
+		"CREATE_CONTRACT": "创建合同",
+		"CREATE_LEAD": "创建潜在客户",
+		"CREATE_CUSTOMER": "创建客户",
+		"CREATE_CLIENT": "创建客户",
+		"VIEW_CLIENTS": "查看客户",
+		"START_TIMER": "开始计时器",
+		"STOP_TIMER": "停止计时器",
+		"TIME_LOG": "时间记录",
+		"VIEW_APPOINTMENTS": "查看预约",
+		"VIEW_TIME_ACTIVITY": "查看时间活动"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "会计",
+		"ORGANIZATION": "组织",
+		"PROJECT_MANAGEMENT": "项目管理",
+		"JOBS": "工作",
+		"CONTACTS": "联系人",
+		"TIME_TRACKING": "时间跟踪"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "名字 (Míngzì)",
@@ -4164,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "密码重置",
+			"multi-tenant-password": "多租户密码重置",
 			"password-less-authentication": "无密码验证",
 			"welcome-user": "欢迎用户",
 			"email-verification": "电子邮件确认",
@@ -4235,7 +4291,8 @@
 	"DIALOG": {
 		"CONFIRM": "确认",
 		"ALERT": "警告",
-		"DELETE_CONFIRM": "警告"
+		"DELETE_CONFIRM": "警告",
+		"QUICK_ACTIONS": "快速行动"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "文件提供者",
@@ -4348,20 +4405,34 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "没有账号吗？",
 		"FORGOT_PASSWORD_TITLE": "忘记密码？",
 		"OR_SIGN_IN_WITH": "或用以下方式登录",
+		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
+		"LOGIN_MAGIC": {
+			"TITLE": "使用魔法代码登录",
+			"DESCRIPTION_TITLE": "我们将向您发送一组用于无密码登录的魔术代码。或者您可以 ",
+			"OR_SIGN_IN_WITH_PASSWORD": "使用密码登录。",
+			"RESEND_CODE_TITLE": "重新发送代码",
+			"SUCCESS_SENT_CODE_TITLE": "已发送至 6 位代码：",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "该代码将很快失效，请尽快输入。",
+			"REQUEST_NEW_CODE_TITLE": "在 {{ countdown }} 秒内请求新代码。"
+		},
 		"LABELS": {
 			"EMAIL": "邮箱地址：",
-			"PASSWORD": "密码："
+			"PASSWORD": "密码：",
+			"CODE": "代码："
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "电子邮件地址",
-			"PASSWORD": "密码"
+			"PASSWORD": "密码",
+			"CODE": "输入代码"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！",
 			"PASSWORD_REQUIRED": "密码是必需的！",
 			"PASSWORD_SHOULD_CONTAIN": "密码应包含{{ minLength }}到{{ maxLength }}个字符！",
-			"PASSWORD_NO_SPACE_EDGES": "密码不得以空格开头或结尾。"
+			"PASSWORD_NO_SPACE_EDGES": "密码不得以空格开头或结尾。",
+			"CODE_REQUIRED": "登录需要代码。",
+			"CODE_REQUIRED_LENGTH": "代码应包含 {{ requiredLength }} 个字符。"
 		},
 		"DEMO": {
 			"TITLE": "自动登录到演示账户。",
@@ -4386,6 +4457,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "电子邮件是必需的！",
 			"EMAIL_REAL_REQUIRED": "电子邮件应该是真实的！"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "更改密码",
+		"SUB_TITLE": "请设置一个新密码",
+		"LABELS": {
+			"NEW_PASSWORD": "新密码：",
+			"CONFIRM_PASSWORD": "确认密码：",
+			"BACK_TO": "返回"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "新密码",
+			"CONFIRM_PASSWORD": "确认密码"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "新密码是必需的！",
+			"CONFIRM_PASSWORD_REQUIRED": "需要密码确认！",
+			"PASSWORDS_NOT_MATCH": "密码与确认密码不匹配！",
+			"PASSWORD_SHOULD_CONTAIN": "新密码应包含{{ minLength }}到{{ maxLength }}个字符。"
 		}
 	},
 	"PAGINATION": {

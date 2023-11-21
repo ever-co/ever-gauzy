@@ -4,43 +4,46 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="{{host}}/assets/images/logos/logo_Gauzy.png"
+					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"
 				></mj-divider>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>Здравейте!</p>
+				<mj-text>
+					<p>Здравейте {{userName}}!</p>
 					<p>
-						Получихме заявка за промяна на паролата Ви за достъп в
-						Gauzy.co
+						Получихме заявка за промяна на паролата за вашия Gauzy акаунт за
+						<strong>{{tenantName}}</strong>.
 					</p>
-					<p>Ako Вие сте заявили промяна на паролата</p>
-					<br /><br />
+					<p>Ако сте поискали да нулирате паролата си, щракнете върху бутона по-долу:</p>
 				</mj-text>
 				<mj-button
-					href="{{generatedUrl}}"
+					href="{{ generatedUrl }}"
 					font-family="Helvetica"
 					background-color="#3366ff"
 					color="white"
 				>
-					Кликнете тук
+					Нулиране на парола
 				</mj-button>
+				<mj-text
+					font-size="14px"
+					font-family="helvetica"
+					color="#555"
+				>
+					<p>Ако не сте поискали тази промяна, моля, игнорирайте този имейл.</p>
+					<p>Тази връзка за повторно задаване на парола ще изтече скоро от съображения за сигурност.</p>
+				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"
 				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica"
-					>© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff"
-						>Gauzy</a
-					>
+				<mj-text align="center" font-size="12px" font-family="helvetica">
+					© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="https://ever.co/" style="color: #598bff"
-						>Ever Co. LTD.</a
-					>
-					All rights reserved.
+					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
+					Всички права запазени.
 				</mj-text>
 			</mj-column>
 		</mj-section>

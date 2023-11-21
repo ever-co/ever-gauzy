@@ -225,7 +225,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		const successMessage = this.getTranslation('INTEGRATIONS.MESSAGE.INTEGRATION_DELETED', {
 			provider: integration?.integration?.provider
 		});
-		this._toastrService.success(successMessage);
+		this._toastrService.success(successMessage, this.getTranslation('TOASTR.TITLE.SUCCESS'));
 	}
 
 	/**

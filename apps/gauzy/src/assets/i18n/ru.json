@@ -6,7 +6,9 @@
 		"ADD": "Добавить",
 		"CREATE": "Создать",
 		"REGISTER": "Регистрация",
+		"CHANGE_PASSWORD": "Изменить пароль",
 		"LOGIN": "Войти",
+		"SEND_CODE": "Войти по электронной почте",
 		"ADD_NOTE": "Добавить заметку",
 		"EDIT": "Редактировать",
 		"MANAGE": "Управление",
@@ -1900,6 +1902,14 @@
 				"ACTIVITY_PROOF_DURATION": "Длительность проверки активности",
 				"ACTIVITY_PROOF_DURATION_INFO": "Длительность диалогового окна для проверки активности, оно отображает количество секунд, заданных для доказательства активности",
 				"ALLOW_TRACK_INACTIVITY": "Разрешить отслеживать бездействие",
+				"SCREENSHOT_FREQUENCY": "Частота скриншотов",
+				"SCREENSHOT_FREQUENCY_INFO": "Укажите частоту обновления или временные интервалы синхронизации.",
+				"RANDOM_SCREENSHOT": "Случайный скриншот",
+				"RANDOM_SCREENSHOT_INFO": "Включить - Сделать скриншоты в случайные интервалы времени. Выключить - Сделать скриншоты с регулярными интервалами",
+				"TRACK_ON_SLEEP": "Отслеживание во сне",
+				"TRACK_ON_SLEEP_INFO": "Включить - Отслеживание, когда устройство переходит в режим сна. Отключить - Таймер останавливает отслеживание времени, когда устройство переходит в режим сна.",
+				"ENFORCED": "Принудительный",
+				"ENFORCED_INFO": "Включено - Обеспечивает обязательность настроек отслеживания во сне, случайных снимков экрана и частоты снимков, установленных администратором, и не могут быть переопределены или проигнорированы пользователями.",
 				"PROOF_OF_COMPLETION": "Доказательство завершения",
 				"PROOF_OF_COMPLETION_TYPE": "Тип подтверждения завершения",
 				"PROOF_OF_COMPLETION_TYPE_DROPDOWN": {
@@ -1918,7 +1928,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Период автоматического закрытия задачи (в днях)",
 				"AUTO_ARCHIVE_ISSUE": "Проблема автоматического архивирования",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Период выпуска автоархива (в днях)",
-				"AUTO_STATUS": "Автостатус"
+				"AUTO_STATUS": "Автостатус",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Включено — система обнаружит бездействие и выдаст предупреждение. Отключено — предупреждение не будет отображаться, если сотрудник неактивен.",
+					"ALLOW_MANUAL_TIME_INFO": "Указывает, разрешен ли ручной ввод времени для отслеживания времени.",
+					"ALLOW_MODIFY_TIME_INFO": "Указывает, разрешено ли изменение записей времени для учета времени.",
+					"ALLOW_DELETE_TIME_INFO": "Указывает, разрешено ли удаление записей времени для учета времени."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Менеджеры",
@@ -2656,6 +2672,45 @@
 		"CHAT": "Чат поддержки",
 		"FAQ": "ЧаВо",
 		"HELP": "Помогите"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Создать счет",
+		"RECEIVED_INVOICES": "Полученные счета",
+		"CREATE_INCOME": "Создать доход",
+		"CREATE_EXPENSE": "Создать расход",
+		"CREATE_ESTIMATE": "Создать смету",
+		"RECEIVED_ESTIMATES": "Полученные сметы",
+		"CREATE_PAYMENT": "Создать платеж",
+		"ADD_EMPLOYEE": "Добавить сотрудника",
+		"ADD_INVENTORY": "Добавить инвентарь",
+		"ADD_EQUIPMENT": "Добавить оборудование",
+		"ADD_VENDOR": "Добавить поставщика",
+		"ADD_DEPARTMENT": "Добавить отдел",
+		"CREATE_TEAM": "Создать команду",
+		"CREATE_TASK": "Создать задачу",
+		"CREATE_PROJECT": "Создать проект",
+		"VIEW_TASKS": "Просмотр задач",
+		"VIEW_TEAM_TASKS": "Просмотр задач команды",
+		"CREATE_CANDIDATE": "Создать кандидата",
+		"CREATE_PROPOSAL": "Создать предложение",
+		"CREATE_CONTRACT": "Создать контракт",
+		"CREATE_LEAD": "Создать клиента",
+		"CREATE_CUSTOMER": "Создать клиента",
+		"CREATE_CLIENT": "Создать клиента",
+		"VIEW_CLIENTS": "Просмотр клиентов",
+		"START_TIMER": "Начать таймер",
+		"STOP_TIMER": "Остановить таймер",
+		"TIME_LOG": "Журнал времени",
+		"VIEW_APPOINTMENTS": "Просмотреть встречи",
+		"VIEW_TIME_ACTIVITY": "Просмотреть активность по времени"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Бухгалтерия",
+		"ORGANIZATION": "Организация",
+		"PROJECT_MANAGEMENT": "Управление проектами",
+		"JOBS": "Работа",
+		"CONTACTS": "Контакты",
+		"TIME_TRACKING": "Учет времени"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Имя",
@@ -4110,6 +4165,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Сброс пароля",
+			"multi-tenant-password": "Сброс пароля мультитенанта",
 			"welcome-user": "Приветствуем пользователя",
 			"invite-organization-client": "Пригласить клиента организации",
 			"email-estimate": "Почтовый расчет",
@@ -4178,7 +4234,8 @@
 	"DIALOG": {
 		"CONFIRM": "Подтвердить",
 		"ALERT": "Оповещение",
-		"DELETE_CONFIRM": "Оповещение"
+		"DELETE_CONFIRM": "Оповещение",
+		"QUICK_ACTIONS": "Быстрые действия"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Поставщик файлов",
@@ -4273,20 +4330,34 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "У вас нет учетной записи?",
 		"FORGOT_PASSWORD_TITLE": "Забыли пароль?",
 		"OR_SIGN_IN_WITH": "Или войдите с",
+		"FORGOT_EMAIL_TITLE": "Забыли адрес электронной почты?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Вход с магическим кодом",
+			"DESCRIPTION_TITLE": "Мы отправим вам магический код для входа без пароля. Или вы можете ",
+			"OR_SIGN_IN_WITH_PASSWORD": "войти с паролем вместо этого.",
+			"RESEND_CODE_TITLE": "Повторно отправить код",
+			"SUCCESS_SENT_CODE_TITLE": "6-значный код отправлен на: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Код скоро истекает, поэтому введите его как можно скорее.",
+			"REQUEST_NEW_CODE_TITLE": "Запросить новый код через {{ countdown }} секунд."
+		},
 		"LABELS": {
 			"EMAIL": "Email адрес:",
-			"PASSWORD": "Пароль:"
+			"PASSWORD": "Пароль:",
+			"CODE": "Код:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Email адрес",
-			"PASSWORD": "Пароль"
+			"PASSWORD": "Пароль",
+			"CODE": "Введите код"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!",
 			"PASSWORD_REQUIRED": "Требуется пароль!",
 			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов!",
-			"PASSWORD_NO_SPACE_EDGES": "Пароли не должны начинаться или заканчиваться пробелами."
+			"PASSWORD_NO_SPACE_EDGES": "Пароли не должны начинаться или заканчиваться пробелами.",
+			"CODE_REQUIRED": "Для входа необходим код.",
+			"CODE_REQUIRED_LENGTH": "Код должен содержать {{ requiredLength }} символов."
 		},
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",
@@ -4311,6 +4382,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
 			"EMAIL_REAL_REQUIRED": "Email должен быть реальным!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Изменить пароль",
+		"SUB_TITLE": "Пожалуйста, установите новый пароль",
+		"LABELS": {
+			"NEW_PASSWORD": "Новый пароль:",
+			"CONFIRM_PASSWORD": "Подтвердить пароль:",
+			"BACK_TO": "Назад к"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Новый пароль",
+			"CONFIRM_PASSWORD": "Подтвердить пароль"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Требуется новый пароль!",
+			"CONFIRM_PASSWORD_REQUIRED": "Требуется подтверждение пароля!",
+			"PASSWORDS_NOT_MATCH": "Пароль не совпадает с подтверждением пароля!",
+			"PASSWORD_SHOULD_CONTAIN": "Новый пароль должен содержать от {{ minLength }} до {{ maxLength }} символов."
 		}
 	},
 	"PAGINATION": {

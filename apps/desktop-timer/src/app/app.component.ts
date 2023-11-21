@@ -5,7 +5,7 @@ import {
 	AfterViewInit,
 	Renderer2,
 } from '@angular/core';
-import { ElectronService, Store, AuthStrategy } from '@gauzy/desktop-ui-lib';
+import { ElectronService, Store, AuthStrategy, TimeTrackerDateManager } from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
@@ -207,8 +207,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 			(event, arg) =>
 				this._ngZone.run(async () => {
 					try {
-						localStorage.setItem('token', arg.token);
-						localStorage.setItem('_userId', arg.userId);
+						this.store.userId = arg.userId;
+						this.store.token = arg.token;
 						await this.authFromSocial(arg);
 					} catch (error) {
 						console.log('ERROR', error);
@@ -222,6 +222,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 		if (jwtParsed) {
 			if (jwtParsed.employeeId) {
 				const user: any = await this.appService.getUserDetail();
+				TimeTrackerDateManager.organization = user?.employee?.organization;
+				this.store.organizationId = user?.employee?.organizationId;
+				this.store.tenantId = jwtParsed.tenantId;
+				this.store.user = user;
 				this.electronService.ipcRenderer.send('auth_success', {
 					user: user,
 					token: arg.token,
