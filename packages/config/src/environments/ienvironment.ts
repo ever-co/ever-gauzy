@@ -10,7 +10,7 @@ import {
 	ICloudinaryConfig,
 	IFacebookConfig,
 	IFiverrConfig,
-	IGithubConfig,
+	IGithubIntegrationConfig,
 	IGoogleConfig,
 	IHubstaffConfig,
 	IJitsuConfig,
@@ -103,7 +103,7 @@ export interface IEnvironment {
 	cloudinaryConfig?: ICloudinaryConfig;
 	facebookConfig: IFacebookConfig;
 	googleConfig: IGoogleConfig;
-	github: IGithubConfig /** Github Configuration */;
+	github: IGithubIntegrationConfig /** Github Configuration */;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
 	twitterConfig: ITwitterConfig;
