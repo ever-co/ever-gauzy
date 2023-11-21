@@ -4411,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "We sturen u een magische code voor een wachtwoordloze aanmelding. Of u kunt ",
 			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan.",
 			"RESEND_CODE_TITLE": "Stuur code opnieuw",
-			"CODE_SUB_TITLE": "Voer de code in die naar je e-mail is gestuurd om in te loggen."
+			"SUCCESS_SENT_CODE_TITLE": "Een code van 6 tekens is verzonden naar: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "De code verloopt binnenkort, dus voer hem snel in.",
+			"REQUEST_NEW_CODE_TITLE": "Vraag een nieuwe code aan in {{ countdown }} seconden."
 		},
 		"LABELS": {
 			"EMAIL": "E-mailadres:",

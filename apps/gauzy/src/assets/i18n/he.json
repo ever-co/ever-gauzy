@@ -4335,7 +4335,9 @@
 			"DESCRIPTION_TITLE": "נשלח לך קוד קסום להתחברות ללא סיסמה. או ניתן ",
 			"OR_SIGN_IN_WITH_PASSWORD": "להתחבר באמצעות סיסמה במקום זאת.",
 			"RESEND_CODE_TITLE": "שלח שוב קוד",
-			"CODE_SUB_TITLE": "הזן את הקוד שנשלח לדואר האלקטרוני כדי להתחבר."
+			"SUCCESS_SENT_CODE_TITLE": "קוד באורך 6 תווים נשלח אל: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "הקוד פג תוקף בקרוב, אז יש להזין אותו מהר.",
+			"REQUEST_NEW_CODE_TITLE": "בקשת קוד חדש בעוד {{ countdown }} שניות."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",

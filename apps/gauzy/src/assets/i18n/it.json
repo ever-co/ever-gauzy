@@ -4411,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "Ti invieremo un codice magico per accedere senza password. Oppure puoi ",
 			"OR_SIGN_IN_WITH_PASSWORD": "accedere con la password al suo posto.",
 			"RESEND_CODE_TITLE": "Rinvia codice",
-			"CODE_SUB_TITLE": "Inserisci il codice inviato via email per accedere."
+			"SUCCESS_SENT_CODE_TITLE": "Un codice di 6 caratteri è stato inviato a: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Il codice scade presto, quindi inseriscilo al più presto.",
+			"REQUEST_NEW_CODE_TITLE": "Richiedi un nuovo codice in {{ countdown }} secondi."
 		},
 		"LABELS": {
 			"EMAIL": "Indirizzo email:",

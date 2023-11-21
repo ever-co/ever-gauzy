@@ -4492,7 +4492,9 @@
 			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
 			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead.",
 			"RESEND_CODE_TITLE": "Resend code",
-			"CODE_SUB_TITLE": "Enter code sent to email to log in."
+			"SUCCESS_SENT_CODE_TITLE": "A 6-character code sent to: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "The code expires shortly, so please enter it soon.",
+			"REQUEST_NEW_CODE_TITLE": "Request a new code in {{ countdown }} seconds."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
