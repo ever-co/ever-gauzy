@@ -213,10 +213,14 @@ spec:
                         value: '$GAUZY_GITHUB_APP_ID'
                       - name: GAUZY_GITHUB_APP_NAME
                         value: '$GAUZY_GITHUB_APP_NAME'
-                      - name: GAUZY_GITHUB_CALLBACK_URL
-                        value: '$GAUZY_GITHUB_CALLBACK_URL'
                       - name: GAUZY_GITHUB_POST_INSTALL_URL
                         value: '$GAUZY_GITHUB_POST_INSTALL_URL'
+                      - name: GAUZY_GITHUB_OAUTH_CLIENT_ID
+                        value: '$GAUZY_GITHUB_OAUTH_CLIENT_ID'
+                      - name: GAUZY_GITHUB_OAUTH_CLIENT_SECRET
+                        value: '$GAUZY_GITHUB_OAUTH_CLIENT_SECRET'
+                      - name: GAUZY_GITHUB_OAUTH_CALLBACK_URL
+                        value: '$GAUZY_GITHUB_OAUTH_CALLBACK_URL'
 
                   ports:
                       - containerPort: 3000
