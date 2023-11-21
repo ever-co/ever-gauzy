@@ -38,6 +38,7 @@ export default class TimerHandler {
 	private _activities = [];
 	private _offlineMode: IOfflineMode = DesktopOfflineModeHandler.instance;
 	private _timerService = new TimerService();
+	private _randomSyncPeriod: number = 1;
 
 	constructor() {
 		/**
@@ -75,7 +76,7 @@ export default class TimerHandler {
 
 
 		await this.createTimer(knex, timeLog);
-		this.collectActivities(setupWindow, knex, timeTrackerWindow);
+		await this.collectActivities(setupWindow, knex, timeTrackerWindow);
 
 		/*
 			* Start time interval for get set activities and screenshots
@@ -94,7 +95,19 @@ export default class TimerHandler {
 	/*
 	 * Collect windows and afk activities
 	 */
-	collectActivities(setupWindow, knex, timeTrackerWindow) {
+	async collectActivities(setupWindow, knex, timeTrackerWindow) {
+		const appSetting = LocalStore.getStore('appSetting');
+		let nextScreenShootLock = false;
+		if (appSetting.randomScreenshotTime) {
+			await this._timerService.update(
+				new Timer({
+					id: this.lastTimer ? this.lastTimer.id : null,
+					startedAt: new Date(),
+					synced: !this._offlineMode.enabled,
+					isStartedOffline: this._offlineMode.enabled
+				})
+			);
+		}
 		this.intervalTimer = setInterval(async () => {
 			try {
 				const projectInfo = LocalStore.getStore('project');
@@ -152,8 +165,16 @@ export default class TimerHandler {
 				});
 
 				if (appSetting.randomScreenshotTime) {
-					if (this.nextScreenshot === this.timeRecordSecond) {
-						await this.randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow);
+					const elapsedTime = Math.floor(moment.duration(this.timeRecordSecond, 'second').asMinutes());
+					console.log({
+						nextScreenshot: this.nextScreenshot,
+						elapsedTime
+					});
+					if (this.nextScreenshot === elapsedTime && !nextScreenShootLock) {
+						nextScreenShootLock = true;
+						this.nextScreenshot = elapsedTime;
+						await this.randomScreenshotUpdate(knex, timeTrackerWindow);
+						nextScreenShootLock = false;
 					}
 				}
 			} catch (error) {
@@ -169,7 +190,8 @@ export default class TimerHandler {
 		this.timeRecordMinute = now.diff(moment(this.timeStart), 'minutes');
 	}
 
-	async randomScreenshotUpdate(setupWindow, knex, timeTrackerWindow) {
+	async randomScreenshotUpdate(knex, timeTrackerWindow) {
+		await this._activeWindow.updateActivities();
 		const activities = await this.getAllActivities(knex, this.timeSlotStart);
 		timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
 		this.nextTickScreenshot();
@@ -206,33 +228,22 @@ export default class TimerHandler {
 		const appSetting = LocalStore.getStore('appSetting');
 		const updatePeriod = appSetting.timer.updatePeriod;
 		const tickAdd = this.maxMinAdditionalTime(updatePeriod);
-		const randomSecond = Math.floor(Math.random() * (tickAdd.max - tickAdd.min)) + tickAdd.min;
-		this.nextScreenshot = this.nextScreenshot + randomSecond;
+		this._randomSyncPeriod = Math.floor(Math.random() * (tickAdd.max - tickAdd.min + 1)) + tickAdd.min;
+		this.nextScreenshot += this._randomSyncPeriod;
 	}
 
-	maxMinAdditionalTime(updatePeriod) {
-		switch (updatePeriod) {
-			case 1:
-				return {
-					max: updatePeriod * 60 + 20,
-					min: updatePeriod * 60 - 20
-				};
-			case 5:
-				return {
-					max: updatePeriod * 60 + 60,
-					min: updatePeriod * 60 - 60
-				};
-			case 10:
-				return {
-					max: updatePeriod * 60 + 60,
-					min: updatePeriod * 60 - 20
-				};
-			default:
-				return {
-					max: updatePeriod * 60 + updatePeriod * 2,
-					min: updatePeriod * 60 - updatePeriod / 2
-				};
-		}
+	maxMinAdditionalTime(updatePeriod: number) {
+		// Calculate the minimum additional time with a random multiplier between 0 and 1, ensuring it's at least 1 unit of time.
+		const minAdditionalTime = Math.max(1, Math.floor(updatePeriod * Math.random()));
+
+		// Calculate the maximum additional time as a random value between minAdditionalTime and updatePeriod
+		const maxAdditionalTime =
+			Math.floor(Math.random() * (updatePeriod - minAdditionalTime + 1)) + minAdditionalTime;
+
+		return {
+			max: maxAdditionalTime,
+			min: minAdditionalTime
+		};
 	}
 
 	/*
@@ -411,7 +422,8 @@ export default class TimerHandler {
 		const config = LocalStore.getStore('configs');
 		log.info(`App Setting: ${moment().format()}`, appSetting);
 		log.info(`Config: ${moment().format()}`, config);
-		const updatePeriod = parseInt(appSetting.timer.updatePeriod, 10) * 60;
+		const updatePeriod =
+			parseInt(appSetting.randomScreenshotTime ? this._randomSyncPeriod : appSetting.timer.updatePeriod, 10) * 60;
 		const timeLogId = this.lastTimer ? this.lastTimer.timelogId : null;
 		const lastTimerId = this.lastTimer ? this.lastTimer.id : null;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
@@ -436,7 +448,7 @@ export default class TimerHandler {
 					organizationId: userInfo.organizationId,
 					projectId: userInfo.projectId,
 					organizationContactId: userInfo.organizationContactId,
-					timeUpdatePeriod: appSetting.timer.updatePeriod,
+					timeUpdatePeriod: updatePeriod,
 					employeeId: userInfo.employeeId,
 					...userInfo,
 					timerId: lastTimerId,
@@ -470,7 +482,7 @@ export default class TimerHandler {
 					projectId: userInfo.projectId,
 					organizationContactId: userInfo.organizationContactId,
 					employeeId: userInfo.employeeId,
-					timeUpdatePeriod: appSetting.timer.updatePeriod,
+					timeUpdatePeriod: updatePeriod,
 					...userInfo,
 					timerId: lastTimerId,
 					timeLogId: timeLogId,
