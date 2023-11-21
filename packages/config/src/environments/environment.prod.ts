@@ -131,14 +131,9 @@ export const environment: IEnvironment = {
 	},
 
 	github: {
-		/**Github OAuth Configuration */
+		/** Github App Install Configuration  */
 		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
 		clientSecret: process.env.GAUZY_GITHUB_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GAUZY_GITHUB_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/github/callback`,
-
-		/** Github App Install Configuration  */
 		appId: process.env.GAUZY_GITHUB_APP_ID,
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
 		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
@@ -149,15 +144,11 @@ export const environment: IEnvironment = {
 			: '',
 
 		/** Github App Post Install Configuration */
-		postInstallUrl:
-			process.env.GAUZY_GITHUB_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
+		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
 
 		/** Github Webhook Configuration */
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
-		webhookUrl:
-			process.env.GAUZY_GITHUB_WEBHOOK_URL ||
-			`${process.env.API_BASE_URL}/api/integration/github/webhook`,
+		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`,
 	},
 
 	microsoftConfig: {

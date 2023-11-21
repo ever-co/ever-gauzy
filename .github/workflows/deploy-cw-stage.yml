@@ -112,7 +112,6 @@ jobs:
                   GAUZY_GITHUB_REDIRECT_URL: '${{ secrets.GAUZY_GITHUB_REDIRECT_URL }}'
                   GAUZY_GITHUB_POST_INSTALL_URL: '${{ secrets.GAUZY_GITHUB_POST_INSTALL_URL }}'
                   GAUZY_GITHUB_APP_ID: '${{ secrets.GAUZY_GITHUB_APP_ID }}'
-                  GAUZY_GITHUB_CALLBACK_URL: '${{ secrets.GAUZY_GITHUB_CALLBACK_URL }}'
                   JITSU_BROWSER_URL: '${{ secrets.JITSU_BROWSER_URL }}'
                   JITSU_BROWSER_WRITE_KEY: '${{ secrets.JITSU_BROWSER_WRITE_KEY }}'
 

@@ -190,18 +190,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Github',
 			fields: [
 				{
-					name: 'GAUZY_GITHUB_CLIENT_ID',
-					field: 'GAUZY_GITHUB_CLIENT_ID',
+					name: 'GAUZY_GITHUB_OAUTH_CLIENT_ID',
+					field: 'GAUZY_GITHUB_OAUTH_CLIENT_ID',
 					value: ''
 				},
 				{
-					name: 'GAUZY_GITHUB_CLIENT_SECRET',
-					field: 'GAUZY_GITHUB_CLIENT_SECRET',
+					name: 'GAUZY_GITHUB_OAUTH_CLIENT_SECRET',
+					field: 'GAUZY_GITHUB_OAUTH_CLIENT_SECRET',
 					value: ''
 				},
 				{
-					name: 'GAUZY_GITHUB_CALLBACK_URL',
-					field: 'GAUZY_GITHUB_CALLBACK_URL',
+					name: 'GAUZY_GITHUB_OAUTH_CALLBACK_URL',
+					field: 'GAUZY_GITHUB_OAUTH_CALLBACK_URL',
 					value: ''
 				}
 			]
