@@ -168,7 +168,6 @@ export default class TimerHandler {
 					const elapsedTime = Math.floor(moment.duration(this.timeRecordSecond, 'second').asMinutes());
 					if (this.nextScreenshot === elapsedTime && !nextScreenShootLock) {
 						nextScreenShootLock = true;
-						this.nextScreenshot = elapsedTime;
 						await this.randomScreenshotUpdate(knex, timeTrackerWindow);
 						nextScreenShootLock = false;
 					}
