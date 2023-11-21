@@ -2697,6 +2697,7 @@
 		"CREATE_LEAD": "Создать клиента",
 		"CREATE_CUSTOMER": "Создать клиента",
 		"CREATE_CLIENT": "Создать клиента",
+		"VIEW_CLIENTS": "Просмотр клиентов",
 		"START_TIMER": "Начать таймер",
 		"STOP_TIMER": "Остановить таймер",
 		"TIME_LOG": "Журнал времени",

@@ -2747,6 +2747,7 @@
 		"CREATE_LEAD": "Crear cliente potencial",
 		"CREATE_CUSTOMER": "Crear cliente",
 		"CREATE_CLIENT": "Crear cliente",
+		"VIEW_CLIENTS": "Ver clientes",
 		"START_TIMER": "Iniciar temporizador",
 		"STOP_TIMER": "Detener temporizador",
 		"TIME_LOG": "Registro de tiempo",
