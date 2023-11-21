@@ -516,6 +516,11 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
+	/**
+	 *
+	 * @param emails
+	 * @returns
+	 */
 	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
 		success: boolean;
 		authData: { jwt: string; userId: string };

@@ -3,27 +3,39 @@ import { AuthGuard } from '@nestjs/passport';
 import { Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
+import { GITHUB } from './github.strategy';
 
 @Controller('github')
 @Public()
+@UseGuards(AuthGuard(GITHUB))
 export class GithubController {
-	constructor(public readonly service: SocialAuthService) {}
 
+	constructor(
+		public readonly service: SocialAuthService
+	) { }
+
+	/**
+	 * Initiates GitHub login.
+	 *
+	 * @param req
+	 */
 	@Get('')
-	@UseGuards(AuthGuard('github'))
-	githubLogin(@Req() req: any) {}
+	githubLogin(@Req() req: any) { }
 
+	/**
+	 * GitHub login callback endpoint.
+	 *
+	 * @param requestCtx - The context of the incoming request.
+	 * @param res - The response object.
+	 * @returns The result of the GitHub login callback.
+	 */
 	@Get('callback')
-	@UseGuards(AuthGuard('github'))
 	async githubLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any
 	) {
 		const { user } = requestCtx;
-		const {
-			success,
-			authData
-		} = await this.service.validateOAuthLoginEmail(user.emails);
+		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}
 }
