@@ -2745,6 +2745,7 @@
 		"CREATE_LEAD": "创建潜在客户",
 		"CREATE_CUSTOMER": "创建客户",
 		"CREATE_CLIENT": "创建客户",
+		"VIEW_CLIENTS": "查看客户",
 		"START_TIMER": "开始计时器",
 		"STOP_TIMER": "停止计时器",
 		"TIME_LOG": "时间记录",
@@ -4410,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "我们将向您发送一组用于无密码登录的魔术代码。或者您可以 ",
 			"OR_SIGN_IN_WITH_PASSWORD": "使用密码登录。",
 			"RESEND_CODE_TITLE": "重新发送代码",
-			"CODE_SUB_TITLE": "输入发送到电子邮件的代码以登录。"
+			"SUCCESS_SENT_CODE_TITLE": "已发送至 6 位代码：",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "该代码将很快失效，请尽快输入。",
+			"REQUEST_NEW_CODE_TITLE": "在 {{ countdown }} 秒内请求新代码。"
 		},
 		"LABELS": {
 			"EMAIL": "邮箱地址：",

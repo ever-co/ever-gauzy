@@ -2,7 +2,7 @@ import { Controller, Get, HttpException, HttpStatus, Query, Res } from '@nestjs/
 import { Response } from 'express';
 import { ConfigService } from '@gauzy/config';
 import { IGithubAppInstallInput } from '@gauzy/contracts';
-import { IGithubConfig, Public } from '@gauzy/common';
+import { IGithubIntegrationConfig, Public } from '@gauzy/common';
 
 @Controller()
 export class GitHubAuthorizationController {
@@ -28,7 +28,7 @@ export class GitHubAuthorizationController {
             }
 
             /** Github Config Options */
-            const { postInstallUrl } = this._config.get<IGithubConfig>('github') as IGithubConfig;
+            const { postInstallUrl } = this._config.get<IGithubIntegrationConfig>('github') as IGithubIntegrationConfig;
 
             /** Construct the redirect URL with query parameters */
             const urlParams = new URLSearchParams();

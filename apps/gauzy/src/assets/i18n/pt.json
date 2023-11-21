@@ -2738,13 +2738,14 @@
 		"CREATE_TASK": "Criar Tarefa",
 		"CREATE_PROJECT": "Criar Projeto",
 		"VIEW_TASKS": "Ver Tarefas",
-		"VIEW_TEAM_TASKS": "Ver Tarefas da Equipe",
+		"VIEW_TEAM_TASKS": "Ver tarefas da equipe",
 		"CREATE_CANDIDATE": "Criar Candidato",
 		"CREATE_PROPOSAL": "Criar Proposta",
 		"CREATE_CONTRACT": "Criar Contrato",
 		"CREATE_LEAD": "Criar Cliente Potencial",
 		"CREATE_CUSTOMER": "Criar Cliente",
 		"CREATE_CLIENT": "Criar Cliente",
+		"VIEW_CLIENTS": "Ver clientes",
 		"START_TIMER": "Iniciar Temporizador",
 		"STOP_TIMER": "Parar Temporizador",
 		"TIME_LOG": "Registo de Tempo",
@@ -4410,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "Vamos enviar um código mágico para uma entrada sem senha. Ou você pode ",
 			"OR_SIGN_IN_WITH_PASSWORD": "entrar com a senha em vez disso.",
 			"RESEND_CODE_TITLE": "Reenviar código",
-			"CODE_SUB_TITLE": "Digite o código enviado para o e-mail para fazer login."
+			"SUCCESS_SENT_CODE_TITLE": "Um código de 6 caracteres enviado para: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "O código expira em breve, então insira-o rapidamente.",
+			"REQUEST_NEW_CODE_TITLE": "Solicitar um novo código em {{ countdown }} segundos."
 		},
 		"LABELS": {
 			"EMAIL": "Endereço de email:",

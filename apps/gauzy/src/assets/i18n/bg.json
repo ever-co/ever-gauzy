@@ -2690,13 +2690,14 @@
 		"CREATE_TASK": "Създаване на задача",
 		"CREATE_PROJECT": "Създаване на проект",
 		"VIEW_TASKS": "Преглед на задачи",
-		"VIEW_TEAM_TASKS": "Преглед на задачи на екипа",
+		"VIEW_TEAM_TASKS": "Преглед на задачите на отбора",
 		"CREATE_CANDIDATE": "Създаване на кандидат",
 		"CREATE_PROPOSAL": "Създаване на предложение",
 		"CREATE_CONTRACT": "Създаване на договор",
 		"CREATE_LEAD": "Създаване на клиент-потенциал",
 		"CREATE_CUSTOMER": "Създаване на клиент",
 		"CREATE_CLIENT": "Създаване на клиент",
+		"VIEW_CLIENTS": "Преглед на клиенти",
 		"START_TIMER": "Стартиране на таймер",
 		"STOP_TIMER": "Спиране на таймер",
 		"TIME_LOG": "Запис на времето",
@@ -4336,7 +4337,9 @@
 			"DESCRIPTION_TITLE": "Ще ви изпратим магически код за вход без парола. Или можете да ",
 			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола.",
 			"RESEND_CODE_TITLE": "Изпрати отново кода",
-			"CODE_SUB_TITLE": "Въведете кода, изпратен на имейла, за да влезете."
+			"SUCCESS_SENT_CODE_TITLE": "Изпратен код с 6 знака до: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Кода изтича скоро, затова въведете го скоро.",
+			"REQUEST_NEW_CODE_TITLE": "Изискване на нов код след {{ countdown }} секунди."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
