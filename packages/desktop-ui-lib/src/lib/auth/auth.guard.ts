@@ -44,8 +44,10 @@ export class AuthGuard implements CanActivate {
 	}
 
 	private async logoutAndRedirect(returnUrl: string): Promise<void> {
-		this.logoutDesktop();
-		this.logoutAndClearStore();
+		if (this.store.userId) {
+			this.logoutDesktop();
+			this.logoutAndClearStore();
+		}
 		await this.redirectToLogin(returnUrl);
 	}
 
