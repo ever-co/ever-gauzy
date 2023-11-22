@@ -3,10 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-github2';
 
-export const GITHUB = 'github';
-
 @Injectable()
-export class GithubStrategy extends PassportStrategy(Strategy, GITHUB) {
+export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
 	constructor(protected readonly configService: ConfigService) {
 		super(config(configService));
 	}
@@ -40,7 +38,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, GITHUB) {
 export const config = (configService: ConfigService) => ({
 	clientID: <string>configService.get<string>('github.clientId') || 'disabled',
 	clientSecret: <string>configService.get<string>('github.clientSecret') || 'disabled',
-	callbackURL: <string>configService.get<string>('github.callbackAPIUrl'),
+	callbackURL: <string>configService.get<string>('github.callbackURL'),
 	passReqToCallback: true,
 	scope: ['read:user', 'user:email']
 });
