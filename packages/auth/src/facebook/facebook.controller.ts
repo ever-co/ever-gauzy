@@ -19,7 +19,7 @@ export class FacebookController {
 	 * @param req
 	 */
 	@Get('facebook')
-	facebooLogin(@Req() req: any) { }
+	facebookLogin(@Req() req: any) { }
 
 	/**
 	 * Facebook login callback endpoint.
@@ -29,7 +29,7 @@ export class FacebookController {
 	 * @returns The result of the Facebook login callback.
 	 */
 	@Get('facebook/callback')
-	async facebooLoginCallback(
+	async facebookLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {
