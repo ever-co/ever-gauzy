@@ -1071,8 +1071,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
-				if (this.start) await this.toggleStart(false);
 				if (arg && arg.quitApp) this.quitApp = true;
+				if (this.start) await this.toggleStart(false);
 			})
 		);
 
