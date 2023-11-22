@@ -3,11 +3,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
-import { GITHUB } from './github.strategy';
 
-@Controller('github')
+@Controller()
 @Public()
-@UseGuards(AuthGuard(GITHUB))
+@UseGuards(AuthGuard('github'))
 export class GithubController {
 
 	constructor(
@@ -19,7 +18,7 @@ export class GithubController {
 	 *
 	 * @param req
 	 */
-	@Get('')
+	@Get('github')
 	githubLogin(@Req() req: any) { }
 
 	/**
@@ -29,7 +28,7 @@ export class GithubController {
 	 * @param res - The response object.
 	 * @returns The result of the GitHub login callback.
 	 */
-	@Get('callback')
+	@Get('github/callback')
 	async githubLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any

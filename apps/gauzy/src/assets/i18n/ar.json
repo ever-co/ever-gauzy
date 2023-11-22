@@ -2744,6 +2744,7 @@
 		"CREATE_LEAD": "إنشاء عميل محتمل",
 		"CREATE_CUSTOMER": "إنشاء عميل",
 		"CREATE_CLIENT": "إنشاء زبون",
+		"VIEW_CLIENTS": "عرض العملاء",
 		"START_TIMER": "بدء المؤقت",
 		"STOP_TIMER": "إيقاف المؤقت",
 		"TIME_LOG": "سجل الوقت",

@@ -18,7 +18,6 @@ import {
 	ILinkedinConfig,
 	IMicrosoftConfig,
 	ISMTPConfig,
-	ITwitterConfig,
 	IUnleashConfig,
 	IUpworkConfig,
 	IWasabiConfig,
@@ -106,7 +105,6 @@ export interface IEnvironment {
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	microsoftConfig: IMicrosoftConfig;
 	linkedinConfig: ILinkedinConfig;
-	twitterConfig: ITwitterConfig;
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;

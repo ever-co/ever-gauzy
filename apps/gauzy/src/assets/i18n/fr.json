@@ -2746,6 +2746,7 @@
 		"CREATE_LEAD": "Créer un prospect",
 		"CREATE_CUSTOMER": "Créer un client",
 		"CREATE_CLIENT": "Créer un client",
+		"VIEW_CLIENTS": "Voir les clients",
 		"START_TIMER": "Démarrer le chronomètre",
 		"STOP_TIMER": "Arrêter le chronomètre",
 		"TIME_LOG": "Journal du temps",

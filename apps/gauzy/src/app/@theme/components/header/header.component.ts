@@ -124,7 +124,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		createContract: 'K',
 		createLead: 'D',
 		createCustomer: 'M',
-		createClient: 'N'
+		createClient: 'N',
+		viewClients: 'shift+N'
 	};
 
 	constructor(
@@ -303,6 +304,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		this.registerShortcut(this.defaultShortcuts.createLead, () => this.navigateTo('createLead'));
 		this.registerShortcut(this.defaultShortcuts.createCustomer, () => this.navigateTo('createCustomer'));
 		this.registerShortcut(this.defaultShortcuts.createClient, () => this.navigateTo('createClient'));
+		this.registerShortcut(this.defaultShortcuts.viewClients, () => this.navigateTo('viewClients'));
 		// -- Time Tracking
 		this.registerShortcut(this.defaultShortcuts.timeLog, () => this.navigateTo('timeLog'));
 		this.registerShortcut(this.defaultShortcuts.viewAppointments, () => this.navigateTo('viewAppointments'));
@@ -1016,8 +1018,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 				  ]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT) ||
-			!!this.user.employee
+			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_CLIENT'),
@@ -1031,6 +1032,22 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							badge: {
 								text: this.formatShortcut(this.defaultShortcuts.createClient),
+								status: 'control'
+							}
+						}
+				  ]
+				: []),
+			...(!!this.user.employee
+				? [
+						{
+							title: this.getTranslation('QUICK_ACTIONS_MENU.VIEW_CLIENTS'),
+							icon: 'person-outline',
+							link: 'pages/contacts/clients',
+							data: {
+								action: 'viewClients'
+							},
+							badge: {
+								text: this.formatShortcut(this.defaultShortcuts.viewClients),
 								status: 'control'
 							}
 						}

@@ -1,14 +1,15 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
-import github from './config/github';
 import { ConfigService } from './config.service';
+import github from './config/github';
+import twitter from './config/twitter';
 
 @Global()
 @Module({
 	imports: [
 		NestConfigModule.forRoot({
 			isGlobal: true,
-			load: [github],
+			load: [github, twitter],
 		}),
 	],
 	providers: [ConfigService],
