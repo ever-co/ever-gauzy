@@ -1,9 +1,13 @@
+/**
+ * Facebook OAuth configuration
+ */
 export interface IFacebookConfig {
-	readonly loginDialogUri: string;
-	readonly accessTokenUri: string;
+	/** The Facebook OAuth App Client ID. */
 	readonly clientId: string;
+
+	/** The Facebook OAuth App Client Secret. */
 	readonly clientSecret: string;
-	readonly oauthRedirectUri: string;
-	readonly state: string;
-	readonly fbGraphVersion: string;
+
+	/** The callback URL for Facebook OAuth authentication. */
+	readonly callbackURL: string;
 }
