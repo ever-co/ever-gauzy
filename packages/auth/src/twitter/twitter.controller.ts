@@ -5,8 +5,8 @@ import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
 @Controller()
-@Public()
 @UseGuards(AuthGuard('twitter'))
+@Public()
 export class TwitterController {
 
 	constructor(
@@ -19,7 +19,7 @@ export class TwitterController {
 	 * @param req
 	 */
 	@Get('twitter')
-	twitterLogin(@Req() req: any) { }
+	twitterOAuthLogin(@Req() req: any) { }
 
 	/**
 	 * Twitter login callback endpoint.
@@ -29,7 +29,7 @@ export class TwitterController {
 	 * @returns The result of the Twitter login callback.
 	 */
 	@Get('twitter/callback')
-	async twitterLoginCallback(
+	async twitterOAuthCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any
 	) {

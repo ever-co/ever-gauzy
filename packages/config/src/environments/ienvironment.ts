@@ -13,7 +13,6 @@ import {
 	IHubstaffConfig,
 	IJitsuConfig,
 	IKeycloakConfig,
-	ILinkedinConfig,
 	IMicrosoftConfig,
 	ISMTPConfig,
 	IUnleashConfig,
@@ -100,7 +99,6 @@ export interface IEnvironment {
 	cloudinaryConfig?: ICloudinaryConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	microsoftConfig: IMicrosoftConfig;
-	linkedinConfig: ILinkedinConfig;
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;

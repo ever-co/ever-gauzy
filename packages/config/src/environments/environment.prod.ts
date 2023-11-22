@@ -141,14 +141,6 @@ export const environment: IEnvironment = {
 			`${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
 	},
 
-	linkedinConfig: {
-		clientId: process.env.LINKEDIN_CLIENT_ID,
-		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-		callbackUrl:
-			process.env.LINKEDIN_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/linked/callback`,
-	},
-
 	fiverrConfig: {
 		clientId: process.env.FIVERR_CLIENT_ID,
 		clientSecret: process.env.FIVERR_CLIENT_SECRET,
