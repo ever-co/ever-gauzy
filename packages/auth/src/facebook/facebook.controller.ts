@@ -4,26 +4,37 @@ import { Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller('facebook')
+@Controller()
+@UseGuards(AuthGuard('facebook'))
 @Public()
 export class FacebookController {
-	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('')
-	@UseGuards(AuthGuard('facebook'))
-	facebooLogin(@Req() req: any) {}
+	constructor(
+		public readonly service: SocialAuthService
+	) { }
 
-	@Get('callback')
-	@UseGuards(AuthGuard('facebook'))
+	/**
+	 * Initiates Facebook login.
+	 *
+	 * @param req
+	 */
+	@Get('facebook')
+	facebooLogin(@Req() req: any) { }
+
+	/**
+	 * Facebook login callback endpoint.
+	 *
+	 * @param requestCtx - The context of the incoming request.
+	 * @param res - The response object.
+	 * @returns The result of the Facebook login callback.
+	 */
+	@Get('facebook/callback')
 	async facebooLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {
 		const { user } = requestCtx;
-		const {
-			success,
-			authData
-		} = await this.service.validateOAuthLoginEmail(user.emails);
+		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}
 }
