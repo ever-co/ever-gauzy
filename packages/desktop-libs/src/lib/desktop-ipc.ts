@@ -241,7 +241,7 @@ export function ipcMainHandler(
 			if (process.platform === 'darwin') {
 				if (isScreenUnauthorized()) {
 					event.sender.send('stop_from_tray', {
-						quitApp: true,
+						quitApp: false,
 					});
 					// Trigger macOS to ask user for screen capture permission
 					try {
