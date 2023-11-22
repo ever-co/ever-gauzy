@@ -43,12 +43,25 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
  * @param configService - An instance of the ConfigService to retrieve configuration values.
  * @returns An object containing Twitter OAuth configuration.
  */
-export const config = (config: ConfigService) => ({
-	consumerKey: <string>config.get<string>('twitter.consumerKey') || 'disabled',
-	consumerSecret: <string>config.get<string>('twitter.consumerSecret') || 'disabled',
-	callbackURL: <string>config.get<string>('twitter.callbackURL'),
+export const config = (configService: ConfigService) => ({
+	// Retrieve Twitter OAuth consumer key from the configuration service, default to 'disabled' if not found.
+	consumerKey: <string>configService.get<string>('twitter.consumerKey') || 'disabled',
+
+	// Retrieve Twitter OAuth consumer secret from the configuration service, default to 'disabled' if not found.
+	consumerSecret: <string>configService.get<string>('twitter.consumerSecret') || 'disabled',
+
+	// Retrieve Twitter OAuth callback URL from the configuration service.
+	callbackURL: <string>configService.get<string>('twitter.callbackURL'),
+
+	// Pass the request object to the callback.
 	passReqToCallback: true,
+
+	// Include email in the Twitter OAuth response.
 	includeEmail: true,
+
+	// JWT secret for Twitter OAuth.
 	secretOrKey: environment.JWT_SECRET,
+
+	// Extract JWT from the request's Authorization header as a bearer token.
 	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
 });
