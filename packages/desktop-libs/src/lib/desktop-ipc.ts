@@ -476,7 +476,7 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
+	ipcMain.handle('DELETE_TIME_SLOT', async (event, intervalId: number) => {
 		try {
 			const count = await intervalService.countNoSynced();
 			if (
@@ -1070,7 +1070,7 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP'];
+	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT'];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});

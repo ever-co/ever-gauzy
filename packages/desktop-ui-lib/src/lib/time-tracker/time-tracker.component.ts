@@ -499,8 +499,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				timeSlotId: this.selectedTimeSlot.id,
 			});
 			if (res) {
-				await this.getLastTimeSlotImage(this.argFromMain);
-				this.electronService.ipcRenderer.send('delete_time_slot');
+				await this.electronService.ipcRenderer.invoke('DELETE_TIME_SLOT');
+				this.refreshTimer();
 				asapScheduler.schedule(() => {
 					this._toastrNotifier.success(
 						this._translateService.instant(
@@ -2196,10 +2196,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async deleteTimeSlot(): Promise<void> {
 		this._isOffline
-			? this.electronService.ipcRenderer.send(
-					'delete_time_slot',
-					this.screenshots[0].id
-			  )
+			? await this.electronService.ipcRenderer.invoke('DELETE_TIME_SLOT', this.screenshots[0].id)
 			: await this._deleteSyncedTimeslot();
 	}
 
