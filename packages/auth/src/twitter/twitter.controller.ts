@@ -4,26 +4,37 @@ import { Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller('twitter')
+@Controller()
 @Public()
+@UseGuards(AuthGuard('twitter'))
 export class TwitterController {
-	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('')
-	@UseGuards(AuthGuard('twitter'))
-	twitterLogin(@Req() req: any) {}
+	constructor(
+		public readonly service: SocialAuthService
+	) { }
 
-	@Get('callback')
-	@UseGuards(AuthGuard('twitter'))
+	/**
+	 * Initiates Twitter login.
+	 *
+	 * @param req
+	 */
+	@Get('twitter')
+	twitterLogin(@Req() req: any) { }
+
+	/**
+	 * Twitter login callback endpoint.
+	 *
+	 * @param requestCtx - The context of the incoming request.
+	 * @param res - The response object.
+	 * @returns The result of the Twitter login callback.
+	 */
+	@Get('twitter/callback')
 	async twitterLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any
 	) {
 		const { user } = requestCtx;
-		const {
-			success,
-			authData
-		} = await this.service.validateOAuthLoginEmail(user.emails);
+		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
 		return this.service.routeRedirect(success, authData, res);
 	}
 }

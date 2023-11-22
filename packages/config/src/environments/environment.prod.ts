@@ -169,14 +169,6 @@ export const environment: IEnvironment = {
 			`${process.env.API_BASE_URL}/api/auth/linked/callback`,
 	},
 
-	twitterConfig: {
-		clientId: process.env.TWITTER_CLIENT_ID,
-		clientSecret: process.env.TWITTER_CLIENT_SECRET,
-		callbackUrl:
-			process.env.TWITTER_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/twitter/callback`,
-	},
-
 	fiverrConfig: {
 		clientId: process.env.FIVERR_CLIENT_ID,
 		clientSecret: process.env.FIVERR_CLIENT_SECRET,

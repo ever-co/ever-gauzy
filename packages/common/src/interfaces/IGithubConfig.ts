@@ -1,3 +1,18 @@
+
+/**
+ * GitHub OAuth configuration
+ */
+export interface IGithubConfig {
+	/** The GitHub OAuth App Client ID. */
+	readonly clientId: string;
+
+	/** The GitHub OAuth App Client Secret. */
+	readonly clientSecret: string;
+
+	/** The callback URL for GitHub OAuth authentication. */
+	readonly callbackURL: string;
+}
+
 /**
  * Configuration options for GitHub integration.
  */

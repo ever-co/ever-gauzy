@@ -1,5 +1,5 @@
 export interface ITwitterConfig {
-	readonly clientId: string;
-	readonly clientSecret: string;
-	readonly callbackUrl?: string;
+	readonly consumerKey: string;
+	readonly consumerSecret: string;
+	readonly callbackURL: string;
 }
