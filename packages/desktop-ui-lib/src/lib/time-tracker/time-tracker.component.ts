@@ -671,7 +671,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isOffline) {
 					try {
 						timelog =
-							isRemote || this._remoteSleepLock || (this.isRemoteTimer && this._isSpecialLogout)
+							isRemote ||
+							this._remoteSleepLock ||
+							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
 										...lastTimer,
