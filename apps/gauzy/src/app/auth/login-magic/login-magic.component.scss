@@ -85,6 +85,10 @@
     margin-bottom: 42px;
     & .form-control-group {
 
+      .not-allowed {
+        cursor: not-allowed;
+      }
+
       .edit-email {
         transition: all;
         &:hover {

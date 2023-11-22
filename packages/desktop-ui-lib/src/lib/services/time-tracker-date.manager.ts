@@ -84,7 +84,7 @@ export class TimeTrackerDateManager {
 
 	// Set the start of the week
 	private startWeekDay() {
-		moment.locale(this._language, {
+		moment.updateLocale(this._language, {
 			week: {
 				dow: TimeTrackerDateManager._startWeekDayNumber,
 			},
