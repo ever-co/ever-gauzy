@@ -5,8 +5,8 @@ import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
 @Controller()
-@Public()
 @UseGuards(AuthGuard('github'))
+@Public()
 export class GithubController {
 
 	constructor(
@@ -19,7 +19,7 @@ export class GithubController {
 	 * @param req
 	 */
 	@Get('github')
-	githubLogin(@Req() req: any) { }
+	githubOAuthLogin(@Req() req: any) { }
 
 	/**
 	 * GitHub login callback endpoint.
@@ -29,7 +29,7 @@ export class GithubController {
 	 * @returns The result of the GitHub login callback.
 	 */
 	@Get('github/callback')
-	async githubLoginCallback(
+	async githubOAuthCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any
 	) {
