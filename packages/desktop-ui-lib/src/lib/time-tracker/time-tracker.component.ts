@@ -464,7 +464,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return arr.reduce((result, current) => {
 			const existing = result.find((item: any) => item.id === current.id);
 			if (existing) {
-				const updatedAtMoment = moment(existing?.updatedAt).utc(true);
+				const updatedAtMoment = moment(existing?.updatedAt, moment.ISO_8601).utc(true);
 				Object.assign(
 					existing,
 					current,
