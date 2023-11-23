@@ -1,14 +1,16 @@
 import { Injectable } from "@angular/core";
-import { ActivatedRouteSnapshot, Resolve } from "@angular/router";
-import { catchError, debounceTime, from, of } from "rxjs";
+import { ActivatedRouteSnapshot, Resolve, Router } from "@angular/router";
+import { catchError, debounceTime, from, of, tap } from "rxjs";
 import { Observable } from "rxjs/internal/Observable";
+import { IUser } from "@gauzy/contracts";
 import { ErrorHandlingService, UsersService } from "../services";
 
 @Injectable({
     providedIn: 'root'
 })
-export class UserTenantResolver implements Resolve<Observable<number | Observable<never>>> {
+export class UserResolver implements Resolve<Observable<number | Observable<never>>> {
     constructor(
+        private readonly router: Router,
         private readonly _usersService: UsersService,
         private readonly _errorHandlingService: ErrorHandlingService,
     ) { }
@@ -18,11 +20,19 @@ export class UserTenantResolver implements Resolve<Observable<number | Observabl
         route: ActivatedRouteSnapshot
     ): Observable<number> {
         // Get the observable for fetching user data from the service
-        const user$ = this._usersService.getMe(['tenant']);
+        const user$ = this._usersService.getMe();
 
         // Pipe operators to process the observable stream
         return from(user$).pipe(
             debounceTime(100), // Add a debounceTime to wait for a specified time before emitting the latest value
+            tap((user: IUser) => {
+                //When a new user registers & logs in for the first time, he/she does not have tenantId.
+                //In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
+                if (!user.tenantId) {
+                    this.router.navigate(['/onboarding/tenant']);
+                    return;
+                }
+            }),
             // Catch and handle errors
             catchError((error) => {
                 // Handle and log errors using the _errorHandlingService

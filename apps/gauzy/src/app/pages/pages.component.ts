@@ -854,8 +854,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CONTACT_EDIT
 							)
 								? {
-										add: '/pages/contacts/leads?openAddDialog=true'
-								  }
+									add: '/pages/contacts/leads?openAddDialog=true'
+								}
 								: {})
 						}
 					},
@@ -870,8 +870,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CONTACT_EDIT
 							)
 								? {
-										add: '/pages/contacts/customers?openAddDialog=true'
-								  }
+									add: '/pages/contacts/customers?openAddDialog=true'
+								}
 								: {})
 						}
 					},
@@ -886,8 +886,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CONTACT_EDIT
 							)
 								? {
-										add: '/pages/contacts/clients?openAddDialog=true'
-								  }
+									add: '/pages/contacts/clients?openAddDialog=true'
+								}
 								: {})
 						}
 					}
@@ -961,7 +961,6 @@ export class PagesComponent extends TranslationBaseComponent
 					//When a new user registers & logs in for the first time, he/she does not have tenantId.
 					//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
 					if (!user.tenantId) {
-						console.log('first call this onboarding tenant!');
 						this.router.navigate(['/onboarding/tenant']);
 						return;
 					}
@@ -1108,7 +1107,6 @@ export class PagesComponent extends TranslationBaseComponent
 		//When a new user registers & logs in for the first time, he/she does not have tenantId.
 		//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
 		if (!this.user.tenantId) {
-			console.log('second call this onboarding tenant!');
 			this.router.navigate(['/onboarding/tenant']);
 			return;
 		}

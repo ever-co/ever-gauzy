@@ -39,7 +39,6 @@ export class AppInitService {
 				//When a new user registers & logs in for the first time, he/she does not have tenantId.
 				//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
 				if (!this.user?.tenantId) {
-					console.log('third call this onboarding tenant!');
 					this.router.navigate(['/onboarding/tenant']);
 					return;
 				}

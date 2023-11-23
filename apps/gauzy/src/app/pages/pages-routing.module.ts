@@ -6,14 +6,14 @@ import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
-import { UserTenantResolver } from '../@core/resolvers';
+import { UserResolver } from '../@core/resolvers';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: PagesComponent,
 		resolve: {
-			user: UserTenantResolver
+			user: UserResolver
 		},
 		children: [
 			{
