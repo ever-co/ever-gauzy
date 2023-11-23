@@ -479,19 +479,19 @@ export function ipcTimer(
 	ipcMain.handle('DELETE_TIME_SLOT', async (event, intervalId: number) => {
 		try {
 			const count = await intervalService.countNoSynced();
+			const notify = new NotificationDesktop();
+			const notification = {
+				message: TranslateService.instant(
+					'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
+				),
+				title: process.env.DESCRIPTION,
+			};
 			if (
 				typeof intervalId === 'number' &&
 				intervalId &&
 				count > 0 &&
 				offlineMode.enabled
 			) {
-				const notification = {
-					message: TranslateService.instant(
-						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
-					),
-					title: process.env.DESCRIPTION,
-				};
-				const notify = new NotificationDesktop();
 				await intervalService.remove(intervalId);
 				await countIntervalQueue(timeTrackerWindow, false);
 				await latestScreenshots(timeTrackerWindow);
@@ -500,9 +500,16 @@ export function ipcTimer(
 					notification.title
 				);
 			}
-			if (!offlineMode.enabled) {
+			if (!offlineMode.enabled && typeof intervalId === 'string') {
+				await intervalService.removeByRemoteId(intervalId);
 				const lastTimer = await timerService.findLastCapture();
-				await timerService.remove(new Timer(lastTimer));
+				const lastInterval = await intervalService.findLastInterval();
+				if (lastTimer) {
+					lastTimer.timeslotId = lastInterval.remoteId;
+					await timerService.update(new Timer(lastTimer));
+				}
+				notify.customNotification(notification.message, notification.title);
+				return lastInterval.remoteId;
 			}
 		} catch (error) {
 			throw new UIError('400', error, 'IPCRMSLOT');
