@@ -113,7 +113,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 	 * @returns
 	 */
 	private async changePreferredLanguage(payload: IUserUpdateInput) {
-		if (!this.user) {
+		if (!this.user || !this.user.tenantId) {
 			return;
 		}
 		try {
