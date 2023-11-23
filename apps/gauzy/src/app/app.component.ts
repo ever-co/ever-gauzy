@@ -25,6 +25,7 @@ import {
 } from './@core/services';
 import { environment } from '../environments/environment';
 import { JitsuService } from './@core/services/analytics/jitsu.service';
+import { union } from 'underscore';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,32 +60,37 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.seoService.trackCanonicalChanges();
 
 		this.store.systemLanguages$
-			.pipe(untilDestroyed(this))
-			.subscribe((languages) => {
-				//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
-				const browserLang = this.translate.getBrowserLang();
+		.pipe(untilDestroyed(this))
+		.subscribe((languages) => {
+			//Returns the language code name from the browser, e.g. "en", "bg", "he", "ru"
+			const browserLang = this.translate.getBrowserLang();
 
-				//Gets default enum languages, e.g. "en", "bg", "he", "ru"
-				const defaultLanguages = Object.values(LanguagesEnum);
+			//Gets default enum languages, e.g. "en", "bg", "he", "ru"
+			const defaultLanguages = Object.values(LanguagesEnum);
 
-				//Gets system languages
-				const systemLanguages: string[] = _.pluck(languages, 'code');
-				systemLanguages.concat(defaultLanguages);
+			//Gets system languages
+			let systemLanguages: string[] = _.pluck(languages, 'code');
+			systemLanguages = union(systemLanguages, defaultLanguages);
 
-				//Sets the default language to use as a fallback, e.g. "en"
-				this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
+			//Sets the default language to use as a fallback, e.g. "en"
+			this.translate.setDefaultLang(LanguagesEnum.ENGLISH);
 
-				//Use browser language as a primary language, if not found then use system default language, e.g. "en"
-				this.translate.use(
-					systemLanguages.includes(browserLang)
-						? browserLang
-						: LanguagesEnum.ENGLISH
-				);
+			//Get preferredLanguage if exist
+			const preferredLanguage = this.store?.user?.preferredLanguage ?? this.store.preferredLanguage ?? null;
 
-				this.translate.onLangChange.subscribe(() => {
-					this.loading = false;
-				});
+			//Use browser language as a primary language, if not found then use system default language, e.g. "en"
+			this.translate.use(
+				preferredLanguage
+					? preferredLanguage
+					: systemLanguages.includes(browserLang)
+					? browserLang
+					: LanguagesEnum.ENGLISH
+			);
+
+			this.translate.onLangChange.subscribe(() => {
+				this.loading = false;
 			});
+		});
 
 		if (Number(this.store.serverConnection) === 0) {
 			this.loading = false;

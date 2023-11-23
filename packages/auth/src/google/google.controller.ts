@@ -16,7 +16,7 @@ export class GoogleController {
 	 * @param req
 	 */
 	@Get('google')
-	googleOAuthLogin(@Req() req: any) { }
+	googleLogin(@Req() req: any) { }
 
 	/**
 	 * Google login callback endpoint.
@@ -26,7 +26,7 @@ export class GoogleController {
 	 * @returns The result of the Google login callback.
 	 */
 	@Get('google/callback')
-	async googleOAuthCallback(
+	async googleLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {

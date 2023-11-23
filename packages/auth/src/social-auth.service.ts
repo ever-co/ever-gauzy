@@ -23,7 +23,7 @@ export class SocialAuthService extends BaseSocialAuth {
 		) as keyof IEnvironment;
 	}
 
-	public validateOAuthLoginEmail(args: []): any {}
+	public validateOAuthLoginEmail(args: []): any { }
 
 	public async getPasswordHash(password: string): Promise<string> {
 		return bcrypt.hash(password, this.saltRounds);
@@ -40,9 +40,7 @@ export class SocialAuthService extends BaseSocialAuth {
 	) {
 		const { userId, jwt } = auth;
 		if (success) {
-			return res.redirect(
-				`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`
-			);
+			return res.redirect(`${this.clientBaseUrl}/#/sign-in/success?jwt=${jwt}&userId=${userId}`);
 		} else {
 			return res.redirect(`${this.clientBaseUrl}/#/auth/register`);
 		}
