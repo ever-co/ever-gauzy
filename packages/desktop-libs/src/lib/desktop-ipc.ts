@@ -476,7 +476,7 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.handle('DELETE_TIME_SLOT', async (event, intervalId: number) => {
+	ipcMain.handle('DELETE_TIME_SLOT', async (event, intervalId: number | string) => {
 		try {
 			const count = await intervalService.countNoSynced();
 			const notify = new NotificationDesktop();

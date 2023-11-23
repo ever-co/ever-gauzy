@@ -1,6 +1,6 @@
 import { DAO, IDatabaseProvider } from '../../interfaces';
 import { ProviderFactory } from '../databases';
-import {IntervalTO, TABLE_NAME_INTERVALS, TABLE_NAME_TIMERS, TimerTO, UserTO} from '../dto';
+import { IntervalTO, TABLE_NAME_INTERVALS, TimerTO, UserTO } from '../dto';
 import { IntervalTransaction } from '../transactions';
 
 export class IntervalDAO implements DAO<IntervalTO> {
