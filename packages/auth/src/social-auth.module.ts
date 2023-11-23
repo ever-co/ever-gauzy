@@ -1,10 +1,14 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@gauzy/config';
 import { AuthGuards, Controllers, Strategies } from './internal';
 import { SocialAuthService } from './social-auth.service';
 
 @Module({
-	imports: [ConfigModule],
+	imports: [
+		ConfigModule,
+		HttpModule
+	],
 	controllers: [...Controllers],
 	providers: [...Strategies, ...AuthGuards, SocialAuthService],
 	exports: [SocialAuthService]
