@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-twitter';
-import { ExtractJwt } from 'passport-jwt';
-import { environment } from '@gauzy/config';
 
 @Injectable()
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
@@ -20,7 +18,6 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	 * @param done
 	 */
 	async validate(
-		request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
@@ -43,12 +40,16 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
  * @param configService - An instance of the ConfigService to retrieve configuration values.
  * @returns An object containing Twitter OAuth configuration.
  */
-export const config = (config: ConfigService) => ({
-	consumerKey: <string>config.get<string>('twitter.consumerKey') || 'disabled',
-	consumerSecret: <string>config.get<string>('twitter.consumerSecret') || 'disabled',
-	callbackURL: <string>config.get<string>('twitter.callbackURL'),
-	passReqToCallback: true,
-	includeEmail: true,
-	secretOrKey: environment.JWT_SECRET,
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+export const config = (configService: ConfigService) => ({
+	// Retrieve Twitter OAuth consumer key from the configuration service, default to 'disabled' if not found.
+	consumerKey: <string>configService.get<string>('twitter.consumerKey') || 'disabled',
+
+	// Retrieve Twitter OAuth consumer secret from the configuration service, default to 'disabled' if not found.
+	consumerSecret: <string>configService.get<string>('twitter.consumerSecret') || 'disabled',
+
+	// Retrieve Twitter OAuth callback URL from the configuration service.
+	callbackURL: <string>configService.get<string>('twitter.callbackURL'),
+
+	// Include email in the Twitter OAuth response.
+	includeEmail: true
 });

@@ -4,26 +4,38 @@ import { Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
-@Controller('linkedin')
+@Controller()
+@UseGuards(AuthGuard('linkedin'))
 @Public()
 export class LinkedinController {
-	constructor(public readonly service: SocialAuthService) {}
 
-	@Get('')
-	@UseGuards(AuthGuard('linkedin'))
-	linkedinLogin(@Req() req: any) {}
+	constructor(
+		public readonly service: SocialAuthService
+	) { }
 
-	@Get('callback')
-	@UseGuards(AuthGuard('linkedin'))
+	/**
+	 * Initiates LinkedIn login.
+	 *
+	 * @param req
+	 */
+	@Get('linkedin')
+	linkedinLogin(@Req() req: any) { }
+
+	/**
+	 * LinkedIn login callback endpoint.
+	 *
+	 * @param requestCtx - The context of the incoming request.
+	 * @param res - The response object.
+	 * @returns The result of the LinkedIn login callback.
+	 */
+	@Get('linkedin/callback')
 	async linkedinLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {
 		const { user } = requestCtx;
-		const {
-			success,
-			authData
-		} = await this.service.validateOAuthLoginEmail(user.emails);
+		const { success, authData } = await this.service.validateOAuthLoginEmail(user.emails);
+
 		return this.service.routeRedirect(success, authData, res);
 	}
 }

@@ -114,26 +114,6 @@ export const environment: IEnvironment = {
 			process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`,
 	},
 
-	facebookConfig: {
-		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
-		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
-		clientId: process.env.FACEBOOK_CLIENT_ID,
-		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
-		oauthRedirectUri:
-			process.env.FACEBOOK_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/facebook/callback`,
-		state: '{fbstate}',
-	},
-
-	googleConfig: {
-		clientId: process.env.GOOGLE_CLIENT_ID,
-		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GOOGLE_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/google/callback`,
-	},
-
 	github: {
 		/** Github App Install Configuration  */
 		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
@@ -153,24 +133,6 @@ export const environment: IEnvironment = {
 		/** Github Webhook Configuration */
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
 		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`,
-	},
-
-	microsoftConfig: {
-		clientId: process.env.MICROSOFT_CLIENT_ID,
-		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-		resource: process.env.MICROSOFT_RESOURCE,
-		tenant: process.env.MICROSOFT_TENANT,
-		callbackUrl:
-			process.env.MICROSOFT_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
-	},
-
-	linkedinConfig: {
-		clientId: process.env.LINKEDIN_CLIENT_ID,
-		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-		callbackUrl:
-			process.env.LINKEDIN_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/linked/callback`,
 	},
 
 	fiverrConfig: {

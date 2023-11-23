@@ -41,9 +41,10 @@
 						[attr.aria-invalid]="email.invalid && email.touched ? true : null"
 						autofocus
 						autocomplete-off
+						[ngClass]="isCodeSent ? 'not-allowed' : ''"
 					/>
 					<nb-icon class="edit-email" *ngIf="isCodeSent" nbSuffix nbButton
-					size="small" ghost icon="edit-outline" pack="eva"></nb-icon>
+					size="small" ghost icon="edit-outline" nbTooltip="edit email" nbTooltipPosition="top"></nb-icon>
 
 				</nb-form-field>
 				<ng-container *ngIf="email.invalid && email.touched && !email.pristine">

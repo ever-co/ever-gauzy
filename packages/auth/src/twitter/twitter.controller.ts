@@ -5,8 +5,8 @@ import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
 @Controller()
-@Public()
 @UseGuards(AuthGuard('twitter'))
+@Public()
 export class TwitterController {
 
 	constructor(

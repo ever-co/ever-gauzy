@@ -8,15 +8,11 @@ import {
 	IAuth0Config,
 	IAwsConfig,
 	ICloudinaryConfig,
-	IFacebookConfig,
 	IFiverrConfig,
 	IGithubIntegrationConfig,
-	IGoogleConfig,
 	IHubstaffConfig,
 	IJitsuConfig,
 	IKeycloakConfig,
-	ILinkedinConfig,
-	IMicrosoftConfig,
 	ISMTPConfig,
 	IUnleashConfig,
 	IUpworkConfig,
@@ -100,11 +96,7 @@ export interface IEnvironment {
 	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
 	cloudinaryConfig?: ICloudinaryConfig;
-	facebookConfig: IFacebookConfig;
-	googleConfig: IGoogleConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
-	microsoftConfig: IMicrosoftConfig;
-	linkedinConfig: ILinkedinConfig;
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;
