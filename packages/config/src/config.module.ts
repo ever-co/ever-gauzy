@@ -6,13 +6,14 @@ import twitter from './config/twitter';
 import facebook from './config/facebook';
 import google from './config/google';
 import linkedin from './config/linkedin';
+import microsoft from './config/microsoft';
 
 @Global()
 @Module({
 	imports: [
 		NestConfigModule.forRoot({
 			isGlobal: true,
-			load: [github, twitter, facebook, google, linkedin],
+			load: [github, twitter, facebook, google, linkedin, microsoft],
 		}),
 	],
 	providers: [ConfigService],

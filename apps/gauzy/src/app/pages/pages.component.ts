@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, Data, NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
 	IOrganization,
@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, map, tap } from 'rxjs/operators';
+import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
@@ -52,11 +52,12 @@ export class PagesComponent extends TranslationBaseComponent
 	reportMenuItems: NbMenuItem[] = [];
 
 	constructor(
+		private readonly router: Router,
+		private readonly route: ActivatedRoute,
 		public readonly translate: TranslateService,
 		private readonly store: Store,
 		private readonly reportService: ReportService,
 		private readonly selectorService: SelectorService,
-		private readonly router: Router,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
 		private readonly authStrategy: AuthStrategy
@@ -853,8 +854,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CONTACT_EDIT
 							)
 								? {
-										add: '/pages/contacts/leads?openAddDialog=true'
-								  }
+									add: '/pages/contacts/leads?openAddDialog=true'
+								}
 								: {})
 						}
 					},
@@ -869,8 +870,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CONTACT_EDIT
 							)
 								? {
-										add: '/pages/contacts/customers?openAddDialog=true'
-								  }
+									add: '/pages/contacts/customers?openAddDialog=true'
+								}
 								: {})
 						}
 					},
@@ -885,8 +886,8 @@ export class PagesComponent extends TranslationBaseComponent
 								PermissionsEnum.ORG_CONTACT_EDIT
 							)
 								? {
-										add: '/pages/contacts/clients?openAddDialog=true'
-								  }
+									add: '/pages/contacts/clients?openAddDialog=true'
+								}
 								: {})
 						}
 					}
@@ -953,6 +954,22 @@ export class PagesComponent extends TranslationBaseComponent
 	}
 
 	async ngOnInit() {
+		this.route.data
+			.pipe(
+				filter(({ user }: Data) => !!user),
+				tap(({ user }: Data) => {
+					//When a new user registers & logs in for the first time, he/she does not have tenantId.
+					//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
+					if (!user.tenantId) {
+						this.router.navigate(['/onboarding/tenant']);
+						return;
+					}
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		await this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
 

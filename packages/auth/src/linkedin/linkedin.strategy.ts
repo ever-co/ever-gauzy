@@ -23,11 +23,10 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 		request: any,
 		accessToken: string,
 		refreshToken: string,
-		profile,
+		profile: any,
 		done: Function
 	) {
 		try {
-			console.log(profile);
 			const { emails } = profile;
 			const user = {
 				emails,
