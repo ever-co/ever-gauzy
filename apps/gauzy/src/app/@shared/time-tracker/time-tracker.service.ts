@@ -232,7 +232,7 @@ export class TimeTrackerService implements OnDestroy {
 		}
 	}
 
-	toggle() {
+	toggle(): Promise<ITimeLog> {
 		if (this.running) {
 			this.turnOffTimer();
 			delete this.timerConfig.source;

@@ -1,7 +1,8 @@
+
 /**
- * Configuration options for GitHub integration.
+ * GitHub OAuth configuration
  */
-export interface IGithubConfig extends Partial<IGithubIntegrationConfig> {
+export interface IGithubConfig {
 	/** The GitHub OAuth App Client ID. */
 	readonly clientId: string;
 
@@ -9,13 +10,20 @@ export interface IGithubConfig extends Partial<IGithubIntegrationConfig> {
 	readonly clientSecret: string;
 
 	/** The callback URL for GitHub OAuth authentication. */
-	readonly callbackUrl: string;
+	readonly callbackURL: string;
 }
 
 /**
- * Configuration options for a GitHub Integration.
+ * Configuration options for GitHub integration.
  */
 export interface IGithubIntegrationConfig {
+
+	/** The GitHub App Client ID. */
+	readonly clientId: string;
+
+	/** The GitHub App Client Secret. */
+	readonly clientSecret: string;
+
 	/** The GitHub App ID. */
 	readonly appId: string;
 

@@ -6,7 +6,9 @@
 		"ADD": "Hinzufügen",
 		"CREATE": "Erstellen",
 		"REGISTER": "Registrieren",
+		"CHANGE_PASSWORD": "Passwort ändern",
 		"LOGIN": "Einloggen",
+		"SEND_CODE": "Mit E-Mail anmelden",
 		"ADD_NOTE": "Notiz hinzufügen",
 		"EDIT": "Bearbeiten",
 		"MANAGE": "Verwalten",
@@ -1913,12 +1915,19 @@
 				"REQUIRE_CLIENT": "Kunde benötigt werden",
 				"REQUIRE_CLIENT_INFO": "Für den Start des Timers und auch für das Hinzufügen oder Bearbeiten von manueller Zeit in den Zeitprotokollen wird der Kunde der erfassten Zeit benötigt.",
 				"ALLOW_TO_SET_DEFAULT_ORGANIZATION": "Erlaube dem Benutzer, die Standardorganisation festzulegen.",
+				"SCREENSHOT_FREQUENCY": "Frequentie schermafbeeldingen",
+				"SCREENSHOT_FREQUENCY_INFO": "Geef de updatefrequentie of tijdintervallen voor synchronisatie op.",
+				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",
+				"RANDOM_SCREENSHOT_INFO": "Inschakelen - Willekeurig schermafbeeldingen maken. Uitschakelen - Schermafbeeldingen maken op regelmatige tijdsintervallen",
+				"TRACK_ON_SLEEP": "Verfolgung im Schlaf",
+				"TRACK_ON_SLEEP_INFO": "Aktivieren - Verfolgung, wenn das Gerät schläft. Deaktivieren - Timer stoppt die Verfolgung, wenn das Gerät schläft.",
+				"ENFORCED": "Erzwungen",
+				"ENFORCED_INFO": "Aktiviert - Stellt sicher, dass die Einstellungen für das Verfolgen im Schlaf, zufällige Bildschirmfotos und die Häufigkeit der Bildschirmaufnahmen, die vom Administrator festgelegt wurden, verbindlich sind und nicht von Benutzern außer Kraft gesetzt oder ignoriert werden können.",
 				"INACTIVITY_TIME_LIMIT": "Inaktivitätsgrenze",
 				"INACTIVITY_TIME_LIMIT_INFO": "Inaktivitätsverfolgungstimeout (d. h. wie viele Minuten Inaktivität erlaubt sind)",
 				"ACTIVITY_PROOF_DURATION": "Aktivitätsnachweis Dauer",
 				"ACTIVITY_PROOF_DURATION_INFO": "Dauer des Aktivitätsnachweises für den Countdown-Dialog; es repräsentiert die Anzahl an Minuten, die gegeben werden, um die Aktivität zu beweisen.",
 				"ENABLE_DETECTION_INACTIVITY": "Aktiviere die Erkennung von Inaktivität bei Mitarbeitern.",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist.",
 				"DELETE_IDLE_TIME": "Aktiviere die Löschung der Leerlaufzeit.",
 				"DELETE_IDLE_TIME_INFO": "Aktivieren - das System wird die Leerlaufzeit löschen. Deaktivieren - das System wird die Leerlaufzeit nicht löschen.",
 				"ALLOW_SCREEN_CAPTURE": "Bildschirmaufnahme zulassen",
@@ -1948,7 +1957,10 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto-Schließen des Problemzeitraums (in Tagen)",
 				"AUTO_ARCHIVE_ISSUE": "Automatische Archivierung Problem",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto-Archivierungszeitraum (in Tagen)",
-				"AUTO_STATUS": "Fahrzeugstatus."
+				"AUTO_STATUS": "Fahrzeugstatus.",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Aktiviert - Das System erkennt die Inaktivität und zeigt eine Warnung an. Deaktiviert - Es wird keine Warnung angezeigt, wenn ein Mitarbeiter inaktiv ist."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Manager",
@@ -2704,6 +2716,45 @@
 		"CHAT": "Support-Chat",
 		"FAQ": "Häufig gestellte Fragen",
 		"HELP": "Hilfe"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Rechnung erstellen",
+		"RECEIVED_INVOICES": "Erhaltene Rechnungen",
+		"CREATE_INCOME": "Einnahme erstellen",
+		"CREATE_EXPENSE": "Ausgabe erstellen",
+		"CREATE_ESTIMATE": "Kostenvoranschlag erstellen",
+		"RECEIVED_ESTIMATES": "Erhaltene Kostenvoranschläge",
+		"CREATE_PAYMENT": "Zahlung erstellen",
+		"ADD_EMPLOYEE": "Mitarbeiter hinzufügen",
+		"ADD_INVENTORY": "Inventar hinzufügen",
+		"ADD_EQUIPMENT": "Ausrüstung hinzufügen",
+		"ADD_VENDOR": "Lieferant hinzufügen",
+		"ADD_DEPARTMENT": "Abteilung hinzufügen",
+		"CREATE_TEAM": "Team erstellen",
+		"CREATE_TASK": "Aufgabe erstellen",
+		"CREATE_PROJECT": "Projekt erstellen",
+		"VIEW_TASKS": "Aufgaben anzeigen",
+		"VIEW_TEAM_TASKS": "Team-Aufgaben anzeigen",
+		"CREATE_CANDIDATE": "Bewerber erstellen",
+		"CREATE_PROPOSAL": "Angebot erstellen",
+		"CREATE_CONTRACT": "Vertrag erstellen",
+		"CREATE_LEAD": "Interessent erstellen",
+		"CREATE_CUSTOMER": "Kunde erstellen",
+		"CREATE_CLIENT": "Kunde erstellen",
+		"VIEW_CLIENTS": "Kunden anzeigen",
+		"START_TIMER": "Timer starten",
+		"STOP_TIMER": "Timer stoppen",
+		"TIME_LOG": "Zeiterfassung",
+		"VIEW_APPOINTMENTS": "Termine anzeigen",
+		"VIEW_TIME_ACTIVITY": "Zeitaktivität anzeigen"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Buchhaltung",
+		"ORGANIZATION": "Organisation",
+		"PROJECT_MANAGEMENT": "Projektmanagement",
+		"JOBS": "Jobs",
+		"CONTACTS": "Kontakte",
+		"TIME_TRACKING": "Zeiterfassung"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Vorname",
@@ -4164,6 +4215,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Kennwort zurücksetzen",
+			"multi-tenant-password": "Multi-Tenant-Passwort-Reset",
 			"password-less-authentication": "Passwortlose Authentifizierung",
 			"welcome-user": "Willkommen Benutzer",
 			"email-verification": "E-Mail-Bestätigung",
@@ -4235,7 +4287,8 @@
 	"DIALOG": {
 		"CONFIRM": "Bestätigen",
 		"ALERT": "Alarm",
-		"DELETE_CONFIRM": "Alarm"
+		"DELETE_CONFIRM": "Alarm",
+		"QUICK_ACTIONS": "schnelle Aktionen"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Dateianbieter",
@@ -4348,20 +4401,34 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Hast du kein Konto?",
 		"FORGOT_PASSWORD_TITLE": "Passwort vergessen?",
 		"OR_SIGN_IN_WITH": "Oder mit anmelden",
+		"FORGOT_EMAIL_TITLE": "E-Mail vergessen?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Einloggen mit einem magischen Code",
+			"DESCRIPTION_TITLE": "Wir senden Ihnen einen magischen Code für eine kennwortfreie Anmeldung. Oder Sie können ",
+			"OR_SIGN_IN_WITH_PASSWORD": "sich stattdessen mit einem Passwort anmelden.",
+			"RESEND_CODE_TITLE": "Code erneut senden",
+			"SUCCESS_SENT_CODE_TITLE": "Ein 6-stelliger Code wurde gesendet an: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Der Code läuft bald ab, bitte geben Sie ihn bald ein.",
+			"REQUEST_NEW_CODE_TITLE": "Neuen Code anfordern in {{ countdown }} Sekunden."
+		},
 		"LABELS": {
 			"EMAIL": "E-Mail-Adresse:",
-			"PASSWORD": "Passwort:"
+			"PASSWORD": "Passwort:",
+			"CODE": "Code:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "E-Mail-Adresse",
-			"PASSWORD": "Passwort"
+			"PASSWORD": "Passwort",
+			"CODE": "Code eingeben"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!",
 			"PASSWORD_REQUIRED": "Passwort wird benötigt!",
 			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwörter dürfen nicht mit Leerzeichen beginnen oder enden."
+			"PASSWORD_NO_SPACE_EDGES": "Passwörter dürfen nicht mit Leerzeichen beginnen oder enden.",
+			"CODE_REQUIRED": "Ein Code ist erforderlich, um sich anzumelden.",
+			"CODE_REQUIRED_LENGTH": "Der Code muss {{ requiredLength }} Zeichen enthalten."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch in Demo-Konten einloggen",
@@ -4386,6 +4453,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Passwort ändern",
+		"SUB_TITLE": "Bitte setzen Sie ein neues Passwort",
+		"LABELS": {
+			"NEW_PASSWORD": "Neues Passwort:",
+			"CONFIRM_PASSWORD": "Passwort bestätigen:",
+			"BACK_TO": "Zurück zu"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Neues Passwort",
+			"CONFIRM_PASSWORD": "Passwort bestätigen"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Neues Passwort ist erforderlich!",
+			"CONFIRM_PASSWORD_REQUIRED": "Passwortbestätigung ist erforderlich!",
+			"PASSWORDS_NOT_MATCH": "Passwort stimmt nicht mit der Passwortbestätigung überein!",
+			"PASSWORD_SHOULD_CONTAIN": "Das neue Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
 		}
 	},
 	"PAGINATION": {

@@ -12,6 +12,9 @@ import { EstimateEmailComponent, EstimateEmailResolver } from './estimate-email'
 import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
 import { ConfirmEmailComponent } from './confirm-email';
 import { ConfirmEmailResolver } from './confirm-email/confirm-email.resolver';
+import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
+import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
+import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
 
 export const routes: Routes = [
 	{
@@ -24,12 +27,6 @@ export const routes: Routes = [
 				pathMatch: 'full'
 			},
 			{
-				path: 'signin',
-				loadChildren: () => import('./signin-workspaces/signin-workspaces.module').then(
-					(m) => m.SignInWorkspacesLayoutModule
-				)
-			},
-			{
 				path: 'login',
 				component: NgxLoginComponent,
 				canActivate: [NoAuthGuard]
@@ -40,9 +37,21 @@ export const routes: Routes = [
 				canActivate: [NoAuthGuard]
 			},
 			{
-				path: 'logout',
-				component: NbLogoutComponent
+				path: 'login-workspace',
+				component: NgxLoginWorkspaceComponent,
+				canActivate: [NoAuthGuard]
 			},
+			{
+				path: 'login-magic',
+				component: NgxLoginMagicComponent,
+				canActivate: [NoAuthGuard]
+			},
+			{
+				path: 'magic-sign-in',
+				component: NgxMagicSignInWorkspaceComponent,
+				canActivate: [NoAuthGuard]
+			},
+
 			{
 				path: 'request-password',
 				component: NgxForgotPasswordComponent,
@@ -77,10 +86,14 @@ export const routes: Routes = [
 				canActivate: [NoAuthGuard],
 				resolve: {
 					estimate: EstimateEmailResolver
-				},
-			}
-		],
-	},
+				}
+			},
+			{
+				path: 'logout',
+				component: NbLogoutComponent
+			},
+		]
+	}
 ];
 
 @NgModule({

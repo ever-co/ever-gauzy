@@ -19,7 +19,7 @@ import * as moment from 'moment';
 import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AuthStrategy } from '../auth';
-import { LanguagesEnum } from 'packages/contracts/dist';
+import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { GAUZY_ENV } from '../constants';
@@ -190,18 +190,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Github',
 			fields: [
 				{
-					name: 'GAUZY_GITHUB_CLIENT_ID',
-					field: 'GAUZY_GITHUB_CLIENT_ID',
+					name: 'GAUZY_GITHUB_OAUTH_CLIENT_ID',
+					field: 'GAUZY_GITHUB_OAUTH_CLIENT_ID',
 					value: ''
 				},
 				{
-					name: 'GAUZY_GITHUB_CLIENT_SECRET',
-					field: 'GAUZY_GITHUB_CLIENT_SECRET',
+					name: 'GAUZY_GITHUB_OAUTH_CLIENT_SECRET',
+					field: 'GAUZY_GITHUB_OAUTH_CLIENT_SECRET',
 					value: ''
 				},
 				{
-					name: 'GAUZY_GITHUB_CALLBACK_URL',
-					field: 'GAUZY_GITHUB_CALLBACK_URL',
+					name: 'GAUZY_GITHUB_OAUTH_CALLBACK_URL',
+					field: 'GAUZY_GITHUB_OAUTH_CALLBACK_URL',
 					value: ''
 				}
 			]
@@ -350,9 +350,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		preventDisplaySleep: false,
 		visibleAwOption: true,
 		visibleWakatimeOption: false,
-		preferredLanguage: LanguagesEnum.ENGLISH
+		preferredLanguage: LanguagesEnum.ENGLISH,
+		enforced: false
 	};
-	periodOption = [1, 3, 5, 10];
+	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
 	screenshotNotification = null;
 	config = {

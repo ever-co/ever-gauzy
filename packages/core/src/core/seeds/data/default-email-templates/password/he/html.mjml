@@ -4,40 +4,46 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="{{host}}/assets/images/logos/logo_Gauzy.png"
+					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"
 				></mj-divider>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>שלום!</p>
-					<p>קיבלנו בקשה לשינוי סיסמה.</p>
-					<p>אם ביקשת לאפס את הסיסמה שלך</p>
-					<br /><br />
+				<mj-text>
+					<p>שלום {{userName}}!</p>
+					<p>
+						קיבלנו בקשה לשינוי סיסמה עבור חשבון Gauzy שלך עבור
+						<strong>{{tenantName}}</strong>.
+					</p>
+					<p>אם ביקשת לאפס את הסיסמה שלך, לחץ על הכפתור למטה:</p>
 				</mj-text>
 				<mj-button
-					href="{{generatedUrl}}"
+					href="{{ generatedUrl }}"
 					font-family="Helvetica"
 					background-color="#3366ff"
 					color="white"
 				>
-					לחץ כאן
+					לאפס את הסיסמה
 				</mj-button>
+				<mj-text
+					font-size="14px"
+					font-family="helvetica"
+					color="#555"
+				>
+					<p>אם לא ביקשת את השינוי הזה, אנא התעלם מאימייל זה.</p>
+					<p>קישור לאיפוס סיסמה זה יפוג בקרוב מטעמי אבטחה.</p>
+				</mj-text>
 				<mj-divider
 					border-color="#1B005D"
 					border-width="1px"
 				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica"
-					>© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff"
-						>Gauzy</a
-					>
+				<mj-text align="center" font-size="12px" font-family="helvetica">
+					© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="https://ever.co/" style="color: #598bff"
-						>Ever Co. LTD.</a
-					>
-					All rights reserved.
+					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
+					כל הזכויות שמורות.
 				</mj-text>
 			</mj-column>
 		</mj-section>

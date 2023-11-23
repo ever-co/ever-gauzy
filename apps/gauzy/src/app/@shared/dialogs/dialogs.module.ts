@@ -18,9 +18,13 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbCheckboxModule,
-	NbFormFieldModule
+	NbFormFieldModule,
+	NbMenuModule,
+	NbBadgeModule,
+	NbTagModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { QuickActionsComponent } from './quick-actions/quick-actions.component';
 
 const directives = [AlertDirective, ConfirmDirective, PromptDirective];
 
@@ -41,9 +45,12 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 		NbCardModule,
 		NbIconModule,
 		TranslateModule,
-		NbFormFieldModule
+		NbFormFieldModule,
+		NbMenuModule,
+		NbBadgeModule,
+		NbTagModule
 	],
-	declarations: [...components, ...directives],
+	declarations: [...components, ...directives, QuickActionsComponent],
 	exports: [...directives],
 	providers: []
 })

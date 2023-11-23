@@ -5,16 +5,16 @@ import { EMPTY, filter } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
 import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from "@gauzy/contracts";
-import { AuthService, ErrorHandlingService, Store } from "./../../../../@core/services";
-import { PasswordFormFieldComponent } from "./../../../../@shared/user/forms/fields/password";
+import { AuthService, ErrorHandlingService, Store } from "./../../@core/services";
+import { PasswordFormFieldComponent } from "./../../@shared/user/forms/fields/password";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'workspace-signin-with-email',
-    templateUrl: './signin-with-email.component.html',
-    styleUrls: ['./signin-with-email.component.scss'],
+    selector: 'ngx-login-workspace',
+    templateUrl: './login-workspace.component.html',
+    styleUrls: ['./login-workspace.component.scss'],
 })
-export class WorkspaceSigninWithEmailComponent implements OnInit {
+export class NgxLoginWorkspaceComponent implements OnInit {
 
     public confirmed_email: string;
     public total_workspaces: number;
@@ -23,7 +23,7 @@ export class WorkspaceSigninWithEmailComponent implements OnInit {
     public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
 
     /** The FormGroup for the sign-in form */
-    public form: FormGroup = WorkspaceSigninWithEmailComponent.buildForm(this._fb);
+    public form: FormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
 
     /**
      * Static method to build a FormGroup for the sign-in form.

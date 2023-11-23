@@ -53,6 +53,7 @@
 							<ngx-password-form-field
 								id="'password'"
 								[placeholder]="'PROFILE_PAGE.PASSWORD' | translate"
+								[label]="'PROFILE_PAGE.PASSWORD' | translate"
 								[ctrl]="form.get('password')"
 								formControlName="password"
                 				[autocomplete]="'new-password'"
@@ -62,6 +63,7 @@
 							<ngx-password-form-field
 								[id]="'reset-password'"
 								[placeholder]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
+								[label]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
 								[ctrl]="form.get('repeatPassword')"
 								formControlName="repeatPassword"
                 				[autocomplete]="'new-password'"

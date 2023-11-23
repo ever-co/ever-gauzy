@@ -6,7 +6,9 @@
 		"ADD": "Ajouter",
 		"CREATE": "Créer",
 		"REGISTER": "S'inscrire",
+		"CHANGE_PASSWORD": "Changer le mot de passe",
 		"LOGIN": "Se connecter",
+		"SEND_CODE": "Se connecter avec un e-mail",
 		"ADD_NOTE": "Ajouter une note",
 		"EDIT": "Éditer",
 		"MANAGE": "Gérer",
@@ -1920,6 +1922,14 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durée du compte à rebours de la preuve d'activité, cela représente un certain nombre de minutes données pour prouver l'activité.",
 				"ENABLE_DETECTION_INACTIVITY": "Permettre la détection de l'inactivité des employés",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
+				"SCREENSHOT_FREQUENCY": "Fréquence des captures d'écran",
+				"SCREENSHOT_FREQUENCY_INFO": "Spécifiez la fréquence de mise à jour ou les intervalles de synchronisation.",
+				"RANDOM_SCREENSHOT": "Capture d'écran aléatoire",
+				"RANDOM_SCREENSHOT_INFO": "Activer - Prendre des captures d'écran à des intervalles aléatoires. Désactiver - Prendre des captures d'écran à intervalles réguliers.",
+				"TRACK_ON_SLEEP": "Suivi pendant le sommeil",
+				"TRACK_ON_SLEEP_INFO": "Activer - Suivi lorsque l'appareil passe en mode veille. Désactiver - Arrêter la minuterie de suivi lorsque l'appareil passe en mode veille.",
+				"ENFORCED": "Forcé",
+				"ENFORCED_INFO": "Activé - Veille à ce que le suivi pendant le sommeil, la capture d'écran aléatoire et les paramètres de fréquence de capture d'écran spécifiés par l'administrateur soient obligatoires et ne peuvent pas être contournés ou ignorés par les utilisateurs.",
 				"DELETE_IDLE_TIME": "Permettre la suppression du temps inactif",
 				"DELETE_IDLE_TIME_INFO": "Activer - le système supprimera le temps d'inactivité. Désactiver - le système ne supprimera pas le temps d'inactivité.",
 				"ALLOW_SCREEN_CAPTURE": "Autoriser la capture d'écran",
@@ -1949,7 +1959,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Période de clôture automatique des incidents (en jours)",
 				"AUTO_ARCHIVE_ISSUE": "Problème d'archivage automatique",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Période de conservation automatique (en jours)",
-				"AUTO_STATUS": "Statut automatique"
+				"AUTO_STATUS": "Statut automatique",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2705,6 +2721,45 @@
 		"CHAT": "Chat de support",
 		"FAQ": "Foire aux questions",
 		"HELP": "Aidez-moi"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Créer une facture",
+		"RECEIVED_INVOICES": "Factures reçues",
+		"CREATE_INCOME": "Créer un revenu",
+		"CREATE_EXPENSE": "Créer une dépense",
+		"CREATE_ESTIMATE": "Créer une estimation",
+		"RECEIVED_ESTIMATES": "Devis reçus",
+		"CREATE_PAYMENT": "Créer un paiement",
+		"ADD_EMPLOYEE": "Ajouter un employé",
+		"ADD_INVENTORY": "Ajouter un inventaire",
+		"ADD_EQUIPMENT": "Ajouter un équipement",
+		"ADD_VENDOR": "Ajouter un fournisseur",
+		"ADD_DEPARTMENT": "Ajouter un département",
+		"CREATE_TEAM": "Créer une équipe",
+		"CREATE_TASK": "Créer une tâche",
+		"CREATE_PROJECT": "Créer un projet",
+		"VIEW_TASKS": "Voir les tâches",
+		"VIEW_TEAM_TASKS": "Voir les tâches de l'équipe",
+		"CREATE_CANDIDATE": "Créer un candidat",
+		"CREATE_PROPOSAL": "Créer une proposition",
+		"CREATE_CONTRACT": "Créer un contrat",
+		"CREATE_LEAD": "Créer un prospect",
+		"CREATE_CUSTOMER": "Créer un client",
+		"CREATE_CLIENT": "Créer un client",
+		"VIEW_CLIENTS": "Voir les clients",
+		"START_TIMER": "Démarrer le chronomètre",
+		"STOP_TIMER": "Arrêter le chronomètre",
+		"TIME_LOG": "Journal du temps",
+		"VIEW_APPOINTMENTS": "Voir les rendez-vous",
+		"VIEW_TIME_ACTIVITY": "Voir l'activité temporelle"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Comptabilité",
+		"ORGANIZATION": "Organisation",
+		"PROJECT_MANAGEMENT": "Gestion de projet",
+		"JOBS": "Emplois",
+		"CONTACTS": "Contacts",
+		"TIME_TRACKING": "Suivi du temps"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Prénom",
@@ -4165,6 +4220,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Réinitialisation de mot de passe",
+			"multi-tenant-password": "Réinitialisation du mot de passe multi-locataire",
 			"password-less-authentication": "Authentification sans mot de passe",
 			"welcome-user": "Bienvenue, utilisateur.",
 			"email-verification": "Confirmation par email",
@@ -4236,7 +4292,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirmer",
 		"ALERT": "Alerte",
-		"DELETE_CONFIRM": "Alerte"
+		"DELETE_CONFIRM": "Alerte",
+		"QUICK_ACTIONS": "ACTIONS RAPIDES"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fournisseur de fichiers",
@@ -4349,20 +4406,34 @@
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",
 		"OR_SIGN_IN_WITH": "Ou connectez-vous avec",
+		"FORGOT_EMAIL_TITLE": "Mot de passe oublié ?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Connexion avec un code magique",
+			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour une connexion sans mot de passe. Ou vous pouvez ",
+			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place.",
+			"RESEND_CODE_TITLE": "Renvoyer le code",
+			"SUCCESS_SENT_CODE_TITLE": "Un code de 6 caractères a été envoyé à : ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Le code expire bientôt, veuillez le saisir rapidement.",
+			"REQUEST_NEW_CODE_TITLE": "Demander un nouveau code dans {{ countdown }} secondes."
+		},
 		"LABELS": {
 			"EMAIL": "Adresse e-mail:",
-			"PASSWORD": "Mot de passe:"
+			"PASSWORD": "Mot de passe:",
+			"CODE": "Code :"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Adresse e-mail",
-			"PASSWORD": "Mot de passe"
+			"PASSWORD": "Mot de passe",
+			"CODE": "Entrez le code"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'e-mail est requis !",
 			"EMAIL_REAL_REQUIRED": "L'e-mail devrait être une vraie adresse !",
 			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
 			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir de {{ minLength }} à {{ maxLength }} caractères!",
-			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces."
+			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces.",
+			"CODE_REQUIRED": "Un code est nécessaire pour se connecter.",
+			"CODE_REQUIRED_LENGTH": "Le code doit contenir {{ requiredLength }} caractères."
 		},
 		"DEMO": {
 			"TITLE": "Connectez-vous automatiquement aux comptes de démonstration",
@@ -4387,6 +4458,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email est requis !",
 			"EMAIL_REAL_REQUIRED": "L'email doit être le véritable !"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Changer le mot de passe",
+		"SUB_TITLE": "Veuillez définir un nouveau mot de passe",
+		"LABELS": {
+			"NEW_PASSWORD": "Nouveau mot de passe :",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe :",
+			"BACK_TO": "Retour à"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nouveau mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Un nouveau mot de passe est requis !",
+			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
+			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
+			"PASSWORD_SHOULD_CONTAIN": "Le nouveau mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères."
 		}
 	},
 	"PAGINATION": {

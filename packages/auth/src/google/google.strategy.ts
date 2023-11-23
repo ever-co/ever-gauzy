@@ -1,12 +1,11 @@
-import { ConfigService, IEnvironment } from '@gauzy/config';
-import { IApiServerOptions } from '@gauzy/common';
+import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-	constructor(private readonly configService: ConfigService) {
+	constructor(protected readonly configService: ConfigService) {
 		super(config(configService));
 	}
 
@@ -35,18 +34,25 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 	}
 }
 
-export const config = (configService: ConfigService) => {
-	const GOOGLE_CONFIG = configService.get(
-		'googleConfig'
-	) as IEnvironment['googleConfig'];
-	const { baseUrl } = configService.apiConfigOptions as IApiServerOptions;
+/**
+ * Creates a configuration object for Google OAuth based on the provided ConfigService.
+ *
+ * @param config - An instance of the ConfigService to retrieve configuration values.
+ * @returns An object containing Google OAuth configuration.
+ */
+export const config = (configService: ConfigService) => ({
+	// Retrieve Google OAuth client ID from the configuration service, default to 'disabled' if not found.
+	clientID: <string>configService.get<string>('google.clientId') || 'disabled',
 
-	return {
-		clientID: GOOGLE_CONFIG.clientId || 'disabled',
-		clientSecret: GOOGLE_CONFIG.clientSecret || 'disabled',
-		callbackURL:
-			GOOGLE_CONFIG.callbackUrl || `${baseUrl}/api/auth/google/callback`,
-		passReqToCallback: true,
-		scope: ['email', 'profile']
-	};
-};
+	// Retrieve Google OAuth client secret from the configuration service, default to 'disabled' if not found.
+	clientSecret: <string>configService.get<string>('google.clientSecret') || 'disabled',
+
+	// Retrieve Google OAuth callback URL from the configuration service.
+	callbackURL: <string>configService.get<string>('google.callbackURL'),
+
+	// Pass the request object to the callback.
+	passReqToCallback: true,
+
+	// Specify the scope for Google OAuth (read user data and user email).
+	scope: ['email', 'profile']
+});

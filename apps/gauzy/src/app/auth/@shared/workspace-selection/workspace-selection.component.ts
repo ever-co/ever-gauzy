@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from './../../../@shared/language-base';
 
 @Component({
-	selector: 'ngx-multi-workspace-onboarding',
-	templateUrl: './multi-workspace.component.html',
-	styleUrls: ['./multi-workspace.component.scss'],
+	selector: 'ngx-workspace-selection',
+	templateUrl: './workspace-selection.component.html',
+	styleUrls: ['./workspace-selection.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MultiWorkspaceOnboardingComponent extends TranslationBaseComponent implements OnInit {
+export class WorkspaceSelectionComponent extends TranslationBaseComponent implements OnInit {
 
 	/**
 	 * Private property to store the workspaces.
