@@ -10,7 +10,10 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbAccordionModule,
-	NbFormFieldModule, NbSelectModule, NbLayoutModule,
+	NbFormFieldModule,
+	NbSelectModule,
+	NbLayoutModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
@@ -59,7 +62,8 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 		ConfirmEmailModule,
 		SharedModule,
 		WorkspaceSelectionModule,
-		PasswordFormFieldModule
+		PasswordFormFieldModule,
+		NbTooltipModule
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -77,4 +81,4 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 	],
 	providers: [ElectronService]
 })
-export class NgxAuthModule { }
+export class NgxAuthModule {}

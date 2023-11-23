@@ -464,7 +464,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return arr.reduce((result, current) => {
 			const existing = result.find((item: any) => item.id === current.id);
 			if (existing) {
-				const updatedAtMoment = moment(existing?.updatedAt).utc(true);
+				const updatedAtMoment = moment(existing?.updatedAt, moment.ISO_8601).utc(true);
 				Object.assign(
 					existing,
 					current,
@@ -671,7 +671,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isOffline) {
 					try {
 						timelog =
-							isRemote || this._remoteSleepLock || (this.isRemoteTimer && this._isSpecialLogout)
+							isRemote ||
+							this._remoteSleepLock ||
+							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
 										...lastTimer,
@@ -1069,8 +1071,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
-				if (this.start) await this.toggleStart(false);
 				if (arg && arg.quitApp) this.quitApp = true;
+				if (this.start) await this.toggleStart(false);
 			})
 		);
 
