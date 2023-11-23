@@ -499,15 +499,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				timeSlotId: this.selectedTimeSlot.id,
 			});
 			if (res) {
-				await this.electronService.ipcRenderer.invoke('DELETE_TIME_SLOT');
-				this.refreshTimer();
-				asapScheduler.schedule(() => {
-					this._toastrNotifier.success(
-						this._translateService.instant(
-							'TIMER_TRACKER.TOASTR.REMOVE_SCREENSHOT'
-						)
-					);
-				});
+				// Delete selected time slot and return last time slot
+				const timeSlotId = await this.electronService.ipcRenderer.invoke(
+					'DELETE_TIME_SLOT',
+					this.selectedTimeSlot.id
+				);
+				this.selectedTimeSlot.id = timeSlotId;
+				// Refresh screen
+				await Promise.allSettled([
+					this.getTodayTime(this.argFromMain, true),
+					this.getLastTimeSlotImage({ timeSlotId })
+				]);
 			}
 		} catch (e) {
 			console.log('error on delete', e);
