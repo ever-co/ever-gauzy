@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-twitter';
-import { ExtractJwt } from 'passport-jwt';
-import { environment } from '@gauzy/config';
 
 @Injectable()
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
@@ -20,7 +18,6 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	 * @param done
 	 */
 	async validate(
-		request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
@@ -53,15 +50,6 @@ export const config = (configService: ConfigService) => ({
 	// Retrieve Twitter OAuth callback URL from the configuration service.
 	callbackURL: <string>configService.get<string>('twitter.callbackURL'),
 
-	// Pass the request object to the callback.
-	passReqToCallback: true,
-
 	// Include email in the Twitter OAuth response.
-	includeEmail: true,
-
-	// JWT secret for Twitter OAuth.
-	secretOrKey: environment.JWT_SECRET,
-
-	// Extract JWT from the request's Authorization header as a bearer token.
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+	includeEmail: true
 });
