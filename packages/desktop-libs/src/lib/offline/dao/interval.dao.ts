@@ -1,6 +1,6 @@
 import { DAO, IDatabaseProvider } from '../../interfaces';
 import { ProviderFactory } from '../databases';
-import { IntervalTO, TABLE_NAME_INTERVALS, UserTO } from '../dto';
+import {IntervalTO, TABLE_NAME_INTERVALS, TABLE_NAME_TIMERS, TimerTO, UserTO} from '../dto';
 import { IntervalTransaction } from '../transactions';
 
 export class IntervalDAO implements DAO<IntervalTO> {
@@ -215,5 +215,23 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		} catch (error) {
 			console.log('[dao]: ', error);
 		}
+	}
+
+	public async deleteByRemoteId(remoteId: string): Promise<void> {
+		try {
+			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS).where('remoteId', remoteId).del();
+		} catch (error) {
+			console.log('[dao]: ', 'interval deleted fails : ', error);
+		}
+	}
+
+	public async lastSyncedInterval(employeeId: string): Promise<IntervalTO> {
+		const [interval] = await this._provider
+			.connection<TimerTO>(TABLE_NAME_INTERVALS)
+			.where('employeeId', employeeId)
+			.whereNotNull('remoteId')
+			.orderBy('id', 'desc')
+			.limit(1);
+		return interval;
 	}
 }
