@@ -19,7 +19,7 @@ export class GithubController {
 	 * @param req
 	 */
 	@Get('github')
-	githubOAuthLogin(@Req() req: any) { }
+	githubLogin(@Req() req: any) { }
 
 	/**
 	 * GitHub login callback endpoint.
@@ -29,7 +29,7 @@ export class GithubController {
 	 * @returns The result of the GitHub login callback.
 	 */
 	@Get('github/callback')
-	async githubOAuthCallback(
+	async githubLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any
 	) {

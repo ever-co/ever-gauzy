@@ -135,16 +135,6 @@ export const environment: IEnvironment = {
 		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`,
 	},
 
-	microsoftConfig: {
-		clientId: process.env.MICROSOFT_CLIENT_ID,
-		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-		resource: process.env.MICROSOFT_RESOURCE,
-		tenant: process.env.MICROSOFT_TENANT,
-		callbackUrl:
-			process.env.MICROSOFT_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
-	},
-
 	fiverrConfig: {
 		clientId: process.env.FIVERR_CLIENT_ID,
 		clientSecret: process.env.FIVERR_CLIENT_SECRET,

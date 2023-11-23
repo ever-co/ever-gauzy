@@ -19,7 +19,7 @@ export class LinkedinController {
 	 * @param req
 	 */
 	@Get('linkedin')
-	linkedinOAuthLogin(@Req() req: any) { }
+	linkedinLogin(@Req() req: any) { }
 
 	/**
 	 * LinkedIn login callback endpoint.
@@ -29,7 +29,7 @@ export class LinkedinController {
 	 * @returns The result of the LinkedIn login callback.
 	 */
 	@Get('linkedin/callback')
-	async linkedinOAuthCallback(
+	async linkedinLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {
