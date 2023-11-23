@@ -5,6 +5,9 @@ import { IMicrosoftConfig } from '@gauzy/common';
  * Register Microsoft OAuth configuration using @nestjs/config
  */
 export default registerAs('microsoft', () => ({
+    /** The URL for the Microsoft Graph API */
+    graphApiURL: process.env.MICROSOFT_GRAPH_API_URL || 'https://graph.microsoft.com/v1.0',
+
     /** The URL for Microsoft OAuth authorization. */
     authorizationURL: process.env.MICROSOFT_AUTHORIZATION_URL || 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 

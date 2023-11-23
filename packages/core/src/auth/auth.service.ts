@@ -529,7 +529,6 @@ export class AuthService extends SocialAuthService {
 			success: false,
 			authData: { jwt: null, userId: null }
 		};
-
 		try {
 			for (const { value } of emails) {
 				const userExist = await this.userService.checkIfExistsEmail(value);
@@ -541,6 +540,9 @@ export class AuthService extends SocialAuthService {
 						success: true,
 						authData: { jwt: token, userId: user.id }
 					};
+
+					// Break the loop and return the response
+					return response;
 				}
 			}
 			return response;

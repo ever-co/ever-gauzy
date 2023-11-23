@@ -19,7 +19,7 @@ export class TwitterController {
 	 * @param req
 	 */
 	@Get('twitter')
-	twitterOAuthLogin(@Req() req: any) { }
+	twitterLogin(@Req() req: any) { }
 
 	/**
 	 * Twitter login callback endpoint.
@@ -29,7 +29,7 @@ export class TwitterController {
 	 * @returns The result of the Twitter login callback.
 	 */
 	@Get('twitter/callback')
-	async twitterOAuthCallback(
+	async twitterLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res: any
 	) {

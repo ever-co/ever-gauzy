@@ -2,6 +2,9 @@
  * Microsoft OAuth configuration
  */
 export interface IMicrosoftConfig {
+	/** The URL for the Microsoft Graph API. */
+	readonly graphApiURL: string;
+
 	/** The URL for Microsoft OAuth authorization. */
 	readonly authorizationURL: string;
 

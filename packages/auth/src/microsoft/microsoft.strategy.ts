@@ -1,39 +1,75 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { ExtractJwt } from 'passport-jwt';
-import { Strategy } from 'passport-oauth2';
-import { environment } from '@gauzy/config';
+import { Strategy, VerifyCallback } from 'passport-oauth2';
+import { firstValueFrom, map } from 'rxjs';
+import { AxiosResponse } from 'axios';
 
 @Injectable()
 export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
-	constructor(protected readonly configService: ConfigService) {
+	constructor(
+		protected readonly configService: ConfigService,
+		private readonly _httpService: HttpService
+	) {
 		super(config(configService));
 	}
 
 	/**
 	 *
 	 * @param accessToken
-	 * @param refresh_token
-	 * @param params
+	 * @param refreshToken
 	 * @param profile
 	 * @param done
 	 */
 	async validate(
-		request: any,
 		accessToken: string,
 		refreshToken: string,
 		profile: any,
-		done: (err: any, user: any, info?: any) => void
+		done: VerifyCallback,
 	) {
 		try {
-			const { emails } = profile;
+			/** Options for making a request to the Graph API using @nestjs/axios. */
+			const options = {
+				headers: {
+					Authorization: `Bearer ${accessToken}`
+				}
+			};
+
+			/**
+			 *
+			 */
+			const url = <string>this.configService.get<string>('microsoft.graphApiURL') + '/me';
+
+			/**
+			* Make a request to the Microsoft Graph API to get user profile information.
+			* Adjust the GraphAPI URL according to your requirements.
+			*/
+			profile = await firstValueFrom(
+				this._httpService.get(url, options).pipe(
+					map((response: AxiosResponse<any, any>) => response.data)
+				)
+			);
+
+			/** Extract the userPrincipalName from the profile and create an emails array. */
+			const emails = [
+				{ value: profile.userPrincipalName, verified: !!profile.userPrincipalName }
+			];
+
+			/** Extract displayName from the profile. */
+			const displayName = profile.displayName;
+
+			/** Create the user object to pass to the done callback */
 			const user = {
 				emails,
-				accessToken
+				displayName,
+				accessToken,
 			};
+
+			/** Call the done callback with the user object. */
 			done(null, user);
 		} catch (err) {
+			/** Call the done callback with the error if any. */
 			done(err, false);
 		}
 	}
@@ -61,15 +97,6 @@ export const config = (configService: ConfigService) => ({
 	/** Retrieve Microsoft OAuth callback URL from the configuration service. */
 	callbackURL: <string>configService.get<string>('microsoft.callbackURL'),
 
-	// Pass the request object to the callback.
-	passReqToCallback: true,
-
-	/** Specify the scope for Microsoft OAuth (read user data). */
-	scope: ['User.Read'],
-
-	// JWT secret for LinkedIn OAuth.
-	secretOrKey: environment.JWT_SECRET,
-
-	// Extract JWT from the request's Authorization header as a bearer token.
-	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+	/** */
+	scope: ['openid', 'profile', 'email', "User.Read"],
 });

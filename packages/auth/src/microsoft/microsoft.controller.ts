@@ -19,7 +19,7 @@ export class MicrosoftController {
 	 * @param req
 	 */
 	@Get('microsoft')
-	microsoftOAuthLogin(@Req() req: any) { }
+	microsoftLogin(@Req() req: any) { }
 
 	/**
 	 * Microsoft login callback endpoint.
@@ -29,7 +29,7 @@ export class MicrosoftController {
 	 * @returns The result of the Microsoft login callback.
 	 */
 	@Get('microsoft/callback')
-	async microsoftOAuthCallback(
+	async microsoftLoginCallback(
 		@RequestCtx() requestCtx: IIncomingRequest,
 		@Res() res
 	) {
