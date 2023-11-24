@@ -31,7 +31,7 @@
 						>Gauzy</a
 					>
 					by
-					<a href="https://ever.co/" style="color: #598bff"
+					<a href="{{companyLink}}" style="color: #598bff"
 						>{{companyName}}</a
 					>
 					All rights reserved.
