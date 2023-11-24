@@ -46,7 +46,7 @@
 					>
 					by
 					<a href="https://ever.co/" style="color: #598bff"
-						>Ever Co. LTD.</a
+						>{{companyName}}</a
 					>
 					All rights reserved.
 				</mj-text>

@@ -35,7 +35,7 @@
 				<mj-text align="center" font-size="12px" font-family="helvetica">© 2019,
 					<a href="https://app.gauzy.co/." style="color: #598bff">Gauzy</a>
 					by
-					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
+					<a href="https://ever.co/" style="color: #598bff">{{companyName}}</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>
