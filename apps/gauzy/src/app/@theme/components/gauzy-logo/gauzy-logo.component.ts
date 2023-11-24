@@ -265,5 +265,9 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		return false;
 	}
 
+	public get isSVG(): boolean {
+		return this.environment.PLATFORM_LOGO.endsWith('.svg');
+	}
+
 	ngOnDestroy(): void { }
 }
