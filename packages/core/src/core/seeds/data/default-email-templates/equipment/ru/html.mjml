@@ -42,7 +42,7 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff"
+					<a href="{{companySiteLink}}" style="color: #598bff"
 						>{{companySite}}</a
 					>
 					by
