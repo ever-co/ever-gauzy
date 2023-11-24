@@ -46,6 +46,17 @@ export class TranslationUtil {
 		console.log(`✔ All translations copied from ${source}.`);
 	}
 
+	private copyOne(language: string): void {
+		try {
+			const file = `${language}.json`;
+			const source = path.join('apps', 'gauzy', 'src', 'assets', 'i18n', file);
+			fs.copyFileSync(source, path.join(this.destination, file));
+			console.log(`✔ Default translation ${language}.json copied from ${source}`);
+		} catch (error) {
+			console.log(`ERROR: Language '${language}' not copied:` + error);
+		}
+	}
+
 	public async downloadAll(): Promise<void> {
 		if (!fs.existsSync(this.destination)) {
 			console.log(`✔ I18n directory created.`);
@@ -60,6 +71,7 @@ export class TranslationUtil {
 				await this.download(language);
 			} catch (error) {
 				console.error(`ERROR: Language '${language}' not available: ` + error);
+				this.copyOne(language);
 			}
 		}
 	}
