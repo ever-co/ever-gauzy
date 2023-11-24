@@ -36,7 +36,6 @@ import { LanguageModule } from './language/language.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
-import { HomeModule } from './home/home.module';
 import { EmployeeModule } from './employee/employee.module';
 import { RoleModule } from './role/role.module';
 import { OrganizationModule } from './organization/organization.module';
@@ -284,7 +283,6 @@ if (environment.sentry && environment.sentry.dsn) {
 		CoreModule,
 		AuthModule,
 		UserModule,
-		HomeModule,
 		EmployeeModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,
@@ -425,8 +423,7 @@ if (environment.sentry && environment.sentry.dsn) {
 					filters: [
 						{
 							type: HttpException,
-							filter: (exception: HttpException) =>
-								500 > exception.getStatus(), // Only report 500 errors
+							filter: (exception: HttpException) => 500 > exception.getStatus(), // Only report 500 errors
 						},
 					],
 				}),

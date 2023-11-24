@@ -1,11 +1,13 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Public } from '@gauzy/common';
+import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
+import { FeatureEnum } from '@gauzy/contracts';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
 
 @Controller()
-@UseGuards(AuthGuard('facebook'))
+@UseGuards(FeatureFlagEnabledGuard, AuthGuard('facebook'))
+@FeatureFlag(FeatureEnum.FEATURE_FACEBOOK_LOGIN)
 @Public()
 export class FacebookController {
 

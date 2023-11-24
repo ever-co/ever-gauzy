@@ -131,3 +131,6 @@ export * from './gauzy-ai/gauzy-ai.service';
 export * from './github/github.service';
 /** */
 export * from './integration';
+
+/** */
+export * from './app.service';

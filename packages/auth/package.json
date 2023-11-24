@@ -28,6 +28,7 @@
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
 		"@nestjs/axios": "^3.0.0",
 		"@nestjs/passport": "^9.0.3",
 		"bcrypt": "^5.1.0",

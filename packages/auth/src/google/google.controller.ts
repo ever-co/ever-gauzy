@@ -1,11 +1,13 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Public } from '@gauzy/common';
+import { FeatureFlagEnabledGuard, FeatureFlag, Public } from '@gauzy/common';
 import { SocialAuthService } from './../social-auth.service';
 import { IIncomingRequest, RequestCtx } from './../request-context.decorator';
+import { FeatureEnum } from '@gauzy/contracts';
 
 @Controller()
-@UseGuards(AuthGuard('google'))
+@UseGuards(FeatureFlagEnabledGuard, AuthGuard('google'))
+@FeatureFlag(FeatureEnum.FEATURE_GOOGLE_LOGIN)
 @Public()
 export class GoogleController {
 	constructor(public readonly service: SocialAuthService) { }

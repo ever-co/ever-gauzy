@@ -145,5 +145,44 @@ export enum FeatureEnum {
 	FEATURE_SMS_GATEWAY = 'FEATURE_SMS_GATEWAY',
 	FEATURE_SMTP = 'FEATURE_SMTP',
 	FEATURE_ROLES_PERMISSION = 'FEATURE_ROLES_PERMISSION',
-	FEATURE_EMAIL_VERIFICATION = 'FEATURE_EMAIL_VERIFICATION'
+	FEATURE_EMAIL_VERIFICATION = 'FEATURE_EMAIL_VERIFICATION',
+
+	/** Defines feature flags and settings related to user authentication methods. */
+	FEATURE_EMAIL_PASSWORD_LOGIN = 'FEATURE_EMAIL_PASSWORD_LOGIN',
+	FEATURE_MAGIC_LOGIN = 'FEATURE_MAGIC_LOGIN',
+	FEATURE_GITHUB_LOGIN = 'FEATURE_GITHUB_LOGIN',
+	FEATURE_FACEBOOK_LOGIN = 'FEATURE_FACEBOOK_LOGIN',
+	FEATURE_GOOGLE_LOGIN = 'FEATURE_GOOGLE_LOGIN',
+	FEATURE_TWITTER_LOGIN = 'FEATURE_TWITTER_LOGIN',
+	FEATURE_MICROSOFT_LOGIN = 'FEATURE_MICROSOFT_LOGIN',
+	FEATURE_LINKEDIN_LOGIN = 'FEATURE_LINKEDIN_LOGIN'
+}
+
+/**
+ * Interface representing flag features for authentication.
+ */
+export interface IAuthenticationFlagFeatures {
+	/** Flag indicating whether email/password login is enabled. */
+	FEATURE_EMAIL_PASSWORD_LOGIN: boolean;
+
+	/** Flag indicating whether magic login is enabled. */
+	FEATURE_MAGIC_LOGIN: boolean;
+
+	/** Flag indicating whether GitHub login is enabled. */
+	FEATURE_GITHUB_LOGIN: boolean;
+
+	/** Flag indicating whether Facebook login is enabled. */
+	FEATURE_FACEBOOK_LOGIN: boolean;
+
+	/** Flag indicating whether Google login is enabled. */
+	FEATURE_GOOGLE_LOGIN: boolean;
+
+	/** Flag indicating whether Twitter login is enabled. */
+	FEATURE_TWITTER_LOGIN: boolean;
+
+	/** Flag indicating whether Microsoft login is enabled. */
+	FEATURE_MICROSOFT_LOGIN: boolean;
+
+	/** Flag indicating whether LinkedIn login is enabled. */
+	FEATURE_LINKEDIN_LOGIN: boolean;
 }
