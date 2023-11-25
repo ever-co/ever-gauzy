@@ -423,7 +423,7 @@ export class AuthService extends SocialAuthService {
 		 */
 		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl,  companySiteLink, companySite, companyLink, companyName } = input;
 		if (!user.emailVerifiedAt) {
-			await this.emailConfirmationService.sendEmailVerification(user, {
+			this.emailConfirmationService.sendEmailVerification(user, {
 				appName,
 				appLogo,
 				appSignature,
@@ -435,7 +435,7 @@ export class AuthService extends SocialAuthService {
 				companyName
 			});
 		}
-		await this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
+		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
 			appName,
 			appLogo,
 			appSignature,
