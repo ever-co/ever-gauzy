@@ -70,19 +70,16 @@ export class SocialLinksComponent implements OnInit {
 			},
 			{
 				url: environment.FACEBOOK_AUTH_LINK,
-				target: '_blank',
 				icon: 'facebook-outline',
 				show: configs.facebook_login
 			},
 			{
 				url: environment.GITHUB_AUTH_LINK,
-				target: '_blank',
 				icon: 'github-outline',
 				show: configs.github_login
 			},
 			{
 				url: environment.TWITTER_AUTH_LINK,
-				target: '_blank',
 				icon: 'twitter-outline',
 				show: configs.twitter_login
 			},
@@ -93,7 +90,6 @@ export class SocialLinksComponent implements OnInit {
 			},
 			{
 				url: environment.MICROSOFT_AUTH_LINK,
-				target: '_blank',
 				icon: 'grid',
 				show: configs.microsoft_login
 			}
