@@ -33,7 +33,7 @@
 					border-width="1px"
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica">© 2019,
-					<a href="{{companySiteLink}}" style="color: #598bff">{{companySite}}</a>
+					<a href="{{appLink}}" style="color: #598bff">{{companySite}}</a>
 					by
 					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
 					All rights reserved.

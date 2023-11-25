@@ -56,7 +56,7 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="{{companySiteLink}}" style="color: #598bff"
+					<a href="{{appLink}}" style="color: #598bff"
 						>{{companySite}}</a
 					>
 					by
