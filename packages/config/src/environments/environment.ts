@@ -236,6 +236,8 @@ export const environment: IEnvironment = {
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
 		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
+		companyLink: process.env.COMPANY_LINK || 'Ever Co. LTD',
+		companyName: process.env.COMPANY_NAME || 'https://ever.co'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

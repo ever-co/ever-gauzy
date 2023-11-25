@@ -28,6 +28,7 @@
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
 		"@nestjs/axios": "^3.0.0",
 		"@nestjs/passport": "^9.0.3",
 		"bcrypt": "^5.1.0",
@@ -48,6 +49,7 @@
 		"@types/node": "^17.0.33",
 		"@types/passport": "^1.0.9",
 		"@types/passport-facebook": "^2.1.10",
+		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.6",
 		"@types/passport-jwt": "^3.0.6",
 		"rimraf": "^3.0.2",

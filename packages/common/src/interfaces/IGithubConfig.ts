@@ -11,6 +11,9 @@ export interface IGithubConfig {
 
 	/** The callback URL for GitHub OAuth authentication. */
 	readonly callbackURL: string;
+
+	/** The User Agent string for GitHub API requests. * */
+	readonly userAgent: string;
 }
 
 /**

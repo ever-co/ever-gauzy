@@ -119,12 +119,12 @@ nb-accordion-item:first-child.collapsed nb-accordion-item-header.principal {
   letter-spacing: 0em;
 }
 
-.logo object {
-	max-width: 128px;
-	max-height: 22px;
-
+.logo {
 	img {
-		width: 128px;
 		height: 22px;
+	}
+	object {
+		max-width: 128px;
+		max-height: 22px;
 	}
 }
