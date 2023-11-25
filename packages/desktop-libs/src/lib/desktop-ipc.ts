@@ -840,7 +840,8 @@ export function ipcTimer(
 
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
-		const { height, width } = display.workArea;
+		const { height, width } = display.workAreaSize;
+		console.log('workAreaSize', { height, width });
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1280 - 50 : 1280;
@@ -866,17 +867,14 @@ export function ipcTimer(
 				break;
 			default:
 				{
-					window.setBounds(
-						{
-							width: isExpanded ? widthLarge : maxWidth,
-							height: maxHeight,
-							x:
-								(width - (isExpanded ? widthLarge : maxWidth)) *
-								0.5,
-							y: (height - maxHeight) * 0.5,
-						},
-						true
-					);
+					const bounds = {
+						width: isExpanded ? widthLarge : maxWidth,
+						height: maxHeight,
+						x: (width - (isExpanded ? widthLarge : maxWidth)) * 0.5,
+						y: (height - maxHeight) * 0.5
+					};
+					console.log('Bounds',JSON.stringify(bounds));
+					window.setBounds(bounds, true);
 				}
 				break;
 		}

@@ -121,6 +121,9 @@ export * from './organization-task-setting.model';
 export * from './task-estimation.model';
 export * from './github.model';
 
+/** App Setting Model */
+export * from './app.model';
+
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
 	IBasePerTenantAndOrganizationEntityModel,

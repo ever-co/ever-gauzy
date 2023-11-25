@@ -1,19 +1,18 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { ConfigService } from './config.service';
-import github from './config/github';
-import twitter from './config/twitter';
-import facebook from './config/facebook';
-import google from './config/google';
-import linkedin from './config/linkedin';
-import microsoft from './config/microsoft';
+import configs from './config';
 
 @Global()
 @Module({
 	imports: [
+		/**
+		 * The NestConfigModule.forRoot method is used to configure the root module for handling configuration settings.
+		 * The 'load' option is used to load configuration modules for different providers.
+		 */
 		NestConfigModule.forRoot({
 			isGlobal: true,
-			load: [github, twitter, facebook, google, linkedin, microsoft],
+			load: [...configs],
 		}),
 	],
 	providers: [ConfigService],
