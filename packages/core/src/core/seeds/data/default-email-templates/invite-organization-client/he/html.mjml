@@ -16,7 +16,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Dear {{name}},</p>
 					<p style="line-height: 1.5rem">
-						{{organizationName}} הזמין אותך להצטרף ל-Ever® Gauzy™ -
+						{{organizationName}} הזמין אותך להצטרף ל- {{appName}} -
 						פלטפורמת ניהול עסקי בקוד פתוח (ERP/CRM/HRM) המתמקדת
 						בהוגנות ושקיפות!
 					</p>
