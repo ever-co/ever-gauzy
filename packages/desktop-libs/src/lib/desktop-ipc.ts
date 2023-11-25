@@ -241,7 +241,7 @@ export function ipcMainHandler(
 			if (process.platform === 'darwin') {
 				if (isScreenUnauthorized()) {
 					event.sender.send('stop_from_tray', {
-						quitApp: true,
+						quitApp: false,
 					});
 					// Trigger macOS to ask user for screen capture permission
 					try {
@@ -476,22 +476,22 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
+	ipcMain.handle('DELETE_TIME_SLOT', async (event, intervalId: number | string) => {
 		try {
 			const count = await intervalService.countNoSynced();
+			const notify = new NotificationDesktop();
+			const notification = {
+				message: TranslateService.instant(
+					'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
+				),
+				title: process.env.DESCRIPTION,
+			};
 			if (
 				typeof intervalId === 'number' &&
 				intervalId &&
 				count > 0 &&
 				offlineMode.enabled
 			) {
-				const notification = {
-					message: TranslateService.instant(
-						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
-					),
-					title: process.env.DESCRIPTION,
-				};
-				const notify = new NotificationDesktop();
 				await intervalService.remove(intervalId);
 				await countIntervalQueue(timeTrackerWindow, false);
 				await latestScreenshots(timeTrackerWindow);
@@ -500,9 +500,16 @@ export function ipcTimer(
 					notification.title
 				);
 			}
-			if (!offlineMode.enabled) {
+			if (!offlineMode.enabled && typeof intervalId === 'string') {
+				await intervalService.removeByRemoteId(intervalId);
 				const lastTimer = await timerService.findLastCapture();
-				await timerService.remove(new Timer(lastTimer));
+				const lastInterval = await intervalService.findLastInterval();
+				if (lastTimer) {
+					lastTimer.timeslotId = lastInterval.remoteId;
+					await timerService.update(new Timer(lastTimer));
+				}
+				notify.customNotification(notification.message, notification.title);
+				return lastInterval.remoteId;
 			}
 		} catch (error) {
 			throw new UIError('400', error, 'IPCRMSLOT');
@@ -833,7 +840,8 @@ export function ipcTimer(
 
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
-		const { height, width } = display.workArea;
+		const { height, width } = display.workAreaSize;
+		console.log('workAreaSize', { height, width });
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1280 - 50 : 1280;
@@ -859,17 +867,14 @@ export function ipcTimer(
 				break;
 			default:
 				{
-					window.setBounds(
-						{
-							width: isExpanded ? widthLarge : maxWidth,
-							height: maxHeight,
-							x:
-								(width - (isExpanded ? widthLarge : maxWidth)) *
-								0.5,
-							y: (height - maxHeight) * 0.5,
-						},
-						true
-					);
+					const bounds = {
+						width: isExpanded ? widthLarge : maxWidth,
+						height: maxHeight,
+						x: (width - (isExpanded ? widthLarge : maxWidth)) * 0.5,
+						y: (height - maxHeight) * 0.5
+					};
+					console.log('Bounds',JSON.stringify(bounds));
+					window.setBounds(bounds, true);
 				}
 				break;
 		}
@@ -1070,7 +1075,7 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP'];
+	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT'];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});

@@ -4,5 +4,7 @@ export interface IAppIntegrationConfig {
 	readonly appSignature?: string;
 	readonly appLink?: string;
 	readonly appEmailConfirmationUrl?: string;
-	readonly callbackUrl?: string;
+	readonly appMagicSignUrl?: string;
+	readonly companyLink?: string;
+	readonly companyName?: string;
 }

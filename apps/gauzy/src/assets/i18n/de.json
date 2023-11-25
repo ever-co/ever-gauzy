@@ -6,6 +6,7 @@
 		"ADD": "Hinzufügen",
 		"CREATE": "Erstellen",
 		"REGISTER": "Registrieren",
+		"CHANGE_PASSWORD": "Passwort ändern",
 		"LOGIN": "Einloggen",
 		"SEND_CODE": "Mit E-Mail anmelden",
 		"ADD_NOTE": "Notiz hinzufügen",
@@ -2733,13 +2734,14 @@
 		"CREATE_TASK": "Aufgabe erstellen",
 		"CREATE_PROJECT": "Projekt erstellen",
 		"VIEW_TASKS": "Aufgaben anzeigen",
-		"VIEW_TEAM_TASKS": "Aufgaben des Teams anzeigen",
+		"VIEW_TEAM_TASKS": "Team-Aufgaben anzeigen",
 		"CREATE_CANDIDATE": "Bewerber erstellen",
 		"CREATE_PROPOSAL": "Angebot erstellen",
 		"CREATE_CONTRACT": "Vertrag erstellen",
 		"CREATE_LEAD": "Interessent erstellen",
 		"CREATE_CUSTOMER": "Kunde erstellen",
 		"CREATE_CLIENT": "Kunde erstellen",
+		"VIEW_CLIENTS": "Kunden anzeigen",
 		"START_TIMER": "Timer starten",
 		"STOP_TIMER": "Timer stoppen",
 		"TIME_LOG": "Zeiterfassung",
@@ -4213,6 +4215,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Kennwort zurücksetzen",
+			"multi-tenant-password": "Multi-Tenant-Passwort-Reset",
 			"password-less-authentication": "Passwortlose Authentifizierung",
 			"welcome-user": "Willkommen Benutzer",
 			"email-verification": "E-Mail-Bestätigung",
@@ -4404,7 +4407,9 @@
 			"DESCRIPTION_TITLE": "Wir senden Ihnen einen magischen Code für eine kennwortfreie Anmeldung. Oder Sie können ",
 			"OR_SIGN_IN_WITH_PASSWORD": "sich stattdessen mit einem Passwort anmelden.",
 			"RESEND_CODE_TITLE": "Code erneut senden",
-			"CODE_SUB_TITLE": "Geben Sie den per E-Mail gesendeten Code ein, um sich anzumelden."
+			"SUCCESS_SENT_CODE_TITLE": "Ein 6-stelliger Code wurde gesendet an: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Der Code läuft bald ab, bitte geben Sie ihn bald ein.",
+			"REQUEST_NEW_CODE_TITLE": "Neuen Code anfordern in {{ countdown }} Sekunden."
 		},
 		"LABELS": {
 			"EMAIL": "E-Mail-Adresse:",
@@ -4448,6 +4453,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-Mail ist erforderlich!",
 			"EMAIL_REAL_REQUIRED": "Die E-Mail sollte die echte sein!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Passwort ändern",
+		"SUB_TITLE": "Bitte setzen Sie ein neues Passwort",
+		"LABELS": {
+			"NEW_PASSWORD": "Neues Passwort:",
+			"CONFIRM_PASSWORD": "Passwort bestätigen:",
+			"BACK_TO": "Zurück zu"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Neues Passwort",
+			"CONFIRM_PASSWORD": "Passwort bestätigen"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Neues Passwort ist erforderlich!",
+			"CONFIRM_PASSWORD_REQUIRED": "Passwortbestätigung ist erforderlich!",
+			"PASSWORDS_NOT_MATCH": "Passwort stimmt nicht mit der Passwortbestätigung überein!",
+			"PASSWORD_SHOULD_CONTAIN": "Das neue Passwort sollte aus {{ minLength }} bis {{ maxLength }} Zeichen bestehen!"
 		}
 	},
 	"PAGINATION": {

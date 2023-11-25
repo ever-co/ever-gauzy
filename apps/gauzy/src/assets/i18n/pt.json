@@ -6,6 +6,7 @@
 		"ADD": "Adicionar",
 		"CREATE": "Criar",
 		"REGISTER": "Registre-se.",
+		"CHANGE_PASSWORD": "Alterar Senha",
 		"LOGIN": "Entrar",
 		"SEND_CODE": "Entrar com e-mail",
 		"ADD_NOTE": "Adicione uma nota",
@@ -2737,13 +2738,14 @@
 		"CREATE_TASK": "Criar Tarefa",
 		"CREATE_PROJECT": "Criar Projeto",
 		"VIEW_TASKS": "Ver Tarefas",
-		"VIEW_TEAM_TASKS": "Ver Tarefas da Equipe",
+		"VIEW_TEAM_TASKS": "Ver tarefas da equipe",
 		"CREATE_CANDIDATE": "Criar Candidato",
 		"CREATE_PROPOSAL": "Criar Proposta",
 		"CREATE_CONTRACT": "Criar Contrato",
 		"CREATE_LEAD": "Criar Cliente Potencial",
 		"CREATE_CUSTOMER": "Criar Cliente",
 		"CREATE_CLIENT": "Criar Cliente",
+		"VIEW_CLIENTS": "Ver clientes",
 		"START_TIMER": "Iniciar Temporizador",
 		"STOP_TIMER": "Parar Temporizador",
 		"TIME_LOG": "Registo de Tempo",
@@ -4217,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Redefinir senha.",
+			"multi-tenant-password": "Resetowanie hasła dla wielu dzierżawców",
 			"password-less-authentication": "Autenticação sem senha",
 			"welcome-user": "Bem-vindo Usuário",
 			"email-verification": "Confirmação de Email",
@@ -4408,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "Vamos enviar um código mágico para uma entrada sem senha. Ou você pode ",
 			"OR_SIGN_IN_WITH_PASSWORD": "entrar com a senha em vez disso.",
 			"RESEND_CODE_TITLE": "Reenviar código",
-			"CODE_SUB_TITLE": "Digite o código enviado para o e-mail para fazer login."
+			"SUCCESS_SENT_CODE_TITLE": "Um código de 6 caracteres enviado para: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "O código expira em breve, então insira-o rapidamente.",
+			"REQUEST_NEW_CODE_TITLE": "Solicitar um novo código em {{ countdown }} segundos."
 		},
 		"LABELS": {
 			"EMAIL": "Endereço de email:",
@@ -4452,6 +4457,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "O email é necessário!",
 			"EMAIL_REAL_REQUIRED": "O email deve ser o verdadeiro!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Alterar Senha",
+		"SUB_TITLE": "Por favor, defina uma nova senha",
+		"LABELS": {
+			"NEW_PASSWORD": "Nova Senha:",
+			"CONFIRM_PASSWORD": "Confirmar Senha:",
+			"BACK_TO": "Voltar para"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nova Senha",
+			"CONFIRM_PASSWORD": "Confirmar Senha"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Nova senha é obrigatória!",
+			"CONFIRM_PASSWORD_REQUIRED": "Confirmação de senha é obrigatória!",
+			"PASSWORDS_NOT_MATCH": "A senha não coincide com a confirmação de senha!",
+			"PASSWORD_SHOULD_CONTAIN": "A nova senha deve conter de {{ minLength }} a {{ maxLength }} caracteres."
 		}
 	},
 	"PAGINATION": {

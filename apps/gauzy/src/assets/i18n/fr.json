@@ -6,6 +6,7 @@
 		"ADD": "Ajouter",
 		"CREATE": "Créer",
 		"REGISTER": "S'inscrire",
+		"CHANGE_PASSWORD": "Changer le mot de passe",
 		"LOGIN": "Se connecter",
 		"SEND_CODE": "Se connecter avec un e-mail",
 		"ADD_NOTE": "Ajouter une note",
@@ -2745,6 +2746,7 @@
 		"CREATE_LEAD": "Créer un prospect",
 		"CREATE_CUSTOMER": "Créer un client",
 		"CREATE_CLIENT": "Créer un client",
+		"VIEW_CLIENTS": "Voir les clients",
 		"START_TIMER": "Démarrer le chronomètre",
 		"STOP_TIMER": "Arrêter le chronomètre",
 		"TIME_LOG": "Journal du temps",
@@ -4218,6 +4220,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Réinitialisation de mot de passe",
+			"multi-tenant-password": "Réinitialisation du mot de passe multi-locataire",
 			"password-less-authentication": "Authentification sans mot de passe",
 			"welcome-user": "Bienvenue, utilisateur.",
 			"email-verification": "Confirmation par email",
@@ -4409,7 +4412,9 @@
 			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour une connexion sans mot de passe. Ou vous pouvez ",
 			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place.",
 			"RESEND_CODE_TITLE": "Renvoyer le code",
-			"CODE_SUB_TITLE": "Entrez le code envoyé par e-mail pour vous connecter."
+			"SUCCESS_SENT_CODE_TITLE": "Un code de 6 caractères a été envoyé à : ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Le code expire bientôt, veuillez le saisir rapidement.",
+			"REQUEST_NEW_CODE_TITLE": "Demander un nouveau code dans {{ countdown }} secondes."
 		},
 		"LABELS": {
 			"EMAIL": "Adresse e-mail:",
@@ -4453,6 +4458,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email est requis !",
 			"EMAIL_REAL_REQUIRED": "L'email doit être le véritable !"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Changer le mot de passe",
+		"SUB_TITLE": "Veuillez définir un nouveau mot de passe",
+		"LABELS": {
+			"NEW_PASSWORD": "Nouveau mot de passe :",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe :",
+			"BACK_TO": "Retour à"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nouveau mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Un nouveau mot de passe est requis !",
+			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
+			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
+			"PASSWORD_SHOULD_CONTAIN": "Le nouveau mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères."
 		}
 	},
 	"PAGINATION": {

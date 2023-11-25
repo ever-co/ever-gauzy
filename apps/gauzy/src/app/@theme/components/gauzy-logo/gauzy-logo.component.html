@@ -30,19 +30,17 @@
 <ng-template #logo>
 	<div
 		*ngIf="isCollapse"
-		[ngClass]="
-			theme === 'default' ||
-			theme === 'corporate' ||
-			theme === 'gauzy-light' ||
-			theme === 'material-light'
-				? ''
-				: 'white-svg'
-		"
+		[ngClass]="{'white-svg': isSVG && (theme === 'dark' || theme === 'cosmic' || theme === 'gauzy-dark' || theme === 'material-dark')}"
 		class="logo"
 		(click)="navigateHome()"
 	>
-		<object [data]="logoUrl" type="image/svg+xml">
-			<img src="assets/images/logos/logo_Gauzy.png" />
-		</object>
+		<ng-container *ngIf="isSVG; else image">
+			<object [data]="logoUrl" type="image/svg+xml">
+				<img src='assets/images/logos/logo_Gauzy.png'/>
+			</object>
+		</ng-container>
+		<ng-template #image>
+			<img [src]="logoUrl || 'assets/images/logos/logo_Gauzy.png'"/>
+		</ng-template>
 	</div>
 </ng-template>

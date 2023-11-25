@@ -264,10 +264,12 @@ export class AuthStrategy extends NbAuthStrategy {
 	}
 
 	private async _logout(): Promise<NbAuthResult> {
+		const preferredLanguage = this.store.preferredLanguage;
 		this.logout$.next(true);
 
 		this.store.clear();
 		this.store.serverConnection = 200;
+		this.store.preferredLanguage = preferredLanguage;
 		if (this.electronService.isElectron) {
 			this.electronService.ipcRenderer.send('logout');
 		}

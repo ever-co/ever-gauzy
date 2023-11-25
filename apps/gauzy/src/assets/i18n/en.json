@@ -8,6 +8,7 @@
 		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
+		"CHANGE_PASSWORD": "Change password",
 		"LOGIN": "Log In",
 		"SEND_CODE": "Send code",
 		"SENDING_CODE": "Sending code...",
@@ -2816,13 +2817,14 @@
 		"CREATE_TASK": "Create Task",
 		"CREATE_PROJECT": "Create Project",
 		"VIEW_TASKS": "View Tasks",
-		"VIEW_TEAM_TASKS": "View Teams's Tasks",
+		"VIEW_TEAM_TASKS": "View Team's Tasks",
 		"CREATE_CANDIDATE": "Create Candidate",
 		"CREATE_PROPOSAL": "Create Proposal",
 		"CREATE_CONTRACT": "Create Contract",
 		"CREATE_LEAD": "Create Lead",
 		"CREATE_CUSTOMER": "Create Customer",
 		"CREATE_CLIENT": "Create Client",
+		"VIEW_CLIENTS": "View Clients",
 		"START_TIMER": "Start Timer",
 		"STOP_TIMER": "Stop Timer",
 		"TIME_LOG": "Time Log",
@@ -4299,6 +4301,7 @@
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
 			"password-less-authentication": "Password Less Authentication",
+			"multi-tenant-password": "Multi-Tenant Forgot Password",
 			"welcome-user": "Welcome User",
 			"email-verification": "Email Confirmation",
 			"invite-organization-client": "Invite Organization Client",
@@ -4489,7 +4492,9 @@
 			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
 			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead.",
 			"RESEND_CODE_TITLE": "Resend code",
-			"CODE_SUB_TITLE": "Enter code sent to email to log in."
+			"SUCCESS_SENT_CODE_TITLE": "A 6-character code sent to: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "The code expires shortly, so please enter it soon.",
+			"REQUEST_NEW_CODE_TITLE": "Request a new code in {{ countdown }} seconds."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
@@ -4533,6 +4538,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Change Password",
+		"SUB_TITLE": "Please set a new password",
+		"LABELS": {
+			"NEW_PASSWORD": "New Password:",
+			"CONFIRM_PASSWORD": "Confirm Password:",
+			"BACK_TO": "Back to"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "New Password",
+			"CONFIRM_PASSWORD": "Confirm Password"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "New password is required!",
+			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
+			"PASSWORDS_NOT_MATCH": "Password does not match with the confirm password!",
+			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!"
 		}
 	},
 	"PAGINATION": {

@@ -397,7 +397,9 @@
 		"sarif",
 		"SARIF",
 		"gridcell",
-		"scrollgrid"
+		"scrollgrid",
+		"r_liteprofile",
+		"r_emailaddress"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
@@ -428,6 +430,7 @@
 		"**/migrations/**",
 		"packages/**/*.seed.json",
 		"**/*.svg",
+		"**/*.mjml",
 		"tools/build/webpack.config.js",
 		"docker-compose.demo.yml",
 		"docker-compose.yml"

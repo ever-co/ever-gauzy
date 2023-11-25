@@ -6,6 +6,7 @@
 		"ADD": "Agregar",
 		"CREATE": "Crear",
 		"REGISTER": "Registrar",
+		"CHANGE_PASSWORD": "Cambiar contraseña",
 		"LOGIN": "Iniciar sesión",
 		"SEND_CODE": "Iniciar sesión con correo electrónico",
 		"ADD_NOTE": "Añadir nota",
@@ -2746,6 +2747,7 @@
 		"CREATE_LEAD": "Crear cliente potencial",
 		"CREATE_CUSTOMER": "Crear cliente",
 		"CREATE_CLIENT": "Crear cliente",
+		"VIEW_CLIENTS": "Ver clientes",
 		"START_TIMER": "Iniciar temporizador",
 		"STOP_TIMER": "Detener temporizador",
 		"TIME_LOG": "Registro de tiempo",
@@ -4219,6 +4221,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Restablecimiento de contraseña",
+			"multi-tenant-password": "Restablecimiento de contraseña de múltiples inquilinos",
 			"password-less-authentication": "Autenticación sin contraseña.",
 			"welcome-user": "Bienvenido Usuario.",
 			"email-verification": "Confirmación de correo electrónico",
@@ -4410,7 +4413,9 @@
 			"DESCRIPTION_TITLE": "Le enviaremos un código mágico para iniciar sesión sin contraseña. O puede ",
 			"OR_SIGN_IN_WITH_PASSWORD": "iniciar sesión con contraseña en su lugar.",
 			"RESEND_CODE_TITLE": "Reenviar código",
-			"CODE_SUB_TITLE": "Ingrese el código enviado por correo electrónico para iniciar sesión."
+			"SUCCESS_SENT_CODE_TITLE": "Se envió un código de 6 caracteres a: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "El código expira pronto, así que ingréselo pronto.",
+			"REQUEST_NEW_CODE_TITLE": "Solicitar un nuevo código en {{ countdown }} segundos."
 		},
 		"LABELS": {
 			"EMAIL": "Dirección de correo electrónico:",
@@ -4454,6 +4459,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "¡Se requiere correo electrónico!",
 			"EMAIL_REAL_REQUIRED": "¡El correo electrónico debe ser el real!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Cambiar contraseña",
+		"SUB_TITLE": "Por favor, establezca una nueva contraseña",
+		"LABELS": {
+			"NEW_PASSWORD": "Nueva contraseña:",
+			"CONFIRM_PASSWORD": "Confirmar contraseña:",
+			"BACK_TO": "Volver a"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nueva contraseña",
+			"CONFIRM_PASSWORD": "Confirmar contraseña"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "¡Se requiere una nueva contraseña!",
+			"CONFIRM_PASSWORD_REQUIRED": "Se requiere la confirmación de la contraseña.",
+			"PASSWORDS_NOT_MATCH": "La contraseña no coincide con la confirmación de la contraseña.",
+			"PASSWORD_SHOULD_CONTAIN": "La nueva contraseña debe contener entre {{ minLength }} y {{ maxLength }} caracteres."
 		}
 	},
 	"PAGINATION": {

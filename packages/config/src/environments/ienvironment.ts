@@ -8,17 +8,12 @@ import {
 	IAuth0Config,
 	IAwsConfig,
 	ICloudinaryConfig,
-	IFacebookConfig,
 	IFiverrConfig,
-	IGithubConfig,
-	IGoogleConfig,
+	IGithubIntegrationConfig,
 	IHubstaffConfig,
 	IJitsuConfig,
 	IKeycloakConfig,
-	ILinkedinConfig,
-	IMicrosoftConfig,
 	ISMTPConfig,
-	ITwitterConfig,
 	IUnleashConfig,
 	IUpworkConfig,
 	IWasabiConfig,
@@ -86,7 +81,7 @@ export interface IEnvironment {
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME?: number;
+	MAGIC_CODE_EXPIRATION_TIME?: number;
 
 	/** Organization Team Join Request Configuration */
 	TEAM_JOIN_REQUEST_EXPIRATION_TIME?: number;
@@ -101,12 +96,7 @@ export interface IEnvironment {
 	awsConfig?: IAwsConfig;
 	wasabiConfig?: IWasabiConfig;
 	cloudinaryConfig?: ICloudinaryConfig;
-	facebookConfig: IFacebookConfig;
-	googleConfig: IGoogleConfig;
-	github: IGithubConfig /** Github Configuration */;
-	microsoftConfig: IMicrosoftConfig;
-	linkedinConfig: ILinkedinConfig;
-	twitterConfig: ITwitterConfig;
+	github: IGithubIntegrationConfig /** Github Configuration */;
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;

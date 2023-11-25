@@ -6,6 +6,7 @@
 		"ADD": "Toevoegen",
 		"CREATE": "Creëer",
 		"REGISTER": "Registreren",
+		"CHANGE_PASSWORD": "Wachtwoord wijzigen",
 		"LOGIN": "Inloggen",
 		"SEND_CODE": "Inloggen met e-mail",
 		"ADD_NOTE": "Voeg een opmerking toe",
@@ -2737,13 +2738,14 @@
 		"CREATE_TASK": "Maak taak",
 		"CREATE_PROJECT": "Maak project",
 		"VIEW_TASKS": "Bekijk taken",
-		"VIEW_TEAM_TASKS": "Bekijk taken van het team",
+		"VIEW_TEAM_TASKS": "Taken van het team bekijken",
 		"CREATE_CANDIDATE": "Maak kandidaat",
 		"CREATE_PROPOSAL": "Maak voorstel",
 		"CREATE_CONTRACT": "Maak contract",
 		"CREATE_LEAD": "Maak lead",
 		"CREATE_CUSTOMER": "Maak klant",
 		"CREATE_CLIENT": "Maak klant",
+		"VIEW_CLIENTS": "Bekijk klanten",
 		"START_TIMER": "Start timer",
 		"STOP_TIMER": "Stop timer",
 		"TIME_LOG": "Tijdregistratie",
@@ -4217,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Wachtwoord resetten",
+			"multi-tenant-password": "Wachtwoord opnieuw instellen voor meerdere tenants",
 			"password-less-authentication": "Wachtwoordloze authenticatie",
 			"welcome-user": "Welkom gebruiker",
 			"email-verification": "E-mailbevestiging",
@@ -4408,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "We sturen u een magische code voor een wachtwoordloze aanmelding. Of u kunt ",
 			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan.",
 			"RESEND_CODE_TITLE": "Stuur code opnieuw",
-			"CODE_SUB_TITLE": "Voer de code in die naar je e-mail is gestuurd om in te loggen."
+			"SUCCESS_SENT_CODE_TITLE": "Een code van 6 tekens is verzonden naar: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "De code verloopt binnenkort, dus voer hem snel in.",
+			"REQUEST_NEW_CODE_TITLE": "Vraag een nieuwe code aan in {{ countdown }} seconden."
 		},
 		"LABELS": {
 			"EMAIL": "E-mailadres:",
@@ -4452,6 +4457,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet de juiste zijn!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Wachtwoord wijzigen",
+		"SUB_TITLE": "Stel een nieuw wachtwoord in, alstublieft",
+		"LABELS": {
+			"NEW_PASSWORD": "Nieuw wachtwoord:",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord:",
+			"BACK_TO": "Terug naar"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nieuw wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Nieuw wachtwoord is verplicht!",
+			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van het wachtwoord is verplicht!",
+			"PASSWORDS_NOT_MATCH": "Het wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
+			"PASSWORD_SHOULD_CONTAIN": "Het nieuwe wachtwoord moet tussen de {{ minLength }} en {{ maxLength }} tekens bevatten."
 		}
 	},
 	"PAGINATION": {

@@ -6,6 +6,7 @@
 		"ADD": "Dodaj",
 		"CREATE": "Stwórz",
 		"REGISTER": "Rejestracja",
+		"CHANGE_PASSWORD": "Zmień hasło",
 		"LOGIN": "Zaloguj się",
 		"SEND_CODE": "Zaloguj się za pomocą e-maila",
 		"ADD_NOTE": "Dodaj notatkę",
@@ -2737,13 +2738,14 @@
 		"CREATE_TASK": "Utwórz zadanie",
 		"CREATE_PROJECT": "Utwórz projekt",
 		"VIEW_TASKS": "Zobacz zadania",
-		"VIEW_TEAM_TASKS": "Zobacz zadania zespołu",
+		"VIEW_TEAM_TASKS": "Wyświetl zadania zespołu",
 		"CREATE_CANDIDATE": "Utwórz kandydata",
 		"CREATE_PROPOSAL": "Utwórz propozycję",
 		"CREATE_CONTRACT": "Utwórz umowę",
 		"CREATE_LEAD": "Utwórz potencjalnego klienta",
 		"CREATE_CUSTOMER": "Utwórz klienta",
 		"CREATE_CLIENT": "Utwórz klienta",
+		"VIEW_CLIENTS": "Zobacz klientów",
 		"START_TIMER": "Rozpocznij pomiar czasu",
 		"STOP_TIMER": "Zatrzymaj pomiar czasu",
 		"TIME_LOG": "Rejestracja czasu",
@@ -4217,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Resetowanie hasła",
+			"multi-tenant-password": "Resetowanie hasła dla wielu dzierżawców",
 			"password-less-authentication": "Autentykacja bez hasła",
 			"welcome-user": "Witaj użytkowniku",
 			"email-verification": "Potwierdzenie adresu e-mail",
@@ -4408,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "Wyślemy ci magiczny kod do logowania bez hasła. Lub możesz ",
 			"OR_SIGN_IN_WITH_PASSWORD": "zalogować się za pomocą hasła.",
 			"RESEND_CODE_TITLE": "Wyślij kod ponownie",
-			"CODE_SUB_TITLE": "Wprowadź kod wysłany na adres e-mail, aby się zalogować."
+			"SUCCESS_SENT_CODE_TITLE": "6-znakowy kod został wysłany do: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Kod wygasa wkrótce, więc wprowadź go szybko.",
+			"REQUEST_NEW_CODE_TITLE": "Poproś o nowy kod za {{ countdown }} sekundy."
 		},
 		"LABELS": {
 			"EMAIL": "Adres email:",
@@ -4452,6 +4457,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Wymagany jest adres e-mail!",
 			"EMAIL_REAL_REQUIRED": "Adres e-mail powinien być prawdziwy!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Zmień hasło",
+		"SUB_TITLE": "Proszę ustawić nowe hasło",
+		"LABELS": {
+			"NEW_PASSWORD": "Nowe hasło:",
+			"CONFIRM_PASSWORD": "Potwierdź hasło:",
+			"BACK_TO": "Powrót do"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nowe hasło",
+			"CONFIRM_PASSWORD": "Potwierdź hasło"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Nowe hasło jest wymagane!",
+			"CONFIRM_PASSWORD_REQUIRED": "Potwierdzenie hasła jest wymagane!",
+			"PASSWORDS_NOT_MATCH": "Hasło nie pasuje do potwierdzenia hasła!",
+			"PASSWORD_SHOULD_CONTAIN": "Nowe hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków."
 		}
 	},
 	"PAGINATION": {

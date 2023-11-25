@@ -50,8 +50,7 @@ export const environment: IEnvironment = {
 	/**
 	 * Password Less Authentication Configuration
 	 */
-	AUTHENTICATION_CODE_EXPIRATION_TIME:
-		parseInt(process.env.AUTHENTICATION_CODE_EXPIRATION_TIME) || 86400 * 1, // default password less authentication code expire time (1 day)
+	MAGIC_CODE_EXPIRATION_TIME: parseInt(process.env.MAGIC_CODE_EXPIRATION_TIME) || 60 * 30, // default magic code expire time (30 minutes)
 
 	/** Organization Team Join Request Configuration **/
 	TEAM_JOIN_REQUEST_EXPIRATION_TIME:
@@ -111,80 +110,25 @@ export const environment: IEnvironment = {
 			process.env.CLOUDINARY_CDN_URL || 'https://res.cloudinary.com',
 	},
 
-	facebookConfig: {
-		loginDialogUri: 'https://www.facebook.com/v2.12/dialog/oauth',
-		accessTokenUri: 'https://graph.facebook.com/v2.12/oauth/access_token',
-		clientId: process.env.FACEBOOK_CLIENT_ID,
-		clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-		fbGraphVersion: process.env.FACEBOOK_GRAPH_VERSION,
-		oauthRedirectUri:
-			process.env.FACEBOOK_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/facebook/callback`,
-		state: '{fbstate}',
-	},
-
-	googleConfig: {
-		clientId: process.env.GOOGLE_CLIENT_ID,
-		clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GOOGLE_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/google/callback`,
-	},
-
 	github: {
-		/**Github OAuth Configuration */
+		/** Github App Install Configuration  */
 		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
 		clientSecret: process.env.GAUZY_GITHUB_CLIENT_SECRET,
-		callbackUrl:
-			process.env.GAUZY_GITHUB_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/github/callback`,
-
-		/** Github App Install Configuration  */
 		appId: process.env.GAUZY_GITHUB_APP_ID,
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
 		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
 			? Buffer.from(
-					process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
-					'base64'
-			  ).toString('ascii')
+				process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
+				'base64'
+			).toString('ascii')
 			: '',
 
 		/** Github App Post Install Configuration */
-		postInstallUrl:
-			process.env.GAUZY_GITHUB_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
+		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
 
 		/** Github Webhook Configuration */
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
-		webhookUrl:
-			process.env.GAUZY_GITHUB_WEBHOOK_URL ||
-			`${process.env.API_BASE_URL}/api/integration/github/webhook`,
-	},
-
-	microsoftConfig: {
-		clientId: process.env.MICROSOFT_CLIENT_ID,
-		clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-		resource: process.env.MICROSOFT_RESOURCE,
-		tenant: process.env.MICROSOFT_TENANT,
-		callbackUrl:
-			process.env.MICROSOFT_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/microsoft/callback`,
-	},
-
-	linkedinConfig: {
-		clientId: process.env.LINKEDIN_CLIENT_ID,
-		clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-		callbackUrl:
-			process.env.LINKEDIN_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/linked/callback`,
-	},
-
-	twitterConfig: {
-		clientId: process.env.TWITTER_CLIENT_ID,
-		clientSecret: process.env.TWITTER_CLIENT_SECRET,
-		callbackUrl:
-			process.env.TWITTER_CALLBACK_URL ||
-			`${process.env.API_BASE_URL}/api/auth/twitter/callback`,
+		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`,
 	},
 
 	fiverrConfig: {
@@ -283,14 +227,13 @@ export const environment: IEnvironment = {
 	 */
 	appIntegrationConfig: {
 		appName: process.env.APP_NAME || 'Gauzy',
-		appLogo:
-			process.env.APP_LOGO ||
-			`${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
+		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'https://app.gauzy.co/',
-		appEmailConfirmationUrl:
-			process.env.APP_EMAIL_CONFIRMATION_URL ||
-			'https://app.gauzy.co/#/auth/confirm-email',
+		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'https://app.gauzy.co/#/auth/confirm-email',
+		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
+		companyLink: process.env.COMPANY_LINK || 'Ever Co. LTD',
+		companyName: process.env.COMPANY_NAME || 'https://ever.co'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

@@ -6,6 +6,7 @@
 		"ADD": "Aggiungi",
 		"CREATE": "Creare",
 		"REGISTER": "Registrazione",
+		"CHANGE_PASSWORD": "Cambia password",
 		"LOGIN": "Accedi",
 		"SEND_CODE": "Accedi con l'email",
 		"ADD_NOTE": "Aggiungi nota",
@@ -2737,13 +2738,14 @@
 		"CREATE_TASK": "Crea attività",
 		"CREATE_PROJECT": "Crea progetto",
 		"VIEW_TASKS": "Visualizza attività",
-		"VIEW_TEAM_TASKS": "Visualizza attività della squadra",
+		"VIEW_TEAM_TASKS": "Visualizza attività del team",
 		"CREATE_CANDIDATE": "Crea candidato",
 		"CREATE_PROPOSAL": "Crea proposta",
 		"CREATE_CONTRACT": "Crea contratto",
 		"CREATE_LEAD": "Crea potenziale cliente",
 		"CREATE_CUSTOMER": "Crea cliente",
 		"CREATE_CLIENT": "Crea cliente",
+		"VIEW_CLIENTS": "Visualizza clienti",
 		"START_TIMER": "Avvia timer",
 		"STOP_TIMER": "Arresta timer",
 		"TIME_LOG": "Registro del tempo",
@@ -4217,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Ripristino della password",
+			"multi-tenant-password": "Reimpostazione della password multi-tenant",
 			"password-less-authentication": "Autenticazione senza password",
 			"welcome-user": "Benvenuto Utente",
 			"email-verification": "Conferma email",
@@ -4408,7 +4411,9 @@
 			"DESCRIPTION_TITLE": "Ti invieremo un codice magico per accedere senza password. Oppure puoi ",
 			"OR_SIGN_IN_WITH_PASSWORD": "accedere con la password al suo posto.",
 			"RESEND_CODE_TITLE": "Rinvia codice",
-			"CODE_SUB_TITLE": "Inserisci il codice inviato via email per accedere."
+			"SUCCESS_SENT_CODE_TITLE": "Un codice di 6 caratteri è stato inviato a: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Il codice scade presto, quindi inseriscilo al più presto.",
+			"REQUEST_NEW_CODE_TITLE": "Richiedi un nuovo codice in {{ countdown }} secondi."
 		},
 		"LABELS": {
 			"EMAIL": "Indirizzo email:",
@@ -4452,6 +4457,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email è obbligatoria!",
 			"EMAIL_REAL_REQUIRED": "L'email deve essere quella vera!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Cambia password",
+		"SUB_TITLE": "Si prega di impostare una nuova password",
+		"LABELS": {
+			"NEW_PASSWORD": "Nuova password:",
+			"CONFIRM_PASSWORD": "Conferma password:",
+			"BACK_TO": "Torna a"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nuova password",
+			"CONFIRM_PASSWORD": "Conferma password"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "È richiesta una nuova password!",
+			"CONFIRM_PASSWORD_REQUIRED": "È richiesta la conferma della password!",
+			"PASSWORDS_NOT_MATCH": "La password non corrisponde alla conferma della password!",
+			"PASSWORD_SHOULD_CONTAIN": "La nuova password dovrebbe contenere tra {{ minLength }} e {{ maxLength }} caratteri."
 		}
 	},
 	"PAGINATION": {

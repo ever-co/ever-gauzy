@@ -30,7 +30,7 @@ export class EmailTemplateGeneratePreviewHandler
 
 		const clientBaseUrl = this.configService.get('clientBaseUrl');
 		const host = this.configService.get('host');
-		const { appName, appLogo, appSignature, appLink } = environment.appIntegrationConfig;
+		const { appName, appLogo, appSignature, appLink, companyLink, companyName } = environment.appIntegrationConfig;
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 		const html = handlebarsTemplate({
@@ -87,6 +87,15 @@ export class EmailTemplateGeneratePreviewHandler
 			appLogo: appLogo,
 			appSignature: appSignature,
 			appLink: appLink,
+			items: [
+				{
+					tenantName: "Default",
+					userName: "Default",
+					resetLink: "https://github.com/ever-co/ever-gauzy"
+				}
+			],
+			companyLink,
+			companyName
 		});
 		return { html };
 	}

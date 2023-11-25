@@ -10,7 +10,10 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbAccordionModule,
-	NbFormFieldModule, NbSelectModule, NbLayoutModule,
+	NbFormFieldModule,
+	NbSelectModule,
+	NbLayoutModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
@@ -33,6 +36,7 @@ import { SocialLinksComponent } from './@shared/social-links/social-links.compon
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
 import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
 import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
+import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
 
 @NgModule({
 	imports: [
@@ -58,7 +62,8 @@ import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
 		ConfirmEmailModule,
 		SharedModule,
 		WorkspaceSelectionModule,
-		PasswordFormFieldModule
+		PasswordFormFieldModule,
+		NbTooltipModule
 	],
 	declarations: [
 		NgxLoginComponent,
@@ -70,9 +75,10 @@ import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
 		NgxRegisterComponent,
 		NgxResetPasswordComponent,
 		NgxLoginMagicComponent,
+		NgxMagicSignInWorkspaceComponent,
 		NgxLoginWorkspaceComponent,
 		SocialLinksComponent
 	],
 	providers: [ElectronService]
 })
-export class NgxAuthModule { }
+export class NgxAuthModule {}

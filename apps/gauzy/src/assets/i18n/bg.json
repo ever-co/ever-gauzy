@@ -6,6 +6,7 @@
 		"ADD": "Добавяне",
 		"CREATE": "Създаване",
 		"REGISTER": "Регистриране",
+		"CHANGE_PASSWORD": "Промяна на паролата",
 		"LOGIN": "Log In",
 		"SEND_CODE": "Вход с имейл",
 		"ADD_NOTE": "Добави бележка",
@@ -2689,13 +2690,14 @@
 		"CREATE_TASK": "Създаване на задача",
 		"CREATE_PROJECT": "Създаване на проект",
 		"VIEW_TASKS": "Преглед на задачи",
-		"VIEW_TEAM_TASKS": "Преглед на задачи на екипа",
+		"VIEW_TEAM_TASKS": "Преглед на задачите на отбора",
 		"CREATE_CANDIDATE": "Създаване на кандидат",
 		"CREATE_PROPOSAL": "Създаване на предложение",
 		"CREATE_CONTRACT": "Създаване на договор",
 		"CREATE_LEAD": "Създаване на клиент-потенциал",
 		"CREATE_CUSTOMER": "Създаване на клиент",
 		"CREATE_CLIENT": "Създаване на клиент",
+		"VIEW_CLIENTS": "Преглед на клиенти",
 		"START_TIMER": "Стартиране на таймер",
 		"STOP_TIMER": "Спиране на таймер",
 		"TIME_LOG": "Запис на времето",
@@ -4164,6 +4166,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
+			"multi-tenant-password": "Повторно задаване на парола за много клиенти",
 			"welcome-user": "Welcome User",
 			"invite-organization-client": "Invite Organization Client",
 			"email-estimate": "Email Estimate",
@@ -4334,7 +4337,9 @@
 			"DESCRIPTION_TITLE": "Ще ви изпратим магически код за вход без парола. Или можете да ",
 			"OR_SIGN_IN_WITH_PASSWORD": "влезете чрез парола.",
 			"RESEND_CODE_TITLE": "Изпрати отново кода",
-			"CODE_SUB_TITLE": "Въведете кода, изпратен на имейла, за да влезете."
+			"SUCCESS_SENT_CODE_TITLE": "Изпратен код с 6 знака до: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Кода изтича скоро, затова въведете го скоро.",
+			"REQUEST_NEW_CODE_TITLE": "Изискване на нов код след {{ countdown }} секунди."
 		},
 		"LABELS": {
 			"EMAIL": "Email address:",
@@ -4378,6 +4383,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Промяна на паролата",
+		"SUB_TITLE": "Моля, задайте нова парола",
+		"LABELS": {
+			"NEW_PASSWORD": "Нова парола:",
+			"CONFIRM_PASSWORD": "Потвърдете паролата:",
+			"BACK_TO": "Обратно към"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Нова парола",
+			"CONFIRM_PASSWORD": "Потвърдете паролата"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Изисква се нова парола!",
+			"CONFIRM_PASSWORD_REQUIRED": "Изисква се потвърждение на паролата!",
+			"PASSWORDS_NOT_MATCH": "Паролата не съвпада с потвърдената парола!",
+			"PASSWORD_SHOULD_CONTAIN": "Новата парола трябва да съдържа от {{ minLength }} до {{ maxLength }} знака!"
 		}
 	},
 	"PAGINATION": {

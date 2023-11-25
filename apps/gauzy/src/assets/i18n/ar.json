@@ -6,6 +6,7 @@
 		"ADD": "إضافة",
 		"CREATE": "أنشئ",
 		"REGISTER": "تسجيل",
+		"CHANGE_PASSWORD": "تغيير كلمة المرور",
 		"LOGIN": "تسجيل الدخول",
 		"SEND_CODE": "تسجيل الدخول بالبريد الإلكتروني",
 		"ADD_NOTE": "أضف ملاحظة",
@@ -2743,6 +2744,7 @@
 		"CREATE_LEAD": "إنشاء عميل محتمل",
 		"CREATE_CUSTOMER": "إنشاء عميل",
 		"CREATE_CLIENT": "إنشاء زبون",
+		"VIEW_CLIENTS": "عرض العملاء",
 		"START_TIMER": "بدء المؤقت",
 		"STOP_TIMER": "إيقاف المؤقت",
 		"TIME_LOG": "سجل الوقت",
@@ -4216,6 +4218,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "إعادة تعيين كلمة السر",
+			"multi-tenant-password": "إعادة تعيين كلمة المرور للمستأجرين المتعددين",
 			"password-less-authentication": "المصادقة بدون كلمة مرور",
 			"welcome-user": "مرحبًا بك، مستخدم.",
 			"email-verification": "تأكيد البريد الإلكتروني",
@@ -4407,7 +4410,9 @@
 			"DESCRIPTION_TITLE": "سنرسل لك رمزًا سحريًا لتسجيل الدخول بدون كلمة مرور. أو يمكنك ",
 			"OR_SIGN_IN_WITH_PASSWORD": "تسجيل الدخول باستخدام كلمة المرور بدلاً من ذلك.",
 			"RESEND_CODE_TITLE": "إعادة إرسال الرمز",
-			"CODE_SUB_TITLE": "أدخل الرمز الذي تم إرساله إلى البريد الإلكتروني لتسجيل الدخول."
+			"SUCCESS_SENT_CODE_TITLE": "تم إرسال رمز مكون من 6 أحرف إلى: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "ينتهي الرمز قريبًا، لذا يرجى إدخاله قريبًا.",
+			"REQUEST_NEW_CODE_TITLE": "طلب رمز جديد في {{ countdown }} ثواني."
 		},
 		"LABELS": {
 			"EMAIL": "عنوان البريد الإلكتروني:",
@@ -4451,6 +4456,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "تغيير كلمة المرور",
+		"SUB_TITLE": "يرجى تعيين كلمة مرور جديدة",
+		"LABELS": {
+			"NEW_PASSWORD": "كلمة المرور الجديدة:",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور:",
+			"BACK_TO": "العودة إلى"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "كلمة المرور الجديدة",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "كلمة المرور الجديدة مطلوبة!",
+			"CONFIRM_PASSWORD_REQUIRED": "تأكيد كلمة المرور مطلوب!",
+			"PASSWORDS_NOT_MATCH": "كلمة المرور غير متطابقة مع تأكيد كلمة المرور!",
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور الجديدة على عدد من {{ minLength }} إلى {{ maxLength }} أحرف!"
 		}
 	},
 	"PAGINATION": {
