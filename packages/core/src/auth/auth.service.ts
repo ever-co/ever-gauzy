@@ -421,7 +421,7 @@ export class AuthService extends SocialAuthService {
 		/**
 		 * Email verification
 		 */
-		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl,  companySiteLink, companySite, companyLink, companyName } = input;
+		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl, companyLink, companyName } = input;
 		if (!user.emailVerifiedAt) {
 			this.emailConfirmationService.sendEmailVerification(user, {
 				appName,
@@ -429,8 +429,6 @@ export class AuthService extends SocialAuthService {
 				appSignature,
 				appLink,
 				appEmailConfirmationUrl,
-				companySiteLink,
-				companySite,
 				companyLink,
 				companyName
 			});
@@ -440,8 +438,6 @@ export class AuthService extends SocialAuthService {
 			appLogo,
 			appSignature,
 			appLink,
-			companySiteLink,
-			companySite,
 			companyLink,
 			companyName
 		});

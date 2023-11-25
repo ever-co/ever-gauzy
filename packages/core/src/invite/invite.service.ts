@@ -1027,7 +1027,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			});
 		}
 
-		const { appName, appLogo, appSignature, appLink, companySiteLink, companySite, companyLink, companyName } =
+		const { appName, appLogo, appSignature, appLink, companyLink, companyName } =
 			input;
 		this.emailService.welcomeUser(
 			input.user,
@@ -1039,8 +1039,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				appLogo,
 				appSignature,
 				appLink,
-				companySiteLink,
-				companySite,
 				companyLink,
 				companyName
 			}
