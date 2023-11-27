@@ -778,9 +778,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 
-				/**
-				 *
-				 */
+				// Date range condition
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)

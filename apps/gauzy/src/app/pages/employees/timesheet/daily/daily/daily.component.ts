@@ -423,7 +423,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 			});
 		} else {
 			// find the row which was previously selected.
-			const isRowSelected = this.timeLogs.find((item) => item['isSelected'] === true);
+			const isRowSelected = this.timeLogs.find((item: ITimeLog) => item['isSelected'] === true);
 			if (!!isRowSelected) {
 				// if row found successfully, mark that row as deselected
 				isRowSelected['isSelected'] = false;
@@ -437,12 +437,20 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		}
 	}
 
-	isRowSelected() {
-		return !!this.timeLogs.find((t: ITimeLog) => t['isSelected']);
+	/**
+	 * Checks if at least one time log in the list is selected.
+	 * @returns True if a time log is selected, otherwise false.
+	 */
+	isRowSelected(): boolean {
+		return !!this.timeLogs.find((log: ITimeLog) => log['isSelected'] === true);
 	}
 
-	isCheckboxSelected() {
-		return this.timeLogs.find((t: ITimeLog) => t['checked']);
+	/**
+	 * Checks if at least one time log in the list has its checkbox selected.
+	 * @returns True if a time log's checkbox is selected, otherwise false.
+	 */
+	isCheckboxSelected(): boolean {
+		return !!this.timeLogs.find((log: ITimeLog) => log['checked'] === true);
 	}
 
 	ngOnDestroy(): void { }

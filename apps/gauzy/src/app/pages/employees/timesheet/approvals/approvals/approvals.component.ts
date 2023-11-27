@@ -342,19 +342,19 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	}
 
 	/**
-	 *
-	 * @returns
+	 * Checks if at least one timesheet in the list is selected.
+	 * @returns True if a timesheet is selected, otherwise false.
 	 */
-	isRowSelected() {
-		return !!this.timesheets.find((t: ITimesheet) => t['isSelected']);
+	isRowSelected(): boolean {
+		return !!this.timesheets.find((timesheet: ITimesheet) => timesheet['isSelected'] === true);
 	}
 
 	/**
-	 *
-	 * @returns
+	 * Checks if at least one timesheet in the list has its checkbox selected.
+	 * @returns True if a timesheet's checkbox is selected, otherwise false.
 	 */
-	isCheckboxSelected() {
-		return this.timesheets.find((t: ITimesheet) => t['checked']);
+	isCheckboxSelected(): boolean {
+		return !!this.timesheets.find((timesheet: ITimesheet) => timesheet['checked'] === true);
 	}
 
 	/**
