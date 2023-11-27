@@ -195,6 +195,24 @@ spec:
                         value: '$GAUZY_GITHUB_OAUTH_CLIENT_SECRET'
                       - name: GAUZY_GITHUB_OAUTH_CALLBACK_URL
                         value: '$GAUZY_GITHUB_OAUTH_CALLBACK_URL'
+                      - name: MAGIC_CODE_EXPIRATION_TIME
+                        value: '$MAGIC_CODE_EXPIRATION_TIME'
+                      - name: APP_NAME
+                        value: '$APP_NAME'
+                      - name: APP_LOGO
+                        value: '$APP_LOGO'
+                      - name: APP_SIGNATURE
+                        value: '$APP_SIGNATURE'
+                      - name: APP_LINK
+                        value: '$APP_LINK'
+                      - name: APP_EMAIL_CONFIRMATION_URL
+                        value: '$APP_EMAIL_CONFIRMATION_URL'
+                      - name: APP_MAGIC_SIGN_URL
+                        value: '$APP_MAGIC_SIGN_URL'
+                      - name: COMPANY_LINK
+                        value: '$COMPANY_LINK'
+                      - name: COMPANY_NAME
+                        value: '$COMPANY_NAME'
 
                   ports:
                       - containerPort: 3000
