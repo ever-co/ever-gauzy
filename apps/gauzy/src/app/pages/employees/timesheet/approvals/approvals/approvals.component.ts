@@ -358,7 +358,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	}
 
 	/**
-	 * Prapare timesheets ids payload
+	 * Prepare timesheets ids payload
 	 *
 	 * @param timesheetIds
 	 * @returns
