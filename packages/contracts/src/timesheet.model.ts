@@ -20,9 +20,9 @@ import { ITask } from './task.model';
 import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
-import { FileStorageProviderEnum } from './file-provider';
-import { IRelationalUser, IUser } from './user.model';
+import { IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
+import { IScreenshot } from './screenshot.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -309,39 +309,7 @@ export interface IURLMetaData {
 	[x: string]: any;
 }
 
-export interface IUpdateScreenshotInput extends ICreateScreenshotInput {
-	id: string;
-}
 
-export interface ICreateScreenshotInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	activityTimestamp: string;
-	employeeId?: string;
-	file: string;
-	thumb?: string;
-	recordedAt: Date | string;
-}
-
-export interface IScreenshot
-	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalEmployee,
-	IRelationalUser {
-	[x: string]: any;
-	timeSlot?: ITimeSlot;
-	timeSlotId?: ITimeSlot['id'];
-	file: string;
-	thumb?: string;
-	fileUrl?: string;
-	thumbUrl?: string;
-	recordedAt?: Date;
-	storageProvider?: FileStorageProviderEnum;
-}
-
-export interface IScreenshotMap {
-	startTime: string;
-	endTime: string;
-	timeSlots: ITimeSlot[];
-}
 
 export interface ITimerStatusInput
 	extends ITimeLogTodayFilters,
