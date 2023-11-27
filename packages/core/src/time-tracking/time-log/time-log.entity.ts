@@ -27,6 +27,7 @@ import {
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
+
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Index()
@@ -38,6 +39,15 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@Index()
 	@Column({ nullable: true })
 	stoppedAt?: Date;
+
+	/**
+	 * Edited timestamp column
+	 */
+	@Column({ type: 'timestamp' })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
+	editedAt?: Date;
 
 	@ApiProperty({ type: () => String, enum: TimeLogType, default: TimeLogType.TRACKED })
 	@IsEnum(TimeLogType)
@@ -86,7 +96,14 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	/** Additional fields */
 	duration: number;
+
+	/**
+	 * Indicates whether the TimeLog has been edited.
+	 * If the value is true, it means the TimeLog has been edited.
+	 * If the value is false or undefined, it means the TimeLog has not been edited.
+	 */
 	isEdited?: boolean;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
@@ -94,18 +111,16 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	*/
 
 	/**
-	 * Employee
+	 * Employee relationship
 	 */
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@ManyToOne(() => Employee, (employee) => employee.timeLogs, {
+	@ManyToOne(() => Employee, (it) => it.timeLogs, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	employee: IEmployee;
 
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
+	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.employee)
 	@Index()
@@ -113,11 +128,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	employeeId: IEmployee['id'];
 
 	/**
-	 * Timesheet
+	 * Timesheet relationship
 	 */
-	@ApiPropertyOptional({ type: () => Timesheet })
-	@IsOptional()
 	@ManyToOne(() => Timesheet, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -134,9 +151,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Organization Project Relationship
 	 */
-	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@IsOptional()
-	@ManyToOne(() => OrganizationProject, (project) => project.timeLogs, {
+	@ManyToOne(() => OrganizationProject, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -160,11 +175,12 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Task
 	 */
-	@ApiPropertyOptional({ type: () => Task })
-	@IsOptional()
-	@ManyToOne(() => Task, (task) => task.activities, {
+	@ManyToOne(() => Task, (it) => it.timeLogs, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'SET NULL'
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	task?: ITask;
@@ -180,11 +196,12 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * OrganizationContact
 	 */
-	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@IsOptional()
-	@ManyToOne(() => OrganizationContact, (contact) => contact.timeLogs, {
+	@ManyToOne(() => OrganizationContact, (it) => it.timeLogs, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'SET NULL'
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -200,11 +217,12 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Organization Team
 	 */
-	@ApiPropertyOptional({ type: () => OrganizationTeam })
-	@IsOptional()
 	@ManyToOne(() => OrganizationTeam, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
-		onDelete: 'SET NULL'
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	organizationTeam?: IOrganizationTeam;
@@ -228,7 +246,9 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 */
 	@ApiProperty({ type: () => TimeSlot, isArray: true })
 	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	timeSlots?: ITimeSlot[];
@@ -249,10 +269,11 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		this.duration = stoppedAt.diff(startedAt, 'seconds');
 
 		/**
-		 * Check If, TimeLog is edited or not
+		 * Sets the 'isEdited' property based on the presence of 'editedAt'.
+		 * If 'editedAt' is defined, 'isEdited' is set to true; otherwise, it is set to false.
 		 */
-		const createdAt = moment(this.createdAt, 'YYYY-MM-DD HH:mm:ss');
-		const updatedAt = moment(this.updatedAt, 'YYYY-MM-DD HH:mm:ss');
-		this.isEdited = updatedAt.diff(createdAt, 'seconds') > 0;
+		if ('editedAt' in this) {
+			this.isEdited = !!this.editedAt;
+		}
 	}
 }
