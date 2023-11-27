@@ -724,24 +724,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * Project budget report
+	 * Get Project budget report
 	 *
 	 * @param request
 	 * @returns
 	 */
-	async projectBudgetLimit(request: IGetTimeLogReportInput) {
-		const {
-			organizationId,
-			employeeIds = [],
-			projectIds = [],
-			startDate,
-			endDate
-		} = request;
-		const tenantId = RequestContext.currentTenantId();
+	async getProjectBudgetLimit(request: IGetTimeLogReportInput) {
+		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const query = this.organizationProjectRepository.createQueryBuilder(
-			'organization_project'
-		);
+		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -756,10 +748,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" =:organizationId`,
-					{ organizationId }
-				);
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, {
+					organizationId
+				});
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, {
 					tenantId
 				});
@@ -770,8 +761,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(`"employee"."organizationId" =:organizationId`, {
 					organizationId
 				});
-				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
-
+				qb.andWhere(`"employee"."tenantId" =:tenantId`, {
+					tenantId
+				});
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
 						employeeIds
@@ -786,25 +778,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 
+				// Date range condition
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
-				qb.andWhere(
-					`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`,
-					{
-						startDate: start,
-						endDate: end
-					}
-				);
+				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+					startDate: start,
+					endDate: end
+				});
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(
-						`"timeLogs"."employeeId" IN (:...employeeIds)`,
-						{
-							employeeIds
-						}
-					);
+					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
 				}
 				if (isNotEmpty(projectIds)) {
 					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
@@ -815,61 +802,52 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 
 		const organizationProjects = await query.getMany();
-		const projects = organizationProjects.map(
-			(
-				organizationProject: IOrganizationProject
-			): IProjectBudgetLimitReport => {
-				const { budgetType, timeLogs = [] } = organizationProject;
-				const budget = organizationProject.budget || 0;
+		const projects = organizationProjects.map((organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
+			const { budgetType, timeLogs = [] } = organizationProject;
+			const budget = organizationProject.budget || 0;
 
-				let spent = 0;
-				let spentPercentage = 0;
-				let reamingBudget = 0;
+			let spent = 0;
+			let spentPercentage = 0;
+			let reamingBudget = 0;
 
-				if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
-					spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
-						return iteratee + log.duration / 3600;
-					}, 0);
-				} else {
-					spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
-						let amount = 0;
-						if (log.employee) {
-							amount =
-								(log.duration / 3600) *
-								log.employee.billRateValue;
-						}
-						return iteratee + amount;
-					}, 0);
-				}
-
-				spentPercentage = (spent * 100) / budget;
-				reamingBudget = Math.max(budget - spent, 0);
-
-				delete organizationProject['timeLogs'];
-				return {
-					project: organizationProject,
-					budgetType,
-					budget,
-					spent: parseFloat(spent.toFixed(2)),
-					reamingBudget: Number.isFinite(reamingBudget)
-						? parseFloat(reamingBudget.toFixed(2))
-						: 0,
-					spentPercentage: Number.isFinite(spentPercentage)
-						? parseFloat(spentPercentage.toFixed(2))
-						: 0
-				};
+			if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
+				spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
+					return iteratee + log.duration / 3600;
+				}, 0);
+			} else {
+				spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
+					let amount = 0;
+					if (log.employee) {
+						amount = (log.duration / 3600) * log.employee.billRateValue;
+					}
+					return iteratee + amount;
+				}, 0);
 			}
-		);
+
+			spentPercentage = (spent * 100) / budget;
+			reamingBudget = Math.max(budget - spent, 0);
+
+			/** */
+			delete organizationProject['timeLogs'];
+			return {
+				project: organizationProject,
+				budgetType,
+				budget,
+				spent: parseFloat(spent.toFixed(2)),
+				reamingBudget: Number.isFinite(reamingBudget) ? parseFloat(reamingBudget.toFixed(2)) : 0,
+				spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0
+			};
+		});
 		return projects;
 	}
 
 	/**
-	 * Client budget report
+	 * Get Client budget report
 	 *
 	 * @param request
 	 * @returns
 	 */
-	async clientBudgetLimit(request: IGetTimeLogReportInput) {
+	async getClientBudgetLimit(request: IGetTimeLogReportInput) {
 		const {
 			organizationId,
 			employeeIds = [],
@@ -1117,135 +1095,148 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return query;
 	}
 
-	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		const tenantId = RequestContext.currentTenantId();
-		const { employeeId, startedAt, stoppedAt, organizationId } = request;
+	/**
+	 * Adds a manual time log entry.
+	 *
+	 * @param request The input data for the manual time log.
+	 * @returns The created time log entry.
+	 */
+	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
-		if (!startedAt || !stoppedAt) {
-			throw new BadRequestException('Please select valid Date, start time and end time');
-		}
-
-		/**
-		 * Get Employee
-		 */
-		const employee = await this.employeeRepository.findOne({
-			where: {
-				id: employeeId
-			},
-			relations: {
-				organization: true
+			// Validate input
+			if (!startedAt || !stoppedAt) {
+				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
-		});
-		const isDateAllow = this.allowDate(
-			startedAt,
-			stoppedAt,
-			employee.organization
-		);
 
-		if (!isDateAllow) {
-			throw new BadRequestException('Please select valid Date, start time and end time');
-		}
+			// Retrieve employee information
+			const employee = await this.employeeRepository.findOne({
+				where: { id: employeeId },
+				relations: { organization: true }
+			});
 
-		const conflicts = await this.checkConflictTime({
-			startDate: startedAt,
-			endDate: stoppedAt,
-			employeeId,
-			organizationId,
-			tenantId,
-			...(request.id ? { ignoreId: request.id } : {})
-		});
+			// Check if the selected date and time range is allowed for the organization
+			const isDateAllow = this.allowDate(startedAt, stoppedAt, employee.organization);
 
-		if (isNotEmpty(conflicts)) {
-			const times: IDateRange = {
-				start: new Date(startedAt),
-				end: new Date(stoppedAt)
-			};
-			for await (const timeLog of conflicts) {
-				const { timeSlots = [] } = timeLog;
-				for await (const timeSlot of timeSlots) {
-					await this.commandBus.execute(
-						new DeleteTimeSpanCommand(times, timeLog, timeSlot)
-					);
+			if (!isDateAllow) {
+				throw new BadRequestException('Please select valid Date, start time and end time');
+			}
+
+			// Check for conflicts with existing time logs
+			const conflicts = await this.checkConflictTime({
+				startDate: startedAt,
+				endDate: stoppedAt,
+				employeeId,
+				organizationId,
+				tenantId,
+				...(request.id ? { ignoreId: request.id } : {})
+			});
+
+			// Resolve conflicts by deleting conflicting time slots
+			if (conflicts && conflicts.length > 0) {
+				const times: IDateRange = {
+					start: new Date(startedAt),
+					end: new Date(stoppedAt)
+				};
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					for await (const timeSlot of timeSlots) {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
+						);
+					}
 				}
 			}
+
+			// Create the new time log entry
+			return await this.commandBus.execute(
+				new TimeLogCreateCommand(request)
+			);
+		} catch (error) {
+			// Handle exceptions appropriately
+			throw new BadRequestException('Failed to add manual time log');
 		}
-		return await this.commandBus.execute(new TimeLogCreateCommand(request));
 	}
 
+	/**
+	 * Updates a manual time log entry.
+	 *
+	 * @param id The ID of the time log entry to be updated.
+	 * @param request The updated data for the manual time log.
+	 * @returns The updated time log entry.
+	 */
 	async updateManualTime(
-		id: string,
+		id: ITimeLog['id'],
 		request: IManualTimeInput
-	): Promise<TimeLog> {
-		const tenantId = RequestContext.currentTenantId();
-		const { startedAt, stoppedAt, employeeId, organizationId } = request;
+	): Promise<ITimeLog> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { startedAt, stoppedAt, employeeId, organizationId } = request;
 
-		if (!startedAt || !stoppedAt) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
-		}
-
-		/**
-		 * Get Employee
-		 */
-		const employee = await this.employeeRepository.findOne({
-			where: {
-				id: employeeId
-			},
-			relations: {
-				organization: true
+			// Validate input
+			if (!startedAt || !stoppedAt) {
+				throw new BadRequestException('Please select valid Date start and end time');
 			}
-		});
-		/**
-		 * Check future date allow
-		 */
-		const isDateAllow = this.allowDate(
-			startedAt,
-			stoppedAt,
-			employee.organization
-		);
-		if (!isDateAllow) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
-		}
 
-		/**
-		 * Check Conflicts TimeLogs
-		 */
-		const timeLog = await this.timeLogRepository.findOneBy({
-			id: id
-		});
-		const conflicts = await this.checkConflictTime({
-			startDate: startedAt,
-			endDate: stoppedAt,
-			employeeId,
-			organizationId,
-			tenantId,
-			...(id ? { ignoreId: id } : {})
-		});
-		if (isNotEmpty(conflicts)) {
-			const times: IDateRange = {
-				start: new Date(startedAt),
-				end: new Date(stoppedAt)
-			};
-			for await (const timeLog of conflicts) {
-				const { timeSlots = [] } = timeLog;
-				for await (const timeSlot of timeSlots) {
-					await this.commandBus.execute(
-						new DeleteTimeSpanCommand(times, timeLog, timeSlot)
-					);
+			// Retrieve employee information
+			const employee = await this.employeeRepository.findOne({
+				where: { id: employeeId },
+				relations: { organization: true }
+			});
+
+			// Check if the selected date and time range is allowed for the organization
+			const isDateAllow = this.allowDate(startedAt, stoppedAt, employee.organization);
+
+			if (!isDateAllow) {
+				throw new BadRequestException('Please select valid Date start and end time');
+			}
+
+			// Check for conflicts with existing time logs
+			const timeLog = await this.timeLogRepository.findOneBy({
+				id: id
+			});
+
+			const conflicts = await this.checkConflictTime({
+				startDate: startedAt,
+				endDate: stoppedAt,
+				employeeId,
+				organizationId,
+				tenantId,
+				...(id ? { ignoreId: id } : {})
+			});
+
+			// Resolve conflicts by deleting conflicting time slots
+			if (isNotEmpty(conflicts)) {
+				const times: IDateRange = {
+					start: new Date(startedAt),
+					end: new Date(stoppedAt)
+				};
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					for await (const timeSlot of timeSlots) {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
+						);
+					}
 				}
 			}
+
+			// Update the last edited date for the manual time log
+			request.editedAt = new Date();
+
+			// Execute the command to update the time log
+			await this.commandBus.execute(
+				new TimeLogUpdateCommand(request, timeLog)
+			);
+
+			// Retrieve the updated time log entry
+			return await this.timeLogRepository.findOneBy({ id: request.id });
+		} catch (error) {
+			// Handle exceptions appropriately
+			throw new BadRequestException('Failed to update manual time log');
 		}
-
-		await this.commandBus.execute(
-			new TimeLogUpdateCommand(request, timeLog)
-		);
-
-		return await this.timeLogRepository.findOneBy({
-			id: request.id
-		});
 	}
 
 	async deleteTimeLogs(
