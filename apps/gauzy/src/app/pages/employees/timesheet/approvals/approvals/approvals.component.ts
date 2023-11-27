@@ -95,8 +95,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 						this.store.hasPermission(
 							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 						)
-						? ['employee', 'employee.user']
-						: []
+							? ['employee', 'employee.user']
+							: []
 					)
 				]
 			});
@@ -317,36 +317,44 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	 */
 	userRowSelect(timesheet: ITimesheet) {
 		// if row is already selected, deselect it.
-		if (timesheet.isSelected) {
-			timesheet.isSelected = false;
+		if (timesheet['isSelected']) {
+			timesheet['isSelected'] = false;
 			this.selectTimesheet({
-				isSelected: timesheet.isSelected,
+				isSelected: timesheet['isSelected'],
 				data: null
 			});
 		} else {
 			// find the row which was previously selected.
 			const isRowSelected = this.timesheets.find(
-				(item: ITimesheet) => item.isSelected === true
+				(item: ITimesheet) => item['isSelected'] === true
 			);
 			if (!!isRowSelected) {
 				// if row found successfully, mark that row as deselected
-				isRowSelected.isSelected = false;
+				isRowSelected['isSelected'] = false;
 			}
 			// mark new row as selected
-			timesheet.isSelected = true;
+			timesheet['isSelected'] = true;
 			this.selectTimesheet({
-				isSelected: timesheet.isSelected,
+				isSelected: timesheet['isSelected'],
 				data: timesheet
 			});
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	isRowSelected() {
-		return !!this.timesheets.find((t: ITimesheet) => t.isSelected);
+		return !!this.timesheets.find((t: ITimesheet) => t['isSelected']);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	isCheckboxSelected() {
-		return this.timesheets.find((t: ITimesheet) => t.checked);
+		return this.timesheets.find((t: ITimesheet) => t['checked']);
 	}
 
 	/**
@@ -359,5 +367,5 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		return (typeof timesheetIds === 'string') ? [timesheetIds] : timesheetIds;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

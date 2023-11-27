@@ -415,34 +415,34 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	 */
 	userRowSelect(timeLog: ITimeLog) {
 		// if row is already selected, deselect it.
-		if (timeLog.isSelected) {
-			timeLog.isSelected = false;
+		if (timeLog['isSelected']) {
+			timeLog['isSelected'] = false;
 			this.selectTimeLog({
-				isSelected: timeLog.isSelected,
+				isSelected: timeLog['isSelected'],
 				data: null
 			});
 		} else {
 			// find the row which was previously selected.
-			const isRowSelected = this.timeLogs.find((item) => item.isSelected === true);
+			const isRowSelected = this.timeLogs.find((item) => item['isSelected'] === true);
 			if (!!isRowSelected) {
 				// if row found successfully, mark that row as deselected
-				isRowSelected.isSelected = false;
+				isRowSelected['isSelected'] = false;
 			}
 			// mark new row as selected
-			timeLog.isSelected = true;
+			timeLog['isSelected'] = true;
 			this.selectTimeLog({
-				isSelected: timeLog.isSelected,
+				isSelected: timeLog['isSelected'],
 				data: timeLog
 			});
 		}
 	}
 
 	isRowSelected() {
-		return !!this.timeLogs.find((t: ITimeLog) => t.isSelected);
+		return !!this.timeLogs.find((t: ITimeLog) => t['isSelected']);
 	}
 
 	isCheckboxSelected() {
-		return this.timeLogs.find((t: ITimeLog) => t.checked);
+		return this.timeLogs.find((t: ITimeLog) => t['checked']);
 	}
 
 	ngOnDestroy(): void { }
