@@ -42,7 +42,6 @@ export class AlterScreenshotTable1701081154869 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "screenshot" ADD "apps" json`);
         await queryRunner.query(`CREATE INDEX "IDX_1b0867d86ead2332f3d4edba7d" ON "screenshot" ("isWorkRelated") `);
         await queryRunner.query(`CREATE INDEX "IDX_eea7986acfb827bf5d0622c41f" ON "screenshot" ("description") `);
-        await queryRunner.query(`CREATE INDEX "IDX_0b6582d5ceeeef670c5e053ea6" ON "screenshot" ("apps") `);
     }
 
     /**
@@ -51,7 +50,6 @@ export class AlterScreenshotTable1701081154869 implements MigrationInterface {
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP INDEX "public"."IDX_0b6582d5ceeeef670c5e053ea6"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_eea7986acfb827bf5d0622c41f"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_1b0867d86ead2332f3d4edba7d"`);
         await queryRunner.query(`ALTER TABLE "screenshot" DROP COLUMN "apps"`);
@@ -87,7 +85,6 @@ export class AlterScreenshotTable1701081154869 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_fa1896dc735403799311968f7e" ON "screenshot" ("userId") `);
         await queryRunner.query(`CREATE INDEX "IDX_1b0867d86ead2332f3d4edba7d" ON "screenshot" ("isWorkRelated") `);
         await queryRunner.query(`CREATE INDEX "IDX_eea7986acfb827bf5d0622c41f" ON "screenshot" ("description") `);
-        await queryRunner.query(`CREATE INDEX "IDX_0b6582d5ceeeef670c5e053ea6" ON "screenshot" ("apps") `);
     }
 
     /**
@@ -96,7 +93,6 @@ export class AlterScreenshotTable1701081154869 implements MigrationInterface {
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`DROP INDEX "IDX_0b6582d5ceeeef670c5e053ea6"`);
         await queryRunner.query(`DROP INDEX "IDX_eea7986acfb827bf5d0622c41f"`);
         await queryRunner.query(`DROP INDEX "IDX_1b0867d86ead2332f3d4edba7d"`);
         await queryRunner.query(`DROP INDEX "IDX_fa1896dc735403799311968f7e"`);

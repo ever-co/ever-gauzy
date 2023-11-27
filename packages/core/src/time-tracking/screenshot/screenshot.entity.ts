@@ -104,7 +104,6 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	})
 	@IsOptional()
 	@IsString()
-	@Index()
 	@Column({
 		nullable: true,
 		type: ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'
