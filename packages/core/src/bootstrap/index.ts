@@ -21,18 +21,13 @@ import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
-export async function bootstrap(
-	pluginConfig?: Partial<IPluginConfig>
-): Promise<INestApplication> {
+export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
 
 	const { BootstrapModule } = await import('./bootstrap.module');
-	const app = await NestFactory.create<NestExpressApplication>(
-		BootstrapModule,
-		{
-			logger: ['log', 'error', 'warn', 'debug', 'verbose'],
-		}
-	);
+	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
+		logger: ['log', 'error', 'warn', 'debug', 'verbose']
+	});
 
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);
@@ -54,7 +49,8 @@ export async function bootstrap(
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
-		allowedHeaders: 'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		allowedHeaders:
+			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
 	// TODO: enable csurf
@@ -66,7 +62,7 @@ export async function bootstrap(
 		expressSession({
 			secret: env.EXPRESS_SESSION_SECRET,
 			resave: true,
-			saveUninitialized: true,
+			saveUninitialized: true
 		})
 	);
 
@@ -77,11 +73,7 @@ export async function bootstrap(
 	const service = app.select(AppModule).get(AppService);
 	await service.seedDBIfEmpty();
 
-	const options = new DocumentBuilder()
-		.setTitle('Gauzy API')
-		.setVersion('1.0')
-		.addBearerAuth()
-		.build();
+	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion('1.0').addBearerAuth().build();
 
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
@@ -97,20 +89,20 @@ export async function bootstrap(
 	console.log(chalk.green(`Configured Host: ${host}`));
 	console.log(chalk.green(`Configured Port: ${port}`));
 
-	console.log(
-		chalk.green(`Swagger UI available at http://${host}:${port}/swg`)
-	);
+	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
 
 	/**
 	 * Dependency injection with class-validator
 	 */
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
+	// Configure Atlassian Connect Express
+	// const addon = ac(express());
+	// app.use(addon.middleware());
+
 	await app.listen(port, host, () => {
-		const message = `Listening at http://${host}:${port}/${globalPrefix}`
-		console.log(
-			chalk.magenta(message)
-		);
+		const message = `Listening at http://${host}:${port}/${globalPrefix}`;
+		console.log(chalk.magenta(message));
 		// Send message to parent process (desktop app)
 		if (process.send) {
 			process.send(message);
@@ -127,9 +119,7 @@ export async function bootstrap(
 /**
  * Setting the global config must be done prior to loading the Bootstrap Module.
  */
-export async function registerPluginConfig(
-	pluginConfig: Partial<IPluginConfig>
-) {
+export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>) {
 	if (Object.keys(pluginConfig).length > 0) {
 		setConfig(pluginConfig);
 	}
@@ -139,15 +129,11 @@ export async function registerPluginConfig(
 	 */
 	setConfig({
 		dbConnectionOptions: {
-			...getMigrationsSetting(),
-		},
+			...getMigrationsSetting()
+		}
 	});
 
-	console.log(
-		chalk.green(
-			`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`
-		)
-	);
+	console.log(chalk.green(`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`));
 
 	/**
 	 * Registered core & plugins entities
@@ -156,10 +142,8 @@ export async function registerPluginConfig(
 	setConfig({
 		dbConnectionOptions: {
 			entities,
-			subscribers: coreSubscribers as Array<
-				Type<EntitySubscriberInterface>
-			>,
-		},
+			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>
+		}
 	});
 
 	let registeredConfig = getConfig();
@@ -169,16 +153,14 @@ export async function registerPluginConfig(
 /**
  * Returns an array of core entities and any additional entities defined in plugins.
  */
-export async function registerAllEntities(
-	pluginConfig: Partial<IPluginConfig>
-) {
+export async function registerAllEntities(pluginConfig: Partial<IPluginConfig>) {
 	const allEntities = coreEntities as Array<Type<any>>;
 	const pluginEntities = getEntitiesFromPlugins(pluginConfig.plugins);
 
 	for (const pluginEntity of pluginEntities) {
 		if (allEntities.find((e) => e.name === pluginEntity.name)) {
 			throw new ConflictException({
-				message: `error.${pluginEntity.name} conflict by default entities`,
+				message: `error.${pluginEntity.name} conflict by default entities`
 			});
 		} else {
 			allEntities.push(pluginEntity);
@@ -199,10 +181,10 @@ export function getMigrationsSetting() {
 	return {
 		migrations: [
 			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
-			join(__dirname, '../database/migrations/*{.ts,.js}'),
+			join(__dirname, '../database/migrations/*{.ts,.js}')
 		],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations'),
-		},
+			migrationsDir: join(__dirname, '../../src/database/migrations')
+		}
 	};
 }

@@ -23,3 +23,4 @@ export * from './IUpworkConfig';
 export * from './IWasabiConfig';
 export * from './IHubstaffConfig';
 export * from './IJitsuConfig';
+export * from './IJiraIntegrationConfig';
