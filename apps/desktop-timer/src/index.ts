@@ -250,7 +250,7 @@ async function startServer(value, restart = false) {
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw,
+			isAw: !!value?.aw?.isAw,
 		};
 		const projectConfig = store.get('project');
 		store.set({

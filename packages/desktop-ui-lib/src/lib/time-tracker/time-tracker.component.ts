@@ -134,7 +134,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		'close-square-outline'
 	);
 	statusIcon$: BehaviorSubject<string> = new BehaviorSubject('success');
-	defaultAwAPI = 'http:localhost:5600';
+	defaultAwAPI = 'http://localhost:5600';
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject(
 		'--h --m'
 	);
