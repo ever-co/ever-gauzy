@@ -143,7 +143,6 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
-// import { JiraModule } from './jira/jira.module';
 const { unleashConfig, github, jitsu, jira } = environment;
 
 if (unleashConfig.url) {
@@ -398,7 +397,6 @@ if (environment.sentry && environment.sentry.dsn) {
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
 		TaskEstimationModule
-		// JiraModule
 	],
 	controllers: [AppController],
 	providers: [
