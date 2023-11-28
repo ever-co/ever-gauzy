@@ -321,7 +321,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * TimeLog
 	 */
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
+	@OneToMany(() => TimeLog, (it) => it.task)
 	@JoinColumn()
 	timeLogs?: ITimeLog[];
 

@@ -237,7 +237,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		}
 
 		const candidateId = this.selectedCandidate.id;
-		this.router.navigate(['/pages/employees/candidates/edit/', candidateId, '/profile']);
+		this.router.navigate(['/pages/employees/candidates/edit', candidateId, 'profile']);
 	}
 
 	async archive(selectedItem?: ICandidateViewModel) {

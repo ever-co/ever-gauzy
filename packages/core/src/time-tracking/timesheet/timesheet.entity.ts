@@ -4,20 +4,20 @@ import {
 	RelationId,
 	ManyToOne,
 	JoinColumn,
-	Index
+	Index,
+	AfterLoad
 } from 'typeorm';
-import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IEmployee, ITimesheet, IUser, TimesheetStatus } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
-import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsUUID } from 'class-validator';
 
 @Entity('timesheet')
-export class Timesheet extends TenantOrganizationBaseEntity
-	implements ITimesheet {
+export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
@@ -76,6 +76,15 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	lockedAt?: Date;
 
+	/**
+	 * Edited timestamp column
+	 */
+	@Column({ type: 'timestamp' })
+	@IsDateString()
+	@Index()
+	@Column({ nullable: true })
+	editedAt?: Date;
+
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
@@ -90,6 +99,14 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	@Column({ default: TimesheetStatus.PENDING })
 	status: string;
 
+	/** Additional fields */
+
+	/**
+	 * Indicates whether the Timesheet has been edited.
+	 * If the value is true, it means the Timesheet has been edited.
+	 * If the value is false or undefined, it means the Timesheet has not been edited.
+	 */
+	isEdited?: boolean;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -100,9 +117,8 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	/**
 	 * Employee
 	 */
-	@ApiPropertyOptional({ type: () => Employee })
-	@IsOptional()
-	@ManyToOne(() => Employee, (employee) => employee.timesheets, {
+	@ManyToOne(() => Employee, (it) => it.timesheets, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -116,11 +132,12 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	employeeId?: IEmployee['id'];
 
 	/**
-	 * Approve By Employee
+	 * Approve By User
 	 */
-	@ApiPropertyOptional({ type: () => Employee })
-	@IsOptional()
-	@ManyToOne(() => User)
+	@ManyToOne(() => User, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+	})
 	@JoinColumn()
 	approvedBy?: IUser;
 
@@ -131,4 +148,18 @@ export class Timesheet extends TenantOrganizationBaseEntity
 	@Index()
 	@Column({ nullable: true })
 	approvedById?: IUser['id'];
+
+	/**
+	 * Called after entity is loaded.
+	 */
+	@AfterLoad()
+	afterLoadEntity?() {
+		/**
+		 * Sets the 'isEdited' property based on the presence of 'editedAt'.
+		 * If 'editedAt' is defined, 'isEdited' is set to true; otherwise, it is set to false.
+		 */
+		if ('editedAt' in this) {
+			this.isEdited = !!this.editedAt;
+		}
+	}
 }
