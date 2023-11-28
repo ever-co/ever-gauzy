@@ -9,7 +9,6 @@ import * as helmet from 'helmet';
 import * as chalk from 'chalk';
 import { join } from 'path';
 import { urlencoded, json } from 'express';
-import * as express from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
@@ -21,7 +20,6 @@ import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
-import * as ac from 'atlassian-connect-express';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
 	const config = await registerPluginConfig(pluginConfig);
