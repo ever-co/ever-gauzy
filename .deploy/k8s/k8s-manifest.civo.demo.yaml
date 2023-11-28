@@ -71,6 +71,8 @@ spec:
                         value: 'refreshSecretKey'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
                   ports:
                       - containerPort: 3000
                         protocol: TCP

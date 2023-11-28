@@ -20,14 +20,21 @@ import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
+import tracer from './tracer';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+	// Start tracing using Signoz first
+	await tracer.start();
+
 	const config = await registerPluginConfig(pluginConfig);
 
 	const { BootstrapModule } = await import('./bootstrap.module');
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose']
 	});
+
+	// Starts listening for shutdown hooks
+	app.enableShutdownHooks();
 
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);

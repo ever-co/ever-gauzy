@@ -185,6 +185,8 @@ spec:
                         value: '$JITSU_SERVER_URL'
                       - name: JITSU_SERVER_WRITE_KEY
                         value: '$JITSU_SERVER_WRITE_KEY'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
                       - name: GAUZY_GITHUB_CLIENT_ID
                         value: '$GAUZY_GITHUB_CLIENT_ID'
                       - name: GAUZY_GITHUB_CLIENT_SECRET
