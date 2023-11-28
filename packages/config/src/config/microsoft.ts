@@ -4,7 +4,7 @@ import { IMicrosoftConfig } from '@gauzy/common';
 /**
  * Register Microsoft OAuth configuration using @nestjs/config
  */
-export default registerAs('microsoft', () => ({
+export default registerAs('microsoft', (): IMicrosoftConfig => ({
     /** The URL for the Microsoft Graph API */
     graphApiURL: process.env.MICROSOFT_GRAPH_API_URL || 'https://graph.microsoft.com/v1.0',
 
@@ -22,4 +22,4 @@ export default registerAs('microsoft', () => ({
 
     /** Callback URL for handling the OAuth response after authentication */
     callbackURL: process.env.MICROSOFT_CALLBACK_URL || `${process.env.API_BASE_URL}/api/auth/microsoft/callback`
-}) as IMicrosoftConfig);
+}));
