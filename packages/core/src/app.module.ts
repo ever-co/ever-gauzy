@@ -144,7 +144,7 @@ import { OrganizationTaskSettingModule } from './organization-task-setting/organ
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
 // import { JiraModule } from './jira/jira.module';
-const { unleashConfig, github, jitsu } = environment;
+const { unleashConfig, github, jitsu, jira } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -246,7 +246,17 @@ if (environment.sentry && environment.sentry.dsn) {
 				webhookSecret: github.webhookSecret
 			}
 		}),
-		// JiraModule.forRoot({ isGlobal: true }),
+		JiraModule.forRoot({
+			isGlobal: true,
+			config: {
+				appName: jira.appName,
+				appDescription: jira.appDescription,
+				appKey: jira.appKey,
+				baseUrl: jira.baseUrl,
+				vendorName: jira.vendorName,
+				vendorUrl: jira.vendorUrl
+			}
+		}),
 		/** Jitsu Configuration */
 		JitsuAnalyticsModule.forRoot({
 			config: {

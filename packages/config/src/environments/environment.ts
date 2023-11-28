@@ -21,35 +21,28 @@ export const environment: IEnvironment = {
 	envName: 'dev',
 
 	env: {
-		LOG_LEVEL: 'debug',
+		LOG_LEVEL: 'debug'
 	},
 
 	EXPRESS_SESSION_SECRET: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
 	USER_PASSWORD_BCRYPT_SALT_ROUNDS: 12,
 
 	JWT_SECRET: process.env.JWT_SECRET || 'secretKey',
-	JWT_TOKEN_EXPIRATION_TIME:
-		parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
+	JWT_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_TOKEN_EXPIRATION_TIME) || 86400 * 1, // default JWT token expire time (1 day)
 
-	JWT_REFRESH_TOKEN_SECRET:
-		process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
-	JWT_REFRESH_TOKEN_EXPIRATION_TIME:
-		parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
+	JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET || 'refreshSecretKey',
+	JWT_REFRESH_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default JWT refresh token expire time (7 days)
 
 	/**
 	 * Email verification options
 	 */
-	JWT_VERIFICATION_TOKEN_SECRET:
-		process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
-	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME:
-		parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) ||
-		86400 * 7, // default verification expire token time (7 days)
+	JWT_VERIFICATION_TOKEN_SECRET: process.env.JWT_VERIFICATION_TOKEN_SECRET || 'verificationSecretKey',
+	JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: parseInt(process.env.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME) || 86400 * 7, // default verification expire token time (7 days)
 
 	/**
 	 * Email Reset
 	 */
-	EMAIL_RESET_EXPIRATION_TIME:
-		parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
+	EMAIL_RESET_EXPIRATION_TIME: parseInt(process.env.EMAIL_RESET_EXPIRATION_TIME) || 1800, // default email reset expiration time (30 minutes)
 
 	/**
 	 * Password Less Authentication Configuration
@@ -57,8 +50,7 @@ export const environment: IEnvironment = {
 	MAGIC_CODE_EXPIRATION_TIME: parseInt(process.env.MAGIC_CODE_EXPIRATION_TIME) || 60 * 30, // default magic code expire time (30 minutes)
 
 	/** Organization Team Join Request Configuration **/
-	TEAM_JOIN_REQUEST_EXPIRATION_TIME:
-		parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
+	TEAM_JOIN_REQUEST_EXPIRATION_TIME: parseInt(process.env.TEAM_JOIN_REQUEST_EXPIRATION_TIME) || 60 * 60 * 24, // default code expire time (1 day)
 
 	/**
 	 * Throttler (Rate Limiting) Options
@@ -73,14 +65,11 @@ export const environment: IEnvironment = {
 		serverHost: process.env.JITSU_SERVER_URL,
 		serverWriteKey: process.env.JITSU_SERVER_WRITE_KEY,
 		debug: process.env.JITSU_SERVER_DEBUG === 'true' ? true : false,
-		echoEvents:
-			process.env.JITSU_SERVER_ECHO_EVENTS === 'true' ? true : false,
+		echoEvents: process.env.JITSU_SERVER_ECHO_EVENTS === 'true' ? true : false
 	},
 
 	fileSystem: {
-		name:
-			(process.env.FILE_PROVIDER as FileStorageProviderEnum) ||
-			FileStorageProviderEnum.LOCAL,
+		name: (process.env.FILE_PROVIDER as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL
 	},
 
 	awsConfig: {
@@ -88,8 +77,8 @@ export const environment: IEnvironment = {
 		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 		region: process.env.AWS_REGION || 'us-east-1',
 		s3: {
-			bucket: process.env.AWS_S3_BUCKET || 'gauzy',
-		},
+			bucket: process.env.AWS_S3_BUCKET || 'gauzy'
+		}
 	},
 
 	wasabiConfig: {
@@ -98,8 +87,8 @@ export const environment: IEnvironment = {
 		region: process.env.WASABI_REGION || 'us-east-1',
 		serviceUrl: process.env.WASABI_SERVICE_URL || 's3.wasabisys.com',
 		s3: {
-			bucket: process.env.WASABI_S3_BUCKET || 'gauzy',
-		},
+			bucket: process.env.WASABI_S3_BUCKET || 'gauzy'
+		}
 	},
 
 	/**
@@ -110,8 +99,7 @@ export const environment: IEnvironment = {
 		api_key: process.env.CLOUDINARY_API_KEY,
 		api_secret: process.env.CLOUDINARY_API_SECRET,
 		secure: process.env.CLOUDINARY_API_SECURE === 'false' ? false : true,
-		delivery_url:
-			process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`,
+		delivery_url: process.env.CLOUDINARY_CDN_URL || `https://res.cloudinary.com`
 	},
 
 	github: {
@@ -121,23 +109,32 @@ export const environment: IEnvironment = {
 		appId: process.env.GAUZY_GITHUB_APP_ID,
 		appName: process.env.GAUZY_GITHUB_APP_NAME,
 		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
-			? Buffer.from(
-				process.env.GAUZY_GITHUB_APP_PRIVATE_KEY,
-				'base64'
-			).toString('ascii')
+			? Buffer.from(process.env.GAUZY_GITHUB_APP_PRIVATE_KEY, 'base64').toString('ascii')
 			: '',
 
 		/** Github App Post Install Configuration */
-		postInstallUrl: process.env.GAUZY_GITHUB_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
+		postInstallUrl:
+			process.env.GAUZY_GITHUB_POST_INSTALL_URL ||
+			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
 
 		/** Github Webhook Configuration */
 		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
-		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`,
+		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
+	},
+
+	jira: {
+		/** Jira Integration Configuration */
+		appName: process.env.GAUZY_JIRA_APP_NAME,
+		appDescription: process.env.GAUZY_JIRA_APP_DESCRIPTION,
+		appKey: process.env.GAUZY_JIRA_APP_KEY,
+		baseUrl: process.env.GAUZY_JIRA_APP_BASE_URL,
+		vendorName: process.env.GAUZY_JIRA_APP_BASE_VENDOR_NAME,
+		vendorUrl: process.env.GAUZY_JIRA_APP_BASE_VENDOR_URL
 	},
 
 	fiverrConfig: {
 		clientId: process.env.FIVERR_CLIENT_ID,
-		clientSecret: process.env.FIVERR_CLIENT_SECRET,
+		clientSecret: process.env.FIVERR_CLIENT_SECRET
 	},
 
 	keycloakConfig: {
@@ -145,31 +142,27 @@ export const environment: IEnvironment = {
 		clientId: process.env.KEYCLOAK_CLIENT_ID,
 		secret: process.env.KEYCLOAK_SECRET,
 		authServerUrl: process.env.KEYCLOAK_AUTH_SERVER_URL,
-		cookieKey: process.env.KEYCLOAK_COOKIE_KEY,
+		cookieKey: process.env.KEYCLOAK_COOKIE_KEY
 	},
 
 	auth0Config: {
 		clientID: process.env.AUTH0_CLIENT_ID,
 		clientSecret: process.env.AUTH0_CLIENT_SECRET,
-		domain: process.env.AUTH0_DOMAIN,
+		domain: process.env.AUTH0_DOMAIN
 	},
 
 	sentry: {
-		dsn: process.env.SENTRY_DSN,
+		dsn: process.env.SENTRY_DSN
 	},
 
-	defaultIntegratedUserPass:
-		process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
+	defaultIntegratedUserPass: process.env.INTEGRATED_USER_DEFAULT_PASS || '123456',
 
 	upwork: {
 		apiKey: process.env.UPWORK_API_KEY,
 		apiSecret: process.env.UPWORK_API_SECRET,
-		callbackUrl:
-			process.env.UPWORK_REDIRECT_URL ||
-			`${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
+		callbackUrl: process.env.UPWORK_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/upwork/callback`,
 		postInstallUrl:
-			process.env.UPWORK_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`,
+			process.env.UPWORK_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/upwork`
 	},
 
 	hubstaff: {
@@ -178,14 +171,12 @@ export const environment: IEnvironment = {
 		clientSecret: process.env.HUBSTAFF_CLIENT_SECRET,
 		/** Hubstaff Integration Post Install URL */
 		postInstallUrl:
-			process.env.HUBSTAFF_POST_INSTALL_URL ||
-			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`,
+			process.env.HUBSTAFF_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/hubstaff`
 	},
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
-	allowSuperAdminRole:
-		process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
 	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
@@ -205,25 +196,21 @@ export const environment: IEnvironment = {
 		secure: process.env.MAIL_PORT === '465' ? true : false, // true for 465, false for other ports
 		auth: {
 			user: process.env.MAIL_USERNAME,
-			pass: process.env.MAIL_PASSWORD,
+			pass: process.env.MAIL_PASSWORD
 		},
-		fromAddress: process.env.MAIL_FROM_ADDRESS,
+		fromAddress: process.env.MAIL_FROM_ADDRESS
 	},
 	defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
 
 	unleashConfig: {
 		// if UNLEASH_API_URL is not set / empty or it's a spaces only, we consider UNLEASH disabled
-		url: process.env.UNLEASH_API_URL
-			? process.env.UNLEASH_API_URL.trim()
-			: '',
+		url: process.env.UNLEASH_API_URL ? process.env.UNLEASH_API_URL.trim() : '',
 		appName: process.env.UNLEASH_APP_NAME,
 		environment: 'development',
 		instanceId: process.env.UNLEASH_INSTANCE_ID,
-		refreshInterval:
-			parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 15000,
-		metricsInterval:
-			parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 60000,
-		apiKey: process.env.UNLEASH_API_KEY,
+		refreshInterval: parseInt(process.env.UNLEASH_REFRESH_INTERVAL) || 15000,
+		metricsInterval: parseInt(process.env.UNLEASH_METRICS_INTERVAL) || 60000,
+		apiKey: process.env.UNLEASH_API_KEY
 	},
 
 	/**
@@ -235,7 +222,7 @@ export const environment: IEnvironment = {
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
 		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
-		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
+		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,
@@ -245,8 +232,8 @@ export const environment: IEnvironment = {
 		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@ever.co`,
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
 		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
-		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`,
-	},
+		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
+	}
 };
 
 export const gauzyToggleFeatures: IGauzyFeatures = {
