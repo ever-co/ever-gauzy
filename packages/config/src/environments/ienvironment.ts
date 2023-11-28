@@ -17,6 +17,7 @@ import {
 	IUnleashConfig,
 	IUpworkConfig,
 	IWasabiConfig,
+	IJiraIntegrationConfig
 } from '@gauzy/common';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -97,6 +98,7 @@ export interface IEnvironment {
 	wasabiConfig?: IWasabiConfig;
 	cloudinaryConfig?: ICloudinaryConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
+	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
 	keycloakConfig: IKeycloakConfig;
 	auth0Config: IAuth0Config;

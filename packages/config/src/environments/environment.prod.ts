@@ -118,6 +118,16 @@ export const environment: IEnvironment = {
 		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
 	},
 
+	jira: {
+		/** Jira Integration Configuration */
+		appName: process.env.GAUZY_JIRA_APP_NAME,
+		appDescription: process.env.GAUZY_JIRA_APP_DESCRIPTION,
+		appKey: process.env.GAUZY_JIRA_APP_KEY,
+		baseUrl: process.env.GAUZY_JIRA_APP_BASE_URL,
+		vendorName: process.env.GAUZY_JIRA_APP_BASE_VENDOR_NAME,
+		vendorUrl: process.env.GAUZY_JIRA_APP_BASE_VENDOR_URL
+	},
+
 	fiverrConfig: {
 		clientId: process.env.FIVERR_CLIENT_ID,
 		clientSecret: process.env.FIVERR_CLIENT_SECRET
