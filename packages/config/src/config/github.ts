@@ -4,7 +4,7 @@ import { IGithubConfig } from '@gauzy/common';
 /**
  * Register GitHub OAuth configuration using @nestjs/config
  */
-export default registerAs('github', () => ({
+export default registerAs('github', (): IGithubConfig => ({
     // GitHub OAuth Client ID
     clientId: process.env.GAUZY_GITHUB_OAUTH_CLIENT_ID,
 
@@ -16,4 +16,4 @@ export default registerAs('github', () => ({
 
     // User Agent for GitHub API requests
     userAgent: process.env.CLIENT_BASE_URL
-}) as IGithubConfig);
+}));
