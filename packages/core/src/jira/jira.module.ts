@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { RouterModule } from 'nest-router';
-import { UserService } from '../user/user.service';
+import { JiraController } from './jira.controller';
 
 @Module({
 	imports: [RouterModule.forRoutes([{ path: '/jira', module: JiraModule }])],
-	controllers: [],
-	providers: [UserService],
+	controllers: [JiraController],
+	providers: [],
 	exports: []
 })
 export class JiraModule {}

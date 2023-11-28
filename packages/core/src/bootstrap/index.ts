@@ -99,8 +99,8 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	// Configure Atlassian Connect Express
-	const addon = ac(express());
-	app.use(addon.middleware());
+	// const addon = ac(express());
+	// app.use(addon.middleware());
 
 	await app.listen(port, host, () => {
 		const message = `Listening at http://${host}:${port}/${globalPrefix}`;
