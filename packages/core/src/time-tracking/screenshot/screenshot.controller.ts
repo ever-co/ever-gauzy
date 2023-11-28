@@ -9,7 +9,7 @@ import {
 	Param,
 	Query,
 	UsePipes,
-	ValidationPipe,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import * as path from 'path';
@@ -17,6 +17,7 @@ import * as moment from 'moment';
 import * as fs from 'fs';
 import { v4 as uuid } from 'uuid';
 import * as Jimp from 'jimp';
+import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	FileStorageProviderEnum,
 	IScreenshot,
@@ -33,6 +34,7 @@ import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { DeleteQueryDTO } from './../../shared/dto';
+import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -41,9 +43,18 @@ import { DeleteQueryDTO } from './../../shared/dto';
 export class ScreenshotController {
 
 	constructor(
-		private readonly screenshotService: ScreenshotService
+		private readonly screenshotService: ScreenshotService,
+		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _integrationTenantService: IntegrationTenantService
 	) { }
 
+	/**
+	 *
+	 * @param entity
+	 * @param file
+	 * @param _req
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create start/stop screenshot.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -73,6 +84,9 @@ export class ScreenshotController {
 		const provider = new FileStorage().getProvider();
 		let thumb: UploadedFile;
 
+		/** */
+		let data: Buffer;
+
 		try {
 			const fileContent = await provider.getFile(file.key);
 			const inputFile = await tempFile('screenshot-thumb');
@@ -91,7 +105,9 @@ export class ScreenshotController {
 					reject(error);
 				}
 			});
-			const data = await fs.promises.readFile(outputFile);
+
+			data = await fs.promises.readFile(outputFile);
+
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
 
@@ -102,6 +118,15 @@ export class ScreenshotController {
 			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 		} catch (error) {
 			console.log('Error while uploading screenshot into file storage provider:', error);
+		}
+
+		/**
+		 *
+		 */
+		try {
+			await this._gauzyAIService.analyzeImage([data]);
+		} catch (error) {
+			console.log(error);
 		}
 
 		try {
@@ -119,6 +144,12 @@ export class ScreenshotController {
 		}
 	}
 
+	/**
+	 *
+	 * @param screenshotId
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({
 		summary: 'Delete record',
 	})
