@@ -172,12 +172,20 @@
 									}}
 								</div>
 							</div>
-							<div>
+							<div class="mb-2">
 								<div class="subtitle">
 									{{ 'TIMESHEET.NOTES' | translate }}:
 								</div>
 								<div>
 									{{ timeLog?.description }}
+								</div>
+							</div>
+							<div class="mb-2" *ngIf="timeLog?.reason">
+								<div class="subtitle">
+									{{ 'TIMESHEET.REASON' | translate }}:
+								</div>
+								<div>
+									{{ timeLog?.reason }}
 								</div>
 							</div>
 						</div>
