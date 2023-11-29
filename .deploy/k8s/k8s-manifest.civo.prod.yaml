@@ -53,6 +53,8 @@ spec:
                         value: 'true'
                       - name: LOG_LEVEL
                         value: 'info'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
                       - name: SENTRY_DSN
                         value: '$SENTRY_DSN'
                       - name: SENTRY_HTTP_TRACING_ENABLED
@@ -173,6 +175,12 @@ spec:
                         value: '$JITSU_SERVER_URL'
                       - name: JITSU_SERVER_WRITE_KEY
                         value: '$JITSU_SERVER_WRITE_KEY'
+                      - name: OTEL_ENABLED
+                        value: '$OTEL_ENABLED'
+                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
                       - name: GAUZY_GITHUB_CLIENT_ID
                         value: '$GAUZY_GITHUB_CLIENT_ID'
                       - name: GAUZY_GITHUB_CLIENT_SECRET

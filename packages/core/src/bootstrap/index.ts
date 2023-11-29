@@ -1,4 +1,5 @@
 // import * as csurf from 'csurf';
+import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -22,12 +23,23 @@ import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+	if (process.env.OTEL_ENABLED) {
+		// Start tracing using Signoz first
+		await tracer.start();
+		console.log('Tracing started');
+	} else {
+		console.log('Tracing not enabled');
+	}
+
 	const config = await registerPluginConfig(pluginConfig);
 
 	const { BootstrapModule } = await import('./bootstrap.module');
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose']
 	});
+
+	// Starts listening for shutdown hooks
+	app.enableShutdownHooks();
 
 	// This will lock all routes and make them accessible by authenticated users only.
 	const reflector = app.get(Reflector);

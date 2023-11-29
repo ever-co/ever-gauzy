@@ -46,7 +46,7 @@ jobs:
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           # Note: for now we are using DB in different provider, so we have to use public hostname
-          DB_HOST: '${{ secrets.DB_HOST_PUBLIC }}'
+          DB_HOST: '${{ secrets.DB_HOST_CW }}'
           DB_USER: '${{ secrets.DB_USER }}'
           DB_PASS: '${{ secrets.DB_PASS }}'
           # Note that for staging we are using for now same server, just different DB name
@@ -54,6 +54,7 @@ jobs:
           DB_PORT: '${{ secrets.DB_PORT }}'
           DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
           DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
+          CLOUD_PROVIDER: 'CW'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
           SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
@@ -103,6 +104,9 @@ jobs:
           PM2_PUBLIC_KEY: '${{ secrets.PM2_PUBLIC_KEY }}'
           JITSU_SERVER_URL: '${{ secrets.JITSU_SERVER_URL }}'
           JITSU_SERVER_WRITE_KEY: '${{ secrets.JITSU_SERVER_WRITE_KEY }}'
+          OTEL_ENABLED: '${{ secrets.OTEL_ENABLED }}'
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
+          OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
           GAUZY_GITHUB_CLIENT_ID: '${{ secrets.GAUZY_GITHUB_CLIENT_ID }}'
           GAUZY_GITHUB_CLIENT_SECRET: '${{ secrets.GAUZY_GITHUB_CLIENT_SECRET }}'
           GAUZY_GITHUB_APP_PRIVATE_KEY: '${{ secrets.GAUZY_GITHUB_APP_PRIVATE_KEY }}'

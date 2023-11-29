@@ -4505,7 +4505,12 @@
 			"SING_ANOTHER_WORKSPACE": "Iniciar sesión en otro espacio de trabajo",
 			"CREATE_NEW_WORKSPACE": "Crear un nuevo espacio de trabajo",
 			"FIND_WORKSPACE": "Encuentra espacio de trabajo."
-		}
+		},
+		"SUCCESS_SIGNIN_TITLE": "¡Felicidades! Has iniciado sesión con éxito en tu espacio de trabajo.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Por favor, ten paciencia mientras preparamos el espacio de trabajo...",
+		"FAIL_SIGNIN_TITLE": "¡Error! El código mágico o el enlace que proporcionaste ha expirado o no es válido.",
+		"FAIL_SIGNIN_SUB_TITLE": "Por favor, inicia el proceso de nuevo.",
+		"THANKING_TEXT": "Gracias por elegirnos."
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Agregar o Eliminar Imagen",

@@ -2,14 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, IsNull, Not, Repository } from 'typeorm';
 import {
-	IBasePerTenantAndOrganizationEntityModel,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
-	IPagination,
-	IntegrationEnum
+	IPagination
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
@@ -98,17 +96,18 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					tenantId,
 					organizationId,
 					name,
+					isActive: true,
+					isArchived: false,
 					integration: {
-						name
-					}
+						provider: name,
+						isActive: true,
+						isArchived: false,
+					},
 				},
-				order: {
-					updatedAt: 'DESC'
-				},
-				relations: {
-					integration: true
-				}
+				order: { updatedAt: 'DESC' },
+				relations: { integration: true },
 			});
+
 			return integration || false;
 		} catch (error) {
 			return false;
@@ -116,20 +115,30 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	}
 
 	/**
-	 *
-	 * @param options
-	 * @returns
+	 * Get integration tenant settings by specified options.
+	 * @param input - The input options for finding the integration tenant settings.
+	 * @returns The integration tenant settings if found.
+	 * @throws BadRequestException if not found or an error occurs.
 	 */
-	async getIntegrationSettings(
-		options: IBasePerTenantAndOrganizationEntityModel
+	async getIntegrationTenantSettings(
+		input: IIntegrationTenantFindInput
 	): Promise<IIntegrationTenant> {
 		try {
-			const { organizationId, tenantId } = options;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const { organizationId, name } = input;
+
 			return await this.findOneByOptions({
 				where: {
 					organizationId,
 					tenantId,
-					name: IntegrationEnum.GAUZY_AI
+					name,
+					isActive: true,
+					isArchived: false,
+					integration: {
+						provider: name,
+						isActive: true,
+						isArchived: false,
+					}
 				},
 				relations: {
 					settings: true

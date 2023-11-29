@@ -1,47 +1,51 @@
 name: Deploy to DigitalOcean Demo
 
 on:
-    workflow_run:
-        workflows: ['Build and Publish Docker Images Demo']
-        branches: [develop, temp]
-        types:
-            - completed
+  workflow_run:
+    workflows: ['Build and Publish Docker Images Demo']
+    branches: [develop]
+    types:
+      - completed
 
 jobs:
-    deploy-demo:
-        runs-on: ubuntu-latest
+  deploy-demo:
+    runs-on: ubuntu-latest
 
-        environment: demo
+    environment: demo
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-            - name: Install doctl
-              uses: digitalocean/action-doctl@v2
-              with:
-                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-            - name: Log in to DigitalOcean Container Registry with short-lived credentials
-              run: doctl registry login --expiry-seconds 600
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
 
-            - name: Save DigitalOcean kubeconfig with short-lived credentials
-              run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-gauzy
 
-            - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
-              run: |
-                  envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
-              env:
-                  # below we are using GitHub secrets for both frontend and backend
-                  DB_NAME: 'gauzy_demo'
-                  SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
-                  SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
-                  SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
-                  SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+      - name: Apply k8s manifests changes in DigitalOcean k8s cluster (if any)
+        run: |
+          envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.demo.yaml | kubectl --context do-sfo2-k8s-gauzy apply -f -
+        env:
+          # below we are using GitHub secrets for both frontend and backend
+          CLOUD_PROVIDER: 'DO'
+          DB_NAME: 'gauzy_demo'
+          SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
+          SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
+          SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'
+          SENTRY_POSTGRES_TRACKING_ENABLED: '${{ secrets.SENTRY_POSTGRES_TRACKING_ENABLED }}'
+          OTEL_ENABLED: '${{ secrets.OTEL_ENABLED }}'
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
+          OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
 
-            # we need this step because for now we just use :latest tag
-            # note: for production we will use different strategy later
-            - name: Restart Pods to pick up :latest tag version
-              run: |
-                  kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-api
-                  kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-webapp
+      # we need this step because for now we just use :latest tag
+      # note: for production we will use different strategy later
+      - name: Restart Pods to pick up :latest tag version
+        run: |
+          kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-api
+          kubectl --context do-sfo2-k8s-gauzy rollout restart deployment/gauzy-demo-webapp

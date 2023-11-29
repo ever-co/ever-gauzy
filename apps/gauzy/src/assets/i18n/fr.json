@@ -4504,7 +4504,12 @@
 			"SING_ANOTHER_WORKSPACE": "Connectez-vous à un autre espace de travail.",
 			"CREATE_NEW_WORKSPACE": "Créez un nouvel espace de travail.",
 			"FIND_WORKSPACE": "Trouver un espace de travail"
-		}
+		},
+		"SUCCESS_SIGNIN_TITLE": "Félicitations ! Vous avez réussi à vous connecter à votre espace de travail.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Veuillez patienter pendant que nous préparons l'espace de travail...",
+		"FAIL_SIGNIN_TITLE": "Erreur ! Le code magique ou le lien que vous avez fourni a expiré ou n'est pas valide.",
+		"FAIL_SIGNIN_SUB_TITLE": "Veuillez initier le processus à nouveau.",
+		"THANKING_TEXT": "Merci de nous avoir choisis."
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Ajouter ou supprimer une image",

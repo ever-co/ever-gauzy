@@ -12,20 +12,25 @@
 </ng-template>
 
 <ng-template #showMessagesTemplate>
-	<div class="message-container">
+	<div class="message-container" *ngIf="success || error">
+		<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
 		<!-- Error Message -->
-		<div *ngIf="error" class="message-container error">
+		<div *ngIf="error" class="error">
 			<div class="text">
-				<h3 class="title">Error</h3>
-				<p class="sub-title">The magic code or link you provided has expired or is invalid. Please initiate the process again.</p>
+				<p class="title">{{ "WORKSPACES.FAIL_SIGNIN_TITLE" | translate }}</p>
+				<p class="sub-title">{{ "WORKSPACES.FAIL_SIGNIN_SUB_TITLE" | translate }}</p>
 			</div>
 		</div>
 		<!-- Success Message -->
-		<div *ngIf="success" class="message-container success">
+		<div *ngIf="success" class="success">
 			<div class="text">
-				<h3 class="title">Success</h3>
-				<p class="sub-title">Congratulations! You've successfully signed in to the workspace. Please hold on for a moment while we prepare your workspace. We appreciate your patience and thank you for choosing us!</p>
+				<p class="title">{{ "WORKSPACES.SUCCESS_SIGNIN_TITLE" | translate }}</p>
+				<p class="sub-title">{{ "WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE" | translate }}</p>
 			</div>
+		</div>
+		<!-- Thanking text -->
+		<div>
+			<p class="thanking-text">{{ "WORKSPACES.THANKING_TEXT" | translate }}</p>
 		</div>
 	</div>
 </ng-template>
