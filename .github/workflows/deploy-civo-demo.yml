@@ -3,7 +3,7 @@ name: Deploy to Civo Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [develop, temp]
+    branches: [civo]
     types:
       - completed
 
@@ -38,6 +38,7 @@ jobs:
         env:
           # below we are using GitHub secrets for both frontend and backend
           DB_NAME: 'gauzy_demo'
+          CLOUD_PROVIDER: 'CIVO'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
           SENTRY_HTTP_TRACING_ENABLED: '${{ secrets.SENTRY_HTTP_TRACING_ENABLED }}'

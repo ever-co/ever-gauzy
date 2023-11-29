@@ -3,7 +3,7 @@ name: Deploy to CoreWeave Demo
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Demo']
-    branches: [develop, temp]
+    branches: [develop]
     types:
       - completed
 
@@ -37,6 +37,7 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.cw.demo.yaml | kubectl --context coreweave apply -f -
         env:
           # below we are using GitHub secrets for both frontend and backend
+          CLOUD_PROVIDER: 'CW'
           DB_NAME: 'gauzy_demo'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
