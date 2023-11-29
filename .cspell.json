@@ -399,7 +399,11 @@
 		"gridcell",
 		"scrollgrid",
 		"r_liteprofile",
-		"r_emailaddress"
+		"r_emailaddress",
+		"Signoz",
+		"OTEL",
+		"OTLP",
+		"opentelemetry"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
