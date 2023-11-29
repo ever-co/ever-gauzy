@@ -1,26 +1,41 @@
+@import "themes";
+
+.ever-logo-svg {
+    margin-top: 2rem;
+    align-self: center;
+}
+
 .message-container {
     display: flex;
-    align-items: center;
-    padding: 20px;
-    border-radius: 8px;
+    flex-direction: column;
+    justify-content: space-between;
+    background: nb-theme(gauzy-card-2);
+    border-radius: nb-theme(border-radius);
+    box-sizing: border-box;
+    padding: 30px;
+    width: 50vw;
+    height: 75vh;
     margin: 10px 0;
 }
-.error {
-    background-color: #FFD6D6;
-    border: 1px solid #FF4040;
+
+.error .title {
     color: #FF4040;
 }
-.success {
-    background-color: #D6FFD6;
-    border: 1px solid #40FF40;
-    color: #40FF40;
+.title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+.sub-title {
+    font-size: .8rem;
+    color: var(--text-hint-color);
+}
+.thanking-text {
+    text-align: center;
+    font-size: .8rem;
 }
 .icon {
     font-size: 24px;
     margin-right: 15px;
-}
-.text {
-    flex-grow: 1;
 }
 h3 {
     margin-bottom: 10px;
