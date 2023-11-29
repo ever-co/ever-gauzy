@@ -6,7 +6,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { SeoService } from './@core/utils/seo.service';
-import { TranslateService } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
@@ -26,6 +26,7 @@ import {
 import { environment } from '../environments/environment';
 import { JitsuService } from './@core/services/analytics/jitsu.service';
 import { union } from 'underscore';
+import { moment } from './@core/moment-extend';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,6 +60,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		this.jitsuService.trackPageViews();
 		this.seoService.trackCanonicalChanges();
 
+		// -- Translate date when language change
+		this.translate.onLangChange.subscribe(
+			(langChangeEvent: LangChangeEvent) => moment.locale(langChangeEvent.lang)
+		)
+
 		this.store.systemLanguages$
 		.pipe(untilDestroyed(this))
 		.subscribe((languages) => {
@@ -66,7 +72,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const browserLang = this.translate.getBrowserLang();
 
 			//Gets default enum languages, e.g. "en", "bg", "he", "ru"
-			const defaultLanguages = Object.values(LanguagesEnum);
+			const defaultLanguages: string[] = Object.values(LanguagesEnum);
 
 			//Gets system languages
 			let systemLanguages: string[] = _.pluck(languages, 'code');
