@@ -12,7 +12,7 @@
 </ng-template>
 
 <ng-template #showMessagesTemplate>
-	<div class="message-container">
+	<div class="message-container" *ngIf="success || error">
 		<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
 		<!-- Error Message -->
 		<div *ngIf="error" class="error">
@@ -22,8 +22,7 @@
 			</div>
 		</div>
 		<!-- Success Message -->
-		<!-- <div *ngIf="success" class="success"> -->
-		<div class="success">
+		<div *ngIf="success" class="success">
 			<div class="text">
 				<p class="title">{{ "WORKSPACES.SUCCESS_SIGNIN_TITLE" | translate }}</p>
 				<p class="sub-title">{{ "WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE" | translate }}</p>
