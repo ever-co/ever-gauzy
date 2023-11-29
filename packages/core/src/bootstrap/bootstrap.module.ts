@@ -1,3 +1,4 @@
+import tracer from './tracer';
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
@@ -5,7 +6,6 @@ import { AppModule } from './../app.module';
 import { HealthIndicatorModule } from '../health-indicator';
 import { Logger, LoggerModule } from '../logger';
 import { SharedModule } from './../shared/shared.module';
-import tracer from './tracer';
 
 @Module({
 	imports: [
@@ -31,10 +31,13 @@ export class BootstrapModule implements NestModule, OnApplicationShutdown {
 			if (signal === 'SIGTERM') {
 				Logger.log('SIGTERM shutting down. Please wait...');
 
-				tracer
-					.shutdown()
-					.then(() => console.log('Tracing terminated'))
-					.catch((error) => console.log('Error terminating tracing', error));
+				if (process.env.OTEL_ENABLED) {
+					try {
+						await tracer.shutdown();
+					} catch (error) {
+						console.log('Error terminating tracing', error);
+					}
+				}
 			}
 		}
 	}

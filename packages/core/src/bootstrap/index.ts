@@ -1,4 +1,5 @@
 // import * as csurf from 'csurf';
+import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -20,11 +21,15 @@ import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
-import tracer from './tracer';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
-	// Start tracing using Signoz first
-	await tracer.start();
+	if (process.env.OTEL_ENABLED) {
+		// Start tracing using Signoz first
+		await tracer.start();
+		console.log('Tracing started');
+	} else {
+		console.log('Tracing not enabled');
+	}
 
 	const config = await registerPluginConfig(pluginConfig);
 
