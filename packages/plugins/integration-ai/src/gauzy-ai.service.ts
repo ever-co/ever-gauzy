@@ -136,14 +136,14 @@ export class GauzyAIService {
 
         /** */
         const headers: AxiosRequestHeaders = customHeaders();
-        console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
+        // console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
 
         // Merge the provided options with the default options
         const mergedOptions: AxiosRequestConfig<T> = {
             ...options,
             // Inside your sendRequest method, use qs.stringify for custom parameter serialization
             paramsSerializer: (params) => {
-                console.log('Customize the serialization of URL parameters', params);
+                // console.log('Customize the serialization of URL parameters', params);
                 if (Object.keys(params).length > 0) {
                     // Customize the serialization of URL parameters as needed
                     return qs.stringify(params, { arrayFormat: 'repeat' });
