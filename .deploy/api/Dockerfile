@@ -228,7 +228,12 @@ ENV IS_DOCKER=true
 # Temporary disable caching in NX Cloud for builds
 ENV NX_NO_CLOUD=true
 
-RUN yarn build:package:api:prod
+RUN if [ "$NODE_ENV" = "production" ]; then \
+	yarn build:package:api:prod; \
+	else \
+	yarn build:package:api; \
+	fi
+
 RUN yarn build:api:prod:docker
 
 FROM node:18-alpine3.17 AS production
