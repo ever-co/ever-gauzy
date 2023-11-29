@@ -160,18 +160,20 @@ export class ScreenshotController {
 				data,
 				file,
 				async (result: ImageAnalysisResult['data']['analysis']) => {
-					const [analysis] = result;
-					/** */
-					const isWorkRelated = analysis.work;
-					const description = analysis.description || '';
-					const apps = analysis.apps || [];
+					if (result) {
+						const [analysis] = result;
+						/** */
+						const isWorkRelated = analysis.work;
+						const description = analysis.description || '';
+						const apps = analysis.apps || [];
 
-					/** */
-					await this._screenshotService.update(screenshot.id, {
-						isWorkRelated,
-						description,
-						apps
-					});
+						/** */
+						await this._screenshotService.update(screenshot.id, {
+							isWorkRelated,
+							description,
+							apps
+						});
+					}
 				}
 			);
 

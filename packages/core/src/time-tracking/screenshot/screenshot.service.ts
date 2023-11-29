@@ -84,7 +84,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			});
 
 			// Check if integration exists
-			if (integration) {
+			if (!!integration) {
 				// Analyze image using Gauzy AI service
 				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
 
