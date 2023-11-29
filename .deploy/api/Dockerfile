@@ -96,6 +96,8 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
 
+# ENV NODE_ENV=${NODE_ENV:-production}
+
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
 
@@ -141,10 +143,13 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 FROM node:18-alpine3.17 AS prodDependencies
+
+ENV CI=true
+ENV NODE_ENV=${NODE_ENV:-production}
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
@@ -186,7 +191,7 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 RUN rm -r node_modules/@angular
@@ -207,8 +212,13 @@ WORKDIR /srv/gauzy
 
 RUN mkdir dist
 
+# Copy the node_modules from the dependencies stage
+COPY --from=dependencies /srv/gauzy/node_modules ./node_modules
+
+# Copy the compiled packages from the development stage
 COPY --chown=node:node --from=development /srv/gauzy .
 
+ENV CI=true
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV DEMO=${DEMO:-false}
@@ -218,7 +228,7 @@ ENV IS_DOCKER=true
 # Temporary disable caching in NX Cloud for builds
 ENV NX_NO_CLOUD=true
 
-RUN yarn build:package:api
+RUN yarn build:package:api:prod
 RUN yarn build:api:prod:docker
 
 FROM node:18-alpine3.17 AS production
@@ -247,8 +257,12 @@ RUN npm install pm2@4.5.1 -g && \
 	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
 	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
 
+# Clean up
+RUN yarn cache clean
+
 USER node:node
 
+ENV CI=true
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV API_HOST=${API_HOST:-api}
