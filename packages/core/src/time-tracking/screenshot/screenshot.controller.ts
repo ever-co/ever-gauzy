@@ -17,11 +17,10 @@ import * as moment from 'moment';
 import * as fs from 'fs';
 import { v4 as uuid } from 'uuid';
 import * as Jimp from 'jimp';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { ImageAnalysisResult } from '@gauzy/integration-ai';
 import {
 	FileStorageProviderEnum,
 	IScreenshot,
-	IntegrationEnum,
 	PermissionsEnum,
 	UploadedFile,
 } from '@gauzy/contracts';
@@ -35,7 +34,6 @@ import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { DeleteQueryDTO } from './../../shared/dto';
-import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -44,9 +42,7 @@ import { IntegrationTenantService } from 'integration-tenant/integration-tenant.
 export class ScreenshotController {
 
 	constructor(
-		private readonly _screenshotService: ScreenshotService,
-		private readonly _gauzyAIService: GauzyAIService,
-		private readonly _integrationTenantService: IntegrationTenantService
+		private readonly _screenshotService: ScreenshotService
 	) { }
 
 	/**
@@ -91,6 +87,8 @@ export class ScreenshotController {
 
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();
+
+		// Initialize file storage provider and process thumbnail
 		const provider = new FileStorage().getProvider();
 		let thumb: UploadedFile;
 
@@ -98,15 +96,17 @@ export class ScreenshotController {
 		let data: Buffer;
 
 		try {
-			// Process the thumbnail
-
+			// Retrieve file content from the file storage provider
 			const fileContent = await provider.getFile(file.key);
 
+			// Create temporary files for input and output of thumbnail processing
 			const inputFile = await tempFile('screenshot-thumb');
 			const outputFile = await tempFile('screenshot-thumb');
 
+			// Write the file content to the input temporary file
 			await fs.promises.writeFile(inputFile, fileContent);
 
+			// Resize the image using Jimp library
 			await new Promise(async (resolve, reject) => {
 				const image = await Jimp.read(inputFile);
 
@@ -114,6 +114,7 @@ export class ScreenshotController {
 				image.resize(250, Jimp.AUTO);
 
 				try {
+					// Write the resized image to the output temporary file
 					await image.writeAsync(outputFile);
 					resolve(image);
 				} catch (error) {
@@ -121,44 +122,27 @@ export class ScreenshotController {
 				}
 			});
 
+			// Read the resized image data from the output temporary file
 			data = await fs.promises.readFile(outputFile);
 
+			// Remove the temporary input and output files
 			await fs.promises.unlink(inputFile);
 			await fs.promises.unlink(outputFile);
 
+			// Define thumbnail file name and directory
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
 
+			// Upload the thumbnail data to the file storage provider
 			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
 			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 		} catch (error) {
-			console.log('Error while uploading screenshot into file storage provider:', error);
+			// Log error and throw an exception if thumbnail processing fails
+			console.log('Error while processing screenshot thumbnail:', error);
 		}
 
 		try {
-			// Retrieve integration
-			const integration = await this._integrationTenantService.getIntegrationByOptions({
-				organizationId,
-				tenantId,
-				name: IntegrationEnum.GAUZY_AI
-			});
-
-			// Check if integration exists
-			if (!!integration) {
-				// Analyze image using Gauzy AI service
-				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
-				if (!!analysis.success) {
-					const [analyzeImage] = analysis.data.analysis;
-
-					entity.isWorkRelated = analyzeImage.work;
-					entity.description = analyzeImage.description;
-					/** */
-					entity.apps = analyzeImage.apps;
-				}
-			}
-		} catch (error) { }
-
-		try {
+			// Populate entity properties for the screenshot
 			entity.organizationId = organizationId;
 			entity.tenantId = tenantId;
 			entity.userId = RequestContext.currentUserId();
@@ -167,8 +151,30 @@ export class ScreenshotController {
 			entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
 			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
-			console.log({ entity });
+			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);
+
+			// Analyze image using Gauzy AI service
+			this._screenshotService.analyzeScreenshot(
+				screenshot,
+				data,
+				file,
+				async (result: ImageAnalysisResult['data']['analysis']) => {
+					const [analysis] = result;
+					/** */
+					const isWorkRelated = analysis.work;
+					const description = analysis.description || '';
+					const apps = analysis.apps || [];
+
+					/** */
+					await this._screenshotService.update(screenshot.id, {
+						isWorkRelated,
+						description,
+						apps
+					});
+				}
+			);
+
 			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {

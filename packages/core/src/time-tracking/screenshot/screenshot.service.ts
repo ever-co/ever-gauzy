@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { GauzyAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
-import { IScreenshot, PermissionsEnum } from '@gauzy/contracts';
+import { IScreenshot, IntegrationEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
@@ -59,17 +59,44 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	}
 
 	/**
-	 *
-	 * @param callback
+	 * Analyze a screenshot using Gauzy AI service.
+	 * @param input - The input options for the screenshot.
+	 * @param data - The screenshot data.
+	 * @param file - The screenshot file.
+	 * @param callback - Optional callback function to handle the analysis result.
+	 * @returns Promise<ImageAnalysisResult>
 	 */
 	async analyzeScreenshot(
-		callback?: (analysis: ImageAnalysisResult[]) => void
-	) {
-		const analysis: ImageAnalysisResult[] = [];
+		input: IScreenshot,
+		data: Buffer,
+		file: UploadedFile,
+		callback?: (analysis: ImageAnalysisResult['data']['analysis']) => void
+	): Promise<ImageAnalysisResult> {
+		try {
+			const { organizationId } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-		// Call the callback function if provided
-		if (callback) {
-			callback(analysis);
+			// Retrieve integration
+			const integration = await this._integrationTenantService.getIntegrationByOptions({
+				organizationId,
+				tenantId,
+				name: IntegrationEnum.GAUZY_AI
+			});
+
+			// Check if integration exists
+			if (integration) {
+				// Analyze image using Gauzy AI service
+				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
+
+				if (analysis.success && callback) {
+					// Call the callback function if provided
+					callback(analysis.data.analysis);
+				}
+
+				return analysis;
+			}
+		} catch (error) {
+			// If needed, consider throwing or handling the error appropriately.
 		}
 	}
 }
