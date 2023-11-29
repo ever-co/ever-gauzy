@@ -35,8 +35,15 @@ if (env.demo) {
 }
 
 if (process.env.CLOUD_PROVIDER) {
-	serviceName = serviceName + ' (' + process.env.CLOUD_PROVIDER.toUpperCase() + ')';
+	const providerName = process.env.CLOUD_PROVIDER.toUpperCase();
+	console.log('Tracing Cloud Provider: ' + providerName);
+	serviceName = serviceName + ' (' + providerName + ')';
 }
+
+console.log('Tracing Headers: ' + process.env.OTEL_EXPORTER_OTLP_HEADERS);
+console.log('Tracing URL: ' + exporterOptions.url);
+console.log('Tracing environment name: ' + env.envName);
+console.log('Tracing service name: ' + serviceName);
 
 const sdk = new NodeSDK({
 	traceExporter,
@@ -50,6 +57,9 @@ if (process.env.OTEL_ENABLED) {
 	// initialize the SDK and register with the OpenTelemetry API
 	// this enables the API to record telemetry
 	sdk.start();
+	console.log('Tracing SDK Started');
+} else {
+	console.log('Tracing SDK Not Enabled');
 }
 
 export default sdk;
