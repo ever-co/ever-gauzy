@@ -2,14 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindManyOptions, IsNull, Not, Repository } from 'typeorm';
 import {
-	IBasePerTenantAndOrganizationEntityModel,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
-	IPagination,
-	IntegrationEnum
+	IPagination
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
