@@ -4499,7 +4499,12 @@
 			"SING_ANOTHER_WORKSPACE": "Melden Sie sich in einem anderen Arbeitsbereich an",
 			"CREATE_NEW_WORKSPACE": "Erstelle einen neuen Arbeitsbereich",
 			"FIND_WORKSPACE": "Finde Arbeitsplatz"
-		}
+		},
+		"SUCCESS_SIGNIN_TITLE": "Herzlichen Glückwunsch! Sie haben sich erfolgreich in Ihren Arbeitsbereich eingeloggt.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Bitte haben Sie Geduld, während wir den Arbeitsbereich vorbereiten...",
+		"FAIL_SIGNIN_TITLE": "Fehler! Der magische Code oder Link, den Sie bereitgestellt haben, ist abgelaufen oder ungültig.",
+		"FAIL_SIGNIN_SUB_TITLE": "Bitte starten Sie den Prozess erneut.",
+		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben."
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Bild hinzufügen oder entfernen",

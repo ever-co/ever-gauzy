@@ -4503,7 +4503,12 @@
 			"SING_ANOTHER_WORKSPACE": "Zaloguj się do innego miejsca pracy",
 			"CREATE_NEW_WORKSPACE": "Utwórz nową przestrzeń roboczą",
 			"FIND_WORKSPACE": "Znajdź miejsce do pracy"
-		}
+		},
+		"SUCCESS_SIGNIN_TITLE": "Gratulacje! Pomyślnie zalogowałeś się do swojej przestrzeni roboczej.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Proszę o cierpliwość podczas przygotowywania przestrzeni roboczej...",
+		"FAIL_SIGNIN_TITLE": "Błąd! Magiczny kod lub link, który podałeś, jest przeterminowany lub nieprawidłowy.",
+		"FAIL_SIGNIN_SUB_TITLE": "Proszę rozpocznij proces ponownie.",
+		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś."
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",

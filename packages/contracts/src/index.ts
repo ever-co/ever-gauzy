@@ -1,4 +1,6 @@
 export * from './accounting-template.model';
+/** App Setting Model */
+export * from './app.model';
 export * from './appointment-employees.model';
 export * from './approval-policy.model';
 export * from './availability-slots.model';
@@ -47,6 +49,7 @@ export * from './expense.model';
 export * from './feature.model';
 export * from './file-provider';
 export * from './geo-location.model';
+export * from './github.model';
 export * from './goal-settings.model';
 export * from './goals.model';
 export * from './help-center-article.model';
@@ -77,6 +80,7 @@ export * from './organization-positions.model';
 export * from './organization-projects.model';
 export * from './organization-recurring-expense.model';
 export * from './organization-sprint.model';
+export * from './organization-task-setting.model';
 export * from './organization-team-employee-model';
 export * from './organization-team-join-request.model';
 export * from './organization-team.model';
@@ -96,17 +100,19 @@ export * from './request-approval-team.model';
 export * from './request-approval.model';
 export * from './role-permission.model';
 export * from './role.model';
+export * from './screenshot.model';
 export * from './seed.model';
 export * from './skill-entity.model';
 export * from './sms.model';
 export * from './tag.model';
+export * from './task-estimation.model';
+export * from './task-linked-issue.model';
 export * from './task-priority.model';
-export * from './task-size.model';
 export * from './task-related-issue-type.model';
+export * from './task-size.model';
 export * from './task-status.model';
 export * from './task-version.model';
 export * from './task.model';
-export * from './task-linked-issue.model';
 export * from './tenant.model';
 export * from './time-off.model';
 export * from './timesheet-statistics.model';
@@ -117,12 +123,6 @@ export * from './upwork.model';
 export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
-export * from './organization-task-setting.model';
-export * from './task-estimation.model';
-export * from './github.model';
-
-/** App Setting Model */
-export * from './app.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {

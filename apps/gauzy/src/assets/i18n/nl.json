@@ -4503,7 +4503,12 @@
 			"SING_ANOTHER_WORKSPACE": "Meld je aan bij een andere werkruimte",
 			"CREATE_NEW_WORKSPACE": "Maak een nieuwe werkruimte",
 			"FIND_WORKSPACE": "Vind een werkruimte"
-		}
+		},
+		"SUCCESS_SIGNIN_TITLE": "Gefeliciteerd! Je bent succesvol ingelogd op je werkruimte.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Wees geduldig terwijl we de werkruimte voorbereiden...",
+		"FAIL_SIGNIN_TITLE": "Fout! De magische code of de link die je hebt opgegeven is verlopen of ongeldig.",
+		"FAIL_SIGNIN_SUB_TITLE": "Start het proces opnieuw a.u.b.",
+		"THANKING_TEXT": "Bedankt dat je voor ons hebt gekozen."
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Afbeelding toevoegen of verwijderen",
