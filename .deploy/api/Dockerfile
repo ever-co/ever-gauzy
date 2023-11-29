@@ -96,7 +96,9 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
 
-# ENV NODE_ENV=${NODE_ENV:-production}
+# We need to set to "development", because we are using "yarn install" below to setup
+# devDependencies even for production builds!
+ENV NODE_ENV=development
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
@@ -149,7 +151,9 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile
 FROM node:18-alpine3.17 AS prodDependencies
 
 ENV CI=true
-ENV NODE_ENV=${NODE_ENV:-production}
+
+# We make NODE_ENV passed as build argument to be available in this stage
+ARG NODE_ENV
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
@@ -219,8 +223,14 @@ COPY --from=dependencies /srv/gauzy/node_modules ./node_modules
 COPY --chown=node:node --from=development /srv/gauzy .
 
 ENV CI=true
+
+# We make NODE_ENV and other env vars passed as build argument to be available in this stage
+ARG NODE_ENV
+ARG DEMO
+ARG NODE_OPTIONS
+
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
-ENV NODE_ENV=${NODE_ENV:-production}
+ENV NODE_ENV=${NODE_ENV}
 ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
@@ -268,6 +278,7 @@ RUN yarn cache clean
 USER node:node
 
 ENV CI=true
+
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV API_HOST=${API_HOST:-api}
