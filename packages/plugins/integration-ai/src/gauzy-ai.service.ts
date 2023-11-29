@@ -130,11 +130,13 @@ export class GauzyAIService {
             // Inside your sendRequest method, use qs.stringify for custom parameter serialization
             paramsSerializer: (params) => {
                 console.log('Customize the serialization of URL parameters', params);
-                // Customize the serialization of URL parameters as needed
-                return qs.stringify(params, { arrayFormat: 'repeat' });
+                if (Object.keys(params).length > 0) {
+                    // Customize the serialization of URL parameters as needed
+                    return qs.stringify(params, { arrayFormat: 'repeat' });
+                }
             }
         };
-        console.log('Default AxiosRequestConfig Options: %s', `${JSON.stringify(mergedOptions)}`);
+        // console.log('Default AxiosRequestConfig Options: %s', `${JSON.stringify(mergedOptions)}`);
 
         try {
             return this._http.request<T>({
@@ -161,14 +163,14 @@ export class GauzyAIService {
      * @param files - Array of Buffers representing the uploaded images.
      * @returns Promise<any> - The analysis result for the image.
      */
-    public async analyzeImage(files: Buffer[]): Promise<any> {
+    public async analyzeImage(stream: Buffer, file: any): Promise<any> {
         // Create FormData and append the image data
         const form = new FormData();
 
-        // Append each file to the FormData with a unique key
-        files.forEach((file: Buffer, index) => {
-            // Assuming you have an image file or buffer
-            form.append(`files[${index}]`, file, `image_${index}.jpg`);
+        // Assuming you have an image file or buffer
+        form.append(`files`, stream, {
+            filename: file.filename,
+            contentType: 'application/octet-stream'
         });
 
         // Set custom headers
@@ -182,8 +184,8 @@ export class GauzyAIService {
         const options = {
             data: form, // Set the request payload
             params: {
-                ws_key: 'EXAMPLE',
-            },
+
+            }
         };
 
         // Call the sendRequest function with the appropriate parameters

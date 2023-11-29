@@ -52,7 +52,6 @@ export class ScreenshotController {
 	 *
 	 * @param entity
 	 * @param file
-	 * @param _req
 	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create start/stop screenshot.' })
@@ -79,7 +78,9 @@ export class ScreenshotController {
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file: UploadedFile
 	) {
-		console.log('Screenshot Http Request', { entity, file });
+		const { organizationId } = entity;
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+
 		const user = RequestContext.currentUser();
 		const provider = new FileStorage().getProvider();
 		let thumb: UploadedFile;
@@ -124,12 +125,15 @@ export class ScreenshotController {
 		 *
 		 */
 		try {
-			await this._gauzyAIService.analyzeImage([data]);
+			const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
+			console.log(analysis);
 		} catch (error) {
 			console.log(error);
 		}
 
 		try {
+			entity.organizationId = organizationId;
+			entity.tenantId = tenantId;
 			entity.userId = RequestContext.currentUserId();
 			entity.file = file.key;
 			entity.thumb = thumb.key;
