@@ -95,7 +95,8 @@ LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
-ENV NODE_ENV=${NODE_ENV:-production}
+
+# ENV NODE_ENV=${NODE_ENV:-production}
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
