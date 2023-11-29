@@ -108,7 +108,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 		nullable: true,
 		type: ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'
 	})
-	apps?: string;
+	apps?: string | string[];
 
 	/** Additional fields */
 	fullUrl?: string;

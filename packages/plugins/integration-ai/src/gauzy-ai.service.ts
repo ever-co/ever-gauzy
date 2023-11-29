@@ -53,6 +53,20 @@ import {
 import { RequestConfigProvider } from './request-config.provider';
 import { AxiosRequestHeaders, HttpMethodEnum } from './configuration.interface';
 
+export interface ImageAnalysisResult {
+    success: boolean;
+    data: {
+        mimetype: string;
+        filename: string;
+        analysis: Array<{
+            work: boolean;
+            description: string;
+            apps: string[];
+        }>;
+        message?: string;
+    };
+}
+
 @Injectable()
 export class GauzyAIService {
     private readonly _logger = new Logger(GauzyAIService.name);
@@ -163,7 +177,7 @@ export class GauzyAIService {
      * @param files - Array of Buffers representing the uploaded images.
      * @returns Promise<any> - The analysis result for the image.
      */
-    public async analyzeImage(stream: Buffer, file: any): Promise<any> {
+    public async analyzeImage(stream: Buffer, file: any): Promise<ImageAnalysisResult[]> {
         // Create FormData and append the image data
         const form = new FormData();
 
@@ -183,14 +197,12 @@ export class GauzyAIService {
         // Set request options
         const options = {
             data: form, // Set the request payload
-            params: {
-
-            }
+            params: {}
         };
 
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
-            this.sendRequest<any>('image/process', options, HttpMethodEnum.POST, headers).pipe(
+            this.sendRequest<ImageAnalysisResult[]>('image/process', options, HttpMethodEnum.POST, headers).pipe(
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
         );

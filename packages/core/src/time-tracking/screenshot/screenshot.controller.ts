@@ -21,6 +21,7 @@ import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	FileStorageProviderEnum,
 	IScreenshot,
+	IntegrationEnum,
 	PermissionsEnum,
 	UploadedFile,
 } from '@gauzy/contracts';
@@ -43,7 +44,7 @@ import { IntegrationTenantService } from 'integration-tenant/integration-tenant.
 export class ScreenshotController {
 
 	constructor(
-		private readonly screenshotService: ScreenshotService,
+		private readonly _screenshotService: ScreenshotService,
 		private readonly _gauzyAIService: GauzyAIService,
 		private readonly _integrationTenantService: IntegrationTenantService
 	) { }
@@ -65,10 +66,16 @@ export class ScreenshotController {
 	})
 	@Post()
 	@UseInterceptors(
+		// Use the LazyFileInterceptor to handle file uploads
 		LazyFileInterceptor('file', {
+			// Define storage settings for uploaded files
 			storage: () => {
 				return new FileStorage().storage({
-					dest: () => path.join('screenshots', moment().format('YYYY/MM/DD'), RequestContext.currentTenantId() || uuid()),
+					dest: () => path.join(
+						'screenshots',
+						moment().format('YYYY/MM/DD'),
+						RequestContext.currentTenantId() || uuid()
+					),
 					prefix: 'screenshots',
 				});
 			},
@@ -78,9 +85,11 @@ export class ScreenshotController {
 		@Body() entity: Screenshot,
 		@UploadedFileStorage() file: UploadedFile
 	) {
+		// Extract necessary properties from the request body
 		const { organizationId } = entity;
 		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
 
+		// Extract user information from the request context
 		const user = RequestContext.currentUser();
 		const provider = new FileStorage().getProvider();
 		let thumb: UploadedFile;
@@ -89,10 +98,15 @@ export class ScreenshotController {
 		let data: Buffer;
 
 		try {
+			// Process the thumbnail
+
 			const fileContent = await provider.getFile(file.key);
+
 			const inputFile = await tempFile('screenshot-thumb');
 			const outputFile = await tempFile('screenshot-thumb');
+
 			await fs.promises.writeFile(inputFile, fileContent);
+
 			await new Promise(async (resolve, reject) => {
 				const image = await Jimp.read(inputFile);
 
@@ -121,15 +135,28 @@ export class ScreenshotController {
 			console.log('Error while uploading screenshot into file storage provider:', error);
 		}
 
-		/**
-		 *
-		 */
 		try {
-			const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
-			console.log(analysis);
-		} catch (error) {
-			console.log(error);
-		}
+			// Retrieve integration
+			const integration = await this._integrationTenantService.getIntegrationByOptions({
+				organizationId,
+				tenantId,
+				name: IntegrationEnum.GAUZY_AI
+			});
+
+			// Check if integration exists
+			if (!!integration) {
+				// Analyze image using Gauzy AI service
+				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
+				if (!!analysis.success) {
+					const [analyzeImage] = analysis.data.analysis;
+
+					entity.isWorkRelated = analyzeImage.work;
+					entity.description = analyzeImage.description;
+					/** */
+					entity.apps = analyzeImage.apps;
+				}
+			}
+		} catch (error) { }
 
 		try {
 			entity.organizationId = organizationId;
@@ -140,9 +167,10 @@ export class ScreenshotController {
 			entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
 			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
 
-			const screenshot = await this.screenshotService.create(entity);
+			console.log({ entity });
+			const screenshot = await this._screenshotService.create(entity);
 			console.log(`Screenshot created for employee (${user.name})`, screenshot);
-			return await this.screenshotService.findOneByIdString(screenshot.id);
+			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
 			console.log(`Error while creating screenshot for employee (${user.name})`, error);
 		}
@@ -172,7 +200,7 @@ export class ScreenshotController {
 		@Param('id', UUIDValidationPipe) screenshotId: IScreenshot['id'],
 		@Query() options: DeleteQueryDTO<Screenshot>
 	): Promise<IScreenshot> {
-		return await this.screenshotService.deleteScreenshot(
+		return await this._screenshotService.deleteScreenshot(
 			screenshotId,
 			options
 		);

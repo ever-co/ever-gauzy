@@ -1,17 +1,21 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
+import { GauzyAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
 import { IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
+import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 import { Screenshot } from './screenshot.entity';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 
 	constructor(
-		@InjectRepository(Screenshot)
-		protected readonly screenshotRepository: Repository<Screenshot>
+		@InjectRepository(Screenshot) protected readonly screenshotRepository: Repository<Screenshot>,
+		/** */
+		private readonly _integrationTenantService: IntegrationTenantService,
+		private readonly _gauzyAIService: GauzyAIService,
 	) {
 		super(screenshotRepository);
 	}
@@ -51,6 +55,21 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			return await this.repository.remove(screenshot);
 		} catch (error) {
 			throw new ForbiddenException();
+		}
+	}
+
+	/**
+	 *
+	 * @param callback
+	 */
+	async analyzeScreenshot(
+		callback?: (analysis: ImageAnalysisResult[]) => void
+	) {
+		const analysis: ImageAnalysisResult[] = [];
+
+		// Call the callback function if provided
+		if (callback) {
+			callback(analysis);
 		}
 	}
 }

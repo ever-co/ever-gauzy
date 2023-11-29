@@ -15,7 +15,7 @@ export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, I
     /** Image/Screenshot Analysis Through Gauzy AI */
     isWorkRelated?: boolean;
     description?: string;
-    apps?: string;
+    apps?: string | string[];
     /** Relations */
     timeSlot?: ITimeSlot;
     timeSlotId?: ITimeSlot['id'];
