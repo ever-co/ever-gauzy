@@ -23,10 +23,10 @@ export class EmailConfirmationService {
     ) { }
 
     /**
-     * Send confirmation email link & code
+     * Sends an email verification link and code to the user.
      *
-     * @param user
-     * @returns
+     * @param user The user to send the verification email to.
+     * @param integration Configuration for app integration.
      */
     public async sendEmailVerification(user: IUser, integration: IAppIntegrationConfig) {
         if (!await this.featureFlagService.isFeatureEnabled(
@@ -34,24 +34,23 @@ export class EmailConfirmationService {
         )) {
             return;
         }
+
         try {
             const { id, email } = user;
             const payload: IVerificationTokenPayload = { id, email };
 
+            // Generate a JWT token for email verification
             const token = sign(payload, environment.JWT_VERIFICATION_TOKEN_SECRET, {
                 expiresIn: `${environment.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME}s`
             });
 
-            /**
-            * Override the default config by merging in the provided values.
-            *
-            */
-            deepMerge(integration, environment.appIntegrationConfig);
+            // Override the default config by merging in the provided values.
+            const appIntegration = deepMerge(environment.appIntegrationConfig, integration);
 
-            const url = `${integration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
+            const verificationLink = `${appIntegration.appEmailConfirmationUrl}?email=${email}&token=${token}`;
             const verificationCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 
-            // update email token field for user
+            // Update user's email token field and verification code
             await this.userService.update(id, {
                 emailToken: await bcrypt.hash(token, 10),
                 code: verificationCode,
@@ -60,8 +59,13 @@ export class EmailConfirmationService {
                 } : {}),
             });
 
-            // send email verification link
-            return this.emailService.emailVerification(user, url, verificationCode, integration);
+            // Send email verification link
+            return await this.emailService.emailVerification(
+                user,
+                verificationLink,
+                verificationCode,
+                appIntegration
+            );
         } catch (error) {
             console.log(error, 'Error while sending verification email');
         }

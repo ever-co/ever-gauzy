@@ -12,7 +12,7 @@ export class AddColumnsToTheIntegrationTypeTable1695111838783 implements Migrati
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`AddColumnsToTheIntegrationTypeTable1695111838783 start running!`));
+        console.log(chalk.yellow(`${this.name} start running!`));
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);

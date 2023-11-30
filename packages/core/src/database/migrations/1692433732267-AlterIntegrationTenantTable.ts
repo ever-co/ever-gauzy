@@ -12,7 +12,7 @@ export class AlterIntegrationTenantTable1692433732267 implements MigrationInterf
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`AlterIntegrationTenantTable1692433732267 start running!`));
+        console.log(chalk.yellow(`${this.name} start running!`));
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);

@@ -15,7 +15,7 @@ export class SeedIntegrationsAndIntegrationTypes1695112275840 implements Migrati
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`SeedIntegrationsAndIntegrationTypes1695112275840 start running!`));
+        console.log(chalk.yellow(`${this.name} start running!`));
 
         await IntegrationsUtils.upsertIntegrationTypes(queryRunner, [IntegrationTypeEnum.PROJECT_MANAGEMENT]);
         await IntegrationsUtils.upsertIntegrationsAndIntegrationTypes(queryRunner, PROJECT_MANAGE_DEFAULT_INTEGRATIONS);
