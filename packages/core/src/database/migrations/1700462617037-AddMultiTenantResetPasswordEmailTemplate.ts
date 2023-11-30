@@ -15,6 +15,7 @@ export class AddMultiTenantResetPasswordEmailTemplate1700462617037 implements Mi
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
         console.log(chalk.yellow(`${this.name} start running!`));
+
         // Migrate email templates for multi-tenant password reset
         try {
             await EmailTemplateUtils.migrateEmailTemplates(queryRunner, EmailTemplateEnum.MULTI_TENANT_PASSWORD_RESET);
