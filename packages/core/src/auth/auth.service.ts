@@ -40,6 +40,7 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
+import { pick } from 'underscore';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -351,12 +352,17 @@ export class AuthService extends SocialAuthService {
 	 * 1. Sign up
 	 * 2. Addition of new user to organization
 	 * 3. User invite accept scenario
+	 *
+	 * @param input
+	 * @param languageCode
+	 * @returns
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		languageCode: LanguagesEnum,
 	): Promise<User> {
 		let tenant = input.user.tenant;
+		// 1. If createdById is provided, get the creating user and use their tenant
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
 				relations: {
@@ -366,46 +372,37 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		/**
-		 * Register new user
-		 */
-		const create = this.userRepository.create({
+		// 2. Register new user
+		const userToCreate = this.userRepository.create({
 			...input.user,
 			tenant,
-			...(input.password
-				? {
-					hash: await this.getPasswordHash(input.password)
-				}
-				: {})
+			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
 		});
-		const entity = await this.userRepository.save(create);
+		const createdUser = await this.userRepository.save(userToCreate);
 
-		/** Email automatically verified after accept invitation */
-		await this.userRepository.update(entity.id, {
-			...(input.inviteId
-				? {
-					emailVerifiedAt: freshTimestamp()
-				}
-				: {})
-		});
+		// 3. Email is automatically verified after accepting an invitation
+		if (input.inviteId) {
+			await this.userRepository.update(createdUser.id, {
+				emailVerifiedAt: freshTimestamp()
+			});
+		}
 
-		/**
-		 * Find latest register user with role
-		 */
+		// 4. Find the latest registered user with role
 		const user = await this.userRepository.findOne({
 			where: {
-				id: entity.id
+				id: createdUser.id
 			},
 			relations: {
 				role: true
 			}
 		});
 
+		// 5. If organizationId is provided, add the user to the organization
 		if (isNotEmpty(input.organizationId)) {
 			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
-		//6. Create Import Records while migrating for relative user.
+		// 6. Create Import Records while migrating for a relative user
 		const { isImporting = false, sourceId = null } = input;
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
@@ -418,29 +415,26 @@ export class AuthService extends SocialAuthService {
 			);
 		}
 
-		/**
-		 * Email verification
-		 */
-		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl, companyLink, companyName } = input;
+		// Extract integration information
+		let integration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'appEmailConfirmationUrl', 'companyLink', 'companyName']);
+
+		// 7. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
-			this.emailConfirmationService.sendEmailVerification(user, {
-				appName,
-				appLogo,
-				appSignature,
-				appLink,
-				appEmailConfirmationUrl,
-				companyLink,
-				companyName
-			});
+			this.emailConfirmationService.sendEmailVerification(
+				user,
+				integration
+			);
 		}
-		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
-			appName,
-			appLogo,
-			appSignature,
-			appLink,
-			companyLink,
-			companyName
-		});
+
+		// 8. Send a welcome email to the user
+		this.emailService.welcomeUser(
+			input.user,
+			languageCode,
+			input.organizationId,
+			input.originalUrl,
+			integration
+		);
+
 		return user;
 	}
 
@@ -691,7 +685,8 @@ export class AuthService extends SocialAuthService {
 			await this.userRepository.update({ email }, { code: magicCode, codeExpireAt });
 
 			// Override the default config by merging in the provided values.
-			const integration = deepMerge(input, environment.appIntegrationConfig);
+			const integration = deepMerge(environment.appIntegrationConfig, input);
+			console.log({ integration }, 'Send Workspace Signin Code');
 
 			/** */
 			let magicLink: string;

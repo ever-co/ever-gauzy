@@ -221,10 +221,10 @@ export const environment: IEnvironment = {
 		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
-		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
+		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
-		companyLink: process.env.COMPANY_LINK || 'Ever Co. LTD',
-		companyName: process.env.COMPANY_NAME || 'https://ever.co'
+		companyLink: process.env.COMPANY_LINK || 'https://ever.co',
+		companyName: process.env.COMPANY_NAME || 'Ever Co. LTD'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

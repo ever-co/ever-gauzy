@@ -455,11 +455,8 @@ export class EmailService {
 		}
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
 
-		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
-		deepMerge(integration, env.appIntegrationConfig);
+		// Override the default config by merging in the provided values.
+		const appIntegration = deepMerge(env.appIntegrationConfig, integration);
 
 		const sendOptions = {
 			template: EmailTemplateEnum.WELCOME_USER,
@@ -472,7 +469,7 @@ export class EmailService {
 				host: originUrl || env.clientBaseUrl,
 				organizationId: organizationId || IsNull(),
 				tenantId,
-				...integration
+				...appIntegration
 			}
 		};
 
@@ -512,16 +509,11 @@ export class EmailService {
 		user: IUser,
 		verificationLink: string,
 		verificationCode: string,
-		thirdPartyIntegration: IAppIntegrationConfig
+		integration: IAppIntegrationConfig
 	) {
 		const { email, firstName, lastName, preferredLanguage } = user;
-		const name = [firstName, lastName].filter(Boolean).join(' ');
+		const name = [firstName, lastName].filter(Boolean).join(' ') || email;
 
-		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
-		const integration = Object.assign({}, env.appIntegrationConfig, thirdPartyIntegration);
 		/**
 		 * Email template email options
 		 */
