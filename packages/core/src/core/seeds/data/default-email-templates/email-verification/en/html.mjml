@@ -31,7 +31,7 @@
 			Click Here
 		</mj-button>
 		<mj-text>
-			This link and code will expire shortly. Please use them promptly. If the link doesn't work, you can use the email verification code directly.
+			<p>This link and code will expire shortly. Please use them promptly. If the link doesn't work, you can use the email verification code directly.</p>
 		</mj-text>
 		<mj-text
 			align="center"
