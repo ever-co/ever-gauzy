@@ -1,51 +1,63 @@
 <mjml>
-	<mj-body background-color="#fff">
-		<mj-section>
-			<mj-column>
-				<mj-image
-					width="100px"
-					src="{{appLogo}}"
-				></mj-image>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text font-size="20px" font-family="helvetica">Hello {{name}}</mj-text>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p style="line-height: 1.5rem">
-						Thank you for joining with {{appName}}.
-					</p>
-					<p>
-						We’d like you to confirm the email address!.
-						Below is the code to verify your email.
-					</p>
-				</mj-text>
-				<mj-button
-					font-family="Helvetica"
-					background-color="#3366ff"
-					color="white"
-				>
-					{{verificationCode}}
-				</mj-button>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>Kindly click on this link to verify your email <a href="{{verificationLink}}" style="color: #598bff">Click Here</a></p>
-				</mj-text>
-				<mj-text font-size="16px" font-family="helvetica">
-					<p>Best regards,</p>
-					<p>{{appSignature}}</p>
-				</mj-text>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text align="center" font-size="12px" font-family="helvetica">
-					© 2019,
-					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
-					by
-					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
-					All rights reserved.
-				</mj-text>
-			</mj-column>
-		</mj-section>
-	</mj-body>
+  <mj-body background-color="#fff">
+    <mj-section>
+      <mj-column>
+        <mj-image
+			width="100px"
+			src="{{appLogo}}"
+		></mj-image>
+		<mj-divider
+			border-color="#1B005D"
+			border-width="1px"
+		></mj-divider>
+        <!-- Greeting and Introduction -->
+        <mj-text font-family="Helvetica">
+			<p>שלום {{name}},</p>
+			<p>תודה שהצטרפת ל-{{appName}}.</p>
+        </mj-text>
+       	<mj-text font-family="Helvetica">
+			<p>קוד אימות הדוא"ל שלך: <strong>{{verificationCode}}</strong></p>
+			<p>כדי להשלים את הרישום שלך, אשר את הדוא"ל שלך על ידי הזנת הקוד למעלה או לחיצה על הקישור למטה. שמור על הקוד בסודיות ואל תשתף אותו עם אף אחד.</p>
+		</mj-text>
+        <!-- Verification Code Button -->
+        <mj-button
+			href="{{verificationLink}}"
+			font-family="Helvetica"
+			background-color="#3366ff"
+			color="white"
+			target="_blank"
+		>
+			לחץ כאן
+		</mj-button>
+		<mj-text>
+			הקישור והקוד הזה יפוג בקרוב. אנא השתמש בהם בהקדם. אם הקישור לא עובד, אתה יכול להשתמש בקוד האימות בדוא"ל ישירות.
+		</mj-text>
+		<mj-text
+			align="center"
+			font-family="Helvetica"
+		>
+			<p>
+				<span style="background-color: #32323205; text-align: center; font-weight: bold; padding: 15px;">
+					<strong>{{verificationCode}}</strong>
+				</span>
+			</p>
+		</mj-text>
+        <mj-text font-family="Helvetica">
+			<p>כל טוב,</p>
+			<p>{{appSignature}}</p>
+		</mj-text>
+        <mj-divider
+			border-color="#1B005D"
+			border-width="1px"
+		></mj-divider>
+        <mj-text align="center" font-size="12px" font-family="helvetica">
+			© 2019,
+			<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
+			by
+			<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
+			כל הזכויות שמורות.
+		</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
 </mjml>
