@@ -62,6 +62,8 @@ spec:
                         value: 0.0.0.0
                       - name: DEMO
                         value: 'true'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
                       - name: NODE_ENV
                         value: 'development'
                       - name: ADMIN_PASSWORD_RESET

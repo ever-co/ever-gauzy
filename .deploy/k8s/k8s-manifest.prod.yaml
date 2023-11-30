@@ -71,6 +71,8 @@ spec:
                         value: 'true'
                       - name: LOG_LEVEL
                         value: 'info'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
                       - name: SENTRY_DSN
                         value: '$SENTRY_DSN'
                       - name: SENTRY_HTTP_TRACING_ENABLED

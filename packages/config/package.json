@@ -23,6 +23,7 @@
 	},
 	"scripts": {
 		"build": "rimraf dist && yarn run compile",
+		"build:prod": "node replaceEnvFiles.js && yarn build",
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"keywords": [],
