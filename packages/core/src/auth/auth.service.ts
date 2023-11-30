@@ -5,6 +5,7 @@ import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
+import { pick } from 'underscore';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -40,7 +41,6 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
-import { pick } from 'underscore';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -684,9 +684,11 @@ export class AuthService extends SocialAuthService {
 			// Update the user record with the generated code and expiration time
 			await this.userRepository.update({ email }, { code: magicCode, codeExpireAt });
 
+			// Extract integration information
+			let appIntegration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName', 'appMagicSignUrl']);
+
 			// Override the default config by merging in the provided values.
-			const integration = deepMerge(environment.appIntegrationConfig, input);
-			console.log({ integration }, 'Send Workspace Signin Code');
+			const integration = deepMerge(environment.appIntegrationConfig, appIntegration);
 
 			/** */
 			let magicLink: string;
@@ -695,7 +697,13 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Send the magic code to the user's email
-			this.emailService.sendMagicLoginCode({ email, magicCode, magicLink, locale, integration });
+			this.emailService.sendMagicLoginCode({
+				email,
+				magicCode,
+				magicLink,
+				locale,
+				integration
+			});
 		} catch (error) {
 			// Handle errors during the process
 			console.log('Error while sending workspace magic login code', error?.message);
