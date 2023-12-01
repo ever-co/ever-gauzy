@@ -5,9 +5,15 @@ import { basename, join } from 'path';
 import * as moment from 'moment';
 import { environment } from '@gauzy/config';
 import * as AWS from 'aws-sdk';
+import { S3Client } from "@aws-sdk/client-s3";
 import { StorageEngine } from 'multer';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
+
+/**
+ * Wasabi Configuration
+ */
+const { wasabi } = environment;
 
 export interface IWasabiConfig {
 	rootPath: string;
@@ -23,27 +29,75 @@ interface IWasabiRegionServiceURL {
 	serviceUrl: string;
 }
 
+/**
+ *
+ */
+const REGION_SERVICE_URLS: IWasabiRegionServiceURL[] = [
+	{
+		region: 'us-east-1',
+		serviceUrl: 'https://s3.wasabisys.com'
+	},
+	{
+		region: 'us-east-2',
+		serviceUrl: 'https://s3.us-east-2.wasabisys.com'
+	},
+	{
+		region: 'us-central-1',
+		serviceUrl: 'https://s3.us-central-1.wasabisys.com'
+	},
+	{
+		region: 'us-west-1',
+		serviceUrl: 'https://s3.us-west-1.wasabisys.com'
+	},
+	{
+		region: 'eu-central-1',
+		serviceUrl: 'https://s3.eu-central-1.wasabisys.com'
+	},
+	{
+		region: 'eu-west-1',
+		serviceUrl: 'https://s3.eu-west-1.wasabisys.com'
+	},
+	{
+		region: 'eu-west-2',
+		serviceUrl: 'https://s3.eu-west-2.wasabisys.com'
+	},
+	{
+		region: 'ap-northeast-1',
+		serviceUrl: 'https://s3.ap-northeast-1.wasabisys.com'
+	},
+	{
+		region: 'ap-northeast-2',
+		serviceUrl: 'https://s3.ap-northeast-2.wasabisys.com'
+	}
+];
+
+/**
+ *
+ */
 export class WasabiS3Provider extends Provider<WasabiS3Provider> {
-	static instance: WasabiS3Provider;
 
-	name = FileStorageProviderEnum.WASABI;
-	tenantId: string;
-
-	config: IWasabiConfig;
-	defaultConfig: IWasabiConfig;
+	public static instance: WasabiS3Provider;
+	public name = FileStorageProviderEnum.WASABI;
+	public tenantId: string;
+	public config: IWasabiConfig;
+	public defaultConfig: IWasabiConfig;
 
 	constructor() {
 		super();
 		this.config = this.defaultConfig = {
 			rootPath: '',
-			wasabi_aws_access_key_id: environment.wasabiConfig.accessKeyId,
-			wasabi_aws_secret_access_key: environment.wasabiConfig.secretAccessKey,
-			wasabi_aws_bucket: environment.wasabiConfig.s3.bucket,
-			...this._mapDefaultWasabiServiceUrl()
+			wasabi_aws_access_key_id: wasabi.accessKeyId,
+			wasabi_aws_secret_access_key: wasabi.secretAccessKey,
+			wasabi_aws_bucket: wasabi.s3.bucket,
+			...this._mapDefaultWasabiServiceUrl(wasabi.region, wasabi.serviceUrl)
 		};
 	}
 
-	getInstance() {
+	/**
+	* Get the singleton instance of WasabiS3Provider
+	* @returns {WasabiS3Provider} The singleton instance
+	*/
+	getInstance(): WasabiS3Provider {
 		if (!WasabiS3Provider.instance) {
 			WasabiS3Provider.instance = new WasabiS3Provider();
 		}
@@ -51,29 +105,23 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		return WasabiS3Provider.instance;
 	}
 
-	setWasabiDetails() {
+	/**
+	 * Set Wasabi details based on the current request's tenantSettings
+	 */
+	private setWasabiDetails() {
 		const request = RequestContext.currentRequest();
 		if (request) {
-			const settings = request['tenantSettings'];
+			const settings = request['tenantSettings'] || {};
 			if (isNotEmpty(settings)) {
+				/** */
 				this.config = {
-					...this.defaultConfig
+					...this.defaultConfig,
+					wasabi_aws_access_key_id: this.trimAndGetValue(settings.wasabi_aws_access_key_id),
+					wasabi_aws_secret_access_key: this.trimAndGetValue(settings.wasabi_aws_secret_access_key),
+					wasabi_aws_service_url: this.trimAndGetValue(settings.wasabi_aws_service_url),
+					wasabi_aws_default_region: this.trimAndGetValue(settings.wasabi_aws_default_region),
+					wasabi_aws_bucket: this.trimAndGetValue(settings.wasabi_aws_bucket),
 				};
-				if (isNotEmpty(settings.wasabi_aws_access_key_id)) {
-					this.config['wasabi_aws_access_key_id'] = settings.wasabi_aws_access_key_id.trim();
-				}
-				if (isNotEmpty(settings.wasabi_aws_secret_access_key)) {
-					this.config['wasabi_aws_secret_access_key'] = settings.wasabi_aws_secret_access_key.trim();
-				}
-				if (isNotEmpty(settings.wasabi_aws_service_url)) {
-					this.config['wasabi_aws_service_url'] = settings.wasabi_aws_service_url.trim();
-				}
-				if (isNotEmpty(settings.wasabi_aws_default_region)) {
-					this.config['wasabi_aws_default_region'] = settings.wasabi_aws_default_region.trim();
-				}
-				if (isNotEmpty(settings.wasabi_aws_bucket)) {
-					this.config['wasabi_aws_bucket'] = settings.wasabi_aws_bucket.trim();
-				}
 			}
 		} else {
 			this.config = {
@@ -83,18 +131,25 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	}
 
 	/**
-	 * Get a pre-signed URL for a given operation name.
+	 * Trim a string value and return it if not empty, otherwise return undefined
+	 * @param value - The string value to trim
+	 * @returns Trimmed string value or undefined if empty
+	 */
+	private trimAndGetValue(value?: string): string | undefined {
+		return isNotEmpty(value) ? value.trim() : undefined;
+	}
+
+	/**
+	 * Get a pre-signed URL for a given file URL.
 	 *
-	 * @param key
-	 * @returns
-	*/
-	url(fileURL: string) {
-		if (!fileURL) {
-			return null;
-		}
-		if (fileURL.startsWith('http')) {
+	 * @param fileURL - The file URL for which to generate a pre-signed URL
+	 * @returns Pre-signed URL or null if the input is invalid
+	 */
+	public url(fileURL: string): string | null {
+		if (!fileURL || fileURL.startsWith('http')) {
 			return fileURL;
 		}
+
 		try {
 			const url = this.getWasabiInstance().getSignedUrl('getObject', {
 				Bucket: this.getWasabiBucket(),
@@ -103,28 +158,33 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			});
 			return url;
 		} catch (error) {
-			console.log('Error while retrieving singed URL:', error);
+			console.error('Error while retrieving signed URL:', error);
+			return null;
 		}
 	}
 
 	/**
-	 * Get full Path of the file storage
+	 * Get the full path of the file in the storage.
 	 *
-	 * @param filePath
-	 * @returns
+	 * @param filePath - The file path to join with the root path
+	 * @returns Full path or null if filePath is falsy
 	 */
-	path(filePath: string) {
+	public path(filePath: string): string | null {
 		return filePath ? join(this.config.rootPath, filePath) : null;
 	}
 
-	handler({
-		dest,
-		filename,
-		prefix = 'file'
-	}: FileStorageOption): StorageEngine {
+	/**
+	 * Create a Multer storage engine configured for AWS S3 (Wasabi).
+	 *
+	 * @param options - Configuration options for the storage engine
+	 * @returns A Multer storage engine
+	 */
+	public handler(options: FileStorageOption): StorageEngine {
+		const { dest, filename, prefix = 'file' } = options;
+
 		return multerS3({
 			s3: this.getWasabiInstance(),
-			bucket: (_req, file, callback) => {
+			bucket: (_req, _file, callback) => {
 				callback(null, this.getWasabiBucket())
 			},
 			metadata: function (_req, file, callback) {
@@ -139,6 +199,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				// A function that determines the name of the uploaded file.
 				let fileName: string;
+
 				if (filename) {
 					fileName = (typeof filename === 'string') ? filename : filename(file, extension);
 				} else {
@@ -151,6 +212,12 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		});
 	}
 
+	/**
+	 * Get a file from Wasabi storage.
+	 *
+	 * @param key - The key of the file to retrieve
+	 * @returns A Promise resolving to a Buffer containing the file data
+	 */
 	async getFile(key: string): Promise<Buffer> {
 		const s3 = this.getWasabiInstance();
 		const params = {
@@ -158,10 +225,21 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			Key: key
 		};
 
-		const data = await s3.getObject(params).promise();
-		return data.Body as Buffer;
+		try {
+			const data = await s3.getObject(params).promise();
+			return data.Body as Buffer;
+		} catch (error) {
+			console.error(`Error while fetching file with key '${key}':`, error);
+			throw error; // Rethrow the error for the caller to handle
+		}
 	}
 
+	/**
+	 *
+	 * @param fileContent
+	 * @param key
+	 * @returns
+	 */
 	async putFile(fileContent: string, key: string = ''): Promise<any> {
 		return new Promise((putFileResolve, reject) => {
 			const fileName = basename(key);
@@ -181,7 +259,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						.promise()
 						.then((res) => res.ContentLength);
 
-					const file = {
+					const file: Partial<UploadedFile> = {
 						originalname: fileName, // original file name
 						size: size, // files in bytes
 						filename: fileName,
@@ -194,25 +272,40 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		});
 	}
 
+	/**
+	 * Delete a file from Wasabi storage.
+	 *
+	 * @param key - The key of the file to delete
+	 * @returns A Promise that resolves when the file is deleted successfully, or rejects with an error
+	 */
 	deleteFile(key: string): Promise<void> {
 		const s3 = this.getWasabiInstance();
 		const params = {
 			Bucket: this.getWasabiBucket(),
 			Key: key
 		};
+
 		return new Promise((resolve, reject) => {
-			s3.deleteObject(params, function (error, data) {
+			s3.deleteObject(params, (error, data) => {
 				if (error) {
-					console.log(error);
+					console.error(`Error while deleting file with key '${key}':`, error);
 					reject(error);
-				} else resolve();
+				} else {
+					resolve();
+				}
 			});
 		});
 	}
 
-	private getWasabiInstance() {
-		this.setWasabiDetails();
+	/**
+	* Get an AWS S3 instance configured with Wasabi details.
+	*
+	* @returns An AWS S3 instance or null in case of an error
+	*/
+	private getWasabiInstance(): AWS.S3 | null {
 		try {
+			this.setWasabiDetails();
+
 			const endpoint = new AWS.Endpoint(this.config.wasabi_aws_service_url);
 			return new AWS.S3({
 				accessKeyId: this.config.wasabi_aws_access_key_id,
@@ -221,81 +314,61 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				endpoint: endpoint
 			});
 		} catch (error) {
-			console.log(`Error while retrieving ${FileStorageProviderEnum.WASABI} instance:`, error);
+			console.error(`Error while retrieving ${FileStorageProviderEnum.WASABI} instance:`, error);
+			return null;
 		}
 	}
 
-	getWasabiBucket() {
+	/**
+	 * Get the Wasabi bucket from the configuration.
+	 *
+	 * @returns The Wasabi bucket name or null if not configured
+	 */
+	public getWasabiBucket(): string | null {
 		this.setWasabiDetails();
-		return this.config.wasabi_aws_bucket;
+		return this.config.wasabi_aws_bucket || null;
 	}
 
-	mapUploadedFile(file): UploadedFile {
+	/**
+	 * Map a partial UploadedFile object to include filename and URL.
+	 *
+	 * @param file - The partial UploadedFile object to map
+	 * @returns The mapped file object
+	 */
+	public mapUploadedFile(file: Partial<UploadedFile>): any {
 		file.filename = file.originalname;
 		file.url = this.url(file.key); // file.location;
 		return file;
 	}
 
 	/**
-	 * Mapped default wasabi service URLs
+	 * Mapped default Wasabi service URLs
 	 *
-	 * @returns
+	 * @param region - Wasabi region
+	 * @param serviceUrl - Wasabi service URL
+	 * @returns { wasabi_aws_default_region: string, wasabi_aws_service_url: string }
 	 */
-	private _mapDefaultWasabiServiceUrl(): {
-		wasabi_aws_default_region: string,
-		wasabi_aws_service_url: string
+	private _mapDefaultWasabiServiceUrl(region?: string, serviceUrl?: string): {
+		wasabi_aws_default_region: string;
+		wasabi_aws_service_url: string;
 	} {
-		const regionServiceUrls: IWasabiRegionServiceURL[] = [
-			{
-				region: 'us-east-1',
-				serviceUrl: 's3.wasabisys.com'
-			},
-			{
-				region: 'us-east-2',
-				serviceUrl: 's3.us-east-2.wasabisys.com'
-			},
-			{
-				region: 'us-central-1',
-				serviceUrl: 's3.us-central-1.wasabisys.com'
-			},
-			{
-				region: 'us-west-1',
-				serviceUrl: 's3.us-west-1.wasabisys.com'
-			},
-			{
-				region: 'eu-central-1',
-				serviceUrl: 's3.eu-central-1.wasabisys.com'
-			},
-			{
-				region: 'eu-west-1',
-				serviceUrl: 's3.eu-west-1.wasabisys.com'
-			},
-			{
-				region: 'eu-west-2',
-				serviceUrl: 's3.eu-west-2.wasabisys.com'
-			},
-			{
-				region: 'ap-northeast-1',
-				serviceUrl: 's3.ap-northeast-1.wasabisys.com'
-			},
-			{
-				region: 'ap-northeast-2',
-				serviceUrl: 's3.ap-northeast-2.wasabisys.com'
+		let item = REGION_SERVICE_URLS.find((item: IWasabiRegionServiceURL) => {
+			if (region) {
+				return item.region === region;
+			} else if (!region && serviceUrl) {
+				return item.serviceUrl === serviceUrl;
 			}
-		];
+			return item.region === 'us-east-1';
+		});
 
-		const region = environment.wasabiConfig.region;
-		const serviceUrl = environment.wasabiConfig.serviceUrl;
-
-		let item = regionServiceUrls.find((item: IWasabiRegionServiceURL) => item.region === 'us-east-1');
-		if (region) {
-			item = regionServiceUrls.find((item: IWasabiRegionServiceURL) => item.region === region);
-		} else if (!region && serviceUrl) {
-			item = regionServiceUrls.find((item: IWasabiRegionServiceURL) => item.serviceUrl === serviceUrl);
+		// Default to 'us-east-1' if no matching region or serviceUrl is found
+		if (!item) {
+			item = REGION_SERVICE_URLS.find((item: IWasabiRegionServiceURL) => item.region === 'us-east-1');
 		}
+
 		return {
 			wasabi_aws_default_region: item.region,
 			wasabi_aws_service_url: item.serviceUrl
-		}
+		};
 	}
 }
