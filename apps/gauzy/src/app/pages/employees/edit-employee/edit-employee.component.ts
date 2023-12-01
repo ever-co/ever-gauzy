@@ -127,8 +127,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			return;
 		}
 		// The call to Location.prepareExternalUrl is the key thing here.
-		let tree = this.router.createUrlTree([
-			`/share/organization/${this.organization.profile_link}/${this.selectedEmployee.profile_link}/${this.selectedEmployee.id}`
+		const tree = this.router.createUrlTree([
+			`/share/organization/${this.organization.profile_link}/${this.organization.id}`
 		]);
     	// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
