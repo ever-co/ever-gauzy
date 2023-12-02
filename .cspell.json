@@ -404,7 +404,9 @@
 		"OTEL",
 		"OTLP",
 		"opentelemetry",
-		"presigner"
+		"presigner",
+		"SCALEWAY",
+		"VULTR"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
