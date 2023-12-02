@@ -40,6 +40,19 @@
 						fullWidth
 					/>
 				</div>
+				<div class="form-group">
+					<label for="client_secret" class="label">
+						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_SECRET_KEY' | translate }}
+					</label>
+					<input
+						id="openai_api_secret_key"
+						formControlName="openai_api_secret_key"
+						nbInput
+						[placeholder]="'FORM.PLACEHOLDERS.OPEN_AI_SECRET_KEY' | translate"
+						required
+						fullWidth
+					/>
+				</div>
 				<button
 					type="submit"
 					nbButton

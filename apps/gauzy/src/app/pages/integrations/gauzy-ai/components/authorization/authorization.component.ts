@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
@@ -12,7 +12,7 @@ import { GauzyAIService, Store } from './../../../../../@core/services';
 	templateUrl: './authorization.component.html',
 	styleUrls: ['./authorization.component.scss'],
 })
-export class GauzyAIAuthorizationComponent implements OnInit, OnDestroy {
+export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	public organization: IOrganization;
 
@@ -21,6 +21,7 @@ export class GauzyAIAuthorizationComponent implements OnInit, OnDestroy {
 		return fb.group({
 			client_id: [null, Validators.required],
 			client_secret: [null, Validators.required],
+			openai_api_secret_key: [null]
 		});
 	}
 
@@ -34,6 +35,9 @@ export class GauzyAIAuthorizationComponent implements OnInit, OnDestroy {
 		private readonly _gauzyAIService: GauzyAIService
 	) { }
 
+	/**
+	 *
+	 */
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
@@ -45,6 +49,12 @@ export class GauzyAIAuthorizationComponent implements OnInit, OnDestroy {
 				untilDestroyed(this) // Ensure that subscriptions are automatically unsubscribed on component destruction.
 			)
 			.subscribe();
+	}
+
+	/**
+	 *
+	 */
+	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -72,12 +82,13 @@ export class GauzyAIAuthorizationComponent implements OnInit, OnDestroy {
 			return;
 		}
 		try {
-			const { client_id, client_secret } = this.form.value;
+			const { client_id, client_secret, openai_api_secret_key } = this.form.value;
 			const { id: organizationId, tenantId } = this.organization;
 
-			this._gauzyAIService.addIntegration({
+			this._gauzyAIService.create({
 				client_id,
 				client_secret,
+				openai_api_secret_key,
 				organizationId,
 				tenantId
 			}).pipe(

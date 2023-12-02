@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IIntegrationKeySecretPairInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
+import { IIntegrationAICreateInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { IntegrationTenantUpdateOrCreateCommand } from '../../integration-tenant/commands';
 import { IntegrationService } from './../../integration/integration.service';
@@ -21,12 +21,12 @@ export class IntegrationAIService {
 	 * @returns
 	 */
 	async create(
-		input: IIntegrationKeySecretPairInput
+		input: IIntegrationAICreateInput
 	): Promise<IIntegrationTenant> {
 
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { client_id, client_secret, organizationId } = input;
+			const { client_id, client_secret, openai_api_secret_key, organizationId } = input;
 
 			const integration = await this._integrationService.findOneByOptions({
 				where: {
@@ -59,6 +59,10 @@ export class IntegrationAIService {
 							{
 								settingsName: 'apiSecret',
 								settingsValue: client_secret
+							},
+							{
+								settingsName: 'openaiApiSecretKey',
+								settingsValue: openai_api_secret_key
 							}
 						].map((setting) => ({
 							...setting,
