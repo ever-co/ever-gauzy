@@ -87,7 +87,6 @@
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"typeorm": "0.3.7",
-		"typeorm-aurora-data-api-driver": "^2.4.4",
 		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git",
 		"underscore": "^1.13.3"
 	},
