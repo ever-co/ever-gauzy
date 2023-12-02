@@ -15,7 +15,7 @@ const config = getConfig();
 export class LocalProvider extends Provider<LocalProvider> {
 
 	public instance: LocalProvider;
-	public name = FileStorageProviderEnum.LOCAL;
+	public readonly name = FileStorageProviderEnum.LOCAL;
 	public config = {
 		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl

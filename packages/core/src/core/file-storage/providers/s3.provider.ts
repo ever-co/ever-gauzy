@@ -42,7 +42,7 @@ export interface IS3ProviderConfig {
 export class S3Provider extends Provider<S3Provider> {
 
 	public instance: S3Provider;
-	public name = FileStorageProviderEnum.S3;
+	public readonly name = FileStorageProviderEnum.S3;
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
 
