@@ -355,7 +355,6 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 			// Create S3 wasabi endpoint
 			const endpoint = addHttpsPrefix(this.config.wasabi_aws_service_url);
-			console.log({ endpoint });
 
 			// Create S3 wasabi region
 			const region = this.config.wasabi_aws_default_region;
