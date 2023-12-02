@@ -191,3 +191,12 @@ export function sluggable(string: string, replacement: any = '-'): string {
  * @returns
  */
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Trim a string value and return it if not empty, otherwise return undefined
+ * @param value - The string value to trim
+ * @returns Trimmed string value or undefined if empty
+ */
+export const trimAndGetValue = (value?: string): string | undefined => {
+	return isNotEmpty(value) ? value.trim() : undefined;
+}
