@@ -15,7 +15,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { isNotEmpty, trimAndGetValue } from '@gauzy/common';
+import { addHttpsPrefix, isNotEmpty, trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -114,7 +114,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			wasabi_aws_access_key_id: wasabi.accessKeyId,
 			wasabi_aws_secret_access_key: wasabi.secretAccessKey,
 			wasabi_aws_bucket: wasabi.s3.bucket,
-			...this._mapDefaultWasabiServiceUrl(wasabi.region, wasabi.serviceUrl)
+			...this._mapDefaultWasabiServiceUrl(wasabi.region, addHttpsPrefix(wasabi.serviceUrl))
 		};
 	}
 
@@ -154,7 +154,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					...this.defaultConfig,
 					wasabi_aws_access_key_id: trimAndGetValue(settings.wasabi_aws_access_key_id),
 					wasabi_aws_secret_access_key: trimAndGetValue(settings.wasabi_aws_secret_access_key),
-					wasabi_aws_service_url: trimAndGetValue(settings.wasabi_aws_service_url),
+					wasabi_aws_service_url: addHttpsPrefix(trimAndGetValue(settings.wasabi_aws_service_url)),
 					wasabi_aws_default_region: trimAndGetValue(settings.wasabi_aws_default_region),
 					wasabi_aws_bucket: trimAndGetValue(settings.wasabi_aws_bucket),
 				};
@@ -354,7 +354,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			this.setWasabiConfiguration();
 
 			// Create S3 wasabi endpoint
-			const endpoint = this.config.wasabi_aws_service_url;
+			const endpoint = addHttpsPrefix(this.config.wasabi_aws_service_url);
+			console.log({ endpoint });
 
 			// Create S3 wasabi region
 			const region = this.config.wasabi_aws_default_region;

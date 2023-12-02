@@ -200,3 +200,15 @@ export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export const trimAndGetValue = (value?: string): string | undefined => {
 	return isNotEmpty(value) ? value.trim() : undefined;
 }
+
+/**
+ * Adds "http://" prefix to a URL if it's missing.
+ * @param url - The URL to ensure has the "http://" prefix.
+ * @returns The URL with the "http://" prefix.
+ */
+export const addHttpsPrefix = (url: string, prefix = 'https'): string => {
+	if (!url.startsWith('http://') && !url.startsWith('https://')) {
+		return `${prefix}://${url}`;
+	}
+	return url;
+}
