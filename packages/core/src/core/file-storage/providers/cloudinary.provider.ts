@@ -78,7 +78,6 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
             api_secret: cloudinary.api_secret,
             secure: cloudinary.secure
         };
-        console.log(this.config);
     }
 
     /**
