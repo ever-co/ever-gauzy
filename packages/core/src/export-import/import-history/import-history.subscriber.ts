@@ -18,13 +18,17 @@ export class ImportHistorySubscriber implements EntitySubscriberInterface<Import
      * @param entity
      * @param event
      */
-    afterLoad(entity: ImportHistory, event?: LoadEvent<ImportHistory>): void | Promise<any> {
+    async afterLoad(
+        entity: ImportHistory,
+        event?: LoadEvent<ImportHistory>
+    ): Promise<any | void> {
         try {
             if (entity instanceof ImportHistory) {
-                entity.fullUrl = new FileStorage().getProvider().url(entity.path);
+                const provider = new FileStorage().getProvider();
+                entity.fullUrl = await provider.url(entity.path);
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterLoad:', error);
         }
     }
 }
