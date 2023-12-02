@@ -403,7 +403,8 @@
 		"Signoz",
 		"OTEL",
 		"OTLP",
-		"opentelemetry"
+		"opentelemetry",
+		"presigner"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
