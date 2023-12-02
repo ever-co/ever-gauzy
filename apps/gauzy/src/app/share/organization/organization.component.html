@@ -416,7 +416,7 @@
 			</div>
 		</ng-template>
 
-		<ng-container *ngIf="organization?.skills.length > 0">
+		<ng-container *ngIf="organization?.skills?.length > 0">
 			<div class="row mb-3">
 				<div class="col">
 					<div class="org-skills row">
@@ -445,7 +445,7 @@
 		<!-- Languages HTML Template -->
 		<ng-template #languagesTemplate>
 			<ng-container *ngIf="organization.languages as languages">
-				<ng-container *ngIf="languages.length > 0">
+				<ng-container *ngIf="languages?.length > 0">
 					<div class="row mb-3">
 						<div class="col">
 							<div class="org-year-found row">
@@ -474,7 +474,7 @@
 		<!-- Awards HTML Template -->
 		<ng-template #awardsTemplate>
 			<ng-container *ngIf="organization.awards as awards">
-				<ng-container *ngIf="awards.length > 0">
+				<ng-container *ngIf="awards?.length > 0">
 					<div class="row mb-3">
 						<div class="col">
 							<div class="org-year-found row">
@@ -512,7 +512,7 @@
 <!-- Employee HTML Template -->
 <ng-template #employeeTemplate>
 	<ng-container *ngIf="employees$ | async as employees">
-		<div class="row" *ngIf="employees.length > 0">
+		<div class="row" *ngIf="employees?.length > 0">
 			<div class="col">
 				<div class="employee-list">
 					<nb-list class="nb_list">
