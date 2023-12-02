@@ -1,10 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { isNotEmpty, trimAndGetValue } from '@gauzy/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'path';
 import * as moment from 'moment';
-import { environment } from '@gauzy/config';
 import {
 	S3Client,
 	DeleteObjectCommand,
@@ -16,6 +13,9 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
+import { environment } from '@gauzy/config';
+import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
+import { isNotEmpty, trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -135,11 +135,21 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 * Set Wasabi details based on the current request's tenantSettings
 	*/
 	private setWasabiConfiguration() {
+		// Use the default configuration as a starting point
+		this.config = {
+			...this.defaultConfig
+		};
+
+		// Check if there is a current request
 		const request = RequestContext.currentRequest();
+
 		if (request) {
+			// Retrieve tenant settings from the request, defaulting to an empty object
 			const settings = request['tenantSettings'] || {};
+
+			// Check if there are non-empty tenant settings
 			if (isNotEmpty(settings)) {
-				/** */
+				// Update the configuration with trimmed and valid values from tenant settings
 				this.config = {
 					...this.defaultConfig,
 					wasabi_aws_access_key_id: trimAndGetValue(settings.wasabi_aws_access_key_id),
@@ -149,10 +159,6 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					wasabi_aws_bucket: trimAndGetValue(settings.wasabi_aws_bucket),
 				};
 			}
-		} else {
-			this.config = {
-				...this.defaultConfig
-			};
 		}
 	}
 
@@ -315,12 +321,12 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 */
 	async deleteFile(key: string): Promise<Object | any> {
 		try {
-			const s3 = this.getWasabiInstance();
+			const s3Client = this.getWasabiInstance();
 
 			/**
 			 * Send a DeleteObjectCommand to Wasabi to delete an object
 			 */
-			const data: DeleteObjectCommandOutput = await s3.send(
+			const data: DeleteObjectCommandOutput = await s3Client.send(
 				// Input parameters when using the DeleteObjectCommand to delete an object from Wasabi storage.
 				new DeleteObjectCommand({
 					Bucket: this.getWasabiBucket(), // The name of the bucket from which to delete the object.
