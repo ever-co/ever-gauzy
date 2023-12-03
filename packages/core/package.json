@@ -40,7 +40,7 @@
 	"keywords": [],
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
-		"@aws-sdk/client-s3": "^3.462.0",
+		"@aws-sdk/client-s3": "^3.465.0",
 		"@aws-sdk/s3-request-presigner": "^3.465.0",
 		"@faker-js/faker": "8.0.0-alpha.0",
 		"@gauzy/auth": "^0.1.0",
