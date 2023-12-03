@@ -210,22 +210,16 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		const { dest, filename, prefix = 'file' } = options;
 
 		return multerS3({
-			/** */
 			s3: this.getWasabiInstance(),
-			/** */
-			acl: 'public-read', // Set ACL permissions as needed
-			/** */
 			bucket: (_req, _file, callback) => {
 				callback(null, this.getWasabiBucket())
 			},
-			/** */
 			metadata: function (_req, _file, callback) {
 				callback(null, { fieldName: _file.fieldname });
 			},
-			/** */
 			key: (_req, file, callback) => {
 				// A string or function that determines the destination path for uploaded
-				const dir = dest instanceof Function ? dest(file) : dest;
+				const destination = dest instanceof Function ? dest(file) : dest;
 
 				// A file extension, or filename extension, is a suffix at the end of a file.
 				const extension = file.originalname.split('.').pop();
@@ -239,8 +233,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
 
-				const fullPath = join(this.config.rootPath, dir, fileName);
-				console.log({ fullPath });
+				// Replace double backslashes with single forward slashes
+				const fullPath = join(destination, fileName).replace(/\\/g, '/');
+
 				callback(null, fullPath);
 			}
 		});
@@ -365,7 +360,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			const endpoint = addHttpsPrefix(this.config.wasabi_aws_service_url);
 
 			// Create S3 wasabi region
-			const region = this.config.wasabi_aws_default_region;
+			const region = this.config.wasabi_aws_default_region; // Specify your Wasabi region
 
 			// Create S3 client service object
 			const s3Client = new S3Client({
@@ -373,7 +368,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					accessKeyId: this.config.wasabi_aws_access_key_id,
 					secretAccessKey: this.config.wasabi_aws_secret_access_key,
 				},
-				region,
+				region, // Specify your Wasabi region
 				endpoint
 			});
 

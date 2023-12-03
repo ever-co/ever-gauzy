@@ -157,7 +157,7 @@ export class S3Provider extends Provider<S3Provider> {
 			},
 			key: (_req, file, callback) => {
 				// A string or function that determines the destination path for uploaded
-				const dir = dest instanceof Function ? dest(file) : dest;
+				const destination = dest instanceof Function ? dest(file) : dest;
 
 				// A file extension, or filename extension, is a suffix at the end of a file.
 				const extension = file.originalname.split('.').pop();
@@ -171,7 +171,9 @@ export class S3Provider extends Provider<S3Provider> {
 					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 				}
 
-				const fullPath = join(this.config.rootPath, dir, fileName);
+				// Replace double backslashes with single forward slashes
+				const fullPath = join(destination, fileName).replace(/\\/g, '/');
+
 				callback(null, fullPath);
 			}
 		});

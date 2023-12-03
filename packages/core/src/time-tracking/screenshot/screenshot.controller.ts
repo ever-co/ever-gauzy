@@ -133,8 +133,11 @@ export class ScreenshotController {
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
 
+			// Replace double backslashes with single forward slashes
+			const fullPath = path.join(thumbDir, thumbName).replace(/\\/g, '/');
+
 			// Upload the thumbnail data to the file storage provider
-			thumb = await provider.putFile(data, path.join(thumbDir, thumbName));
+			thumb = await provider.putFile(data, fullPath);
 			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 		} catch (error) {
 			// Log error and throw an exception if thumbnail processing fails
