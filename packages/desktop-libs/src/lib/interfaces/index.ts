@@ -36,3 +36,5 @@ export * from './i-local-server';
 export * from './i-read-write-file';
 export * from './i-server-config';
 export * from './i-path-window';
+export * from './i-activity';
+export * from './i-desktop-event';
