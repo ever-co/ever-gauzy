@@ -36,7 +36,6 @@ import {
 	ipcTimer,
 	TrayIcon,
 	LocalStore,
-	DataModel,
 	AppMenu,
 	DesktopUpdater,
 	removeMainListener,
@@ -241,8 +240,6 @@ eventErrorManager.onShowError(async (message) => {
 });
 
 async function startServer(value, restart = false) {
-	const dataModel = new DataModel();
-	await dataModel.createNewTable(knex);
 	try {
 		const config: any = {
 			...value,
