@@ -406,7 +406,9 @@
 		"opentelemetry",
 		"presigner",
 		"SCALEWAY",
-		"VULTR"
+		"VULTR",
+		"Codegen",
+		"icns"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
