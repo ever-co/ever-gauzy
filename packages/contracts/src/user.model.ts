@@ -9,7 +9,7 @@ import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
 import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
-import { ICandidate } from 'candidate.model';
+import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
 
 export interface IRelationalUser {
