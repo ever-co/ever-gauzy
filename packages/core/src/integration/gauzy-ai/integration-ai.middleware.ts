@@ -16,7 +16,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
     async use(
         request: Request,
-        response: Response,
+        _response: Response,
         next: NextFunction
     ) {
         // Extract tenant and organization IDs from request headers
