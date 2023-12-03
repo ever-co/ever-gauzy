@@ -50,7 +50,9 @@ import {
 	LanguageInterceptor,
 	AlwaysOnModule,
 	UnauthorizedInterceptor,
-	GAUZY_ENV
+	GAUZY_ENV,
+	ActivityWatchInterceptor,
+	ActivityWatchModule
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -97,7 +99,8 @@ import { environment } from '../environments/environment';
 			}
 		}),
 		NbDatepickerModule.forRoot(),
-		AboutModule
+		AboutModule,
+		ActivityWatchModule
 	],
 	providers: [
 		AppService,
@@ -119,6 +122,11 @@ import { environment } from '../environments/environment';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ActivityWatchInterceptor,
 			multi: true
 		},
 		{
