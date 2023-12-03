@@ -41,6 +41,7 @@ import { NgxTranslateModule } from '../ngx-translate';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { AlwaysOnService } from '../always-on/always-on.service';
 import { TaskRenderModule } from './task-render/task-render.module';
+import { ActivityWatchModule } from '../intergrations';
 
 @NgModule({
 	declarations: [
@@ -78,7 +79,8 @@ import { TaskRenderModule } from './task-render/task-render.module';
 		TimeTrackerStatusModule,
 		ImageViewerModule,
 		NgxTranslateModule,
-		TaskRenderModule
+		TaskRenderModule,
+		ActivityWatchModule
 	],
 	providers: [
 		NbSidebarService,
