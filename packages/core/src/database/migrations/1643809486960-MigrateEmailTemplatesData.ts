@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from 'chalk';
 import { EmailTemplateEnum } from "@gauzy/contracts";
-import { EmailTemplateUtils } from "email-template/utils";
+import { EmailTemplateUtils } from "./../../email-template/utils";
 
 export class MigrateEmailTemplatesData1643809486960 implements MigrationInterface {
 
@@ -13,7 +13,8 @@ export class MigrateEmailTemplatesData1643809486960 implements MigrationInterfac
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`MigrateEmailTemplatesData1643809486960 start running!`));
+        console.log(chalk.yellow(`${this.name} start running!`));
+
         const templates = Object.values(EmailTemplateEnum);
         await Promise.all(
             templates.map(

@@ -20,14 +20,17 @@ export class TaskVersionSubscriber implements EntitySubscriberInterface<TaskVers
 	 * @param entity
 	 * @param event
 	 */
-	afterLoad(entity: TaskVersion | Partial<TaskVersion>, event?: LoadEvent<TaskVersion>): void | Promise<any> {
+	async afterLoad(
+		entity: TaskVersion | Partial<TaskVersion>,
+		event?: LoadEvent<TaskVersion>
+	): Promise<any | void> {
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
+				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('Error in afterLoad:', error);
 		}
 	}
 

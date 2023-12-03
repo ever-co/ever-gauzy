@@ -22,6 +22,7 @@ import {
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
 import * as chalk from 'chalk';
+import * as FormData from 'form-data';
 import {
     ApolloClient,
     ApolloQueryResult,
@@ -51,6 +52,20 @@ import {
 } from '@gauzy/contracts';
 import { RequestConfigProvider } from './request-config.provider';
 import { AxiosRequestHeaders, HttpMethodEnum } from './configuration.interface';
+
+export interface ImageAnalysisResult {
+    success: boolean;
+    data: {
+        mimetype: string;
+        filename: string;
+        analysis: Array<{
+            work: boolean;
+            description: string;
+            apps: string[];
+        }>;
+        message?: string;
+    };
+}
 
 @Injectable()
 export class GauzyAIService {
@@ -84,63 +99,64 @@ export class GauzyAIService {
     }
 
     /**
-   * Send an HTTP request with dynamic configuration.
-   *
-   * @param path The URL path for the request.
-   * @param options Custom Axios request configuration.
-   * @param method The HTTP method (e.g., GET, POST).
-   * @returns An Observable that emits the response data or throws an error.
-   */
+     * Send an HTTP request with dynamic configuration.
+     *
+     * @param path The URL path for the request.
+     * @param options Custom Axios request configuration.
+     * @param method The HTTP method (e.g., GET, POST).
+     * @returns An Observable that emits the response data or throws an error.
+     */
     private sendRequest<T>(
         path: string,
         options: AxiosRequestConfig = {},
         method: string = HttpMethodEnum.GET,
+        defaultHeaders: AxiosRequestHeaders = {
+            'Content-Type': 'application/json',  // Define default headers
+        }
     ): Observable<AxiosResponse<T>> {
-        const {
-            ApiKey,
-            ApiSecret,
-            ApiBearerToken,
-            ApiTenantId,
-        } = this._requestConfigProvider.getConfig();
+        /** */
+        const { ApiKey, ApiSecret, ApiBearerToken, ApiTenantId } = this._requestConfigProvider.getConfig();
 
-        // Define default headers
-        const defaultHeaders: AxiosRequestHeaders = {
-            'Content-Type': 'application/json',
-        };
-
-        // Add your custom headers here
-        const headers: AxiosRequestHeaders = {
+        // Add your custom headers
+        const customHeaders = (): AxiosRequestHeaders => ({
             // Define default headers
             ...defaultHeaders,
             // Add your custom headers here
             'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
             'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
+            /** */
             ...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
             ...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
 
+            /** */
             ...(ApiTenantId ? { 'Tenant-Id': ApiTenantId } : {}),
             ...(ApiBearerToken ? { 'Authorization': ApiBearerToken } : {}),
-        };
-        console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
+        });
+
+        /** */
+        const headers: AxiosRequestHeaders = customHeaders();
+        // console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
 
         // Merge the provided options with the default options
         const mergedOptions: AxiosRequestConfig<T> = {
             ...options,
             // Inside your sendRequest method, use qs.stringify for custom parameter serialization
             paramsSerializer: (params) => {
-                console.log('Customize the serialization of URL parameters', params);
-                // Customize the serialization of URL parameters as needed
-                return qs.stringify(params, { arrayFormat: 'repeat' });
+                // console.log('Customize the serialization of URL parameters', params);
+                if (Object.keys(params).length > 0) {
+                    // Customize the serialization of URL parameters as needed
+                    return qs.stringify(params, { arrayFormat: 'repeat' });
+                }
             }
         };
-        console.log('Default AxiosRequestConfig Options: %s', `${JSON.stringify(mergedOptions)}`);
+        // console.log('Default AxiosRequestConfig Options: %s', `${JSON.stringify(mergedOptions)}`);
 
         try {
             return this._http.request<T>({
                 ...mergedOptions,
                 url: path,
-                method: method,
+                method,
                 headers,
             });
         } catch (error) {
@@ -153,6 +169,43 @@ export class GauzyAIService {
                 throw new HttpException('An error occurred while making the request.', HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
+    }
+
+    /**
+     * Analyze an image/screenshot using Gauzy AI.
+     *
+     * @param files - Array of Buffers representing the uploaded images.
+     * @returns Promise<any> - The analysis result for the image.
+     */
+    public async analyzeImage(stream: Buffer, file: any): Promise<ImageAnalysisResult[]> {
+        // Create FormData and append the image data
+        const form = new FormData();
+
+        // Assuming you have an image file or buffer
+        form.append(`files`, stream, {
+            filename: file.filename,
+            contentType: 'application/octet-stream'
+        });
+
+        // Set custom headers
+        const headers = {
+            ...form.getHeaders(),
+            'Content-Length': form.getLengthSync().toString(),
+            // Add any other headers you need
+        };
+
+        // Set request options
+        const options = {
+            data: form, // Set the request payload
+            params: {}
+        };
+
+        // Call the sendRequest function with the appropriate parameters
+        return await firstValueFrom(
+            this.sendRequest<ImageAnalysisResult[]>('image/process', options, HttpMethodEnum.POST, headers).pipe(
+                map((resp: AxiosResponse<any, any>) => resp.data)
+            )
+        );
     }
 
     /**
@@ -170,9 +223,8 @@ export class GauzyAIService {
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
             this.sendRequest<any>('employee/job/application/pre-process', {
-                method: HttpMethodEnum.POST, // Set the HTTP method to POST
                 data: params, // Set the request payload
-            }).pipe(
+            }, HttpMethodEnum.POST).pipe(
                 tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
@@ -190,9 +242,7 @@ export class GauzyAIService {
     ): Promise<void> {
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
-            this.sendRequest<any>(`employee/job/application/generate-proposal/${employeeJobApplicationId}`, {
-                method: HttpMethodEnum.POST, // Set the HTTP method to POST
-            }).pipe(
+            this.sendRequest<any>(`employee/job/application/generate-proposal/${employeeJobApplicationId}`, {}, HttpMethodEnum.POST).pipe(
                 tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )
@@ -210,9 +260,7 @@ export class GauzyAIService {
     ): Promise<void> {
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
-            this.sendRequest<any>(`employee/job/application/${employeeJobApplicationId}`, {
-                method: HttpMethodEnum.GET, // Set the HTTP method to GET
-            }).pipe(
+            this.sendRequest<any>(`employee/job/application/${employeeJobApplicationId}`).pipe(
                 tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                 map((resp: AxiosResponse<any, any>) => resp.data)
             )

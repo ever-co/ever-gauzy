@@ -1,6 +1,7 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { isNotEmpty } from '@gauzy/common';
+import { IntegrationEnum } from '@gauzy/contracts';
 import { RequestConfigProvider } from '@gauzy/integration-ai';
 import { arrayToObject } from 'core/utils';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
@@ -15,7 +16,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
     async use(
         request: Request,
-        response: Response,
+        _response: Response,
         next: NextFunction
     ) {
         // Extract tenant and organization IDs from request headers
@@ -34,7 +35,11 @@ export class IntegrationAIMiddleware implements NestMiddleware {
             // Check if tenant and organization IDs are not empty
             if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
                 // Fetch integration settings from the service
-                const { settings = [] } = await this.integrationTenantService.getIntegrationSettings({ tenantId, organizationId });
+                const { settings = [] } = await this.integrationTenantService.getIntegrationTenantSettings({
+                    tenantId,
+                    organizationId,
+                    name: IntegrationEnum.GAUZY_AI
+                });
                 // Convert settings array to an object
                 const { apiKey: ApiKey, apiSecret: ApiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
 

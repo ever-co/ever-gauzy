@@ -1,13 +1,7 @@
 import { AnalyticsInterface } from '@jitsu/js';
 import { Logger } from '@nestjs/common';
 import * as chalk from 'chalk';
-import {
-	InsertEvent,
-	RemoveEvent,
-	EntitySubscriberInterface,
-	UpdateEvent,
-	EventSubscriber,
-} from 'typeorm';
+import { InsertEvent, RemoveEvent, EntitySubscriberInterface, UpdateEvent, EventSubscriber } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { createJitsu } from './jitsu-helper';
 
@@ -32,27 +26,16 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 					host: jitsu.serverHost,
 					writeKey: jitsu.serverWriteKey,
 					debug: jitsu.debug,
-					echoEvents: jitsu.echoEvents,
+					echoEvents: jitsu.echoEvents
 				};
-				this.logger.log(
-					`JITSU Configuration`,
-					chalk.magenta(JSON.stringify(jitsuConfig))
-				);
+				this.logger.log(`JITSU Configuration`, chalk.magenta(JSON.stringify(jitsuConfig)));
 				// Create an instance of Jitsu Analytics with configuration
 				this.jitsuAnalytics = createJitsu(jitsuConfig);
 			} else {
-				console.error(
-					chalk.yellow(
-						`Jitsu Analytics initialization failed: Missing host or writeKey.`
-					)
-				);
+				console.error(chalk.yellow(`Jitsu Analytics initialization failed: Missing host or writeKey.`));
 			}
 		} catch (error) {
-			console.error(
-				chalk.red(
-					`Jitsu Analytics initialization failed: ${error.message}`
-				)
-			);
+			console.error(chalk.red(`Jitsu Analytics initialization failed: ${error.message}`));
 		}
 	}
 
@@ -60,15 +43,12 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity insertion.
 	 */
 	async afterInsert(event: InsertEvent<any>) {
-		if (this.logEnabled)
-			this.logger.log(
-				`AFTER ENTITY INSERTED: `,
-				JSON.stringify(event.entity)
-			);
+		if (this.logEnabled) this.logger.log(`AFTER ENTITY INSERTED: `, JSON.stringify(event.entity));
 
 		// Track an event with Jitsu Analytics
-		await this.analyticsTrack('afterInsert', {
-			data: { ...event.entity },
+		// NOTE: we do not await before we want to track events asynchronously
+		this.analyticsTrack('afterInsert', {
+			data: { ...event.entity }
 		});
 	}
 
@@ -76,15 +56,12 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity update.
 	 */
 	async afterUpdate(event: UpdateEvent<any>) {
-		if (this.logEnabled)
-			this.logger.log(
-				`AFTER ENTITY UPDATED: `,
-				JSON.stringify(event.entity)
-			);
+		if (this.logEnabled) this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(event.entity));
 
 		// Track an event with Jitsu Analytics
-		await this.analyticsTrack('afterUpdate', {
-			data: { ...event.entity },
+		// NOTE: we do not await before we want to track events asynchronously
+		this.analyticsTrack('afterUpdate', {
+			data: { ...event.entity }
 		});
 	}
 
@@ -92,15 +69,12 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity removal.
 	 */
 	async afterRemove(event: RemoveEvent<any>) {
-		if (this.logEnabled)
-			this.logger.log(
-				`AFTER ENTITY REMOVED: `,
-				JSON.stringify(event.entity)
-			);
+		if (this.logEnabled) this.logger.log(`AFTER ENTITY REMOVED: `, JSON.stringify(event.entity));
 
 		// Track an event with Jitsu Analytics
-		await this.analyticsTrack('afterRemove', {
-			data: { ...event.entity },
+		// NOTE: we do not await before we want to track events asynchronously
+		this.analyticsTrack('afterRemove', {
+			data: { ...event.entity }
 		});
 	}
 
@@ -110,10 +84,7 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * @param properties Additional event properties (optional).
 	 * @returns A promise that resolves when the event is tracked.
 	 */
-	async analyticsTrack(
-		event: string,
-		properties?: Record<string, any> | null
-	): Promise<void> {
+	async analyticsTrack(event: string, properties?: Record<string, any> | null): Promise<void> {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsuAnalytics) {
 			try {
@@ -126,14 +97,9 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 				const tracked = await this.trackEvent(event, properties);
 
 				if (this.logEnabled)
-					this.logger.log(
-						`After Jitsu Tracked Entity Events`,
-						chalk.blue(JSON.stringify(tracked))
-					);
+					this.logger.log(`After Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
 			} catch (error) {
-				this.logger.error(
-					`Error while Jitsu tracking event. Unable to track event: ${error.message}`
-				);
+				this.logger.error(`Error while Jitsu tracking event. Unable to track event: ${error.message}`);
 			}
 		}
 	}
@@ -144,10 +110,7 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * @param properties Additional data or properties associated with the event.
 	 * @returns A Promise that resolves when the event is tracked.
 	 */
-	async trackEvent(
-		event: string,
-		properties?: Record<string, any> | null
-	): Promise<any> {
+	async trackEvent(event: string, properties?: Record<string, any> | null): Promise<any> {
 		return await this.jitsuAnalytics.track(event, properties);
 	}
 
@@ -157,10 +120,7 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * @param traits User traits or properties to associate with the user.
 	 * @returns A Promise that resolves when the user is identified.
 	 */
-	async identify(
-		id: string | object,
-		traits?: Record<string, any> | null
-	): Promise<any> {
+	async identify(id: string | object, traits?: Record<string, any> | null): Promise<any> {
 		return await this.jitsuAnalytics.identify(id, traits);
 	}
 
@@ -170,10 +130,7 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * @param traits Additional data or traits associated with the group.
 	 * @returns A Promise that resolves when the users are grouped.
 	 */
-	async group(
-		id: string | object,
-		traits?: Record<string, any> | null
-	): Promise<any> {
+	async group(id: string | object, traits?: Record<string, any> | null): Promise<any> {
 		return await this.jitsuAnalytics.group(id, traits);
 	}
 }

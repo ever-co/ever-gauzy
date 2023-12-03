@@ -9,7 +9,7 @@
 		"downlevelIteration": true,
 		"esModuleInterop": true,
 		"module": "commonjs",
-		"target": "es2016",
+		"target": "es2020",
 		"typeRoots": ["../../node_modules/@types"]
 	},
 	"files": ["global.d.ts"],

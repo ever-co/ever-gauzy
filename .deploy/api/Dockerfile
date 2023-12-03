@@ -6,6 +6,7 @@ ARG API_BASE_URL
 ARG CLIENT_BASE_URL
 ARG API_HOST
 ARG API_PORT
+ARG CLOUD_PROVIDER
 ARG SENTRY_DSN
 ARG SENTRY_HTTP_TRACING_ENABLED
 ARG SENTRY_POSTGRES_TRACKING_ENABLED
@@ -75,6 +76,18 @@ ARG GAUZY_GITHUB_APP_ID
 ARG GAUZY_GITHUB_APP_NAME
 ARG GAUZY_GITHUB_POST_INSTALL_URL
 ARG GAUZY_GITHUB_APP_PRIVATE_KEY
+ARG MAGIC_CODE_EXPIRATION_TIME
+ARG APP_NAME
+ARG APP_LOGO
+ARG APP_SIGNATURE
+ARG APP_LINK
+ARG APP_EMAIL_CONFIRMATION_URL
+ARG APP_MAGIC_SIGN_URL
+ARG COMPANY_LINK
+ARG COMPANY_NAME
+ARG OTEL_ENABLED
+ARG OTEL_EXPORTER_OTLP_HEADERS
+ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 
 FROM node:18-alpine3.17 AS dependencies
 
@@ -82,6 +95,10 @@ LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 
 ENV CI=true
+
+# We need to set to "development", because we are using "yarn install" below to setup
+# devDependencies even for production builds!
+ENV NODE_ENV=development
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
@@ -128,10 +145,15 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 FROM node:18-alpine3.17 AS prodDependencies
+
+ENV CI=true
+
+# We make NODE_ENV passed as build argument to be available in this stage
+ARG NODE_ENV
 
 # Set Python interpreter for `node-gyp` to use
 ENV PYTHON /usr/bin/python
@@ -173,7 +195,7 @@ COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugin
 
 COPY --chown=node:node package.json yarn.lock ./
 
-RUN yarn install --network-timeout 1000000 --frozen-lockfile --production && yarn cache clean
+RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
 RUN rm -r node_modules/@angular
@@ -194,10 +216,21 @@ WORKDIR /srv/gauzy
 
 RUN mkdir dist
 
+# Copy the node_modules from the dependencies stage
+COPY --from=dependencies /srv/gauzy/node_modules ./node_modules
+
+# Copy the compiled packages from the development stage
 COPY --chown=node:node --from=development /srv/gauzy .
 
+ENV CI=true
+
+# We make NODE_ENV and other env vars passed as build argument to be available in this stage
+ARG NODE_ENV
+ARG DEMO
+ARG NODE_OPTIONS
+
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=30000"}
-ENV NODE_ENV=${NODE_ENV:-production}
+ENV NODE_ENV=${NODE_ENV}
 ENV DEMO=${DEMO:-false}
 
 ENV IS_DOCKER=true
@@ -205,7 +238,12 @@ ENV IS_DOCKER=true
 # Temporary disable caching in NX Cloud for builds
 ENV NX_NO_CLOUD=true
 
-RUN yarn build:package:api
+RUN if [ "$NODE_ENV" = "production" ]; then \
+	yarn build:package:api:prod; \
+	else \
+	yarn build:package:api; \
+	fi
+
 RUN yarn build:api:prod:docker
 
 FROM node:18-alpine3.17 AS production
@@ -234,7 +272,12 @@ RUN npm install pm2@4.5.1 -g && \
 	touch ormlogs.log && chown node:node ormlogs.log && chown node:node wait && \
 	chmod +x wait entrypoint.compose.sh entrypoint.prod.sh && chown -R node:node apps/
 
+# Clean up
+RUN yarn cache clean
+
 USER node:node
+
+ENV CI=true
 
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
 ENV NODE_ENV=${NODE_ENV:-production}
@@ -255,6 +298,7 @@ ENV DB_TYPE=${DB_TYPE:-sqlite}
 ENV DB_SSL_MODE=${DB_SSL_MODE}
 ENV DB_CA_CERT=${DB_CA_CERT}
 ENV DEMO=${DEMO:-false}
+ENV CLOUD_PROVIDER=${CLOUD_PROVIDER}
 ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 ENV AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 ENV AWS_REGION=${AWS_REGION}
@@ -314,6 +358,18 @@ ENV GAUZY_GITHUB_POST_INSTALL_URL=${GAUZY_GITHUB_POST_INSTALL_URL}
 ENV GAUZY_GITHUB_OAUTH_CLIENT_ID=${GAUZY_GITHUB_OAUTH_CLIENT_ID}
 ENV GAUZY_GITHUB_OAUTH_CLIENT_SECRET=${GAUZY_GITHUB_OAUTH_CLIENT_SECRET}
 ENV GAUZY_GITHUB_OAUTH_CALLBACK_URL=${GAUZY_GITHUB_OAUTH_CALLBACK_URL}
+ENV MAGIC_CODE_EXPIRATION_TIME=${MAGIC_CODE_EXPIRATION_TIME}
+ENV APP_NAME=${APP_NAME}
+ENV APP_LOGO=${APP_LOGO}
+ENV APP_SIGNATURE=${APP_SIGNATURE}
+ENV APP_LINK=${APP_LINK}
+ENV APP_EMAIL_CONFIRMATION_URL=${APP_EMAIL_CONFIRMATION_URL}
+ENV APP_MAGIC_SIGN_URL=${APP_MAGIC_SIGN_URL}
+ENV COMPANY_LINK=${COMPANY_LINK}
+ENV COMPANY_NAME=${COMPANY_NAME}
+ENV OTEL_ENABLED=${OTEL_ENABLED}
+ENV OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}
+ENV OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS}
 
 EXPOSE ${API_PORT}
 

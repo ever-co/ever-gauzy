@@ -13,6 +13,7 @@ export class AlterTableOrganization1700123233258 implements MigrationInterface {
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
         console.log(chalk.yellow(`${this.name} start running!`));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {

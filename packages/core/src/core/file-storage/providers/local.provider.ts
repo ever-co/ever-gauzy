@@ -1,3 +1,4 @@
+import { HttpException, HttpStatus } from '@nestjs/common';
 import * as multer from 'multer';
 import * as fs from 'fs';
 import { basename, join, resolve } from 'path';
@@ -8,129 +9,170 @@ import { Provider } from './provider';
 
 const config = getConfig();
 
+/**
+ *
+ */
 export class LocalProvider extends Provider<LocalProvider> {
 
-	static instance: LocalProvider;
-	name = FileStorageProviderEnum.LOCAL;
-
-	config = {
+	public instance: LocalProvider;
+	public readonly name = FileStorageProviderEnum.LOCAL;
+	public config = {
 		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl
 	};
 
-	getInstance() {
-		if (!LocalProvider.instance) {
-			LocalProvider.instance = new LocalProvider();
+	/**
+	* Get the singleton instance of LocalProvider
+	* @returns {LocalProvider} The singleton instance
+	*/
+	getProviderInstance(): LocalProvider {
+		if (!this.instance) {
+			this.instance = new LocalProvider();
 		}
-		return LocalProvider.instance;
+		return this.instance;
 	}
 
 	/**
-	 * Get full URL of the file storage
+	 * Generates a URL for a given file URL.
+	 * If the file URL is already an external URL (starts with 'http'), returns the original URL.
+	 * If the file URL is relative, constructs a URL using the 'public' directory and the base URL from the configuration.
 	 *
-	 * @param fileURL
-	 * @returns
+	 * @param fileURL - The file URL for which to generate a URL.
+	 * @returns A Promise resolving to a string representing the generated URL.
 	 */
-	url(fileURL: string) {
-		if (!fileURL) {
-			return null;
-		}
-		if (fileURL.startsWith('http')) {
+	public async url(fileURL: string): Promise<string> {
+		// If the file URL is already an external URL, return the original URL
+		if (!fileURL || fileURL.startsWith('http')) {
 			return fileURL;
 		}
+
+		// If the file URL is relative, construct a URL using the 'public' directory and the base URL from the configuration
 		return new URL(join('public', fileURL), this.config.baseUrl).toString();
 	}
 
 	/**
-	 * Get full Path of the file storage
+	 * Gets the full path of the file storage by joining the root path with the provided file path.
 	 *
-	 * @param filePath
-	 * @returns
+	 * @param filePath - The file path for which to get the full path.
+	 * @returns The full path of the file storage or null if the file path is falsy.
 	 */
-	path(filePath: string) {
+	public path(filePath: string): string | null {
+		// If the file path is truthy, join it with the root path; otherwise, return null
 		return filePath ? join(this.config.rootPath, filePath) : null;
 	}
 
-	handler({
-		dest,
-		filename,
-		prefix = 'file'
-	}: FileStorageOption): multer.StorageEngine {
+	/**
+	 * Creates and returns a multer storage engine based on the provided options.
+	 *
+	 * @param options - The options for configuring the multer storage engine.
+	 * @returns A multer storage engine.
+	 */
+	handler(options: FileStorageOption): multer.StorageEngine {
+		const { dest, filename, prefix = 'file' } = options;
+
 		return multer.diskStorage({
 			destination: (_req, file, callback) => {
 				// A string or function that determines the destination path for uploaded
-				let dir: string;
-				if (dest instanceof Function) {
-					dir = dest(file);
-				} else {
-					dir = dest;
-				}
+				const dir = dest instanceof Function ? dest(file) : dest;
 
+				// Ensure the destination directory exists, create if not
 				const fullPath = join(this.config.rootPath, dir);
 				fs.mkdirSync(fullPath, { recursive: true });
 
 				callback(null, fullPath);
 			},
 			filename: (_req, file, callback) => {
-				// A file extension, or filename extension, is a suffix at the end of a file.
+				// A file extension, or filename extension, is a suffix at the end of a file
 				const extension = file.originalname.split('.').pop();
 
-				// A function that determines the name of the uploaded file.
-				let fileName: string;
-				if (filename) {
-					if (typeof filename === 'string') {
-						fileName = filename;
-					} else {
-						fileName = filename(file, extension);
-					}
-				} else {
-					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
-				}
+				/**
+				 * A function that determines the name of the uploaded file.
+				 * Simplified and optimized filename assignment
+				 */
+				let fileName: string = filename ? (typeof filename === 'string' ? filename : filename(file, extension)) : `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+
 				callback(null, fileName);
 			}
 		});
 	}
 
-	async getFile(file: string): Promise<Buffer> {
-		return await fs.promises.readFile(this.path(file));
-	}
-
-	async deleteFile(file: string): Promise<void> {
-		if (fs.existsSync(this.path(file))) {
-			return fs.unlinkSync(this.path(file));
+	/**
+	 * Reads the content of the file asynchronously and returns a Promise resolving to a Buffer.
+	 *
+	 * @param file - The file path.
+	 * @returns A Promise resolving to a Buffer containing the file data.
+	 */
+	async getFile(file: string): Promise<Buffer | any> {
+		try {
+			return await fs.promises.readFile(this.path(file));
+		} catch (error) {
+			console.error(`Error while reading file "${file}":`, error);
 		}
 	}
 
+	/**
+	 * Writes the file content to the specified path asynchronously and returns a Promise resolving to an UploadedFile.
+	 *
+	 * @param fileContent - The content of the file.
+	 * @param path - The path where the file will be stored.
+	 * @returns A Promise resolving to an UploadedFile.
+	 */
 	async putFile(fileContent: any, path: string = ''): Promise<UploadedFile> {
-		return new Promise((putFileResolve, reject) => {
+		try {
 			const fullPath = join(this.config.rootPath, path);
-			fs.writeFile(fullPath, fileContent, (err) => {
-				if (err) {
-					reject(err);
-					return;
-				}
+			await fs.promises.writeFile(fullPath, fileContent);
 
-				const stats = fs.statSync(fullPath);
-				const baseName = basename(path);
-				const file = {
-					originalname: baseName,
-					size: stats.size,
-					filename: baseName,
-					path: fullPath
-				};
-				putFileResolve(this.mapUploadedFile(file));
-			});
-		});
+			const stats = await fs.promises.stat(fullPath);
+			const baseName = basename(path);
+
+			const file: Partial<UploadedFile> = {
+				originalname: baseName, // original file name
+				size: stats.size, // files in bytes
+				filename: baseName,
+				path: fullPath, // Full path of the file
+			};
+
+			return await this.mapUploadedFile(file)
+		} catch (error) {
+			console.error(`Error while putting file at path "${path}":`, error);
+			throw new HttpException(error, HttpStatus.BAD_REQUEST, { description: `Error while putting file at path "${path}":` });
+		}
 	}
 
-	mapUploadedFile(file): UploadedFile {
+	/**
+	 * Deletes the file asynchronously.
+	 *
+	 * @param file - The file path.
+	 * @returns A Promise that resolves when the file is deleted successfully.
+	 */
+	async deleteFile(file: string): Promise<void> {
+		try {
+			const filePath = this.path(file);
+
+			// Check if the file exists before attempting to delete
+			if (fs.existsSync(filePath)) {
+				return fs.unlinkSync(filePath);
+			}
+		} catch (error) {
+			console.error(`Error while deleting file "${file}":`, error);
+			throw error; // Rethrow the error to let the calling code handle it
+		}
+	}
+
+	/**
+	 * Map a partial UploadedFile object to include filename and URL.
+	 *
+	 * @param file - The partial UploadedFile object to map
+	 * @returns The mapped file object
+	 */
+	public async mapUploadedFile(file: any): Promise<UploadedFile> {
 		const separator = process.platform === 'win32' ? '\\' : '/';
 
 		if (file.path) {
-			file.key = file.path.replace(this.config.rootPath + separator, '');
+			file.key = file.path.replace(`${this.config.rootPath}${separator}`, '');
 		}
 
-		file.url = this.url(file.key);
+		file.url = await this.url(file.key);
 		return file;
 	}
 }

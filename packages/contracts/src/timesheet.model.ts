@@ -20,15 +20,15 @@ import { ITask } from './task.model';
 import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
 import { ReportGroupByFilter } from './report.model';
-import { FileStorageProviderEnum } from './file-provider';
-import { IRelationalUser, IUser } from './user.model';
+import { IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
+import { IScreenshot } from './screenshot.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
-	[x: string]: any;
 	employee: IEmployee;
-	employeeId?: string;
+	employeeId?: IEmployee['id'];
 	approvedBy?: IUser;
+	approvedById?: IUser['id'];
 	timeLogs?: ITimeLog[];
 	duration?: number;
 	keyboard?: number;
@@ -39,12 +39,13 @@ export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	approvedAt?: Date;
 	submittedAt?: Date;
 	lockedAt?: Date;
+	editedAt?: Date;
 	isBilled?: boolean;
 	status: string;
+	isEdited?: boolean;
 }
 
-export interface ITimesheetCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimesheetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
 	approvedById?: string;
 	duration: number;
@@ -60,8 +61,7 @@ export interface ITimesheetCreateInput
 	status?: string;
 }
 
-export interface ITimeSheetFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface ITimeSheetFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId: string;
 	approvedById?: string;
 	employee: IEmployeeFindInput;
@@ -107,28 +107,28 @@ export interface IDateRange {
 	start: Date;
 	end: Date;
 }
-export interface ITimeLog
-	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalOrganizationProject,
-	IRelationalOrganizationTeam {
-	[x: string]: any;
+export interface ITimeLog extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationProject, IRelationalOrganizationTeam {
 	employee: IEmployee;
+	employeeId: IEmployee['id'];
 	timesheet?: ITimesheet;
+	timesheetId?: ITimesheet['id'];
 	task?: ITask;
+	taskId?: ITask['id'];
 	timeSlots?: ITimeSlot[];
 	project?: IOrganizationProject;
+	projectId?: IOrganizationProject['id'];
 	organizationContact?: IOrganizationContact;
+	organizationContactId?: IOrganizationContact['id'];
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	/** Edited At* */
+	editedAt?: Date;
 	logType: TimeLogType;
 	description?: string;
 	reason?: string;
 	duration: number;
 	isBillable: boolean;
-	employeeId: string;
-	organizationContactId?: string;
-	taskId?: string;
 	tags?: string[];
 	isRunning?: boolean;
 	isEdited?: boolean;
@@ -309,39 +309,7 @@ export interface IURLMetaData {
 	[x: string]: any;
 }
 
-export interface IUpdateScreenshotInput extends ICreateScreenshotInput {
-	id: string;
-}
 
-export interface ICreateScreenshotInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	activityTimestamp: string;
-	employeeId?: string;
-	file: string;
-	thumb?: string;
-	recordedAt: Date | string;
-}
-
-export interface IScreenshot
-	extends IBasePerTenantAndOrganizationEntityModel,
-	IRelationalEmployee,
-	IRelationalUser {
-	[x: string]: any;
-	timeSlot?: ITimeSlot;
-	timeSlotId?: ITimeSlot['id'];
-	file: string;
-	thumb?: string;
-	fileUrl?: string;
-	thumbUrl?: string;
-	recordedAt?: Date;
-	storageProvider?: FileStorageProviderEnum;
-}
-
-export interface IScreenshotMap {
-	startTime: string;
-	endTime: string;
-	timeSlots: ITimeSlot[];
-}
 
 export interface ITimerStatusInput
 	extends ITimeLogTodayFilters,
@@ -389,8 +357,7 @@ export interface ITimerToggleInput
 	stoppedAt?: Date;
 }
 
-export interface IManualTimeInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	employeeId?: string;
 	projectId?: string;
@@ -401,6 +368,7 @@ export interface IManualTimeInput
 	reason?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	editedAt?: Date;
 	tags?: string[];
 	isBillable?: boolean;
 }
