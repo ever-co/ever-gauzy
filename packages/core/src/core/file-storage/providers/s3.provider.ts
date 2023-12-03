@@ -187,16 +187,16 @@ export class S3Provider extends Provider<S3Provider> {
 		try {
 			const s3Client = this.getS3Instance();
 
+			// Input parameters when using the GetObjectCommand to retrieve an object from Wasabi storage.
+			const command = new GetObjectCommand({
+				Bucket: this.getS3Bucket(), // The name of the bucket from which to retrieve the object.
+				Key: key, // The key (path) of the object to retrieve from the bucket.
+			});
+
 			/**
-			 * Send a GetObjectCommand to AWS S3 to retrieve an object
+			 * Send a GetObjectCommand to Wasabi to retrieve an object
 			 */
-			const data: GetObjectCommandOutput = await s3Client.send(
-				// Input parameters when using the GetObjectCommand to retrieve an object from AWS S3 storage.
-				new GetObjectCommand({
-					Bucket: this.getS3Bucket(), // The name of the bucket from which to retrieve the object.
-					Key: key, // The key (path) of the object to retrieve from the bucket.
-				})
-			);
+			const data: GetObjectCommandOutput = await s3Client.send(command);
 			return data.Body;
 		} catch (error) {
 			console.error(`Error while fetching file with key '${key}':`, error);
@@ -215,27 +215,28 @@ export class S3Provider extends Provider<S3Provider> {
 			const s3Client = this.getS3Instance();
 			const filename = basename(key);
 
+			// Input parameters for the PutObjectCommand when uploading a file to AWS S3 storage.
+			const putObjectCommand = new PutObjectCommand({
+				Bucket: this.getS3Bucket(), // The name of the bucket to which the file should be uploaded.
+				Body: fileContent, // The content of the file to be uploaded.
+				Key: key, // The key (path) under which to store the file in the bucket.
+				ContentDisposition: `inline; ${filename}`, // Additional headers for the object.
+				ContentType: 'image'
+			});
+
 			/**
 			 * Send a PutObjectCommand to AWS S3 to upload the object
 			 */
-			await s3Client.send(
-				// Input parameters for the PutObjectCommand when uploading a file to AWS S3 storage.
-				new PutObjectCommand({
-					Bucket: this.getS3Bucket(), // The name of the bucket to which the file should be uploaded.
-					Body: fileContent, // The content of the file to be uploaded.
-					Key: key, // The key (path) under which to store the file in the bucket.
-					ContentDisposition: `inline; ${filename}` // Additional headers for the object.
-				})
-			);
+			await s3Client.send(putObjectCommand);
+
+			// Input parameters for the HeadObjectCommand when retrieving metadata about an object in AWS S3 storage.
+			const headObjectCommand = new HeadObjectCommand({
+				Key: key, // The key (path) of the object for which to retrieve metadata.
+				Bucket: this.getS3Bucket() // The name of the bucket where the object is stored.
+			});
 
 			// Send a HeadObjectCommand to AWS S3 to retrieve ContentLength property metadata
-			const { ContentLength } = await s3Client.send(
-				// Input parameters for the HeadObjectCommand when retrieving metadata about an object in AWS S3 storage.
-				new HeadObjectCommand({
-					Key: key, // The key (path) of the object for which to retrieve metadata.
-					Bucket: this.getS3Bucket() // The name of the bucket where the object is stored.
-				})
-			);
+			const { ContentLength } = await s3Client.send(headObjectCommand);
 
 			const file: Partial<UploadedFile> = {
 				originalname: filename, // original file name
@@ -261,16 +262,16 @@ export class S3Provider extends Provider<S3Provider> {
 		try {
 			const s3Client = this.getS3Instance();
 
+			// Input parameters when using the DeleteObjectCommand to delete an object from AWS S3 storage.
+			const command = new DeleteObjectCommand({
+				Bucket: this.getS3Bucket(), // The name of the bucket from which to delete the object.
+				Key: key // The key (path) of the object to delete from the bucket.
+			})
+
 			/**
 			 * Send a DeleteObjectCommand to AWS S3 to delete an object
 			 */
-			const data: DeleteObjectCommandOutput = await s3Client.send(
-				// Input parameters when using the DeleteObjectCommand to delete an object from AWS S3 storage.
-				new DeleteObjectCommand({
-					Bucket: this.getS3Bucket(), // The name of the bucket from which to delete the object.
-					Key: key // The key (path) of the object to delete from the bucket.
-				})
-			);
+			const data: DeleteObjectCommandOutput = await s3Client.send(command);
 			return new Object({
 				status: HttpStatus.OK,
 				message: `file with key: ${key} is successfully deleted`,

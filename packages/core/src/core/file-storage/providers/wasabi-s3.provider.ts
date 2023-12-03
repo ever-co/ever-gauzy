@@ -210,13 +210,19 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		const { dest, filename, prefix = 'file' } = options;
 
 		return multerS3({
+			/** */
 			s3: this.getWasabiInstance(),
+			/** */
+			acl: 'public-read', // Set ACL permissions as needed
+			/** */
 			bucket: (_req, _file, callback) => {
 				callback(null, this.getWasabiBucket())
 			},
-			metadata: function (_req, file, callback) {
-				callback(null, { fieldName: file.fieldname });
+			/** */
+			metadata: function (_req, _file, callback) {
+				callback(null, { fieldName: _file.fieldname });
 			},
+			/** */
 			key: (_req, file, callback) => {
 				// A string or function that determines the destination path for uploaded
 				const dir = dest instanceof Function ? dest(file) : dest;
@@ -234,6 +240,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				}
 
 				const fullPath = join(this.config.rootPath, dir, fileName);
+				console.log({ fullPath });
 				callback(null, fullPath);
 			}
 		});
@@ -249,16 +256,16 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		try {
 			const s3Client = this.getWasabiInstance();
 
+			// Input parameters when using the GetObjectCommand to retrieve an object from Wasabi storage.
+			const command = new GetObjectCommand({
+				Bucket: this.getWasabiBucket(), // The name of the bucket from which to retrieve the object.
+				Key: key, // The key (path) of the object to retrieve from the bucket.
+			});
+
 			/**
 			 * Send a GetObjectCommand to Wasabi to retrieve an object
 			 */
-			const data: GetObjectCommandOutput = await s3Client.send(
-				// Input parameters when using the GetObjectCommand to retrieve an object from Wasabi storage.
-				new GetObjectCommand({
-					Bucket: this.getWasabiBucket(), // The name of the bucket from which to retrieve the object.
-					Key: key, // The key (path) of the object to retrieve from the bucket.
-				})
-			);
+			const data: GetObjectCommandOutput = await s3Client.send(command);
 			return data.Body;
 		} catch (error) {
 			console.error(`Error while fetching file with key '${key}':`, error);
@@ -277,27 +284,28 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			const s3Client = this.getWasabiInstance();
 			const filename = basename(key);
 
+			// Input parameters for the PutObjectCommand when uploading a file to Wasabi storage.
+			const putObjectCommand = new PutObjectCommand({
+				Bucket: this.getWasabiBucket(), // The name of the bucket to which the file should be uploaded.
+				Body: fileContent, // The content of the file to be uploaded.
+				Key: key, // The key (path) under which to store the file in the bucket.
+				ContentDisposition: `inline; ${filename}`, // Additional headers for the object.
+				ContentType: 'image'
+			});
+
 			/**
 			 * Send a PutObjectCommand to Wasabi to upload the object
 			 */
-			await s3Client.send(
-				// Input parameters for the PutObjectCommand when uploading a file to Wasabi storage.
-				new PutObjectCommand({
-					Bucket: this.getWasabiBucket(), // The name of the bucket to which the file should be uploaded.
-					Body: fileContent, // The content of the file to be uploaded.
-					Key: key, // The key (path) under which to store the file in the bucket.
-					ContentDisposition: `inline; ${filename}` // Additional headers for the object.
-				})
-			);
+			await s3Client.send(putObjectCommand);
+
+			// Input parameters for the HeadObjectCommand when retrieving metadata about an object in Wasabi storage.
+			const headObjectCommand = new HeadObjectCommand({
+				Key: key, // The key (path) of the object for which to retrieve metadata.
+				Bucket: this.getWasabiBucket() // The name of the bucket where the object is stored.
+			});
 
 			// Send a HeadObjectCommand to Wasabi to retrieve ContentLength property metadata
-			const { ContentLength } = await s3Client.send(
-				// Input parameters for the HeadObjectCommand when retrieving metadata about an object in Wasabi storage.
-				new HeadObjectCommand({
-					Key: key, // The key (path) of the object for which to retrieve metadata.
-					Bucket: this.getWasabiBucket() // The name of the bucket where the object is stored.
-				})
-			);
+			const { ContentLength } = await s3Client.send(headObjectCommand);
 
 			const file: Partial<UploadedFile> = {
 				originalname: filename, // original file name
@@ -323,16 +331,16 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		try {
 			const s3Client = this.getWasabiInstance();
 
+			// Input parameters when using the DeleteObjectCommand to delete an object from Wasabi storage.
+			const command = new DeleteObjectCommand({
+				Bucket: this.getWasabiBucket(), // The name of the bucket from which to delete the object.
+				Key: key // The key (path) of the object to delete from the bucket.
+			})
+
 			/**
 			 * Send a DeleteObjectCommand to Wasabi to delete an object
 			 */
-			const data: DeleteObjectCommandOutput = await s3Client.send(
-				// Input parameters when using the DeleteObjectCommand to delete an object from Wasabi storage.
-				new DeleteObjectCommand({
-					Bucket: this.getWasabiBucket(), // The name of the bucket from which to delete the object.
-					Key: key // The key (path) of the object to delete from the bucket.
-				})
-			);
+			const data: DeleteObjectCommandOutput = await s3Client.send(command);
 			return new Object({
 				status: HttpStatus.OK,
 				message: `file with key: ${key} is successfully deleted`,
