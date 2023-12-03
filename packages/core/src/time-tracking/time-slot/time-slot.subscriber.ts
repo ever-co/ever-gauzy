@@ -49,23 +49,24 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
      */
     async afterRemove(event: RemoveEvent<TimeSlot>): Promise<any | void> {
         try {
-            if (event.entityId && event.entity.screenshots) {
-                const { screenshots } = event.entity;
-                console.log(`AFTER TIME_SLOT WITH ID ${event.entityId} REMOVED`);
-                if (screenshots instanceof Array && isNotEmpty(screenshots)) {
-                    for await (const screenshot of screenshots) {
-                        const instance = await new FileStorage().getProvider(screenshot.storageProvider).getInstance();
-                        if (screenshot.file) {
-                            instance.deleteFile(screenshot.file);
-                        }
-                        if (screenshot.thumb) {
-                            instance.deleteFile(screenshot.thumb);
-                        }
+            const entityId = event.entityId;
+            const { screenshots } = event.entity ?? {};
+
+            if (entityId && Array.isArray(screenshots) && isNotEmpty(screenshots)) {
+                console.log(`AFTER TIME_SLOT WITH ID ${entityId} REMOVED`);
+
+                for await (const screenshot of screenshots) {
+                    const instance = await new FileStorage().getProvider(screenshot?.storageProvider).getProviderInstance();
+                    if (screenshot?.file) {
+                        await instance.deleteFile(screenshot.file);
+                    }
+                    if (screenshot?.thumb) {
+                        await instance.deleteFile(screenshot.thumb);
                     }
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterRemove:', error);
         }
     }
 

@@ -142,7 +142,7 @@
         "consolidate": "^0.16.0",
         "electron-log": "^4.4.8",
         "electron-store": "^8.1.0",
-        "electron-updater": "^5.3.0",
+		"electron-updater": "^6.1.7",
         "electron-util": "^0.17.2",
         "embedded-queue": "^0.0.11",
         "ffi-napi": "^4.0.3",

@@ -20,7 +20,10 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
      *
      * @param entity
      */
-    afterLoad(entity: Feature, event?: LoadEvent<Feature>): void | Promise<any> {
+    async afterLoad(
+        entity: Feature,
+        event?: LoadEvent<Feature>
+    ): Promise<any | void> {
         try {
             if (!entity.status) {
                 entity.status = shuffle(Object.values(FeatureStatusEnum))[0];
@@ -33,12 +36,11 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
             }
 
             if (entity.image) {
-                const store = new FileStorage()
-                store.setProvider(FileStorageProviderEnum.LOCAL);
-                entity.imageUrl = store.getProviderInstance().url(entity.image);
+                const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+                entity.imageUrl = await store.getProviderInstance().url(entity.image);
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterLoad:', error);
         }
     }
 }

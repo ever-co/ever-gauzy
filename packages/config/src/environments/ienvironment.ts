@@ -95,8 +95,8 @@ export interface IEnvironment {
 
 	fileSystem: FileSystem;
 	awsConfig?: IAwsConfig;
-	wasabiConfig?: IWasabiConfig;
-	cloudinaryConfig?: ICloudinaryConfig;
+	wasabi?: IWasabiConfig;
+	cloudinary?: ICloudinaryConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
