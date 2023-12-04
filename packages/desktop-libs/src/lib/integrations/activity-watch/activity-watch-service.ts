@@ -107,7 +107,7 @@ export class ActivityWatchService {
 			]);
 
 			const systemPercentage = totalDuration > 0 ? (windowDuration - afkDuration) / totalDuration : 0;
-			const mousePercentage = totalDuration > 0 ? afkDuration / totalDuration : 0;
+			const mousePercentage = totalDuration > 0 ? noAfkDuration / totalDuration : 0;
 			const keyboardPercentage = totalDuration > 0 ? noAfkDuration / totalDuration : 0;
 
 			return {
