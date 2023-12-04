@@ -44,7 +44,6 @@ export class ActivityWatchService {
 
 			const params = LocalStore.beforeRequestParams();
 			const currentDate = moment().utc();
-			const lastWindowEvent = windowEvents[windowEvents.length - 1];
 
 			return windowEvents.map((windowEvent) => {
 				const metaData = JSON.parse(windowEvent.data) as IActivityWatchWindowEvent['data'];
@@ -72,8 +71,8 @@ export class ActivityWatchService {
 					mergeWith(firefoxEvents);
 				}
 
-				if (windowEvent === lastWindowEvent && windowEvent.duration === 0) {
-					windowEvent.duration = moment().diff(lastWindowEvent.recordedAt, 'seconds');
+				if (windowEvent.duration === 0) {
+					windowEvent.duration = moment().diff(windowEvent.recordedAt, 'seconds');
 				}
 
 				return {
@@ -107,13 +106,6 @@ export class ActivityWatchService {
 				this.afkService.durationNoAfk(timerId)
 			]);
 
-			console.log('Percentage', {
-				windowActivityDuration: windowDuration,
-				totalActivityDuration: totalDuration,
-				afkDuration,
-				noAfkDuration
-			});
-
 			const systemPercentage = totalDuration > 0 ? (windowDuration - afkDuration) / totalDuration : 0;
 			const mousePercentage = totalDuration > 0 ? afkDuration / totalDuration : 0;
 			const keyboardPercentage = totalDuration > 0 ? noAfkDuration / totalDuration : 0;
@@ -131,5 +123,11 @@ export class ActivityWatchService {
 				keyboardPercentage: 0
 			};
 		}
+	}
+
+	public get isConnected(): boolean {
+		const params = LocalStore.beforeRequestParams();
+		const setting = LocalStore.getStore('appSetting');
+		return params?.aw?.isAw && setting?.awIsConnected;
 	}
 }

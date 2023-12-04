@@ -121,7 +121,6 @@ export default class TimerHandler {
 		}
 		this.intervalTimer = setInterval(async () => {
 			try {
-				const projectInfo = LocalStore.getStore('project');
 				const appSetting = LocalStore.getStore('appSetting');
 				await this.createQueue(
 					`sqlite-queue-${process.env.NAME}`,
@@ -134,7 +133,7 @@ export default class TimerHandler {
 					},
 					knex
 				);
-				if (projectInfo && projectInfo.aw && projectInfo.aw.isAw && appSetting.awIsConnected) {
+				if (this._activityWatchService.isConnected) {
 					const end = moment().toDate();
 					const start = moment(this.timeSlotStart).toDate();
 					const data: IActivityWatchCollectEventData = {
@@ -343,7 +342,7 @@ export default class TimerHandler {
 		});
 
 		const allActivities = [...awActivities, ...wakatimeHeartbeats];
-		if (!params?.aw?.isAw) {
+		if (!this._activityWatchService.isConnected) {
 			allActivities.push(...this._activities);
 		}
 		return { allActivities, idsWakatime };
@@ -363,17 +362,21 @@ export default class TimerHandler {
 		const lastTimerId = this.lastTimer ? this.lastTimer.id : null;
 		const durationNow = now.diff(moment(lastTimeSlot), 'seconds');
 		const activityWatch = await this._activityWatchService.activityPercentage(lastTimerId);
-		console.log(`Watchers: ${JSON.stringify(activityWatch)}`);
 		const activityPercentages = {
 			keyboard: Math.round(
-				(params?.aw?.isAw ? activityWatch.keyboardPercentage : this._eventCounter.keyboardPercentage) *
-					durationNow
+				(this._activityWatchService.isConnected
+					? activityWatch.keyboardPercentage
+					: this._eventCounter.keyboardPercentage) * durationNow
 			),
 			mouse: Math.round(
-				(params?.aw?.isAw ? activityWatch.mousePercentage : this._eventCounter.mousePercentage) * durationNow
+				(this._activityWatchService.isConnected
+					? activityWatch.mousePercentage
+					: this._eventCounter.mousePercentage) * durationNow
 			),
 			system: Math.round(
-				(params?.aw?.isAw ? activityWatch.systemPercentage : this._eventCounter.systemPercentage) * durationNow
+				(this._activityWatchService.isConnected
+					? activityWatch.systemPercentage
+					: this._eventCounter.systemPercentage) * durationNow
 			)
 		};
 		let preparedActivities = null;
