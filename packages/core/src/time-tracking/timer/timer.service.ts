@@ -467,7 +467,7 @@ export class TimerService {
 		 * Get last logs (running or completed)
 		 */
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 		query.setFindOptions({
 			...(request['relations'] ? { relations: request['relations'] } : {}),
 		});
@@ -482,12 +482,12 @@ export class TimerService {
 			...(isNotEmpty(source) ? { source } : {}),
 			...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
 		});
-		query.orderBy('time_log.employeeId', 'DESC'); // Adjust ORDER BY to match the SELECT list
-		query.addOrderBy('time_log.startedAt', 'DESC');
-		query.addOrderBy('time_log.createdAt', 'DESC');
+		query.orderBy(`"${query.alias}"."employeeId"`, 'ASC'); // Adjust ORDER BY to match the SELECT list
+		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
+		query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
 
 		// Get last logs group by employees (running or completed)
-		const lastLogs = await query.distinctOn(["time_log.employeeId"]).getMany();
+		const lastLogs = await query.distinctOn([`"${query.alias}"."employeeId"`]).getMany();
 
 		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
 		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => {

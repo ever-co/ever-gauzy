@@ -5,6 +5,7 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
+	ITimerStatus,
 } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/common';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
@@ -76,33 +77,28 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 			const { organizationId, startDate, endDate, withLaskWorkedTask, source } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
+			//
 			const employeeIds = members.map(({ employeeId }) => employeeId);
-			console.log({ employeeIds });
 
-			// this._timerService.getTimerWorkedStatus({
-			// 	source,
-			// 	employeeId,
-			// 	organizationId,
-			// 	tenantId,
-			// 	organizationTeamId,
-			// 	...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
-			// })
+			//
+			const statistics = await this._timerService.getTimerWorkedStatus({
+				source,
+				employeeIds,
+				organizationId,
+				tenantId,
+				organizationTeamId,
+				...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
+			});
 
-
+			//
 			const memberPromises = members.map(async (member: IOrganizationTeamEmployee) => {
 				const { employeeId } = member;
-				/**
-				 *
-				 */
-				const [timerWorkedStatus, totalWorkedTasks, totalTodayTasks] = await Promise.all([
-					this._timerService.getTimerWorkedStatus({
-						source,
-						employeeId,
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
-					}),
+				//
+				const timerWorkedStatus = statistics.find(
+					(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
+				);
+				//
+				const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
 					this._statisticService.getTasks({
 						organizationId,
 						tenantId,
@@ -118,13 +114,12 @@ export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrg
 						endDate,
 					}),
 				]);
-
 				return {
 					...member,
-					lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus[0]?.lastLog?.task : null,
-					running: timerWorkedStatus[0]?.running,
-					duration: timerWorkedStatus[0]?.duration,
-					timerStatus: timerWorkedStatus[0]?.timerStatus,
+					lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
+					running: timerWorkedStatus?.running,
+					duration: timerWorkedStatus?.duration,
+					timerStatus: timerWorkedStatus?.timerStatus,
 					totalWorkedTasks,
 					totalTodayTasks,
 				};
