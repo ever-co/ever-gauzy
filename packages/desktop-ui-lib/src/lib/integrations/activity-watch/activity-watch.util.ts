@@ -7,7 +7,8 @@ export class ActivityWatchUtil {
 			windowBucket: null,
 			afkBucket: null,
 			chromeBucket: null,
-			firefoxBucket: null
+			firefoxBucket: null,
+			edgeBucket: null
 		};
 		Object.keys(buckets).forEach((key) => {
 			const keyParse = key.split('_')[0];
@@ -23,6 +24,9 @@ export class ActivityWatchUtil {
 					break;
 				case 'aw-watcher-web-firefox':
 					parsedBuckets.firefoxBucket = buckets[key];
+					break;
+				case 'aw-watcher-web-edge':
+					parsedBuckets.edgeBucket = buckets[key];
 					break;
 				default:
 					break;

@@ -11,6 +11,7 @@ export interface IParseBucketsResult {
 	afkBucket: IActivityWatchBucket;
 	chromeBucket: IActivityWatchBucket;
 	firefoxBucket: IActivityWatchBucket;
+	edgeBucket: IActivityWatchBucket;
 }
 
 export interface IActivityWatchEventService {
@@ -21,4 +22,6 @@ export interface IActivityWatchEventService {
 	collectAfkEvents(range: IDateRange): Promise<IActivityWatchAfkEvent[]>;
 
 	collectWindowsEvents(range: IDateRange): Promise<IActivityWatchWindowEvent[]>;
+
+	collectEdgeEvents(range: IDateRange): Promise<IActivityWatchWebEvent[]>;
 }

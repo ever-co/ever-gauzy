@@ -597,6 +597,23 @@ export function ipcTimer(
 		});
 	});
 
+	ActivityWatchEventManager.onPushEdgeActivity(async (_, result: IActivityWatchEventResult) => {
+		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
+		if (!collections.length) return;
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: collections,
+					type: ActivityWatchEventTableList.EDGE
+				},
+				knex
+			);
+		} catch (error) {
+			throw new UIError('500', error, 'IPCQWIN');
+		}
+	});
+
 	ipcMain.on('remove_wakatime_local_data', async (event, arg) => {
 		try {
 			if (arg.idsWakatime && arg.idsWakatime.length > 0) {

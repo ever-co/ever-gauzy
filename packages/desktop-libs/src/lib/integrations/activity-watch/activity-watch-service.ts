@@ -7,22 +7,31 @@ import { IActivity, IActivityPercentage, IDesktopEvent } from '../../interfaces'
 import moment from 'moment';
 import { LocalStore } from '../../desktop-store';
 import { ActivityWatchBrowserList } from './i-activity-watch-event-service';
+import { ActivityWatchEdgeService } from './activity-watch-edge-service';
 
 export class ActivityWatchService {
 	private readonly chromeService: ActivityWatchChromeService;
 	private readonly firefoxService: ActivityWatchFirefoxService;
 	private readonly afkService: ActivityWatchAfkService;
 	private readonly windowService: ActivityWatchWindowService;
+	private readonly edgeService: ActivityWatchEdgeService;
 
 	constructor() {
 		this.chromeService = new ActivityWatchChromeService();
 		this.firefoxService = new ActivityWatchFirefoxService();
 		this.afkService = new ActivityWatchAfkService();
 		this.windowService = new ActivityWatchWindowService();
+		this.edgeService = new ActivityWatchEdgeService();
 	}
 
 	public async clearAllEvents(): Promise<void> {
-		const servicesToClear = [this.chromeService, this.firefoxService, this.afkService, this.windowService];
+		const servicesToClear = [
+			this.chromeService,
+			this.firefoxService,
+			this.afkService,
+			this.windowService,
+			this.edgeService
+		];
 		await Promise.all(
 			servicesToClear.map(async (service) => {
 				try {
@@ -36,9 +45,9 @@ export class ActivityWatchService {
 
 	public async activities(timerId: IDesktopEvent['timerId']): Promise<IActivity[]> {
 		try {
-			const services = [this.windowService, this.chromeService, this.firefoxService];
+			const services = [this.windowService, this.chromeService, this.firefoxService, this.edgeService];
 
-			const [windowEvents, chromeEvents, firefoxEvents] = await Promise.all(
+			const [windowEvents, chromeEvents, firefoxEvents, edgeEvents] = await Promise.all(
 				services.map((service) => service.find({ timerId }))
 			);
 
@@ -68,6 +77,7 @@ export class ActivityWatchService {
 					};
 					mergeWith(chromeEvents);
 					mergeWith(firefoxEvents);
+					mergeWith(edgeEvents);
 				}
 
 				if (windowEvent.duration === 0) {

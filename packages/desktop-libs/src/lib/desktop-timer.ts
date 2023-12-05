@@ -18,7 +18,8 @@ import {
 	ActivityWatchFirefoxService,
 	ActivityWatchChromeService,
 	ActivityWatchWindowService,
-	ActivityWatchAfkService
+	ActivityWatchAfkService,
+	ActivityWatchEdgeService
 } from './integrations';
 
 console.log = log.log;
@@ -573,6 +574,12 @@ export default class TimerHandler {
 									{
 										const firefoxService = new ActivityWatchFirefoxService();
 										await firefoxService.save(job.data.data);
+									}
+									break;
+								case ActivityWatchEventTableList.EDGE:
+									{
+										const edgeService = new ActivityWatchEdgeService();
+										await edgeService.save(job.data.data);
 									}
 									break;
 								case 'remove-window-events':

@@ -1,4 +1,4 @@
-import {IDesktopEvent} from '../../interfaces';
+import { IDesktopEvent } from '../../interfaces';
 
 export interface IActivityWatchEventService {
 	save(event: IDesktopEvent): Promise<void>;
@@ -24,10 +24,12 @@ export enum ActivityWatchEventTableList {
 	AFK = 'afk_events',
 	WINDOW = 'window_events',
 	CHROME = 'chrome_events',
-	FIREFOX = 'firefox_events'
+	FIREFOX = 'firefox_events',
+	EDGE = 'edge_events'
 }
 
 export enum ActivityWatchBrowserList {
 	CHROME = 'Google Chrome',
-	FIREFOX = 'Firefox'
+	FIREFOX = 'Firefox',
+	EDGE = 'Microsoft Edge'
 }

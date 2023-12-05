@@ -73,5 +73,6 @@ export enum ActivityWatchCollectEvent {
 	WINDOW = 'collect_data',
 	AFK = 'collect_afk',
 	CHROME = 'collect_chrome_activities',
-	FIREFOX = 'collect_firefox_activities'
+	FIREFOX = 'collect_firefox_activities',
+	EDGE = 'collect_edge_activities'
 }

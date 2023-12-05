@@ -9,7 +9,8 @@ enum ActivityWatchMainEvent {
 	REMOVE = 'remove_aw_local_data',
 	STATUS = 'aw_status',
 	SET_TP = 'set_tp_aw',
-	REMOVE_AFK = 'remove_afk_local_Data'
+	REMOVE_AFK = 'remove_afk_local_Data',
+	PUSH_EDGE = 'push_edge_activity'
 }
 
 export class ActivityWatchEventManager {
@@ -72,6 +73,12 @@ export class ActivityWatchEventManager {
 
 	public static onRemoveAfkLocalData<T>(listener: (event: IpcMainEvent, result?: T) => Promise<void>): void {
 		ipcMain.on(ActivityWatchMainEvent.REMOVE_AFK, listener);
+	}
+
+	public static onPushEdgeActivity<T>(
+		listener: (event: IpcMainEvent, result?: IActivityWatchEventResult) => T
+	): void {
+		ipcMain.on(ActivityWatchMainEvent.PUSH_EDGE, listener);
 	}
 }
 

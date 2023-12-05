@@ -55,6 +55,12 @@ export class ActivityWatchElectronService {
 				ipcEvent: ActivityWatchCollectEvent.FIREFOX,
 				collectEventFn: async (arg) => this.activityWatchEventService.collectFirefoxEvents(arg),
 				sendEventFn: (result) => this.send('push_firefox_activity', result)
+			},
+			{
+				type: ActivityWatchEventType.URL,
+				ipcEvent: ActivityWatchCollectEvent.EDGE,
+				collectEventFn: async (arg) => this.activityWatchEventService.collectEdgeEvents(arg),
+				sendEventFn: (result) => this.send('push_edge_activity', result)
 			}
 		];
 	}

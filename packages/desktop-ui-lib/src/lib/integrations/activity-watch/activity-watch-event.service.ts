@@ -69,4 +69,8 @@ export class ActivityWatchEventService implements IActivityWatchEventService {
 			return false;
 		}
 	}
+
+	public collectEdgeEvents(range: IDateRange): Promise<IActivityWatchWebEvent[]> {
+		return this.collectEvents('edgeBucket', range);
+	}
 }
