@@ -3,6 +3,7 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
+	ITimerStatus,
 } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { parseToBoolean } from '@gauzy/common';
@@ -63,18 +64,11 @@ export class PublicTeamService {
 					public: true,
 					...params,
 				},
-				...(options.relations
-					? {
-						relations: options.relations,
-					}
-					: {}),
+				...(options.relations ? { relations: options.relations, } : {}),
 			});
 			if ('members' in team) {
-				const { members, organizationId, tenantId } = team;
-				team['members'] = await this.syncMembers(
-					{ organizationId, tenantId, members },
-					options
-				);
+				const { members } = team;
+				team['members'] = await this.syncMembers(team, members, options);
 			}
 			return team;
 		} catch (error) {
@@ -89,26 +83,35 @@ export class PublicTeamService {
 	 * @returns
 	 */
 	async syncMembers(
-		{ organizationId, tenantId, members },
-		options: IDateRangePicker & IOrganizationTeamStatisticInput
+		organizationTeam: IOrganizationTeam,
+		members: IOrganizationTeamEmployee[],
+		input: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
-			const { startDate, endDate, withLaskWorkedTask, source } = options;
+			const { id: organizationTeamId, organizationId, tenantId } = organizationTeam;
+			const { startDate, endDate, withLaskWorkedTask, source } = input;
+
+			const employeeIds = members.map(({ employeeId }) => employeeId);
+
+			//
+			const statistics = await this._timerService.getTimerWorkedStatus({
+				source,
+				employeeIds,
+				organizationId,
+				tenantId,
+				organizationTeamId,
+				...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
+			});
+
 			return await Promise.all(
-				await members.map(async (member: IOrganizationTeamEmployee) => {
-					const { employeeId, organizationTeamId } = member;
-					/**
-					 *
-					 */
-					const [timerWorkedStatus, totalWorkedTasks, totalTodayTasks] = await Promise.all([
-						this._timerService.getTimerWorkedStatus({
-							source,
-							employeeId,
-							organizationId,
-							tenantId,
-							organizationTeamId,
-							...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
-						}),
+				members.map(async (member: IOrganizationTeamEmployee) => {
+					const { employeeId } = member;
+					//
+					const timerWorkedStatus = statistics.find(
+						(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
+					);
+					//
+					const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
 						this._statisticService.getTasks({
 							organizationId,
 							tenantId,
@@ -126,8 +129,8 @@ export class PublicTeamService {
 					]);
 					return {
 						...member,
-						lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus[0].lastLog?.task : null,
-						timerStatus: timerWorkedStatus[0]?.timerStatus,
+						lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
+						timerStatus: timerWorkedStatus?.timerStatus,
 						totalWorkedTasks,
 						totalTodayTasks,
 					};
