@@ -20,7 +20,7 @@ export class PublicTeamService {
 
 		private readonly _statisticService: StatisticService,
 		private readonly _timerService: TimerService
-	) {}
+	) { }
 
 	/**
 	 * GET organization team by profile link
@@ -65,8 +65,8 @@ export class PublicTeamService {
 				},
 				...(options.relations
 					? {
-							relations: options.relations,
-					  }
+						relations: options.relations,
+					}
 					: {}),
 			});
 			if ('members' in team) {
@@ -97,34 +97,25 @@ export class PublicTeamService {
 			return await Promise.all(
 				await members.map(async (member: IOrganizationTeamEmployee) => {
 					const { employeeId, organizationTeamId } = member;
-					const timerWorkedStatus =
-						await this._timerService.getTimerWorkedStatus({
+					/**
+					 *
+					 */
+					const [timerWorkedStatus, totalWorkedTasks, totalTodayTasks] = await Promise.all([
+						this._timerService.getTimerWorkedStatus({
 							source,
 							employeeId,
-							organizationTeamId,
 							organizationId,
 							tenantId,
-							...(parseToBoolean(withLaskWorkedTask)
-								? {
-										relations: ['task'],
-								  }
-								: {}),
-						});
-					return {
-						...member,
-						lastWorkedTask: parseToBoolean(withLaskWorkedTask)
-							? timerWorkedStatus.lastLog?.task
-							: null,
-						timerStatus: timerWorkedStatus?.timerStatus,
-						totalWorkedTasks: await this._statisticService.getTasks(
-							{
-								organizationId,
-								tenantId,
-								organizationTeamId,
-								employeeIds: [employeeId],
-							}
-						),
-						totalTodayTasks: await this._statisticService.getTasks({
+							organizationTeamId,
+							...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
+						}),
+						this._statisticService.getTasks({
+							organizationId,
+							tenantId,
+							organizationTeamId,
+							employeeIds: [employeeId],
+						}),
+						this._statisticService.getTasks({
 							organizationId,
 							tenantId,
 							organizationTeamId,
@@ -132,6 +123,13 @@ export class PublicTeamService {
 							startDate,
 							endDate,
 						}),
+					]);
+					return {
+						...member,
+						lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus[0].lastLog?.task : null,
+						timerStatus: timerWorkedStatus[0]?.timerStatus,
+						totalWorkedTasks,
+						totalTodayTasks,
 					};
 				})
 			);
