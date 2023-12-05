@@ -23,7 +23,7 @@ import {
 import { isNotEmpty } from '@gauzy/common';
 import { Employee, TimeLog } from './../../core/entities/internal';
 import { RequestContext } from '../../core/context';
-import { getDateRange, validateDateRange } from './../../core/utils';
+import { getDateRangeFormat, validateDateRange } from './../../core/utils';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -48,19 +48,17 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
+	async getTimerStatus(
+		request: ITimerStatusInput
+	): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
 		let employee: IEmployee;
 
 		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
-		if (
-			isNotEmpty(request.employeeId) &&
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (!!permission && isNotEmpty(request.employeeId)) {
 			const { employeeId } = request;
 			/** Get specific employee */
 			employee = await this.employeeRepository.findOneBy({
@@ -79,33 +77,35 @@ export class TimerService {
 		}
 
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 
 		const { id: employeeId } = employee;
-		const { start, end } =
-			todayStart && todayEnd
-				? { start: todayStart, end: todayEnd }
-				: getDateRange();
+
+		/** */
+		const { start, end } = getDateRangeFormat(
+			moment.utc(todayStart || moment().startOf('day')),
+			moment.utc(todayEnd || moment().endOf('day'))
+		);
 
 		// Get today's completed timelogs
 		const logs = await this.timeLogRepository.find({
 			join: {
-				alias: 'timeLog',
+				alias: 'time_log',
 				innerJoin: {
-					timeSlots: 'timeLog.timeSlots',
+					timeSlots: 'time_log.timeSlots',
 				},
 			},
 			where: {
 				...(source ? { source } : {}),
-				startedAt: Between(start, end),
+				startedAt: Between<Date>(start as Date, end as Date),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
 				organizationId,
 				isRunning: false,
+				isActive: true,
+				isArchived: false
 			},
 			order: {
 				startedAt: 'DESC',
@@ -117,21 +117,19 @@ export class TimerService {
 		const lastLog = await this.timeLogRepository.findOne({
 			where: {
 				...(source ? { source } : {}),
-				startedAt: Between(start, end),
+				startedAt: Between<Date>(start as Date, end as Date),
 				stoppedAt: Not(IsNull()),
 				employeeId,
 				tenantId,
 				organizationId,
+				isActive: true,
+				isArchived: false
 			},
 			order: {
 				startedAt: 'DESC',
 				createdAt: 'DESC',
 			},
-			...(request['relations']
-				? {
-					relations: request['relations'],
-				}
-				: {}),
+			...(request['relations'] ? { relations: request['relations'], } : {}),
 		});
 
 		const status: ITimerStatus = {
@@ -141,20 +139,18 @@ export class TimerService {
 		};
 
 		// Calculate completed timelogs duration
-		status.duration += logs
-			.filter(Boolean)
-			.reduce((sum, log) => sum + log.duration, 0);
+		status.duration += logs.filter(Boolean).reduce((sum, log) => sum + log.duration, 0);
 
 		// Calculate last TimeLog duration
 		if (lastLog) {
 			status.lastLog = lastLog;
 			status.running = lastLog.isRunning;
+
 			if (status.running) {
-				status.duration += Math.abs(
-					moment().diff(moment(lastLog.startedAt), 'seconds')
-				);
+				status.duration += Math.abs(moment().diff(moment(lastLog.startedAt), 'seconds'));
 			}
 		}
+
 		return status;
 	}
 
