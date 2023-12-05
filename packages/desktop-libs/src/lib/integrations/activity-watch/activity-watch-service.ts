@@ -58,8 +58,7 @@ export class ActivityWatchService {
 							const eventRecordedAt = moment(event.recordedAt);
 
 							if (
-								(eventRecordedAt.isSame(windowEvent.recordedAt) ||
-									(event === lastEvent && event.duration > 0)) &&
+								(eventRecordedAt.isSame(windowEvent.recordedAt) || event === lastEvent) &&
 								metaDataTitle.startsWith(data.title)
 							) {
 								Object.assign(metaData, data);
@@ -106,9 +105,9 @@ export class ActivityWatchService {
 				this.afkService.durationNoAfk(timerId)
 			]);
 
-			const systemPercentage = totalDuration > 0 ? (windowDuration - afkDuration) / totalDuration : 0;
-			const mousePercentage = totalDuration > 0 ? noAfkDuration / totalDuration : 0;
-			const keyboardPercentage = totalDuration > 0 ? noAfkDuration / totalDuration : 0;
+			const systemPercentage = this.normalizeToRange(windowDuration - afkDuration, totalDuration);
+			const mousePercentage = this.normalizeToRange(noAfkDuration, totalDuration);
+			const keyboardPercentage = this.normalizeToRange(noAfkDuration, totalDuration);
 
 			return {
 				systemPercentage,
@@ -129,5 +128,12 @@ export class ActivityWatchService {
 		const params = LocalStore.beforeRequestParams();
 		const setting = LocalStore.getStore('appSetting');
 		return params?.aw?.isAw && setting?.awIsConnected;
+	}
+
+	private normalizeToRange(value: number, total: number): number {
+		if (total <= 0) {
+			return 0;
+		}
+		return Math.min(Math.max(value / total, 0), 1);
 	}
 }
