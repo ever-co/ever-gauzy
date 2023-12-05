@@ -311,12 +311,9 @@ export interface IURLMetaData {
 
 
 
-export interface ITimerStatusInput
-	extends ITimeLogTodayFilters,
-	IBaseRelationsEntityModel,
-	IRelationalEmployee,
-	IRelationalOrganizationTeam {
+export interface ITimerStatusInput extends ITimeLogTodayFilters, IBaseRelationsEntityModel, IRelationalEmployee, IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
+	employeeIds?: string[];
 }
 
 export interface ITimerStatus {
