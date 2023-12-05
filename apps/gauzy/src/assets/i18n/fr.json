@@ -8,6 +8,7 @@
 		"REGISTER": "S'inscrire",
 		"CHANGE_PASSWORD": "Changer le mot de passe",
 		"LOGIN": "Se connecter",
+		"SIGNIN": "Se connecter",
 		"SEND_CODE": "Se connecter avec un e-mail",
 		"ADD_NOTE": "Ajouter une note",
 		"EDIT": "Éditer",
@@ -4399,6 +4400,34 @@
 			"receipt": "Reçu"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "S'inscrire",
+		"HAVE_AN_ACCOUNT": "Vous avez déjà un compte ?",
+		"LABELS": {
+			"FULL_NAME": "Nom complet :",
+			"EMAIL": "Adresse e-mail :",
+			"PASSWORD": "Mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe :"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Nom complet",
+			"EMAIL": "Adresse e-mail",
+			"PASSWORD": "Mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Le nom complet est requis !",
+			"FULL_NAME_SHOULD_CONTAIN": "Le nom complet doit contenir entre {{ minLength }} et {{ maxLength }} caractères",
+			"EMAIL_REQUIRED": "L'e-mail est requis !",
+			"EMAIL_SHOULD_BE_REAL": "L'e-mail doit être réel !",
+			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent pas commencer ou finir par des espaces !",
+			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
+			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères",
+			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
+			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
+			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">J'accepte les </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Conditions générales</strong></a><span class=\"normal-terms-text\"> et la </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Politique de confidentialité</strong></a>"
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Connexion",
 		"SUB_TITLE": "Salut ! Connectez-vous avec votre adresse e-mail.",
@@ -4437,7 +4466,15 @@
 		},
 		"DEMO": {
 			"TITLE": "Connectez-vous automatiquement aux comptes de démonstration",
-			"SUB_TITLE": "Veuillez sélectionner le type de compte ci-dessous."
+			"SUB_TITLE": "Veuillez sélectionner le type de compte ci-dessous.",
+			"SUPER_ADMIN_TITLE": "Super administrateur",
+			"ADMIN_TITLE": "Administrateur",
+			"EMPLOYEE_TITLE": "Employé",
+			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Identifiants de démonstration</span>",
+			"LABELS": {
+				"EMAIL": "E-mail : ",
+				"PASSWORD": "Mot de passe : "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4505,11 +4542,33 @@
 			"CREATE_NEW_WORKSPACE": "Créez un nouvel espace de travail.",
 			"FIND_WORKSPACE": "Trouver un espace de travail"
 		},
+		"LABELS": {
+			"EMAIL": "Entrez votre adresse e-mail :",
+			"PASSWORD": "Entrez votre mot de passe :"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "nom@adresse-mail.com",
+			"PASSWORD": "Mot de passe"
+		},
+		"SIGN_IN_TITLE": "Se connecter à l'espace de travail",
+		"BACK_TO": "Retour à",
 		"SUCCESS_SIGNIN_TITLE": "Félicitations ! Vous avez réussi à vous connecter à votre espace de travail.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Veuillez patienter pendant que nous préparons l'espace de travail...",
 		"FAIL_SIGNIN_TITLE": "Erreur ! Le code magique ou le lien que vous avez fourni a expiré ou n'est pas valide.",
 		"FAIL_SIGNIN_SUB_TITLE": "Veuillez initier le processus à nouveau.",
-		"THANKING_TEXT": "Merci de nous avoir choisis."
+		"THANKING_TEXT": "Merci de nous avoir choisis.",
+		"UNKNOWN_WORKSPACE": "Vous ne connaissez pas votre espace de travail ?",
+		"FIND_WORKSPACE": "Trouver votre espace de travail"
+	},
+	"DEMO": {
+		"SUPER_ADMIN_TITLE": "Super administrateur",
+		"ADMIN_TITLE": "Administrateur",
+		"EMPLOYEE_TITLE": "Employé",
+		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Identifiants de démonstration</span>",
+		"LABELS": {
+			"EMAIL": "E-mail: ",
+			"PASSWORD": "Mot de passe: "
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Ajouter ou supprimer une image",

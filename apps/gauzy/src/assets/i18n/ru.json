@@ -8,6 +8,7 @@
 		"REGISTER": "Регистрация",
 		"CHANGE_PASSWORD": "Изменить пароль",
 		"LOGIN": "Войти",
+		"SIGNIN": "Вход",
 		"SEND_CODE": "Войти по электронной почте",
 		"ADD_NOTE": "Добавить заметку",
 		"EDIT": "Редактировать",
@@ -4323,6 +4324,34 @@
 			"receipt": "Квитанция"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Регистрация",
+		"HAVE_AN_ACCOUNT": "Уже есть аккаунт?",
+		"LABELS": {
+			"FULL_NAME": "Полное имя:",
+			"EMAIL": "Адрес электронной почты:",
+			"PASSWORD": "Пароль",
+			"CONFIRM_PASSWORD": "Подтвердите пароль:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Полное имя",
+			"EMAIL": "Адрес электронной почты",
+			"PASSWORD": "Пароль",
+			"CONFIRM_PASSWORD": "Подтвердите пароль"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Полное имя обязательно!",
+			"FULL_NAME_SHOULD_CONTAIN": "Полное имя должно содержать от {{ minLength }} до {{ maxLength }} символов",
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_SHOULD_BE_REAL": "Адрес электронной почты должен быть реальным!",
+			"PASSWORD_NO_SPACE_EDGES": "Пароль не должен начинаться или заканчиваться пробелами!",
+			"PASSWORD_REQUIRED": "Требуется пароль!",
+			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов",
+			"CONFIRM_PASSWORD_REQUIRED": "Требуется подтверждение пароля!",
+			"PASSWORDS_NOT_MATCH": "Пароли не совпадают!",
+			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Соглашаюсь с </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Условиями использования</strong></a><span class=\"normal-terms-text\"> и </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Политикой конфиденциальности</strong></a>"
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Логин",
 		"SUB_TITLE": "Привет! Войдите с помощью электронной почты.",
@@ -4361,7 +4390,15 @@
 		},
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",
-			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже."
+			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже.",
+			"SUPER_ADMIN_TITLE": "Супер Администратор",
+			"ADMIN_TITLE": "Администратор",
+			"EMPLOYEE_TITLE": "Сотрудник",
+			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демонстрационные учетные данные</span>",
+			"LABELS": {
+				"EMAIL": "Электронная почта: ",
+				"PASSWORD": "Пароль: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4428,11 +4465,33 @@
 			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",
 			"FIND_WORKSPACE": "Найти рабочую область"
 		},
+		"LABELS": {
+			"EMAIL": "Введите ваш адрес электронной почты:",
+			"PASSWORD": "Введите ваш пароль:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "Пароль"
+		},
+		"SIGN_IN_TITLE": "Вход в Рабочее пространство",
+		"BACK_TO": "Назад к",
 		"SUCCESS_SIGNIN_TITLE": "Поздравляю! Вы успешно вошли в свое рабочее пространство.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Пожалуйста, будьте терпеливы, пока мы готовим рабочее пространство...",
 		"FAIL_SIGNIN_TITLE": "Ошибка! Магический код или ссылка, которую вы предоставили, устарели или недействительны.",
 		"FAIL_SIGNIN_SUB_TITLE": "Пожалуйста, начните процесс заново.",
-		"THANKING_TEXT": "Спасибо, что выбрали нас."
+		"THANKING_TEXT": "Спасибо, что выбрали нас.",
+		"UNKNOWN_WORKSPACE": "Не знаете своего рабочего пространства?",
+		"FIND_WORKSPACE": "Найти ваши рабочие пространства"
+	},
+	"DEMO": {
+		"SUPER_ADMIN_TITLE": "Супер Администратор",
+		"ADMIN_TITLE": "Администратор",
+		"EMPLOYEE_TITLE": "Сотрудник",
+		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демонстрационные учетные данные</span>",
+		"LABELS": {
+			"EMAIL": "Электронная почта: ",
+			"PASSWORD": "Пароль: "
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Добавить или выложить изображение",

@@ -8,6 +8,7 @@
 		"REGISTER": "Registreren",
 		"CHANGE_PASSWORD": "Wachtwoord wijzigen",
 		"LOGIN": "Inloggen",
+		"SIGNIN": "Aanmelden",
 		"SEND_CODE": "Inloggen met e-mail",
 		"ADD_NOTE": "Voeg een opmerking toe",
 		"EDIT": "Bewerken",
@@ -4398,6 +4399,34 @@
 			"receipt": "Ontvangstbewijs"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Registreren",
+		"HAVE_AN_ACCOUNT": "Heb je al een account?",
+		"LABELS": {
+			"FULL_NAME": "Volledige naam:",
+			"EMAIL": "E-mailadres:",
+			"PASSWORD": "Wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Volledige naam",
+			"EMAIL": "E-mailadres",
+			"PASSWORD": "Wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Volledige naam is verplicht!",
+			"FULL_NAME_SHOULD_CONTAIN": "Volledige naam moet tussen {{ minLength }} en {{ maxLength }} tekens bevatten",
+			"EMAIL_REQUIRED": "E-mailadres is verplicht!",
+			"EMAIL_SHOULD_BE_REAL": "E-mailadres moet echt zijn!",
+			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties!",
+			"PASSWORD_REQUIRED": "Wachtwoord is verplicht!",
+			"PASSWORD_SHOULD_CONTAIN": "Wachtwoord moet tussen {{ minLength }} en {{ maxLength }} tekens bevatten",
+			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van wachtwoord is verplicht!",
+			"PASSWORDS_NOT_MATCH": "Wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
+			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Akkoord met </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Algemene voorwaarden</strong></a><span class=\"normal-terms-text\"> en </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Privacybeleid</strong></a>"
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Inloggen",
 		"SUB_TITLE": "Hallo! Log in met je e-mail.",
@@ -4436,7 +4465,15 @@
 		},
 		"DEMO": {
 			"TITLE": "Automatisch inloggen op demorekeningen",
-			"SUB_TITLE": "Selecteer hieronder het type account."
+			"SUB_TITLE": "Selecteer hieronder het type account.",
+			"SUPER_ADMIN_TITLE": "Superbeheerder",
+			"ADMIN_TITLE": "Beheerder",
+			"EMPLOYEE_TITLE": "Werknemer",
+			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo-inloggegevens</span>",
+			"LABELS": {
+				"EMAIL": "E-mail: ",
+				"PASSWORD": "Wachtwoord: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4504,11 +4541,33 @@
 			"CREATE_NEW_WORKSPACE": "Maak een nieuwe werkruimte",
 			"FIND_WORKSPACE": "Vind een werkruimte"
 		},
+		"LABELS": {
+			"EMAIL": "Voer je e-mailadres in:",
+			"PASSWORD": "Voer je wachtwoord in:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "naam@workspace-email.com",
+			"PASSWORD": "Wachtwoord"
+		},
+		"SIGN_IN_TITLE": "Aanmelden bij Workspace",
+		"BACK_TO": "Terug naar",
 		"SUCCESS_SIGNIN_TITLE": "Gefeliciteerd! Je bent succesvol ingelogd op je werkruimte.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Wees geduldig terwijl we de werkruimte voorbereiden...",
 		"FAIL_SIGNIN_TITLE": "Fout! De magische code of de link die je hebt opgegeven is verlopen of ongeldig.",
 		"FAIL_SIGNIN_SUB_TITLE": "Start het proces opnieuw a.u.b.",
-		"THANKING_TEXT": "Bedankt dat je voor ons hebt gekozen."
+		"THANKING_TEXT": "Bedankt dat je voor ons hebt gekozen.",
+		"UNKNOWN_WORKSPACE": "Weet je niet waar je werkruimte is?",
+		"FIND_WORKSPACE": "Vind je werkruimtes"
+	},
+	"DEMO": {
+		"SUPER_ADMIN_TITLE": "Superbeheerder",
+		"ADMIN_TITLE": "Beheerder",
+		"EMPLOYEE_TITLE": "Werknemer",
+		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo-inloggegevens</span>",
+		"LABELS": {
+			"EMAIL": "E-mail: ",
+			"PASSWORD": "Wachtwoord: "
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Afbeelding toevoegen of verwijderen",

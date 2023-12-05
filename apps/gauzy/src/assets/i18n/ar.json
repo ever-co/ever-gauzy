@@ -8,6 +8,7 @@
 		"REGISTER": "تسجيل",
 		"CHANGE_PASSWORD": "تغيير كلمة المرور",
 		"LOGIN": "تسجيل الدخول",
+		"SIGNIN": "تسجيل الدخول",
 		"SEND_CODE": "تسجيل الدخول بالبريد الإلكتروني",
 		"ADD_NOTE": "أضف ملاحظة",
 		"EDIT": "تعديل",
@@ -4397,6 +4398,34 @@
 			"receipt": "إيصال"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "تسجيل",
+		"HAVE_AN_ACCOUNT": "هل لديك حساب بالفعل؟",
+		"LABELS": {
+			"FULL_NAME": " :الاسم الكامل",
+			"EMAIL": " :عنوان البريد الإلكتروني",
+			"PASSWORD": " :كلمة المرور",
+			"CONFIRM_PASSWORD": " :تأكيد كلمة المرور"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "الاسم الكامل",
+			"EMAIL": "عنوان البريد الإلكتروني",
+			"PASSWORD": "كلمة المرور",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "!الاسم الكامل مطلوب",
+			"FULL_NAME_SHOULD_CONTAIN": "يجب أن يحتوي الاسم الكامل على عدد من {{ minLength }} إلى {{ maxLength }} حرفًا",
+			"EMAIL_REQUIRED": "!البريد الإلكتروني مطلوب",
+			"EMAIL_SHOULD_BE_REAL": "!يجب أن يكون البريد الإلكتروني حقيقيًا",
+			"PASSWORD_NO_SPACE_EDGES": "!يجب ألا تبدأ أو تنتهي كلمات المرور بمسافات",
+			"PASSWORD_REQUIRED": "!كلمة المرور مطلوبة",
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد من {{ minLength }} إلى {{ maxLength }} حرفًا",
+			"CONFIRM_PASSWORD_REQUIRED": "!تأكيد كلمة المرور مطلوب",
+			"PASSWORDS_NOT_MATCH": "!كلمة المرور لا تتطابق مع تأكيد كلمة المرور",
+			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\"> موافق على </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong> الشروط و الأحكام </strong></a><span class=\"normal-terms-text\"> و </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong> سياسة الخصوصية </strong></a>"
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "تسجيل الدخول",
 		"SUB_TITLE": "مرحبًا! قم بتسجيل الدخول باستخدام بريدك الإلكتروني.",
@@ -4435,7 +4464,15 @@
 		},
 		"DEMO": {
 			"TITLE": "تسجيل الدخول تلقائيًا إلى حسابات التجريبية",
-			"SUB_TITLE": "يرجى تحديد نوع الحساب أدناه."
+			"SUB_TITLE": ".يرجى تحديد نوع الحساب أدناه",
+			"SUPER_ADMIN_TITLE": "مشرف عام",
+			"ADMIN_TITLE": "مسؤول",
+			"EMPLOYEE_TITLE": "موظف",
+			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">بيانات</span> العرض",
+			"LABELS": {
+				"EMAIL": " :البريد الإلكتروني",
+				"PASSWORD": " :كلمة المرور"
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4503,14 +4540,36 @@
 			"CREATE_NEW_WORKSPACE": "أنشئ مساحة عمل جديدة",
 			"FIND_WORKSPACE": "ابحث عن مساحة عمل"
 		},
+		"LABELS": {
+			"EMAIL": ":أدخل عنوان بريدك الإلكتروني",
+			"PASSWORD": ":أدخل كلمة المرور الخاصة بك"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "كلمة المرور"
+		},
+		"SIGN_IN_TITLE": "تسجيل الدخول إلى مساحة العمل",
+		"BACK_TO": "العودة إلى ",
 		"SUCCESS_SIGNIN_TITLE": ".تهانينا! لقد قمت بتسجيل الدخول بنجاح إلى مساحة العمل الخاصة بك",
 		"SUCCESS_SIGNIN_SUB_TITLE": "...يرجى أن تكون صبورًا بينما نقوم بإعداد مساحة العمل",
 		"FAIL_SIGNIN_TITLE": ".خطأ! رمز السحر أو الرابط الذي قدمته منتهي الصلاحية أو غير صالح",
 		"FAIL_SIGNIN_SUB_TITLE": ".يرجى بدء العملية من جديد",
-		"THANKING_TEXT": ".شكرًا لاختيارك لنا"
+		"THANKING_TEXT": ".شكرًا لاختيارك لنا",
+		"UNKNOWN_WORKSPACE": "لا تعرف مساحة العمل الخاصة بك؟",
+		"FIND_WORKSPACE": "ابحث عن مساحتك الخاصة"
+	},
+	"DEMO": {
+		"SUPER_ADMIN_TITLE": "مشرف عام",
+		"ADMIN_TITLE": "مسؤول",
+		"EMPLOYEE_TITLE": "موظف",
+		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">بيانات</span> العرض",
+		"LABELS": {
+			"EMAIL": ":البريد الإلكتروني",
+			"PASSWORD": ":كلمة المرور"
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "أضف أو أزل الصورة",
-		"AVAILABLE": "الصورة غير متاحة."
+		"AVAILABLE": "الصورة غير متاحة"
 	}
 }

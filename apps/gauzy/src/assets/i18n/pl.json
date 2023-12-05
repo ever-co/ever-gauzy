@@ -8,6 +8,7 @@
 		"REGISTER": "Rejestracja",
 		"CHANGE_PASSWORD": "Zmień hasło",
 		"LOGIN": "Zaloguj się",
+		"SIGNIN": "Zaloguj się",
 		"SEND_CODE": "Zaloguj się za pomocą e-maila",
 		"ADD_NOTE": "Dodaj notatkę",
 		"EDIT": "Edytuj",
@@ -4398,6 +4399,34 @@
 			"receipt": "Paragon"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Zarejestruj się",
+		"HAVE_AN_ACCOUNT": "Masz już konto?",
+		"LABELS": {
+			"FULL_NAME": "Pełna nazwa:",
+			"EMAIL": "Adres e-mail:",
+			"PASSWORD": "Hasło",
+			"CONFIRM_PASSWORD": "Potwierdź hasło:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Pełna nazwa",
+			"EMAIL": "Adres e-mail",
+			"PASSWORD": "Hasło",
+			"CONFIRM_PASSWORD": "Potwierdź hasło"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Pełna nazwa jest wymagana!",
+			"FULL_NAME_SHOULD_CONTAIN": "Pełna nazwa powinna zawierać od {{ minLength }} do {{ maxLength }} znaków",
+			"EMAIL_REQUIRED": "Adres e-mail jest wymagany!",
+			"EMAIL_SHOULD_BE_REAL": "Adres e-mail powinien być prawdziwy!",
+			"PASSWORD_NO_SPACE_EDGES": "Hasła nie mogą zaczynać się ani kończyć spacjami!",
+			"PASSWORD_REQUIRED": "Hasło jest wymagane!",
+			"PASSWORD_SHOULD_CONTAIN": "Hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków",
+			"CONFIRM_PASSWORD_REQUIRED": "Potwierdzenie hasła jest wymagane!",
+			"PASSWORDS_NOT_MATCH": "Hasło nie pasuje do potwierdzenia hasła!",
+			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Zgadzam się z </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Warunki korzystania</strong></a><span class=\"normal-terms-text\"> oraz </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Polityką prywatności</strong></a>"
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Logowanie",
 		"SUB_TITLE": "Cześć! Zaloguj się za pomocą swojego adresu e-mail",
@@ -4436,7 +4465,15 @@
 		},
 		"DEMO": {
 			"TITLE": "Logowanie automatyczne do kont demo",
-			"SUB_TITLE": "Proszę wybrać typ konta poniżej"
+			"SUB_TITLE": "Proszę wybrać typ konta poniżej",
+			"SUPER_ADMIN_TITLE": "Superadministrator",
+			"ADMIN_TITLE": "Administrator",
+			"EMPLOYEE_TITLE": "Pracownik",
+			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Dane do logowania w wersji demonstracyjnej</span>",
+			"LABELS": {
+				"EMAIL": "E-mail: ",
+				"PASSWORD": "Hasło: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4504,11 +4541,33 @@
 			"CREATE_NEW_WORKSPACE": "Utwórz nową przestrzeń roboczą",
 			"FIND_WORKSPACE": "Znajdź miejsce do pracy"
 		},
+		"LABELS": {
+			"EMAIL": "Wprowadź swój adres e-mail:",
+			"PASSWORD": "Wprowadź swoje hasło:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "nazwa@adres-email-firmy.com",
+			"PASSWORD": "Hasło"
+		},
+		"SIGN_IN_TITLE": "Zaloguj się do Przestrzeni Roboczej",
+		"BACK_TO": "Powrót do",
 		"SUCCESS_SIGNIN_TITLE": "Gratulacje! Pomyślnie zalogowałeś się do swojej przestrzeni roboczej.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Proszę o cierpliwość podczas przygotowywania przestrzeni roboczej...",
 		"FAIL_SIGNIN_TITLE": "Błąd! Magiczny kod lub link, który podałeś, jest przeterminowany lub nieprawidłowy.",
 		"FAIL_SIGNIN_SUB_TITLE": "Proszę rozpocznij proces ponownie.",
-		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś."
+		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś.",
+		"UNKNOWN_WORKSPACE": "Nie wiesz, gdzie jest twoja przestrzeń robocza?",
+		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze"
+	},
+	"DEMO": {
+		"SUPER_ADMIN_TITLE": "Superadministrator",
+		"ADMIN_TITLE": "Administrator",
+		"EMPLOYEE_TITLE": "Pracownik",
+		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Dane do logowania w wersji demonstracyjnej</span>",
+		"LABELS": {
+			"EMAIL": "E-mail: ",
+			"PASSWORD": "Hasło: "
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",

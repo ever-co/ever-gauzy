@@ -8,6 +8,7 @@
 		"REGISTER": "Регистриране",
 		"CHANGE_PASSWORD": "Промяна на паролата",
 		"LOGIN": "Log In",
+		"SIGNIN": "Вход",
 		"SEND_CODE": "Вход с имейл",
 		"ADD_NOTE": "Добави бележка",
 		"EDIT": "Редактиране",
@@ -4324,6 +4325,34 @@
 			"receipt": "Receipt"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Регистрация",
+		"HAVE_AN_ACCOUNT": "Вече имате акаунт?",
+		"LABELS": {
+			"FULL_NAME": "Пълно име:",
+			"EMAIL": "Имейл адрес:",
+			"PASSWORD": "Парола",
+			"CONFIRM_PASSWORD": "Потвърдете паролата:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Пълно име",
+			"EMAIL": "Имейл адрес",
+			"PASSWORD": "Парола",
+			"CONFIRM_PASSWORD": "Потвърдете паролата"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Името е задължително!",
+			"FULL_NAME_SHOULD_CONTAIN": "Името трябва да съдържа от {{ minLength }} до {{ maxLength }} знака",
+			"EMAIL_REQUIRED": "Имейлът е задължителен!",
+			"EMAIL_SHOULD_BE_REAL": "Имейлът трябва да е реален!",
+			"PASSWORD_NO_SPACE_EDGES": "Паролите не трябва да започват или завършват с интервали!",
+			"PASSWORD_REQUIRED": "Паролата е задължителна!",
+			"PASSWORD_SHOULD_CONTAIN": "Паролата трябва да съдържа от {{ minLength }} до {{ maxLength }} знака",
+			"CONFIRM_PASSWORD_REQUIRED": "Изисква се потвърждение на паролата!",
+			"PASSWORDS_NOT_MATCH": "Паролата не съвпада с потвърждението на паролата!",
+			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Съгласен съм с </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Общи условия и правила</strong></a><span class=\"normal-terms-text\"> и </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Политика за поверителност</strong></a>"
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
 		"SUB_TITLE": "Hello! Log in with your email.",
@@ -4362,7 +4391,15 @@
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
-			"SUB_TITLE": "Please select account type below."
+			"SUB_TITLE": "Please select account type below.",
+			"SUPER_ADMIN_TITLE": "Супер администратор",
+			"ADMIN_TITLE": "Администратор",
+			"EMPLOYEE_TITLE": "Служител",
+			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демо</span> данни",
+			"LABELS": {
+				"EMAIL": "Имейл: ",
+				"PASSWORD": "Парола: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4429,11 +4466,33 @@
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		},
+		"LABELS": {
+			"EMAIL": "Въведете вашия имейл адрес:",
+			"PASSWORD": "Въведете вашата парола:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "Парола"
+		},
+		"SIGN_IN_TITLE": "Вход в Работното пространство",
+		"BACK_TO": "Назад към",
 		"SUCCESS_SIGNIN_TITLE": "Поздравления! Влезли сте успешно в работното си пространство.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Моля, бъдете търпеливи, докато подготвяме работното пространство...",
 		"FAIL_SIGNIN_TITLE": "Грешка! Магическият код или връзката, която предоставихте, е изтекъл или невалиден.",
 		"FAIL_SIGNIN_SUB_TITLE": "Моля, инициирайте процеса отново.",
-		"THANKING_TEXT": "Благодарим ви, че ни избрахте."
+		"THANKING_TEXT": "Благодарим ви, че ни избрахте.",
+		"UNKNOWN_WORKSPACE": "Не знаете работното си пространство?",
+		"FIND_WORKSPACE": "Намерете вашето работно пространство"
+	},
+	"DEMO": {
+		"SUPER_ADMIN_TITLE": "Супер администратор",
+		"ADMIN_TITLE": "Администратор",
+		"EMPLOYEE_TITLE": "Служител",
+		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демо</span> данни",
+		"LABELS": {
+			"EMAIL": "Имейл: ",
+			"PASSWORD": "Парола: "
+		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",
