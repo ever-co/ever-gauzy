@@ -51,7 +51,8 @@
         "asarUnpack": [
             "node_modules/screenshot-desktop/lib/win32",
             "node_modules/@sentry/electron",
-            "node_modules/sqlite3/lib"
+            "node_modules/sqlite3/lib",
+            "node_modules/better-sqlite3"
         ],
         "directories": {
             "buildResources": "icons",
