@@ -72,6 +72,7 @@ export class ActivityWatchService {
 							) {
 								Object.assign(metaData, data);
 								windowEvent.type = event.type;
+								metaData.app = data.title;
 							}
 						}
 					};
