@@ -85,7 +85,7 @@ import { TaskRenderCellComponent } from './task-render/task-render-cell/task-ren
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 import { GAUZY_ENV } from '../constants';
 import { TasksComponent } from '../tasks/tasks.component';
-import { ActivityWatchViewService } from '../intergrations';
+import { ActivityWatchViewService } from '../integrations';
 
 enum TimerStartMode {
 	MANUAL = 'manual',

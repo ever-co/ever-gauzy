@@ -41,7 +41,7 @@ import { NgxTranslateModule } from '../ngx-translate';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { AlwaysOnService } from '../always-on/always-on.service';
 import { TaskRenderModule } from './task-render/task-render.module';
-import { ActivityWatchModule } from '../intergrations';
+import { ActivityWatchModule } from '../integrations';
 
 @NgModule({
 	declarations: [

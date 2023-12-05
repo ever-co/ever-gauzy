@@ -1,10 +1,10 @@
 {
-    "name": "gauzy-desktop-timer",
-    "productName": "Gauzy Desktop Timer",
+    "name": "ever-gauzy-desktop-timer",
+    "productName": "Ever Gauzy Desktop Timer",
     "version": "0.1.0",
-    "description": "Gauzy Desktop Timer",
+    "description": "Ever Gauzy Desktop Timer",
     "license": "AGPL-3.0",
-    "homepage": "https://gauzy.co",
+    "homepage": "https://akatsuki.com",
     "repository": {
         "type": "git",
         "url": "https://github.com/ever-co/ever-gauzy.git"
@@ -27,9 +27,9 @@
         ]
     },
     "build": {
-        "appId": "com.ever.gauzydesktoptimer",
+        "appId": "co.ever.gauzy.desktop-timer",
         "artifactName": "${name}-${version}.${ext}",
-        "productName": "Gauzy Desktop Timer",
+        "productName": "Ever Gauzy Desktop Timer",
         "copyright": "Copyright © 2019-Present. Ever Co. LTD",
         "afterSign": "tools/notarize.js",
         "dmg": {
@@ -98,7 +98,7 @@
                 "deb",
                 "tar.gz"
             ],
-            "executableName": "gauzy-desktop-timer",
+            "executableName": "ever-gauzy-desktop-timer",
             "artifactName": "${name}-${version}.${ext}",
             "synopsis": "Desktop",
             "category": "Development"
@@ -142,7 +142,7 @@
         "consolidate": "^0.16.0",
         "electron-log": "^4.4.8",
         "electron-store": "^8.1.0",
-		"electron-updater": "^6.1.7",
+        "electron-updater": "^6.1.7",
         "electron-util": "^0.17.2",
         "embedded-queue": "^0.0.11",
         "ffi-napi": "^4.0.3",
