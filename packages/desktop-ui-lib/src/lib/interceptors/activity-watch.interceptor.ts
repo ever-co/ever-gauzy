@@ -13,7 +13,7 @@ export class ActivityWatchInterceptor implements HttpInterceptor {
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		const baseUrl = this.environment?.AWHost || 'http://localhost:5600';
 		const API_VERSION = '/api/0';
-		if (baseUrl && request.url.startsWith(`${API_ACTIVITY_WATCH_PREFIX}`)) {
+		if (request.url.startsWith(`${API_ACTIVITY_WATCH_PREFIX}`)) {
 			const url = baseUrl.concat(API_VERSION).concat(request.url);
 			request = request.clone({ url });
 		}

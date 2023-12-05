@@ -982,7 +982,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.teamSelect = arg.organizationTeamId;
 					this.token = arg.token;
 					this.note = arg.note;
-					this._activityWatchViewService.aw$.next(!!arg?.aw?.isAw);
+					this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 					this.appSetting$.next(arg.settings);
 					this._timeZoneManager.changeZone(
 						this.appSetting?.zone || ZoneEnum.LOCAL
@@ -1021,7 +1021,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.projectSelect = arg.projectId;
 					this.teamSelect = arg.organizationTeamId;
 					this.note = arg.note;
-					this._activityWatchViewService.aw$.next(!!arg?.aw?.isAw);
+					this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 					await this.setTimerDetails();
 					await this.toggleStart(true);
 				})
@@ -2250,7 +2250,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// screenshot process
 		let screenshotImg = [];
 		let thumbScreenshotImg = [];
-		if (!arg?.displays) {
+		if (!arg.displays) {
 			screenshotImg = await this.getScreenshot(arg, false);
 			thumbScreenshotImg = await this.getScreenshot(arg, true);
 		} else {
