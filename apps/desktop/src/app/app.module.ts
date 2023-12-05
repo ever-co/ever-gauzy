@@ -38,7 +38,8 @@ import {
 	LanguageInterceptor,
 	Store,
 	AlwaysOnModule,
-	GAUZY_ENV
+	GAUZY_ENV,
+	ActivityWatchInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -116,6 +117,11 @@ import { environment } from '../environments/environment';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: ServerErrorInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ActivityWatchInterceptor,
 			multi: true
 		},
 		{
