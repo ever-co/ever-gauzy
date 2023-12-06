@@ -11,7 +11,7 @@ export class AddColumnsToTheIntegrationTable1695023907817 implements MigrationIn
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`${this.name} start running!`));
+        console.log(chalk.yellow(this.name + ' start running!'));
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);

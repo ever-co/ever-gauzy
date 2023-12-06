@@ -13,7 +13,7 @@ export class MigrateEmailTemplatesData1643809486960 implements MigrationInterfac
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`${this.name} start running!`));
+        console.log(chalk.yellow(this.name + ' start running!'));
 
         const templates = Object.values(EmailTemplateEnum);
         await Promise.all(

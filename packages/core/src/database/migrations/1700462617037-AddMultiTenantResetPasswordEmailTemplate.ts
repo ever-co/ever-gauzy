@@ -1,4 +1,3 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { EmailTemplateEnum } from "@gauzy/contracts";
@@ -14,7 +13,7 @@ export class AddMultiTenantResetPasswordEmailTemplate1700462617037 implements Mi
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`${this.name} start running!`));
+        console.log(chalk.yellow(this.name + ' start running!'));
 
         // Migrate email templates for multi-tenant password reset
         try {

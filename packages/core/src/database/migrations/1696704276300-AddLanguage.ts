@@ -11,7 +11,7 @@ export class AddLanguage1696704276300 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
-		console.log(chalk.yellow(`${this.name} start running!`));
+		console.log(chalk.yellow(this.name + ' start running!'));
 
 		await LanguageUtils.migrateLanguages(queryRunner);
 	}

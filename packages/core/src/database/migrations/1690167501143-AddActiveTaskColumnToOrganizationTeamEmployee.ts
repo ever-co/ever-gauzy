@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from "chalk";
 
 export class AddActiveTaskColumnToOrganizationTeamEmployee1690167501143
-	implements MigrationInterface
-{
+	implements MigrationInterface {
 	name = 'AddActiveTaskColumnToOrganizationTeamEmployee1690167501143';
 
 	/**
@@ -11,6 +11,8 @@ export class AddActiveTaskColumnToOrganizationTeamEmployee1690167501143
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
 			await this.sqliteUpQueryRunner(queryRunner);
 		} else {

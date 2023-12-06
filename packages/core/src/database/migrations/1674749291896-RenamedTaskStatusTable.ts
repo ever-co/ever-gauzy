@@ -1,5 +1,5 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class RenamedTaskStatusTable1674749291896 implements MigrationInterface {
 
@@ -11,6 +11,8 @@ export class RenamedTaskStatusTable1674749291896 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         await queryRunner.query(`ALTER TABLE "status" RENAME TO "task_status"`);
     }
 
