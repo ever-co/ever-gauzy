@@ -11,7 +11,7 @@ import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
-	constructor(private readonly timerService: TimerService) {}
+	constructor(private readonly timerService: TimerService) { }
 
 	/**
 	 * GET timer today's status
@@ -22,7 +22,9 @@ export class TimerController {
 	@Get('/status')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getTimerStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatus> {
+	async getTimerStatus(
+		@Query() query: TimerStatusQueryDTO
+	): Promise<ITimerStatus> {
 		return await this.timerService.getTimerStatus(query);
 	}
 
@@ -35,7 +37,9 @@ export class TimerController {
 	@Get('/status/worked')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_TRACKER)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getTimerWorkedStatus(@Query() query: TimerStatusQueryDTO): Promise<ITimerStatus> {
+	async getTimerWorkedStatus(
+		@Query() query: TimerStatusQueryDTO
+	): Promise<ITimerStatus[]> {
 		return await this.timerService.getTimerWorkedStatus(query);
 	}
 

@@ -2,14 +2,14 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
-		"target": "es2016",
+		"target": "es2020",
 		"declaration": true,
 		"experimentalDecorators": true,
 		"declarationMap": true,
 		"sourceMap": true,
 		"inlineSources": true,
 		"types": ["node"],
-		"lib": ["dom", "es2018"]
+		"lib": ["es2020", "dom", "es2018"]
 	},
 	"angularCompilerOptions": {
 		"skipTemplateCodegen": true,

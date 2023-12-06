@@ -25,20 +25,20 @@ export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType>
 	 * @param entity
 	 * @param event
 	 */
-	afterLoad(
+	async afterLoad(
 		entity: IssueType | Partial<IssueType>,
 		event?: LoadEvent<IssueType>
-	): void | Promise<any> {
+	): Promise<any | void> {
 		try {
 			if (!!entity['image']) {
 				entity.fullIconUrl = entity.image.fullUrl || entity.icon;
 			}
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
+				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('Error in afterLoad:', error);
 		}
 	}
 

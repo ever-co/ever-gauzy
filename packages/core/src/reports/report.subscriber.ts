@@ -18,14 +18,17 @@ export class ReportSubscriber implements EntitySubscriberInterface<Report> {
      *
      * @param entity
      */
-    afterLoad(entity: Report, event?: LoadEvent<Report>): void | Promise<any> {
+    async afterLoad(
+        entity: Report,
+        event?: LoadEvent<Report>
+    ): Promise<any | void> {
         try {
             if (entity.image) {
                 const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-                entity.imageUrl = store.getProviderInstance().url(entity.image);
+                entity.imageUrl = await store.getProviderInstance().url(entity.image);
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterLoad:', error);
         }
     }
 }
