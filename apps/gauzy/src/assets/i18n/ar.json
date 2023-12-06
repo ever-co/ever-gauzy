@@ -4423,7 +4423,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد من {{ minLength }} إلى {{ maxLength }} حرفًا",
 			"CONFIRM_PASSWORD_REQUIRED": "!تأكيد كلمة المرور مطلوب",
 			"PASSWORDS_NOT_MATCH": "!كلمة المرور لا تتطابق مع تأكيد كلمة المرور",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\"> موافق على </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong> الشروط و الأحكام </strong></a><span class=\"normal-terms-text\"> و </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong> سياسة الخصوصية </strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "أوافق على",
+				"TERMS_AND_CONDITIONS": "البنود والشروط",
+				"AND": " و ",
+				"PRIVACY_POLICY": "سياسة الخصوصية"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4468,7 +4473,8 @@
 			"SUPER_ADMIN_TITLE": "مشرف عام",
 			"ADMIN_TITLE": "مسؤول",
 			"EMPLOYEE_TITLE": "موظف",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">بيانات</span> العرض",
+			"DEMO_TITLE": "عرض تجريبي",
+			"CREDENTIALS_TITLE": "بيانات الاعتماد",
 			"LABELS": {
 				"EMAIL": " :البريد الإلكتروني",
 				"PASSWORD": " :كلمة المرور"
@@ -4557,16 +4563,6 @@
 		"THANKING_TEXT": ".شكرًا لاختيارك لنا",
 		"UNKNOWN_WORKSPACE": "لا تعرف مساحة العمل الخاصة بك؟",
 		"FIND_WORKSPACE": "ابحث عن مساحتك الخاصة"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "مشرف عام",
-		"ADMIN_TITLE": "مسؤول",
-		"EMPLOYEE_TITLE": "موظف",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">بيانات</span> العرض",
-		"LABELS": {
-			"EMAIL": ":البريد الإلكتروني",
-			"PASSWORD": ":كلمة المرور"
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "أضف أو أزل الصورة",

@@ -12,8 +12,10 @@
           <nb-accordion-item class="demo-credentials-select-item">
             <nb-accordion-item-header class="demo-credentials-header">
               <div class="demo-credentials-head-text">
-                <div [innerHTML]="'LOGIN_PAGE.DEMO.DEMO_CREDENTIALS_TITLE' | translate">
-                </div>
+                <span class="demo-text-span">
+                  {{ "LOGIN_PAGE.DEMO.DEMO_TITLE" | translate }}
+                </span>
+                {{ "LOGIN_PAGE.DEMO.CREDENTIALS_TITLE" | translate }}
               </div>
             </nb-accordion-item-header>
             <nb-accordion-item-body class="demo-credentials-body">

@@ -183,7 +183,22 @@
 						[(ngModel)]="user.terms"
 						[required]="getConfigValue('forms.register.terms')"
 					>
-						<div [innerHTML]="'REGISTER_PAGE.VALIDATIONS.AGREE_TERMS_PRIVACY' | translate"></div>
+						<span class="normal-terms-text">
+							{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.AGREE_TO" | translate }}
+						</span>
+						<a routerLink="/legal/terms" target="_blank" class="terms-link">
+							<strong>
+								{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.TERMS_AND_CONDITIONS" | translate }}
+							</strong>
+						</a>
+						<span class="normal-terms-text">
+							{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.AND" | translate }}
+						</span>
+						<a routerLink="/legal/privacy" target="_blank" class="terms-link">
+							<strong>
+								{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.PRIVACY_POLICY" | translate }}
+							</strong>
+						</a>
 					</nb-checkbox>
 				</div>
 			</ng-container>

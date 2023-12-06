@@ -4350,7 +4350,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "Паролата трябва да съдържа от {{ minLength }} до {{ maxLength }} знака",
 			"CONFIRM_PASSWORD_REQUIRED": "Изисква се потвърждение на паролата!",
 			"PASSWORDS_NOT_MATCH": "Паролата не съвпада с потвърждението на паролата!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Съгласен съм с </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Общи условия и правила</strong></a><span class=\"normal-terms-text\"> и </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Политика за поверителност</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Съгласен съм с",
+				"TERMS_AND_CONDITIONS": "Общи условия",
+				"AND": " и ",
+				"PRIVACY_POLICY": "Политика за поверителност"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4395,7 +4400,8 @@
 			"SUPER_ADMIN_TITLE": "Супер администратор",
 			"ADMIN_TITLE": "Администратор",
 			"EMPLOYEE_TITLE": "Служител",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демо</span> данни",
+			"DEMO_TITLE": "Демо",
+			"CREDENTIALS_TITLE": "Удостоверения",
 			"LABELS": {
 				"EMAIL": "Имейл: ",
 				"PASSWORD": "Парола: "
@@ -4483,16 +4489,6 @@
 		"THANKING_TEXT": "Благодарим ви, че ни избрахте.",
 		"UNKNOWN_WORKSPACE": "Не знаете работното си пространство?",
 		"FIND_WORKSPACE": "Намерете вашето работно пространство"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Супер администратор",
-		"ADMIN_TITLE": "Администратор",
-		"EMPLOYEE_TITLE": "Служител",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демо</span> данни",
-		"LABELS": {
-			"EMAIL": "Имейл: ",
-			"PASSWORD": "Парола: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

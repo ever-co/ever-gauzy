@@ -4349,7 +4349,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов",
 			"CONFIRM_PASSWORD_REQUIRED": "Требуется подтверждение пароля!",
 			"PASSWORDS_NOT_MATCH": "Пароли не совпадают!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Соглашаюсь с </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Условиями использования</strong></a><span class=\"normal-terms-text\"> и </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Политикой конфиденциальности</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Согласен с",
+				"TERMS_AND_CONDITIONS": "Условиями использования",
+				"AND": " и ",
+				"PRIVACY_POLICY": "Политикой конфиденциальности"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4394,7 +4399,8 @@
 			"SUPER_ADMIN_TITLE": "Супер Администратор",
 			"ADMIN_TITLE": "Администратор",
 			"EMPLOYEE_TITLE": "Сотрудник",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демонстрационные учетные данные</span>",
+			"DEMO_TITLE": "Демо",
+			"CREDENTIALS_TITLE": "Учетные данные",
 			"LABELS": {
 				"EMAIL": "Электронная почта: ",
 				"PASSWORD": "Пароль: "
@@ -4482,16 +4488,6 @@
 		"THANKING_TEXT": "Спасибо, что выбрали нас.",
 		"UNKNOWN_WORKSPACE": "Не знаете своего рабочего пространства?",
 		"FIND_WORKSPACE": "Найти ваши рабочие пространства"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Супер Администратор",
-		"ADMIN_TITLE": "Администратор",
-		"EMPLOYEE_TITLE": "Сотрудник",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Демонстрационные учетные данные</span>",
-		"LABELS": {
-			"EMAIL": "Электронная почта: ",
-			"PASSWORD": "Пароль: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Добавить или выложить изображение",

@@ -4348,7 +4348,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "סיסמה צריכה להכיל בין {{ minLength }} ל-{{ maxLength }} תווים",
 			"CONFIRM_PASSWORD_REQUIRED": "אישור סיסמה נדרש!",
 			"PASSWORDS_NOT_MATCH": "הסיסמה לא תואמת לאישור הסיסמה!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">מסכים ל </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>תנאי השימוש</strong></a><span class=\"normal-terms-text\"> ול </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>מדיניות הפרטיות</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "הסכמה",
+				"TERMS_AND_CONDITIONS": "תנאים והגבלות",
+				"AND": " וגם ",
+				"PRIVACY_POLICY": "מדיניות פרטיות"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4393,7 +4398,8 @@
 			"SUPER_ADMIN_TITLE": "מנהל ראשי",
 			"ADMIN_TITLE": "מנהל",
 			"EMPLOYEE_TITLE": "עובד",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">פרטי דמו</span>",
+			"DEMO_TITLE": "הדגמה",
+			"CREDENTIALS_TITLE": "פרטי כניסה",
 			"LABELS": {
 				"EMAIL": "אימייל: ",
 				"PASSWORD": "סיסמה: "
@@ -4481,16 +4487,6 @@
 		"THANKING_TEXT": ".תודה על בחירתך בנו",
 		"UNKNOWN_WORKSPACE": "אין לך מושג מה המרחב שלך?",
 		"FIND_WORKSPACE": "מצא את המרחב שלך"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "מנהל ראשי",
-		"ADMIN_TITLE": "מנהל",
-		"EMPLOYEE_TITLE": "עובד",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">פרטי דמו</span>",
-		"LABELS": {
-			"EMAIL": "אימייל: ",
-			"PASSWORD": "סיסמה: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

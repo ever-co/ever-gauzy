@@ -4424,7 +4424,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "A senha deve conter de {{ minLength }} a {{ maxLength }} caracteres",
 			"CONFIRM_PASSWORD_REQUIRED": "Confirmação de senha é obrigatória!",
 			"PASSWORDS_NOT_MATCH": "A senha não coincide com a confirmação de senha!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Concordo com </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Termos de Uso</strong></a><span class=\"normal-terms-text\"> e </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Política de Privacidade</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Concordo com",
+				"TERMS_AND_CONDITIONS": "Termos e Condições",
+				"AND": " e ",
+				"PRIVACY_POLICY": "Política de Privacidade"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4469,7 +4474,8 @@
 			"SUPER_ADMIN_TITLE": "Super Administrador",
 			"ADMIN_TITLE": "Administrador",
 			"EMPLOYEE_TITLE": "Funcionário",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Credenciais de Demonstração</span>",
+			"DEMO_TITLE": "Demonstração",
+			"CREDENTIALS_TITLE": "Credenciais",
 			"LABELS": {
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Senha: "
@@ -4558,16 +4564,6 @@
 		"THANKING_TEXT": "Obrigado por nos escolher.",
 		"UNKNOWN_WORKSPACE": "Não conhece a sua área de trabalho?",
 		"FIND_WORKSPACE": "Encontre suas áreas de trabalho"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Super Administrador",
-		"ADMIN_TITLE": "Administrador",
-		"EMPLOYEE_TITLE": "Funcionário",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Credenciais de Demonstração</span>",
-		"LABELS": {
-			"EMAIL": "E-mail: ",
-			"PASSWORD": "Senha: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Adicionar ou Remover Imagem",

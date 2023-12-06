@@ -4424,7 +4424,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "Wachtwoord moet tussen {{ minLength }} en {{ maxLength }} tekens bevatten",
 			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van wachtwoord is verplicht!",
 			"PASSWORDS_NOT_MATCH": "Wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Akkoord met </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Algemene voorwaarden</strong></a><span class=\"normal-terms-text\"> en </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Privacybeleid</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Akkoord met",
+				"TERMS_AND_CONDITIONS": "Algemene voorwaarden",
+				"AND": " en ",
+				"PRIVACY_POLICY": "Privacybeleid"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4469,7 +4474,8 @@
 			"SUPER_ADMIN_TITLE": "Superbeheerder",
 			"ADMIN_TITLE": "Beheerder",
 			"EMPLOYEE_TITLE": "Werknemer",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo-inloggegevens</span>",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Inloggegevens",
 			"LABELS": {
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Wachtwoord: "
@@ -4558,16 +4564,6 @@
 		"THANKING_TEXT": "Bedankt dat je voor ons hebt gekozen.",
 		"UNKNOWN_WORKSPACE": "Weet je niet waar je werkruimte is?",
 		"FIND_WORKSPACE": "Vind je werkruimtes"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Superbeheerder",
-		"ADMIN_TITLE": "Beheerder",
-		"EMPLOYEE_TITLE": "Werknemer",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo-inloggegevens</span>",
-		"LABELS": {
-			"EMAIL": "E-mail: ",
-			"PASSWORD": "Wachtwoord: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Afbeelding toevoegen of verwijderen",

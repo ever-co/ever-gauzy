@@ -4505,7 +4505,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Agree to </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Terms & Conditions</strong></a><span class=\"normal-terms-text\"> and </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Privacy Policy</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO":"Agree to",
+				"TERMS_AND_CONDITIONS":"Terms & Conditions",
+				"AND": " and ",
+				"PRIVACY_POLICY": "Privacy Policy"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4550,7 +4555,8 @@
 			"SUPER_ADMIN_TITLE": "Super Admin",
 			"ADMIN_TITLE": "Admin",
 			"EMPLOYEE_TITLE": "Employee",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo</span> Credentials",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Credentials",
 			"LABELS": {
 				"EMAIL":"Email: ",
 				"PASSWORD": "Password: "
@@ -4639,16 +4645,6 @@
 		"THANKING_TEXT": "Thank you for choosing us.",
 		"UNKNOWN_WORKSPACE": "Don't know your workspace?",
 		"FIND_WORKSPACE": "Find your workspaces"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Super Admin",
-		"ADMIN_TITLE": "Admin",
-		"EMPLOYEE_TITLE": "Employee",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo</span> Credentials",
-		"LABELS": {
-			"EMAIL":"Email: ",
-			"PASSWORD": "Password: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

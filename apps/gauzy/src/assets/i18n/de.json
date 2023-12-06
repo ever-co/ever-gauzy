@@ -4420,7 +4420,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte zwischen {{ minLength }} und {{ maxLength }} Zeichen enthalten",
 			"CONFIRM_PASSWORD_REQUIRED": "Die Bestätigung des Passworts ist erforderlich!",
 			"PASSWORDS_NOT_MATCH": "Das Passwort stimmt nicht mit der Passwortbestätigung überein!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Ich stimme den </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Allgemeinen Geschäftsbedingungen</strong></a><span class=\"normal-terms-text\"> und der </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Datenschutzrichtlinie</strong></a> zu"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Zustimmen",
+				"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen",
+				"AND": " und ",
+				"PRIVACY_POLICY": "Datenschutzbestimmungen"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4465,7 +4470,8 @@
 			"SUPER_ADMIN_TITLE": "Super-Administrator",
 			"ADMIN_TITLE": "Administrator",
 			"EMPLOYEE_TITLE": "Mitarbeiter",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo</span> Anmeldedaten",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Anmeldedaten",
 			"LABELS": {
 				"EMAIL": "E-Mail: ",
 				"PASSWORD": "Passwort: "
@@ -4554,16 +4560,6 @@
 		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben.",
 		"UNKNOWN_WORKSPACE": "Kennen Sie Ihren Arbeitsbereich nicht?",
 		"FIND_WORKSPACE": "Finden Sie Ihren Arbeitsbereich"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Super-Administrator",
-		"ADMIN_TITLE": "Administrator",
-		"EMPLOYEE_TITLE": "Mitarbeiter",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Demo</span> Anmeldedaten",
-		"LABELS": {
-			"EMAIL": "E-Mail: ",
-			"PASSWORD": "Passwort: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Bild hinzufügen oder entfernen",

@@ -4424,7 +4424,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "Hasło powinno zawierać od {{ minLength }} do {{ maxLength }} znaków",
 			"CONFIRM_PASSWORD_REQUIRED": "Potwierdzenie hasła jest wymagane!",
 			"PASSWORDS_NOT_MATCH": "Hasło nie pasuje do potwierdzenia hasła!",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">Zgadzam się z </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>Warunki korzystania</strong></a><span class=\"normal-terms-text\"> oraz </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>Polityką prywatności</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Zgadzam się na",
+				"TERMS_AND_CONDITIONS": "Regulamin",
+				"AND": " oraz ",
+				"PRIVACY_POLICY": "Polityka prywatności"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4469,7 +4474,8 @@
 			"SUPER_ADMIN_TITLE": "Superadministrator",
 			"ADMIN_TITLE": "Administrator",
 			"EMPLOYEE_TITLE": "Pracownik",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Dane do logowania w wersji demonstracyjnej</span>",
+			"DEMO_TITLE": "Dema",
+			"CREDENTIALS_TITLE": "Dane uwierzytelniające",
 			"LABELS": {
 				"EMAIL": "E-mail: ",
 				"PASSWORD": "Hasło: "
@@ -4558,16 +4564,6 @@
 		"THANKING_TEXT": "Dziękujemy, że nas wybrałeś.",
 		"UNKNOWN_WORKSPACE": "Nie wiesz, gdzie jest twoja przestrzeń robocza?",
 		"FIND_WORKSPACE": "Znajdź swoje przestrzenie robocze"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "Superadministrator",
-		"ADMIN_TITLE": "Administrator",
-		"EMPLOYEE_TITLE": "Pracownik",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">Dane do logowania w wersji demonstracyjnej</span>",
-		"LABELS": {
-			"EMAIL": "E-mail: ",
-			"PASSWORD": "Hasło: "
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",

@@ -4424,7 +4424,12 @@
 			"PASSWORD_SHOULD_CONTAIN": "密码应包含 {{ minLength }} 到 {{ maxLength }} 个字符",
 			"CONFIRM_PASSWORD_REQUIRED": "需要确认密码！",
 			"PASSWORDS_NOT_MATCH": "密码与确认密码不匹配！",
-			"AGREE_TERMS_PRIVACY": "<span class=\"normal-terms-text\">同意 </span><a routerLink=\"/legal/terms\" target=\"_blank\" class=\"terms-link\"><strong>条款和条件</strong></a><span class=\"normal-terms-text\"> 以及 </span><a routerLink=\"/legal/privacy\" target=\"_blank\" class=\"terms-link\"><strong>隐私政策</strong></a>"
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "同意",
+				"TERMS_AND_CONDITIONS": "条款和条件",
+				"AND": " 和 ",
+				"PRIVACY_POLICY": "隐私政策"
+			}
 		}
 	},
 	"LOGIN_PAGE": {
@@ -4469,7 +4474,8 @@
 			"SUPER_ADMIN_TITLE": "超级管理员",
 			"ADMIN_TITLE": "管理员",
 			"EMPLOYEE_TITLE": "员工",
-			"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">演示凭证</span>",
+			"DEMO_TITLE": "演示",
+			"CREDENTIALS_TITLE": "凭证",
 			"LABELS": {
 				"EMAIL": "电子邮件：",
 				"PASSWORD": "密码："
@@ -4558,16 +4564,6 @@
 		"THANKING_TEXT": "感谢您选择我们。",
 		"UNKNOWN_WORKSPACE": "不知道您的工作区？",
 		"FIND_WORKSPACE": "查找您的工作区"
-	},
-	"DEMO": {
-		"SUPER_ADMIN_TITLE": "超级管理员",
-		"ADMIN_TITLE": "管理员",
-		"EMPLOYEE_TITLE": "员工",
-		"DEMO_CREDENTIALS_TITLE": "<span class=\"demo-text-span\">演示凭证</span>",
-		"LABELS": {
-			"EMAIL": "电子邮件：",
-			"PASSWORD": "密码："
-		}
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",
