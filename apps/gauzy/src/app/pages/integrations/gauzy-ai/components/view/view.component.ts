@@ -16,16 +16,26 @@ import { Store } from './../../../../../@core/services';
 	providers: [TitleCasePipe]
 })
 export class GauzyAIViewComponent extends TranslationBaseComponent implements OnInit {
-
 	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
 	public settings$: Observable<IIntegrationSetting[]>;
 	public settings: IIntegrationSetting[] = [];
+	public dummySettings: IIntegrationSetting[] = [
+		{
+			settingsValue: '382808338280882808xS8Y8XsL',
+			settingsName: 'API Keys'
+		},
+		{ settingsValue: '382808xS8Y3828088K382808sG', settingsName: 'API Secret' },
+		{
+			settingsValue: '382382808808xS3828088Y8Jsm',
+			settingsName: 'Open AI API Secret'
+		}
+	];
 
 	constructor(
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly _store: Store,
+		private readonly _store: Store
 	) {
 		super(translateService);
 	}
@@ -44,13 +54,13 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 				this.settings = settings;
 			}),
 			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this),
+			untilDestroyed(this)
 		);
 	}
 
 	/**
 	 * Navigate to the "Integrations" page.
-	*/
+	 */
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
 	}

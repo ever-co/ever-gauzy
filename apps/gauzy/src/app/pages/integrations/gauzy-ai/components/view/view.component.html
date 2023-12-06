@@ -12,13 +12,7 @@
 		</div>
 		<div>
 			<div>
-				<button
-					nbButton
-					status="primary"
-					class="mr-2"
-					size="small"
-					(click)="navigateToResetIntegration()"
-				>
+				<button nbButton status="primary" class="mr-2" size="small" (click)="navigateToResetIntegration()">
 					<div class="sync-container">
 						<nb-icon class="sync" icon="sync-outline"></nb-icon>
 						{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
@@ -33,6 +27,29 @@
 				<!-- <header>
 					{{ 'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate }}
 				</header> -->
+				<div class="integration-container">
+					<div class="integration-row" *ngFor="let setting of dummySettings">
+						<div class="integration-label">
+							{{ setting.settingsName }}
+							<nb-icon icon="info-outline" size="small"></nb-icon>
+						</div>
+						<div class="integration-value">
+							<nb-icon
+								(click)="setting.show = !setting.show"
+								[icon]="!!setting.show ? 'eye-outline' : 'eye-off-outline'"
+							></nb-icon>
+							<div
+								gaTextMask
+								[config]="{
+									text: setting.settingsValue,
+									showOriginal: !!setting.show,
+									replacement: 0.75
+								}"
+								class="integration-mask"
+							></div>
+						</div>
+					</div>
+				</div>
 			</nb-tab>
 			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate">
 				<ga-wip></ga-wip>

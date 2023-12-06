@@ -1,11 +1,47 @@
 :host {
-    .tabset {
-        padding: 0;
+  .tabset {
+    padding: 0;
+  }
+
+  header {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+  }
+
+  nb-tab.content-active {
+    background: var(--gauzy-card-2);
+    height: calc(100vh - 20.5rem);
+    border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+  }
+
+  .integration-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .integration-row {
+      background: var(--gauzy-card-2);
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      display: flex;
+      justify-content: space-between;
+
+      .integration-label {
+        nb-icon {
+          font-size: 1rem;
+        }
+      }
+
+      .integration-value {
+        display: flex;
+        gap: 0.25rem;
+
+        nb-icon {
+          cursor: pointer;
+        }
+      }
     }
-    header {
-        font-size: 18px;
-        font-weight: 600;
-        line-height: 30px;
-        letter-spacing: 0em;
-    }
+  }
 }
