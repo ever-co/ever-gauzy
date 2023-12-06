@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { filter, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IIntegrationSetting, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { Store } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,14 +17,36 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 })
 export class GauzyAIViewComponent extends TranslationBaseComponent implements OnInit {
 
+	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
+	public settings$: Observable<IIntegrationSetting[]>;
+	public settings: IIntegrationSetting[] = [];
+
 	constructor(
-		public readonly _translateService: TranslateService,
-		private readonly _router: Router
+		private readonly _router: Router,
+		private readonly _activatedRoute: ActivatedRoute,
+		public readonly translateService: TranslateService,
+		private readonly _store: Store,
 	) {
-		super(_translateService);
+		super(translateService);
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {
+		// Setting up the organization$ observable pipeline
+		this.organization$ = this._store.selectedOrganization$.pipe(
+			// Exclude falsy values from the emitted values
+			filter((organization: IOrganization) => !!organization),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
+		this.settings$ = this._activatedRoute.data.pipe(
+			// Update component state with fetched issues
+			tap((settings: IIntegrationSetting[]) => {
+				this.settings = settings;
+			}),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this),
+		);
+	}
 
 	/**
 	 * Navigate to the "Integrations" page.

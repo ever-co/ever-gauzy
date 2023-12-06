@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbTooltipModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbTabsetModule, NbTooltipModule } from '@nebular/theme';
 import { TranslateModule } from './../../../@shared/translate/translate.module';
 import { BackNavigationModule } from './../../../@shared/back-navigation';
 import { GauzyAIRoutingModule } from './gauzy-ai-routing.module';
@@ -24,6 +24,7 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		NbCardModule,
 		NbIconModule,
 		NbInputModule,
+		NbTabsetModule,
 		NbTooltipModule,
 		GauzyAIRoutingModule,
 		TranslateModule,

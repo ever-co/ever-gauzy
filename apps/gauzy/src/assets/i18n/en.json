@@ -1248,7 +1248,12 @@
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret",
 			"OPEN_AI_SECRET_KEY": "Open AI Secret Key",
-			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			}
 		},
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",

@@ -28,6 +28,15 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-wip></ga-wip>
+		<nb-tabset class="mt-4">
+			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.KEYS' | translate" [active]="true">
+				<!-- <header>
+					{{ 'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate }}
+				</header> -->
+			</nb-tab>
+			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate">
+				<ga-wip></ga-wip>
+			</nb-tab>
+		</nb-tabset>
 	</nb-card-body>
 </nb-card>
