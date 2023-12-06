@@ -14,7 +14,7 @@ export class GithubMiddleware implements NestMiddleware {
 
     async use(
         request: Request,
-        response: Response,
+        _response: Response,
         next: NextFunction
     ) {
         try {

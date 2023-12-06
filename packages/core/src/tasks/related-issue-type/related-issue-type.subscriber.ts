@@ -11,9 +11,7 @@ import { FileStorage } from '../../core/file-storage';
 import { TaskRelatedIssueTypes } from './related-issue-type.entity';
 
 @EventSubscriber()
-export class TaskRelatedIssueTypesSubscriber
-	implements EntitySubscriberInterface<TaskRelatedIssueTypes>
-{
+export class TaskRelatedIssueTypesSubscriber implements EntitySubscriberInterface<TaskRelatedIssueTypes> {
 	/**
 	 * Indicates that this subscriber only listen to TaskRelatedIssueTypes events.
 	 */
@@ -27,21 +25,17 @@ export class TaskRelatedIssueTypesSubscriber
 	 * @param entity
 	 * @param event
 	 */
-	afterLoad(
+	async afterLoad(
 		entity: TaskRelatedIssueTypes | Partial<TaskRelatedIssueTypes>,
 		event?: LoadEvent<TaskRelatedIssueTypes>
-	): void | Promise<any> {
+	): Promise<any | void> {
 		try {
 			if (entity.icon) {
-				const store = new FileStorage().setProvider(
-					FileStorageProviderEnum.LOCAL
-				);
-				entity.fullIconUrl = store
-					.getProviderInstance()
-					.url(entity.icon);
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('Error in afterLoad:', error);
 		}
 	}
 

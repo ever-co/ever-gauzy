@@ -81,11 +81,14 @@ export const environment: IEnvironment = {
 		}
 	},
 
-	wasabiConfig: {
+	/**
+	 * Wasabi Configuration
+	 */
+	wasabi: {
 		accessKeyId: process.env.WASABI_ACCESS_KEY_ID,
 		secretAccessKey: process.env.WASABI_SECRET_ACCESS_KEY,
 		region: process.env.WASABI_REGION || 'us-east-1',
-		serviceUrl: process.env.WASABI_SERVICE_URL || 's3.wasabisys.com',
+		serviceUrl: process.env.WASABI_SERVICE_URL || 'https://s3.wasabisys.com',
 		s3: {
 			bucket: process.env.WASABI_S3_BUCKET || 'gauzy'
 		}
@@ -94,7 +97,7 @@ export const environment: IEnvironment = {
 	/**
 	 * Cloudinary FileSystem Storage Configuration
 	 */
-	cloudinaryConfig: {
+	cloudinary: {
 		cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
 		api_key: process.env.CLOUDINARY_API_KEY,
 		api_secret: process.env.CLOUDINARY_API_SECRET,
@@ -221,10 +224,10 @@ export const environment: IEnvironment = {
 		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
-		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || 'http://localhost:4200/#/auth/confirm-email',
+		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
-		companyLink: process.env.COMPANY_LINK || 'Ever Co. LTD',
-		companyName: process.env.COMPANY_NAME || 'https://ever.co'
+		companyLink: process.env.COMPANY_LINK || 'https://ever.co',
+		companyName: process.env.COMPANY_NAME || 'Ever Co. LTD'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,

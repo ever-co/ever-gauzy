@@ -4,6 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { NB_AUTH_OPTIONS, NbAuthOptions, NbAuthService, NbRegisterComponent } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { patterns } from '../../@shared/regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })
@@ -20,6 +21,7 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 	public queryParams$: Observable<Params>; // Observable for the query params
 
 	constructor(
+		public readonly translate: TranslateService,
 		protected readonly nbAuthService: NbAuthService,
 		protected readonly cdr: ChangeDetectorRef,
 		protected readonly router: Router,
@@ -30,6 +32,13 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 	}
 
 	ngOnInit() {
+		/**
+		 * Get the current language from the translation service and
+		 * set it as the preferred language for the user.
+		 */
+		const currentLang = this.translate.currentLang;
+		this.user.preferredLanguage = currentLang;
+
 		// Create an observable to listen to query parameter changes in the current route.
 		this.queryParams$ = this.activatedRoute.queryParams.pipe(
 			// Filter and ensure that query parameters are present.

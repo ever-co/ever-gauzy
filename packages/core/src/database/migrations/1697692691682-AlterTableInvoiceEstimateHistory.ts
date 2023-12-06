@@ -12,7 +12,8 @@ export class AlterTableInvoiceEstimateHistory1697692691682 implements MigrationI
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-		console.log(chalk.yellow(`${this.name} start running!`));
+        console.log(chalk.yellow(`${this.name} start running!`));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -33,23 +34,23 @@ export class AlterTableInvoiceEstimateHistory1697692691682 implements MigrationI
         }
     }
 
-	/**
-	 * PostgresDB Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "invoice_estimate_history" ADD "title" character varying`);
-	}
+    /**
+     * PostgresDB Up Migration
+     *
+     * @param queryRunner
+     */
+    public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`ALTER TABLE "invoice_estimate_history" ADD "title" character varying`);
+    }
 
-	/**
-	 * PostgresDB Down Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "invoice_estimate_history" DROP COLUMN "title"`);
-	}
+    /**
+     * PostgresDB Down Migration
+     *
+     * @param queryRunner
+     */
+    public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`ALTER TABLE "invoice_estimate_history" DROP COLUMN "title"`);
+    }
 
     /**
     * SqliteDB and BetterSQlite3DB Up Migration

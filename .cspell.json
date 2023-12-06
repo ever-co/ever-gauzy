@@ -403,7 +403,12 @@
 		"Signoz",
 		"OTEL",
 		"OTLP",
-		"opentelemetry"
+		"opentelemetry",
+		"presigner",
+		"SCALEWAY",
+		"VULTR",
+		"Codegen",
+		"icns"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

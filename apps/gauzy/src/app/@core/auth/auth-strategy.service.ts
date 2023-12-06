@@ -3,7 +3,7 @@ import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { IUser, IAuthResponse, IUserLoginInput } from '@gauzy/contracts';
+import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
@@ -110,10 +110,13 @@ export class AuthStrategy extends NbAuthStrategy {
 		}
 	}
 
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	register(data?: any): Observable<NbAuthResult> {
-		const { email, fullName, password, confirmPassword, tenant, tags } =
-			data;
-
+		const { email, fullName, password, confirmPassword, tenant, tags, preferredLanguage = LanguagesEnum.ENGLISH } = data;
 		if (password !== confirmPassword) {
 			return of(
 				new NbAuthResult(false, null, null, [
@@ -122,36 +125,32 @@ export class AuthStrategy extends NbAuthStrategy {
 			);
 		}
 
-		const registerInput = {
+		/**
+		 *
+		 */
+		const register = {
 			user: {
-				firstName: fullName
-					? fullName.split(' ').slice(0, -1).join(' ')
-					: null,
-				lastName: fullName
-					? fullName.split(' ').slice(-1).join(' ')
-					: null,
+				firstName: fullName ? fullName.split(' ').slice(0, -1).join(' ') : null,
+				lastName: fullName ? fullName.split(' ').slice(-1).join(' ') : null,
 				email: email?.trim(),
 				tenant,
 				tags,
+				preferredLanguage
 			},
 			password,
 			confirmPassword,
 		};
-		return this.authService.register(registerInput).pipe(
+		return this.authService.register(register).pipe(
 			switchMap((res: IUser | any) => {
 				if (res.status === 400) {
 					throw new Error(res.message);
 				}
 				const user: IUser = res;
 				if (isNotEmpty(user)) {
-					return this.login({
-						email,
-						password,
-					});
+					return this.login({ email, password, });
 				}
 			}),
 			catchError((err) => {
-				console.log(err);
 				return of(
 					new NbAuthResult(
 						false,
@@ -197,7 +196,7 @@ export class AuthStrategy extends NbAuthStrategy {
 						value.response,
 						false,
 						value.message ||
-							AuthStrategy.config.requestPass.defaultErrors
+						AuthStrategy.config.requestPass.defaultErrors
 					);
 				}),
 				catchError((error) => {
@@ -335,7 +334,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					true,
 					res,
 					this.route.snapshot.queryParams['returnUrl'] ||
-						AuthStrategy.config.login.redirect.success,
+					AuthStrategy.config.login.redirect.success,
 					[],
 					AuthStrategy.config.login.defaultMessages
 				);
