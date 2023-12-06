@@ -75,6 +75,7 @@ export class Integration extends BaseEntity implements IIntegration {
 	@Column({ nullable: true })
 	order: number;
 
+	/** Additional fields */
 	fullImgUrl?: string;
 	/*
 	|--------------------------------------------------------------------------

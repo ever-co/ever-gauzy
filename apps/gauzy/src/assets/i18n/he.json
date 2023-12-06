@@ -1205,7 +1205,17 @@
 		"FILTER_INTEGRATIONS": "Filter integrations",
 		"SEARCH_INTEGRATIONS": "Search integrations",
 		"PAID": "Paid",
-		"INTEGRATION": "Integration"
+		"INTEGRATION": "Integration",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
+			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
+			"NO_INTEGRATIONS": "You have not configured any integrations",
+			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
+			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",

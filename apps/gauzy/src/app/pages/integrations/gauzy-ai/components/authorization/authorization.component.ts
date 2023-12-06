@@ -4,19 +4,30 @@ import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { GauzyAIService, Store } from './../../../../../@core/services';
+import { GauzyAIService, Store, ToastrService } from './../../../../../@core/services';
+import { ReplacePipe } from 'apps/gauzy/src/app/@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-gauzy-ai-authorization',
 	templateUrl: './authorization.component.html',
 	styleUrls: ['./authorization.component.scss'],
+	providers: []
 })
 export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	public organization: IOrganization;
 
+	/**
+	 * The form property is a readonly FormGroup that is built using the buildForm static method.
+	 */
 	readonly form: FormGroup = GauzyAIAuthorizationComponent.buildForm(this._formBuilder);
+
+	/**
+	 * Static method to build the Angular FormGroup using the FormBuilder.
+	 * @param fb The FormBuilder instance used to build the form.
+	 * @returns A FormGroup containing form controls for client_id, client_secret, and openai_api_secret_key.
+	 */
 	static buildForm(fb: FormBuilder): FormGroup {
 		return fb.group({
 			client_id: [null, Validators.required],
@@ -25,6 +36,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		});
 	}
 
+	// Using @ViewChild to get a reference to the FormGroupDirective with the template reference variable 'formDirective'
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	constructor(
@@ -32,7 +44,9 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
-		private readonly _gauzyAIService: GauzyAIService
+		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _toastrService: ToastrService,
+		private readonly _replacePipe: ReplacePipe
 	) { }
 
 	/**
@@ -74,17 +88,23 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	/**
-	 *
-	 * @returns
+	 * Handles the form submission for creating a new integration.
+	 * @returns {Promise<void>} A promise indicating the success or failure of the submission.
 	 */
-	async onSubmit() {
-		if (!this.organization || this.form.invalid) {
-			return;
-		}
+	async onSubmit(): Promise<void> {
 		try {
-			const { client_id, client_secret, openai_api_secret_key } = this.form.value;
-			const { id: organizationId, tenantId } = this.organization;
+			// Check if the organization is available and the form is valid
+			if (!this.organization || this.form.invalid) {
+				return;
+			}
 
+			// Extract values from the form
+			const { client_id, client_secret, openai_api_secret_key } = this.form.value;
+
+			// Extract values from the organization
+			const { id: organizationId, tenantId, name: organizationName } = this.organization;
+
+			// Create a new integration using the provided values
 			this._gauzyAIService.create({
 				client_id,
 				client_secret,
@@ -92,12 +112,30 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				organizationId,
 				tenantId
 			}).pipe(
+				// Perform actions after the integration creation
 				tap((integration: IIntegrationTenant) => {
+					if (!!integration) {
+						// Transform integration name for display
+						const provider = this._replacePipe.transform(integration?.name, '_', ' ');
+
+						// Display success message
+						this._toastrService.success(`INTEGRATIONS.MESSAGE.INTEGRATION_ADDED`, {
+							provider,
+							organization: organizationName
+						});
+					}
+				}),
+				// Redirect to the Gauzy AI integration after creation
+				tap((integration: IIntegrationTenant) => {
+					//
+					this.formDirective.reset();
 					this._redirectToGauzyAIIntegration(integration.id);
 				}),
+				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			).subscribe();
 		} catch (error) {
+			// Log any errors that occur during the process
 			console.log('Error while creating new integration for Gauzy AI', error);
 		}
 	}

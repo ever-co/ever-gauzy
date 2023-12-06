@@ -23,14 +23,18 @@ export class IntegrationAIService {
 	async create(
 		input: IIntegrationAICreateInput
 	): Promise<IIntegrationTenant> {
-
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { client_id, client_secret, openai_api_secret_key, organizationId } = input;
 
+			/**
+			 * Retrieves an integration from the database based on specified options.
+			 */
 			const integration = await this._integrationService.findOneByOptions({
 				where: {
-					provider: IntegrationEnum.GAUZY_AI
+					provider: IntegrationEnum.GAUZY_AI,
+					isActive: true,
+					isArchived: false
 				}
 			});
 

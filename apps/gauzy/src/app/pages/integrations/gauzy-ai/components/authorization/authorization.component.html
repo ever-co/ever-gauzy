@@ -13,7 +13,7 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="col-xl-6 col-12">
-			<form [formGroup]="form" (ngSubmit)="onSubmit()" #formDirective="ngForm">
+			<form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="onSubmit()">
 				<div class="form-group">
 					<label for="client_id" class="label">
 						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.API_KEY' | translate }}
@@ -41,7 +41,7 @@
 					/>
 				</div>
 				<div class="form-group">
-					<label for="client_secret" class="label">
+					<label for="openai_api_secret_key" class="label">
 						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_SECRET_KEY' | translate }}
 					</label>
 					<input

@@ -1205,7 +1205,17 @@
 		"FILTER_INTEGRATIONS": "Фильтровать интеграцию",
 		"SEARCH_INTEGRATIONS": "Интеграции поиска",
 		"PAID": "Оплачено",
-		"INTEGRATION": "Интеграция"
+		"INTEGRATION": "Интеграция",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Обновлены настройки для '{{provider}}' интеграция",
+			"INTEGRATION_DELETED": "Интеграция '{{provider}}' успешно удалено",
+			"NO_INTEGRATIONS": "Вы не настроили ни одной интеграции",
+			"INTEGRATION_ENABLED": "Интеграция '{{provider}}' успешно включена",
+			"INTEGRATION_DISABLED": "Интеграция '{{provider}}' успешно отключена",
+			"INTEGRATION_ADDED": "Интеграция '{{provider}}' добавлена ​​в '{{organization}}'"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
