@@ -56,8 +56,13 @@ export class ActivityWatchService {
 
 			return windowEvents.map((windowEvent) => {
 				const metaData = JSON.parse(windowEvent.data) as IActivityWatchWindowEvent['data'];
+				let title = metaData.app;
 
-				if (Object.values(ActivityWatchBrowserList).some((browser) => metaData.app.toLowerCase().includes(browser.toLowerCase()))) {
+				if (
+					Object.values(ActivityWatchBrowserList).some((browser) =>
+						metaData.app.toLowerCase().includes(browser.toLowerCase())
+					)
+				) {
 					const mergeWith = (events: IDesktopEvent[]) => {
 						const lastEvent = events[events.length - 1];
 						const metaDataTitle = metaData.title;
@@ -72,7 +77,7 @@ export class ActivityWatchService {
 							) {
 								Object.assign(metaData, data);
 								windowEvent.type = event.type;
-								metaData.app = data.title;
+								title = data.title;
 								events.splice(events.indexOf(event), 1);
 							}
 						}
@@ -87,7 +92,7 @@ export class ActivityWatchService {
 				}
 
 				return {
-					title: metaData.app,
+					title,
 					date: currentDate.format('YYYY-MM-DD'),
 					time: currentDate.format('HH:mm:ss'),
 					duration: Math.floor(windowEvent.duration),
