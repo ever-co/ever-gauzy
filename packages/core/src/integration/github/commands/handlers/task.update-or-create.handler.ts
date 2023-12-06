@@ -1,5 +1,4 @@
 import { ICommandHandler, CommandHandler, CommandBus } from '@nestjs/cqrs';
-import { Logger } from '@nestjs/common';
 import {
 	IGithubIssueCreateOrUpdatePayload,
 	IGithubIssue,
@@ -23,7 +22,6 @@ import { GithubTaskUpdateOrCreateCommand } from '../task.update-or-create.comman
 
 @CommandHandler(GithubTaskUpdateOrCreateCommand)
 export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<GithubTaskUpdateOrCreateCommand> {
-	private readonly logger = new Logger('GithubTaskUpdateOrCreateCommandHandler');
 
 	constructor(
 		private readonly _commandBus: CommandBus,
@@ -177,7 +175,6 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 			}
 		} catch (error) {
 			// Handle errors gracefully, for example, log them
-			this.logger.error('Error in sync github issue and labels', error);
 		}
 	}
 
