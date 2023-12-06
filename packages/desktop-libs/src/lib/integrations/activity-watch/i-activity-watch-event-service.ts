@@ -34,5 +34,7 @@ export enum ActivityWatchBrowserList {
 	EDGE = 'Microsoft Edge',
 	EDGE_EXE = 'msedge.exe',
 	CHROME_EXE = 'chrome.exe',
-	FIREFOX_EXE = 'firefox.exe'
+	FIREFOX_EXE = 'firefox.exe',
+	EDGE_LINUX = 'Microsoft-edge',
+	CHROME_LINUX = 'Google-chrome'
 }
