@@ -9,6 +9,7 @@ import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
+import { DirectivesModule } from '../../../@shared/directives/directives.module';
 
 @NgModule({
 	declarations: [
@@ -29,7 +30,8 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		GauzyAIRoutingModule,
 		TranslateModule,
 		BackNavigationModule,
-		WorkInProgressModule
+		WorkInProgressModule,
+		DirectivesModule
 	]
 })
 export class GauzyAIModule { }
