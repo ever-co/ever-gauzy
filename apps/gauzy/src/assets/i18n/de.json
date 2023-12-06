@@ -8,6 +8,7 @@
 		"REGISTER": "Registrieren",
 		"CHANGE_PASSWORD": "Passwort ändern",
 		"LOGIN": "Einloggen",
+		"SIGNIN": "Anmelden",
 		"SEND_CODE": "Mit E-Mail anmelden",
 		"ADD_NOTE": "Notiz hinzufügen",
 		"EDIT": "Bearbeiten",
@@ -4394,6 +4395,39 @@
 			"receipt": "Quittung"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Registrieren",
+		"HAVE_AN_ACCOUNT": "Haben Sie bereits ein Konto?",
+		"LABELS": {
+			"FULL_NAME": "Vollständiger Name:",
+			"EMAIL": "E-Mail-Adresse:",
+			"PASSWORD": "Passwort",
+			"CONFIRM_PASSWORD": "Passwort bestätigen:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Vollständiger Name",
+			"EMAIL": "E-Mail-Adresse",
+			"PASSWORD": "Passwort",
+			"CONFIRM_PASSWORD": "Passwort bestätigen"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Der Name ist erforderlich!",
+			"FULL_NAME_SHOULD_CONTAIN": "Der Name sollte zwischen {{ minLength }} und {{ maxLength }} Zeichen enthalten",
+			"EMAIL_REQUIRED": "Die E-Mail ist erforderlich!",
+			"EMAIL_SHOULD_BE_REAL": "Die E-Mail sollte echt sein!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwörter dürfen nicht mit Leerzeichen beginnen oder enden!",
+			"PASSWORD_REQUIRED": "Das Passwort ist erforderlich!",
+			"PASSWORD_SHOULD_CONTAIN": "Das Passwort sollte zwischen {{ minLength }} und {{ maxLength }} Zeichen enthalten",
+			"CONFIRM_PASSWORD_REQUIRED": "Die Bestätigung des Passworts ist erforderlich!",
+			"PASSWORDS_NOT_MATCH": "Das Passwort stimmt nicht mit der Passwortbestätigung überein!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Zustimmen",
+				"TERMS_AND_CONDITIONS": "Allgemeine Geschäftsbedingungen",
+				"AND": " und ",
+				"PRIVACY_POLICY": "Datenschutzbestimmungen"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Anmeldung",
 		"SUB_TITLE": "Hallo! Melde dich mit deiner E-Mail an.",
@@ -4432,7 +4466,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Automatisch in Demo-Konten einloggen",
-			"SUB_TITLE": "Bitte wählen Sie unten den Kontotyp aus."
+			"SUB_TITLE": "Bitte wählen Sie unten den Kontotyp aus.",
+			"SUPER_ADMIN_TITLE": "Super-Administrator",
+			"ADMIN_TITLE": "Administrator",
+			"EMPLOYEE_TITLE": "Mitarbeiter",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Anmeldedaten",
+			"LABELS": {
+				"EMAIL": "E-Mail: ",
+				"PASSWORD": "Passwort: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4500,11 +4543,23 @@
 			"CREATE_NEW_WORKSPACE": "Erstelle einen neuen Arbeitsbereich",
 			"FIND_WORKSPACE": "Finde Arbeitsplatz"
 		},
+		"LABELS": {
+			"EMAIL": "Geben Sie Ihre E-Mail-Adresse ein:",
+			"PASSWORD": "Geben Sie Ihr Passwort ein:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "Passwort"
+		},
+		"SIGN_IN_TITLE": "Anmeldung im Arbeitsbereich",
+		"BACK_TO": "Zurück zu",
 		"SUCCESS_SIGNIN_TITLE": "Herzlichen Glückwunsch! Sie haben sich erfolgreich in Ihren Arbeitsbereich eingeloggt.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Bitte haben Sie Geduld, während wir den Arbeitsbereich vorbereiten...",
 		"FAIL_SIGNIN_TITLE": "Fehler! Der magische Code oder Link, den Sie bereitgestellt haben, ist abgelaufen oder ungültig.",
 		"FAIL_SIGNIN_SUB_TITLE": "Bitte starten Sie den Prozess erneut.",
-		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben."
+		"THANKING_TEXT": "Vielen Dank, dass Sie uns gewählt haben.",
+		"UNKNOWN_WORKSPACE": "Kennen Sie Ihren Arbeitsbereich nicht?",
+		"FIND_WORKSPACE": "Finden Sie Ihren Arbeitsbereich"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Bild hinzufügen oder entfernen",

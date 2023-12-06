@@ -5,7 +5,7 @@
             <gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
         </div>
         <div class="title-wrapper">
-            <h1 id="title" class="title">Register</h1>
+            <h1 id="title" class="title">{{ "REGISTER_PAGE.TITLE" | translate }}</h1>
         </div>
         <div class="hr-div-strong"></div>
         <nb-alert *ngIf="showMessages?.error && errors?.length && !submitted" outline="danger" role="alert">
@@ -25,7 +25,7 @@
         <form (ngSubmit)="register()" #form="ngForm" aria-labelledby="title" class="form">
 			<div class="form-control-group">
 				<label class="label" for="input-name">
-					Full name:
+					{{ "REGISTER_PAGE.LABELS.FULL_NAME" | translate }}
 				</label>
 				<input
 					nbInput
@@ -33,7 +33,7 @@
 					#fullName="ngModel"
 					id="input-name"
 					name="fullName"
-					placeholder="Full name"
+					[placeholder]=" 'REGISTER_PAGE.PLACEHOLDERS.FULL_NAME' | translate "
 					autofocus
 					fullWidth
 					fieldSize="large"
@@ -43,25 +43,27 @@
 					[maxlength]="getConfigValue('forms.validation.fullName.maxLength')"
 					[attr.aria-invalid]=" fullName.invalid && fullName.touched ? true : null"
 					autocomplete="full-name"
-				/>
+					/>
 				<ng-container *ngIf="fullName.invalid && fullName.touched">
 					<p class="caption status-danger" *ngIf="fullName.errors?.required">
-						Full name is required!
+						{{ "REGISTER_PAGE.VALIDATIONS.FULL_NAME_REQUIRED" | translate }}
 					</p>
 					<p
 						class="caption status-danger"
 						*ngIf="fullName.errors?.minlength || fullName.errors?.maxlength"
 						>
-						Full name should contains from
-						{{ getConfigValue('forms.validation.fullName.minLength') }} to
-						{{ getConfigValue('forms.validation.fullName.maxLength') }}
-						characters
+						{{ "REGISTER_PAGE.VALIDATIONS.FULL_NAME_SHOULD_CONTAIN" |
+							translate : {
+								minLength: getConfigValue('forms.validation.fullName.minLength'),
+								maxLength: getConfigValue('forms.validation.fullName.maxLength')
+							}
+						}}
 					</p>
 				</ng-container>
 			</div>
 			<div class="form-control-group" *ngIf="!(queryParams$ | async).email">
 				<label class="label" for="input-email">
-					Email address:
+					{{ "REGISTER_PAGE.LABELS.EMAIL" | translate }}
 				</label>
 				<input
 					nbInput
@@ -71,7 +73,7 @@
 					name="email"
 					pattern=".+@.+..+"
 					noSpaceEdges
-					placeholder="Email address"
+					[placeholder]="'REGISTER_PAGE.PLACEHOLDERS.EMAIL' | translate"
 					fullWidth
 					fieldSize="large"
 					[status]=" email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
@@ -81,16 +83,16 @@
 				/>
 				<ng-container *ngIf="email.invalid && email.touched">
 					<p class="caption status-danger" *ngIf="email.errors?.required">
-						Email is required!
+						{{ "REGISTER_PAGE.VALIDATIONS.EMAIL_REQUIRED" | translate }}
 					</p>
 					<p class="caption status-danger" *ngIf="email.errors?.pattern">
-						Email should be the real one!
+						{{ "REGISTER_PAGE.VALIDATIONS.EMAIL_SHOULD_BE_REAL" | translate }}
 					</p>
 				</ng-container>
 			</div>
 			<div class="form-control-group">
 				<label class="label" for="input-password">
-					Password:
+					{{ "REGISTER_PAGE.LABELS.PASSWORD" | translate }}
 				</label>
 				<nb-form-field>
 					<input
@@ -102,7 +104,7 @@
 						type="password"
 						id="input-password"
 						name="password"
-						placeholder="Password"
+						[placeholder]=" 'REGISTER_PAGE.PLACEHOLDERS.PASSWORD' | translate "
 						fullWidth
 						fieldSize="large"
 						[status]="password.dirty ? password.invalid ? 'danger' : 'success' : 'basic'"
@@ -122,22 +124,22 @@
 				</nb-form-field>
 				<ng-container *ngIf="password.invalid && password.touched">
 					<p class="caption status-danger" *ngIf="password.errors?.pattern">
-						Passwords must not begin or end with spaces.
+						{{ "REGISTER_PAGE.VALIDATIONS.PASSWORD_NO_SPACE_EDGES" | translate }}
 					</p>
 					<p class="caption status-danger" *ngIf="password.errors?.required">
-						Password is required!
+						{{ "REGISTER_PAGE.VALIDATIONS.PASSWORD_REQUIRED" | translate }}
 					</p>
 					<p class="caption status-danger" *ngIf="password.errors?.minlength || password.errors?.maxlength">
-						Password should contain from
-						{{ getConfigValue('forms.validation.password.minLength') }} to
-						{{ getConfigValue('forms.validation.password.maxLength') }}
-						characters
+						{{ "REGISTER_PAGE.VALIDATIONS.PASSWORD_SHOULD_CONTAIN" | translate : {
+							minLength: getConfigValue('forms.validation.password.minLength'),
+							maxLength: getConfigValue('forms.validation.password.maxLength')
+						} }}
 					</p>
 				</ng-container>
 			</div>
 			<div class="form-control-group">
 				<label class="label" for="input-re-password">
-					Repeat password:
+					{{ "REGISTER_PAGE.LABELS.CONFIRM_PASSWORD" | translate }}
 				</label>
 				<nb-form-field>
 					<input
@@ -148,7 +150,7 @@
 						type="password"
 						id="input-re-password"
 						name="rePass"
-						placeholder="Confirm Password"
+						[placeholder]=" 'REGISTER_PAGE.PLACEHOLDERS.CONFIRM_PASSWORD' | translate"
 						fullWidth
 						fieldSize="large"
 						[status]="confirmPassword.dirty ? confirmPassword.invalid || password.value != confirmPassword.value ? 'danger' : 'success' : 'basic' "
@@ -166,10 +168,10 @@
 				</nb-form-field>
 				<ng-container *ngIf="confirmPassword.touched">
 					<p class="caption status-danger" *ngIf="confirmPassword.errors?.required">
-						Password confirmation is required!
+						{{ "REGISTER_PAGE.VALIDATIONS.CONFIRM_PASSWORD_REQUIRED" | translate }}
 					</p>
 					<p class="caption status-danger" *ngIf="password.value != confirmPassword.value && !confirmPassword.errors?.required">
-						Password does not match the confirm password.
+						{{ "REGISTER_PAGE.VALIDATIONS.PASSWORDS_NOT_MATCH" | translate }}
 					</p>
 				</ng-container>
 			</div>
@@ -181,13 +183,21 @@
 						[(ngModel)]="user.terms"
 						[required]="getConfigValue('forms.register.terms')"
 					>
-						<span class="normal-terms-text">Agree to </span>
+						<span class="normal-terms-text">
+							{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.AGREE_TO" | translate }}
+						</span>
 						<a routerLink="/legal/terms" target="_blank" class="terms-link">
-							<strong>Terms & Conditions</strong>
+							<strong>
+								{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.TERMS_AND_CONDITIONS" | translate }}
+							</strong>
 						</a>
-						<span class="normal-terms-text"> and </span>
+						<span class="normal-terms-text">
+							{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.AND" | translate }}
+						</span>
 						<a routerLink="/legal/privacy" target="_blank" class="terms-link">
-							<strong>Privacy Policy</strong>
+							<strong>
+								{{ "REGISTER_PAGE.VALIDATIONS.CHECK_BOX_TEXTS.PRIVACY_POLICY" | translate }}
+							</strong>
 						</a>
 					</nb-checkbox>
 				</div>
@@ -200,7 +210,7 @@
 					[disabled]="submitted || !form.valid || !user.terms"
 					[class.btn-pulse]="submitted"
 				>
-					Register
+					{{ "BUTTONS.REGISTER" | translate }}
 				</button>
 			</div>
         </form>
@@ -211,13 +221,17 @@
         <div class="hr-div-soft"></div>
 
 		<section class="another-action" aria-label="Sign In Workspace">
-            Don’t know your workspace?
-			<a class="text-link" routerLink="/auth/login-workspace">Find your workspaces</a>
+            {{ "WORKSPACES.UNKNOWN_WORKSPACE" | translate }}
+			<a class="text-link" routerLink="/auth/login-workspace">
+				{{ "WORKSPACES.FIND_WORKSPACE" | translate }}
+			</a>
         </section>
 
         <section class="another-action" aria-label="Sign in">
-            Already have an account?
-            <a class="text-link" routerLink="../login">Log in</a>
+            {{ "REGISTER_PAGE.HAVE_AN_ACCOUNT" | translate }}
+            <a class="text-link" routerLink="../login">
+				{{ "BUTTONS.LOGIN" | translate }}
+			</a>
         </section>
     </div>
     <div class="features-wrapper">

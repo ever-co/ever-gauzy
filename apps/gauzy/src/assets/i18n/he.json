@@ -8,6 +8,7 @@
 		"REGISTER": "Register",
 		"CHANGE_PASSWORD": "שנה סיסמה",
 		"LOGIN": "Log In",
+		"SIGNIN": "התחברות",
 		"SEND_CODE": "התחבר עם דואר אלקטרוני",
 		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
@@ -4322,6 +4323,39 @@
 			"receipt": "Receipt"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "הרשמה",
+		"HAVE_AN_ACCOUNT": "כבר יש לך חשבון?",
+		"LABELS": {
+			"FULL_NAME": "שם מלא:",
+			"EMAIL": "כתובת דוא\"ל:",
+			"PASSWORD": "סיסמה",
+			"CONFIRM_PASSWORD": "אשר סיסמה:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "שם מלא",
+			"EMAIL": "כתובת דוא\"ל",
+			"PASSWORD": "סיסמה",
+			"CONFIRM_PASSWORD": "אשר סיסמה"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "שם מלא נדרש!",
+			"FULL_NAME_SHOULD_CONTAIN": "שם מלא צריך להכיל בין {{ minLength }} ל-{{ maxLength }} תווים",
+			"EMAIL_REQUIRED": "כתובת דוא\"ל נדרשת!",
+			"EMAIL_SHOULD_BE_REAL": "כתובת דוא\"ל צריכה להיות אמיתית!",
+			"PASSWORD_NO_SPACE_EDGES": "סיסמאות לא יכולות להתחיל או להסתיים עם רווחים!",
+			"PASSWORD_REQUIRED": "סיסמה נדרשת!",
+			"PASSWORD_SHOULD_CONTAIN": "סיסמה צריכה להכיל בין {{ minLength }} ל-{{ maxLength }} תווים",
+			"CONFIRM_PASSWORD_REQUIRED": "אישור סיסמה נדרש!",
+			"PASSWORDS_NOT_MATCH": "הסיסמה לא תואמת לאישור הסיסמה!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "הסכמה",
+				"TERMS_AND_CONDITIONS": "תנאים והגבלות",
+				"AND": " וגם ",
+				"PRIVACY_POLICY": "מדיניות פרטיות"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
 		"SUB_TITLE": "Hello! Log in with your email.",
@@ -4360,7 +4394,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
-			"SUB_TITLE": "Please select account type below."
+			"SUB_TITLE": "Please select account type below.",
+			"SUPER_ADMIN_TITLE": "מנהל ראשי",
+			"ADMIN_TITLE": "מנהל",
+			"EMPLOYEE_TITLE": "עובד",
+			"DEMO_TITLE": "הדגמה",
+			"CREDENTIALS_TITLE": "פרטי כניסה",
+			"LABELS": {
+				"EMAIL": "אימייל: ",
+				"PASSWORD": "סיסמה: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4427,11 +4470,23 @@
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		},
+		"LABELS": {
+			"EMAIL": "הזן את כתובת הדוא\"ל שלך:",
+			"PASSWORD": "הזן את הסיסמה שלך:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "סיסמה"
+		},
+		"SIGN_IN_TITLE": "התחבר למרחב העבודה",
+		"BACK_TO": "חזרה אל",
 		"SUCCESS_SIGNIN_TITLE": ".מזל טוב! נכנסת למערכת בהצלחה",
 		"SUCCESS_SIGNIN_SUB_TITLE": "...אנא התאזרי בסבלנות בזמן שאנו מכינים את המערכת",
 		"FAIL_SIGNIN_TITLE": ".שגיאה! קוד הקסם או הקישור שסיפקת פג או אינו תקף",
 		"FAIL_SIGNIN_SUB_TITLE": ".אנא התחל/י את התהליך מחדש",
-		"THANKING_TEXT": ".תודה על בחירתך בנו"
+		"THANKING_TEXT": ".תודה על בחירתך בנו",
+		"UNKNOWN_WORKSPACE": "אין לך מושג מה המרחב שלך?",
+		"FIND_WORKSPACE": "מצא את המרחב שלך"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",
