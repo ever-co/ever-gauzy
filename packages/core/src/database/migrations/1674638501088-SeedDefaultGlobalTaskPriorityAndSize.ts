@@ -1,5 +1,5 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 import { v4 as uuidV4 } from 'uuid';
 import { DEFAULT_GLOBAL_PRIORITIES } from "./../../tasks/priorities/default-global-priorities";
 import { DEFAULT_GLOBAL_SIZES } from "./../../tasks/sizes/default-global-sizes";
@@ -14,6 +14,8 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         await this.seedDefaultTaskPriorities(queryRunner);
         await this.seedDefaultTaskSizes(queryRunner);
     }
@@ -23,7 +25,7 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
     *
     * @param queryRunner
     */
-    public async down(queryRunner: QueryRunner): Promise<any> {}
+    public async down(queryRunner: QueryRunner): Promise<any> { }
 
     /**
      * Default global task priorities

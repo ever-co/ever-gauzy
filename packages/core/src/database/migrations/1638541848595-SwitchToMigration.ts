@@ -1,9 +1,12 @@
-import {MigrationInterface, QueryRunner} from "typeorm";
+import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class SwitchToMigration1638541848595 implements MigrationInterface {
     name = 'SwitchToMigration1638541848595'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -5358,11 +5361,11 @@ export class SwitchToMigration1638541848595 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_3557d514afd3794d40128e0542" ON "tag_warehouse" ("tagId") `);
     }
 
-     /**
-     * SqliteDB Down Migration
-     *
-     * @param queryRunner
-     */
+    /**
+    * SqliteDB Down Migration
+    *
+    * @param queryRunner
+    */
     private async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`DROP INDEX "IDX_3557d514afd3794d40128e0542"`);
         await queryRunner.query(`DROP INDEX "IDX_08385e1e045b83d25978568743"`);

@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from "chalk";
 
 export class AddMinimumBillingRateColumnToEmployeeTable1687967010243 implements MigrationInterface {
 	name = 'AddMinimumBillingRateColumnToEmployeeTable1687967010243';
@@ -9,6 +10,8 @@ export class AddMinimumBillingRateColumnToEmployeeTable1687967010243 implements 
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
 			await this.sqliteUpQueryRunner(queryRunner);
 		} else {

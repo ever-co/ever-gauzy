@@ -1,10 +1,13 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class AlterEmployeeRecurringExpenseTable1646056129050 implements MigrationInterface {
 
     name = 'AlterEmployeeRecurringExpenseTable1646056129050';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
