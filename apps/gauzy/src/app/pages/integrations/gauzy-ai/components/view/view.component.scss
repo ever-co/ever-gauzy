@@ -21,6 +21,11 @@
     flex-direction: column;
     gap: 0.5rem;
 
+    .date {
+      color: var(--gauzy-text-color-2);
+      font-size: 12px;
+    }
+
     .integration-row {
       background: var(--gauzy-card-2);
       padding: 1rem;

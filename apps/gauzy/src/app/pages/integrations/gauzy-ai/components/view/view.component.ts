@@ -22,12 +22,14 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	public dummySettings: IIntegrationSetting[] = [
 		{
 			settingsValue: '382808338280882808xS8Y8XsL',
-			settingsName: 'API Keys'
+			settingsName: 'API Keys',
+			createdAt: new Date()
 		},
-		{ settingsValue: '382808xS8Y3828088K382808sG', settingsName: 'API Secret' },
+		{ settingsValue: '382808xS8Y3828088K382808sG', settingsName: 'API Secret', createdAt: new Date() },
 		{
 			settingsValue: '382382808808xS3828088Y8Jsm',
-			settingsName: 'Open AI API Secret'
+			settingsName: 'Open AI API Secret',
+			createdAt: new Date()
 		}
 	];
 

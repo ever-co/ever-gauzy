@@ -29,9 +29,14 @@
 				</header> -->
 				<div class="integration-container">
 					<div class="integration-row" *ngFor="let setting of dummySettings">
-						<div class="integration-label">
-							{{ setting.settingsName }}
-							<nb-icon icon="info-outline" size="small"></nb-icon>
+						<div class="integration-label-container">
+							<div class="integration-label">
+								{{ setting.settingsName }}
+								<nb-icon icon="info-outline" size="small"></nb-icon>
+							</div>
+							<div class="date">
+								Generated {{ setting.createdAt | date: 'longDate' }}
+							</div>
 						</div>
 						<div class="integration-value">
 							<nb-icon
