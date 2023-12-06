@@ -57,6 +57,9 @@ import {
 @Entity('organization_team')
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
 
+	/**
+	 * Team name
+	 */
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -64,32 +67,44 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@Column()
 	name: string;
 
+	/**
+	 * Team color (optional)
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	color?: string;
 
+	/**
+	 * Team emoji (optional)
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	emoji?: string;
 
+	/**
+	 * Optional property representing the team size.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	teamSize?: string;
 
+	/**
+	 * Optional property representing the logo of the organization team.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
-	logo: string;
+	logo?: string;
 
 	/**
-	 * prefix for organization team
+	 * Optional property representing the prefix for the organization team.
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -98,7 +113,8 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	prefix?: string;
 
 	/**
-	 * Team type should be boolean true/false
+	 * Optional property representing the team type (boolean true/false).
+	 * Default value is set to false.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
@@ -106,12 +122,16 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@Column({ nullable: true, default: false })
 	public?: boolean;
 
+	/**
+	 * Optional property representing the profile link for the organization team.
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
 	profile_link?: string;
+
 
 	/*
 	|--------------------------------------------------------------------------
@@ -122,7 +142,11 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, (user) => user.teams, {
+	@ManyToOne(() => User, (it) => it.teams, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
@@ -137,6 +161,9 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 * ImageAsset
 	 */
 	@ManyToOne(() => ImageAsset, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -163,27 +190,22 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * OrganizationTeamEmployee
 	 */
-	@OneToMany(
-		() => OrganizationTeamEmployee,
-		(entity) => entity.organizationTeam,
-		{
-			cascade: true,
-		}
-	)
+	@OneToMany(() => OrganizationTeamEmployee, (it) => it.organizationTeam, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true
+	})
 	members?: IOrganizationTeamEmployee[];
 
 	/**
 	 * RequestApprovalTeam
 	 */
-	@OneToMany(() => RequestApprovalTeam, (entity) => entity.team)
+	@OneToMany(() => RequestApprovalTeam, (it) => it.team)
 	requestApprovals?: IRequestApprovalTeam[];
 
 	/**
 	 * Goal
 	 */
-	@OneToMany(() => Goal, (it) => it.ownerTeam, {
-		onDelete: 'SET NULL',
-	})
+	@OneToMany(() => Goal, (it) => it.ownerTeam)
 	goals?: IGoal[];
 
 	/**
@@ -195,40 +217,37 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Team Related Status type
 	 */
-	@OneToMany(
-		() => TaskRelatedIssueTypes,
-		(relatedIssueType) => relatedIssueType.organizationTeam
-	)
+	@OneToMany(() => TaskRelatedIssueTypes, (it) => it.organizationTeam)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
 	 * Team Priorities
 	 */
-	@OneToMany(() => TaskPriority, (priority) => priority.organizationTeam)
+	@OneToMany(() => TaskPriority, (it) => it.organizationTeam)
 	priorities?: ITaskPriority[];
 
 	/**
 	 * Team Sizes
 	 */
-	@OneToMany(() => TaskSize, (size) => size.organizationTeam)
+	@OneToMany(() => TaskSize, (it) => it.organizationTeam)
 	sizes?: ITaskSize[];
 
 	/**
 	 * Team Versions
 	 */
-	@OneToMany(() => TaskVersion, (version) => version.organizationTeam)
+	@OneToMany(() => TaskVersion, (it) => it.organizationTeam)
 	versions?: ITaskVersion[];
 
 	/**
 	 * Team Labels
 	 */
-	@OneToMany(() => Tag, (label) => label.organizationTeam)
+	@OneToMany(() => Tag, (it) => it.organizationTeam)
 	labels?: ITag[];
 
 	/**
 	 * Team Issue Types
 	 */
-	@OneToMany(() => IssueType, (issueType) => issueType.organizationTeam)
+	@OneToMany(() => IssueType, (it) => it.organizationTeam)
 	issueTypes?: IIssueType[];
 
 	/*
@@ -236,21 +255,25 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ManyToMany(() => Tag, (tag) => tag.organizationTeams, {
+	@ManyToMany(() => Tag, (it) => it.organizationTeams, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
 	})
 	@JoinTable({
-		name: 'tag_organization_team',
+		name: 'tag_organization_team'
 	})
 	tags?: ITag[];
 
 	/**
 	 * Task
 	 */
-	@ManyToMany(() => Task, (task) => task.teams, {
+	@ManyToMany(() => Task, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
 	})
 	@JoinTable()
 	tasks?: ITask[];
@@ -259,8 +282,10 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 * Equipment Sharing
 	 */
 	@ManyToMany(() => EquipmentSharing, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
 
@@ -268,7 +293,9 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 * Organization Project
 	 */
 	@ManyToMany(() => OrganizationProject, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	projects?: IOrganizationProject[];

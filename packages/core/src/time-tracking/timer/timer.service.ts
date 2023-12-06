@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, IsNull, Between, Not } from 'typeorm';
+import { Repository, IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -35,10 +35,8 @@ import {
 @Injectable()
 export class TimerService {
 	constructor(
-		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
-		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		@InjectRepository(TimeLog) private readonly timeLogRepository: Repository<TimeLog>,
+		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
 		private readonly commandBus: CommandBus
 	) { }
 
@@ -434,97 +432,72 @@ export class TimerService {
 	/**
 	 * Get timer worked status
 	 *
-	 * @param request
-	 * @returns
+	 * @param request The input parameters for the query.
+	 * @returns The timer status for the employee.
 	 */
 	public async getTimerWorkedStatus(
 		request: ITimerStatusInput
-	): Promise<ITimerStatus> {
+	): Promise<ITimerStatus[]> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
 
-		let employee: IEmployee;
-		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
-		if (
-			(RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			) ||
-				RequestContext.hasPermission(
-					PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
-				) ||
-				isNotEmpty(organizationTeamId)) &&
-			isNotEmpty(request.employeeId)
-		) {
-			const { employeeId } = request;
-			/** Get specific employee */
-			employee = await this.employeeRepository.findOneBy({
-				id: employeeId,
-				tenantId,
-				organizationId,
-			});
+		// Define the array to store employeeIds
+		let employeeIds: string[] = [];
+
+		const permissions = [
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
+		];
+
+		// Check if the current user has any of the specified permissions
+		if (RequestContext.hasAnyPermission(permissions)) {
+			// If yes, set employeeIds based on request.employeeIds or request.employeeId
+			employeeIds = request.employeeIds ? request.employeeIds.filter(Boolean) : [request.employeeId].filter(Boolean);
 		} else {
-			const userId = RequestContext.currentUserId();
-			/** EMPLOYEE have ability to see only own timer status */
-			employee = await this.employeeRepository.findOneBy({
-				userId,
-				tenantId,
-				organizationId,
-			});
+			// EMPLOYEE have the ability to see only their own timer status
+			const employeeId = RequestContext.currentEmployeeId();
+			employeeIds = [employeeId];
 		}
 
-		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
-		}
-
-		const { id: employeeId } = employee;
-		const status: ITimerStatus = {
-			duration: 0,
-			running: false,
-			lastLog: null,
-		};
 		/**
-		 * Get last log (running or completed)
+		 * Get last logs (running or completed)
 		 */
-		const lastLog = await this.timeLogRepository.findOne({
-			where: {
-				startedAt: Not(IsNull()),
-				stoppedAt: Not(IsNull()),
-				employeeId,
-				tenantId,
-				organizationId,
-				...(source ? { source } : {}),
-				...(isNotEmpty(organizationTeamId)
-					? {
-						organizationTeamId,
-					}
-					: {}),
-			},
-			order: {
-				startedAt: 'DESC',
-				createdAt: 'DESC',
-			},
-			...(request['relations']
-				? {
-					relations: request['relations'],
-				}
-				: {}),
+		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.setFindOptions({
+			...(request['relations'] ? { relations: request['relations'] } : {}),
 		});
+		query.where({
+			startedAt: Not(IsNull()),
+			stoppedAt: Not(IsNull()),
+			employeeId: In(employeeIds),
+			tenantId,
+			organizationId,
+			isActive: true,
+			isArchived: false,
+			...(isNotEmpty(source) ? { source } : {}),
+			...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
+		});
+		query.orderBy(`"${query.alias}"."employeeId"`, 'ASC'); // Adjust ORDER BY to match the SELECT list
+		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
+		query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
+
+		// Get last logs group by employees (running or completed)
+		const lastLogs = await query.distinctOn([`"${query.alias}"."employeeId"`]).getMany();
+
+		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
+		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => {
+			return {
+				duration: lastLog?.duration || 0,
+				running: lastLog?.isRunning || false,
+				lastLog: lastLog || null,
+				timerStatus: lastLog?.isRunning ? 'running' : moment(lastLog?.stoppedAt).diff(new Date(), 'day') > 0 ? 'idle' : 'pause',
+			};
+		});
+
 		/**
-		 * calculate last timelog duration
+		 * @returns An array of ITimerStatus objects.
 		 */
-		if (lastLog) {
-			status.lastLog = lastLog;
-			status.running = lastLog.isRunning;
-			status.duration = lastLog.duration;
-			/** Get timer current status */
-			status.timerStatus = lastLog.isRunning
-				? 'running'
-				: moment(lastLog.stoppedAt).diff(new Date(), 'day') > 0
-					? 'idle'
-					: 'pause';
-		}
-		return status;
+		return statistics;
 	}
 }

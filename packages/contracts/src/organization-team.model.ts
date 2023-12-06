@@ -8,14 +8,12 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject } from './organization-projects.model';
 
-export interface IOrganizationTeam
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalImageAsset {
+export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
 	color?: string;
 	emoji?: string;
 	teamSize?: string;
-	logo: string;
+	logo?: string;
 	prefix?: string;
 	public?: boolean;
 	profile_link?: string;
@@ -26,18 +24,14 @@ export interface IOrganizationTeam
 	tasks?: ITask[];
 }
 
-export interface IOrganizationTeamFindInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalEmployee {
+export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	name?: string;
 	prefix?: string;
 	public?: boolean;
 	profile_link?: string;
 }
 
-export interface IOrganizationTeamCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalImageAsset {
+export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
 	emoji?: string;
 	teamSize?: string;
@@ -52,21 +46,20 @@ export interface IOrganizationTeamCreateInput
 	projects?: IOrganizationProject[];
 }
 
-export interface IOrganizationTeamUpdateInput
-	extends Partial<IOrganizationTeamCreateInput> {
+export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
 	id: string;
 	public?: boolean;
 }
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 	withLaskWorkedTask: boolean;
-	includeOrganizationTeamId?: boolean;
 }
 
 export interface IRelationalOrganizationTeam {
 	organizationTeam?: IOrganizationTeam;
 	organizationTeamId?: IOrganizationTeam['id'];
 }
+
 export interface IOrganizationTeamStoreState {
 	team: IOrganizationTeam;
 	action: CrudActionEnum;
