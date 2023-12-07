@@ -5,11 +5,20 @@ import { IntegrationResolver } from '../integration.resolver';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
+import { IntegrationSettingResolver } from '../integration-setting.resolver';
 
 const routes: Routes = [
 	{
 		path: '', // Empty path for the main route
 		component: GauzyAILayoutComponent, // Component for the main layout
+		data: {
+			selectors: {
+				project: false,
+				team: false,
+				employee: false,
+				date: false
+			}
+		},
 		children: [
 			{
 				path: '', // Child route for the default page
@@ -25,12 +34,29 @@ const routes: Routes = [
 				path: 'reset', // Separate route for the reset page
 				component: GauzyAIAuthorizationComponent, // Create a new component for the reset page
 				data: {
-					state: false
+					state: false,
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false
+					}
 				}
 			},
 			{
 				path: ':id', // Child route with a parameter (id)
 				component: GauzyAIViewComponent, // Component for the route with an id parameter
+				resolve: {
+					settings: IntegrationSettingResolver, // Resolver to fetch data before activating the route
+				},
+				data: {
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false
+					}
+				},
 			},
 		]
 	},

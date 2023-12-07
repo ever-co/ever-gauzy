@@ -410,6 +410,8 @@
 		"Codegen",
 		"icns",
 		"msedge"
+		"openai",
+		"OPENAI"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

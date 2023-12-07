@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
-import { IIntegrationKeySecretPairInput, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationAICreateInput, IIntegrationTenant } from '@gauzy/contracts';
 import { API_PREFIX } from '../../constants';
 
 @Injectable({
@@ -18,7 +18,7 @@ export class GauzyAIService {
 	 * @param input
 	 * @returns
 	 */
-	addIntegration(input: IIntegrationKeySecretPairInput): Observable<IIntegrationTenant> {
+	create(input: IIntegrationAICreateInput): Observable<IIntegrationTenant> {
 		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/gauzy-ai`, input);
 	}
 }

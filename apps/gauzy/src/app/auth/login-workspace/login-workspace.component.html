@@ -9,7 +9,7 @@
 				<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
 			</div>
 
-			<h1 class="title">Sign in to Workspace</h1>
+			<h1 class="title">{{ "WORKSPACES.SIGN_IN_TITLE" | translate }}</h1>
 
 			<div class="hr-div-strong"></div>
 
@@ -19,13 +19,13 @@
 
 			<section class="sign-in-or-up" aria-label="Sign in or sign up">
 				<p class="redirect-link-p">
-					<span>Back to </span>
+					<span>{{ "WORKSPACES.BACK_TO" | translate }}</span>
 					<a class="text-link" [routerLink]="['/auth/login']">
-						<span>Log In</span>
+						<span>{{ "BUTTONS.LOGIN" | translate }}</span>
 					</a>
 				</p>
 				<p class="redirect-link-p">
-					<a [routerLink]="['/auth/register']" class="text-link">Register</a>
+					<a [routerLink]="['/auth/register']" class="text-link">{{ "BUTTONS.REGISTER" | translate }}</a>
 				</p>
 			</section>
 		</div>
@@ -42,14 +42,14 @@
 			<div class="col">
 				<div class="form-group">
 					<label class="label" for="email">
-						Enter your email address:
+						{{ "WORKSPACES.LABELS.EMAIL" | translate }}
 					</label>
 					<input
 						nbInput
 						id="email"
 						name="email"
 						type="email"
-						placeholder="name@workspace-email.com"
+						[placeholder]="'WORKSPACES.PLACEHOLDERS.EMAIL' | translate"
 						fullWidth
 						fieldSize="large"
 						formControlName="email"
@@ -58,8 +58,8 @@
 				</div>
 				<ngx-password-form-field
 					id="password"
-					label="Enter your password:"
-					placeholder="Password"
+					[label]="'WORKSPACES.LABELS.PASSWORD' | translate"
+					[placeholder]="'WORKSPACES.PLACEHOLDERS.PASSWORD' | translate"
 					autocomplete="password"
 					formControlName="password"
 				></ngx-password-form-field>
@@ -67,7 +67,7 @@
 		</div>
 		<div class="submit-btn-wrapper">
 			<button nbButton size="small" class="submit-btn" type="submit">
-				Sign In
+				{{ "BUTTONS.SIGNIN" | translate }}
 			</button>
 		</div>
 	</form>

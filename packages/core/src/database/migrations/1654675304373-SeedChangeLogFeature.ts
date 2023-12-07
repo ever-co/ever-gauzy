@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 import { v4 as uuidV4 } from 'uuid';
 
 export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
@@ -6,7 +7,9 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
     name = 'SeedChangeLogFeature1654675304373';
 
     public async up(queryRunner: QueryRunner): Promise<any> {
-		const date = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type) ? Date.now() : new Date();
+        console.log(chalk.yellow(this.name + ' start running!'));
+
+        const date = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type) ? Date.now() : new Date();
         const features = [
             {
                 icon: 'cube-outline',

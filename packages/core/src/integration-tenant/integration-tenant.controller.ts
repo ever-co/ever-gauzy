@@ -80,11 +80,12 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	}
 
 	/**
-	 * Fetch an IntegrationTenant entity in the database
+	 * Fetches an IntegrationTenant entity by ID from the database.
 	 *
-	 * @param integrationId
-	 * @param query
-	 * @returns
+	 * @param integrationId - The ID of the IntegrationTenant entity (validated by UUIDValidationPipe).
+	 * @param query - Optional query parameters, such as relations.
+	 * @returns {Promise<IIntegrationTenant>} The fetched IntegrationTenant entity.
+	 * @throws {InternalServerErrorException} If an error occurs during the fetching process.
 	 */
 	@Get(':id')
 	async findById(
@@ -92,10 +93,10 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 		@Query() query: RelationsQueryDTO
 	): Promise<IIntegrationTenant> {
 		try {
+			const { relations } = query;
+
 			// Attempt to find the IntegrationTenant entity in the database
-			return await this._integrationTenantService.findOneByIdString(integrationId, {
-				relations: query.relations,
-			});
+			return await this._integrationTenantService.findOneByIdString(integrationId, { relations });
 		} catch (error) {
 			// Handle and log any errors that occur
 			console.error(`Error while finding IntegrationTenant: ${error.message}`);

@@ -7,30 +7,19 @@ import {
 } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/common';
 import { DateRangeQueryDTO, RelationsQueryDTO } from './../../shared/dto';
+
 /**
- * Get team statistic request DTO validation
+ * DTO for handling requests related to organization team statistics.
+ * Combines date range and relations query features.
  */
-export class OrganizationTeamStatisticDTO
-	extends IntersectionType(DateRangeQueryDTO, RelationsQueryDTO)
-	implements IOrganizationTeamStatisticInput, IDateRangePicker
-{
-	/**
-	 * Indicates if last worked task row should be included in entity result.
-	 */
-	@ApiPropertyOptional({ type: 'boolean' })
-	@IsOptional()
-	@Transform(({ value }: TransformFnParams) =>
-		value ? parseToBoolean(value) : false
-	)
-	readonly withLaskWorkedTask: boolean;
+export class OrganizationTeamStatisticDTO extends IntersectionType(DateRangeQueryDTO, RelationsQueryDTO) implements IOrganizationTeamStatisticInput, IDateRangePicker {
 
 	/**
-	 * Indicates if organizationTeamId should be used to filter the records.
+	 * Indicates whether the last worked task row should be included in the entity result.
+	 * Default value is set to false.
 	 */
-	@ApiPropertyOptional({ type: 'boolean' })
+	@ApiPropertyOptional({ type: Boolean, default: false })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) =>
-		value ? parseToBoolean(value) : false
-	)
-	readonly includeOrganizationTeamId?: boolean;
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value) ?? false)
+	readonly withLaskWorkedTask: boolean = false;
 }

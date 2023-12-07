@@ -5,50 +5,56 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
+	ITimerStatus,
 } from '@gauzy/contracts';
 import { parseToBoolean } from '@gauzy/common';
 import { GetOrganizationTeamStatisticQuery } from '../get-organization-team-statistic.query';
 import { OrganizationTeamService } from '../../organization-team.service';
 import { TimerService } from '../../../time-tracking/timer/timer.service';
 import { StatisticService } from './../../../time-tracking/statistic';
+import { RequestContext } from 'core';
 
 @QueryHandler(GetOrganizationTeamStatisticQuery)
-export class GetOrganizationTeamStatisticHandler
-	implements IQueryHandler<GetOrganizationTeamStatisticQuery>
-{
-	constructor(
-		private readonly timerService: TimerService,
-		private readonly organizationTeamService: OrganizationTeamService,
-		private readonly _statisticService: StatisticService
-	) {}
+export class GetOrganizationTeamStatisticHandler implements IQueryHandler<GetOrganizationTeamStatisticQuery> {
 
+	constructor(
+		private readonly _timerService: TimerService,
+		private readonly _organizationTeamService: OrganizationTeamService,
+		private readonly _statisticService: StatisticService
+	) { }
+
+	/**
+ * Execute the GetOrganizationTeamStatisticQuery.
+ *
+ * @param input - The input query for getting organization team statistics.
+ * @returns The organization team with optional statistics.
+ */
 	public async execute(
-		query: GetOrganizationTeamStatisticQuery
+		input: GetOrganizationTeamStatisticQuery
 	): Promise<IOrganizationTeam> {
 		try {
-			const { organizationTeamId, options } = query;
-			const { withLaskWorkedTask } = options;
+			const { organizationTeamId, query } = input;
+			const { withLaskWorkedTask } = query;
 
-			const organizationTeam =
-				await this.organizationTeamService.findOneByIdString(
+			/**
+			 * Find the organization team by ID with optional relations.
+			 */
+			const organizationTeam = await this._organizationTeamService.findOneByIdString(
+				organizationTeamId,
+				query['relations'] ? { relations: query['relations'] } : {}
+			);
+
+			/**
+			 * If the organization team has 'members', sync last worked tasks based on the query.
+			 */
+			if ('members' in organizationTeam && Boolean(withLaskWorkedTask)) {
+				organizationTeam['members'] = await this.syncLastWorkedTask(
 					organizationTeamId,
-					{
-						...(options['relations']
-							? {
-									relations: options['relations'],
-							  }
-							: {}),
-					}
+					organizationTeam['members'],
+					query
 				);
-			if ('members' in organizationTeam) {
-				const { members, organizationId, tenantId } = organizationTeam;
-				if (Boolean(withLaskWorkedTask)) {
-					organizationTeam['members'] = await this.syncLastWorkedTask(
-						{ members, organizationId, tenantId },
-						options
-					);
-				}
 			}
+
 			return organizationTeam;
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -56,78 +62,73 @@ export class GetOrganizationTeamStatisticHandler
 	}
 
 	/**
-	 * Synced last worked tasks by every team members
+	 * Synchronize last worked task information for members of an organization team.
 	 *
-	 * @param param0
-	 * @returns
+	 * @param members - Array of organization team members.
+	 * @param input - Input parameters including date range and statistics options.
+	 * @returns A promise resolving to an array of organization team members with updated statistics.
 	 */
 	async syncLastWorkedTask(
-		{ organizationId, tenantId, members },
-		options: IDateRangePicker & IOrganizationTeamStatisticInput
+		organizationTeamId: IOrganizationTeam['id'],
+		members: IOrganizationTeamEmployee[],
+		input: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
-			const {
-				startDate,
-				endDate,
-				withLaskWorkedTask,
-				source,
-				includeOrganizationTeamId,
-			} = options;
-			return await Promise.all(
-				await members.map(async (member: IOrganizationTeamEmployee) => {
-					const { employeeId, organizationTeamId } = member;
-					const timerWorkedStatus =
-						await this.timerService.getTimerWorkedStatus({
-							source,
-							employeeId,
-							...(includeOrganizationTeamId === false
-								? {}
-								: { organizationTeamId }),
-							organizationId,
-							tenantId,
-							...(parseToBoolean(withLaskWorkedTask)
-								? {
-										relations: ['task'],
-								  }
-								: {}),
-						});
+			const { organizationId, startDate, endDate, withLaskWorkedTask, source } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-					return {
-						...member,
-						lastWorkedTask: parseToBoolean(withLaskWorkedTask)
-							? timerWorkedStatus.lastLog?.task
-							: null,
-						running: timerWorkedStatus?.running,
-						duration: timerWorkedStatus?.duration,
-						timerStatus: timerWorkedStatus?.timerStatus,
-						totalWorkedTasks: await this._statisticService.getTasks(
-							{
-								organizationId,
-								tenantId,
-								...(includeOrganizationTeamId === false
-									? {}
-									: { organizationTeamId }),
-								employeeIds: [employeeId],
-							}
-						),
-						totalTodayTasks: await this._statisticService.getTasks({
-							organizationId,
-							tenantId,
-							...(includeOrganizationTeamId === false
-								? {}
-								: { organizationTeamId }),
-							employeeIds: [employeeId],
-							startDate,
-							endDate,
-						}),
-					};
-				})
-			);
+			//
+			const employeeIds = members.map(({ employeeId }) => employeeId);
+
+			//
+			const statistics = await this._timerService.getTimerWorkedStatus({
+				source,
+				employeeIds,
+				organizationId,
+				tenantId,
+				organizationTeamId,
+				...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
+			});
+
+			//
+			const memberPromises = members.map(async (member: IOrganizationTeamEmployee) => {
+				const { employeeId } = member;
+				//
+				const timerWorkedStatus = statistics.find(
+					(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
+				);
+				//
+				const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
+					this._statisticService.getTasks({
+						organizationId,
+						tenantId,
+						organizationTeamId,
+						employeeIds: [employeeId],
+					}),
+					this._statisticService.getTasks({
+						organizationId,
+						tenantId,
+						organizationTeamId,
+						employeeIds: [employeeId],
+						startDate,
+						endDate,
+					}),
+				]);
+				return {
+					...member,
+					lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
+					running: timerWorkedStatus?.running,
+					duration: timerWorkedStatus?.duration,
+					timerStatus: timerWorkedStatus?.timerStatus,
+					totalWorkedTasks,
+					totalTodayTasks,
+				};
+			});
+
+			return await Promise.all(memberPromises);
 		} catch (error) {
-			console.log(
-				'Error while retrieving team members last worked task',
-				error
-			);
+			console.error('Error while retrieving team members last worked task', error);
+			return []; // or handle the error in an appropriate way
 		}
 	}
 }
