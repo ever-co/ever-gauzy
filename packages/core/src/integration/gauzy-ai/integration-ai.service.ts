@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationAICreateInput, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../core/context';
 import { IntegrationTenantUpdateOrCreateCommand } from '../../integration-tenant/commands';
 import { IntegrationService } from './../../integration/integration.service';
 
 @Injectable()
 export class IntegrationAIService {
-	private readonly logger = new Logger('IntegrationAIService');
 
 	constructor(
 		private readonly _commandBus: CommandBus,
@@ -64,10 +64,12 @@ export class IntegrationAIService {
 								settingsName: 'apiSecret',
 								settingsValue: client_secret
 							},
-							{
-								settingsName: 'openAiApiSecretKey',
-								settingsValue: openai_api_secret_key
-							}
+							...(isNotEmpty(openai_api_secret_key) ? [
+								{
+									settingsName: 'openAiApiSecretKey',
+									settingsValue: openai_api_secret_key
+								}
+							] : [])
 						].map((setting) => ({
 							...setting,
 							tenantId,
@@ -77,8 +79,7 @@ export class IntegrationAIService {
 				)
 			);
 		} catch (error) {
-			this.logger.error(`Error while creating ${IntegrationEnum.GAUZY_AI} integration settings`, error?.message);
-			throw new Error(`Failed to add ${IntegrationEnum.GAUZY_AI} integration`);
+			throw new HttpException(`Failed to add Gauzy AI integration`, HttpStatus.BAD_REQUEST);
 		}
 	}
 }
