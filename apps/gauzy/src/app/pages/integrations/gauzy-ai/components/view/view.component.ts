@@ -12,7 +12,7 @@ import { Store } from './../../../../../@core/services';
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
 	API_SECRET = 'apiSecret',
-	OPEN_AI_SECRET_KEY = 'openaiApiSecretKey'
+	OPEN_AI_API_SECRET_KEY = 'openAiApiSecretKey'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -31,18 +31,18 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	public settingTitles: Record<string, string>[] = [
 		{
 			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.API_KEY'),
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_KEY'),
-			matching: SettingTitlesEnum.API_KEY
+			matching: SettingTitlesEnum.API_KEY,
+			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_KEY')
 		},
 		{
 			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.API_SECRET'),
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_SECRET'),
-			matching: SettingTitlesEnum.API_SECRET
+			matching: SettingTitlesEnum.API_SECRET,
+			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_SECRET')
 		},
 		{
-			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_SECRET_KEY'),
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_SECRET_KEY'),
-			matching: SettingTitlesEnum.OPEN_AI_SECRET_KEY
+			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_SECRET_KEY'),
+			matching: SettingTitlesEnum.OPEN_AI_API_SECRET_KEY,
+			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_API_SECRET_KEY')
 		}
 	];
 

@@ -71,6 +71,7 @@ export interface ImageAnalysisResult {
 export class GauzyAIService {
     private readonly _logger = new Logger(GauzyAIService.name);
     private _client: ApolloClient<NormalizedCacheObject>;
+    public logging: boolean = false;
 
     // For now, we disable Apollo client caching for all GraphQL queries and mutations
     private readonly defaultOptions: DefaultOptions = {
@@ -115,7 +116,7 @@ export class GauzyAIService {
         }
     ): Observable<AxiosResponse<T>> {
         /** */
-        const { ApiKey, ApiSecret, ApiBearerToken, ApiTenantId } = this._requestConfigProvider.getConfig();
+        const { apiKey, apiSecret, openAiApiSecretKey, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
         // Add your custom headers
         const customHeaders = (): AxiosRequestHeaders => ({
@@ -126,17 +127,21 @@ export class GauzyAIService {
             'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
             /** */
-            ...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
-            ...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
+            ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
+            ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
+            ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
 
             /** */
-            ...(ApiTenantId ? { 'Tenant-Id': ApiTenantId } : {}),
-            ...(ApiBearerToken ? { 'Authorization': ApiBearerToken } : {}),
+            ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
+            ...(tenantIdApi ? { 'Tenant-Id': tenantIdApi } : {}),
         });
 
         /** */
         const headers: AxiosRequestHeaders = customHeaders();
-        // console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
+
+        if (this.logging) {
+            console.log('Default AxiosRequestConfig Headers: %s', `${JSON.stringify(headers)}`);
+        }
 
         // Merge the provided options with the default options
         const mergedOptions: AxiosRequestConfig<T> = {
@@ -414,7 +419,6 @@ export class GauzyAIService {
                     method: HttpMethodEnum.POST, // Set the HTTP method to GET
                     data: createOneEmployeeJobApplication
                 }).pipe(
-                    tap((resp: AxiosResponse<any, any>) => console.log(resp)),
                     map((resp: AxiosResponse<any, any>) => resp.data)
                 )
             );
@@ -1317,8 +1321,7 @@ export class GauzyAIService {
     private initClient() {
         // Create a custom ApolloLink to modify headers
         const authLink = new ApolloLink((operation, forward) => {
-            const { ApiKey, ApiSecret, ApiBearerToken, ApiTenantId } = this._requestConfigProvider.getConfig();
-            console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
+            const { apiKey, apiSecret, openAiApiSecretKey, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
             // Add your custom headers here
             const customHeaders = {
@@ -1327,14 +1330,16 @@ export class GauzyAIService {
                 'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
                 'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
 
-                ...(ApiKey ? { 'X-APP-ID': ApiKey } : {}),
-                ...(ApiSecret ? { 'X-API-KEY': ApiSecret } : {}),
+                ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
+                ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
+                ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
 
-                ...(ApiTenantId ? { 'Tenant-Id': ApiTenantId } : {}),
-                ...(ApiBearerToken ? { 'Authorization': ApiBearerToken } : {}),
+                ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
+                ...(tenantIdApi ? { 'Tenant-Id': tenantIdApi } : {}),
             };
-            console.log('Custom Run Time Headers: %s', customHeaders);
-
+            if (this.logging) {
+                console.log('Custom Run Time Headers: %s', customHeaders);
+            }
             // Modify the operation context to include the headers
             operation.setContext(({ headers }) => ({
                 headers: {

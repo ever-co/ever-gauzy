@@ -1,6 +1,6 @@
 import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from 'typeorm';
 import { IntegrationSetting } from './integration-setting.entity';
-import { KeysToWrapSecrets, sensitiveSecretKeys } from './integration-setting.utils';
+import { keysToWrapSecrets, sensitiveSecretKeys } from './integration-setting.utils';
 
 @EventSubscriber()
 export class IntegrationSettingSubscriber implements EntitySubscriberInterface<IntegrationSetting> {
@@ -34,7 +34,7 @@ export class IntegrationSettingSubscriber implements EntitySubscriberInterface<I
         };
 
         // Apply the wrapping function only to the sensitive keys
-        const wrapped = KeysToWrapSecrets(sensitiveSecretKeys, secrets, percentage);
+        const wrapped = keysToWrapSecrets(sensitiveSecretKeys, secrets, percentage);
 
         entity.wrapSecretKey = settingsName;
         entity.wrapSecretvalue = wrapped[settingsName];

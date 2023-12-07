@@ -65,7 +65,7 @@ export class IntegrationAIService {
 								settingsValue: client_secret
 							},
 							{
-								settingsName: 'openaiApiSecretKey',
+								settingsName: 'openAiApiSecretKey',
 								settingsValue: openai_api_secret_key
 							}
 						].map((setting) => ({

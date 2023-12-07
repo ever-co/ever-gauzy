@@ -1,7 +1,7 @@
 import { isNotEmpty, isObject } from "@gauzy/common";
 
 // Assuming you have fetched sensitive keys specific entity
-export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openaiApiSecretKey'];
+export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openAiApiSecretKey'];
 
 /**
  * Wrap specified keys in an object with a specific character.
@@ -12,7 +12,7 @@ export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openaiApiSecretKey']
  * @param character - The character used for replacement.
  * @returns The object with specified keys wrapped.
  */
-export function KeysToWrapSecrets(
+export function keysToWrapSecrets(
     keysToWrap: string[],
     secrets: Record<string, any>,
     percentage = 35,
