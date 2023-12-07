@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationSetting, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { DateFormatPipe } from './../../../../../@shared/pipes';
 import { Store } from './../../../../../@core/services';
 
 enum SettingTitlesEnum {
@@ -20,7 +19,7 @@ enum SettingTitlesEnum {
 @Component({
 	styleUrls: ['./view.component.scss'],
 	templateUrl: './view.component.html',
-	providers: [TitleCasePipe, DateFormatPipe]
+	providers: [TitleCasePipe]
 })
 export class GauzyAIViewComponent extends TranslationBaseComponent implements OnInit {
 
