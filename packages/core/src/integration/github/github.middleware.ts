@@ -51,9 +51,7 @@ export class GithubMiddleware implements NestMiddleware {
                         // Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
                         settings: arrayToObject(settings, 'settingsName', 'settingsValue')
                     });
-                } catch (error) {
-                    console.log(`Error while getting integration settings inside middleware: %s`, error?.message);
-                }
+                } catch (error) { }
             }
         } catch (error) {
             console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);
