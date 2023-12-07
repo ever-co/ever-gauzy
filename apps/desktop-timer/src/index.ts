@@ -396,7 +396,7 @@ app.on('ready', async () => {
 		await splashScreen.loadURL();
 		splashScreen.show();
 	} catch (error) {
-		throw new UIError('SPLASH', error, '400');
+		console.error(error);
 	}
 	if (!settings) {
 		launchAtStartup(true, false);
