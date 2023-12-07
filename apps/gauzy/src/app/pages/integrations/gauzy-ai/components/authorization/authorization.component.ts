@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
-import { filter, tap } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
+import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { GauzyAIService, Store, ToastrService } from './../../../../../@core/services';
-import { ReplacePipe } from 'apps/gauzy/src/app/@shared/pipes';
+import { HttpStatus, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
+import { ErrorHandlingService, GauzyAIService, Store, ToastrService } from './../../../../../@core/services';
+import { ReplacePipe } from './../../../../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,6 +47,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		private readonly _store: Store,
 		private readonly _gauzyAIService: GauzyAIService,
 		private readonly _toastrService: ToastrService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _replacePipe: ReplacePipe
 	) { }
 
@@ -112,6 +114,11 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				organizationId,
 				tenantId
 			}).pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
 				// Perform actions after the integration creation
 				tap((integration: IIntegrationTenant) => {
 					if (!!integration) {
@@ -130,6 +137,13 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 					//
 					this.formDirective.reset();
 					this._redirectToGauzyAIIntegration(integration.id);
+				}),
+				// Catch and handle errors
+				catchError((error) => {
+					// Handle and log errors using the _errorHandlingService
+					this._errorHandlingService.handleError(error);
+					// Return an empty observable to continue the stream
+					return EMPTY;
 				}),
 				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
