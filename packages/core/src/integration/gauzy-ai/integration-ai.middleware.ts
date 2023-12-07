@@ -42,6 +42,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
                 });
                 // Convert settings array to an object
                 const { apiKey: ApiKey, apiSecret: ApiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
+                console.log({ ApiKey, ApiSecret });
 
                 if (ApiKey && ApiSecret) {
                     // Update custom headers and request configuration with API key and secret
