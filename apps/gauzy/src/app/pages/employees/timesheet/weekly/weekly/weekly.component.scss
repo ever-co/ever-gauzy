@@ -42,8 +42,13 @@
     background: var(--gauzy-card-4);
     border-radius: nb-theme(border-radius);
     padding: 3px;
-    height: 42px;
     padding-left: 12px;
+    flex-wrap: nowrap;
+
+    .project-name {
+      flex: 0 0 20%;
+      max-width: 20%;
+    }
   }
 
   nb-card-body {
