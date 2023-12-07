@@ -58,25 +58,4 @@ export class IntegrationSetting extends TenantOrganizationBaseEntity implements 
 	@Expose({ toPlainOnly: true, name: 'settingsValue' })
 	@IsSecret()
 	wrapSecretvalue?: string;
-
-	/*
-	|--------------------------------------------------------------------------
-	| @EventSubscriber
-	|--------------------------------------------------------------------------
-	*/
-	/**
-	 * Called after entity is loaded.
-	 */
-	@AfterLoad()
-	afterLoadEntity?() {
-		const { settingsName, settingsValue } = this;
-
-		// Apply the wrapping function only to the sensitive keys
-		const wrapped = KeysToWrapSecrets(sensitiveSecretKeys, {
-			[settingsName]: settingsValue,
-		});
-
-		this.wrapSecretKey = settingsName;
-		this.wrapSecretvalue = wrapped[settingsName];
-	}
 }

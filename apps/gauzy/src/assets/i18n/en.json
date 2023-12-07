@@ -1250,9 +1250,15 @@
 			"OPEN_AI_SECRET_KEY": "Open AI Secret Key",
 			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
 			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
 			"TAB": {
 				"KEYS": "Keys",
 				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"OPEN_AI_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible."
 			}
 		},
 		"GITHUB_PAGE": {
