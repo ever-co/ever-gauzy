@@ -408,7 +408,8 @@
 		"SCALEWAY",
 		"VULTR",
 		"Codegen",
-		"icns"
+		"icns",
+		"pantone"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
