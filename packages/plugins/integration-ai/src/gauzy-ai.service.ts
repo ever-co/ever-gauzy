@@ -1337,7 +1337,9 @@ export class GauzyAIService {
                 ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
                 ...(tenantIdApi ? { 'Tenant-Id': tenantIdApi } : {}),
             };
+
             if (this.logging) {
+                console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
                 console.log('Custom Run Time Headers: %s', customHeaders);
             }
             // Modify the operation context to include the headers
