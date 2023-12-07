@@ -37,6 +37,6 @@ export class IntegrationSettingSubscriber implements EntitySubscriberInterface<I
         const wrapped = keysToWrapSecrets(sensitiveSecretKeys, secrets, percentage);
 
         entity.wrapSecretKey = settingsName;
-        entity.wrapSecretvalue = wrapped[settingsName];
+        entity.wrapSecretValue = wrapped[settingsName];
     }
 }

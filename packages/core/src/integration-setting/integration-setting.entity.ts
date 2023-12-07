@@ -56,5 +56,5 @@ export class IntegrationSetting extends TenantOrganizationBaseEntity implements 
 
 	@Expose({ toPlainOnly: true, name: 'settingsValue' })
 	@IsSecret()
-	wrapSecretvalue?: string;
+	wrapSecretValue?: string;
 }
