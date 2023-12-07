@@ -123,13 +123,7 @@ export * from './upwork.model';
 export * from './user-organization.model';
 export * from './user.model';
 export * from './wakatime.model';
-export * from './organization-task-setting.model';
-export * from './task-estimation.model';
-export * from './github.model';
 export * from './activity-watch.model';
-
-/** App Setting Model */
-export * from './app.model';
 
 export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
 export {
