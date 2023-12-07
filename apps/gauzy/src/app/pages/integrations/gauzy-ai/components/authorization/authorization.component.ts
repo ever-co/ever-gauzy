@@ -134,9 +134,8 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				}),
 				// Redirect to the Gauzy AI integration after creation
 				tap((integration: IIntegrationTenant) => {
-					//
-					this.formDirective.reset();
 					this._redirectToGauzyAIIntegration(integration.id);
+					// this.formDirective.reset();
 				}),
 				// Catch and handle errors
 				catchError((error) => {
