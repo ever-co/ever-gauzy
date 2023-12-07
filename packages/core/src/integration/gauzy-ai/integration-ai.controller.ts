@@ -1,6 +1,6 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { IIntegrationKeySecretPairInput, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
+import { IIntegrationAICreateInput, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { IntegrationAIService } from './integration-ai.service';
@@ -22,7 +22,7 @@ export class IntegrationAIController {
 	 */
 	@Post()
 	async create(
-		@Body() input: IIntegrationKeySecretPairInput
+		@Body() input: IIntegrationAICreateInput
 	): Promise<IIntegrationTenant> {
 		return await this._integrationAIService.create(input);
 	}

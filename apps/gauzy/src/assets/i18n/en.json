@@ -646,6 +646,7 @@
 			"UPWORK_SECRET": "Upwork Secret",
 			"GAUZY_API_KEY": "Gauzy AI Key",
 			"GAUZY_API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -1247,7 +1248,19 @@
 			"TITLE": "Gauzy AI Integration",
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret",
-			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible."
+			}
 		},
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
@@ -1276,7 +1289,8 @@
 			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
 			"NO_INTEGRATIONS": "You have not configured any integrations",
 			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
-			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled"
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
+			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled"
