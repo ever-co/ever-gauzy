@@ -2,7 +2,17 @@
 	<div class="gallery-header d-flex p-2">
 		<span class="spacer"></span>
 		<div class="ml-auto">
-			<button 
+			<button
+				*ngIf="item?.description"
+				status="info"
+				nbButton
+				[nbTooltip]="item?.description"
+			>
+				<nb-icon icon="info-outline"></nb-icon>
+			</button>
+			<button
+				class="ml-2"
+				status="success"
 				nbButton
 				(click)="downloadFile(item?.fullUrl)"
 				[nbTooltip]="'BUTTONS.DOWNLOAD' | translate"
@@ -11,6 +21,7 @@
 			</button>
 			<button
 				class="ml-2"
+				status="danger"
 				nbButton (click)="close()"
 				[nbTooltip]="'BUTTONS.CLOSE' | translate"
 			>

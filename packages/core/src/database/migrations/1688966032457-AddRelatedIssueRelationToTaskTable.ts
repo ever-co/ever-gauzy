@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from "chalk";
 
 export class AddRelatedIssueRelationToTaskTable1688966032457 implements MigrationInterface {
 	name = 'AddRelatedIssueRelationToTaskTable1688966032457';
@@ -9,6 +10,8 @@ export class AddRelatedIssueRelationToTaskTable1688966032457 implements Migratio
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
 			await this.sqliteUpQueryRunner(queryRunner);
 		} else {

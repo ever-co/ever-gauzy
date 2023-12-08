@@ -8,6 +8,7 @@
 		"REGISTER": "Registrazione",
 		"CHANGE_PASSWORD": "Cambia password",
 		"LOGIN": "Accedi",
+		"SIGNIN": "Accedi",
 		"SEND_CODE": "Accedi con l'email",
 		"ADD_NOTE": "Aggiungi nota",
 		"EDIT": "Modifica",
@@ -4398,6 +4399,39 @@
 			"receipt": "Ricevuta"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Registra",
+		"HAVE_AN_ACCOUNT": "Hai già un account?",
+		"LABELS": {
+			"FULL_NAME": "Nome completo:",
+			"EMAIL": "Indirizzo email:",
+			"PASSWORD": "Password",
+			"CONFIRM_PASSWORD": "Conferma password:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Nome completo",
+			"EMAIL": "Indirizzo email",
+			"PASSWORD": "Password",
+			"CONFIRM_PASSWORD": "Conferma password"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Il nome completo è obbligatorio!",
+			"FULL_NAME_SHOULD_CONTAIN": "Il nome completo deve contenere tra {{ minLength }} e {{ maxLength }} caratteri",
+			"EMAIL_REQUIRED": "L'indirizzo email è obbligatorio!",
+			"EMAIL_SHOULD_BE_REAL": "L'indirizzo email deve essere reale!",
+			"PASSWORD_NO_SPACE_EDGES": "Le password non devono iniziare o finire con spazi!",
+			"PASSWORD_REQUIRED": "La password è obbligatoria!",
+			"PASSWORD_SHOULD_CONTAIN": "La password deve contenere tra {{ minLength }} e {{ maxLength }} caratteri",
+			"CONFIRM_PASSWORD_REQUIRED": "La conferma della password è obbligatoria!",
+			"PASSWORDS_NOT_MATCH": "La password non corrisponde alla conferma della password!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Accetto",
+				"TERMS_AND_CONDITIONS": "Termini e condizioni",
+				"AND": " e ",
+				"PRIVACY_POLICY": "Informativa sulla privacy"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Accesso",
 		"SUB_TITLE": "Ciao! Accedi con la tua email",
@@ -4436,7 +4470,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Accedi automaticamente agli account di prova",
-			"SUB_TITLE": "Seleziona il tipo di account qui sotto"
+			"SUB_TITLE": "Seleziona il tipo di account qui sotto",
+			"SUPER_ADMIN_TITLE": "Super Admin",
+			"ADMIN_TITLE": "Admin",
+			"EMPLOYEE_TITLE": "Impiegato",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Credenziali",
+			"LABELS": {
+				"EMAIL": "Email: ",
+				"PASSWORD": "Password: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4504,11 +4547,23 @@
 			"CREATE_NEW_WORKSPACE": "Crea un nuovo spazio di lavoro",
 			"FIND_WORKSPACE": "Trova uno spazio di lavoro"
 		},
+		"LABELS": {
+			"EMAIL": "Inserisci il tuo indirizzo email:",
+			"PASSWORD": "Inserisci la tua password:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "nome@workspace-email.com",
+			"PASSWORD": "Password"
+		},
+		"SIGN_IN_TITLE": "Accedi a Workspace",
+		"BACK_TO": "Torna a",
 		"SUCCESS_SIGNIN_TITLE": "Congratulazioni! Hai effettuato l'accesso con successo al tuo spazio di lavoro.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Per favore, sii paziente mentre prepariamo lo spazio di lavoro...",
 		"FAIL_SIGNIN_TITLE": "Errore! Il codice magico o il link che hai fornito è scaduto o non è valido.",
 		"FAIL_SIGNIN_SUB_TITLE": "Per favore, inizia il processo di nuovo.",
-		"THANKING_TEXT": "Grazie per averci scelto."
+		"THANKING_TEXT": "Grazie per averci scelto.",
+		"UNKNOWN_WORKSPACE": "Non conosci il tuo spazio di lavoro?",
+		"FIND_WORKSPACE": "Trova i tuoi spazi di lavoro"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Aggiungi o Rimuovi Immagine",

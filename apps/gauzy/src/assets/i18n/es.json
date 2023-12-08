@@ -8,6 +8,7 @@
 		"REGISTER": "Registrar",
 		"CHANGE_PASSWORD": "Cambiar contraseña",
 		"LOGIN": "Iniciar sesión",
+		"SIGNIN": "Iniciar sesión",
 		"SEND_CODE": "Iniciar sesión con correo electrónico",
 		"ADD_NOTE": "Añadir nota",
 		"EDIT": "Editar",
@@ -4400,6 +4401,39 @@
 			"receipt": "Recibo"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Registrarse",
+		"HAVE_AN_ACCOUNT": "¿Ya tienes una cuenta?",
+		"LABELS": {
+			"FULL_NAME": "Nombre completo:",
+			"EMAIL": "Dirección de correo electrónico:",
+			"PASSWORD": "Contraseña",
+			"CONFIRM_PASSWORD": "Confirmar contraseña:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Nombre completo",
+			"EMAIL": "Dirección de correo electrónico",
+			"PASSWORD": "Contraseña",
+			"CONFIRM_PASSWORD": "Confirmar contraseña"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "¡Se requiere el nombre completo!",
+			"FULL_NAME_SHOULD_CONTAIN": "El nombre completo debe contener entre {{ minLength }} y {{ maxLength }} caracteres",
+			"EMAIL_REQUIRED": "¡Se requiere el correo electrónico!",
+			"EMAIL_SHOULD_BE_REAL": "¡El correo electrónico debe ser real!",
+			"PASSWORD_NO_SPACE_EDGES": "¡Las contraseñas no deben comenzar ni terminar con espacios!",
+			"PASSWORD_REQUIRED": "¡Se requiere la contraseña!",
+			"PASSWORD_SHOULD_CONTAIN": "La contraseña debe contener entre {{ minLength }} y {{ maxLength }} caracteres",
+			"CONFIRM_PASSWORD_REQUIRED": "¡Se requiere la confirmación de la contraseña!",
+			"PASSWORDS_NOT_MATCH": "La contraseña no coincide con la confirmación de la contraseña!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Aceptar",
+				"TERMS_AND_CONDITIONS": "Términos y condiciones",
+				"AND": " y ",
+				"PRIVACY_POLICY": "Política de privacidad"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Acceso",
 		"SUB_TITLE": "¡Hola! Inicia sesión con tu correo electrónico.",
@@ -4438,7 +4472,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Iniciar sesión automáticamente en cuentas de demostración",
-			"SUB_TITLE": "Por favor, selecciona el tipo de cuenta a continuación."
+			"SUB_TITLE": "Por favor, selecciona el tipo de cuenta a continuación.",
+			"SUPER_ADMIN_TITLE": "Superadministrador",
+			"ADMIN_TITLE": "Administrador",
+			"EMPLOYEE_TITLE": "Empleado",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Credenciales",
+			"LABELS": {
+				"EMAIL": "Correo electrónico: ",
+				"PASSWORD": "Contraseña: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4506,11 +4549,23 @@
 			"CREATE_NEW_WORKSPACE": "Crear un nuevo espacio de trabajo",
 			"FIND_WORKSPACE": "Encuentra espacio de trabajo."
 		},
+		"LABELS": {
+			"EMAIL": "Ingrese su dirección de correo electrónico:",
+			"PASSWORD": "Ingrese su contraseña:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "nombre@correo-electronico.com",
+			"PASSWORD": "Contraseña"
+		},
+		"SIGN_IN_TITLE": "Iniciar sesión en el espacio de trabajo",
+		"BACK_TO": "Volver a",
 		"SUCCESS_SIGNIN_TITLE": "¡Felicidades! Has iniciado sesión con éxito en tu espacio de trabajo.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Por favor, ten paciencia mientras preparamos el espacio de trabajo...",
 		"FAIL_SIGNIN_TITLE": "¡Error! El código mágico o el enlace que proporcionaste ha expirado o no es válido.",
 		"FAIL_SIGNIN_SUB_TITLE": "Por favor, inicia el proceso de nuevo.",
-		"THANKING_TEXT": "Gracias por elegirnos."
+		"THANKING_TEXT": "Gracias por elegirnos.",
+		"UNKNOWN_WORKSPACE": "¿No conoces tu espacio de trabajo?",
+		"FIND_WORKSPACE": "Encuentra tu espacio de trabajo"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Agregar o Eliminar Imagen",

@@ -17,8 +17,8 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
-					ApiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
-					ApiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
+					apiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
+					apiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
 				},
 			}),
 			inject: [ConfigService],
@@ -51,8 +51,8 @@ export class GauzyAIModule {
 				{
 					provide: GAUZY_AI_CONFIG_OPTIONS,
 					useFactory: (config: ConfigService): IConfigurationOptions => ({
-						ApiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
-						ApiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
+						apiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
+						apiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
 						...options,
 					}),
 					inject: [ConfigService],

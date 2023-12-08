@@ -41,11 +41,19 @@
 				<div class="row mb-3 justify-content-left">
 					<div class="col-3 mb-2" *ngFor="let image of screenshots">
 						<div class="screenshot">
-							<img
-								nb-card-image
-								draggable="false"
-								[src]="image?.thumbUrl"
-							/>
+							<img nb-card-image draggable="false" [src]="image?.thumbUrl"/>
+							<button
+								*ngIf="image?.description"
+								class="ml-right select-hidden"
+								status="info"
+								nbButton
+								size="tiny"
+								[nbTooltip]="image?.description"
+							>
+								<nb-icon
+									icon="info-outline"
+								></nb-icon>
+							</button>
 							<button
 								class="ml-auto select-hidden"
 								status="danger"
@@ -53,7 +61,9 @@
 								size="tiny"
 								(click)="deleteImage(image, image?.employee)"
 							>
-								<nb-icon icon="trash-2-outline"></nb-icon>
+								<nb-icon
+									icon="trash-2-outline"
+								></nb-icon>
 							</button>
 							<div class="text-caption caption text-center mt-1">
 								{{ image?.recordedAt | dateTimeFormat }}
