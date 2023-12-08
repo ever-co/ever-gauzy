@@ -408,7 +408,10 @@
 		"SCALEWAY",
 		"VULTR",
 		"Codegen",
-		"icns"
+		"icns",
+		"pantone"
+		"openai",
+		"OPENAI"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

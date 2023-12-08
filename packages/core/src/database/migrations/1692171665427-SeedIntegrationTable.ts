@@ -1,4 +1,3 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from 'uuid';
 import { getConfig } from "@gauzy/config";
@@ -17,7 +16,7 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`SeedIntegrationTable1692171665427 start running!`));
+        console.log(chalk.yellow(this.name + ' start running!'));
 
         await this.upsertIntegrationsAndIntegrationTypes(queryRunner);
     }

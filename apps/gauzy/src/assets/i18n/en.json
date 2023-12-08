@@ -10,6 +10,7 @@
 		"REGISTER": "Register",
 		"CHANGE_PASSWORD": "Change password",
 		"LOGIN": "Log In",
+		"SIGNIN": "Sign in",
 		"SEND_CODE": "Send code",
 		"SENDING_CODE": "Sending code...",
 		"ADD_NOTE": "Add note",
@@ -645,6 +646,7 @@
 			"UPWORK_SECRET": "Upwork Secret",
 			"GAUZY_API_KEY": "Gauzy AI Key",
 			"GAUZY_API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -1246,7 +1248,19 @@
 			"TITLE": "Gauzy AI Integration",
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret",
-			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible."
+			}
 		},
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
@@ -1275,7 +1289,8 @@
 			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
 			"NO_INTEGRATIONS": "You have not configured any integrations",
 			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
-			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled"
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
+			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled"
@@ -4479,6 +4494,39 @@
 			"receipt": "Receipt"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Register",
+		"HAVE_AN_ACCOUNT": "Already have an account?",
+		"LABELS": {
+			"FULL_NAME": "Full name:",
+			"EMAIL": "Email address:",
+			"PASSWORD": "Password",
+			"CONFIRM_PASSWORD":"Confirm Password:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Full name",
+			"EMAIL": "Email address",
+			"PASSWORD": "Password",
+			"CONFIRM_PASSWORD": "Confirm password"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Full name is required!",
+			"FULL_NAME_SHOULD_CONTAIN": "Full name should contain from {{ minLength }} to {{ maxLength }} characters",
+			"EMAIL_REQUIRED": "Email is required!",
+			"EMAIL_SHOULD_BE_REAL":"Email should be a real one!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces!",
+			"PASSWORD_REQUIRED": "Password is required!",
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
+			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO":"Agree to",
+				"TERMS_AND_CONDITIONS":"Terms & Conditions",
+				"AND": " and ",
+				"PRIVACY_POLICY": "Privacy Policy"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
 		"SUB_TITLE": "Hello! Log in with your email.",
@@ -4517,7 +4565,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
-			"SUB_TITLE": "Please select account type below."
+			"SUB_TITLE": "Please select account type below.",
+			"SUPER_ADMIN_TITLE": "Super Admin",
+			"ADMIN_TITLE": "Admin",
+			"EMPLOYEE_TITLE": "Employee",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Credentials",
+			"LABELS": {
+				"EMAIL":"Email: ",
+				"PASSWORD": "Password: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4585,11 +4642,23 @@
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		},
+		"LABELS": {
+			"EMAIL": "Enter your email address:",
+			"PASSWORD": "Enter your password:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "Password"
+		},
+		"SIGN_IN_TITLE": "Sign in to Workspace",
+		"BACK_TO": "Back to ",
 		"SUCCESS_SIGNIN_TITLE": "Congrats! you’ve successfully signed in to your workspace.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Please be patient while we are preparing the workspace...",
 		"FAIL_SIGNIN_TITLE": "Error! the magic code or link you provided is expired or invalid.",
 		"FAIL_SIGNIN_SUB_TITLE": "Please initiate the process again.",
-		"THANKING_TEXT": "Thank you for choosing us."
+		"THANKING_TEXT": "Thank you for choosing us.",
+		"UNKNOWN_WORKSPACE": "Don't know your workspace?",
+		"FIND_WORKSPACE": "Find your workspaces"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

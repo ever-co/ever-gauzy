@@ -1,10 +1,13 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class ChangelogPlugin1638797573521 implements MigrationInterface {
 
     name = 'ChangelogPlugin1638797573521';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -77,11 +80,11 @@ export class ChangelogPlugin1638797573521 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_c2037b621d2e8023898aee4ac7" ON "changelog" ("organizationId") `);
     }
 
-     /**
-     * SqliteDB Down Migration
-     *
-     * @param queryRunner
-     */
+    /**
+    * SqliteDB Down Migration
+    *
+    * @param queryRunner
+    */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_c2037b621d2e8023898aee4ac7"`);
         await queryRunner.query(`DROP INDEX "IDX_744268ee0ec6073883267bc3b6"`);

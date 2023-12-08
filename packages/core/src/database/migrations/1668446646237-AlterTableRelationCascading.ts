@@ -1,5 +1,5 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class AlterTableRelationCascading1668446646237 implements MigrationInterface {
 
@@ -11,6 +11,8 @@ export class AlterTableRelationCascading1668446646237 implements MigrationInterf
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -72,7 +74,7 @@ export class AlterTableRelationCascading1668446646237 implements MigrationInterf
     *
     * @param queryRunner
     */
-     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`DROP INDEX "IDX_760034f54e598d519b5f0c4ece"`);
         await queryRunner.query(`DROP INDEX "IDX_e699b50ca468e75bbd36913dcc"`);
         await queryRunner.query(`CREATE TABLE "temporary_skill_employee" ("skillId" varchar NOT NULL, "employeeId" varchar NOT NULL, PRIMARY KEY ("skillId", "employeeId"))`);
