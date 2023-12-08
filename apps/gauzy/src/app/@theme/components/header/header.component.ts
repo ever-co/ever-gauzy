@@ -242,6 +242,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			},
 			(event: KeyboardEvent, handler: HotkeysEvent) => {
 				const pressedKeys: string = this.pressedKeysToString(handler);
+				// -- prevent triggering shortcuts when typing in NbOptions (searchable inputs)
+				if ((event.target as Element).localName === "nb-option") return;
 				if (this.shortcutsMap.has(pressedKeys)) {
 					// -- close dialog if open when using shortcuts and prevent closing dialog by pressing unregistered keys
 					this.quickActionsRef &&
