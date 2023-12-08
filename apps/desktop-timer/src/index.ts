@@ -388,9 +388,13 @@ app.on('ready', async () => {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
 		IS_INTEGRATED_DESKTOP: configs?.isLocalServer,
 	};
-	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-	await splashScreen.loadURL();
-	splashScreen.show();
+	try {
+		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+		await splashScreen.loadURL();
+		splashScreen.show();
+	} catch (error) {
+		console.error(error);
+	}
 	if (!settings) {
 		launchAtStartup(true, false);
 	}

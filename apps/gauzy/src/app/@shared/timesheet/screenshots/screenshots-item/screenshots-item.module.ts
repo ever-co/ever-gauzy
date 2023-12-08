@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbDialogModule,
@@ -7,27 +8,25 @@ import {
 	NbCheckboxModule,
 	NbProgressBarModule,
 	NbPopoverModule,
-	NbListModule
+	NbListModule,
+	NbTooltipModule
 } from '@nebular/theme';
-import { ScreenshotsItemComponent } from './screenshots-item.component';
-import { SharedModule } from '../../../shared.module';
-import { TranslateModule } from '@ngx-translate/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MomentModule } from 'ngx-moment';
 import { GalleryModule } from '../../../gallery/gallery.module';
-import { DialogsModule } from '../../../dialogs';
+import { DialogsModule } from '../../../dialogs/dialogs.module';
 import { ViewScreenshotsModalModule } from '../view-screenshots-modal/view-screenshots-modal.module';
-import { TableComponentsModule } from '../../../table-components';
+import { TableComponentsModule } from '../../../table-components/table-components.module';
+import { SharedModule } from '../../../shared.module';
+import { TranslateModule } from '../../../translate/translate.module';
+import { ScreenshotsItemComponent } from './screenshots-item.component';
 
 @NgModule({
 	declarations: [ScreenshotsItemComponent],
 	exports: [ScreenshotsItemComponent],
 	imports: [
 		CommonModule,
-		DialogsModule,
 		FormsModule,
-		GalleryModule,
-		MomentModule,
+		ReactiveFormsModule,
 		NbButtonModule,
 		NbCheckboxModule,
 		NbDialogModule.forChild(),
@@ -35,11 +34,14 @@ import { TableComponentsModule } from '../../../table-components';
 		NbListModule,
 		NbPopoverModule,
 		NbProgressBarModule,
-		ReactiveFormsModule,
-		SharedModule,
-		TableComponentsModule,
+		NbTooltipModule,
+		MomentModule,
 		TranslateModule,
+		SharedModule,
+		DialogsModule,
+		GalleryModule,
+		TableComponentsModule,
 		ViewScreenshotsModalModule
 	]
 })
-export class ScreenshotsItemModule {}
+export class ScreenshotsItemModule { }
