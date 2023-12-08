@@ -36,6 +36,15 @@
 								></nb-checkbox>
 							</ng-container>
 							<button
+								*ngIf="lastScreenshot?.description"
+								class="ml-right"
+								status="info"
+								nbButton
+								size="tiny"
+							>
+								<nb-icon icon="info-outline" size="small" [nbTooltip]="lastScreenshot?.description"></nb-icon>
+							</button>
+							<button
 								class="ml-auto select-hidden"
 								status="basic"
 								nbButton
