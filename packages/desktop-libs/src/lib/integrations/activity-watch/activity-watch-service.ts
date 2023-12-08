@@ -53,6 +53,7 @@ export class ActivityWatchService {
 
 			const params = LocalStore.beforeRequestParams();
 			const currentDate = moment().utc();
+			const lastWindowEvent = windowEvents[windowEvents.length - 1];
 
 			return windowEvents.map((windowEvent) => {
 				const metaData = JSON.parse(windowEvent.data) as IActivityWatchWindowEvent['data'];
@@ -63,7 +64,7 @@ export class ActivityWatchService {
 						metaData.app.toLowerCase().includes(browser.toLowerCase())
 					)
 				) {
-					const mergeWith = (events: IDesktopEvent[]) => {
+					const mergeWith = (events: IDesktopEvent[]): boolean => {
 						const lastEvent = events[events.length - 1];
 						const metaDataTitle = metaData.title;
 
@@ -72,22 +73,24 @@ export class ActivityWatchService {
 							const eventRecordedAt = moment(event.recordedAt);
 
 							if (
-								(eventRecordedAt.isSame(windowEvent.recordedAt) || event === lastEvent) &&
+								(eventRecordedAt.isSameOrAfter(windowEvent.recordedAt) || event === lastEvent) &&
 								metaDataTitle.startsWith(data.title)
 							) {
 								Object.assign(metaData, data);
 								windowEvent.type = event.type;
 								title = data.title;
-								events.splice(events.indexOf(event), 1);
+								return true;
 							}
 						}
+						return false;
 					};
-					mergeWith(chromeEvents);
-					mergeWith(firefoxEvents);
-					mergeWith(edgeEvents);
+					const merged = mergeWith(chromeEvents) || mergeWith(firefoxEvents) || mergeWith(edgeEvents);
+					if (!merged) {
+						console.log('No merged events');
+					}
 				}
 
-				if (windowEvent.duration === 0) {
+				if (lastWindowEvent === windowEvent && windowEvent.duration === 0) {
 					windowEvent.duration = moment().diff(windowEvent.recordedAt, 'seconds');
 				}
 
