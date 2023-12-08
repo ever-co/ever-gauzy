@@ -1,21 +1,22 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ViewScreenshotsModalComponent } from './view-screenshots-modal.component';
 import {
 	NbDialogModule,
 	NbCardModule,
 	NbButtonModule,
 	NbIconModule,
 	NbProgressBarModule,
-	NbAlertModule
+	NbAlertModule,
+	NbTooltipModule
 } from '@nebular/theme';
-import { SharedModule } from '../../../shared.module';
 import { MomentModule } from 'ngx-moment';
-import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '../../../shared.module';
 import { LabelModule } from '../../../components/label/label.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
-import { TableComponentsModule } from '../../../table-components';
+import { TranslateModule } from '../../../translate/translate.module';
+import { TableComponentsModule } from '../../../table-components/table-components.module';
+import { ViewScreenshotsModalComponent } from './view-screenshots-modal.component';
 
 @NgModule({
 	declarations: [ViewScreenshotsModalComponent],
@@ -23,13 +24,14 @@ import { TableComponentsModule } from '../../../table-components';
 	imports: [
 		CommonModule,
 		NbAlertModule,
-		NbDialogModule.forChild(),
-		NbCardModule,
 		NbButtonModule,
+		NbCardModule,
+		NbDialogModule.forChild(),
 		NbIconModule,
-		SharedModule,
 		NbProgressBarModule,
+		NbTooltipModule,
 		MomentModule,
+		SharedModule,
 		TranslateModule,
 		LabelModule,
 		GalleryModule,
