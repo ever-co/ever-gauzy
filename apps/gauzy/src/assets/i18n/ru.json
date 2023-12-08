@@ -1199,6 +1199,38 @@
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
 			"HOURLY": "Почасовой"
 		},
+		"GAUZY_AI_PAGE": {
+			"TITLE": "Gauzy AI Integration",
+			"API_KEY": "Gauzy AI key",
+			"API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible."
+			}
+		},
+		"GITHUB_PAGE": {
+			"TITLE": "GitHub Integration",
+			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
+			"SELECT_REPOSITORY": "Select repository",
+			"SEARCH_REPOSITORY": "Type to search repository",
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
+			"HAS_SYNCED_DISABLED": "'{{repository}}' sync successfully disabled",
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
+			"TAB": {
+				"AUTO_SYNC": "Auto sync",
+				"MANUAL_SYNC": "Manual sync"
+			}
+		},
 		"COMING_SOON": "Скоро появится",
 		"RE_INTEGRATE": "Переинтегрировать",
 		"SETTINGS": "Настройки",
@@ -1206,7 +1238,17 @@
 		"FILTER_INTEGRATIONS": "Фильтровать интеграцию",
 		"SEARCH_INTEGRATIONS": "Интеграции поиска",
 		"PAID": "Оплачено",
-		"INTEGRATION": "Интеграция"
+		"INTEGRATION": "Интеграция",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Обновлены настройки для '{{provider}}' интеграция",
+			"INTEGRATION_DELETED": "Интеграция '{{provider}}' успешно удалено",
+			"NO_INTEGRATIONS": "Вы не настроили ни одной интеграции",
+			"INTEGRATION_ENABLED": "Интеграция '{{provider}}' успешно включена",
+			"INTEGRATION_DISABLED": "Интеграция '{{provider}}' успешно отключена",
+			"INTEGRATION_ADDED": "Интеграция '{{provider}}' добавлена ​​в '{{organization}}'"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",

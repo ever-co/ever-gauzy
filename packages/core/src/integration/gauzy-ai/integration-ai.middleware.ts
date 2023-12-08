@@ -41,14 +41,22 @@ export class IntegrationAIMiddleware implements NestMiddleware {
                     name: IntegrationEnum.GAUZY_AI
                 });
                 // Convert settings array to an object
-                const { apiKey: ApiKey, apiSecret: ApiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
+                const { apiKey, apiSecret, openAiApiSecretKey } = arrayToObject(settings, 'settingsName', 'settingsValue');
 
-                if (ApiKey && ApiSecret) {
+                if (apiKey && apiSecret) {
                     // Update custom headers and request configuration with API key and secret
-                    request.headers['X-APP-ID'] = ApiKey;
-                    request.headers['X-API-KEY'] = ApiSecret;
+                    request.headers['X-APP-ID'] = apiKey;
+                    request.headers['X-API-KEY'] = apiSecret;
 
-                    this.requestConfigProvider.setConfig({ ApiKey, ApiSecret });
+                    if (isNotEmpty(openAiApiSecretKey)) {
+                        request.headers['X-OPENAI-SECRET-KEY'] = openAiApiSecretKey;
+                    }
+
+                    this.requestConfigProvider.setConfig({
+                        apiKey,
+                        apiSecret,
+                        ...(isNotEmpty(openAiApiSecretKey) && { openAiApiSecretKey }),
+                    });
                 }
             }
         } catch (error) {

@@ -410,6 +410,8 @@
 		"Codegen",
 		"icns",
 		"pantone"
+		"openai",
+		"OPENAI"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
