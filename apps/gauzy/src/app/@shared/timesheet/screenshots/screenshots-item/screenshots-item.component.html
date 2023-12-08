@@ -30,20 +30,12 @@
 						<ng-container *ngIf="timeSlot?.isAllowDelete">
 							<ng-container *ngIf="multiple">
 								<nb-checkbox
+									size="tiny"
 									[(ngModel)]="isSelected"
 									(click)="$event.stopPropagation()"
 									(ngModelChange)="toggleSelect(timeSlot)"
 								></nb-checkbox>
 							</ng-container>
-							<button
-								*ngIf="lastScreenshot?.description"
-								class="ml-right"
-								status="info"
-								nbButton
-								size="tiny"
-							>
-								<nb-icon icon="info-outline" size="small" [nbTooltip]="lastScreenshot?.description"></nb-icon>
-							</button>
 							<button
 								class="ml-auto select-hidden"
 								status="basic"
@@ -60,6 +52,16 @@
 								></nb-icon>
 							</button>
 						</ng-container>
+						<button
+							*ngIf="lastScreenshot?.description"
+							class="ml-2"
+							status="info"
+							nbButton
+							size="tiny"
+							[nbTooltip]="lastScreenshot?.description"
+						>
+							<nb-icon icon="info-outline" size="small"></nb-icon>
+						</button>
 					</div>
 					<div class="view-button select-hidden">
 						<ng-container *ngIf="timeSlot?.screenshots?.length > 0">
