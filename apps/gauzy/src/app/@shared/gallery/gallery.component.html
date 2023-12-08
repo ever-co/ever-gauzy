@@ -4,6 +4,7 @@
 		<div class="ml-auto">
 			<button
 				*ngIf="item?.description"
+				status="info"
 				nbButton
 				[nbTooltip]="item?.description"
 			>
@@ -11,6 +12,7 @@
 			</button>
 			<button
 				class="ml-2"
+				status="success"
 				nbButton
 				(click)="downloadFile(item?.fullUrl)"
 				[nbTooltip]="'BUTTONS.DOWNLOAD' | translate"
@@ -19,6 +21,7 @@
 			</button>
 			<button
 				class="ml-2"
+				status="danger"
 				nbButton (click)="close()"
 				[nbTooltip]="'BUTTONS.CLOSE' | translate"
 			>
