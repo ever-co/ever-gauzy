@@ -324,11 +324,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	private toggleQuickActionsDialog() {
 		if (!this.quickActionsRef) {
 			this.openQuickActions();
-			return;
-		}
-		if (this.quickActionsRef) {
+		} else {
 			this.quickActionsRef.close();
-			return;
 		}
 	}
 
