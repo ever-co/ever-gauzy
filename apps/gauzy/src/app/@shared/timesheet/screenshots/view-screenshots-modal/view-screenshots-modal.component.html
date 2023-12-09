@@ -72,6 +72,17 @@
 					</div>
 				</div>
 			</ng-template>
+			<ng-template [ngIf]="screenshots.length > 0">
+				<h6>{{ 'TIMESHEET.APPS' | translate }}</h6>
+				<div class="row mb-3 justify-content-start">
+					<!--  -->
+					<div class="col-12" *ngIf="apps?.length > 0">
+						<div>
+							<span class="badge" *ngFor="let app of apps">{{ app }}</span>
+						</div>
+					</div>
+				</div>
+			</ng-template>
 			<h6>{{ 'TIMESHEET.SCREENSHOTS.TIME_LOG' | translate }}</h6>
 			<ng-container *ngIf="timeLogs?.length > 0">
 				<div *ngFor="let timeLog of timeLogs" class="mt-3 p-3 card">
@@ -196,15 +207,6 @@
 								</div>
 								<div>
 									{{ timeLog?.reason }}
-								</div>
-							</div>
-							<!--  -->
-							<div class="mb-2" *ngIf="apps?.length > 0">
-								<div class="subtitle">
-									{{ 'TIMESHEET.APPS' | translate }}:
-								</div>
-								<div>
-									<span class="badge" *ngFor="let app of apps">{{ app }}</span>
 								</div>
 							</div>
 						</div>
