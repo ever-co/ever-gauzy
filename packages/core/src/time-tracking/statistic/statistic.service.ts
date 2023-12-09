@@ -31,7 +31,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateRangeFormat } from './../../core/utils';
+import { getDateRangeFormat, isSqliteDB } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -106,10 +106,11 @@ export class StatisticService {
 			duration: 0
 		};
 		const weekQuery = this.timeSlotRepository.createQueryBuilder();
+		weekQuery.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs');
+
 		const weekTimeStatistics = await weekQuery
-			.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs')
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekQuery.alias}"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`
 				}`,
@@ -215,10 +216,11 @@ export class StatisticService {
 		);
 
 		const todayQuery = this.timeSlotRepository.createQueryBuilder();
+		todayQuery.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs');
+
 		const todayTimeStatistics = await todayQuery
-			.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs')
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${todayQuery.alias}"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`
 				}`,
@@ -362,18 +364,13 @@ export class StatisticService {
 			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
-		/**
-		 *
-		 */
-		const isSqlite = ['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type);
-
 		const query = this.employeeRepository.createQueryBuilder();
 		let employees: IMembersStatistics[] = await query
 			.select(`"${query.alias}".id`)
 			.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name')
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
-				`${isSqlite
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 				}`,
@@ -433,7 +430,7 @@ export class StatisticService {
 			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			weekTimeQuery
 				.select(
-					`${isSqlite
+					`${isSqliteDB(this.configService.dbConnectionOptions.type)
 						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 					}`,
@@ -519,7 +516,7 @@ export class StatisticService {
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			dayTimeQuery
 				.select(
-					`${isSqlite
+					`${isSqliteDB(this.configService.dbConnectionOptions.type)
 						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 					}`,
@@ -578,8 +575,6 @@ export class StatisticService {
 
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
 
-			console.log({ dayTimeSlots });
-
 			dayTimeSlots = mapObject(
 				groupBy(dayTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -626,13 +621,13 @@ export class StatisticService {
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
 					.select(
-						`${isSqlite
+						`${isSqliteDB(this.configService.dbConnectionOptions.type)
 							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
 							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 						}`,
 						`duration`
 					)
-					.addSelect(`${isSqlite ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`, 'day')
+					.addSelect(`${isSqliteDB(this.configService.dbConnectionOptions.type) ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`, 'day')
 					.andWhere(`"${weekHoursQuery.alias}"."id" = :memberId`, { memberId: member.id })
 					.andWhere(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 					.andWhere(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`, { organizationId })
@@ -664,7 +659,7 @@ export class StatisticService {
 							}
 						})
 					)
-					.addGroupBy(`${isSqlite ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`);
+					.addGroupBy(`${isSqliteDB(this.configService.dbConnectionOptions.type) ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
 				console.log({ member });
@@ -712,7 +707,7 @@ export class StatisticService {
 			.select(`"project"."name"`, "name")
 			.addSelect(`"project"."id"`, "projectId")
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
 				}`,
@@ -785,7 +780,7 @@ export class StatisticService {
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder('time_log');
 		totalDurationQuery
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
 				}`,
@@ -927,9 +922,7 @@ export class StatisticService {
 			.addSelect(`"task"."id"`, 'taskId')
 			.addSelect(`"${todayQuery.alias}"."updatedAt"`, 'updatedAt')
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(
-					this.configService.dbConnectionOptions.type
-				)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
 				}`,
@@ -1032,7 +1025,7 @@ export class StatisticService {
 			.addSelect(`"task"."id"`, "taskId")
 			.addSelect(`"${query.alias}"."updatedAt"`, 'updatedAt')
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
 				}`,
@@ -1138,7 +1131,7 @@ export class StatisticService {
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
 		totalDurationQuery
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
 				}`,
@@ -1342,7 +1335,7 @@ export class StatisticService {
 			.addGroupBy(`"${query.alias}"."title"`)
 			.andWhere(
 				new Brackets((qb) => {
-					if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
+					if (isSqliteDB(this.configService.dbConnectionOptions.type)) {
 						qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`, { start, end });
 					} else {
 						qb.andWhere(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`, { start, end });
@@ -1401,7 +1394,7 @@ export class StatisticService {
 			.innerJoin(`time_slot.timeLogs`, 'time_log')
 			.andWhere(
 				new Brackets((qb) => {
-					if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
+					if (isSqliteDB(this.configService.dbConnectionOptions.type)) {
 						qb.andWhere(`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`, {
 							start,
 							end
