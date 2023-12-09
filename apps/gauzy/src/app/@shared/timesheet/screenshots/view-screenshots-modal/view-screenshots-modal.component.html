@@ -41,7 +41,7 @@
 				<div class="row mb-3 justify-content-left">
 					<div class="col-3 mb-2" *ngFor="let image of screenshots">
 						<div class="screenshot" [ngClass]="{
-							'screenshot-item-red': image?.isWorkRelated === false
+							'danger-bordered': image?.isWorkRelated === false
 						}">
 							<img nb-card-image draggable="false" [src]="image?.thumbUrl"/>
 							<button
