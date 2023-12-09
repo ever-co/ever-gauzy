@@ -40,12 +40,22 @@
 				<h6>{{ 'TIMESHEET.SCREENSHOTS.SCREENSHOTS' | translate }}</h6>
 				<div class="row mb-3 justify-content-left">
 					<div class="col-3 mb-2" *ngFor="let image of screenshots">
-						<div class="screenshot">
-							<img
-								nb-card-image
-								draggable="false"
-								[src]="image?.thumbUrl"
-							/>
+						<div class="screenshot" [ngClass]="{
+							'danger-bordered': image?.isWorkRelated === false
+						}">
+							<img nb-card-image draggable="false" [src]="image?.thumbUrl"/>
+							<button
+								*ngIf="image?.description"
+								class="ml-right select-hidden"
+								status="info"
+								nbButton
+								size="tiny"
+								[nbTooltip]="image?.description"
+							>
+								<nb-icon
+									icon="info-outline"
+								></nb-icon>
+							</button>
 							<button
 								class="ml-auto select-hidden"
 								status="danger"
@@ -53,11 +63,24 @@
 								size="tiny"
 								(click)="deleteImage(image, image?.employee)"
 							>
-								<nb-icon icon="trash-2-outline"></nb-icon>
+								<nb-icon
+									icon="trash-2-outline"
+								></nb-icon>
 							</button>
 							<div class="text-caption caption text-center mt-1">
 								{{ image?.recordedAt | dateTimeFormat }}
 							</div>
+						</div>
+					</div>
+				</div>
+			</ng-template>
+			<ng-template [ngIf]="screenshots.length > 0">
+				<h6>{{ 'TIMESHEET.APPS' | translate }}</h6>
+				<div class="row mb-3 justify-content-start">
+					<!--  -->
+					<div class="col-12" *ngIf="apps?.length > 0">
+						<div>
+							<span class="badge" *ngFor="let app of apps">{{ app }}</span>
 						</div>
 					</div>
 				</div>
@@ -172,7 +195,7 @@
 									}}
 								</div>
 							</div>
-							<div class="mb-2">
+							<div class="mb-2" *ngIf="timeLog?.description">
 								<div class="subtitle">
 									{{ 'TIMESHEET.NOTES' | translate }}:
 								</div>

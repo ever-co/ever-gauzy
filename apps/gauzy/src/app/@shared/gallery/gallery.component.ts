@@ -8,10 +8,10 @@ import {
 } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
-import { GalleryItem } from './gallery.directive';
-import { GalleryService } from './gallery.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { saveAs } from 'file-saver';
+import { GalleryItem } from './gallery.directive';
+import { GalleryService } from './gallery.service';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -124,12 +124,12 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	ngOnDestroy() { }
 
 	downloadFile(url: string) {
-		if(url) {
+		if (url) {
 			this.galleryService
-			.downloadFile(url)
-			.subscribe(blob => {
-				saveAs(blob, url.replace(/^.*[\\\/]/, ''))
-			});
-		}		
+				.downloadFile(url)
+				.subscribe(blob => {
+					saveAs(blob, url.replace(/^.*[\\\/]/, ''))
+				});
+		}
 	}
 }
