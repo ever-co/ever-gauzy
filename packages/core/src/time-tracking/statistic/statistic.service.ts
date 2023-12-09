@@ -1377,34 +1377,26 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -1417,19 +1409,10 @@ export class StatisticService {
 			.addGroupBy(`"${query.alias}"."title"`)
 			.andWhere(
 				new Brackets((qb) => {
-					if (
-						this.configService.dbConnectionOptions.type ===
-						'sqlite'
-					) {
-						qb.andWhere(
-							`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
-							{ start, end }
-						);
+					if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
+						qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`, { start, end });
 					} else {
-						qb.andWhere(
-							`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
-							{ start, end }
-						);
+						qb.andWhere(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`, { start, end });
 					}
 				})
 			)
@@ -1485,10 +1468,7 @@ export class StatisticService {
 			.innerJoin(`time_slot.timeLogs`, 'time_log')
 			.andWhere(
 				new Brackets((qb) => {
-					if (
-						this.configService.dbConnectionOptions.type ===
-						'sqlite'
-					) {
+					if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
 						qb.andWhere(`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`, {
 							start,
 							end
