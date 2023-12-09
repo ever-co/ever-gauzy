@@ -182,7 +182,7 @@
 									}}
 								</div>
 							</div>
-							<div class="mb-2">
+							<div class="mb-2" *ngIf="timeLog?.description">
 								<div class="subtitle">
 									{{ 'TIMESHEET.NOTES' | translate }}:
 								</div>
@@ -196,6 +196,15 @@
 								</div>
 								<div>
 									{{ timeLog?.reason }}
+								</div>
+							</div>
+							<!--  -->
+							<div class="mb-2" *ngIf="apps?.length > 0">
+								<div class="subtitle">
+									{{ 'TIMESHEET.APPS' | translate }}:
+								</div>
+								<div>
+									<span class="badge" *ngFor="let app of apps">{{ app }}</span>
 								</div>
 							</div>
 						</div>
