@@ -35,14 +35,14 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 const { entity } = event;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (isSqliteDB(options.type)) {
+                if (entity && isSqliteDB(options.type)) {
                     try {
                         if (isJsObject(entity.apps)) {
                             entity.apps = JSON.stringify(entity.apps);
                         }
                     } catch (error) {
                         // Handle the error appropriately, set a default value or take another action.
-                        entity.apps = JSON.stringify({});
+                        entity.apps = JSON.stringify([]);
                     }
                 }
             }
@@ -63,14 +63,14 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 const { entity } = event;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (isSqliteDB(options.type)) {
+                if (entity && isSqliteDB(options.type)) {
                     try {
                         if (isJsObject(entity.apps)) {
                             entity.apps = JSON.stringify(entity.apps);
                         }
                     } catch (error) {
                         // Handle the error appropriately, set a default value or take another action.
-                        entity.apps = JSON.stringify({});
+                        entity.apps = JSON.stringify([]);
                     }
                 }
             }
@@ -106,7 +106,7 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 entity.thumbUrl = thumbUrl;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (['sqlite', 'better-sqlite3'].includes(options.type)) {
+                if (isSqliteDB(options.type)) {
                     // Check if 'apps' is a string and parse it as JSON
                     if (typeof apps === 'string') {
                         try {
