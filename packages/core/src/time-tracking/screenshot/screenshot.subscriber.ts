@@ -2,6 +2,7 @@ import {
     DataSourceOptions,
     EntitySubscriberInterface,
     EventSubscriber,
+    InsertEvent,
     LoadEvent,
     RemoveEvent,
     UpdateEvent
@@ -11,6 +12,7 @@ import { getConfig } from "@gauzy/config";
 import { isJsObject } from "@gauzy/common";
 import { Screenshot } from "./screenshot.entity";
 import { FileStorage } from "./../../core/file-storage";
+import { isSqliteDB } from "./../../core/utils";
 
 @EventSubscriber()
 export class ScreenshotSubscriber implements EntitySubscriberInterface<Screenshot> {
@@ -20,6 +22,33 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     */
     listenTo() {
         return Screenshot;
+    }
+
+    /**
+     *
+     * @param event
+     */
+    beforeInsert(event: InsertEvent<Screenshot>): void | Promise<any> {
+        try {
+            if (event) {
+                const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+                const { entity } = event;
+
+                // Check if the database type is SQLite or better-sqlite3
+                if (isSqliteDB(options.type)) {
+                    try {
+                        if (isJsObject(entity.apps)) {
+                            entity.apps = JSON.stringify(entity.apps);
+                        }
+                    } catch (error) {
+                        // Handle the error appropriately, set a default value or take another action.
+                        entity.apps = JSON.stringify({});
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error in beforeInsert event:', error);
+        }
     }
 
     /**
@@ -34,7 +63,7 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 const { entity } = event;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (['sqlite', 'better-sqlite3'].includes(options.type)) {
+                if (isSqliteDB(options.type)) {
                     try {
                         if (isJsObject(entity.apps)) {
                             entity.apps = JSON.stringify(entity.apps);
