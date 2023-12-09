@@ -41,8 +41,12 @@
 				<nb-icon icon="arrow-left"></nb-icon>
 			</button>
 		</div>
-		<div class="media-viewer" (click)="$event.stopPropagation()">
-			<img #imageMedia [src]="item?.fullUrl" />
+		<div
+			class="media-viewer"
+			(click)="$event.stopPropagation()"
+			[ngClass]="{ 'thumb-item-red': item?.isWorkRelated === false }"
+		>
+			<img #imageMedia [src]="item?.fullUrl"/>
 		</div>
 		<div class="right-button">
 			<button
@@ -58,13 +62,15 @@
 	</div>
 	<div class="gallery-footer">
 		<div class="thumb-items custom-scroll" #customScroll>
-			<div
+			<div *ngFor="let thumb of items; let index = index"
 				class="thumb-item text-center"
-				*ngFor="let thumb of items; let index = index"
-				[ngClass]="{ 'thumb-item-active': item == thumb }"
+				[ngClass]="{
+					'thumb-item-active': item == thumb,
+					'thumb-item-red': thumb?.isWorkRelated === false
+				}"
 				(click)="setFocus(thumb)"
 			>
-				<img *ngIf="thumb" [src]="thumb?.thumbUrl" />
+				<img *ngIf="thumb" [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
 				<span>{{ thumb?.recordedAt | dateTimeFormat }}</span>
 			</div>
 		</div>

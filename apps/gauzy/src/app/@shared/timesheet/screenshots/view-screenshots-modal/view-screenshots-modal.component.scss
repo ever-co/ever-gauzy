@@ -86,4 +86,11 @@
 		margin-bottom: 10px;
 		color: var(--gauzy-text-color-2);
 	}
+	.screenshot {
+		&.screenshot-item-red {
+			img {
+				border: 4px solid nb-theme(color-danger-500) !important;
+			}
+		}
+    }
 }
