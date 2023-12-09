@@ -4132,6 +4132,7 @@
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
 		"REASON": "Reason",
 		"NOTES": "Notes",
+		"APPS": "Apps",
 		"TIME_OVERLAPS": "Time overlaps",
 		"TIME_TRACKING": "Time Tracking",
 		"MEMBERS_WORKED": "Members worked",

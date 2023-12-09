@@ -99,7 +99,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	 * Applications associated with the image or screenshot.
 	 */
 	@ApiPropertyOptional({
-		type: () => String,
+		type: () => ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json',
 		description: 'Applications associated with the image or screenshot.'
 	})
 	@IsOptional()

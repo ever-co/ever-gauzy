@@ -1,9 +1,16 @@
-import { DataSourceOptions, EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent, RemoveEvent } from "typeorm";
+import {
+    DataSourceOptions,
+    EntitySubscriberInterface,
+    EventSubscriber,
+    LoadEvent,
+    RemoveEvent,
+    UpdateEvent
+} from "typeorm";
 import { IScreenshot } from "@gauzy/contracts";
-import { Screenshot } from "./screenshot.entity";
-import { FileStorage } from "./../../core/file-storage";
 import { getConfig } from "@gauzy/config";
 import { isJsObject } from "@gauzy/common";
+import { Screenshot } from "./screenshot.entity";
+import { FileStorage } from "./../../core/file-storage";
 
 @EventSubscriber()
 export class ScreenshotSubscriber implements EntitySubscriberInterface<Screenshot> {
@@ -16,44 +23,46 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     }
 
     /**
-     * Called before activity entity is inserted to the database.
+     * Called before a Screenshot entity is updated in the database.
      *
-     * @param event
+     * @param event The update event.
      */
-    beforeInsert(event: InsertEvent<Screenshot>): void | Promise<any> {
+    beforeUpdate(event: UpdateEvent<Screenshot>): void | Promise<any> {
         try {
             if (event) {
                 const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+                const { entity } = event;
+
+                // Check if the database type is SQLite or better-sqlite3
                 if (['sqlite', 'better-sqlite3'].includes(options.type)) {
-                    const { entity } = event;
                     try {
                         if (isJsObject(entity.apps)) {
                             entity.apps = JSON.stringify(entity.apps);
                         }
                     } catch (error) {
-                        console.log('Before Insert Screenshot Activity Error:', error);
+                        // Handle the error appropriately, set a default value or take another action.
                         entity.apps = JSON.stringify({});
                     }
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in beforeUpdate event:', error);
         }
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after the entity is loaded from the database.
      *
-     * @param entity
-     * @param event
+     * @param entity The loaded Screenshot entity.
+     * @param event The LoadEvent.
      */
-    async afterLoad(
-        entity: Screenshot | Partial<Screenshot>,
-        event?: LoadEvent<Screenshot>
-    ): Promise<any | void> {
+    async afterLoad(entity: Screenshot | Partial<Screenshot>, event?: LoadEvent<Screenshot>): Promise<any | void> {
         try {
+            const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+
+            // Check if the entity is an instance of Screenshot
             if (entity instanceof Screenshot) {
-                const { storageProvider, file, thumb } = entity;
+                const { storageProvider, file, thumb, apps } = entity;
 
                 const store = new FileStorage().setProvider(storageProvider);
 
@@ -63,10 +72,25 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                     store.getProviderInstance().url(thumb)
                 ]);
 
+                // Assign the retrieved URLs to the entity properties
                 entity.fullUrl = fullUrl;
                 entity.thumbUrl = thumbUrl;
+
+                // Check if the database type is SQLite or better-sqlite3
+                if (['sqlite', 'better-sqlite3'].includes(options.type)) {
+                    // Check if 'apps' is a string and parse it as JSON
+                    if (typeof apps === 'string') {
+                        try {
+                            entity.apps = JSON.parse(apps);
+                        } catch (error) {
+                            // Handle the error by logging and setting a default value
+                            entity.apps = []; // Set a default value, adjust based on your requirements
+                        }
+                    }
+                }
             }
         } catch (error) {
+            // Handle any unexpected errors during the afterLoad process
             console.error('Error in afterLoad:', error);
         }
     }
