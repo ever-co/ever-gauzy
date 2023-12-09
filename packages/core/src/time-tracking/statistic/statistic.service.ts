@@ -58,46 +58,32 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			todayStart,
-			todayEnd
-		} = request;
+		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		/**
@@ -223,15 +209,10 @@ export class StatisticService {
 			duration: 0
 		};
 
-		const { start: startToday, end: endToday } = (todayStart && todayEnd) ?
-			getDateRangeFormat(
-				moment.utc(todayStart),
-				moment.utc(todayEnd)
-			) :
-			getDateRangeFormat(
-				moment().startOf('day').utc(),
-				moment().endOf('day').utc()
-			);
+		const { start: startToday, end: endToday } = getDateRangeFormat(
+			moment.utc(todayStart || moment().startOf('day')),
+			moment.utc(todayEnd || moment().endOf('day'))
+		);
 
 		const todayQuery = this.timeSlotRepository.createQueryBuilder();
 		const todayTimeStatistics = await todayQuery
@@ -356,47 +337,35 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			todayStart,
-			todayEnd
-		} = request;
+		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
+
+		/**
+		 *
+		 */
+		const isSqlite = ['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type);
 
 		const query = this.employeeRepository.createQueryBuilder();
 		let employees: IMembersStatistics[] = await query
@@ -404,7 +373,7 @@ export class StatisticService {
 			.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name')
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqlite
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 				}`,
@@ -431,18 +400,16 @@ export class StatisticService {
 					if (isNotEmpty(employeeIds)) {
 						qb.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
 							employeeIds
-						})
-							.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
-								employeeIds
-							});
+						});
+						qb.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+							employeeIds
+						});
 					}
 					/**
 					 * If Project Selected
 					 */
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, { projectIds });
 					}
 					qb.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
@@ -466,7 +433,7 @@ export class StatisticService {
 			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			weekTimeQuery
 				.select(
-					`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+					`${isSqlite
 						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 					}`,
@@ -520,6 +487,7 @@ export class StatisticService {
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
+
 			weekTimeSlots = mapObject(
 				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -551,7 +519,7 @@ export class StatisticService {
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			dayTimeQuery
 				.select(
-					`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+					`${isSqlite
 						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 					}`,
@@ -566,16 +534,10 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start: startToday, end: endToday } = (todayStart && todayEnd) ?
-							getDateRangeFormat(
-								moment.utc(todayStart),
-								moment.utc(todayEnd)
-							) :
-							getDateRangeFormat(
-								moment().startOf('day').utc(),
-								moment().endOf('day').utc()
-							);
-
+						const { start: startToday, end: endToday } = getDateRangeFormat(
+							moment.utc(todayStart || moment().startOf('day')),
+							moment.utc(todayEnd || moment().endOf('day'))
+						);
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
 							startToday,
 							endToday
@@ -615,6 +577,9 @@ export class StatisticService {
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
 
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
+
+			console.log({ dayTimeSlots });
+
 			dayTimeSlots = mapObject(
 				groupBy(dayTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -661,21 +626,13 @@ export class StatisticService {
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
 					.select(
-						`${this.configService.dbConnectionOptions.type ===
-							'sqlite'
+						`${isSqlite
 							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
 							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 						}`,
 						`duration`
 					)
-					.addSelect(
-						`${this.configService.dbConnectionOptions.type ===
-							'sqlite'
-							? `(strftime('%w', timeLogs.startedAt))`
-							: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-						}`,
-						'day'
-					)
+					.addSelect(`${isSqlite ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`, 'day')
 					.andWhere(`"${weekHoursQuery.alias}"."id" = :memberId`, { memberId: member.id })
 					.andWhere(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 					.andWhere(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`, { organizationId })
@@ -706,16 +663,11 @@ export class StatisticService {
 								});
 							}
 						})
-					);
-				member.weekHours = await weekHoursQuery
-					.addGroupBy(
-						`${this.configService.dbConnectionOptions.type ===
-							'sqlite'
-							? `(strftime('%w', timeLogs.startedAt))`
-							: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-						}`
 					)
-					.getRawMany();
+					.addGroupBy(`${isSqlite ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`);
+
+				member.weekHours = await weekHoursQuery.getRawMany();
+				console.log({ member });
 			}
 		}
 		return employees;
@@ -733,35 +685,26 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
 
-		/*
-		*  Get employees id of the organization or get current employee id
-		*/
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
+		 */
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -1261,34 +1204,25 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -1301,7 +1235,6 @@ export class StatisticService {
 			},
 			relations: {
 				project: true,
-				timeSlots: true,
 				employee: {
 					user: true
 				}
@@ -1541,35 +1474,26 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
 
-		/*
-		 *  Get employees id of the organization or get current employee id
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -1776,24 +1700,14 @@ export class StatisticService {
 		qb: WhereExpressionBuilder,
 		request: IGetCountsStatistics
 	) {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			employeeIds = [],
-			projectIds = []
-		} = request;
+		const { organizationId, startDate, endDate, employeeIds = [], projectIds = [] } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
