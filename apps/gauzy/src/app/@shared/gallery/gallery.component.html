@@ -44,7 +44,7 @@
 		<div
 			class="media-viewer"
 			(click)="$event.stopPropagation()"
-			[ngClass]="{ 'thumb-item-red': item?.isWorkRelated === false }"
+			[ngClass]="{ 'danger-bordered': item?.isWorkRelated === false }"
 		>
 			<img #imageMedia [src]="item?.fullUrl"/>
 		</div>
@@ -66,7 +66,7 @@
 				class="thumb-item text-center"
 				[ngClass]="{
 					'thumb-item-active': item == thumb,
-					'thumb-item-red': thumb?.isWorkRelated === false
+					'danger-bordered': thumb?.isWorkRelated === false
 				}"
 				(click)="setFocus(thumb)"
 			>
