@@ -662,7 +662,6 @@ export class StatisticService {
 					.addGroupBy(`${isSqliteDB(this.configService.dbConnectionOptions.type) ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
-				console.log({ member });
 			}
 		}
 		return employees;
