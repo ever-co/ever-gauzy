@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { IEmployee, IOrganization, IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { progressStatus, toLocal } from '@gauzy/common-angular';
+import { isNotEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
 import { sortBy } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -246,17 +246,21 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		// Use a Set to automatically handle uniqueness
 		const uniqueAppsSet = new Set<string>();
 
-		// Iterate through each screenshot to collect unique apps
-		this.screenshots.forEach((screenshot: IScreenshot) => {
-			// Determine the format of 'apps' property and convert if needed
-			const apps: string | string[] = screenshot.apps;
-			const screenshotApps = Array.isArray(apps) ? apps : this.parseApps(apps);
+		if (isNotEmpty(this.screenshots)) {
+			// Iterate through each screenshot to collect unique apps
+			this.screenshots.forEach((screenshot: IScreenshot) => {
+				// Determine the format of 'apps' property and convert if needed
+				const apps: string | string[] = screenshot.apps;
+				const screenshotApps = Array.isArray(apps) ? apps : this.parseApps(apps);
 
-			// Add each app to the Set to ensure uniqueness
-			screenshotApps.forEach((app) => {
-				uniqueAppsSet.add(app);
+				if (isNotEmpty(screenshotApps)) {
+					// Add each app to the Set to ensure uniqueness
+					screenshotApps.forEach((app) => {
+						uniqueAppsSet.add(app);
+					});
+				}
 			});
-		});
+		}
 
 		// Convert the Set back to an array for the final result
 		return Array.from(uniqueAppsSet);
