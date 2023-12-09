@@ -33,6 +33,7 @@ import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 
+	public isShowBorder: boolean = false;
 	public organization: IOrganization;
 	progressStatus = progressStatus;
 	fallbackSvg = DEFAULT_SVG;
@@ -73,6 +74,11 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				employeeId: timeSlot.employeeId,
 				...screenshot
 			}));
+
+			// Check if all screenshots have isWorkRelated as false
+			this.isShowBorder = this.screenshots.every(
+				(screenshot: IScreenshot) => screenshot.isWorkRelated === false
+			);
 
 			// Assign a new object to _timeSlot with modified properties
 			this._timeSlot = Object.assign({}, timeSlot, {

@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card" [ngClass]="{ 'danger-bordered' : isShowBorder }">
 	<div class="activity" *ngIf="timeSlot; else noActivity">
 		<ng-template
 			[ngIf]="employees && employees.length > 1"
