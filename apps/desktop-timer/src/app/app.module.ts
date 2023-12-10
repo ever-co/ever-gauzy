@@ -50,7 +50,8 @@ import {
 	LanguageInterceptor,
 	AlwaysOnModule,
 	UnauthorizedInterceptor,
-	GAUZY_ENV
+	GAUZY_ENV,
+	OrganizationInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -123,6 +124,11 @@ import { environment } from '../environments/environment';
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
+			useClass: OrganizationInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
 			multi: true
 		},
@@ -177,11 +183,11 @@ import { environment } from '../environments/environment';
 			provide: GAUZY_ENV,
 			useValue: {
 				...gauzyEnvironment,
-				...environment,
-			},
+				...environment
+			}
 		}
 	],
 	bootstrap: [AppComponent],
-	exports: [],
+	exports: []
 })
-export class AppModule { }
+export class AppModule {}
