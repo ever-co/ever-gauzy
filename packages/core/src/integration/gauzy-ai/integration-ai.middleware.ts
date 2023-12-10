@@ -9,6 +9,8 @@ import { IntegrationTenantService } from 'integration-tenant/integration-tenant.
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
 
+    private logging: boolean = true;
+
     constructor(
         private readonly integrationTenantService: IntegrationTenantService,
         private readonly requestConfigProvider: RequestConfigProvider,
@@ -19,9 +21,9 @@ export class IntegrationAIMiddleware implements NestMiddleware {
         _response: Response,
         next: NextFunction
     ) {
-        // Extract tenant and organization IDs from request headers
-        const tenantId = request.header('tenant-id');
-        const organizationId = request.header('organization-id');
+        // Extract tenant and organization IDs from request headers and body
+        const tenantId = request.header('tenant-id') || request.body?.tenantId;
+        const organizationId = request.header('organization-id') || request.body?.organizationId;
 
         // Log tenant and organization IDs
         console.log('Auth Tenant-ID Header: %s', tenantId);
@@ -43,6 +45,11 @@ export class IntegrationAIMiddleware implements NestMiddleware {
                 // Convert settings array to an object
                 const { apiKey, apiSecret, openAiApiSecretKey } = arrayToObject(settings, 'settingsName', 'settingsValue');
 
+                if (this.logging) {
+                    console.log('AI Integration API Key: %s', apiKey);
+                    console.log('AI Integration API Secret: %s', apiSecret);
+                }
+
                 if (apiKey && apiSecret) {
                     // Update custom headers and request configuration with API key and secret
                     request.headers['X-APP-ID'] = apiKey;
@@ -50,6 +57,10 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
                     if (isNotEmpty(openAiApiSecretKey)) {
                         request.headers['X-OPENAI-SECRET-KEY'] = openAiApiSecretKey;
+                    }
+
+                    if (this.logging) {
+                        console.log('AI Integration Config Settings: %s', { apiKey, apiSecret });
                     }
 
                     this.requestConfigProvider.setConfig({
