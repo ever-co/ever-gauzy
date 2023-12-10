@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { IEmployee, IOrganization, IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { progressStatus, toLocal } from '@gauzy/common-angular';
+import { isNotEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
 import { sortBy } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -78,6 +78,12 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		this._timeLogs = sortBy(timeLogs, 'recordedAt');
 	}
 
+	/**
+	 * Array to store unique application names associated with the current time slot.
+	 * Used in the context of time logs and screenshots.
+	 */
+	apps: string[] = [];
+
 	constructor(
 		private readonly store: Store,
 		private readonly dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
@@ -123,6 +129,9 @@ export class ViewScreenshotsModalComponent implements OnInit {
 
 			// Set the time logs property to the time logs of the retrieved time slot
 			this.timeLogs = this.timeSlot.timeLogs;
+
+			// Retrieve and set unique apps from the screenshots of the time slot
+			this.apps = this.getScreenshotUniqueApps();
 		} catch (error) {
 			// Handle errors by logging and displaying a toastr message
 			console.error('Error while retrieving TimeSlot:', error);
@@ -225,5 +234,56 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			console.error('Error while deleting TimeLog:', error);
 			this.toastrService.danger(error);
 		}
+	}
+
+	/**
+	 * Extracts unique applications from an array of screenshots,
+	 * handling the possibility of 'apps' being a string or an array.
+	 *
+	 * @returns An array containing unique application names.
+	 */
+	public getScreenshotUniqueApps(): string[] {
+		// Use a Set to automatically handle uniqueness
+		const uniqueAppsSet = new Set<string>();
+
+		if (isNotEmpty(this.screenshots)) {
+			// Iterate through each screenshot to collect unique apps
+			this.screenshots.forEach((screenshot: IScreenshot) => {
+				// Determine the format of 'apps' property and convert if needed
+				const apps: string | string[] = screenshot.apps;
+				const screenshotApps = Array.isArray(apps) ? apps : this.parseApps(apps);
+
+				if (isNotEmpty(screenshotApps)) {
+					// Add each app to the Set to ensure uniqueness
+					screenshotApps.forEach((app) => {
+						uniqueAppsSet.add(app);
+					});
+				}
+			});
+		}
+
+		// Convert the Set back to an array for the final result
+		return Array.from(uniqueAppsSet);
+	}
+
+	/**
+	 * Parses a string representation of applications as JSON,
+	 * returning the parsed array or an empty array if parsing fails.
+	 *
+	 * @param apps The string or array representation of applications.
+	 * @returns An array of application names.
+	 * @private
+	 */
+	private parseApps(apps: string | string[]): string[] {
+		if (typeof apps === 'string') {
+			try {
+				return JSON.parse(apps);
+			} catch (error) {
+				// Return an empty array if parsing fails
+				return [];
+			}
+		}
+		// If 'apps' is already an array, return it as is
+		return apps;
 	}
 }

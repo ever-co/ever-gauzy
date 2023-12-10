@@ -18,6 +18,7 @@
 	@include nb-rtl(padding-left, 8px);
 	overflow: hidden;
 	height: calc(100vh - 19.25rem);
+	overflow-y: scroll;
 }
 .aside-nav {
 	width: 180px;

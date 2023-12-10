@@ -19,6 +19,7 @@ export interface GalleryItem {
 	recordedAt?: Date;
 	employeeId?: string;
 	description?: IScreenshot['description'];
+	isWorkRelated?: IScreenshot['isWorkRelated'];
 }
 
 @Directive({

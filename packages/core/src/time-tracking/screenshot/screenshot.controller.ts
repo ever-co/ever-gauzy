@@ -165,6 +165,8 @@ export class ScreenshotController {
 				async (result: ImageAnalysisResult['data']['analysis']) => {
 					if (result) {
 						const [analysis] = result;
+						console.log(`Screenshot analyze response: %s`, analysis);
+
 						/** */
 						const isWorkRelated = analysis.work;
 						const description = analysis.description || '';
