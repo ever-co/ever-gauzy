@@ -83,8 +83,12 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 				name: IntegrationEnum.GAUZY_AI
 			});
 
+			console.log('AI Integraiton Tenant: %s', integration);
+
 			// Check if integration exists
 			if (!!integration) {
+				console.log('Screenshot/Image Analyze Starting');
+
 				// Analyze image using Gauzy AI service
 				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
 
@@ -97,6 +101,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			}
 		} catch (error) {
 			// If needed, consider throwing or handling the error appropriately.
+			console.log('Failed to get AI integraiton for provided options: %s', error?.message);
 		}
 	}
 }
