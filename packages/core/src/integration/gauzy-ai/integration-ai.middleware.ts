@@ -25,9 +25,11 @@ export class IntegrationAIMiddleware implements NestMiddleware {
         const tenantId = request.header('tenant-id') || request.body?.tenantId;
         const organizationId = request.header('organization-id') || request.body?.organizationId;
 
-        // Log tenant and organization IDs
-        console.log('Auth Tenant-ID Header: %s', tenantId);
-        console.log('Auth Organization-ID Header: %s', organizationId);
+        if (this.logging) {
+            // Log tenant and organization IDs
+            console.log('Auth Tenant-ID Header: %s', tenantId);
+            console.log('Auth Organization-ID Header: %s', organizationId);
+        }
 
         // Initialize custom headers
         request.headers['X-APP-ID'] = null;
