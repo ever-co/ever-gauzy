@@ -44,11 +44,6 @@
     padding: 10px;
     padding-left: 12px;
     flex-wrap: nowrap;
-
-    .project-name {
-      flex: 0 0 20%;
-      max-width: 20%;
-    }
   }
 
   nb-card-body {
@@ -60,7 +55,7 @@
       border-radius: nb-theme(border-radius);
       margin-top: 6px;
       overflow: auto;
-	  height: 100%;
+	    height: 100%;
       @include nb-ltr(padding, 0 0.5rem 0 0);
       @include nb-rtl(padding, 0 0 0 0.5rem);
       .content {
@@ -93,6 +88,11 @@
     }
   }
 
+  .project-name {
+    flex: 0 0 20%;
+    max-width: 20%;
+  }
+
   nb-checkbox ::ng-deep .custom-checkbox {
     border-width: 2px;
   }
@@ -116,4 +116,15 @@
   position: absolute;
   right: 1rem;
   top: -0.75rem;
+}
+
+@media screen and (max-width: 1280px) {
+  .content .project-name {
+    font-size: 14px;
+  }
+
+  .content .text-center button {
+    padding: 8px 8px;
+    font-size: 10px;
+  }
 }

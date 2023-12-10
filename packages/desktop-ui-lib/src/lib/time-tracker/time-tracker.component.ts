@@ -444,6 +444,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (!this.start || isForcedSync) {
 			this._lastTotalWorkedToday$.next(count.todayDuration);
 			this._lastTotalWorkedWeek$.next(count.weekDuration);
+			this._alwaysOnService.update('00:00:00', this._lastTotalWorkedToday);
 		}
 	}
 
@@ -852,17 +853,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._timeRun$
 			.pipe(
-				tap((current: string) =>
-					this.electronService.ipcRenderer.send('ao_time_update', {
-						today: moment
-							.duration(this._lastTotalWorkedToday, 'seconds')
-							.format('HH:mm', {
-								trim: false,
-								trunc: true,
-							}),
-						current,
-					})
-				),
+				tap((current: string) => {
+					this._alwaysOnService.update(current, this._lastTotalWorkedToday);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
