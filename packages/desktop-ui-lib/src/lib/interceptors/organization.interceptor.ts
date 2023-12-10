@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Store } from '../services';
 
 @Injectable()
-export class OrganizationIdInterceptor implements HttpInterceptor {
+export class OrganizationInterceptor implements HttpInterceptor {
 	constructor(private _store: Store) {}
 
 	intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {

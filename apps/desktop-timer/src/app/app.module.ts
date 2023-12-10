@@ -51,7 +51,7 @@ import {
 	AlwaysOnModule,
 	UnauthorizedInterceptor,
 	GAUZY_ENV,
-	OrganizationIdInterceptor
+	OrganizationInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -124,7 +124,7 @@ import { environment } from '../environments/environment';
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
-			useClass: OrganizationIdInterceptor,
+			useClass: OrganizationInterceptor,
 			multi: true
 		},
 		{
