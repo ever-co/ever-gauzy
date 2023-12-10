@@ -304,30 +304,7 @@
 						</div>
 						<div class="row">
 							<div *ngIf="(appSetting$ | async) && (appSetting$ | async)?.visibleAwOption" class="col-12">
-								<div class="row">
-									<div
-										[nbTooltipDisabled]="!(start$ | async)"
-										class="col-8"
-										nbTooltip="ActivityWatch integration can be turned on/off only when the timer is stopped"
-										nbTooltipStatus="warning"
-									>
-										<nb-toggle
-											(checkedChange)="setAW($event)"
-											[checked]="aw$ | async"
-											[disabled]="start$ | async"
-										>
-											{{ 'TIMER_TRACKER.ACTIVITY_WATCH_INTEGRATION' | translate }}
-										</nb-toggle>
-									</div>
-									<div *ngIf="aw$ | async" class="col-4 text-right">
-										<nb-icon
-											[icon]="iconAw$ | async"
-											[nbTooltip]="activityWatchLog$ | async | translate"
-											[status]="statusIcon$ | async"
-										>
-										</nb-icon>
-									</div>
-								</div>
+								<gauzy-activity-watch></gauzy-activity-watch>
 							</div>
 							<div
 								*ngIf="(appSetting$ | async) && (appSetting$ | async)?.visibleWakatimeOption"
