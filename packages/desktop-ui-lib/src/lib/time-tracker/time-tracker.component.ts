@@ -852,12 +852,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				tap(async (tasks) => {
 					if (tasks.length > 0) {
-						const idx = tasks.findIndex(
-							(row) => row.id === this.taskSelect
-						);
-						if (idx > -1) {
-							tasks[idx].isSelected = true;
-						}
+						tasks = tasks.map((row) => ({ ...row, isSelected: row.id === this.taskSelect }));
 					} else {
 						tasks = [];
 						this.taskSelect = null;
@@ -2215,27 +2210,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.isCollapse$.next(this.isExpand);
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
-
 	public rowSelect(value): void {
-		if (!value?.source?.data?.length) {
-			this.taskSelect = null;
+		if (!value.selected.length) {
 			return;
 		}
-		this.taskSelect = value.data.id;
-		value.data.isSelected = true;
-		const selectedLast = value.source.data.findIndex(
-			(row) => row.isSelected && row.id !== value.data.id
-		);
-		if (selectedLast > -1) {
-			value.source.data[selectedLast].isSelected = false;
+
+		const [selected] = value.selected;
+		const data = value.source.data;
+
+		if (this.taskSelect !== selected.id) {
+			this.setTask(selected.id);
+			this._tasks$.next(data);
 		}
-		const idx = value.source.data.findIndex(
-			(row) => row.id === value.data.id
-		);
-		value.source.data.splice(idx, 1);
-		value.source.data.unshift(value.data);
-		value.source.data[idx].isSelected = true;
-		this.setTask(value.data.id);
 	}
 
 	public onSearch(query: string = ''): void {
