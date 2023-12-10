@@ -51,6 +51,7 @@ import {
 	AlwaysOnModule,
 	UnauthorizedInterceptor,
 	GAUZY_ENV,
+	OrganizationInterceptor,
 	ActivityWatchInterceptor,
 	ActivityWatchModule
 } from '@gauzy/desktop-ui-lib';
@@ -127,6 +128,11 @@ import { environment } from '../environments/environment';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: ActivityWatchInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: OrganizationInterceptor,
 			multi: true
 		},
 		{
