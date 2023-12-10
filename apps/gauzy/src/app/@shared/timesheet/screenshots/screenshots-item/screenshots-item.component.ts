@@ -19,7 +19,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { distinctUntilChange, progressStatus, toLocal } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
 import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
@@ -75,10 +75,12 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				...screenshot
 			}));
 
-			// Check if all screenshots have isWorkRelated as false
-			this.isShowBorder = this.screenshots.every(
-				(screenshot: IScreenshot) => screenshot.isWorkRelated === false
-			);
+			if (isNotEmpty(this.screenshots)) {
+				// Check if all screenshots have isWorkRelated as false
+				this.isShowBorder = this.screenshots.every(
+					(screenshot: IScreenshot) => screenshot.isWorkRelated === false
+				);
+			}
 
 			// Assign a new object to _timeSlot with modified properties
 			this._timeSlot = Object.assign({}, timeSlot, {

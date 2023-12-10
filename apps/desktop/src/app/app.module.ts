@@ -38,7 +38,9 @@ import {
 	LanguageInterceptor,
 	Store,
 	AlwaysOnModule,
-	GAUZY_ENV
+	GAUZY_ENV,
+	ActivityWatchInterceptor,
+	OrganizationInterceptor
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
@@ -94,6 +96,11 @@ import { environment } from '../environments/environment';
 			multi: true,
 		},
 		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: OrganizationInterceptor,
+			multi: true
+		},
+		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
 				showDialog: true,
@@ -116,6 +123,11 @@ import { environment } from '../environments/environment';
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: ServerErrorInterceptor,
+			multi: true
+		},
+		{
+			provide: HTTP_INTERCEPTORS,
+			useClass: ActivityWatchInterceptor,
 			multi: true
 		},
 		{

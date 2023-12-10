@@ -156,6 +156,7 @@ export class ScreenshotController {
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);
+			console.log(`Created screenshot for ${user.name}: %s`, screenshot);
 
 			// Analyze image using Gauzy AI service
 			this._screenshotService.analyzeScreenshot(

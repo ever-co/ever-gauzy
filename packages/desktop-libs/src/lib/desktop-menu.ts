@@ -1,9 +1,10 @@
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
-import { TimerData } from './desktop-timer-activity';
 import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
 import { TranslateService } from './translation';
+import { TimerService } from './offline';
 export class AppMenu {
+	private readonly timerService = new TimerService();
 	public menu: MenuItemConstructorOptions[] = [];
 	constructor(
 		timeTrackerWindow,
@@ -68,11 +69,7 @@ export class AppMenu {
 							LocalStore.getStore('configs').timeTrackerWindow,
 						async click() {
 							timeTrackerWindow.show();
-							const lastTime =
-								await TimerData.getLastCaptureTimeSlot(
-									knex,
-									LocalStore.beforeRequestParams()
-								);
+							const lastTime = await this.timerService.findLastCapture();
 							console.log(
 								'Last Capture Time (Desktop Menu):',
 								lastTime
