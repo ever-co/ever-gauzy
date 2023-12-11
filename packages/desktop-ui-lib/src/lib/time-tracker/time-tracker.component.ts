@@ -1866,15 +1866,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public setTask(item: string): void {
 		this.taskSelect = item;
+		this._tasks$.next(this._tasks$.getValue());
 		this.electronService.ipcRenderer.send('update_project_on', {
-			taskId: this.taskSelect,
+			taskId: this.taskSelect
 		});
 		if (item) this.errors.task = false;
 	}
 
 	public descriptionChange(e): void {
 		if (e) this.errors.note = false;
-		this.setTask(null);
+		this.clearSelectedTaskAndRefresh();
 		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
 			note: this.note,
@@ -2138,13 +2139,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public handleRowSelection(selectionEvent): void {
-		const tableData = selectionEvent.source.data;
-
 		if (this.isNoRowSelected(selectionEvent)) {
-			this.clearSelectedTaskAndRefresh(tableData);
+			this.clearSelectedTaskAndRefresh();
 		} else {
 			const selectedRow = selectionEvent.selected[0];
-			this.handleSelectedTaskChange(selectedRow.id, tableData);
+			this.handleSelectedTaskChange(selectedRow.id);
 		}
 	}
 
@@ -2152,24 +2151,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return !selectionEvent.selected.length;
 	}
 
-	private clearSelectedTaskAndRefresh(data): void {
-		this.setTask(null)
-		this._tasks$.next(data);
+	private clearSelectedTaskAndRefresh(): void {
+		this.setTask(null);
 	}
 
-	private handleSelectedTaskChange(selectedTaskId, data): void {
+	private handleSelectedTaskChange(selectedTaskId): void {
 		if (this.isDifferentTask(selectedTaskId)) {
-			this.setActiveTaskAndRefresh(selectedTaskId, data);
+			this.setTask(selectedTaskId);
 		}
 	}
 
 	private isDifferentTask(selectedTaskId): boolean {
 		return this.taskSelect !== selectedTaskId;
-	}
-
-	private setActiveTaskAndRefresh(taskId, data): void {
-		this.setTask(taskId)
-		this._tasks$.next(data);
 	}
 
 	public onSearch(query: string = ''): void {
