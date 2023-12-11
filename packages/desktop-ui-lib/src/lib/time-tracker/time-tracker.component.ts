@@ -2136,18 +2136,40 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.isCollapse$.next(this.isExpand);
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
-	public rowSelect(value): void {
-		if (!value.selected.length) {
-			return;
-		}
 
-		const [selected] = value.selected;
-		const data = value.source.data;
+	public handleRowSelection(selectionEvent): void {
+		const tableData = selectionEvent.source.data;
 
-		if (this.taskSelect !== selected.id) {
-			this.setTask(selected.id);
-			this._tasks$.next(data);
+		if (this.isNoRowSelected(selectionEvent)) {
+			this.clearSelectedTaskAndRefresh(tableData);
+		} else {
+			const selectedRow = selectionEvent.selected[0];
+			this.handleSelectedTaskChange(selectedRow.id, tableData);
 		}
+	}
+
+	private isNoRowSelected(selectionEvent): boolean {
+		return !selectionEvent.selected.length;
+	}
+
+	private clearSelectedTaskAndRefresh(data): void {
+		this.setTask(null)
+		this._tasks$.next(data);
+	}
+
+	private handleSelectedTaskChange(selectedTaskId, data): void {
+		if (this.isDifferentTask(selectedTaskId)) {
+			this.setActiveTaskAndRefresh(selectedTaskId, data);
+		}
+	}
+
+	private isDifferentTask(selectedTaskId): boolean {
+		return this.taskSelect !== selectedTaskId;
+	}
+
+	private setActiveTaskAndRefresh(taskId, data): void {
+		this.setTask(taskId)
+		this._tasks$.next(data);
 	}
 
 	public onSearch(query: string = ''): void {
