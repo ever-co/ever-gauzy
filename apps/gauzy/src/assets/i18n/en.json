@@ -482,7 +482,9 @@
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
 			"AUTO_SYNC_TAG": "Label",
 			"GITHUB_REPOSITORY": "GitHub Repository",
-			"PROJECT": "Project"
+			"PROJECT": "Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Do you want to enable Jobs Search & Matching Analysis?",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Do you want to enable Employee Performance Analysis?"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -675,7 +677,9 @@
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
 			"AUTO_SYNC_TAG": "Select Auto-sync Label",
-			"SELECT_PROJECT": "Select Project"
+			"SELECT_PROJECT": "Select Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enable Jobs Search & Matching Analysis",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1259,7 +1263,9 @@
 			"TOOLTIP": {
 				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
 				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
-				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible."
+				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enables advanced job search and matching analyses for enhanced accuracy. Disabling hides 'Browse' and 'Matching' menu items for a streamlined interface.",
+				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Manages the transmission of employee work metrics, including keyboard inputs, mouse movements, and screenshots, for analysis by Gauzy AI. Enable for comprehensive performance analysis; disable for strict user privacy and data control."
 			}
 		},
 		"GITHUB_PAGE": {
