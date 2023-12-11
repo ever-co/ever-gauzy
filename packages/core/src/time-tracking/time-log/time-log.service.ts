@@ -358,6 +358,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				startedAt: true,
 				stoppedAt: true,
 				description: true,
+				projectId: true,
+				taskId: true,
+				organizationContactId: true,
 				project: {
 					id: true,
 					name: true,
@@ -978,120 +981,106 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 	}
 
-	getFilterTimeLogQuery(
-		query: SelectQueryBuilder<TimeLog>,
-		request: IGetTimeLogInput
-	) {
+	/**
+	 * Modifies the provided query to filter TimeLogs based on the given criteria.
+	 * @param query - The query to be modified.
+	 * @param request - The criteria for filtering TimeLogs.
+	 * @returns The modified query.
+	 */
+	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogInput) {
 		const { organizationId, projectIds = [] } = request;
 		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
 
-		let employeeIds: string[];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (isNotEmpty(request.employeeIds)) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Set employeeIds based on permissions and request
+		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+
 		if (isNotEmpty(request.timesheetId)) {
-			const { timesheetId } = request;
 			query.andWhere(`"${query.alias}"."timesheetId" = :timesheetId`, {
-				timesheetId
+				timesheetId: request.timesheetId
 			});
 		}
+
+		//
 		if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
 			const { start: startDate, end: endDate } = getDateRangeFormat(
 				moment.utc(request.startDate),
 				moment.utc(request.endDate)
 			);
-			query.andWhere(
-				`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`,
-				{
-					startDate,
-					endDate
-				}
-			);
+			query.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
+				startDate,
+				endDate
+			});
 		}
+
+		//
 		if (isNotEmpty(employeeIds)) {
-			query.andWhere(
-				`"${query.alias}"."employeeId" IN (:...employeeIds)`,
-				{
-					employeeIds
-				}
-			);
+			query.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+				employeeIds
+			});
 		}
+
+		//
 		if (isNotEmpty(projectIds)) {
 			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
 				projectIds
 			});
 		}
+
 		if (isNotEmpty(request.activityLevel)) {
 			/**
 			 * Activity Level should be 0-100%
-			 * So, we have convert it into 10 minutes timeslot by multiply by 6
+			 * Convert it into a 10-minute time slot by multiplying by 6
 			 */
 			const { activityLevel } = request;
-			const start = activityLevel.start * 6;
-			const end = activityLevel.end * 6;
 
 			query.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
-				start,
-				end
+				start: activityLevel.start * 6,
+				end: activityLevel.end * 6
 			});
 		}
+
+		//
 		if (isNotEmpty(request.source)) {
 			const { source } = request;
-			if (source instanceof Array) {
-				query.andWhere(`"${query.alias}"."source" IN (:...source)`, {
-					source
-				});
-			} else {
-				query.andWhere(`"${query.alias}"."source" = :source`, {
-					source
-				});
-			}
+			const condition = source instanceof Array ? `"${query.alias}"."source" IN (:...source)` : `"${query.alias}"."source" = :source`;
+
+			query.andWhere(condition, { source });
 		}
+
 		if (isNotEmpty(request.logType)) {
 			const { logType } = request;
-			if (logType instanceof Array) {
-				query.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
-					logType
-				});
-			} else {
-				query.andWhere(`"${query.alias}"."logType" = :logType`, {
-					logType
-				});
-			}
+			const condition = logType instanceof Array ? `"${query.alias}"."logType" IN (:...logType)` : `"${query.alias}"."logType" = :logType`;
+
+			query.andWhere(condition, { logType });
 		}
+
 		if (isNotEmpty(request.teamId)) {
 			const { teamId } = request;
-			/**
-			 * If used organization team filter
-			 */
-			query.andWhere(
-				`"organization_teams"."organizationTeamId" = :teamId`,
-				{
-					teamId
-				}
-			);
+
+			// Filter by organization team ID if used in the request
+			query.andWhere(`"organization_teams"."organizationTeamId" = :teamId`, {
+				teamId
+			});
 		}
+
+		//
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				);
-				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
 			})
 		);
+
 		return query;
 	}
 
