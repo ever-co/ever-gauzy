@@ -359,6 +359,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				stoppedAt: true,
 				description: true,
 				projectId: true,
+				taskId: true,
+				organizationContactId: true,
 				project: {
 					id: true,
 					name: true,
@@ -414,7 +416,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			this.getFilterTimeLogQuery(qb, request);
 		});
 		const logs = await query.getMany();
-		console.log({ logs });
 
 		/**
 		 * GET daily time logs report group by filters
