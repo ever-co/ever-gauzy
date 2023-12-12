@@ -521,7 +521,7 @@ export interface IProjectBudgetLimitReport {
 	budget?: number;
 	spent?: number;
 	spentPercentage?: number;
-	reamingBudget?: number;
+	remainingBudget?: number;
 }
 
 export interface IClientBudgetLimitReport {
@@ -530,7 +530,7 @@ export interface IClientBudgetLimitReport {
 	budget?: number;
 	spent?: number;
 	spentPercentage?: number;
-	reamingBudget?: number;
+	remainingBudget?: number;
 }
 
 export interface IDeleteTimeSlot
