@@ -455,7 +455,14 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto-sync tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
+			"AUTO_SYNC_TAG": "Label",
+			"GITHUB_REPOSITORY": "GitHub Repository",
+			"PROJECT": "Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Искате ли да активирате търсенето на работа и анализът на съответствието?",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Искате ли да активирате Анализ на ефективността на служителите?"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Име",
@@ -640,7 +647,13 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
+			"AUTO_SYNC_TAG": "Select Auto-sync Label",
+			"SELECT_PROJECT": "Select Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Активиране на търсене на работа и анализ на съответствие",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Активиране на анализ на ефективността на служителите"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
@@ -1212,9 +1225,11 @@
 				"SETTINGS": "Settings"
 			},
 			"TOOLTIP": {
-				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
-				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
-				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible."
+				"API_KEY": "API ключът служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
+				"API_SECRET": "API тайният ключ служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
+				"OPEN_AI_API_SECRET_KEY": "Тайният API ключ на OpenAI служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
+				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Активира разширен анализ на търсенето на работа и съвпадение за по-голяма точност. При изключване скрива пунктовете 'Преглед' и 'Съвпадение' за по-лесен интерфейс.",
+				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Управлява предаването на метрики за работата на служителите, включително клавишни въвеждания, движения на мишката и снимки на екрана, за анализ от Gauzy AI. Включването позволява изчерпателен анализ на производителността. При изключване Gauzy AI няма да получава и анализира снимки или други подробни данни, за да гарантира строга конфиденциалност и контрол върху споделянето на данни."
 			}
 		},
 		"GITHUB_PAGE": {

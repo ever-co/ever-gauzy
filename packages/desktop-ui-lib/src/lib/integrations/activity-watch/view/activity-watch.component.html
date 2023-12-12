@@ -1,0 +1,19 @@
+<div class="row">
+	<div
+		[nbTooltipDisabled]="!(isTimerRunning$ | async)"
+		class="col-8"
+		nbTooltip="ActivityWatch integration can be turned on/off only when the timer is stopped"
+		nbTooltipStatus="warning"
+	>
+		<nb-toggle
+			(checkedChange)="setActivityWatch($event)"
+			[checked]="aw$ | async"
+			[disabled]="isTimerRunning$ | async"
+		>
+			{{ 'TIMER_TRACKER.ACTIVITY_WATCH_INTEGRATION' | translate }}
+		</nb-toggle>
+	</div>
+	<div *ngIf="aw$ | async" class="col-4 text-right">
+		<nb-icon [icon]="icon$ | async" [nbTooltip]="log$ | async | translate" [status]="status$ | async"></nb-icon>
+	</div>
+</div>
