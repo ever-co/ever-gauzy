@@ -136,7 +136,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			this.getFilterTimeLogQuery(qb, request);
 		});
 
-		console.log(query.getQueryAndParameters());
 		// Set up the where clause using the provided filter function
 		return await query.getMany();
 	}
