@@ -72,97 +72,100 @@
 					<ng-template [ngIf]="logs?.length > 0" [ngIfElse]="notFound">
 						<div class="content" style="cursor: pointer">
 							<ng-container *ngFor="let log of logs; let last = last">
-								<div
-									[ngClass]="{ 'border-bottom': !last, 'selected': log?.isSelected, 'hidden': log?.isHidden }"
-									class="row m-0 py-3 align-items-center"
-									(click)="userRowSelect(log)"
-								>
-									<ng-template
-										[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
+								<!-- Check if the log is not hidden -->
+								<ng-container *ngIf="!log.isHidden">
+									<div
+										[ngClass]="{ 'border-bottom': !last, 'selected': log?.isSelected }"
+										class="row m-0 py-3 align-items-center"
+										(click)="userRowSelect(log)"
 									>
 										<ng-template
-											ngxTimeTrackingAuthorized
-											[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+											[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 										>
-											<div class="col-auto">
-												<nb-checkbox
-													[checked]="log.checked"
-													(click)=" $event.stopPropagation() "
-													(checkedChange)="toggleCheckbox($event, log)"
-													status="basic"
-													[disabled]="log.isRunning"
-												></nb-checkbox>
+											<ng-template
+												ngxTimeTrackingAuthorized
+												[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
+											>
+												<div class="col-auto">
+													<nb-checkbox
+														[checked]="log.checked"
+														(click)=" $event.stopPropagation() "
+														(checkedChange)="toggleCheckbox($event, log)"
+														status="basic"
+														[disabled]="log.isRunning"
+													></nb-checkbox>
+												</div>
+											</ng-template>
+										</ng-template>
+										<div class="col-3 project-name">
+											<ngx-project
+												*ngIf="log?.project; else noProject"
+												[rowData]="log"
+											></ngx-project>
+											<ng-template #noProject>
+												<span>
+													{{ 'TIMESHEET.NO_PROJECT' | translate }}
+												</span>
+											</ng-template>
+											<div class="mt-2 small">
+												<span *ngIf="log?.task; else noToDo">
+													<strong>
+														{{ 'TIMESHEET.TODO' | translate }} :
+													</strong>
+													{{ log?.task?.title }}
+												</span>
+												<ng-template #noToDo>
+													<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
+												</ng-template>
 											</div>
-										</ng-template>
-									</ng-template>
-									<div class="col-3 project-name">
-										<ngx-project
-											*ngIf="log?.project; else noProject"
-											[rowData]="log"
-										></ngx-project>
-										<ng-template #noProject>
-											<span>
-												{{ 'TIMESHEET.NO_PROJECT' | translate }}
+										</div>
+										<div
+											class="col employee-name"
+											*ngxPermissionsOnly="[
+												PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+											]"
+										>
+											<div class="name-container">
+												<ngx-avatar
+													class="report-table"
+													[name]="log?.employee?.user?.name"
+													[src]="log?.employee?.user?.imageUrl"
+													[id]="log?.employee?.id"
+												></ngx-avatar>
+											</div>
+										</div>
+										<div class="col">
+											<span class="log">
+												{{ log.logType | titlecase }}
 											</span>
-										</ng-template>
-										<div class="mt-2 small">
-											<span *ngIf="log?.task; else noToDo">
-												<strong>
-													{{ 'TIMESHEET.TODO' | translate }} :
-												</strong>
-												{{ log?.task?.title }}
+										</div>
+										<div class="col">
+											<span class="log">
+												{{ log.source | replace : '_' : ' ' | titlecase }}
 											</span>
-											<ng-template #noToDo>
-												<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
+										</div>
+										<div class="col">
+											{{ log.duration | durationFormat }}
+										</div>
+										<div class="col-2">
+											<span class="start-timer">
+												{{ log.startedAt | utcToLocal | timeFormat: true }}
+											</span>
+											-
+											<span *ngIf="!log.isRunning; else runningTimer" class="end-timer">
+												{{ log.stoppedAt | utcToLocal | timeFormat: true }}
+											</span>
+											<ng-template #runningTimer>
+												<span class="running-timer">
+													{{ 'TIMESHEET.TILL_NOW' | translate }}
+												</span>
 											</ng-template>
 										</div>
-									</div>
-									<div
-										class="col employee-name"
-										*ngxPermissionsOnly="[
-											PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-										]"
-									>
-										<div class="name-container">
-											<ngx-avatar
-												class="report-table"
-												[name]="log?.employee?.user?.name"
-												[src]="log?.employee?.user?.imageUrl"
-												[id]="log?.employee?.id"
-											></ngx-avatar>
+										<div class="col">
+											{{ log?.description }}
 										</div>
 									</div>
-									<div class="col">
-										<span class="log">
-											{{ log.logType | titlecase }}
-										</span>
-									</div>
-									<div class="col">
-										<span class="log">
-											{{ log.source | replace : '_' : ' ' | titlecase }}
-										</span>
-									</div>
-									<div class="col">
-										{{ log.duration | durationFormat }}
-									</div>
-									<div class="col-2">
-										<span class="start-timer">
-											{{ log.startedAt | utcToLocal | timeFormat: true }}
-										</span>
-										-
-										<span *ngIf="!log.isRunning; else runningTimer" class="end-timer">
-											{{ log.stoppedAt | utcToLocal | timeFormat: true }}
-										</span>
-										<ng-template #runningTimer>
-											<span class="running-timer">
-												{{ 'TIMESHEET.TILL_NOW' | translate }}
-											</span>
-										</ng-template>
-									</div>
-									<div class="col">
-										{{ log?.description }}
-									</div>
-								</div>
+								</ng-container>
 							</ng-container>
 						</div>
 					</ng-template>
