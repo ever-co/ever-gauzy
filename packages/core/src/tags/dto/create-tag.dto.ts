@@ -5,5 +5,5 @@ import { Tag } from './../tag.entity';
 
 export class CreateTagDTO extends IntersectionType(
 	PartialType(TenantOrganizationBaseDTO),
-	PickType(Tag, ['name', 'description', 'color', 'icon', 'organizationTeamId'])
+	PickType(Tag, ['name', 'description', 'color', 'backgroundColor', 'icon', 'organizationTeamId'])
 ) implements ITagCreateInput { }
