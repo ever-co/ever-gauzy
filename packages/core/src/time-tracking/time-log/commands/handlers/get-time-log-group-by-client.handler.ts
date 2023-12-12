@@ -46,7 +46,7 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 
 						// Group projectLogs by date
 						const byDate = chain(projectLogs)
-							.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+							.groupBy((log) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
 							.map((dateLogs: ITimeLog[], date) => ({
 								date,
 								projectLogs: this.getGroupByEmployee(dateLogs) // Group dateLogs by employeeId

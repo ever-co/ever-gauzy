@@ -17,9 +17,8 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 		command: GetTimeLogGroupByDateCommand
 	): Promise<IReportDayGroupByDate> {
 		const { timeLogs } = command;
-
 		const dailyLogs: any = chain(timeLogs)
-			.groupBy((log: ITimeLog) => moment(log.startedAt).format('YYYY-MM-DD'))
+			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
 			.map((byDateLogs: ITimeLog[], date: string) => {
 				// Calculate average duration for specific date range.
 				const avgDuration = calculateAverage(pluck(byDateLogs, 'duration'));
