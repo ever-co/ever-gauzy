@@ -5,7 +5,6 @@ export class IntegrationSyncGithubRepositoryCommand implements ICommand {
 	static readonly type = '[Integration] Sync Github Repository';
 
 	constructor(
-		public readonly input: IIntegrationMapSyncRepository,
-		public readonly hasSyncEnabled: boolean = false
+		public readonly input: IIntegrationMapSyncRepository
 	) { }
 }

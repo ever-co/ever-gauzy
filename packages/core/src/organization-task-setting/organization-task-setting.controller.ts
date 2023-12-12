@@ -1,15 +1,17 @@
 import {
-Body,
-Controller,
-HttpCode,
-HttpStatus,
-Param,
-Put,
-UseGuards,
-Post,
-UsePipes,
-ValidationPipe,
-Get,
+    Body,
+    Controller,
+    HttpCode,
+    HttpStatus,
+    Param,
+    Put,
+    UseGuards,
+    Post,
+    UsePipes,
+    ValidationPipe,
+    Get,
+    Query,
+    HttpException,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -21,6 +23,7 @@ import { OrganizationTaskSettingCreateCommand, OrganizationTaskSettingUpdateComm
 import { CreateOrganizationTaskSettingDTO, UpdateOrganizationTaskSettingDTO } from './dto';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { OrganizationTaskSettingService } from './organization-task-setting.service';
+import { TenantOrganizationBaseDTO } from 'core/dto';
 
 @ApiTags('OrganizationTaskSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -55,12 +58,22 @@ export class OrganizationTaskSettingController {
         PermissionsEnum.ALL_ORG_VIEW,
         PermissionsEnum.ORG_TASK_SETTING
     )
-    @Get('organization/:organizationId')
+    @Get('organization')
     @UsePipes(new ValidationPipe())
     async findByOrganizationId(
-        @Param('organizationId', UUIDValidationPipe) organizationId: IOrganizationTaskSetting['id'],
+        @Query() query: TenantOrganizationBaseDTO,
     ): Promise<IOrganizationTaskSetting> {
-        return await this.organizationTaskSettingService.findByOrganizationId(organizationId);
+        try {
+            // Validate the input data (You can use class-validator for validation)
+            if (!query || !query.organizationId) {
+                throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
+            }
+
+            return await this.organizationTaskSettingService.findByOrganization(query);
+        } catch (error) {
+            // Handle errors and return an appropriate error response
+            throw new HttpException(`Error while retrieving organization task settings: ${error.message}`, HttpStatus.BAD_REQUEST);
+        }
     }
 
     /**
@@ -84,21 +97,24 @@ export class OrganizationTaskSettingController {
     @HttpCode(HttpStatus.CREATED)
     @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_SETTING)
     @Post()
-    @UsePipes(new ValidationPipe())
+    @UsePipes(new ValidationPipe({ whitelist: true }))
     async create(
         @Body() body: CreateOrganizationTaskSettingDTO
     ): Promise<IOrganizationTaskSetting> {
-        return this.commandBus.execute(
+        return await this.commandBus.execute(
             new OrganizationTaskSettingCreateCommand(body)
         );
     }
 
     /**
-     * UPDATE organization tasks setting
+     * Update an existing organization task setting record.
      *
-     * @param id
-     * @param body
-     * @returns
+     * @param id - The unique identifier of the organization task setting to be updated.
+     * @param body - The data containing the updates for the organization task setting.
+     * @returns A Promise resolving to the updated organization task setting.
+     *
+     * @throws Throws an HTTP status 404 error if the record is not found.
+     * @throws Throws an HTTP status 400 error for invalid input. The response body may contain clues as to what went wrong.
      */
     @ApiOperation({ summary: 'Update an existing record' })
     @ApiResponse({
@@ -117,12 +133,12 @@ export class OrganizationTaskSettingController {
     @HttpCode(HttpStatus.OK)
     @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_SETTING)
     @Put(':id')
-    @UsePipes(new ValidationPipe())
+    @UsePipes(new ValidationPipe({ whitelist: true }))
     async update(
         @Param('id', UUIDValidationPipe) id: IOrganizationTaskSetting['id'],
         @Body() body: UpdateOrganizationTaskSettingDTO
     ): Promise<IOrganizationTaskSetting> {
-        return this.commandBus.execute(
+        return await this.commandBus.execute(
             new OrganizationTaskSettingUpdateCommand(id, body)
         );
     }

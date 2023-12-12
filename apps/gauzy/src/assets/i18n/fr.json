@@ -6,7 +6,10 @@
 		"ADD": "Ajouter",
 		"CREATE": "Créer",
 		"REGISTER": "S'inscrire",
+		"CHANGE_PASSWORD": "Changer le mot de passe",
 		"LOGIN": "Se connecter",
+		"SIGNIN": "Se connecter",
+		"SEND_CODE": "Se connecter avec un e-mail",
 		"ADD_NOTE": "Ajouter une note",
 		"EDIT": "Éditer",
 		"MANAGE": "Gérer",
@@ -806,7 +809,7 @@
 		"TIME_OFF": "Congé",
 		"APPROVALS": "Approbations",
 		"HELP": "Aider",
-		"ABOUT": "À propos de",
+		"ABOUT": "À propos",
 		"CONTACTS": "Contacts",
 		"ADMIN": "Administreur",
 		"EMPLOYEE_LEVEL": "Niveau d'employé",
@@ -816,7 +819,7 @@
 		"ORGANIZATIONS": "Organisations",
 		"SETTINGS": "Paramètres",
 		"GENERAL": "Général",
-		"EMAIL_HISTORY": "Histoire des e-mails",
+		"EMAIL_HISTORY": "Historique des e-mails",
 		"USERS": "Utilisateurs",
 		"ROLES": "Rôles et Permissions",
 		"DANGER_ZONE": "Zone dangereuse",
@@ -1920,6 +1923,14 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Durée du compte à rebours de la preuve d'activité, cela représente un certain nombre de minutes données pour prouver l'activité.",
 				"ENABLE_DETECTION_INACTIVITY": "Permettre la détection de l'inactivité des employés",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
+				"SCREENSHOT_FREQUENCY": "Fréquence des captures d'écran",
+				"SCREENSHOT_FREQUENCY_INFO": "Spécifiez la fréquence de mise à jour ou les intervalles de synchronisation.",
+				"RANDOM_SCREENSHOT": "Capture d'écran aléatoire",
+				"RANDOM_SCREENSHOT_INFO": "Activer - Prendre des captures d'écran à des intervalles aléatoires. Désactiver - Prendre des captures d'écran à intervalles réguliers.",
+				"TRACK_ON_SLEEP": "Suivi pendant le sommeil",
+				"TRACK_ON_SLEEP_INFO": "Activer - Suivi lorsque l'appareil passe en mode veille. Désactiver - Arrêter la minuterie de suivi lorsque l'appareil passe en mode veille.",
+				"ENFORCED": "Forcé",
+				"ENFORCED_INFO": "Activé - Veille à ce que le suivi pendant le sommeil, la capture d'écran aléatoire et les paramètres de fréquence de capture d'écran spécifiés par l'administrateur soient obligatoires et ne peuvent pas être contournés ou ignorés par les utilisateurs.",
 				"DELETE_IDLE_TIME": "Permettre la suppression du temps inactif",
 				"DELETE_IDLE_TIME_INFO": "Activer - le système supprimera le temps d'inactivité. Désactiver - le système ne supprimera pas le temps d'inactivité.",
 				"ALLOW_SCREEN_CAPTURE": "Autoriser la capture d'écran",
@@ -1949,7 +1960,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Période de clôture automatique des incidents (en jours)",
 				"AUTO_ARCHIVE_ISSUE": "Problème d'archivage automatique",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Période de conservation automatique (en jours)",
-				"AUTO_STATUS": "Statut automatique"
+				"AUTO_STATUS": "Statut automatique",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Activé - le système détectera l'inactivité et affichera un avertissement. Désactivé - aucun avertissement ne sera affiché lorsqu'un employé est inactif.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2706,6 +2723,45 @@
 		"FAQ": "Foire aux questions",
 		"HELP": "Aidez-moi"
 	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Créer une facture",
+		"RECEIVED_INVOICES": "Factures reçues",
+		"CREATE_INCOME": "Créer un revenu",
+		"CREATE_EXPENSE": "Créer une dépense",
+		"CREATE_ESTIMATE": "Créer une estimation",
+		"RECEIVED_ESTIMATES": "Devis reçus",
+		"CREATE_PAYMENT": "Créer un paiement",
+		"ADD_EMPLOYEE": "Ajouter un employé",
+		"ADD_INVENTORY": "Ajouter un inventaire",
+		"ADD_EQUIPMENT": "Ajouter un équipement",
+		"ADD_VENDOR": "Ajouter un fournisseur",
+		"ADD_DEPARTMENT": "Ajouter un département",
+		"CREATE_TEAM": "Créer une équipe",
+		"CREATE_TASK": "Créer une tâche",
+		"CREATE_PROJECT": "Créer un projet",
+		"VIEW_TASKS": "Voir les tâches",
+		"VIEW_TEAM_TASKS": "Voir les tâches de l'équipe",
+		"CREATE_CANDIDATE": "Créer un candidat",
+		"CREATE_PROPOSAL": "Créer une proposition",
+		"CREATE_CONTRACT": "Créer un contrat",
+		"CREATE_LEAD": "Créer un prospect",
+		"CREATE_CUSTOMER": "Créer un client",
+		"CREATE_CLIENT": "Créer un client",
+		"VIEW_CLIENTS": "Voir les clients",
+		"START_TIMER": "Démarrer le chronomètre",
+		"STOP_TIMER": "Arrêter le chronomètre",
+		"TIME_LOG": "Journal du temps",
+		"VIEW_APPOINTMENTS": "Voir les rendez-vous",
+		"VIEW_TIME_ACTIVITY": "Voir l'activité temporelle"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Comptabilité",
+		"ORGANIZATION": "Organisation",
+		"PROJECT_MANAGEMENT": "Gestion de projet",
+		"JOBS": "Emplois",
+		"CONTACTS": "Contacts",
+		"TIME_TRACKING": "Suivi du temps"
+	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Prénom",
 		"LAST_NAME": "Nom de famille",
@@ -3311,7 +3367,7 @@
 		}
 	},
 	"ABOUT_PAGE": {
-		"ABOUT": "À propos de"
+		"ABOUT": "À propos"
 	},
 	"FOOTER": {
 		"BY": "par",
@@ -3743,7 +3799,7 @@
 			"READY_FOR_ADVANCED_SETTINGS": "Êtes-vous prêt pour quelques paramètres avancés ?",
 			"FINAL_STEP_GP": "Ceci est la dernière étape où vous pouvez vous plonger dans les détails de votre plateforme Gauzy.",
 			"PORT": "Port",
-			"PORT_API": "Port Api",
+			"PORT_API": "Port API",
 			"UI": "Ui",
 			"API_HOST": "Hôte de l'API",
 			"HOST": "Hôte",
@@ -3803,7 +3859,7 @@
 			"SERVER_HOSTNAME": "Nom d'hôte/adresse IP du serveur",
 			"AUTO_START_STARTUP": "Démarrage automatique au démarrage",
 			"SERVER_TYPE": "Type de serveur",
-			"LOCAL_API_PORT": "Port Api local",
+			"LOCAL_API_PORT": "Port API local",
 			"UI_PORT": "UI Port",
 			"SERVER_URL": "URL du serveur",
 			"DB_CONFIG": "Configuration de la base de données",
@@ -4165,6 +4221,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Réinitialisation de mot de passe",
+			"multi-tenant-password": "Réinitialisation du mot de passe multi-locataire",
 			"password-less-authentication": "Authentification sans mot de passe",
 			"welcome-user": "Bienvenue, utilisateur.",
 			"email-verification": "Confirmation par email",
@@ -4236,7 +4293,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirmer",
 		"ALERT": "Alerte",
-		"DELETE_CONFIRM": "Alerte"
+		"DELETE_CONFIRM": "Alerte",
+		"QUICK_ACTIONS": "ACTIONS RAPIDES"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Fournisseur de fichiers",
@@ -4342,30 +4400,87 @@
 			"receipt": "Reçu"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "S'inscrire",
+		"HAVE_AN_ACCOUNT": "Vous avez déjà un compte ?",
+		"LABELS": {
+			"FULL_NAME": "Nom complet :",
+			"EMAIL": "Adresse e-mail :",
+			"PASSWORD": "Mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe :"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Nom complet",
+			"EMAIL": "Adresse e-mail",
+			"PASSWORD": "Mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Le nom complet est requis !",
+			"FULL_NAME_SHOULD_CONTAIN": "Le nom complet doit contenir entre {{ minLength }} et {{ maxLength }} caractères",
+			"EMAIL_REQUIRED": "L'e-mail est requis !",
+			"EMAIL_SHOULD_BE_REAL": "L'e-mail doit être réel !",
+			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent pas commencer ou finir par des espaces !",
+			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
+			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères",
+			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
+			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Accepter",
+				"TERMS_AND_CONDITIONS": "Conditions générales",
+				"AND": " et ",
+				"PRIVACY_POLICY": "Politique de confidentialité"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Connexion",
 		"SUB_TITLE": "Salut ! Connectez-vous avec votre adresse e-mail.",
-		"REMEMBER_ME_TITLE": "Souviens-toi de moi",
+		"REMEMBER_ME_TITLE": "Se souvenir de moi",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Vous n'avez pas de compte ?",
 		"FORGOT_PASSWORD_TITLE": "Mot de passe oublié ?",
+		"OR_SIGN_IN_WITH": "Ou connectez-vous avec",
+		"FORGOT_EMAIL_TITLE": "Mot de passe oublié ?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Connexion avec un code magique",
+			"DESCRIPTION_TITLE": "Nous vous enverrons un code magique pour une connexion sans mot de passe. Ou vous pouvez ",
+			"OR_SIGN_IN_WITH_PASSWORD": "vous connecter avec un mot de passe à la place.",
+			"RESEND_CODE_TITLE": "Renvoyer le code",
+			"SUCCESS_SENT_CODE_TITLE": "Un code de 6 caractères a été envoyé à : ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "Le code expire bientôt, veuillez le saisir rapidement.",
+			"REQUEST_NEW_CODE_TITLE": "Demander un nouveau code dans {{ countdown }} secondes."
+		},
 		"LABELS": {
-			"EMAIL": "Adresse électronique:",
-			"PASSWORD": "Mot de passe:"
+			"EMAIL": "Adresse e-mail:",
+			"PASSWORD": "Mot de passe:",
+			"CODE": "Code :"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "Adresse e-mail",
-			"PASSWORD": "Mot de passe"
+			"PASSWORD": "Mot de passe",
+			"CODE": "Entrez le code"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'e-mail est requis !",
-			"EMAIL_REAL_REQUIRED": "L'email devrait être le vrai !",
+			"EMAIL_REAL_REQUIRED": "L'e-mail devrait être une vraie adresse !",
 			"PASSWORD_REQUIRED": "Le mot de passe est requis !",
 			"PASSWORD_SHOULD_CONTAIN": "Le mot de passe doit contenir de {{ minLength }} à {{ maxLength }} caractères!",
-			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces."
+			"PASSWORD_NO_SPACE_EDGES": "Les mots de passe ne doivent ni commencer ni se terminer par des espaces.",
+			"CODE_REQUIRED": "Un code est nécessaire pour se connecter.",
+			"CODE_REQUIRED_LENGTH": "Le code doit contenir {{ requiredLength }} caractères."
 		},
 		"DEMO": {
 			"TITLE": "Connectez-vous automatiquement aux comptes de démonstration",
-			"SUB_TITLE": "Veuillez sélectionner le type de compte ci-dessous."
+			"SUB_TITLE": "Veuillez sélectionner le type de compte ci-dessous.",
+			"SUPER_ADMIN_TITLE": "Super administrateur",
+			"ADMIN_TITLE": "Administrateur",
+			"EMPLOYEE_TITLE": "Employé",
+			"DEMO_TITLE": "Démo",
+			"CREDENTIALS_TITLE": "Identifiants",
+			"LABELS": {
+				"EMAIL": "E-mail : ",
+				"PASSWORD": "Mot de passe : "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4386,6 +4501,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "L'email est requis !",
 			"EMAIL_REAL_REQUIRED": "L'email doit être le véritable !"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Changer le mot de passe",
+		"SUB_TITLE": "Veuillez définir un nouveau mot de passe",
+		"LABELS": {
+			"NEW_PASSWORD": "Nouveau mot de passe :",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe :",
+			"BACK_TO": "Retour à"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nouveau mot de passe",
+			"CONFIRM_PASSWORD": "Confirmer le mot de passe"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Un nouveau mot de passe est requis !",
+			"CONFIRM_PASSWORD_REQUIRED": "La confirmation du mot de passe est requise !",
+			"PASSWORDS_NOT_MATCH": "Le mot de passe ne correspond pas à la confirmation du mot de passe !",
+			"PASSWORD_SHOULD_CONTAIN": "Le nouveau mot de passe doit contenir entre {{ minLength }} et {{ maxLength }} caractères."
 		}
 	},
 	"PAGINATION": {
@@ -4413,7 +4547,24 @@
 			"SING_ANOTHER_WORKSPACE": "Connectez-vous à un autre espace de travail.",
 			"CREATE_NEW_WORKSPACE": "Créez un nouvel espace de travail.",
 			"FIND_WORKSPACE": "Trouver un espace de travail"
-		}
+		},
+		"LABELS": {
+			"EMAIL": "Entrez votre adresse e-mail :",
+			"PASSWORD": "Entrez votre mot de passe :"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "nom@adresse-mail.com",
+			"PASSWORD": "Mot de passe"
+		},
+		"SIGN_IN_TITLE": "Se connecter à l'espace de travail",
+		"BACK_TO": "Retour à",
+		"SUCCESS_SIGNIN_TITLE": "Félicitations ! Vous avez réussi à vous connecter à votre espace de travail.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Veuillez patienter pendant que nous préparons l'espace de travail...",
+		"FAIL_SIGNIN_TITLE": "Erreur ! Le code magique ou le lien que vous avez fourni a expiré ou n'est pas valide.",
+		"FAIL_SIGNIN_SUB_TITLE": "Veuillez initier le processus à nouveau.",
+		"THANKING_TEXT": "Merci de nous avoir choisis.",
+		"UNKNOWN_WORKSPACE": "Vous ne connaissez pas votre espace de travail ?",
+		"FIND_WORKSPACE": "Trouver votre espace de travail"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Ajouter ou supprimer une image",

@@ -1,10 +1,13 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class ReportTableIconSeed1652936174625 implements MigrationInterface {
 
-    name = 'ReportTableIconSeed1652936174625';
+	name = 'ReportTableIconSeed1652936174625';
 
-    public async up(queryRunner: QueryRunner): Promise<any> {
+	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		const isSqlite = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type);
 		if (isSqlite) {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['far fa-clock', 'time-activity']);
@@ -31,9 +34,9 @@ export class ReportTableIconSeed1652936174625 implements MigrationInterface {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['far fa-credit-card', 'project-budgets']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['far fa-credit-card', 'client-budgets']);
 		}
-    }
+	}
 
-    public async down(queryRunner: QueryRunner): Promise<any> {
+	public async down(queryRunner: QueryRunner): Promise<any> {
 		const isSqlite = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type);
 		if (isSqlite) {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['clock-outline', 'time-activity']);
@@ -60,5 +63,5 @@ export class ReportTableIconSeed1652936174625 implements MigrationInterface {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['credit-card-outline', 'project-budgets']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['credit-card-outline', 'client-budgets']);
 		}
-    }
+	}
 }

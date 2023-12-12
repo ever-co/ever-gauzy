@@ -58,8 +58,6 @@ const windowSetting = () => {
 	};
 
 	const filesPath = store.get('filePath');
-	if (process.platform === 'linux') {
-		mainWindowSettings.icon = filesPath.iconPath;
-	}
+	mainWindowSettings.icon = filesPath.iconPath;
 	return mainWindowSettings;
 };

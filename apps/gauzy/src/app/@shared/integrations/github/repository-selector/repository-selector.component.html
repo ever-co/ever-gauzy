@@ -25,8 +25,13 @@
                 [placeholder]="'INTEGRATIONS.GITHUB_PAGE.SEARCH_REPOSITORY' | translate"
             >
         </ng-template>
+        <ng-template ng-label-tmp let-item="item">
+            <img src="assets/images/integrations/github.svg"/>
+            <span class="ml-1">{{ item.full_name }}</span>
+		</ng-template>
         <ng-template ng-option-tmp let-item="item">
-            <span>{{ item.full_name }}</span>
-        </ng-template>
+            <img src="assets/images/integrations/github.svg"/>
+            <span class="ml-1">{{ item.full_name }}</span>
+		</ng-template>
     </ng-select>
 </div>

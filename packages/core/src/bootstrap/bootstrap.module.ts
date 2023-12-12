@@ -1,9 +1,5 @@
-import {
-	MiddlewareConsumer,
-	Module,
-	NestModule,
-	OnApplicationShutdown
-} from '@nestjs/common';
+import tracer from './tracer';
+import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { AppModule } from './../app.module';
@@ -31,6 +27,18 @@ export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	async onApplicationShutdown(signal: string) {
 		if (signal) {
 			Logger.log(`Received shutdown signal: ${signal}`);
+
+			if (signal === 'SIGTERM') {
+				Logger.log('SIGTERM shutting down. Please wait...');
+
+				if (process.env.OTEL_ENABLED) {
+					try {
+						await tracer.shutdown();
+					} catch (error) {
+						console.log('Error terminating tracing', error);
+					}
+				}
+			}
 		}
 	}
 }

@@ -347,3 +347,13 @@ export function findIntersection(arr1: any[], arr2: any[]) {
 	const intersection = arr2.filter((element) => set1.has(element));
 	return intersection;
 }
+
+/**
+ * Check if the given database connection type is SQLite.
+ *
+ * @param {string} connectionType - The database connection type.
+ * @returns {boolean} - Returns true if the database connection type is SQLite.
+ */
+export function isSqliteDB(connectionType: string): boolean {
+	return ['sqlite', 'better-sqlite3'].includes(connectionType);
+}

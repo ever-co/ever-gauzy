@@ -104,7 +104,7 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantUpdateInput extends IIntegrationTenantCreateInput {
+export interface IIntegrationTenantUpdateInput extends Partial<IIntegrationTenantCreateInput> {
 	id?: IIntegrationTenant['id'];
 }
 
@@ -172,7 +172,8 @@ export interface IDateRangeActivityFilter {
 	end: Date;
 }
 
-export interface IIntegrationKeySecretPairInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IIntegrationAICreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	client_id: string;
 	client_secret: string;
+	openai_api_secret_key: string;
 }

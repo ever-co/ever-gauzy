@@ -1,10 +1,13 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class AlterPaymentTable1645012749640 implements MigrationInterface {
 
     name = 'AlterPaymentTable1645012749640';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -47,12 +50,12 @@ export class AlterPaymentTable1645012749640 implements MigrationInterface {
     *
     * @param queryRunner
     */
-    public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+    public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 
     /**
      * SqliteDB Down Migration
      *
      * @param queryRunner
      */
-    public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+    public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 }

@@ -14,7 +14,7 @@ export class GithubMiddleware implements NestMiddleware {
 
     async use(
         request: Request,
-        response: Response,
+        _response: Response,
         next: NextFunction
     ) {
         try {
@@ -31,7 +31,13 @@ export class GithubMiddleware implements NestMiddleware {
                     const { settings = [] } = await this._integrationTenantService.findOneByIdString(integrationId, {
                         where: {
                             tenantId,
-                            organizationId
+                            organizationId,
+                            isActive: true,
+                            isArchived: false,
+                            integration: {
+                                isActive: true,
+                                isArchived: false,
+                            }
                         },
                         relations: {
                             settings: true
@@ -45,9 +51,7 @@ export class GithubMiddleware implements NestMiddleware {
                         // Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
                         settings: arrayToObject(settings, 'settingsName', 'settingsValue')
                     });
-                } catch (error) {
-                    console.log(`Error while getting integration settings inside middleware: %s`, error?.message);
-                }
+                } catch (error) { }
             }
         } catch (error) {
             console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);

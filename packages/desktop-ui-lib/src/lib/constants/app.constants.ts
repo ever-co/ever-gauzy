@@ -13,3 +13,5 @@ export const injector = Injector.create({
 		{ provide: GAUZY_ENV, useValue: environment }
 	]
 });
+
+export const API_ACTIVITY_WATCH_PREFIX = '/buckets';

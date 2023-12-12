@@ -18,6 +18,7 @@
 	@include nb-rtl(padding-left, 8px);
 	overflow: hidden;
 	height: calc(100vh - 19.25rem);
+	overflow-y: scroll;
 }
 .aside-nav {
 	width: 180px;
@@ -201,7 +202,7 @@ nb-accordion {
 					@include respond(md) {
 						width: 100%;
 					}
-					& .invite-toggle {
+					& .toggle-switch {
 						margin-bottom: 5px;
 					}
 				}
@@ -411,6 +412,16 @@ nb-accordion {
 			display: flex;
 			justify-content: space-between;
 			flex-grow: 1;
+			.toggle {
+				min-width: 2rem;
+			}
+		}
+		&.start::ng-deep .toggle-label {
+			align-items: flex-start;
+
+			span.text {
+				width: 100%;
+			}
 		}
 	}
 }
@@ -421,5 +432,16 @@ nb-accordion {
 :host {
 	nb-card-body {
 		overflow: visible;
+	}
+}
+
+.time-tracker{
+	.row {
+		margin-left: -0.5rem;
+		margin-right: -0.5rem;
+	}
+	.col-xl-6, .col-12 {
+		padding-left: 0.5rem;
+		padding-right: 0.5rem;
 	}
 }

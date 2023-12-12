@@ -1,0 +1,33 @@
+:host {
+    .issue-details {
+        letter-spacing: 0em;
+        text-align: left;
+        .issue-header {
+            .issue-labels {
+                font-size: 14px;
+                display: block;
+                margin-top: 15px;
+            }
+            .issue-title {
+                font-size: 16px;
+                font-weight: 600;
+                text-decoration: none;
+                padding-top: 10px;
+                a {
+                    color: var(--text-basic-color);
+                    &:hover {
+                        text-decoration: none;
+                    }
+                }
+            }
+        }
+        .issue-body {
+            margin-top: 20px;
+            .issue-description {
+                font-size: 14px;
+                margin-top: 10px;
+                line-height: 17px
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card" [ngClass]="{ 'danger-bordered' : isShowBorder }">
 	<div class="activity" *ngIf="timeSlot; else noActivity">
 		<ng-template
 			[ngIf]="employees && employees.length > 1"
@@ -30,6 +30,7 @@
 						<ng-container *ngIf="timeSlot?.isAllowDelete">
 							<ng-container *ngIf="multiple">
 								<nb-checkbox
+									size="tiny"
 									[(ngModel)]="isSelected"
 									(click)="$event.stopPropagation()"
 									(ngModelChange)="toggleSelect(timeSlot)"
@@ -37,7 +38,7 @@
 							</ng-container>
 							<button
 								class="ml-auto select-hidden"
-								status="basic"
+								status="danger"
 								nbButton
 								size="tiny"
 								(click)="$event.stopPropagation()"
@@ -46,11 +47,20 @@
 								(confirm)="deleteSlot(timeSlot)"
 							>
 								<nb-icon
-									status="danger"
 									icon="trash-2-outline"
 								></nb-icon>
 							</button>
 						</ng-container>
+						<button
+							*ngIf="lastScreenshot?.description"
+							class="ml-2"
+							status="info"
+							nbButton
+							size="tiny"
+							[nbTooltip]="lastScreenshot?.description"
+						>
+							<nb-icon icon="info-outline" size="small"></nb-icon>
+						</button>
 					</div>
 					<div class="view-button select-hidden">
 						<ng-container *ngIf="timeSlot?.screenshots?.length > 0">

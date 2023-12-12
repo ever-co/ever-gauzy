@@ -50,13 +50,20 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	*/
 
 	/**
-	 * Organization Project
+	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (project) => project.priorities, {
+	@ManyToOne(() => OrganizationProject, (it) => it.priorities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
 
+	/**
+	 * Organization Project ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
@@ -66,13 +73,20 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	projectId?: IOrganizationProject['id'];
 
 	/**
-	 * Organization Team
+	 * Organization Team Relationship
 	 */
 	@ManyToOne(() => OrganizationTeam, (team) => team.priorities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
 
+	/**
+	 * Organization Team ID
+	 */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()

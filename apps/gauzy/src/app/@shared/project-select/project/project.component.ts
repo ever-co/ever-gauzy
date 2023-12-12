@@ -46,8 +46,8 @@ import { TruncatePipe } from '../../pipes';
 		}
 	]
 })
-export class ProjectSelectorComponent
-	implements OnInit, OnDestroy, AfterViewInit {
+export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
+
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
 	hasAddProject$: Observable<boolean>;

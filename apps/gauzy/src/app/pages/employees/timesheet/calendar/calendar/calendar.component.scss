@@ -13,12 +13,14 @@
     height: 100%;
     overflow: auto;
   }
-}
-.add-button {
-  position: absolute;
-  right: 1rem;
-  top: -0.75rem;
-  background-color: var(--gauzy-card-2);
-  padding: 6px 8px;
-  border-radius: nb-theme(button-rectangle-border-radius);
+
+  .add-button {
+    position: absolute;
+    @include nb-rtl(left, 1rem);
+    @include nb-ltr(right, 1rem);
+    top: -0.75rem;
+    background-color: var(--gauzy-card-2);
+    padding: 6px 8px;
+    border-radius: nb-theme(button-rectangle-border-radius);
+  }
 }

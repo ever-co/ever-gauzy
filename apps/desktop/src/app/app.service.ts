@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { environment } from '../environments/environment';
 import { catchError } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
 
@@ -8,134 +7,10 @@ import { firstValueFrom, throwError } from 'rxjs';
 	providedIn: 'root',
 })
 export class AppService {
-	AW_HOST = environment.AWHost;
-	buckets: any = {};
 	constructor(private http: HttpClient) {}
 
 	public async pingServer(values) {
 		return await firstValueFrom(this.http.get(values.host + '/api'));
-	}
-
-	startTime(id): Promise<any> {
-		const defaultValue: any = [
-			{
-				timestamp: new Date(),
-				data: {
-					running: true,
-					label: '',
-				},
-			},
-		];
-
-		if (id) defaultValue[0].id = id;
-		return this.http
-			.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultValue
-			)
-			.pipe()
-			.toPromise();
-	}
-
-	stopTime(historyTime): Promise<any> {
-		const defaultStopParams = [
-			{
-				timestamp: new Date(),
-				data: {
-					running: false,
-					label: '',
-				},
-				id: historyTime.id,
-			},
-		];
-		return this.http
-			.post(
-				`${this.AW_HOST}/api/0/buckets/aw-stopwatch/events`,
-				defaultStopParams
-			)
-			.pipe()
-			.toPromise();
-	}
-
-	getAwBuckets(tpURL): Promise<any> {
-		return this.http.get(`${tpURL}/api/0/buckets`).pipe().toPromise();
-	}
-
-	parseBuckets(buckets) {
-		Object.keys(buckets).forEach((key) => {
-			const keyParse = key.split('_')[0];
-			switch (keyParse) {
-				case 'aw-watcher-window':
-					this.buckets.windowBucket = buckets[key];
-					break;
-				case 'aw-watcher-afk':
-					this.buckets.afkBucket = buckets[key];
-					break;
-				case 'aw-watcher-web-chrome':
-					this.buckets.chromeBucket = buckets[key];
-					break;
-				case 'aw-watcher-web-firefox':
-					this.buckets.firefoxBucket = buckets[key];
-					break;
-				default:
-					break;
-			}
-		});
-	}
-
-	async collectEvents(tpURL, tp, start, end): Promise<any> {
-		if (!this.buckets.windowBucket) {
-			const allBuckets = await this.getAwBuckets(tpURL);
-			this.parseBuckets(allBuckets);
-		}
-		return this.collectFromAW(tpURL, start, end);
-	}
-
-	collectAfk(tpURL, tp, start, end): Promise<any> {
-		return this.collectAfkFromAW(tpURL, start, end);
-	}
-
-	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
-		if (!this.buckets.chromeBucket) return Promise.resolve([]);
-		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-			.pipe()
-			.toPromise();
-	}
-
-	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
-		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
-		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-			.pipe()
-			.toPromise();
-	}
-
-	pushActivityCollectionToGauzy() {
-		return true;
-	}
-	collectFromAW(tpURL, start, end) {
-		if (!this.buckets.windowBucket) return Promise.resolve([]);
-		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-			.pipe()
-			.toPromise();
-	}
-
-	collectAfkFromAW(tpURL, start, end) {
-		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return this.http
-			.get(
-				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?limit=1`
-			)
-			.pipe()
-			.toPromise();
 	}
 
 	pushToTimeSlot(values) {

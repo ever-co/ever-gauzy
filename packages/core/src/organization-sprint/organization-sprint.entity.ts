@@ -58,18 +58,31 @@ export class OrganizationSprint
 	@Column({ nullable: true })
 	dayStart?: number;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * OrganizationProject Relationship
+	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(
-		() => OrganizationProject,
-		(project) => project.organizationSprints,
-		{
-			nullable: true,
-			onDelete: 'CASCADE'
-		}
-	)
+	@ManyToOne(() => OrganizationProject, (it) => it.organizationSprints, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
+	})
 	@JoinColumn()
 	project?: OrganizationProject;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => Task })
 	@OneToMany(() => Task, (task) => task.organizationSprint)

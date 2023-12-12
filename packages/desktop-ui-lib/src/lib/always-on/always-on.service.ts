@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ElectronService } from '../electron/services';
+import * as moment from "moment/moment";
 
 export enum AlwaysOnStateEnum {
 	STARTED = 'Started',
@@ -42,6 +43,16 @@ export class AlwaysOnService {
 					observer.next(count);
 				}
 			);
+		});
+	}
+
+	public update(current: string, today: number): void {
+		this._electronService.ipcRenderer.send('ao_time_update', {
+			today: moment.duration(today, 'seconds').format('HH:mm', {
+				trim: false,
+				trunc: true
+			}),
+			current
 		});
 	}
 }

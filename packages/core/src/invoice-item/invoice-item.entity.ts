@@ -9,7 +9,7 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsNumber, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import {
 	Employee,
 	Expense,
@@ -25,7 +25,7 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 export class InvoiceItem
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceItem {
-		
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column({ nullable: true })
@@ -66,10 +66,10 @@ export class InvoiceItem
 	applyDiscount?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	// Invoice Item Belongs to Expense
 	@ApiPropertyOptional({ type: () => Expense })
@@ -133,18 +133,22 @@ export class InvoiceItem
 
 	// Invoice Item Belongs to Project
 	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (project) => project.invoiceItems, {
-		onDelete: 'SET NULL'
+	@ManyToOne(() => OrganizationProject, (it) => it.invoiceItems, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
 
 	@ApiPropertyOptional({ type: () => String })
-	@RelationId((it: InvoiceItem) => it.project)
-	@IsString()
 	@IsOptional()
+	@RelationId((it: InvoiceItem) => it.project)
+	@IsUUID()
 	@Column({ nullable: true })
-	projectId?: string;
+	projectId?: IOrganizationProject['id'];
 
 	// Invoice Item Belongs to Product
 	@ApiPropertyOptional({ type: () => Product })

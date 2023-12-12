@@ -12,24 +12,38 @@
           <nb-accordion-item class="demo-credentials-select-item">
             <nb-accordion-item-header class="demo-credentials-header">
               <div class="demo-credentials-head-text">
-                <div><span class="demo-text-span">Demo </span>Credentials</div>
+                <span class="demo-text-span">
+                  {{ "LOGIN_PAGE.DEMO.DEMO_TITLE" | translate }}
+                </span>
+                {{ "LOGIN_PAGE.DEMO.CREDENTIALS_TITLE" | translate }}
               </div>
             </nb-accordion-item-header>
             <nb-accordion-item-body class="demo-credentials-body">
-              <div>Super Admin</div>
+              <div>{{ "LOGIN_PAGE.DEMO.SUPER_ADMIN_TITLE" | translate }}</div>
               <br/>
-              <div>Email: admin@ever.co</div>
-              <div>Password: admin</div>
+              <div>
+                {{ "LOGIN_PAGE.DEMO.LABELS.EMAIL" | translate }} admin@ever.co
+              </div>
+              <div>
+                {{ "LOGIN_PAGE.DEMO.LABELS.PASSWORD" | translate }} admin
+              </div>
               <br/>
-              <div>Admin</div>
+              <div>{{ "LOGIN_PAGE.DEMO.ADMIN_TITLE" | translate }}</div>
               <br/>
-              <div>Email: local.admin@ever.co</div>
-              <div>Password: admin</div>
+              <div>
+                {{ "LOGIN_PAGE.DEMO.LABELS.EMAIL" | translate }} local.admin@ever.co
+              </div>
+              <div>
+                {{ "LOGIN_PAGE.DEMO.LABELS.PASSWORD" | translate }} admin
+              </div>
               <br/>
-              <div>Employee</div>
+              <div>{{ "LOGIN_PAGE.DEMO.EMPLOYEE_TITLE" | translate }}</div>
               <br/>
-              <div>Email: employee@ever.co</div>
-              <div>Password: 123456</div>
+              <div>
+                {{ "LOGIN_PAGE.DEMO.LABELS.EMAIL" | translate }} employee@ever.co</div>
+              <div>
+                {{ "LOGIN_PAGE.DEMO.LABELS.PASSWORD" | translate }} 123456
+              </div>
             </nb-accordion-item-body>
           </nb-accordion-item>
         </nb-accordion>
@@ -222,44 +236,24 @@
 
         </div>
       </div>
+      <div class="login-magic-wrapper">
+        <a routerLink="/auth/login-magic">
+          {{ "LOGIN_PAGE.LOGIN_MAGIC.TITLE" | translate }}
+        </a>
+      </div>
     </form>
     <div class="hr-div-soft"></div>
-    <section
-      *ngIf="socialLinks && socialLinks.length > 0"
-      class="links"
-      aria-label="Social sign in"
-    >
-      or enter with:
-      <div class="socials">
-        <ng-container *ngFor="let socialLink of socialLinks">
-          <a
-            *ngIf="socialLink.link"
-            [routerLink]="socialLink.link"
-            [attr.target]="socialLink.target"
-            class="social-link"
-          >
-            <nb-icon
-              *ngIf="socialLink.icon; else title"
-              [icon]="socialLink.icon"
-            ></nb-icon>
-            <ng-template #title>{{ socialLink.title }}</ng-template>
-          </a>
-          <a
-            *ngIf="socialLink.url"
-            [attr.href]="socialLink.url"
-            [attr.target]="socialLink.target"
-            class="social-link"
-          >
-            <nb-icon
-              *ngIf="socialLink.icon; else title"
-              [icon]="socialLink.icon"
-            ></nb-icon>
-            <ng-template #title>{{ socialLink.title }}</ng-template>
-          </a>
-        </ng-container>
-      </div>
+    <section>
+      <ngx-social-links></ngx-social-links>
     </section>
     <div class="hr-div-soft"></div>
+    <section class="another-action" aria-label="Sign In Workspace">
+		  {{ "WORKSPACES.UNKNOWN_WORKSPACE" | translate }}
+      <a class="text-link" routerLink="/auth/login-workspace">
+        {{ "WORKSPACES.FIND_WORKSPACE" | translate }}
+      </a>
+    </section>
+
     <section class="another-action" aria-label="Register">
       {{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
       <a class="text-link" routerLink="/auth/register">

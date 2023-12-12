@@ -1,5 +1,6 @@
-import { RolePermissionUtils } from './../../role-permission/utils';
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from "chalk";
+import { RolePermissionUtils } from './../../role-permission/utils';
 
 export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	name = 'MigrateRolePermisisons1679765443208';
@@ -10,6 +11,8 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		try {
 			await RolePermissionUtils.migrateRolePermissions(queryRunner);
 		} catch (error) {
@@ -22,5 +25,5 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	 *
 	 * @param queryRunner
 	 */
-	public async down(queryRunner: QueryRunner): Promise<any> {}
+	public async down(queryRunner: QueryRunner): Promise<any> { }
 }

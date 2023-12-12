@@ -19,12 +19,14 @@ export class IntegrationSyncGithubRepositoryCommandHandler implements ICommandHa
 	 */
 	public async execute(command: IntegrationSyncGithubRepositoryCommand): Promise<IOrganizationGithubRepository> {
 		// Extract input parameters from the command
-		const { input, hasSyncEnabled } = command;
+		const { input } = command;
 		const { repository, organizationId, integrationId } = input;
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		// Destructure the repository object for better readability
-		const { id: repositoryId, full_name, name, owner, open_issues_count, status = GithubRepositoryStatusEnum.PENDING } = repository;
+		const { id: repositoryId, full_name, name, owner, open_issues_count } = repository;
+		const status: GithubRepositoryStatusEnum = repository.status || GithubRepositoryStatusEnum.SYNCING
+
 		try {
 			/**
 			 * Find an integration repository based on repository, integration, organization, and tenant.
@@ -49,7 +51,6 @@ export class IntegrationSyncGithubRepositoryCommandHandler implements ICommandHa
 				owner: owner.login,
 				issuesCount: open_issues_count,
 				private: repository.private,
-				hasSyncEnabled,
 				status,
 				repositoryId,
 				integrationId,
@@ -68,7 +69,6 @@ export class IntegrationSyncGithubRepositoryCommandHandler implements ICommandHa
 				owner: owner.login,
 				issuesCount: open_issues_count,
 				private: repository.private,
-				hasSyncEnabled,
 				status,
 				repositoryId,
 				integrationId,

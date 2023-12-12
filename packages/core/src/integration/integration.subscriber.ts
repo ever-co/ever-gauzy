@@ -18,17 +18,17 @@ export class IntegrationSubscriber implements EntitySubscriberInterface<Integrat
      * @param entity
      * @param event
      */
-    afterLoad(
+    async afterLoad(
         entity: Integration | Partial<Integration>,
         event?: LoadEvent<Integration>
-    ): void | Promise<any> {
+    ): Promise<any | void> {
         try {
             if (!!entity.imgSrc) {
                 const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-                entity.fullImgUrl = store.getProviderInstance().url(entity.imgSrc);
+                entity.fullImgUrl = await store.getProviderInstance().url(entity.imgSrc);
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterLoad:', error);
         }
     }
 }

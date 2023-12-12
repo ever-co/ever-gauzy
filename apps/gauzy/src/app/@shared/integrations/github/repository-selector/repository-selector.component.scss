@@ -4,4 +4,11 @@
 	nb-select {
 		max-width: none;
 	}
+	img {
+        width: 28px;
+        height: 28px;
+        border-radius: nb-theme(border-radius);
+        box-shadow: var(--gauzy-shadow);
+        object-fit: cover;
+    }
 }

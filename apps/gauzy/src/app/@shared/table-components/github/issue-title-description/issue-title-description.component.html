@@ -1,0 +1,25 @@
+<div class="issue-details">
+	<div class="issue-header">
+		<div class="issue-labels">
+			<ng-template [ngIf]="rowData?.labels">
+				<ga-only-tags
+					[value]="rowData?.labels"
+					[rowData]="rowData"
+				></ga-only-tags>
+			</ng-template>
+		</div>
+        <div class="issue-title">
+			<a href="javascript:void(0)" (click)="openIssue()">
+				<nb-icon icon="eye-outline" pack="eva" [nbTooltip]="rowData?.title"></nb-icon>
+				{{ rowData?.title }}
+			</a>
+		</div>
+	</div>
+	<div class="issue-body">
+		<div class="issue-description">
+            <ngx-security-trust-html
+				[value]="rowData?.body"
+			></ngx-security-trust-html>
+		</div>
+	</div>
+</div>

@@ -1,8 +1,8 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId, } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
-import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationProject } from '@gauzy/contracts';
-import { IntegrationTenant, OrganizationProject, TenantOrganizationBaseEntity } from 'core/entities/internal';
+import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue, IOrganizationProject } from '@gauzy/contracts';
+import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from 'core/entities/internal';
 
 @Entity('organization_github_repository')
 export class OrganizationGithubRepository extends TenantOrganizationBaseEntity implements IOrganizationGithubRepository {
@@ -46,7 +46,7 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     @IsOptional()
     @IsBoolean()
     @Index()
-    @Column({ nullable: true, default: false })
+    @Column({ nullable: true, default: true })
     hasSyncEnabled: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
@@ -94,6 +94,14 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     */
 
     /** Repository Sync Organization Projects */
-    @OneToMany(() => OrganizationProject, (it) => it.repository)
+    @OneToMany(() => OrganizationProject, (it) => it.repository, {
+        cascade: true
+    })
     projects?: IOrganizationProject[];
+
+    /** Repository Sync Organization Projects */
+    @OneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository, {
+        cascade: true
+    })
+    issues?: IOrganizationGithubRepositoryIssue[];
 }

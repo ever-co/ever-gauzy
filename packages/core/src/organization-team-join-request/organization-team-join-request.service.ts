@@ -130,7 +130,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			const organizationTeamJoinRequest = await this._organizationTeamJoinRequestRepository.save(createEntityLike);
 
 			/** Place here organization team join request email to send verification code*/
-			let { appName, appLogo, appSignature, appLink } = entity;
+			let { appName, appLogo, appSignature, appLink, companyLink, companyName } = entity;
 
 			this._emailService.organizationTeamJoinRequest(
 				organizationTeam,
@@ -142,6 +142,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					appLogo,
 					appSignature,
 					appLink,
+					companyLink,
+					companyName
 				}
 			);
 
@@ -249,7 +251,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 
 			/** Place here organization team join request email to send verification code*/
-			let { appName, appLogo, appSignature, appLink } = entity;
+			let { appName, appLogo, appSignature, appLink, companyLink, companyName } = entity;
 			this._emailService.organizationTeamJoinRequest(
 				request.organizationTeam,
 				{
@@ -264,6 +266,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					appLogo,
 					appSignature,
 					appLink,
+					companyLink,
+					companyName
 				}
 			);
 		} finally {
