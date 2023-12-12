@@ -83,7 +83,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 				name: IntegrationEnum.GAUZY_AI
 			});
 
-			console.log('AI Integraiton Tenant: %s', integration);
+			console.log('AI Integration Tenant: %s', integration);
 
 			// Check if integration exists
 			if (!!integration) {
@@ -101,7 +101,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			}
 		} catch (error) {
 			// If needed, consider throwing or handling the error appropriately.
-			console.log('Failed to get AI integraiton for provided options: %s', error?.message);
+			console.log('Failed to get AI Integration for provided options: %s', error?.message);
 		}
 	}
 }
