@@ -1,11 +1,5 @@
 <div class="task-render">
 	<div (click)="showDetail()" class="detail">
-		<nb-icon
-			*ngIf="isSelected$ | async"
-			class="running-task"
-			icon="arrow-right-outline"
-			status="primary"
-		></nb-icon>
 		<div *ngIf="number" class="task-number">
 			{{ number }}
 		</div>
