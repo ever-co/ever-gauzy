@@ -83,7 +83,7 @@ export class TagController extends CrudController<Tag> {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
 		@Body() entity: CreateTagDTO
-	): Promise<Tag> {
+	): Promise<ITag> {
 		return await this.tagService.create(entity);
 	}
 
