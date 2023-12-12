@@ -1866,7 +1866,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public setTask(item: string): void {
 		this.taskSelect = item;
-		this._tasks$.next(this._tasks$.getValue());
 		this.electronService.ipcRenderer.send('update_project_on', {
 			taskId: this.taskSelect
 		});
