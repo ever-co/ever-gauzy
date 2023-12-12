@@ -189,6 +189,7 @@ export interface ITimeLogFilters
 	endDate?: Date | string;
 	isCustomDate?: boolean;
 	projectIds?: string[];
+	teamIds?: string[];
 	employeeIds?: string[];
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
@@ -370,11 +371,8 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	isBillable?: boolean;
 }
 
-export interface IGetTimeLogInput
-	extends ITimeLogFilters,
-	IBaseRelationsEntityModel {
+export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	timesheetId?: string;
-	teamId?: string;
 }
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {

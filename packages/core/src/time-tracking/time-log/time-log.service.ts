@@ -33,12 +33,11 @@ import {
 	ReportGroupFilterEnum,
 	IOrganizationProject,
 	IDeleteTimeLog,
-	IOrganizationContact,
-	ITimeSlot
+	IOrganizationContact
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
-import { chain, pluck, reduce } from 'underscore';
-import { ArraySum, isEmpty, isNotEmpty } from '@gauzy/common';
+import { chain, pluck } from 'underscore';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
@@ -93,8 +92,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
-		query.leftJoin(`${query.alias}.employee`, 'team_employee');
-		query.leftJoin(`team_employee.employee`, 'organization_teams');
 
 		// Set up the find options for the query
 		query.setFindOptions({
@@ -139,6 +136,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			this.getFilterTimeLogQuery(qb, request);
 		});
 
+		console.log(query.getQueryAndParameters());
 		// Set up the where clause using the provided filter function
 		return await query.getMany();
 	}
@@ -927,7 +925,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns The modified query.
 	 */
 	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogInput) {
-		const { organizationId, projectIds = [] } = request;
+		const { organizationId, projectIds = [], teamIds = [] } = request;
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 
@@ -971,6 +969,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			});
 		}
 
+		// Filter by organization team ID if used in the request
+		if (isNotEmpty(teamIds)) {
+			query.andWhere(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`, {
+				teamIds
+			});
+		}
+
 		// Filters records based on the overall column, representing the activity level.
 		if (isNotEmpty(request.activityLevel)) {
 			/**
@@ -999,15 +1004,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const condition = logType instanceof Array ? `"${query.alias}"."logType" IN (:...logType)` : `"${query.alias}"."logType" = :logType`;
 
 			query.andWhere(condition, { logType });
-		}
-
-		if (isNotEmpty(request.teamId)) {
-			const { teamId } = request;
-
-			// Filter by organization team ID if used in the request
-			query.andWhere(`"organization_teams"."organizationTeamId" = :teamId`, {
-				teamId
-			});
 		}
 
 		// Additional conditions for filtering by tenantId and organizationId

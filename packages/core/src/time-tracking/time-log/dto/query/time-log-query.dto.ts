@@ -1,4 +1,4 @@
-import { IGetTimeLogReportInput, IOrganizationTeam, ITimesheet, ReportGroupFilterEnum } from "@gauzy/contracts";
+import { IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from "@gauzy/contracts";
 import { ApiPropertyOptional, IntersectionType } from "@nestjs/swagger";
 import { IsEnum, IsOptional, IsUUID } from "class-validator";
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "../../../../shared/dto";
@@ -20,9 +20,4 @@ export class TimeLogQueryDTO extends IntersectionType(
     @IsOptional()
     @IsUUID()
     readonly timesheetId: ITimesheet['id'];
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsUUID()
-    readonly teamId: IOrganizationTeam['id'];
 }
