@@ -5,5 +5,5 @@ import { Tag } from './../tag.entity';
 
 export class UpdateTagDTO extends IntersectionType(
     PartialType(TenantOrganizationBaseDTO),
-    PartialType(PickType(Tag, ['name', 'description', 'color', 'icon', 'organizationTeamId'])),
+    PartialType(PickType(Tag, ['name', 'description', 'color', 'textColor', 'icon', 'organizationTeamId'])),
 ) implements ITagUpdateInput { }

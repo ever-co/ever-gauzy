@@ -1,11 +1,11 @@
 import {
-    DEFAULT_API_BASE_URL,
-    DEFAULT_API_HOST,
-    DEFAULT_API_PORT,
-    DEFAULT_GRAPHQL_API_PATH,
-    IPluginConfig
-} from "@gauzy/common";
-import { dbConnectionConfig, environment } from "@gauzy/config";
+	DEFAULT_API_BASE_URL,
+	DEFAULT_API_HOST,
+	DEFAULT_API_PORT,
+	DEFAULT_GRAPHQL_API_PATH,
+	IPluginConfig
+} from '@gauzy/common';
+import { dbConnectionConfig } from '@gauzy/config';
 
 export const devConfig: IPluginConfig = {
 	apiConfigOptions: {
@@ -22,7 +22,7 @@ export const devConfig: IPluginConfig = {
 	},
 	dbConnectionOptions: {
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
-		migrationsRun: !environment.production, // Run migrations automatically, you can disable this if you prefer running migration manually.
+		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
 		...dbConnectionConfig
 	},
 	plugins: []
