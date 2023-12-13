@@ -8,7 +8,7 @@ import {
 	NbMenuService
 } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
-import { BehaviorSubject, Observable, catchError, firstValueFrom, from, of, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
@@ -46,21 +46,19 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	public filters: ITimeLogFilters = this.request; // Time log filters. Assuming request is defined somewhere.
 	public contextMenus: NbMenuItem[] = []; // C
 
-	/**
-	 * Reference to the GauzyFiltersComponent using @ViewChild.
-	 */
+	//Reference to the GauzyFiltersComponent using @ViewChild.
 	@ViewChild(GauzyFiltersComponent) private gauzyFiltersComponent: GauzyFiltersComponent;
-	/**
-	 * Observable containing the date picker configuration.
-	 */
+
+	// Observable containing the date picker configuration.
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
-	/**
-	 * BehaviorSubject holding the time log filters as payloads.
-	 */
+
+	// BehaviorSubject holding the time log filters as payloads.
 	private payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
-	/**
-	 * Represents the selected log along with its selection status.
-	 */
+
+	// Declare a subject to trigger refresh
+	private refreshTrigger$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+	// Represents the selected log along with its selection status.
 	public selectedLog: {
 		data: ITimeLog,
 		isSelected: boolean
@@ -87,9 +85,9 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	 */
 	ngOnInit() {
 		this._handleSubjectOperationsSubscriber();
-		this._handleItemClickSubscriber();
-		this._handleQueryParamMapSubscriber();
-		this.getDailyTimesheetLogs();
+		this._handleUpdateLogSubscriber();
+		this._handleRefreshDailyLogs();
+		this._getDailyTimesheetLogs();
 	}
 
 	/**
@@ -98,7 +96,8 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	ngAfterViewInit() {
 		this._createContextMenus();
 		this._applyTranslationOnContextMenu();
-		this._handleUpdateLogSubscriber();
+		this._handleItemClickSubscriber();
+		this._handleQueryParamMapSubscriber();
 	}
 
 	// Subscribe to the subject and perform operations.
@@ -144,11 +143,11 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	}
 
 	// Subscribe to the queryParamMap changes and perform operations.
-	_handleQueryParamMapSubscriber(): void {
+	private _handleQueryParamMapSubscriber(): void {
 		this._route.queryParamMap
 			.pipe(
 				// Debounce time to wait for a pause in events
-				debounceTime(1000),
+				debounceTime(500),
 				// Filter to ensure there are parameters
 				filter((params: ParamMap) => !!params),
 				// Filter to ensure 'openAddDialog' is 'true'
@@ -164,47 +163,75 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	/**
 	 * Retrieves daily time logs based on payloads and handles observables.
 	 */
-	public getDailyTimesheetLogs() {
+	private _getDailyTimesheetLogs() {
 		this.logs$ = this.payloads$.pipe(
 			// Ensure payload changes are distinct
 			distinctUntilChange(),
 			// Filter to ensure a valid organization and payloads
 			filter((payloads: ITimeLogFilters) => !!this.organization && !!payloads),
-			// Tap to set loading to true
-			tap(() => this.loading = true),
 			// SwitchMap to fetch time logs using provided payloads
-			switchMap((payloads: ITimeLogFilters) => {
-				// Extract organizationId from the organization object
-				const { id: organizationId } = this.organization;
-				// Check for a valid organization; return empty array if not valid
-				if (!organizationId) {
-					return of([]); // No valid organization, return empty array
-				}
-				// Invoke the service to fetch time logs with given payloads
-				const api$ = this._timesheetService.getTimeLogs(payloads, [
-					'project',
-					'task',
-					'organizationContact',
-					'employee.user'
-				]);
-				// Convert the promise-based API call to an observable
-				return from(api$).pipe(
-					// Handle API call errors and log them
-					catchError((error) => {
-						console.log('Error while retrieving daily time logs entries', error);
-						this._errorHandlingService.handleError(error);
-						return of([]); // Return an empty observable to continue stream
-					}),
-					// Ensure lifecycle management to avoid memory leaks
-					untilDestroyed(this)
-				);
+			switchMap(() => this._getDailyLogs()),
+			// Ensure lifecycle management to avoid memory leaks
+			untilDestroyed(this)
+		);
+	}
+
+	/**
+	 * Handles the refresh of daily time logs.
+	 */
+	private _handleRefreshDailyLogs() {
+		this.refreshTrigger$.pipe(
+			// Filter to ensure a valid organization
+			filter((value) => !!this.organization && !!value),
+			// SwitchMap to fetch time logs using provided payloads
+			switchMap(() => this._getDailyLogs()),
+			// Ensure lifecycle management to avoid memory leaks
+			untilDestroyed(this)
+		).subscribe();
+	}
+
+	/**
+	 * Retrieves daily time logs based on payloads and handles observables.
+	 */
+	private _getDailyLogs(): Observable<ITimeLog[]> {
+		// Extract organizationId from the organization object
+		const organizationId = this.organization?.id;
+
+		// Check for a valid organization; return empty array if not valid
+		if (!organizationId) {
+			return of([]); // No valid organization, return empty array
+		}
+
+		// Set loading to true
+		this.loading = true;
+
+		// Get the current payloads value
+		const payloads = this.payloads$.getValue();
+
+		// Invoke the service to fetch time logs with given payloads
+		const api$ = this._timesheetService.getTimeLogs(payloads, [
+			'project',
+			'task',
+			'organizationContact',
+			'employee.user'
+		]);
+
+		// Convert the promise-based API call to an observable
+		return from(api$).pipe(
+			// Handle API call errors and log them
+			catchError((error) => {
+				console.error('Error while retrieving daily time logs entries', error);
+				this._errorHandlingService.handleError(error);
+				return of([]); // Return an empty observable to continue stream
 			}),
 			// Update component state with fetched issues
 			tap((logs: ITimeLog[]) => {
 				this.logs = logs;
 			}),
 			// Finalize to set loading to false
-			tap(() => this.loading = false),
+			finalize(() => {
+				this.loading = false;
+			}),
 			// Ensure lifecycle management to avoid memory leaks
 			untilDestroyed(this)
 		);
@@ -238,12 +265,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		}
 
 		// Pick specific properties from filters
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 
 		// Create a request object by combining appliedFilter and processed request
 		const request: IGetTimeLogInput = {
@@ -276,7 +298,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt));
 				}),
 				// Tap to notify subscribers
-				tap(() => this.subject$.next(true)),
+				tap(() => this.refreshTrigger$.next(true)),
 				// Ensure lifecycle management to avoid memory leaks
 				untilDestroyed(this)
 			)
@@ -304,7 +326,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(editedTimeLog.startedAt));
 				}),
 				// Tap to notify subscribers
-				tap(() => this.subject$.next(true)),
+				tap(() => this.refreshTrigger$.next(true)),
 				// Ensure lifecycle management to avoid memory leaks
 				untilDestroyed(this)
 			)
@@ -330,7 +352,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 				untilDestroyed(this),
 			)
 			.subscribe(() => {
-				this.subject$.next(true);
+				this.refreshTrigger$.next(true);
 			});
 	}
 
@@ -352,7 +374,6 @@ export class DailyComponent extends BaseSelectorFilterComponent
 			};
 			// Use await to wait for the promise to resolve
 			await this._timesheetService.deleteLogs(request);
-			timeLog['isHidden'] = true;
 
 			// Move the checkTimerStatus call outside the try block for consistency
 			this.checkTimerStatus();
@@ -363,9 +384,10 @@ export class DailyComponent extends BaseSelectorFilterComponent
 				organization: this.organization.name
 			});
 		} catch (error) {
-			console.error('Error while deleting TimeLog:', error);
-			timeLog['isHidden'] = false;
+			console.error('Error occurred while deleting TimeLog. Error Details:', error);
 			this._toastrService.danger(error);
+		} finally {
+			this.refreshTrigger$.next(true);
 		}
 	}
 
@@ -403,7 +425,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	 */
 	private async _bulkDeleteAction(): Promise<void> {
 		const confirmed = await firstValueFrom(this._confirmDeleteDialog());
-
+		//
 		if (confirmed) {
 			try {
 				const logIds = this.getSelectedLogIds();
@@ -420,10 +442,10 @@ export class DailyComponent extends BaseSelectorFilterComponent
 					organization: this.organization.name
 				});
 			} catch (error) {
-				console.error('Error while deleting multiple timelogs:', error);
-				this._toastrService.danger('An error occurred while deleting multiple time logs.');
+				console.error('Error occurred while deleting multiple time logs. Error Details:', error);
+				this._toastrService.danger(error);
 			} finally {
-				this.subject$.next(true);
+				this.refreshTrigger$.next(true);
 			}
 		}
 	}

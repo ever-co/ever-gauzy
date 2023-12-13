@@ -68,7 +68,7 @@
 				</div>
 			</div>
 			<div [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary" class="custom-body">
-				<ng-container *ngIf="(logs$ | async) as logs">
+				<ng-container *ngIf="(logs$ | async)">
 					<ng-template [ngIf]="logs?.length > 0" [ngIfElse]="notFound">
 						<div class="content" style="cursor: pointer">
 							<ng-container *ngFor="let log of logs; let last = last">
