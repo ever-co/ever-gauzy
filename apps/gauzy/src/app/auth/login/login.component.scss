@@ -109,13 +109,12 @@
         justify-content: center;
       }
     }
-  }
-  & .links {
-    margin-top: 21px;
-    @include social-links-style;
-    & .socials {
-      margin-top: 15px;
-      margin-bottom: 25px;
+    .login-magic-wrapper {
+      margin: 3rem 0 0 0;
+
+      & a {
+        font-weight: bold;
+      }
     }
   }
   & .another-action {

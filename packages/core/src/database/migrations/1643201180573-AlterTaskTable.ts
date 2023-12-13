@@ -1,10 +1,13 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class AlterTaskTable1643201180573 implements MigrationInterface {
 
     name = 'AlterTaskTable1643201180573';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -20,11 +23,11 @@ export class AlterTaskTable1643201180573 implements MigrationInterface {
         }
     }
 
-     /**
-     * PostgresDB Up Migration
-     *
-     * @param queryRunner
-     */
+    /**
+    * PostgresDB Up Migration
+    *
+    * @param queryRunner
+    */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "task" ALTER COLUMN "status" SET DEFAULT 'Todo'`);
     }

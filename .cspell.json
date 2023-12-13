@@ -395,7 +395,24 @@
 		"chetan",
 		"Yostorono",
 		"sarif",
-		"SARIF"
+		"SARIF",
+		"gridcell",
+		"scrollgrid",
+		"r_liteprofile",
+		"r_emailaddress",
+		"Signoz",
+		"OTEL",
+		"OTLP",
+		"opentelemetry",
+		"presigner",
+		"SCALEWAY",
+		"VULTR",
+		"Codegen",
+		"icns",
+		"pantone",
+		"msedge",
+		"openai",
+		"OPENAI"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
@@ -426,6 +443,7 @@
 		"**/migrations/**",
 		"packages/**/*.seed.json",
 		"**/*.svg",
+		"**/*.mjml",
 		"tools/build/webpack.config.js",
 		"docker-compose.demo.yml",
 		"docker-compose.yml"

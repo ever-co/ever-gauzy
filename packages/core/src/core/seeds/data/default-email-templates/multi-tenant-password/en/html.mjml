@@ -1,0 +1,73 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{appLogo}}"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text>
+					<p>Hello!</p>
+					<p><strong>Multi-Tenant Forgot Password:</strong></p>
+					<p>
+						This ensures that you can reset your password for the desired tenant. Click on the respective
+						link for the tenant you want to reset your password.
+					</p>
+				</mj-text>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-table>
+					<tr
+						style="
+							background-color: #1b005d !important;
+							color: #ffffff;
+							text-align: center;
+							font-weight: bold;
+							padding: 15px;
+						"
+					>
+						<th>Tenant</th>
+						<th>User</th>
+						<th>Link to reset Password</th>
+					</tr>
+					{{#each items}}
+					<tr style="border-bottom: 1px solid #ecedee; text-align: center; padding: 15px 0">
+						<td>{{ this.tenantName }}</td>
+						<td>{{ this.userName }}</td>
+						<td>
+							<a href="{{ this.resetLink }}" style="color: #598bff; text-decoration: none">
+								Reset Password
+							</a>
+						</td>
+					</tr>
+					{{/each}}
+				</mj-table>
+			</mj-column>
+		</mj-section>
+		<mj-section>
+			<mj-column>
+				<mj-divider
+				  	border-color="#1B005D"
+				  	border-width="1px"
+				></mj-divider>
+				<mj-text
+					align="center"
+					font-size="12px"
+					font-family="helvetica"
+				>
+				  	© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
+					by
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

@@ -71,6 +71,8 @@ spec:
                         value: 'true'
                       - name: LOG_LEVEL
                         value: 'info'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
                       - name: SENTRY_DSN
                         value: '$SENTRY_DSN'
                       - name: SENTRY_HTTP_TRACING_ENABLED
@@ -185,6 +187,12 @@ spec:
                         value: '$JITSU_SERVER_URL'
                       - name: JITSU_SERVER_WRITE_KEY
                         value: '$JITSU_SERVER_WRITE_KEY'
+                      - name: OTEL_ENABLED
+                        value: '$OTEL_ENABLED'
+                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
                       - name: GAUZY_GITHUB_CLIENT_ID
                         value: '$GAUZY_GITHUB_CLIENT_ID'
                       - name: GAUZY_GITHUB_CLIENT_SECRET
@@ -199,10 +207,32 @@ spec:
                         value: '$GAUZY_GITHUB_APP_ID'
                       - name: GAUZY_GITHUB_APP_NAME
                         value: '$GAUZY_GITHUB_APP_NAME'
-                      - name: GAUZY_GITHUB_CALLBACK_URL
-                        value: '$GAUZY_GITHUB_CALLBACK_URL'
                       - name: GAUZY_GITHUB_POST_INSTALL_URL
                         value: '$GAUZY_GITHUB_POST_INSTALL_URL'
+                      - name: GAUZY_GITHUB_OAUTH_CLIENT_ID
+                        value: '$GAUZY_GITHUB_OAUTH_CLIENT_ID'
+                      - name: GAUZY_GITHUB_OAUTH_CLIENT_SECRET
+                        value: '$GAUZY_GITHUB_OAUTH_CLIENT_SECRET'
+                      - name: GAUZY_GITHUB_OAUTH_CALLBACK_URL
+                        value: '$GAUZY_GITHUB_OAUTH_CALLBACK_URL'
+                      - name: MAGIC_CODE_EXPIRATION_TIME
+                        value: '$MAGIC_CODE_EXPIRATION_TIME'
+                      - name: APP_NAME
+                        value: '$APP_NAME'
+                      - name: APP_LOGO
+                        value: '$APP_LOGO'
+                      - name: APP_SIGNATURE
+                        value: '$APP_SIGNATURE'
+                      - name: APP_LINK
+                        value: '$APP_LINK'
+                      - name: APP_EMAIL_CONFIRMATION_URL
+                        value: '$APP_EMAIL_CONFIRMATION_URL'
+                      - name: APP_MAGIC_SIGN_URL
+                        value: '$APP_MAGIC_SIGN_URL'
+                      - name: COMPANY_LINK
+                        value: '$COMPANY_LINK'
+                      - name: COMPANY_NAME
+                        value: '$COMPANY_NAME'
 
                   ports:
                       - containerPort: 3000

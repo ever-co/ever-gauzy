@@ -6,7 +6,10 @@
 		"ADD": "إضافة",
 		"CREATE": "أنشئ",
 		"REGISTER": "تسجيل",
+		"CHANGE_PASSWORD": "تغيير كلمة المرور",
 		"LOGIN": "تسجيل الدخول",
+		"SIGNIN": "تسجيل الدخول",
+		"SEND_CODE": "تسجيل الدخول بالبريد الإلكتروني",
 		"ADD_NOTE": "أضف ملاحظة",
 		"EDIT": "تعديل",
 		"MANAGE": "إدارة",
@@ -1918,11 +1921,18 @@
 				"ACTIVITY_PROOF_DURATION": "مدة إثبات النشاط",
 				"ACTIVITY_PROOF_DURATION_INFO": "مدة عداد تناقص إثبات النشاط، يمثل عدد الدقائق المعطى لإثبات النشاط",
 				"ENABLE_DETECTION_INACTIVITY": "تمكين اكتشاف عدم نشاط الموظف",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "تمكين - سيتم اكتشاف عدم النشاط في النظام وعرض تحذير.\nتعطيل - لن يتم عرض أي تحذير عندما يكون الموظف غير نشط.",
 				"DELETE_IDLE_TIME": "تمكين حذف وقت الخمول",
 				"DELETE_IDLE_TIME_INFO": "تفعيل - ستقوم النظام بحذف الوقت الخامل.\nتعطيل - لن يقوم النظام بحذف الوقت الخامل.",
 				"ALLOW_SCREEN_CAPTURE": "السماح بالتقاط الشاشة",
 				"ALLOW_SCREEN_CAPTURE_INFO": "تمكين - سيقوم المؤقت بأخذ لقطة للشاشة. تعطيل - سيعمل المؤقت دون أخذ لقطة للشاشة لجميع أعضاء المنظمة.",
+				"SCREENSHOT_FREQUENCY": "تردد التقاط الشاشة",
+				"SCREENSHOT_FREQUENCY_INFO": "حدد تردد التحديث أو فواصل الزمن للتزامن.",
+				"RANDOM_SCREENSHOT": "لقطة شاشة عشوائية",
+				"RANDOM_SCREENSHOT_INFO": "تمكين - التقاط لقطات شاشة في فواصل زمنية عشوائية. تعطيل - التقاط لقطات شاشة في فواصل زمنية منتظمة",
+				"TRACK_ON_SLEEP": "تتبع أثناء النوم",
+				"TRACK_ON_SLEEP_INFO": "تمكين - تتبع عندما يدخل الجهاز في وضع النوم. تعطيل - توقف مؤقت عن تتبع الوقت عندما يدخل الجهاز في وضع النوم.",
+				"ENFORCED": "مفروض",
+				"ENFORCED_INFO": "تمكين - يضمن أن تكون إعدادات تتبع النوم واللقطة العشوائية وتكرار اللقطة المحددة من قبل المشرف إلزامية ولا يمكن تجاوزها أو تجاهلها من قبل المستخدمين.",
 				"TASK_SETTING": "إعدادات المهمة",
 				"TASK_PRIVACY": "خصوصية المهمة",
 				"MULTIPLE_ASSIGNEE": "مع المنفذين المتعددين",
@@ -1948,7 +1958,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "فترة إغلاق التقرير التلقائي (بالأيام)",
 				"AUTO_ARCHIVE_ISSUE": "مشكلة الأرشفة التلقائية",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "فترة مسألة الأرشفة التلقائية (بالأيام)",
-				"AUTO_STATUS": "حالة تلقائية"
+				"AUTO_STATUS": "حالة تلقائية",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "تمكين - سيتم اكتشاف عدم النشاط في النظام وعرض تحذير.\nتعطيل - لن يتم عرض أي تحذير عندما يكون الموظف غير نشط.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "المديرين",
@@ -2704,6 +2720,45 @@
 		"CHAT": "الدعم عبر الدردشة",
 		"FAQ": "أسئلة متكررة",
 		"HELP": "مساعدة"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "إنشاء فاتورة",
+		"RECEIVED_INVOICES": "الفواتير المستلمة",
+		"CREATE_INCOME": "إنشاء إيراد",
+		"CREATE_EXPENSE": "إنشاء مصروف",
+		"CREATE_ESTIMATE": "إنشاء تقدير",
+		"RECEIVED_ESTIMATES": "التقديرات المستلمة",
+		"CREATE_PAYMENT": "إنشاء دفعة",
+		"ADD_EMPLOYEE": "إضافة موظف",
+		"ADD_INVENTORY": "إضافة مخزون",
+		"ADD_EQUIPMENT": "إضافة معدات",
+		"ADD_VENDOR": "إضافة مورد",
+		"ADD_DEPARTMENT": "إضافة قسم",
+		"CREATE_TEAM": "إنشاء فريق",
+		"CREATE_TASK": "إنشاء مهمة",
+		"CREATE_PROJECT": "إنشاء مشروع",
+		"VIEW_TASKS": "عرض المهام",
+		"VIEW_TEAM_TASKS": "عرض مهام الفريق",
+		"CREATE_CANDIDATE": "إنشاء مرشح",
+		"CREATE_PROPOSAL": "إنشاء اقتراح",
+		"CREATE_CONTRACT": "إنشاء عقد",
+		"CREATE_LEAD": "إنشاء عميل محتمل",
+		"CREATE_CUSTOMER": "إنشاء عميل",
+		"CREATE_CLIENT": "إنشاء زبون",
+		"VIEW_CLIENTS": "عرض العملاء",
+		"START_TIMER": "بدء المؤقت",
+		"STOP_TIMER": "إيقاف المؤقت",
+		"TIME_LOG": "سجل الوقت",
+		"VIEW_APPOINTMENTS": "عرض المواعيد",
+		"VIEW_TIME_ACTIVITY": "عرض نشاط الوقت"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "المحاسبة",
+		"ORGANIZATION": "التنظيم",
+		"PROJECT_MANAGEMENT": "إدارة المشروع",
+		"JOBS": "الوظائف",
+		"CONTACTS": "جهات الاتصال",
+		"TIME_TRACKING": "تتبع الوقت"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "الاسم الأول",
@@ -4164,6 +4219,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "إعادة تعيين كلمة السر",
+			"multi-tenant-password": "إعادة تعيين كلمة المرور للمستأجرين المتعددين",
 			"password-less-authentication": "المصادقة بدون كلمة مرور",
 			"welcome-user": "مرحبًا بك، مستخدم.",
 			"email-verification": "تأكيد البريد الإلكتروني",
@@ -4235,7 +4291,8 @@
 	"DIALOG": {
 		"CONFIRM": "تأكيد",
 		"ALERT": "تنبيه",
-		"DELETE_CONFIRM": "تنبيه"
+		"DELETE_CONFIRM": "تنبيه",
+		"QUICK_ACTIONS": "إجراءات سريعة"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "مزود الملفات",
@@ -4341,30 +4398,87 @@
 			"receipt": "إيصال"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "تسجيل",
+		"HAVE_AN_ACCOUNT": "هل لديك حساب بالفعل؟",
+		"LABELS": {
+			"FULL_NAME": " :الاسم الكامل",
+			"EMAIL": " :عنوان البريد الإلكتروني",
+			"PASSWORD": " :كلمة المرور",
+			"CONFIRM_PASSWORD": " :تأكيد كلمة المرور"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "الاسم الكامل",
+			"EMAIL": "عنوان البريد الإلكتروني",
+			"PASSWORD": "كلمة المرور",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "!الاسم الكامل مطلوب",
+			"FULL_NAME_SHOULD_CONTAIN": "يجب أن يحتوي الاسم الكامل على عدد من {{ minLength }} إلى {{ maxLength }} حرفًا",
+			"EMAIL_REQUIRED": "!البريد الإلكتروني مطلوب",
+			"EMAIL_SHOULD_BE_REAL": "!يجب أن يكون البريد الإلكتروني حقيقيًا",
+			"PASSWORD_NO_SPACE_EDGES": "!يجب ألا تبدأ أو تنتهي كلمات المرور بمسافات",
+			"PASSWORD_REQUIRED": "!كلمة المرور مطلوبة",
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد من {{ minLength }} إلى {{ maxLength }} حرفًا",
+			"CONFIRM_PASSWORD_REQUIRED": "!تأكيد كلمة المرور مطلوب",
+			"PASSWORDS_NOT_MATCH": "!كلمة المرور لا تتطابق مع تأكيد كلمة المرور",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "أوافق على",
+				"TERMS_AND_CONDITIONS": "البنود والشروط",
+				"AND": " و ",
+				"PRIVACY_POLICY": "سياسة الخصوصية"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "تسجيل الدخول",
 		"SUB_TITLE": "مرحبًا! قم بتسجيل الدخول باستخدام بريدك الإلكتروني.",
 		"REMEMBER_ME_TITLE": "تذكرني",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "ليس لديك حساب؟",
 		"FORGOT_PASSWORD_TITLE": "هل نسيت كلمة المرور؟",
+		"OR_SIGN_IN_WITH": "أو قم بتسجيل الدخول بـ",
+		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
+		"LOGIN_MAGIC": {
+			"TITLE": "تسجيل الدخول بواسطة رمز سحري",
+			"DESCRIPTION_TITLE": "سنرسل لك رمزًا سحريًا لتسجيل الدخول بدون كلمة مرور. أو يمكنك ",
+			"OR_SIGN_IN_WITH_PASSWORD": "تسجيل الدخول باستخدام كلمة المرور بدلاً من ذلك.",
+			"RESEND_CODE_TITLE": "إعادة إرسال الرمز",
+			"SUCCESS_SENT_CODE_TITLE": "تم إرسال رمز مكون من 6 أحرف إلى: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "ينتهي الرمز قريبًا، لذا يرجى إدخاله قريبًا.",
+			"REQUEST_NEW_CODE_TITLE": "طلب رمز جديد في {{ countdown }} ثواني."
+		},
 		"LABELS": {
 			"EMAIL": "عنوان البريد الإلكتروني:",
-			"PASSWORD": "كلمة المرور:"
+			"PASSWORD": "كلمة المرور:",
+			"CODE": "الرمز:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "عنوان البريد الإلكتروني",
-			"PASSWORD": "كلمة المرور"
+			"PASSWORD": "كلمة المرور",
+			"CODE": "أدخل الرمز"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!",
 			"PASSWORD_REQUIRED": "كلمة المرور مطلوبة!",
 			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور على عدد الأحرف المسموح به من {{ minLength }} إلى {{ maxLength }}!",
-			"PASSWORD_NO_SPACE_EDGES": "يجب ألا تبدأ كلمات المرور أو تنتهي بمسافات."
+			"PASSWORD_NO_SPACE_EDGES": "يجب ألا تبدأ كلمات المرور أو تنتهي بمسافات.",
+			"CODE_REQUIRED": "الرمز مطلوب لتسجيل الدخول.",
+			"CODE_REQUIRED_LENGTH": "يجب أن يحتوي الرمز على {{ requiredLength }} أحرف."
 		},
 		"DEMO": {
 			"TITLE": "تسجيل الدخول تلقائيًا إلى حسابات التجريبية",
-			"SUB_TITLE": "يرجى تحديد نوع الحساب أدناه."
+			"SUB_TITLE": ".يرجى تحديد نوع الحساب أدناه",
+			"SUPER_ADMIN_TITLE": "مشرف عام",
+			"ADMIN_TITLE": "مسؤول",
+			"EMPLOYEE_TITLE": "موظف",
+			"DEMO_TITLE": "عرض تجريبي",
+			"CREDENTIALS_TITLE": "بيانات الاعتماد",
+			"LABELS": {
+				"EMAIL": " :البريد الإلكتروني",
+				"PASSWORD": " :كلمة المرور"
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4385,6 +4499,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "البريد الإلكتروني مطلوب!",
 			"EMAIL_REAL_REQUIRED": "يجب أن يكون البريد الإلكتروني الحقيقي!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "تغيير كلمة المرور",
+		"SUB_TITLE": "يرجى تعيين كلمة مرور جديدة",
+		"LABELS": {
+			"NEW_PASSWORD": "كلمة المرور الجديدة:",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور:",
+			"BACK_TO": "العودة إلى"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "كلمة المرور الجديدة",
+			"CONFIRM_PASSWORD": "تأكيد كلمة المرور"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "كلمة المرور الجديدة مطلوبة!",
+			"CONFIRM_PASSWORD_REQUIRED": "تأكيد كلمة المرور مطلوب!",
+			"PASSWORDS_NOT_MATCH": "كلمة المرور غير متطابقة مع تأكيد كلمة المرور!",
+			"PASSWORD_SHOULD_CONTAIN": "يجب أن تحتوي كلمة المرور الجديدة على عدد من {{ minLength }} إلى {{ maxLength }} أحرف!"
 		}
 	},
 	"PAGINATION": {
@@ -4412,10 +4545,27 @@
 			"SING_ANOTHER_WORKSPACE": "تسجيل الدخول إلى مساحة عمل أخرى",
 			"CREATE_NEW_WORKSPACE": "أنشئ مساحة عمل جديدة",
 			"FIND_WORKSPACE": "ابحث عن مساحة عمل"
-		}
+		},
+		"LABELS": {
+			"EMAIL": ":أدخل عنوان بريدك الإلكتروني",
+			"PASSWORD": ":أدخل كلمة المرور الخاصة بك"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "كلمة المرور"
+		},
+		"SIGN_IN_TITLE": "تسجيل الدخول إلى مساحة العمل",
+		"BACK_TO": "العودة إلى ",
+		"SUCCESS_SIGNIN_TITLE": ".تهانينا! لقد قمت بتسجيل الدخول بنجاح إلى مساحة العمل الخاصة بك",
+		"SUCCESS_SIGNIN_SUB_TITLE": "...يرجى أن تكون صبورًا بينما نقوم بإعداد مساحة العمل",
+		"FAIL_SIGNIN_TITLE": ".خطأ! رمز السحر أو الرابط الذي قدمته منتهي الصلاحية أو غير صالح",
+		"FAIL_SIGNIN_SUB_TITLE": ".يرجى بدء العملية من جديد",
+		"THANKING_TEXT": ".شكرًا لاختيارك لنا",
+		"UNKNOWN_WORKSPACE": "لا تعرف مساحة العمل الخاصة بك؟",
+		"FIND_WORKSPACE": "ابحث عن مساحتك الخاصة"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "أضف أو أزل الصورة",
-		"AVAILABLE": "الصورة غير متاحة."
+		"AVAILABLE": "الصورة غير متاحة"
 	}
 }

@@ -6,6 +6,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { OnboardingCompleteRoutingModule } from './onboarding-complete-routing.module';
 import { OnboardingCompleteComponent } from './onboarding-complete.component';
+import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 @NgModule({
 	imports: [
@@ -15,7 +16,8 @@ import { OnboardingCompleteComponent } from './onboarding-complete.component';
 		NbButtonModule,
 		NbIconModule,
 		TranslateModule,
-		FeatureToggleModule
+		FeatureToggleModule,
+		ThemeSelectorModule
 	],
 	providers: [TenantService],
 	declarations: [OnboardingCompleteComponent]

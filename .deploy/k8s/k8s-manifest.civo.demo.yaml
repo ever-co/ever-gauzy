@@ -71,6 +71,14 @@ spec:
                         value: 'refreshSecretKey'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
+                      - name: OTEL_ENABLED
+                        value: '$OTEL_ENABLED'
+                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
                   ports:
                       - containerPort: 3000
                         protocol: TCP

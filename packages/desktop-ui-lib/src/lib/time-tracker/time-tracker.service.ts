@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-// import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
@@ -14,38 +13,41 @@ import {
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IPagination,
+	ITaskPriority,
+	ITaskSize,
+	ITaskSizeFindInput,
 	ITaskStatus,
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
 	TimeLogSourceEnum,
 	TimeLogType,
 } from '@gauzy/contracts';
-import { ClientCacheService } from '../services/client-cache.service';
-import { TaskCacheService } from '../services/task-cache.service';
-import { ProjectCacheService } from '../services/project-cache.service';
-import { TimeSlotCacheService } from '../services/time-slot-cache.service';
-import { UserOrganizationService } from './organization-selector/user-organization.service';
-import { EmployeeCacheService } from '../services/employee-cache.service';
-import { TagCacheService } from '../services/tag-cache.service';
-import { TimeLogCacheService } from '../services/time-log-cache.service';
-import { LoggerService } from '../electron/services';
-import { API_PREFIX } from '../constants/app.constants';
 import {
+	ClientCacheService,
+	EmployeeCacheService,
+	ProjectCacheService,
 	Store,
+	TagCacheService,
+	TaskCacheService,
+	TaskPriorityCacheService,
+	TaskSizeCacheService,
 	TaskStatusCacheService,
 	TeamsCacheService,
+	TimeLogCacheService,
+	TimeSlotCacheService,
 	TimeTrackerDateManager,
 } from '../services';
+import { UserOrganizationService } from './organization-selector/user-organization.service';
+import { LoggerService } from '../electron/services';
+import { API_PREFIX } from '../constants';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
-	AW_HOST = 'http://localhost:5600';
 	token = '';
 	userId = '';
 	employeeId = '';
-	buckets: any = {};
 
 	constructor(
 		private readonly http: HttpClient,
@@ -60,7 +62,9 @@ export class TimeTrackerService {
 		private readonly _loggerService: LoggerService,
 		private readonly _store: Store,
 		private readonly _taskStatusCacheService: TaskStatusCacheService,
-		private readonly _teamsCacheService: TeamsCacheService
+		private readonly _teamsCacheService: TeamsCacheService,
+		private readonly _taskPriorityCacheService: TaskPriorityCacheService,
+		private readonly _taskSizeCacheService: TaskSizeCacheService
 	) {}
 
 	createAuthorizationHeader(headers: Headers) {
@@ -214,8 +218,8 @@ export class TimeTrackerService {
 				  }
 				: {}),
 			...(values.organizationTeamId && {
-				organizationTeamId:values.organizationTeamId,
-				})
+				organizationTeamId: values.organizationTeamId,
+			}),
 		};
 		let projects$ = this._projectCacheService.getValue(params);
 		if (!projects$) {
@@ -444,76 +448,6 @@ export class TimeTrackerService {
 		);
 	}
 
-	collectFromAW(tpURL, start, end) {
-		if (!this.buckets.windowBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-		);
-	}
-
-	getAwBuckets(tpURL): Promise<any> {
-		return firstValueFrom(this.http.get(`${tpURL}/api/0/buckets`));
-	}
-
-	parseBuckets(buckets) {
-		Object.keys(buckets).forEach((key) => {
-			const keyParse = key.split('_')[0];
-			switch (keyParse) {
-				case 'aw-watcher-window':
-					this.buckets.windowBucket = buckets[key];
-					break;
-				case 'aw-watcher-afk':
-					this.buckets.afkBucket = buckets[key];
-					break;
-				case 'aw-watcher-web-chrome':
-					this.buckets.chromeBucket = buckets[key];
-					break;
-				case 'aw-watcher-web-firefox':
-					this.buckets.firefoxBucket = buckets[key];
-					break;
-				default:
-					break;
-			}
-		});
-	}
-
-	async collectEvents(tpURL, tp, start, end): Promise<any> {
-		if (!this.buckets.windowBucket) {
-			const allBuckets = await this.getAwBuckets(tpURL);
-			this.parseBuckets(allBuckets);
-		}
-		return this.collectFromAW(tpURL, start, end);
-	}
-
-	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
-		if (!this.buckets.chromeBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-		);
-	}
-
-	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
-		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-		);
-	}
-
-	collectAfkFromAW(tpURL, start, end) {
-		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?events?start=${start}&end=${end}&limit=1`
-			)
-		);
-	}
-
 	pushToTimeSlot(values) {
 		console.log('✅ - TimeSlot', values);
 		const params = {
@@ -534,12 +468,6 @@ export class TimeTrackerService {
 		};
 
 		console.log('Params', params);
-
-		// if (!values.isAw || !values.isAwConnected) {
-		// 	delete params.overall;
-		// 	delete params.mouse;
-		// 	delete params.keyboard;
-		// }
 
 		return firstValueFrom(
 			this.http.post(`${API_PREFIX}/timesheet/time-slot`, params).pipe(
@@ -736,12 +664,18 @@ export class TimeTrackerService {
 		);
 	}
 
-	public async getTeams(): Promise<IOrganizationTeam[]> {
+	public async getTeams(values?: any): Promise<IOrganizationTeam[]> {
 		const params = {
 			where: {
 				organizationId: this._store.organizationId,
 				tenantId: this._store.tenantId,
+				...(values?.projectId && {
+					projects: {
+						id: values.projectId
+					}
+				})
 			},
+			relations: ['projects']
 		};
 		let teams$ = this._teamsCacheService.getValue(params);
 		if (!teams$) {
@@ -759,5 +693,48 @@ export class TimeTrackerService {
 			this._teamsCacheService.setValue(teams$, params);
 		}
 		return firstValueFrom(teams$);
+	}
+
+	public async taskSizes(): Promise<ITaskSize[]> {
+		const params: ITaskSizeFindInput = {
+			organizationId: this._store.organizationId,
+			tenantId: this._store.tenantId,
+		};
+		let taskSizes$ = this._taskSizeCacheService.getValue(params);
+		if (!taskSizes$) {
+			taskSizes$ = this.http
+				.get<IPagination<ITaskSize>>(`${API_PREFIX}/task-sizes`, {
+					params: toParams({ ...params }),
+				})
+				.pipe(
+					map((res) => res.items),
+					shareReplay(1)
+				);
+			this._taskSizeCacheService.setValue(taskSizes$, params);
+		}
+		return firstValueFrom(taskSizes$);
+	}
+
+	public async taskPriorities(): Promise<ITaskPriority[]> {
+		const params: ITaskSizeFindInput = {
+			organizationId: this._store.organizationId,
+			tenantId: this._store.tenantId,
+		};
+		let taskPriorities$ = this._taskPriorityCacheService.getValue(params);
+		if (!taskPriorities$) {
+			taskPriorities$ = this.http
+				.get<IPagination<ITaskPriority>>(
+					`${API_PREFIX}/task-priorities`,
+					{
+						params: toParams({ ...params }),
+					}
+				)
+				.pipe(
+					map((res) => res.items),
+					shareReplay(1)
+				);
+			this._taskPriorityCacheService.setValue(taskPriorities$, params);
+		}
+		return firstValueFrom(taskPriorities$);
 	}
 }

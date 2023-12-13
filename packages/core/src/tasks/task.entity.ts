@@ -150,10 +150,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	rootEpic?: ITask;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	// Define the parent-child relationship
 	@ApiPropertyOptional({ type: () => Task })
@@ -178,7 +178,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@ManyToOne(() => OrganizationProject, (it) => it.tasks, {
+		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
@@ -285,10 +288,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	taskPriorityId?: ITaskPriority['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Organization Team Employees
@@ -318,7 +321,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * TimeLog
 	 */
-	@OneToMany(() => TimeLog, (timeLog) => timeLog.task)
+	@OneToMany(() => TimeLog, (it) => it.task)
 	@JoinColumn()
 	timeLogs?: ITimeLog[];
 
@@ -337,10 +340,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	linkedIssues?: TaskLinkedIssue[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tags

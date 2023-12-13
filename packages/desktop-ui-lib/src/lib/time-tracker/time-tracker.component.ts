@@ -84,6 +84,8 @@ import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 import { GAUZY_ENV } from '../constants';
+import { TasksComponent } from '../tasks/tasks.component';
+import { ActivityWatchViewService } from '../integrations';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -129,11 +131,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	teamSelect = null;
 	errors: any = {};
 	note: String = null;
-	iconAw$: BehaviorSubject<string> = new BehaviorSubject(
-		'close-square-outline'
-	);
-	statusIcon$: BehaviorSubject<string> = new BehaviorSubject('success');
-	defaultAwAPI = 'http:localhost:5600';
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject(
 		'--h --m'
 	);
@@ -208,6 +205,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _alwaysOnService: AlwaysOnService,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
+		private readonly _activityWatchViewService: ActivityWatchViewService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -226,18 +224,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.hasContactPermission$.next(
 						permissions.includes(PermissionsEnum.ORG_CONTACT_EDIT)
 					);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.aw$
-			.pipe(
-				tap(async (isChecked: boolean) => {
-					await this.pingAw(null);
-					this.electronService.ipcRenderer.send('set_tp_aw', {
-						host: this.defaultAwAPI,
-						isAw: isChecked,
-					});
 				}),
 				untilDestroyed(this)
 			)
@@ -328,12 +314,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this._organizationContacts$.asObservable();
 	}
 
-	private _aw$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-
-	public get aw$(): Observable<boolean> {
-		return this._aw$.asObservable();
-	}
-
 	private _sourceData$: BehaviorSubject<LocalDataSource>;
 
 	public get sourceData$(): Observable<LocalDataSource> {
@@ -373,28 +353,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this._isOver$.asObservable();
 	}
 
-	private _activityWatchLog$: BehaviorSubject<string> = new BehaviorSubject(
-		null
-	);
-
-	public get activityWatchLog$(): Observable<string> {
-		return this._activityWatchLog$.asObservable();
-	}
-
 	public get start(): boolean {
 		return this.start$.getValue();
-	}
-
-	public get aw(): boolean {
-		return this._aw$.getValue();
-	}
-
-	public get iconAw(): string {
-		return this.iconAw$.getValue();
-	}
-
-	get statusIcon(): string {
-		return this.statusIcon$.getValue();
 	}
 
 	public get todayDuration(): any {
@@ -463,7 +423,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return arr.reduce((result, current) => {
 			const existing = result.find((item: any) => item.id === current.id);
 			if (existing) {
-				const updatedAtMoment = moment(existing?.updatedAt).utc(true);
+				const updatedAtMoment = moment(existing?.updatedAt, moment.ISO_8601).utc(true);
 				Object.assign(
 					existing,
 					current,
@@ -476,7 +436,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				result.push(current);
 			}
-			return result;
+			return result.filter(task => !!task?.id);
 		}, []);
 	}
 
@@ -484,6 +444,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (!this.start || isForcedSync) {
 			this._lastTotalWorkedToday$.next(count.todayDuration);
 			this._lastTotalWorkedWeek$.next(count.weekDuration);
+			this._alwaysOnService.update('00:00:00', this._lastTotalWorkedToday);
 		}
 	}
 
@@ -498,15 +459,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				timeSlotId: this.selectedTimeSlot.id,
 			});
 			if (res) {
-				await this.getLastTimeSlotImage(this.argFromMain);
-				this.electronService.ipcRenderer.send('delete_time_slot');
-				asapScheduler.schedule(() => {
-					this._toastrNotifier.success(
-						this._translateService.instant(
-							'TIMER_TRACKER.TOASTR.REMOVE_SCREENSHOT'
-						)
-					);
-				});
+				// Delete selected time slot and return last time slot
+				const timeSlotId = await this.electronService.ipcRenderer.invoke(
+					'DELETE_TIME_SLOT',
+					this.selectedTimeSlot.id
+				);
+				this.selectedTimeSlot.id = timeSlotId;
+				// Refresh screen
+				await Promise.allSettled([
+					this.getTodayTime(this.argFromMain, true),
+					this.getLastTimeSlotImage({ timeSlotId })
+				]);
 			}
 		} catch (e) {
 			console.log('error on delete', e);
@@ -670,11 +633,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isOffline) {
 					try {
 						timelog =
-							isRemote || this._remoteSleepLock
+							isRemote ||
+							this._remoteSleepLock ||
+							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
 										...lastTimer,
-										...params,
+										...params
 								  });
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
@@ -686,31 +651,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			asapScheduler.schedule(async () => {
 				try {
-					const promises: Promise<void>[] = [
-						this.electronService.ipcRenderer.invoke(
-							'UPDATE_SYNCED_TIMER',
-							{
-								lastTimer: timelog,
-								...lastTimer,
-							}
-						),
-						this.getTimerStatus(params),
-					];
-					if (this._startMode === TimerStartMode.MANUAL) {
-						const takeScreenCapturePromise =
-							this.electronService.ipcRenderer.invoke(
-								'TAKE_SCREEN_CAPTURE',
-								{
-									quitApp: this.quitApp,
-								}
-							);
-						promises.push(takeScreenCapturePromise);
-					}
-					const result = await Promise.allSettled(promises);
-					const size = result.length;
-					if (size === 3 && result[size - 1].status === 'rejected') {
-						await promises[size - 1];
-					}
+					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+						lastTimer: timelog,
+						...lastTimer
+					});
+					await this.getTimerStatus(params);
 				} catch (error) {
 					this._errorHandlerService.handleError(error);
 				}
@@ -866,14 +811,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				tap(async (tasks) => {
 					if (tasks.length > 0) {
-						const idx = tasks.findIndex(
-							(row) => row.id === this.taskSelect
-						);
-						if (idx > -1) {
-							tasks[idx].isSelected = true;
-						}
+						tasks = tasks.map((row) => ({ ...row, isSelected: row.id === this.taskSelect }));
 					} else {
 						tasks = [];
+						this.taskSelect = null;
 					}
 					this.tableData = tasks;
 					await this._sourceData.load(this.tableData);
@@ -907,17 +848,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this._timeRun$
 			.pipe(
-				tap((current: string) =>
-					this.electronService.ipcRenderer.send('ao_time_update', {
-						today: moment
-							.duration(this._lastTotalWorkedToday, 'seconds')
-							.format('HH:mm', {
-								trim: false,
-								trunc: true,
-							}),
-						current,
-					})
-				),
+				tap((current: string) => {
+					this._alwaysOnService.update(current, this._lastTotalWorkedToday);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -936,13 +869,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this.start$
 			.pipe(
-				tap((isStart: boolean) =>
-					this._alwaysOnService.run(
-						isStart
-							? AlwaysOnStateEnum.STARTED
-							: AlwaysOnStateEnum.STOPPED
-					)
-				),
+				tap((isStart: boolean) => {
+					this._alwaysOnService.run(isStart ? AlwaysOnStateEnum.STARTED : AlwaysOnStateEnum.STOPPED);
+					this._activityWatchViewService.isTimerRunning$.next(isStart);
+				}),
 				filter((isStart: boolean) => !isStart),
 				tap(() => {
 					this._timeRun$.next('00:00:00');
@@ -1040,7 +970,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.teamSelect = arg.organizationTeamId;
 					this.token = arg.token;
 					this.note = arg.note;
-					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 					this.appSetting$.next(arg.settings);
 					this._timeZoneManager.changeZone(
 						this.appSetting?.zone || ZoneEnum.LOCAL
@@ -1050,7 +980,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 					const parallelizedTasks: Promise<void>[] = [
 						this.loadStatuses(),
-						this.getTeams(),
+						this.getTeams(arg),
 						this.getClient(arg),
 						this.getProjects(arg),
 						this.getTask(arg),
@@ -1079,7 +1009,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.projectSelect = arg.projectId;
 					this.teamSelect = arg.organizationTeamId;
 					this.note = arg.note;
-					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 					await this.setTimerDetails();
 					await this.toggleStart(true);
 				})
@@ -1087,8 +1017,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
-				if (this.start) await this.toggleStart(false);
 				if (arg && arg.quitApp) this.quitApp = true;
+				if (this.start) await this.toggleStart(false);
 			})
 		);
 
@@ -1099,7 +1029,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					await this.setProject(arg.projectId);
 					this.setTask(arg.taskId);
 					this.note = arg.note;
-					this._aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
+					this._activityWatchViewService.aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 				})
 		);
 
@@ -1187,12 +1117,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				} catch (error) {
 					console.log('[User Error]: ', error);
 				}
-			})
-		);
-
-		this.electronService.ipcRenderer.on('save_temp_img', (event, arg) =>
-			this._ngZone.run(() => {
-				event.sender.send('save_temp_img', arg);
 			})
 		);
 
@@ -1723,7 +1647,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				.format('hh:mm:ss', { trim: false })
 		);
 		if (second % 5 === 0) {
-			await this.pingAw(null);
+			await this._activityWatchViewService.pingActivityWatchServer();
 			if (this.lastScreenCapture.createdAt) {
 				this.lastScreenCapture$.next({
 					...this.lastScreenCapture,
@@ -1754,8 +1678,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					note: this.note,
 					organizationContactId: this.organizationContactId,
 					aw: {
-						host: this.defaultAwAPI,
-						isAw: this.aw,
+						host: this._environment?.AWHost,
+						isAw: this._activityWatchViewService.aw,
 					},
 					timeLog: null,
 					isRemoteTimer: this.isRemoteTimer,
@@ -1769,6 +1693,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 			await this._toggle(timer, onClick);
+			if (this._startMode === TimerStartMode.MANUAL) {
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', {
+					quitApp: this.quitApp
+				});
+				await this.sendActivities(activities);
+			}
 			await this.updateOrganizationTeamEmployee();
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
@@ -1782,13 +1712,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public async stopTimer(onClick = true, isEmergency = false): Promise<void> {
 		try {
 			const config = { quitApp: this.quitApp, isEmergency };
-			const timer = await this.electronService.ipcRenderer.invoke(
-				'STOP_TIMER',
-				config
-			);
-			await this._toggle(timer, onClick);
+			if (this._startMode === TimerStartMode.MANUAL) {
+				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				await this.sendActivities(activities, () => this._toggle(timer, onClick));
+			} else {
+				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+				await this._toggle(timer, onClick);
+			}
 			this.electronService.ipcRenderer.send('update_tray_stop');
 			this._startMode = TimerStartMode.STOP;
+			if (this._isSpecialLogout) {
+				this._isSpecialLogout = false;
+				await this.logout();
+			}
+
+			if (this.quitApp) {
+				this.electronService.remote.app.quit();
+			}
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		}
@@ -1797,13 +1738,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	async getTask(arg) {
 		try {
 			const tasks = await this.timeTrackerService.getTasks(arg);
-			const statistics = !tasks.length
-				? []
-				: await this.timeTrackerService.getTasksStatistics({
-						...arg,
-						taskIds: tasks.map((res) => res.id),
-				  });
-			this._tasks$.next(this.merge(tasks, statistics));
+			if (tasks.length) {
+				const statistics = await this.timeTrackerService.getTasksStatistics({
+					...arg,
+					taskIds: tasks.map((task) => task.id)
+				});
+				this._tasks$.next(this.merge(tasks, statistics));
+				if (!this._tasks$.getValue().some((task) => task.id === this.taskSelect)) {
+					this.taskSelect = null;
+				}
+			} else {
+				this._tasks$.next([]);
+			}
 		} catch (error) {
 			this._tasks$.next([]);
 			console.log('ERROR', error);
@@ -1812,11 +1758,20 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async getProjects(arg) {
 		try {
-			const res = await this.timeTrackerService.getProjects(arg);
-			this._projects$.next(res || []);
+			const projects = await this.timeTrackerService.getProjects(arg);
+
+			// Check if the selected project is not in the response
+			if (!projects.some(project => project.id === this.projectSelect)) {
+				this.projectSelect = null;
+				this.argFromMain.projectId = null;
+			}
+
+			// Update the projects observable with the response (or an empty array if it's falsy)
+			this._projects$.next(projects || []);
 		} catch (error) {
+			// Handle errors by logging them and updating the projects observable with an empty array
+			console.error('ERROR', error);
 			this._projects$.next([]);
-			console.log('ERROR', error);
 		}
 	}
 
@@ -1874,8 +1829,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				organizationContactId: this.organizationContactId,
 			});
 			this._tasks$.next([]);
-			this.projectSelect = null;
-			this.taskSelect = null;
+			this.teamSelect = null;
 			this.errors.client = false;
 		} else {
 			await this.getProjects(this.argFromMain);
@@ -1884,23 +1838,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async setProject(item: string): Promise<void> {
 		try {
+			const parallelizedTasks: Promise<void>[] = [
+				this.getTeams({
+					...this.argFromMain,
+					projectId: item
+				}),
+				this.getTask({
+					...this.argFromMain,
+					projectId: item
+				})
+			];
 			this.projectSelect = item;
+			this.argFromMain.projectId = item;
 			this.electronService.ipcRenderer.send('update_project_on', {
-				projectId: this.projectSelect,
+				projectId: this.projectSelect
 			});
 			if (item) {
-				await this.getTask({
-					...this.argFromMain,
-					projectId: this.projectSelect,
-				});
-				this.taskSelect = null;
 				this.errors.project = false;
 			} else {
-				await this.getTask({
-					...this.argFromMain,
-				});
+				this.errorBind();
 			}
-			this.errorBind();
+			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
 			console.log('ERROR', error);
 		}
@@ -1909,42 +1867,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public setTask(item: string): void {
 		this.taskSelect = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
-			taskId: this.taskSelect,
+			taskId: this.taskSelect
 		});
 		if (item) this.errors.task = false;
 	}
 
 	public descriptionChange(e): void {
 		if (e) this.errors.note = false;
-		this.setTask(null);
+		this.clearSelectedTaskAndRefresh();
 		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
 			note: this.note,
 		});
-	}
-
-	setAW(checked: boolean) {
-		this._aw$.next(checked);
-	}
-
-	public async pingAw(host: string): Promise<void> {
-		if (!this.aw) {
-			return;
-		}
-		try {
-			await this.timeTrackerService.pingAw(
-				`${host || this.defaultAwAPI}/api`
-			);
-			this.iconAw$.next('checkmark-square-outline');
-			this.statusIcon$.next('success');
-			this.electronService.ipcRenderer.send('aw_status', true);
-			this._activityWatchLog$.next('TIMER_TRACKER.AW_CONNECTED');
-		} catch (e) {
-			this.iconAw$.next('close-square-outline');
-			this.statusIcon$.next('danger');
-			this.electronService.ipcRenderer.send('aw_status', false);
-			this._activityWatchLog$.next('TIMER_TRACKER.AW_DISCONNECTED');
-		}
 	}
 
 	public validationField(): boolean {
@@ -2111,6 +2045,18 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						allowScreenshotCapture: isAllowScreenCapture,
 					}
 				);
+				const enforced = res.employee.organization.enforced;
+				const settings = {
+					timer: { updatePeriod: res.employee.organization.screenshotFrequency },
+					trackOnPcSleep: res.employee.organization.trackOnSleep,
+					randomScreenshotTime: res.employee.organization.randomScreenshot
+				};
+				this.electronService.ipcRenderer.send('update_app_setting', {
+					values: {
+						enforced,
+						...(enforced && settings)
+					}
+				});
 				this.isTrackingEnabled =
 					typeof res.employee.isTrackingEnabled !== 'undefined'
 						? res.employee.isTrackingEnabled
@@ -2133,6 +2079,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.selectedTimeSlot = this.lastTimeSlot;
 			this._dialog = this.dialogService.open(dialog, {
 				context: this.dialogType[option.type].message,
+				backdropClass: 'backdrop-blur'
 			});
 			this._dialog.onClose.subscribe(async (selectedOption) => {
 				if (selectedOption) {
@@ -2165,10 +2112,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	async deleteTimeSlot(): Promise<void> {
 		this._isOffline
-			? this.electronService.ipcRenderer.send(
-					'delete_time_slot',
-					this.screenshots[0].id
-			  )
+			? await this.electronService.ipcRenderer.invoke('DELETE_TIME_SLOT', this.screenshots[0].id)
 			: await this._deleteSyncedTimeslot();
 	}
 
@@ -2193,26 +2137,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
-	public rowSelect(value): void {
-		if (!value?.source?.data?.length) {
-			this.taskSelect = null;
-			return;
+	public handleRowSelection(selectionEvent): void {
+		if (this.isNoRowSelected(selectionEvent)) {
+			this.clearSelectedTaskAndRefresh();
+		} else {
+			const selectedRow = selectionEvent.selected[0];
+			this.handleSelectedTaskChange(selectedRow.id);
 		}
-		this.taskSelect = value.data.id;
-		value.data.isSelected = true;
-		const selectedLast = value.source.data.findIndex(
-			(row) => row.isSelected && row.id !== value.data.id
-		);
-		if (selectedLast > -1) {
-			value.source.data[selectedLast].isSelected = false;
+	}
+
+	private isNoRowSelected(selectionEvent): boolean {
+		return !selectionEvent.selected.length;
+	}
+
+	private clearSelectedTaskAndRefresh(): void {
+		this.setTask(null);
+	}
+
+	private handleSelectedTaskChange(selectedTaskId): void {
+		if (this.isDifferentTask(selectedTaskId)) {
+			this.setTask(selectedTaskId);
 		}
-		const idx = value.source.data.findIndex(
-			(row) => row.id === value.data.id
-		);
-		value.source.data.splice(idx, 1);
-		value.source.data.unshift(value.data);
-		value.source.data[idx].isSelected = true;
-		this.setTask(value.data.id);
+	}
+
+	private isDifferentTask(selectedTaskId): boolean {
+		return this.taskSelect !== selectedTaskId;
 	}
 
 	public onSearch(query: string = ''): void {
@@ -2289,89 +2238,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async getActivities(arg): Promise<any[]> {
-		let windowEvents: any = [];
-		let chromeEvent: any = [];
-		let firefoxEvent: any = [];
-		try {
-			// window event
-			windowEvents = await this.timeTrackerService.collectEvents(
-				arg.tpURL,
-				arg.tp,
-				arg.start,
-				arg.end
-			);
-
-			//  chrome event
-			chromeEvent =
-				await this.timeTrackerService.collectChromeActivityFromAW(
-					arg.tpURL,
-					arg.start,
-					arg.end
-				);
-
-			// firefox event
-			firefoxEvent =
-				await this.timeTrackerService.collectFirefoxActivityFromAw(
-					arg.tpURL,
-					arg.start,
-					arg.end
-				);
-		} catch (error) {
-			this._loggerService.log.info('failed collect from AW');
-		}
-
-		return this.mappingActivities(arg, [
-			...windowEvents,
-			...chromeEvent,
-			...firefoxEvent,
-		]);
-	}
-
-	public mappingActivities(arg, activities: any[]): any[] {
-		return activities.map((act) => {
-			return {
-				title: act.data.title || act.data.app,
-				date: moment(act.timestamp).utc().format('YYYY-MM-DD'),
-				time: moment(act.timestamp).utc().format('HH:mm:ss'),
-				duration: Math.floor(act.duration),
-				type: act.data.title.url ? 'URL' : 'APP',
-				taskId: arg.taskId,
-				projectId: arg.projectId,
-				organizationContactId: arg.organizationContactId,
-				organizationId: arg.organizationId,
-				employeeId: arg.employeeId,
-				source: 'DESKTOP',
-			};
-		});
-	}
-
-	public async getAfk(arg): Promise<number> {
-		try {
-			const afkWatch: any =
-				await this.timeTrackerService.collectAfkFromAW(
-					arg.tpURL,
-					arg.start,
-					arg.end
-				);
-			const afkOnly = afkWatch.filter(
-				(afk) => afk.data && afk.data.status === 'afk'
-			);
-			return this.afkCount(afkOnly);
-		} catch (error) {
-			return 0;
-		}
-	}
-
-	public afkCount(afkList): number {
-		let afkTime = 0;
-		afkList.forEach((x) => {
-			afkTime += x.duration;
-		});
-		return afkTime;
-	}
-
-	public async sendActivities(arg): Promise<void> {
+	public async sendActivities(arg, callBack?: () => Promise<void>): Promise<void> {
 		if (this.isRemoteTimer) return;
 		// screenshot process
 		let screenshotImg = [];
@@ -2385,25 +2252,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// notify
 		this.screenshotNotify(arg, thumbScreenshotImg);
 
-		// updateActivities to api
-		const afkTime: number = await this.getAfk(arg);
-		const duration = arg.timeUpdatePeriod * 60 - afkTime;
-		let activities = null;
-		if (!arg.activities) {
-			activities = await this.getActivities(arg);
-		} else {
-			activities = arg.activities;
-		}
-
 		const paramActivity = {
 			employeeId: arg.employeeId,
 			projectId: arg.projectId,
-			duration: this.aw ? duration : arg.duration,
+			duration: arg.duration,
 			keyboard: arg.keyboard,
 			mouse: arg.mouse,
 			overall: arg.system,
 			startedAt: arg.startedAt,
-			activities: activities,
+			activities: arg.activities,
 			timeLogId: arg.timeLogId,
 			organizationId: arg.organizationId,
 			tenantId: arg.tenantId,
@@ -2418,6 +2275,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const resActivities: any =
 				await this.timeTrackerService.pushToTimeSlot(paramActivity);
 			console.log('result of timeslot', resActivities);
+			if (callBack) {
+				await callBack();
+			}
 			const timeLogs = resActivities.timeLogs;
 			this.electronService.ipcRenderer.send('return_time_slot', {
 				timerId: arg.timerId,
@@ -2425,9 +2285,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				quitApp: arg.quitApp,
 				timeLogs: timeLogs,
 			});
-			this.electronService.ipcRenderer.send('remove_aw_local_data', {
-				idsAw: arg.idsAw,
-			});
+			this.electronService.ipcRenderer.send('remove_aw_local_data');
 			this.electronService.ipcRenderer.send(
 				'remove_wakatime_local_data',
 				{
@@ -2478,15 +2336,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				b64Imgs: [],
 			});
 		} catch (error) {
-			console.log('error send to api timeslot', error);
-			this.electronService.ipcRenderer.send('failed_save_time_slot', {
-				params: JSON.stringify({
-					...paramActivity,
-					b64Imgs: [],
-				}),
-				message: error.message,
-			});
-
+			this._loggerService.log.error('error send to api timeslot', error);
 			this.electronService.ipcRenderer.send('failed_synced_timeslot', {
 				params: {
 					...paramActivity,
@@ -2498,15 +2348,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}),
 				},
 			});
-		}
-
-		if (this._isSpecialLogout) {
-			this._isSpecialLogout = false;
-			await this.logout();
-		}
-
-		if (this.quitApp) {
-			this.electronService.remote.app.quit();
+			// Force stop
+			if (callBack) {
+				await callBack();
+			}
 		}
 	}
 
@@ -2538,16 +2383,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 			return resImg;
 		} catch (error) {
-			this.electronService.ipcRenderer.send('save_temp_img', {
-				params: JSON.stringify({
-					...arg,
-					b64img: b64img,
-					fileName: fileName,
-					timeSlotId,
-				}),
-				message: error.message,
-				type: 'screenshot',
-			});
+			this._loggerService.log.error(error);
 		}
 	}
 
@@ -2591,9 +2427,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public addTask(): void {
 		this.isAddTask = !this._isOffline && this._hasTaskPermission;
+		if (!this.isAddTask) {
+			return;
+		}
+		this.dialogService
+			.open(TasksComponent, {
+				context: {
+					employee: this.userData,
+					hasProjectPermission: this.hasProjectPermission$.getValue(),
+					selected: {
+						projectId: this.projectSelect,
+						teamId: this.teamSelect,
+						contactId: this.organizationContactId
+					},
+					userData: this.argFromMain
+				},
+				backdropClass: 'backdrop-blur'
+			})
+			.onClose.pipe(
+				tap(() => this.closeAddTask()),
+				filter((result) => !!result),
+				tap((result) => this.callbackNewTask(result)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	public closeAddTask(e): void {
+	public closeAddTask(): void {
 		this.isAddTask = false;
 		this.electronService.ipcRenderer.send('refresh-timer');
 	}
@@ -2811,9 +2671,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async getTeams(): Promise<void> {
+	public async getTeams(arg?: any): Promise<void> {
 		try {
-			const teams = await this.timeTrackerService.getTeams();
+			const teams = await this.timeTrackerService.getTeams(arg);
+			// Check if the selected team is not in the response
+			if (!teams.some(team => team.id === this.teamSelect)) {
+				this.teamSelect = null;
+				this.argFromMain.organizationTeamId = null;
+			}
 			this._teams$.next(teams);
 		} catch (error) {
 			this._teams$.next([]);
@@ -2823,23 +2688,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async setTeams(organizationTeamId: string): Promise<void> {
 		try {
+			const parallelizedTasks: Promise<void>[] = [
+				this.getProjects({
+					...this.argFromMain,
+					organizationTeamId
+				}),
+				this.getTask({
+					...this.argFromMain,
+					organizationTeamId
+				})
+			];
 			this.teamSelect = organizationTeamId;
 			this.electronService.ipcRenderer.send('update_project_on', {
-				organizationTeamId,
+				organizationTeamId
 			});
 			this.argFromMain.organizationTeamId = organizationTeamId;
 			if (organizationTeamId) {
-				await this.getProjects({
-					...this.argFromMain,
-					organizationTeamId,
-				});
-				this._tasks$.next([]);
-				this.projectSelect = null;
-				this.taskSelect = null;
 				this.errors.teams = false;
 			} else {
-				await this.getProjects(this.argFromMain);
+				this.errorBind();
 			}
+			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
 			console.log('ERROR', error);
 		}

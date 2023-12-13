@@ -31,7 +31,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateRangeFormat } from './../../core/utils';
+import { getDateRangeFormat, isSqliteDB } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -58,46 +58,32 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getCounts(request: IGetCountsStatistics): Promise<ICountsStatistics> {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			todayStart,
-			todayEnd
-		} = request;
+		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		/**
@@ -120,10 +106,11 @@ export class StatisticService {
 			duration: 0
 		};
 		const weekQuery = this.timeSlotRepository.createQueryBuilder();
+		weekQuery.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs');
+
 		const weekTimeStatistics = await weekQuery
-			.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs')
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekQuery.alias}"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`
 				}`,
@@ -199,7 +186,6 @@ export class StatisticService {
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 						})
 					);
 				})
@@ -224,21 +210,17 @@ export class StatisticService {
 			duration: 0
 		};
 
-		const { start: startToday, end: endToday } = (todayStart && todayEnd) ?
-			getDateRangeFormat(
-				moment.utc(todayStart),
-				moment.utc(todayEnd)
-			) :
-			getDateRangeFormat(
-				moment().startOf('day').utc(),
-				moment().endOf('day').utc()
-			);
+		const { start: startToday, end: endToday } = getDateRangeFormat(
+			moment.utc(todayStart || moment().startOf('day')),
+			moment.utc(todayEnd || moment().endOf('day'))
+		);
 
 		const todayQuery = this.timeSlotRepository.createQueryBuilder();
+		todayQuery.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs');
+
 		const todayTimeStatistics = await todayQuery
-			.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs')
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${todayQuery.alias}"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`
 				}`,
@@ -314,7 +296,6 @@ export class StatisticService {
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 						})
 					);
 				})
@@ -358,46 +339,29 @@ export class StatisticService {
 	 * @returns
 	 */
 	async getMembers(request: IGetMembersStatistics): Promise<IMembersStatistics[]> {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			todayStart,
-			todayEnd
-		} = request;
+		const { organizationId, startDate, endDate, todayStart, todayEnd } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start: weeklyStart, end: weeklyEnd } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start: weeklyStart, end: weeklyEnd } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.employeeRepository.createQueryBuilder();
@@ -406,7 +370,7 @@ export class StatisticService {
 			.addSelect(`("user"."firstName" || ' ' ||  "user"."lastName")`, 'user_name')
 			.addSelect(`"user"."imageUrl"`, 'user_image_url')
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 				}`,
@@ -433,24 +397,21 @@ export class StatisticService {
 					if (isNotEmpty(employeeIds)) {
 						qb.andWhere(`"${query.alias}"."id" IN(:...employeeIds)`, {
 							employeeIds
-						})
-							.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
-								employeeIds
-							});
+						});
+						qb.andWhere(`"timeLogs"."employeeId" IN(:...employeeIds)`, {
+							employeeIds
+						});
 					}
 					/**
 					 * If Project Selected
 					 */
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
-							projectIds
-						});
+						qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, { projectIds });
 					}
 					qb.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 						})
 					);
 				})
@@ -469,7 +430,7 @@ export class StatisticService {
 			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			weekTimeQuery
 				.select(
-					`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+					`${isSqliteDB(this.configService.dbConnectionOptions.type)
 						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
 					}`,
@@ -515,7 +476,6 @@ export class StatisticService {
 							new Brackets((qb: WhereExpressionBuilder) => {
 								qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 								qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-								qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 							})
 						);
 					})
@@ -524,6 +484,7 @@ export class StatisticService {
 				.addGroupBy(`${weekTimeQuery.alias}.employeeId`);
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
+
 			weekTimeSlots = mapObject(
 				groupBy(weekTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -555,7 +516,7 @@ export class StatisticService {
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
 			dayTimeQuery
 				.select(
-					`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+					`${isSqliteDB(this.configService.dbConnectionOptions.type)
 						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
 					}`,
@@ -570,16 +531,10 @@ export class StatisticService {
 				.andWhere(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						const { start: startToday, end: endToday } = (todayStart && todayEnd) ?
-							getDateRangeFormat(
-								moment.utc(todayStart),
-								moment.utc(todayEnd)
-							) :
-							getDateRangeFormat(
-								moment().startOf('day').utc(),
-								moment().endOf('day').utc()
-							);
-
+						const { start: startToday, end: endToday } = getDateRangeFormat(
+							moment.utc(todayStart || moment().startOf('day')),
+							moment.utc(todayEnd || moment().endOf('day'))
+						);
 						qb.where(`"timeLogs"."startedAt" BETWEEN :startToday AND :endToday`, {
 							startToday,
 							endToday
@@ -611,7 +566,6 @@ export class StatisticService {
 							new Brackets((qb: WhereExpressionBuilder) => {
 								qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 								qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-								qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 							})
 						);
 					})
@@ -620,6 +574,7 @@ export class StatisticService {
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
 
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
+
 			dayTimeSlots = mapObject(
 				groupBy(dayTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -666,21 +621,13 @@ export class StatisticService {
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
 					.select(
-						`${this.configService.dbConnectionOptions.type ===
-							'sqlite'
+						`${isSqliteDB(this.configService.dbConnectionOptions.type)
 							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
 							: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`
 						}`,
 						`duration`
 					)
-					.addSelect(
-						`${this.configService.dbConnectionOptions.type ===
-							'sqlite'
-							? `(strftime('%w', timeLogs.startedAt))`
-							: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-						}`,
-						'day'
-					)
+					.addSelect(`${isSqliteDB(this.configService.dbConnectionOptions.type) ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`, 'day')
 					.andWhere(`"${weekHoursQuery.alias}"."id" = :memberId`, { memberId: member.id })
 					.andWhere(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 					.andWhere(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`, { organizationId })
@@ -696,7 +643,6 @@ export class StatisticService {
 							});
 							qb.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 							qb.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-							qb.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 						})
 					)
 					.andWhere(
@@ -712,16 +658,10 @@ export class StatisticService {
 								});
 							}
 						})
-					);
-				member.weekHours = await weekHoursQuery
-					.addGroupBy(
-						`${this.configService.dbConnectionOptions.type ===
-							'sqlite'
-							? `(strftime('%w', timeLogs.startedAt))`
-							: 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-						}`
 					)
-					.getRawMany();
+					.addGroupBy(`${isSqliteDB(this.configService.dbConnectionOptions.type) ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`);
+
+				member.weekHours = await weekHoursQuery.getRawMany();
 			}
 		}
 		return employees;
@@ -739,35 +679,26 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
 
-		/*
-		*  Get employees id of the organization or get current employee id
-		*/
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
+		 */
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -775,7 +706,7 @@ export class StatisticService {
 			.select(`"project"."name"`, "name")
 			.addSelect(`"project"."id"`, "projectId")
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
 				}`,
@@ -799,7 +730,6 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -849,7 +779,7 @@ export class StatisticService {
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder('time_log');
 		totalDurationQuery
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
 				}`,
@@ -868,7 +798,6 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"${totalDurationQuery.alias}"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -992,12 +921,9 @@ export class StatisticService {
 			.addSelect(`"task"."id"`, 'taskId')
 			.addSelect(`"${todayQuery.alias}"."updatedAt"`, 'updatedAt')
 			.addSelect(
-				`${
-					['sqlite', 'better-sqlite3'].includes(
-						this.configService.dbConnectionOptions.type
-					)
-						? `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
-						: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
+					? `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
+					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
 				}`,
 				`today_duration`
 			)
@@ -1025,15 +951,12 @@ export class StatisticService {
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(
-						`"${todayQuery.alias}"."tenantId" = :tenantId`,
-						{ tenantId }
-					);
-					qb.andWhere(
-						`"${todayQuery.alias}"."organizationId" = :organizationId`,
-						{ organizationId }
-					);
-					qb.andWhere(`"${todayQuery.alias}"."deletedAt" IS NULL`);
+					qb.andWhere(`"${todayQuery.alias}"."tenantId" = :tenantId`, {
+						tenantId
+					});
+					qb.andWhere(`"${todayQuery.alias}"."organizationId" = :organizationId`, {
+						organizationId
+					});
 				})
 			)
 			.andWhere(
@@ -1041,10 +964,9 @@ export class StatisticService {
 					qb.andWhere(`"time_slot"."tenantId" = :tenantId`, {
 						tenantId,
 					});
-					qb.andWhere(
-						`"time_slot"."organizationId" = :organizationId`,
-						{ organizationId }
-					);
+					qb.andWhere(`"time_slot"."organizationId" = :organizationId`, {
+						organizationId
+					});
 				})
 			)
 			.andWhere(
@@ -1102,7 +1024,7 @@ export class StatisticService {
 			.addSelect(`"task"."id"`, "taskId")
 			.addSelect(`"${query.alias}"."updatedAt"`, 'updatedAt')
 			.addSelect(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
 				}`,
@@ -1128,7 +1050,6 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -1209,7 +1130,7 @@ export class StatisticService {
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
 		totalDurationQuery
 			.select(
-				`${['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				`${isSqliteDB(this.configService.dbConnectionOptions.type)
 					? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
 					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
 				}`,
@@ -1230,7 +1151,6 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"${totalDurationQuery.alias}"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -1276,34 +1196,25 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -1316,7 +1227,6 @@ export class StatisticService {
 			},
 			relations: {
 				project: true,
-				timeSlots: true,
 				employee: {
 					user: true
 				}
@@ -1346,7 +1256,6 @@ export class StatisticService {
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-					web.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 				})
 			);
 			qb.andWhere(
@@ -1393,34 +1302,26 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
-		/*
-		 *  Get employees id of the organization or get current employee id
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -1433,19 +1334,10 @@ export class StatisticService {
 			.addGroupBy(`"${query.alias}"."title"`)
 			.andWhere(
 				new Brackets((qb) => {
-					if (
-						this.configService.dbConnectionOptions.type ===
-						'sqlite'
-					) {
-						qb.andWhere(
-							`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`,
-							{ start, end }
-						);
+					if (isSqliteDB(this.configService.dbConnectionOptions.type)) {
+						qb.andWhere(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`, { start, end });
 					} else {
-						qb.andWhere(
-							`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`,
-							{ start, end }
-						);
+						qb.andWhere(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`, { start, end });
 					}
 				})
 			)
@@ -1471,7 +1363,6 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -1502,10 +1393,7 @@ export class StatisticService {
 			.innerJoin(`time_slot.timeLogs`, 'time_log')
 			.andWhere(
 				new Brackets((qb) => {
-					if (
-						this.configService.dbConnectionOptions.type ===
-						'sqlite'
-					) {
+					if (isSqliteDB(this.configService.dbConnectionOptions.type)) {
 						qb.andWhere(`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`, {
 							start,
 							end
@@ -1540,7 +1428,6 @@ export class StatisticService {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
 					qb.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
-					qb.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			)
 			.andWhere(
@@ -1579,35 +1466,26 @@ export class StatisticService {
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
 
-		/*
-		 *  Get employees id of the organization or get current employee id
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		/**
+		 * Set employeeIds based on user conditions and permissions
 		 */
-		if (
-			(user.employeeId && request.onlyMe) ||
-			(
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-				&& user.employeeId
-			)
-		) {
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
+			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
@@ -1622,7 +1500,6 @@ export class StatisticService {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 			})
 		);
 		query.andWhere(
@@ -1722,7 +1599,6 @@ export class StatisticService {
 						});
 						web.andWhere(`"timeLogs"."tenantId" = :tenantId`, { tenantId });
 						web.andWhere(`"timeLogs"."organizationId" = :organizationId`, { organizationId });
-						web.andWhere(`"timeLogs"."deletedAt" IS NULL`);
 					})
 				);
 				qb.andWhere(
@@ -1816,29 +1692,18 @@ export class StatisticService {
 		qb: WhereExpressionBuilder,
 		request: IGetCountsStatistics
 	) {
-		const {
-			organizationId,
-			startDate,
-			endDate,
-			employeeIds = [],
-			projectIds = []
-		} = request;
+		const { organizationId, startDate, endDate, employeeIds = [], projectIds = [] } = request;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
 				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
 			})
 		);
 		qb.andWhere(

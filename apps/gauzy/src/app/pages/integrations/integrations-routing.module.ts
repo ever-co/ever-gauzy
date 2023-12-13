@@ -54,7 +54,10 @@ const routes: Routes = [
 		path: 'gauzy-ai',
 		loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
 			(m) => m.GauzyAIModule
-		)
+		),
+		data: {
+			selectors: false
+		}
 	},
 	{
 		path: 'github',

@@ -27,7 +27,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		private readonly store: Store,
 		private readonly usersService: UsersService,
 		private readonly themeService: NbThemeService
-	) {}
+	) { }
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;

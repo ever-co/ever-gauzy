@@ -16,7 +16,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Уважаемый {{email}},</p>
 					<p style="line-height: 1.5rem">
-						Благодарим вас за регистрацию в Ever® Gauzy™ — платформе
+						Благодарим вас за регистрацию в {{appName}} — платформе
 						управления бизнесом с открытым исходным кодом
 						(ERP/CRM/HRM).
 					</p>
@@ -32,7 +32,7 @@
 					© 2019,
 					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>

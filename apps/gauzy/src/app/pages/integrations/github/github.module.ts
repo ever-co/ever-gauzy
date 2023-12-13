@@ -5,6 +5,7 @@ import {
 	NbCardModule,
 	NbDialogModule,
 	NbIconModule,
+	NbPopoverModule,
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule
@@ -18,10 +19,11 @@ import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubViewComponent } from './components/view/view.component';
-import { GithubSettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
+import { GithubSettingsComponent } from './components/settings/settings.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { DirectivesModule } from '../../../@shared/directives/directives.module';
 import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
+import { PaginationModule } from '../../../@shared/pagination/pagination.module';
 
 @NgModule({
 	declarations: [
@@ -29,7 +31,7 @@ import { ProjectSelectModule } from '../../../@shared/project-select/project-sel
 		GithubWizardComponent,
 		GithubInstallationComponent,
 		GithubViewComponent,
-		GithubSettingsDialogComponent
+		GithubSettingsComponent
 	],
 	imports: [
 		CommonModule,
@@ -37,6 +39,7 @@ import { ProjectSelectModule } from '../../../@shared/project-select/project-sel
 		NbCardModule,
 		NbDialogModule,
 		NbIconModule,
+		NbPopoverModule,
 		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
@@ -46,6 +49,7 @@ import { ProjectSelectModule } from '../../../@shared/project-select/project-sel
 		TranslateModule,
 		DirectivesModule,
 		BackNavigationModule,
+		PaginationModule,
 		RepositorySelectorModule,
 		ProjectSelectModule
 	]

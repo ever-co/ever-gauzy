@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 import { seedProjectMembersCount } from "./../../organization-project/organization-project.seed";
 
 export class AlterOrganizationProject1650532321598 implements MigrationInterface {
@@ -6,6 +7,8 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
     name = 'AlterOrganizationProject1650532321598';
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
@@ -90,21 +93,21 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
     // And such Seed method basically update qty of members per project when we create initial data in DB
     private async _calculateProjectMembersCount(queryRunner: QueryRunner) {
 
-      console.log('_calculateProjectMembersCount called');
+        console.log('_calculateProjectMembersCount called');
 
         /**
          * GET all tenants in the system
          */
-	    const tenants = await queryRunner.connection.manager.query(`SELECT * FROM tenant`);
+        const tenants = await queryRunner.connection.manager.query(`SELECT * FROM tenant`);
 
-      console.log(`found ${tenants.length} tenants in DB`);
+        console.log(`found ${tenants.length} tenants in DB`);
 
-      await seedProjectMembersCount(
+        await seedProjectMembersCount(
             queryRunner.connection,
             tenants
-      );
+        );
 
-      console.log('_calculateProjectMembersCount called');
+        console.log('_calculateProjectMembersCount called');
 
     }
 }

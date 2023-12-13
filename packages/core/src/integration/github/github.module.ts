@@ -84,6 +84,10 @@ export class GithubModule implements NestModule {
 			},
 			/** */
 			{
+				path: '/integration/github/:integrationId/manual-sync/issues',
+				method: RequestMethod.POST,
+			},
+			{
 				path: '/integration/github/:integrationId/auto-sync/issues',
 				method: RequestMethod.POST,
 			}

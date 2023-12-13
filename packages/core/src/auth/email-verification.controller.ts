@@ -11,11 +11,10 @@ import {
     ValidationPipe
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { IAppIntegrationConfig, Public } from '@gauzy/common';
+import { FeatureFlag, IAppIntegrationConfig, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
-import { FeatureFlag } from './../shared/decorators';
 import { ConfirmEmailByCodeDTO, ConfirmEmailByTokenDTO } from './dto';
 
 @Controller('email/verify')
@@ -26,7 +25,7 @@ export class EmailVerificationController {
 
     constructor(
         private readonly emailConfirmationService: EmailConfirmationService
-    ) {}
+    ) { }
 
     /**
      * Email verification by token

@@ -3,7 +3,7 @@ name: Deploy to Render Demo
 on:
     workflow_run:
         workflows: ['Build and Publish Docker Images Demo']
-        branches: [develop, temp]
+        branches: [render]
         types:
             - completed
 

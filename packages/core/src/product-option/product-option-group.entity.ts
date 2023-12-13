@@ -21,11 +21,11 @@ export class ProductOptionGroup
 	name: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
-	
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
 	/**
 	 * Product
 	 */
@@ -43,26 +43,28 @@ export class ProductOptionGroup
 	productId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => ProductOption, isArray: true })
 	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
-		eager: true
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true,
 	})
 	options: ProductOption[];
 
 	/**
 	 * ProductOptionGroupTranslation
 	 */
- 	@ApiProperty({ type: () => ProductOptionGroupTranslation, isArray: true })
-	@OneToMany(() => ProductOptionGroupTranslation, (translation) => translation.reference, { 
-		eager: true 
+	@ApiProperty({ type: () => ProductOptionGroupTranslation, isArray: true })
+	@OneToMany(() => ProductOptionGroupTranslation, (translation) => translation.reference, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
+		eager: true,
 	})
 	translations: ProductOptionGroupTranslation[];
 }

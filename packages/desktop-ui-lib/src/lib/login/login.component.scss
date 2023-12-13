@@ -85,7 +85,8 @@
 			align-items: center;
 
 			& .forgot-password {
-				color: $button-color;
+				text-decoration-line: underline;
+				margin-bottom: 0;
 				font-size: 14px;
 				font-style: normal;
 				font-weight: 500;
@@ -97,6 +98,10 @@
 				@include mobile-screen {
 					display: none;
 				}
+			}
+
+			& .forgot-password:hover {
+				color: $button-color;
 			}
 
 			& .forgot-password-big {
@@ -120,7 +125,7 @@
 
 			& .submit-btn {
 				@include submit-btn;
-				padding: 13px 59px;
+				padding: 12px 48px;
 			}
 		}
 
@@ -137,10 +142,13 @@
 	& .links {
 		margin-top: 10px;
 		@include social-links-style;
+		width: 100%;
 
 		& .socials {
-			margin-top: 15px;
-			margin-bottom: 15px;
+			display: flex;
+			justify-content: flex-start;
+			width: 100%;
+			margin-left: -10px;
 		}
 	}
 

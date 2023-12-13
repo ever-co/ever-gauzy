@@ -16,7 +16,7 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>{{email}} היקר,</p>
 					<p style="line-height: 1.5rem">
-						תודה על הרשמתך ב-Ever® Gauzy™ - פלטפורמת ניהול עסקי בקוד
+						תודה על הרשמתך ב-{{appName}} - פלטפורמת ניהול עסקי בקוד
 						פתוח (ERP/CRM/HRM).
 					</p>
 					<p>אנו שמחים לקבל אותך על הסיפון!</p>
@@ -31,7 +31,7 @@
 					© 2019,
 					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="https://ever.co/" style="color: #598bff">Ever Co. LTD.</a>
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>

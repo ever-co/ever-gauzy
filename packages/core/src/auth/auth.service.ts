@@ -5,6 +5,7 @@ import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
+import { pick } from 'underscore';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -22,10 +23,12 @@ import {
 	IUserLoginInput as IUserWorkspaceSigninInput,
 	IUserTokenInput,
 	IOrganizationTeam,
+	IWorkspaceResponse,
+	ITenant,
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
@@ -101,25 +104,29 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
-			console.log('Error while authenticating user: %s', error);
 			throw new UnauthorizedException();
 		}
 	}
 
 	/**
-	 * Signs in users to workspaces.
-	 * @param param0 - IUserSigninWorkspaceInput containing email and password.
-	 * @returns IUserSigninWorkspaceResponse containing user details and confirmation status.
+	 * Authenticate a user by email and password and return user workspaces.
+	 *
+	 * @param email - The user's email.
+	 * @param password - The user's password.
+	 * @returns A promise that resolves to a response with user workspaces.
+	 * @throws UnauthorizedException if authentication fails.
 	 */
 	async signinWorkspacesByEmailPassword({ email, password }: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
-		console.time('signin workspaces');
-		// Fetching users matching the query
+
+		/** Fetching users matching the query */
 		let users = await this.userService.find({
 			where: {
 				email,
 				isActive: true,
+				isArchived: false
 			},
 			relations: {
+				tenant: true,
 				employee: true
 			},
 			order: {
@@ -127,42 +134,57 @@ export class AuthService extends SocialAuthService {
 			}
 		});
 
-		// Filtering users based on password match
-		users = users.filter((user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive));
+		if (users.length === 0) {
+			throw new UnauthorizedException();
+		}
 
-		// Creating an array of user objects with relevant data
-		const workspaces = users.map((user: IUser) => {
-			const payload: JwtPayload = {
-				userId: user.id,
-				email: user.email,
-				tenantId: user.tenant ? user.tenantId : null
-			};
-			const token = sign(payload, environment.JWT_SECRET, {
-				expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
+		// Filter users based on password match
+		users = users.filter((user: IUser) =>
+			!!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive)
+		);
+
+		/** */
+		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+		/** */
+		for await (const user of users) {
+			const id = user.id;
+			/** */
+			await this.userRepository.update({
+				id,
+				email,
+				isActive: true,
+				isArchived: false
+			}, {
+				code,
+				codeExpireAt
 			});
-			return new Object({
-				user: new User({
-					name: user.name,
-					imageUrl: user.imageUrl,
-					tenant: new Tenant({
-						id: user.tenant ? user.tenantId : null,
-						name: user.tenant?.name || '',
-						logo: user.tenant?.logo || ''
-					})
-				}),
-				token
-			});
-		});
+		}
+
+		// Create an array of user objects with relevant data
+		const workspaces: IWorkspaceResponse[] = users.map((user: IUser) => ({
+			user: new User({
+				id: user.id,
+				email: user.email || null,
+				name: user.name,
+				imageUrl: user.imageUrl,
+				tenant: new Tenant({
+					id: user.tenant ? user.tenantId : null,
+					name: user.tenant?.name || '',
+					logo: user.tenant?.logo || ''
+				})
+			}),
+			token: this.generateToken(user, code)
+		}));
 
 		// Determining the response based on the number of matching users
 		const response: IUserSigninWorkspaceResponse = {
-			workspaces,
+			workspaces: workspaces,
 			confirmed_email: email,
 			show_popup: workspaces.length > 1,
 			total_workspaces: workspaces.length
 		};
-
-		console.timeEnd('signin workspaces');
 
 		if (workspaces.length > 0) {
 			return response;
@@ -173,67 +195,114 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Request Reset Password
+	 * Generate a JWT token for the given user.
 	 *
-	 * @param request
-	 * @param languageCode
-	 * @param originUrl
-	 * @returns
+	 * @param user - The user object for which to generate the token.
+	 * @returns The JWT token as a string.
 	 */
-	async requestPassword(
+	private generateToken(user: IUser, code: string): string {
+		const payload: JwtPayload = {
+			userId: user.id,
+			email: user.email,
+			tenantId: user.tenant ? user.tenantId : null,
+			code
+		};
+		return sign(payload, environment.JWT_SECRET, {
+			expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`,
+		});
+	}
+
+	/**
+	 * Initiates the process to request a password reset.
+	 *
+	 * @param request - The reset password request object containing the email address.
+	 * @param languageCode - The language code used for email communication.
+	 * @param originUrl - Optional parameter representing the origin URL of the request.
+	 * @returns A Promise that resolves to a boolean indicating the success of the password reset request
+	 *          or throws a BadRequestException in case of failure.
+	 */
+	async requestResetPassword(
 		request: IResetPasswordRequest,
 		languageCode: LanguagesEnum,
 		originUrl?: string
 	): Promise<boolean | BadRequestException> {
-		const { email } = request;
-
 		try {
-			await this.userRepository.findOneByOrFail({
-				email,
-				isActive: true
-			});
-		} catch (error) {
-			throw new BadRequestException('Forgot password request failed!');
-		}
+			const { email } = request;
 
-		try {
-			const user = await this.userService.findOneByOptions({
-				where: {
-					email,
-					isActive: true
-				},
-				relations: {
-					role: true,
-					employee: true
-				}
-			});
-			/**
-			 * Create password reset request
-			 */
-			const token = await this.getJwtAccessToken(user);
-			if (token) {
-				await this.commandBus.execute(
-					new PasswordResetCreateCommand({
-						email: user.email,
-						token
-					})
-				);
-
-				const { id: userId, tenantId } = user;
-
-				const url = `${environment.clientBaseUrl}/#/auth/reset-password?token=${token}`;
-				const { organizationId } = await this.userOrganizationService.findOneByOptions({
-					where: {
-						userId,
-						tenantId
-					}
-				});
-				this.emailService.requestPassword(user, url, languageCode, organizationId, originUrl);
-				return true;
+			// Fetch users with specific criteria
+			const users = await this.fetchUsers(email);
+			// Throw an exception if no matching users are found
+			if (users.length === 0) {
+				throw new BadRequestException('Forgot password request failed!');
 			}
+
+			// Initialize an array to store reset links along with tenant and user information
+			const tenantUsersMap: { resetLink: string; tenant: ITenant; user: IUser }[] = [];
+
+			// Iterate through users and generate reset links
+			for await (const user of users) {
+				const { email, tenantId } = user;
+				const token = await this.getJwtAccessToken(user);
+
+				// Proceed if a valid token and email are obtained
+				if (!!token && !!email) {
+					try {
+						// Create a password reset request and generate a reset link
+						const request = await this.commandBus.execute(
+							new PasswordResetCreateCommand({
+								email,
+								tenantId,
+								token
+							})
+						);
+						const resetLink = `${environment.clientBaseUrl}/#/auth/reset-password?token=${request.token}&tenantId=${tenantId}&email=${email}`;
+						tenantUsersMap.push({ resetLink, tenant: user.tenant, user });
+					} catch (error) {
+						throw new BadRequestException('Forgot password request failed!');
+					}
+				}
+			}
+
+			// If there is only one user, send a password reset email
+			if (users.length === 1) {
+				const [user] = users;
+				const [tenantUserMap] = tenantUsersMap;
+
+				if (tenantUserMap) {
+					const { resetLink } = tenantUserMap;
+					this.emailService.requestPassword(user, resetLink, languageCode, originUrl);
+				}
+			} else {
+				// If multiple users are found, send a multi-tenant password reset email
+				this.emailService.multiTenantResetPassword(email, tenantUsersMap, languageCode, originUrl);
+			}
+
+			// Return success status
+			return true;
 		} catch (error) {
+			// Throw a BadRequestException in case of failure
 			throw new BadRequestException('Forgot password request failed!');
 		}
+	}
+
+	/**
+	 * Fetch users from the repository based on specific criteria.
+	 *
+	 * @param {string} email - The user's email address.
+	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
+	 */
+	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
+		return await this.userRepository.find({
+			where: {
+				email,
+				isActive: true,
+				isArchived: false,
+			},
+			relations: {
+				tenant: true,
+				role: true
+			},
+		});
 	}
 
 	/**
@@ -283,12 +352,17 @@ export class AuthService extends SocialAuthService {
 	 * 1. Sign up
 	 * 2. Addition of new user to organization
 	 * 3. User invite accept scenario
+	 *
+	 * @param input
+	 * @param languageCode
+	 * @returns
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
 		languageCode: LanguagesEnum,
 	): Promise<User> {
 		let tenant = input.user.tenant;
+		// 1. If createdById is provided, get the creating user and use their tenant
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
 				relations: {
@@ -298,50 +372,41 @@ export class AuthService extends SocialAuthService {
 			tenant = creatingUser.tenant;
 		}
 
-		/**
-		 * Register new user
-		 */
-		const create = this.userRepository.create({
+		// 2. Register new user
+		const userToCreate = this.userRepository.create({
 			...input.user,
 			tenant,
-			...(input.password
-				? {
-					hash: await this.getPasswordHash(input.password)
-				}
-				: {})
+			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
 		});
-		const entity = await this.userRepository.save(create);
+		const createdUser = await this.userRepository.save(userToCreate);
 
-		/** Email automatically verified after accept invitation */
-		await this.userRepository.update(entity.id, {
-			...(input.inviteId
-				? {
-					emailVerifiedAt: freshTimestamp()
-				}
-				: {})
-		});
+		// 3. Email is automatically verified after accepting an invitation
+		if (input.inviteId) {
+			await this.userRepository.update(createdUser.id, {
+				emailVerifiedAt: freshTimestamp()
+			});
+		}
 
-		/**
-		 * Find latest register user with role
-		 */
+		// 4. Find the latest registered user with role
 		const user = await this.userRepository.findOne({
 			where: {
-				id: entity.id
+				id: createdUser.id
 			},
 			relations: {
 				role: true
 			}
 		});
 
+		// 5. If organizationId is provided, add the user to the organization
 		if (isNotEmpty(input.organizationId)) {
 			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
-		//6. Create Import Records while migrating for relative user.
+		// 6. Create Import Records while migrating for a relative user
 		const { isImporting = false, sourceId = null } = input;
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
-			await this.commandBus.execute(
+			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
 					entityType: this.userRepository.metadata.tableName,
 					sourceId,
@@ -350,25 +415,26 @@ export class AuthService extends SocialAuthService {
 			);
 		}
 
-		/**
-		 * Email verification
-		 */
-		const { appName, appLogo, appSignature, appLink, appEmailConfirmationUrl } = input;
+		// Extract integration information
+		let integration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'appEmailConfirmationUrl', 'companyLink', 'companyName']);
+
+		// 7. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
-			await this.emailConfirmationService.sendEmailVerification(user, {
-				appName,
-				appLogo,
-				appSignature,
-				appLink,
-				appEmailConfirmationUrl
-			});
+			this.emailConfirmationService.sendEmailVerification(
+				user,
+				integration
+			);
 		}
-		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, {
-			appName,
-			appLogo,
-			appSignature,
-			appLink
-		});
+
+		// 8. Send a welcome email to the user
+		this.emailService.welcomeUser(
+			input.user,
+			languageCode,
+			input.organizationId,
+			input.originalUrl,
+			integration
+		);
+
 		return user;
 	}
 
@@ -448,6 +514,11 @@ export class AuthService extends SocialAuthService {
 		}
 	}
 
+	/**
+	 *
+	 * @param emails
+	 * @returns
+	 */
 	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>): Promise<{
 		success: boolean;
 		authData: { jwt: string; userId: string };
@@ -456,7 +527,6 @@ export class AuthService extends SocialAuthService {
 			success: false,
 			authData: { jwt: null, userId: null }
 		};
-
 		try {
 			for (const { value } of emails) {
 				const userExist = await this.userService.checkIfExistsEmail(value);
@@ -468,6 +538,9 @@ export class AuthService extends SocialAuthService {
 						success: true,
 						authData: { jwt: token, userId: user.id }
 					};
+
+					// Break the loop and return the response
+					return response;
 				}
 			}
 			return response;
@@ -484,7 +557,10 @@ export class AuthService extends SocialAuthService {
 	 */
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
+			// Extract the user ID from the request
 			const userId = request.id;
+
+			// Retrieve the user's data from the userService
 			const user = await this.userService.findOneByIdString(userId, {
 				relations: {
 					employee: true,
@@ -496,13 +572,19 @@ export class AuthService extends SocialAuthService {
 					createdAt: 'DESC'
 				}
 			});
+
+			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId,
 				employeeId: user.employee ? user.employee.id : null
 			};
+
+			// Check if the user has a role
 			if (user.role) {
 				payload.role = user.role.name;
+
+				// Check if the role has rolePermissions
 				if (user.role.rolePermissions) {
 					payload.permissions = user.role.rolePermissions
 						.filter((rolePermission: IRolePermission) => rolePermission.enabled)
@@ -513,9 +595,14 @@ export class AuthService extends SocialAuthService {
 			} else {
 				payload.role = null;
 			}
+
+			// Generate an access token using the payload and a secret
 			const accessToken = sign(payload, environment.JWT_SECRET, {});
+
+			// Return the generated access token
 			return accessToken;
 		} catch (error) {
+			// Handle any errors that occur during the process
 			console.log('Error while getting jwt access token', error);
 		}
 	}
@@ -560,47 +647,66 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Sends a unique authentication code to the user's email for workspace sign-in.
 	 *
-	 * @param input
-	 * @param locale
-	 * @returns
+	 * @param input - User email input along with partial app integration configuration.
+	 * @param locale - Language/locale for email content.
+	 * @returns {Promise<void>} - A promise indicating the completion of the operation.
 	 */
 	async sendWorkspaceSigninCode(
 		input: IUserEmailInput & Partial<IAppIntegrationConfig>,
 		locale: LanguagesEnum
-	) {
+	): Promise<void> {
 		const { email } = input;
+
+		// Check if the email is provided
 		if (!email) {
 			return;
 		}
+
 		try {
+			// Count the number of users with the given email
 			const count = await this.userRepository.countBy({
 				email
 			});
+
+			// If no user found with the email, return
 			if (count === 0) {
 				return;
 			}
 
-			const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
-			const codeExpireAt = moment().add(environment.AUTHENTICATION_CODE_EXPIRATION_TIME, 'seconds').toDate();
+			// Generate a random alphanumeric code
+			const magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 
-			await this.userRepository.update({ email }, { code, codeExpireAt });
-			/**
-			 * Send password less authentication email
-			 */
-			let { appName, appLogo, appSignature, appLink, callbackUrl } = input;
-			if (callbackUrl) {
-				callbackUrl = `${callbackUrl}?email=${email}&code=${code}`;
+			// Calculate the expiration time for the code
+			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+			// Update the user record with the generated code and expiration time
+			await this.userRepository.update({ email }, { code: magicCode, codeExpireAt });
+
+			// Extract integration information
+			let appIntegration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName', 'appMagicSignUrl']);
+
+			// Override the default config by merging in the provided values.
+			const integration = deepMerge(environment.appIntegrationConfig, appIntegration);
+
+			/** */
+			let magicLink: string;
+			if (integration.appMagicSignUrl) {
+				magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
 			}
-			this.emailService.passwordLessAuthentication(email, code, locale, {
-				appName,
-				appLogo,
-				appSignature,
-				appLink,
-				callbackUrl
+
+			// Send the magic code to the user's email
+			this.emailService.sendMagicLoginCode({
+				email,
+				magicCode,
+				magicLink,
+				locale,
+				integration
 			});
 		} catch (error) {
-			console.log('Error while sending authentication code', error?.message);
+			// Handle errors during the process
+			console.log('Error while sending workspace magic login code', error?.message);
 		}
 	}
 
@@ -614,7 +720,6 @@ export class AuthService extends SocialAuthService {
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
 		try {
-			console.time('confirm signin for multi-tenant workspaces');
 			const { email, code } = payload;
 
 			// Check for missing email or code
@@ -628,7 +733,8 @@ export class AuthService extends SocialAuthService {
 					email,
 					code,
 					codeExpireAt: MoreThanOrEqual(new Date()),
-					isActive: true
+					isActive: true,
+					isArchived: false
 				},
 				relations: {
 					tenant: true,
@@ -636,37 +742,29 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
-			const workspaces: IUser[] = [];
+			// Create an array of user objects with relevant data
+			const workspaces: IWorkspaceResponse[] = [];
+
 			// Create an array of user objects with relevant data
 			for await (const user of users) {
 				const userId = user.id;
 				const tenantId = user.tenant ? user.tenantId : null;
 				const employeeId = user.employee ? user.employeeId : null;
 
-				const payload: JwtPayload = {
-					userId: user.id,
-					email: user.email,
-					tenantId: user.tenant ? user.tenantId : null,
-					code
-				};
-
-				const token = sign(payload, environment.JWT_SECRET, {
-					expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
-				});
-
-				const workspace = new Object({
+				const workspace: IWorkspaceResponse = {
 					user: new User({
-						email: user.email || '',
-						name: user.name || '',
-						imageUrl: user.imageUrl || '',
+						id: user.id,
+						email: user.email || null,
+						name: user.name || null,
+						imageUrl: user.imageUrl || null,
 						tenant: new Tenant({
 							id: user.tenant ? user.tenantId : null,
-							name: user.tenant?.name || '',
-							logo: user.tenant?.logo || ''
+							name: user.tenant?.name || null,
+							logo: user.tenant?.logo || null
 						}),
 					}),
-					token
-				});
+					token: this.generateToken(user, code),
+				};
 
 				try {
 					if (includeTeams) {
@@ -692,16 +790,12 @@ export class AuthService extends SocialAuthService {
 				total_workspaces: workspaces.length
 			};
 
-			console.timeEnd('confirm signin for multi-tenant workspaces');
-
 			// Return the response if there are matching users
 			if (workspaces.length > 0) {
 				return response;
-			} else {
-				throw new UnauthorizedException();
 			}
+			throw new UnauthorizedException();
 		} catch (error) {
-			console.log('Error while verifying email & code for multi-tenant workspace signin: %s', error?.message);
 			throw new UnauthorizedException();
 		}
 	}
@@ -712,7 +806,7 @@ export class AuthService extends SocialAuthService {
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.
 	 */
-	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput) {
+	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput): Promise<IAuthResponse | null> {
 		try {
 			const { email, token } = input;
 
@@ -722,18 +816,17 @@ export class AuthService extends SocialAuthService {
 			}
 
 			let payload: JwtPayload | string = this.verifyToken(token);
-			console.log({ payload });
-
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
 				const user = await this.userRepository.findOneOrFail({
 					where: {
-						email,
 						id: userId,
+						email,
 						tenantId,
 						code,
 						codeExpireAt: MoreThanOrEqual(new Date()),
-						isActive: true
+						isActive: true,
+						isArchived: false
 					},
 					relations: {
 						employee: true,
@@ -761,11 +854,11 @@ export class AuthService extends SocialAuthService {
 				const refresh_token = await this.getJwtRefreshToken(user);
 				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
-				return new Object({
+				return {
 					user,
 					token: access_token,
 					refresh_token: refresh_token
-				});
+				};
 			}
 			throw new UnauthorizedException();
 		} catch (error) {
