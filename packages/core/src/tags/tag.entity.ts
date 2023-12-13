@@ -75,11 +75,11 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@Column()
 	color: string;
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
-	textColor: string;
+	@Column({ nullable: true})
+	textColor?: string;
 
 	@ApiPropertyOptional({ type: () => String, required: false })
 	@IsOptional()
