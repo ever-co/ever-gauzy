@@ -579,7 +579,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 			screenshots = screenshots.filter((screenshot) => !!screenshot);
 			if (screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
