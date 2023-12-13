@@ -2010,6 +2010,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {
+					this._store.userRolePermissions = res.role.rolePermissions;
 					this.userPermission = res.role.rolePermissions
 						.map((permission) =>
 							permission.enabled ? permission.permission : null
