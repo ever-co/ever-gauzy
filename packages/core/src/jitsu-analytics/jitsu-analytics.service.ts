@@ -18,14 +18,10 @@ export class JitsuAnalyticsService {
 				// Initialize the Jitsu Analytics instance
 				this.jitsu = createJitsu(this.config);
 			} else {
-				this.logger.error(
-					`Jitsu Analytics initialization failed: Missing host or writeKey.`
-				);
+				this.logger.warn(`Jitsu Analytics initialization failed: Missing host or writeKey.`);
 			}
 		} catch (error) {
-			this.logger.error(
-				`Jitsu Analytics initialization failed: ${error.message}`
-			);
+			this.logger.error(`Jitsu Analytics initialization failed: ${error.message}`);
 		}
 	}
 
@@ -35,10 +31,7 @@ export class JitsuAnalyticsService {
 	 * @param properties Additional event properties (optional).
 	 * @returns A promise that resolves when the event is tracked.
 	 */
-	async trackEvent(
-		event: string,
-		properties?: Record<string, any> | null
-	): Promise<any> {
+	async trackEvent(event: string, properties?: Record<string, any> | null): Promise<any> {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsu && this.config.host && this.config.writeKey) {
 			return await this.jitsu.track(event, properties);
@@ -53,10 +46,7 @@ export class JitsuAnalyticsService {
 	 * @param traits User traits or properties to associate with the user.
 	 * @returns A Promise that resolves when the user is identified.
 	 */
-	async identify(
-		id: string | object,
-		traits?: Record<string, any> | null
-	): Promise<any> {
+	async identify(id: string | object, traits?: Record<string, any> | null): Promise<any> {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsu && this.config.host && this.config.writeKey) {
 			return await this.jitsu.identify(id, traits);
@@ -69,10 +59,7 @@ export class JitsuAnalyticsService {
 	 * @param traits Additional data or traits associated with the group.
 	 * @returns A Promise that resolves when the users are grouped.
 	 */
-	async group(
-		id: string | object,
-		traits?: Record<string, any> | null
-	): Promise<any> {
+	async group(id: string | object, traits?: Record<string, any> | null): Promise<any> {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsu && this.config.host && this.config.writeKey) {
 			return await this.jitsu.group(id, traits);
