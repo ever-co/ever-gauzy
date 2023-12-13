@@ -25,7 +25,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 	public async execute(command: IntegrationMapSyncLabelCommand): Promise<ITag> {
 		const { request } = command;
 		const { sourceId, organizationId, integrationId, entity } = request;
-		const { name, color, description, isSystem } = entity;
+		const { name, color, description, textColor, isSystem } = entity;
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		try {
@@ -52,6 +52,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 						id: integrationMap.gauzyId,
 						name,
 						color,
+						textColor,
 						description,
 						isSystem,
 						organizationId,
@@ -64,6 +65,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 				new TagCreateCommand({
 					name,
 					color,
+					textColor,
 					description,
 					isSystem,
 					organizationId,
