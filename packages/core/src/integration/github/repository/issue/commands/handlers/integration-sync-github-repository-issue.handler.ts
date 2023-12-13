@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganizationGithubRepository, IOrganizationGithubRepositoryFindInput, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
+import { Repository } from 'typeorm';
 import { RequestContext } from 'core/context';
 import { IntegrationSyncGithubRepositoryIssueCommand } from '../integration-sync-github-repository-issue.command';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { OrganizationGithubRepositoryIssue } from './../../github-repository-issue.entity';
 import { OrganizationGithubRepository } from './../../../github-repository.entity';
 
@@ -27,7 +27,7 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 	public async execute(command: IntegrationSyncGithubRepositoryIssueCommand): Promise<IOrganizationGithubRepositoryIssue> {
 		try {
 			// Extract input parameters from the command
-			const { input, repository, issue } = command;
+			const { input, repositoryId, issue } = command;
 
 			// Extract relevant data from the input
 			const { organizationId, integrationId } = input;
@@ -38,15 +38,15 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 				organizationId,
 				tenantId,
 				integrationId,
-				repositoryId: repository.id
+				repositoryId
 			});
-			// Extract issue details
-			const { sourceId, number } = issue;
 
+			// Extract issue details
+			const { id, number } = issue;
 			/** */
 			try {
 				return await this.organizationGithubRepositoryIssueRepository.findOneByOrFail({
-					issueId: sourceId,
+					issueId: id,
 					issueNumber: number,
 					organizationId,
 					tenantId,
@@ -55,7 +55,7 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 			} catch (error) {
 				// Create a new integration repository issue if it doesn't exist
 				const createEntity = this.organizationGithubRepositoryIssueRepository.create({
-					issueId: sourceId,
+					issueId: id,
 					issueNumber: number,
 					organizationId,
 					tenantId,

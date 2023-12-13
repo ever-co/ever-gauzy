@@ -88,16 +88,16 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 
 		const { organizationId, startDate, endDate } = request;
 		const { start, end } = (startDate && endDate) ?
-								getDateRangeFormat(
-									moment.utc(startDate),
-									moment.utc(endDate)
-								) :
-								// use current start of the month if startDate not found
-								// use current end of the month if endDate not found
-								getDateRangeFormat(
-									moment().startOf('month').utc(),
-									moment().endOf('month').utc()
-								);
+			getDateRangeFormat(
+				moment.utc(startDate),
+				moment.utc(endDate)
+			) :
+			// use current start of the month if startDate not found
+			// use current end of the month if endDate not found
+			getDateRangeFormat(
+				moment().startOf('month').utc(),
+				moment().endOf('month').utc()
+			);
 
 		const employeeIds: string[] = [];
 		if (
@@ -114,7 +114,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(						{
+				qb.where({
 					startedAt: Between(start, end),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
 				});
@@ -123,7 +123,6 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 
 		qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 		qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-		qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 		return qb;
 	}
 }

@@ -25,17 +25,17 @@ export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPri
 	 * @param entity
 	 * @param event
 	 */
-	afterLoad(
+	async afterLoad(
 		entity: TaskPriority | Partial<TaskPriority>,
 		event?: LoadEvent<TaskPriority>
-	): void | Promise<any> {
+	): Promise<any | void> {
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
+				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('Error in afterLoad:', error);
 		}
 	}
 

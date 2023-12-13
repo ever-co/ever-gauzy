@@ -50,14 +50,14 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		}
 
 		const { start, end } = (startDate && endDate) ?
-								getDateRangeFormat(
-									moment.utc(startDate),
-									moment.utc(endDate)
-								) :
-								getDateRangeFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
-								);
+			getDateRangeFormat(
+				moment.utc(startDate),
+				moment.utc(endDate)
+			) :
+			getDateRangeFormat(
+				moment().startOf('day').utc(),
+				moment().endOf('day').utc()
+			);
 
 		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
 		query.setFindOptions({
@@ -168,7 +168,6 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
 					web.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
-					web.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			);
 			qb.andWhere(

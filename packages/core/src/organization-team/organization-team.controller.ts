@@ -129,23 +129,25 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	/**
 	 * Find team by primary ID
 	 *
-	 * @param id
-	 * @returns
+	 * @param id - The primary ID of the organization team.
+	 * @param query - Query parameters for team statistics.
+	 * @returns The result of the team statistics query.
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get(':id')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
-		@Query() options: OrganizationTeamStatisticDTO
-	): Promise<any> {
+		@Query() query: OrganizationTeamStatisticDTO,
+	): Promise<IOrganizationTeam> {
 		return await this._queryBus.execute(
 			new GetOrganizationTeamStatisticQuery(
 				id,
-				options
+				query
 			)
 		);
 	}
+
 
 	/**
 	 * CREATE organization team

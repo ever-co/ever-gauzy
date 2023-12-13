@@ -7,7 +7,7 @@ import { Activity } from './activity.entity';
 import { OrganizationProject } from './../../core/entities/internal';
 import { Employee } from '../../employee/employee.entity';
 
-const AppsNames: string[] = [
+export const AppsNames: string[] = [
 	'Sublime Text',
 	'Chrome',
 	'Visual Studio Core',
@@ -15,7 +15,9 @@ const AppsNames: string[] = [
 	'Slack',
 	'Skype',
 	'Mail',
-	'Terminal'
+	'Terminal',
+	"Desktop Timer",
+	"PgAdmin"
 ];
 
 export const createRandomActivities = async (

@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { FileStorageProviderEnum, ITenantSetting, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
+import { FileStorageProviderEnum, HttpStatus, ITenantSetting, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
+import { ErrorHandlingService, FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 import { environment } from './../../../../environments/environment';
 
@@ -48,7 +48,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 				wasabi_aws_access_key_id: [],
 				wasabi_aws_secret_access_key: [],
 				wasabi_aws_default_region: ['us-east-1'],
-				wasabi_aws_service_url: ['s3.wasabisys.com'],
+				wasabi_aws_service_url: ['https://s3.wasabisys.com'],
 				wasabi_aws_bucket: ['gauzy']
 			}),
 			// Cloudinary Configuration
@@ -73,12 +73,13 @@ export class FileStorageComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		public readonly translate: TranslateService,
-		private readonly tenantService: TenantService,
-		private readonly fileStorageService: FileStorageService,
-		private readonly toastrService: ToastrService,
-		private readonly store: Store,
 		private readonly fb: FormBuilder,
+		public readonly translate: TranslateService,
+		private readonly _store: Store,
+		private readonly _tenantService: TenantService,
+		private readonly _fileStorageService: FileStorageService,
+		private readonly _toastrService: ToastrService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 	) {
 		super(translate);
 	}
@@ -90,7 +91,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.user$
+		this._store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this.subject$.next(true)),
@@ -103,7 +104,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	 * GET current tenant file storage setting
 	 */
 	async getSetting() {
-		const settings = this.settings = await this.tenantService.getSettings();
+		const settings = this.settings = await this._tenantService.getSettings();
 		if (isNotEmpty(settings)) {
 			const { fileStorageProvider } = settings;
 			this.setFileStorageProvider(fileStorageProvider);
@@ -116,7 +117,6 @@ export class FileStorageComponent extends TranslationBaseComponent
 	 * SAVE current tenant file storage setting
 	 */
 	async submit() {
-		console.log(this.form);
 		if (this.form.invalid) {
 			return;
 		}
@@ -142,23 +142,32 @@ export class FileStorageComponent extends TranslationBaseComponent
 
 		try {
 			if (fileStorageProvider === FileStorageProviderEnum.WASABI) {
-				await this.fileStorageService.validateWasabiCredentials(settings);
-
-				this.toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
-					bucket: `${settings.wasabi_aws_bucket}`,
-					region: `${settings.wasabi_aws_default_region}`
-				});
+				try {
+					const response = await this._fileStorageService.validateWasabiCredentials(settings);
+					if (response.status === HttpStatus.BAD_REQUEST) {
+						// Handle and log errors
+						this._errorHandlingService.handleError(response);
+						return;
+					} else {
+						this._toastrService.success('TOASTR.MESSAGE.BUCKET_CREATED', {
+							bucket: `${settings.wasabi_aws_bucket}`,
+							region: `${settings.wasabi_aws_default_region}`
+						});
+					}
+				} catch (error) {
+					console.error('Error while validating wasabi credentials', error);
+				}
 			}
 		} catch (error) {
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 			return;
 		}
 
 		try {
-			await this.tenantService.saveSettings(settings);
-			this.toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
+			await this._tenantService.saveSettings(settings);
+			this._toastrService.success('TOASTR.MESSAGE.SETTINGS_SAVED');
 		} catch (error) {
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		} finally {
 			this.subject$.next(true);
 		}

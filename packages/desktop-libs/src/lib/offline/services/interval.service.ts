@@ -132,4 +132,22 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 			throw new AppError('INTERVALSRVCE', error);
 		}
 	}
+
+	public async removeByRemoteId(remoteId: string): Promise<void> {
+		try {
+			await this._intervalDAO.deleteByRemoteId(remoteId);
+		} catch (error) {
+			throw new AppError('INTERVALSRVCE', error);
+		}
+	}
+
+	public async findLastInterval(): Promise<IntervalTO> {
+		try {
+			const { employeeId } = await this._userService.retrieve();
+			return await this._intervalDAO.lastSyncedInterval(employeeId);
+		} catch (error) {
+			console.error(error);
+			return null;
+		}
+	}
 }

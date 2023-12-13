@@ -13,21 +13,24 @@ export class ImageAssetSubscriber implements EntitySubscriberInterface<ImageAsse
     }
 
     /**
-     * Called after entity is loaded from the database.
-     *
-     * @param entity
-     * @param event
-     */
-    afterLoad(entity: ImageAsset | Partial<ImageAsset>, event?: LoadEvent<ImageAsset>): void | Promise<any> {
+    * Called after entity is loaded from the database.
+    *
+    * @param entity
+    * @param event
+    */
+    async afterLoad(
+        entity: ImageAsset | Partial<ImageAsset>,
+        event?: LoadEvent<ImageAsset>
+    ): Promise<any | void> {
         try {
             if (entity instanceof ImageAsset) {
-                const { storageProvider } = entity;
-                const store = new FileStorage().setProvider(storageProvider);
-                entity.fullUrl = store.getProviderInstance().url(entity.url);
-                entity.thumbUrl = store.getProviderInstance().url(entity.thumb);
+                const { storageProvider, url, thumb } = entity;
+                const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
+                entity.fullUrl = await store.url(url);
+                entity.thumbUrl = await store.url(thumb);
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterLoad:', error);
         }
     }
 }

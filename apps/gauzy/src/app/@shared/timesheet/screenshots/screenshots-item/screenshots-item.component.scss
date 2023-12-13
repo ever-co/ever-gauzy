@@ -20,6 +20,9 @@
     &:hover {
       box-shadow: 0px 36px 18px -24px rgba(0, 0, 0, 0.15);
     }
+	&.danger-bordered {
+		border: 2px solid nb-theme(color-danger-500) !important;
+	}
   }
   .curser-pointer {
     cursor: pointer;

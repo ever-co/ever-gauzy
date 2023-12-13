@@ -91,6 +91,8 @@ export class GithubService {
 						tenantId,
 						organizationId,
 						entitySettings: entitySettings,
+						isActive: true,
+						isArchived: false,
 						settings: [
 							{
 								settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
@@ -171,6 +173,8 @@ export class GithubService {
 									tenantId,
 									organizationId,
 									entitySettings: [],
+									isActive: true,
+									isArchived: false,
 									settings: [
 										{
 											settingsName: GithubPropertyMapEnum.ACCESS_TOKEN,

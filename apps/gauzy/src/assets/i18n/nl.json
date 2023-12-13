@@ -6,7 +6,10 @@
 		"ADD": "Toevoegen",
 		"CREATE": "Creëer",
 		"REGISTER": "Registreren",
+		"CHANGE_PASSWORD": "Wachtwoord wijzigen",
 		"LOGIN": "Inloggen",
+		"SIGNIN": "Aanmelden",
+		"SEND_CODE": "Inloggen met e-mail",
 		"ADD_NOTE": "Voeg een opmerking toe",
 		"EDIT": "Bewerken",
 		"MANAGE": "Beheren",
@@ -1919,6 +1922,14 @@
 				"ACTIVITY_PROOF_DURATION_INFO": "Duur van de activiteitsbewijs countdown dialoog, het vertegenwoordigt een aantal minuten dat wordt gegeven om de activiteit te bewijzen.",
 				"ENABLE_DETECTION_INACTIVITY": "Mogelijkheid inschakelen om inactiviteit van werknemer te detecteren",
 				"ENABLE_DETECTION_INACTIVITY_INFO": "Ingeschakeld - het systeem detecteert inactiviteit en geeft een waarschuwing weer. Uitgeschakeld - er wordt geen waarschuwing weergegeven wanneer een werknemer inactief is.",
+				"SCREENSHOT_FREQUENCY": "Frequentie van schermafbeeldingen",
+				"SCREENSHOT_FREQUENCY_INFO": "Specificeer de updatefrequentie of tijdsinterval synchronisatie.",
+				"RANDOM_SCREENSHOT": "Willekeurige schermafbeelding",
+				"RANDOM_SCREENSHOT_INFO": "Inschakelen - Schermafbeeldingen nemen op willekeurige intervallen. Uitschakelen - Schermafbeeldingen nemen op regelmatige intervallen.",
+				"TRACK_ON_SLEEP": "Volgen tijdens slaap",
+				"TRACK_ON_SLEEP_INFO": "Inschakelen - Volgen wanneer het apparaat in slaapstand gaat. Uitschakelen - Timer stoppen met het volgen van tijd wanneer het apparaat in slaapstand gaat.",
+				"ENFORCED": "Gedwongen",
+				"ENFORCED_INFO": "Ingeschakeld - Zorgt ervoor dat de instellingen voor het volgen tijdens de slaap, willekeurige schermafbeeldingen en de frequentie van schermafbeeldingen, gespecificeerd door de beheerder, verplicht zijn en niet kunnen worden overschreven of genegeerd door gebruikers.",
 				"DELETE_IDLE_TIME": "Sta verwijdering van inactieve tijd toe",
 				"DELETE_IDLE_TIME_INFO": "Inschakelen - het systeem zal inactieve tijd verwijderen. Uitschakelen - het systeem zal inactieve tijd niet verwijderen.",
 				"ALLOW_SCREEN_CAPTURE": "Schermopname toestaan",
@@ -1948,7 +1959,13 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Sluitingstermijn probleem (in dagen)",
 				"AUTO_ARCHIVE_ISSUE": "Automatische archiveringsprobleem",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Periode voor het automatisch archiveren (in dagen)",
-				"AUTO_STATUS": "Autostatus"
+				"AUTO_STATUS": "Autostatus",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Ingeschakeld - het systeem detecteert inactiviteit en geeft een waarschuwing weer. Uitgeschakeld - er wordt geen waarschuwing weergegeven wanneer een werknemer inactief is.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2704,6 +2721,45 @@
 		"CHAT": "Ondersteuningschat",
 		"FAQ": "Veelgestelde vragen",
 		"HELP": "Hulp"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Maak factuur",
+		"RECEIVED_INVOICES": "Ontvangen facturen",
+		"CREATE_INCOME": "Maak inkomsten",
+		"CREATE_EXPENSE": "Maak kosten",
+		"CREATE_ESTIMATE": "Maak schatting",
+		"RECEIVED_ESTIMATES": "Ontvangen schattingen",
+		"CREATE_PAYMENT": "Maak betaling",
+		"ADD_EMPLOYEE": "Voeg medewerker toe",
+		"ADD_INVENTORY": "Voeg voorraad toe",
+		"ADD_EQUIPMENT": "Voeg apparatuur toe",
+		"ADD_VENDOR": "Voeg leverancier toe",
+		"ADD_DEPARTMENT": "Voeg afdeling toe",
+		"CREATE_TEAM": "Maak team",
+		"CREATE_TASK": "Maak taak",
+		"CREATE_PROJECT": "Maak project",
+		"VIEW_TASKS": "Bekijk taken",
+		"VIEW_TEAM_TASKS": "Taken van het team bekijken",
+		"CREATE_CANDIDATE": "Maak kandidaat",
+		"CREATE_PROPOSAL": "Maak voorstel",
+		"CREATE_CONTRACT": "Maak contract",
+		"CREATE_LEAD": "Maak lead",
+		"CREATE_CUSTOMER": "Maak klant",
+		"CREATE_CLIENT": "Maak klant",
+		"VIEW_CLIENTS": "Bekijk klanten",
+		"START_TIMER": "Start timer",
+		"STOP_TIMER": "Stop timer",
+		"TIME_LOG": "Tijdregistratie",
+		"VIEW_APPOINTMENTS": "Afspraken bekijken",
+		"VIEW_TIME_ACTIVITY": "Tijdactiviteit bekijken"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Boekhouding",
+		"ORGANIZATION": "Organisatie",
+		"PROJECT_MANAGEMENT": "Projectbeheer",
+		"JOBS": "Banen",
+		"CONTACTS": "Contacten",
+		"TIME_TRACKING": "Tijdregistratie"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "Voornaam",
@@ -4164,6 +4220,7 @@
 		},
 		"TEMPLATE_NAMES": {
 			"password": "Wachtwoord resetten",
+			"multi-tenant-password": "Wachtwoord opnieuw instellen voor meerdere tenants",
 			"password-less-authentication": "Wachtwoordloze authenticatie",
 			"welcome-user": "Welkom gebruiker",
 			"email-verification": "E-mailbevestiging",
@@ -4235,7 +4292,8 @@
 	"DIALOG": {
 		"CONFIRM": "Bevestigen",
 		"ALERT": "Waarschuwing",
-		"DELETE_CONFIRM": "Waarschuwing"
+		"DELETE_CONFIRM": "Waarschuwing",
+		"QUICK_ACTIONS": "Snelle acties"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Bestandsaanbieder",
@@ -4341,30 +4399,87 @@
 			"receipt": "Ontvangstbewijs"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Registreren",
+		"HAVE_AN_ACCOUNT": "Heb je al een account?",
+		"LABELS": {
+			"FULL_NAME": "Volledige naam:",
+			"EMAIL": "E-mailadres:",
+			"PASSWORD": "Wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Volledige naam",
+			"EMAIL": "E-mailadres",
+			"PASSWORD": "Wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Volledige naam is verplicht!",
+			"FULL_NAME_SHOULD_CONTAIN": "Volledige naam moet tussen {{ minLength }} en {{ maxLength }} tekens bevatten",
+			"EMAIL_REQUIRED": "E-mailadres is verplicht!",
+			"EMAIL_SHOULD_BE_REAL": "E-mailadres moet echt zijn!",
+			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties!",
+			"PASSWORD_REQUIRED": "Wachtwoord is verplicht!",
+			"PASSWORD_SHOULD_CONTAIN": "Wachtwoord moet tussen {{ minLength }} en {{ maxLength }} tekens bevatten",
+			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van wachtwoord is verplicht!",
+			"PASSWORDS_NOT_MATCH": "Wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Akkoord met",
+				"TERMS_AND_CONDITIONS": "Algemene voorwaarden",
+				"AND": " en ",
+				"PRIVACY_POLICY": "Privacybeleid"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Inloggen",
 		"SUB_TITLE": "Hallo! Log in met je e-mail.",
 		"REMEMBER_ME_TITLE": "Onthoud mij",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Heeft u geen account?",
 		"FORGOT_PASSWORD_TITLE": "Wachtwoord vergeten?",
+		"OR_SIGN_IN_WITH": "Of meld je aan met",
+		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Inloggen met een magische code",
+			"DESCRIPTION_TITLE": "We sturen u een magische code voor een wachtwoordloze aanmelding. Of u kunt ",
+			"OR_SIGN_IN_WITH_PASSWORD": "inloggen met een wachtwoord in plaats daarvan.",
+			"RESEND_CODE_TITLE": "Stuur code opnieuw",
+			"SUCCESS_SENT_CODE_TITLE": "Een code van 6 tekens is verzonden naar: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "De code verloopt binnenkort, dus voer hem snel in.",
+			"REQUEST_NEW_CODE_TITLE": "Vraag een nieuwe code aan in {{ countdown }} seconden."
+		},
 		"LABELS": {
 			"EMAIL": "E-mailadres:",
-			"PASSWORD": "Wachtwoord:"
+			"PASSWORD": "Wachtwoord:",
+			"CODE": "Code:"
 		},
 		"PLACEHOLDERS": {
 			"EMAIL": "E-mailadres",
-			"PASSWORD": "Wachtwoord"
+			"PASSWORD": "Wachtwoord",
+			"CODE": "Voer de code in"
 		},
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet echt zijn!",
 			"PASSWORD_REQUIRED": "Wachtwoord is verplicht!",
 			"PASSWORD_SHOULD_CONTAIN": "Het wachtwoord moet bestaan uit {{ minLength }} tot {{ maxLength }} tekens!",
-			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties."
+			"PASSWORD_NO_SPACE_EDGES": "Wachtwoorden mogen niet beginnen of eindigen met spaties.",
+			"CODE_REQUIRED": "Een code is vereist om in te loggen.",
+			"CODE_REQUIRED_LENGTH": "De code moet {{ requiredLength }} tekens bevatten."
 		},
 		"DEMO": {
 			"TITLE": "Automatisch inloggen op demorekeningen",
-			"SUB_TITLE": "Selecteer hieronder het type account."
+			"SUB_TITLE": "Selecteer hieronder het type account.",
+			"SUPER_ADMIN_TITLE": "Superbeheerder",
+			"ADMIN_TITLE": "Beheerder",
+			"EMPLOYEE_TITLE": "Werknemer",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Inloggegevens",
+			"LABELS": {
+				"EMAIL": "E-mail: ",
+				"PASSWORD": "Wachtwoord: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4385,6 +4500,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "E-mail is verplicht!",
 			"EMAIL_REAL_REQUIRED": "De e-mail moet de juiste zijn!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Wachtwoord wijzigen",
+		"SUB_TITLE": "Stel een nieuw wachtwoord in, alstublieft",
+		"LABELS": {
+			"NEW_PASSWORD": "Nieuw wachtwoord:",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord:",
+			"BACK_TO": "Terug naar"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "Nieuw wachtwoord",
+			"CONFIRM_PASSWORD": "Bevestig wachtwoord"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "Nieuw wachtwoord is verplicht!",
+			"CONFIRM_PASSWORD_REQUIRED": "Bevestiging van het wachtwoord is verplicht!",
+			"PASSWORDS_NOT_MATCH": "Het wachtwoord komt niet overeen met de bevestiging van het wachtwoord!",
+			"PASSWORD_SHOULD_CONTAIN": "Het nieuwe wachtwoord moet tussen de {{ minLength }} en {{ maxLength }} tekens bevatten."
 		}
 	},
 	"PAGINATION": {
@@ -4412,7 +4546,24 @@
 			"SING_ANOTHER_WORKSPACE": "Meld je aan bij een andere werkruimte",
 			"CREATE_NEW_WORKSPACE": "Maak een nieuwe werkruimte",
 			"FIND_WORKSPACE": "Vind een werkruimte"
-		}
+		},
+		"LABELS": {
+			"EMAIL": "Voer je e-mailadres in:",
+			"PASSWORD": "Voer je wachtwoord in:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "naam@workspace-email.com",
+			"PASSWORD": "Wachtwoord"
+		},
+		"SIGN_IN_TITLE": "Aanmelden bij Workspace",
+		"BACK_TO": "Terug naar",
+		"SUCCESS_SIGNIN_TITLE": "Gefeliciteerd! Je bent succesvol ingelogd op je werkruimte.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Wees geduldig terwijl we de werkruimte voorbereiden...",
+		"FAIL_SIGNIN_TITLE": "Fout! De magische code of de link die je hebt opgegeven is verlopen of ongeldig.",
+		"FAIL_SIGNIN_SUB_TITLE": "Start het proces opnieuw a.u.b.",
+		"THANKING_TEXT": "Bedankt dat je voor ons hebt gekozen.",
+		"UNKNOWN_WORKSPACE": "Weet je niet waar je werkruimte is?",
+		"FIND_WORKSPACE": "Vind je werkruimtes"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Afbeelding toevoegen of verwijderen",

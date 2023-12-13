@@ -431,8 +431,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 					contactType: this.contactType,
 					...(this.selectedEmployeeId
 						? {
-								members: [this.selectedEmployeeId]
-						  }
+							members: [this.selectedEmployeeId]
+						}
 						: {}),
 					...(this.filters.where ? this.filters.where : {})
 				},
@@ -612,5 +612,5 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		return find ? find.country : row.country;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

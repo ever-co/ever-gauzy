@@ -229,8 +229,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	 * OrganizationProject
 	 */
 	@ApiProperty({ type: () => OrganizationProject, isArray: true })
-	@ManyToMany(() => OrganizationProject, (organizationProject) => organizationProject.tags, {
-		onDelete: 'CASCADE'
+	@ManyToMany(() => OrganizationProject, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
 	})
 	organizationProjects?: IOrganizationProject[];
 

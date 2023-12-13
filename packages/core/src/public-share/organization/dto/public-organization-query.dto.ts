@@ -5,10 +5,11 @@ import { IsEnum, IsOptional } from "class-validator";
  * Get public organization request DTO validation
  */
 export enum OrganizationRelationEnum {
-	'skills' = 'skills',
-	'awards' = 'awards',
-	'languages' = 'languages',
-	'languages.language' = 'languages.language'
+    'image' = 'image',
+    'skills' = 'skills',
+    'awards' = 'awards',
+    'languages' = 'languages',
+    'languages.language' = 'languages.language'
 }
 
 export class PublicOrganizationQueryDTO {

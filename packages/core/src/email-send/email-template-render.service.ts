@@ -63,7 +63,6 @@ export class EmailTemplateRenderService {
         }
 
         try {
-            console.log('Email template locals: %s', locals);
             view = view.replace('\\', '/');
 
             let emailTemplate: IEmailTemplate;

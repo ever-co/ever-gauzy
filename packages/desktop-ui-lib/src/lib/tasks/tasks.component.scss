@@ -1,17 +1,52 @@
 @import 'gauzy/_gauzy-dialogs';
 
-.body {
-  width: 550px;
-  width: 550px;
-  background-color: var(--gauzy-card-4);
-  border-radius: var(--border-radius);
-  padding: 0.75rem 1rem;
-  margin-top: 8px;
+:host {
+  nb-card {
+    width: 1030px;
+    margin: auto;
+
+    nb-card-body {
+      background-color: var(--gauzy-card-2);
+      @include nb-rtl(padding, 0.5rem 1rem 0.5rem 0.5rem);
+      @include nb-ltr(padding, 0.5rem 0.5rem 0.5rem 1rem);
+
+      .body {
+        min-height: 59vh;
+        overflow: auto;
+        overflow-x: hidden;
+        @include nb-rtl(padding, 0 0 0 0.5rem);
+        @include nb-ltr(padding, 0 0.5rem 0 0);
+        flex-direction: row;
+        display: flex;
+        gap: 0.3125rem;
+
+        .selector-container {
+          width: 60%;
+          min-height: 59vh;
+          overflow: overlay;
+          overflow-x: hidden;
+          @include nb-rtl(padding, 0 0 0 0.6875rem);
+          @include nb-ltr(padding, 0 0.6875rem 0 0);
+
+          .col-sm-6,
+          .col-sm-12 {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+          }
+
+          .row {
+            margin-left: -0.5rem !important;
+            margin-right: -0.5rem !important;
+          }
+        }
+      }
+    }
+  }
 }
 
 .description {
   margin-top: 10px;
-  height: 150px;
+  height: 100%;
 }
 
 .name-input {
@@ -26,7 +61,8 @@ h5 {
   background: var(--color-primary-transparent-default);
   padding: 0px 4px;
   border-radius: calc(var(--border-radius) / 2);
-  color: var(--text-primary-color)
+  color: var(--text-primary-color);
+  width: fit-content;
 }
 
 .estimate-inputs {
@@ -49,7 +85,6 @@ h5 {
 // Project selector
 
 :host {
-
   .multiple-select {
     width: 100%;
   }
@@ -118,7 +153,6 @@ input {
   }
 
   .ng-select .ng-select-focused .ng-select-container {
-
     &:hover,
     &:focus,
     &:active,
@@ -140,6 +174,10 @@ input {
     flex-wrap: initial;
     gap: 4px;
   }
+
+  .cke_contents {
+    height: 309px !important;
+  }
 }
 
 .text {
@@ -149,19 +187,15 @@ input {
 }
 
 :host {
-
   nb-card-header,
   nb-card-footer {
-    padding: 1rem 0;
-  }
-
-  nb-card {
-    background-color: unset;
+    padding: 1rem;
   }
 
   nb-card-footer {
     display: flex;
     gap: 1rem;
+    justify-content: flex-end;
   }
 
   ::ng-deep {

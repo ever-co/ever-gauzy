@@ -1,28 +1,47 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { TenantSettingService } from '../../tenant/tenant-setting/tenant-setting.service';
 import * as jwt from 'jsonwebtoken';
+import { Request, Response, NextFunction } from 'express';
+import { TenantSettingService } from '../../tenant/tenant-setting/tenant-setting.service';
 
 @Injectable()
 export class FileStorageMiddleware implements NestMiddleware {
-	constructor(private readonly tenantSettingService: TenantSettingService) {}
 
-	async use(req, res, next) {
-		const authHeader = req.headers.authorization;
+	constructor(
+		private readonly tenantSettingService: TenantSettingService
+	) { }
+
+	/**
+	 *
+	 * @param _request
+	 * @param _response
+	 * @param next
+	 */
+	async use(
+		_request: Request,
+		_response: Response,
+		next: NextFunction
+	) {
+		const authHeader = _request.headers.authorization;
 
 		if (authHeader) {
 			const token = authHeader.split(' ')[1];
-			const data: any = jwt.decode(token);
+
+			// Decode JWT token
+			const decodedToken: any = jwt.decode(token);
 
 			let tenantSettings = {};
-			if (data && data.tenantId) {
+			if (decodedToken && decodedToken.tenantId) {
+
+				// Fetch tenant settings based on the decoded tenantId
 				tenantSettings = await this.tenantSettingService.get({
 					where: {
-						tenantId: data.tenantId
+						tenantId: decodedToken.tenantId
 					}
 				});
 			}
 
-			req.tenantSettings = tenantSettings;
+			// Attach tenantSettings to the request object
+			_request['tenantSettings'] = tenantSettings;
 		}
 
 		next();

@@ -55,6 +55,10 @@ export class IntegrationAIModule implements NestModule {
 			{
 				path: '/job-preset/employee/:employeeId/criterion',
 				method: RequestMethod.POST
+			},
+			{
+				path: '/timesheet/screenshot',
+				method: RequestMethod.POST
 			}
 		); // Apply to specific routes and methods
 	}

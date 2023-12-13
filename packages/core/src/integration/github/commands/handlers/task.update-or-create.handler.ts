@@ -1,5 +1,4 @@
 import { ICommandHandler, CommandHandler, CommandBus } from '@nestjs/cqrs';
-import { Logger } from '@nestjs/common';
 import {
 	IGithubIssueCreateOrUpdatePayload,
 	IGithubIssue,
@@ -14,6 +13,7 @@ import { RequestContext } from 'core/context';
 import { arrayToObject } from 'core/utils';
 import { OrganizationProjectService } from 'organization-project/organization-project.service';
 import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
+import { IntegrationSyncGithubRepositoryIssueCommand } from 'integration/github/repository/issue/commands';
 import { IntegrationMapSyncEntityCommand } from 'integration-map/commands';
 import { IntegrationMapService } from 'integration-map/integration-map.service';
 import { GithubRepositoryIssueService } from './../../repository/issue/github-repository-issue.service';
@@ -22,7 +22,6 @@ import { GithubTaskUpdateOrCreateCommand } from '../task.update-or-create.comman
 
 @CommandHandler(GithubTaskUpdateOrCreateCommand)
 export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<GithubTaskUpdateOrCreateCommand> {
-	private readonly logger = new Logger('GithubTaskUpdateOrCreateCommandHandler');
 
 	constructor(
 		private readonly _commandBus: CommandBus,
@@ -74,81 +73,108 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 
 				// Step 3: Ensure that installation ID is available
 				if (!!installationId) {
-					// Step 4: Get the project and repository information
-					const project = await this._organizationProjectService.findOneByIdString(projectId, {
-						where: {
-							organizationId,
-							tenantId,
-						},
-						relations: {
-							repository: true,
-						},
-					});
-
-					// Step 5: Check if the project and its repository are available
-					if (!!project && !!project.repository) {
-						const repository = project.repository;
-
-						// Step 6: Prepare the payload for opening the GitHub issue
-						const payload: IGithubIssueCreateOrUpdatePayload = {
-							repo: repository.name,
-							owner: repository.owner,
-							title: task.title,
-							body: task.description,
-							labels: this._mapIssueLabelPayload(task.tags || []),
-						};
-
-						const syncTag = settings['sync_tag'];
-						// Check if the issue should be synchronized for this project
-						// Step 7: Continue execution based on auto-sync label setting
-						if (!!this.shouldSyncIssue(project, payload.labels, syncTag)) {
-							try {
-								// Check if an integration map already exists for the issue
-								const integrationMap = await this._integrationMapService.findOneByWhereOptions({
-									entity: IntegrationEntity.ISSUE,
-									gauzyId: task.id,
-									integrationId,
+					try {
+						// Step 4: Get the project and repository information
+						const project = await this._organizationProjectService.findOneByIdString(projectId, {
+							where: {
+								organizationId,
+								tenantId,
+								isActive: true,
+								isArchived: false,
+								repository: {
 									organizationId,
 									tenantId,
+									hasSyncEnabled: true,
 									isActive: true,
 									isArchived: false
-								});
-								try {
-									/** */
-									const syncIssue = await this._githubRepositoryIssueService.findOneByWhereOptions({
-										organizationId,
-										tenantId,
-										repositoryId: repository.id,
-										issueId: parseInt(integrationMap.sourceId)
-									});
-									payload.issue_number = syncIssue.issueNumber;
-
-									await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-								} catch (error) {
-									console.log('Error while getting synced issue', error?.message);
 								}
-							} catch (error) {
-								// Step 9: Open the GitHub issue
-								const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
-								// Step 10: Create a mapping between the task and the GitHub issue
-								return await this._commandBus.execute(
-									new IntegrationMapSyncEntityCommand({
+							},
+							relations: {
+								repository: true
+							}
+						});
+
+						// Step 5: Check if the project and its repository are available
+						if (!!project && !!project.repository) {
+							const repository = project.repository;
+
+							// Step 6: Prepare the payload for opening the GitHub issue
+							const payload: IGithubIssueCreateOrUpdatePayload = {
+								repo: repository.name,
+								owner: repository.owner,
+								title: task.title,
+								body: task.description,
+								labels: this._mapIssueLabelPayload(task.tags || []),
+							};
+
+							const syncTag = settings['sync_tag'];
+							// Check if the issue should be synchronized for this project
+							// Step 7: Continue execution based on auto-sync label setting
+							if (!!this.shouldSyncIssue(project, payload.labels, syncTag)) {
+								try {
+									// Check if an integration map already exists for the issue
+									const integrationMap = await this._integrationMapService.findOneByWhereOptions({
+										entity: IntegrationEntity.ISSUE,
 										gauzyId: task.id,
 										integrationId,
-										sourceId: (issue.id).toString(),
-										entity: IntegrationEntity.ISSUE,
 										organizationId,
-										tenantId
-									})
-								);
+										tenantId,
+										isActive: true,
+										isArchived: false
+									});
+									try {
+										/** */
+										const syncIssue = await this._githubRepositoryIssueService.findOneByWhereOptions({
+											organizationId,
+											tenantId,
+											repositoryId: repository.id,
+											issueId: parseInt(integrationMap.sourceId)
+										});
+										payload.issue_number = syncIssue.issueNumber;
+
+										await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+									} catch (error) {
+										console.log('Error while getting synced issue', error?.message);
+									}
+								} catch (error) {
+									// Step 9: Open the GitHub issue
+									const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+
+									// Step 10: Synchronized GitHub repository issue.
+									const { repositoryId } = repository;
+									await this._commandBus.execute(
+										new IntegrationSyncGithubRepositoryIssueCommand(
+											{
+												tenantId,
+												organizationId,
+												integrationId
+											},
+											repositoryId,
+											issue
+										)
+									);
+
+									// Step 11: Create a mapping between the task and the GitHub issue
+									return await this._commandBus.execute(
+										new IntegrationMapSyncEntityCommand({
+											gauzyId: task.id,
+											integrationId,
+											sourceId: (issue.id).toString(),
+											entity: IntegrationEntity.ISSUE,
+											organizationId,
+											tenantId
+										})
+									);
+								}
 							}
 						}
+					} catch (error) {
+						console.log('Project Not Found: %s', error.message);
 					}
 				}
 			}
 		} catch (error) {
 			// Handle errors gracefully, for example, log them
-			this.logger.error('Error in sync github issue and labels', error);
 		}
 	}
 

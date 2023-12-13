@@ -95,8 +95,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 						this.store.hasPermission(
 							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 						)
-						? ['employee', 'employee.user']
-						: []
+							? ['employee', 'employee.user']
+							: []
 					)
 				]
 			});
@@ -317,40 +317,48 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	 */
 	userRowSelect(timesheet: ITimesheet) {
 		// if row is already selected, deselect it.
-		if (timesheet.isSelected) {
-			timesheet.isSelected = false;
+		if (timesheet['isSelected']) {
+			timesheet['isSelected'] = false;
 			this.selectTimesheet({
-				isSelected: timesheet.isSelected,
+				isSelected: timesheet['isSelected'],
 				data: null
 			});
 		} else {
 			// find the row which was previously selected.
 			const isRowSelected = this.timesheets.find(
-				(item: ITimesheet) => item.isSelected === true
+				(item: ITimesheet) => item['isSelected'] === true
 			);
 			if (!!isRowSelected) {
 				// if row found successfully, mark that row as deselected
-				isRowSelected.isSelected = false;
+				isRowSelected['isSelected'] = false;
 			}
 			// mark new row as selected
-			timesheet.isSelected = true;
+			timesheet['isSelected'] = true;
 			this.selectTimesheet({
-				isSelected: timesheet.isSelected,
+				isSelected: timesheet['isSelected'],
 				data: timesheet
 			});
 		}
 	}
 
-	isRowSelected() {
-		return !!this.timesheets.find((t: ITimesheet) => t.isSelected);
-	}
-
-	isCheckboxSelected() {
-		return this.timesheets.find((t: ITimesheet) => t.checked);
+	/**
+	 * Checks if at least one timesheet in the list is selected.
+	 * @returns True if a timesheet is selected, otherwise false.
+	 */
+	isRowSelected(): boolean {
+		return !!this.timesheets.find((timesheet: ITimesheet) => timesheet['isSelected'] === true);
 	}
 
 	/**
-	 * Prapare timesheets ids payload
+	 * Checks if at least one timesheet in the list has its checkbox selected.
+	 * @returns True if a timesheet's checkbox is selected, otherwise false.
+	 */
+	isCheckboxSelected(): boolean {
+		return !!this.timesheets.find((timesheet: ITimesheet) => timesheet['checked'] === true);
+	}
+
+	/**
+	 * Prepare timesheets ids payload
 	 *
 	 * @param timesheetIds
 	 * @returns
@@ -359,5 +367,5 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		return (typeof timesheetIds === 'string') ? [timesheetIds] : timesheetIds;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -2,8 +2,7 @@ import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
-export interface IOrganizationTaskSetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam, IRelationalOrganizationProject
-{
+export interface IOrganizationTaskSetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam, IRelationalOrganizationProject {
 
     isTasksPrivacyEnabled: boolean;
     isTasksMultipleAssigneesEnabled: boolean;
@@ -33,16 +32,16 @@ export interface IOrganizationTaskSetting extends IBasePerTenantAndOrganizationE
     isTasksAutoStatusEnabled: boolean;
 }
 
-export enum TaskProofOfCompletionTypeEnum
-{
+export enum TaskProofOfCompletionTypeEnum {
     PUBLIC = 'PUBLIC',
     PRIVATE = 'PRIVATE',
 }
 
+export interface IOrganizationTaskSettingFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam, IRelationalOrganizationProject { }
+
 export interface IOrganizationTaskSettingCreateInput extends IOrganizationTaskSetting { }
 
-export interface IOrganizationTaskSettingUpdateInput extends Partial<IOrganizationTaskSettingCreateInput>
-{
+export interface IOrganizationTaskSettingUpdateInput extends Partial<IOrganizationTaskSettingCreateInput> {
     id?: IOrganizationTaskSetting['id'];
 }
 

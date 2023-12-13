@@ -1,20 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
-import { IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID } from 'class-validator';
+import { Exclude, Expose } from 'class-transformer';
 import { IIntegrationSetting } from '@gauzy/contracts';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+} from './../core/entities/internal';
+import { IsSecret } from './../core/decorators';
 
 @Entity('integration_setting')
 export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {
 
+	@Exclude({ toPlainOnly: true })
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@Column()
 	settingsName: string;
 
+	@Exclude({ toPlainOnly: true })
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@Column()
 	settingsValue: string;
 
@@ -27,7 +33,6 @@ export class IntegrationSetting extends TenantOrganizationBaseEntity implements 
 	/**
 	 * IntegrationTenant
 	 */
-	@ApiProperty({ type: () => IntegrationTenant })
 	@ManyToOne(() => IntegrationTenant, (it) => it.settings, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
@@ -41,4 +46,15 @@ export class IntegrationSetting extends TenantOrganizationBaseEntity implements 
 	@Index()
 	@Column()
 	integrationId?: IntegrationTenant['id'];
+
+	/**
+	 * Additional fields to expose secret fields
+	 */
+	@Expose({ toPlainOnly: true, name: 'settingsName' })
+	@IsSecret()
+	wrapSecretKey?: string;
+
+	@Expose({ toPlainOnly: true, name: 'settingsValue' })
+	@IsSecret()
+	wrapSecretValue?: string;
 }

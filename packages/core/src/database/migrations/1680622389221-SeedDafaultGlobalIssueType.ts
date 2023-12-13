@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from "chalk";
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -19,6 +20,8 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		await this.seedDefaultIssueTypes(queryRunner);
 	}
 

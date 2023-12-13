@@ -4,7 +4,7 @@
 			<mj-column>
 				<mj-image
 					width="100px"
-					src="{{host}}/assets/images/logos/logo_Gauzy.png"
+					src="{{appLogo}}"
 				></mj-image>
 				<mj-divider
 					border-color="#1B005D"
@@ -34,12 +34,12 @@
 				></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="https://app.gauzy.co/." style="color: #598bff"
-						>Gauzy</a
+					<a href="{{appLink}}" style="color: #598bff"
+						>{{appName}}</a
 					>
 					by
-					<a href="https://ever.co/" style="color: #598bff"
-						>Ever Co. LTD.</a
+					<a href="{{companyLink}}" style="color: #598bff"
+						>{{companyName}}</a
 					>
 					All rights reserved.
 				</mj-text>

@@ -28,7 +28,6 @@ import {
 	ipcTimer,
 	TrayIcon,
 	LocalStore,
-	DataModel,
 	AppMenu,
 	DesktopUpdater,
 	removeMainListener,
@@ -73,7 +72,6 @@ const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
 
-const dataModel = new DataModel();
 const store = new Store();
 
 let serve: boolean;
@@ -119,7 +117,7 @@ let serverDesktop = null;
 let dialogErr = false;
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
 });
 
 // Instance detection
@@ -486,7 +484,6 @@ app.on('ready', async () => {
 	try {
 		await provider.createDatabase();
 		await provider.migrate();
-		await dataModel.createNewTable(knex);
 	} catch (error) {
 		throw new AppError('MAINDB', error);
 	}

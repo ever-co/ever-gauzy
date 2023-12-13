@@ -1,4 +1,3 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 
@@ -12,7 +11,8 @@ export class AddSyncTagColumnToTheOrganizationProjectTable1697434249910 implemen
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
-        console.log(chalk.yellow(`AddSyncTagColumnToTheOrganizationProjectTable1697434249910 start running!`));
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {

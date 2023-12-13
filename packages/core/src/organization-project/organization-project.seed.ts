@@ -1,3 +1,6 @@
+
+
+
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { chain } from 'underscore';
@@ -113,13 +116,17 @@ export const createRandomOrganizationProjects = async (
 				project.budgetType = faker.helpers.arrayElement(
 					Object.values(OrganizationProjectBudgetTypeEnum)
 				);
-				project.budget =
-					project.budgetType == OrganizationProjectBudgetTypeEnum.COST
-						? faker.number.int({ min: 500, max: 5000 })
-						: faker.number.int({ min: 40, max: 400 });
 
+				if (project.budgetType === OrganizationProjectBudgetTypeEnum.COST) {
+					// Set budget for COST type
+					project.budget = faker.number.int({ min: 500, max: 5000 });
+				} else {
+					// Set budget for other types
+					project.budget = faker.number.int({ min: 40, max: 400 });
+				}
 				project.startDate = faker.date.past({ years: 5 });
-				project.endDate = faker.date.past({ years: 2 });
+				// Generate endDate as a date in the future
+				faker.date.between({ from: project.startDate, to: new Date() })
 				projects.push(project);
 			}
 			await dataSource.manager.save(projects);
@@ -190,8 +197,7 @@ export async function seedProjectMembersCount(
 		 * GET all tenant projects for specific tenant
 		 */
 		const projects = await dataSource.manager.query(
-			`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = ${
-				isSqlite ? '?' : '$1'
+			`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = ${isSqlite ? '?' : '$1'
 			}`,
 			[tenantId]
 		);
@@ -218,8 +224,7 @@ export async function seedProjectMembersCount(
 			const count = members['count'];
 
 			await dataSource.manager.query(
-				`UPDATE "organization_project" SET "membersCount" = ${
-					isSqlite ? '?' : '$1'
+				`UPDATE "organization_project" SET "membersCount" = ${isSqlite ? '?' : '$1'
 				} WHERE "id" = ${isSqlite ? '?' : '$2'}`,
 				[count, projectId]
 			);

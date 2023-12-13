@@ -36,8 +36,7 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
 })
 export class ExpenseCategoriesComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	loading: boolean = false;
 	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
@@ -306,7 +305,7 @@ export class ExpenseCategoriesComponent
 
 		const res =
 			this.selected.expenseCategory &&
-			expenseCategory === this.selected.expenseCategory
+				expenseCategory === this.selected.expenseCategory
 				? { state: !this.selected.state }
 				: { state: true };
 		this.selected.state = res.state;
@@ -353,5 +352,5 @@ export class ExpenseCategoriesComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

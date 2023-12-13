@@ -39,13 +39,8 @@ export class NoInternetLogoGenerator
 					return;
 				}
 				// load image from assets
-				DesktopEnvironmentManager.environment.NO_INTERNET_LOGO =
-					path.join(
-						'assets',
-						'images',
-						'logos',
-						`no_internet_logo${extName}`
-					);
+				DesktopEnvironmentManager.environment.NO_INTERNET_LOGO = `./assets/images/logos/no_internet_logo${extName}`;
+
 				// remove downloaded file
 				await this.remove(filePath);
 				console.log(`✔ ${extName} copied successfully.`);

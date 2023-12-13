@@ -183,3 +183,32 @@ export function sluggable(string: string, replacement: any = '-'): string {
 		trim: true // trim leading and trailing replacement chars, defaults to `true`
 	}).replace(/[_]/g, replacement);
 }
+
+/**
+ * How To Make A Sleep Function In TypeScript?
+ *
+ * @param ms
+ * @returns
+ */
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Trim a string value and return it if not empty, otherwise return undefined
+ * @param value - The string value to trim
+ * @returns Trimmed string value or undefined if empty
+ */
+export const trimAndGetValue = (value?: string): string | undefined => {
+	return isNotEmpty(value) ? value.trim() : undefined;
+}
+
+/**
+ * Adds "http://" prefix to a URL if it's missing.
+ * @param url - The URL to ensure has the "http://" prefix.
+ * @returns The URL with the "http://" prefix.
+ */
+export const addHttpsPrefix = (url: string, prefix = 'https'): string => {
+	if (!url.startsWith('http://') && !url.startsWith('https://')) {
+		return `${prefix}://${url}`;
+	}
+	return url;
+}

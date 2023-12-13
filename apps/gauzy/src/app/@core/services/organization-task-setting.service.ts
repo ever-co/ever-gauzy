@@ -1,36 +1,35 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IOrganizationTaskSettingCreateInput, IOrganizationTaskSetting, IOrganizationTaskSettingUpdateInput } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
+import { IOrganizationTaskSetting, IOrganizationTaskSettingFindInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
+import { CrudService } from './crud/crud.service';
 
 @Injectable({
     providedIn: 'root',
 })
-export class OrganizationTaskSettingService {
-    private readonly API_URL = `${API_PREFIX}/organization-task-setting`;
+export class OrganizationTaskSettingService extends CrudService<IOrganizationTaskSetting> {
+    private static readonly API_URL = `${API_PREFIX}/organization-task-setting`;
 
-    constructor(private readonly http: HttpClient) { }
-
-    create(
-        body: IOrganizationTaskSettingCreateInput
-    ): Observable<IOrganizationTaskSetting> {
-        return this.http.post<IOrganizationTaskSetting>(this.API_URL, body);
+    constructor(
+        protected readonly http: HttpClient
+    ) {
+        super(http, OrganizationTaskSettingService.API_URL);
     }
 
-    edit(
-        body: Partial<IOrganizationTaskSettingUpdateInput>
+    /**
+     *
+     * @param id
+     * @returns
+     */
+    getByOrganization(
+        params: IOrganizationTaskSettingFindInput
     ): Observable<IOrganizationTaskSetting> {
-        return this.http.put<IOrganizationTaskSetting>(
-            `${this.API_URL}/${body.id}`,
-            body
-        );
-    }
-    getByOrganizationId(
-        id: IOrganizationTaskSetting['id']
-    ): Observable<IOrganizationTaskSetting> {
-        return this.http.get<IOrganizationTaskSetting>(
-            `${this.API_URL}/organization/${id}`
-        );
+        return this.http.get<IOrganizationTaskSetting>(`${this.API_URL}/organization`, {
+            params: toParams({
+                ...params
+            })
+        });
     }
 }

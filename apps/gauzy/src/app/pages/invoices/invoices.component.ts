@@ -74,10 +74,8 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './invoices.component.html',
 	styleUrls: ['invoices.component.scss'],
 })
-export class InvoicesComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class InvoicesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedInvoice: IInvoice;
@@ -957,10 +955,10 @@ export class InvoicesComponent
 			].includes(value.toLowerCase())
 				? 'success'
 				: ['void', 'draft', 'partially paid'].includes(
-						value.toLowerCase()
-				  )
-				? 'warning'
-				: 'danger';
+					value.toLowerCase()
+				)
+					? 'warning'
+					: 'danger';
 		}
 		return {
 			originalValue: value,
@@ -999,8 +997,8 @@ export class InvoicesComponent
 				invoiceNumber: {
 					title: this.isEstimate
 						? this.getTranslation(
-								'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
-						  )
+							'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
+						)
 						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
@@ -1314,7 +1312,7 @@ export class InvoicesComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
 	/**
 	 * On change number of item per page option
@@ -1337,5 +1335,5 @@ export class InvoicesComponent
 		if (event) this.toggleActionsPopover();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

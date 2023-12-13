@@ -1,18 +1,24 @@
-import { ITimeLogTodayFilters } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
+import { ITimeLogTodayFilters } from "@gauzy/contracts";
 import { IsDateString, IsOptional } from "class-validator";
 import { IsBeforeDate } from "./../../../shared/validators";
 
 export class TodayDateRangeQueryDTO implements ITimeLogTodayFilters {
 
+    /**
+     * The start of the date range for today's logs.
+     */
     @ApiPropertyOptional({ type: () => Date })
     @IsOptional()
     @IsDateString()
     @IsBeforeDate(TodayDateRangeQueryDTO, (it) => it.todayEnd, {
-        message: "Today start date must be before to the today end date"
+        message: "Today start date must be before today end date"
     })
     readonly todayStart: Date;
 
+    /**
+     * The end of the date range for today's logs.
+     */
     @ApiPropertyOptional({ type: () => Date })
     @IsOptional()
     @IsDateString()

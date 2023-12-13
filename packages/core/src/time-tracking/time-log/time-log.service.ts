@@ -358,6 +358,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				startedAt: true,
 				stoppedAt: true,
 				description: true,
+				projectId: true,
+				taskId: true,
+				organizationContactId: true,
 				project: {
 					id: true,
 					name: true,
@@ -724,24 +727,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * Project budget report
+	 * Get Project budget report
 	 *
 	 * @param request
 	 * @returns
 	 */
-	async projectBudgetLimit(request: IGetTimeLogReportInput) {
-		const {
-			organizationId,
-			employeeIds = [],
-			projectIds = [],
-			startDate,
-			endDate
-		} = request;
-		const tenantId = RequestContext.currentTenantId();
+	async getProjectBudgetLimit(request: IGetTimeLogReportInput) {
+		const { organizationId, employeeIds = [], projectIds = [], startDate, endDate } = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const query = this.organizationProjectRepository.createQueryBuilder(
-			'organization_project'
-		);
+		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -756,10 +751,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		query.innerJoinAndSelect(`timeLogs.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(
-					`"${query.alias}"."organizationId" =:organizationId`,
-					{ organizationId }
-				);
+				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, {
+					organizationId
+				});
 				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, {
 					tenantId
 				});
@@ -770,8 +764,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(`"employee"."organizationId" =:organizationId`, {
 					organizationId
 				});
-				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
-
+				qb.andWhere(`"employee"."tenantId" =:tenantId`, {
+					tenantId
+				});
 				if (isNotEmpty(employeeIds)) {
 					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
 						employeeIds
@@ -786,25 +781,20 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
 
+				// Date range condition
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
-				qb.andWhere(
-					`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`,
-					{
-						startDate: start,
-						endDate: end
-					}
-				);
+				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+					startDate: start,
+					endDate: end
+				});
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(
-						`"timeLogs"."employeeId" IN (:...employeeIds)`,
-						{
-							employeeIds
-						}
-					);
+					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+						employeeIds
+					});
 				}
 				if (isNotEmpty(projectIds)) {
 					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
@@ -815,61 +805,52 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 
 		const organizationProjects = await query.getMany();
-		const projects = organizationProjects.map(
-			(
-				organizationProject: IOrganizationProject
-			): IProjectBudgetLimitReport => {
-				const { budgetType, timeLogs = [] } = organizationProject;
-				const budget = organizationProject.budget || 0;
+		const projects = organizationProjects.map((organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
+			const { budgetType, timeLogs = [] } = organizationProject;
+			const budget = organizationProject.budget || 0;
 
-				let spent = 0;
-				let spentPercentage = 0;
-				let reamingBudget = 0;
+			let spent = 0;
+			let spentPercentage = 0;
+			let reamingBudget = 0;
 
-				if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
-					spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
-						return iteratee + log.duration / 3600;
-					}, 0);
-				} else {
-					spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
-						let amount = 0;
-						if (log.employee) {
-							amount =
-								(log.duration / 3600) *
-								log.employee.billRateValue;
-						}
-						return iteratee + amount;
-					}, 0);
-				}
-
-				spentPercentage = (spent * 100) / budget;
-				reamingBudget = Math.max(budget - spent, 0);
-
-				delete organizationProject['timeLogs'];
-				return {
-					project: organizationProject,
-					budgetType,
-					budget,
-					spent: parseFloat(spent.toFixed(2)),
-					reamingBudget: Number.isFinite(reamingBudget)
-						? parseFloat(reamingBudget.toFixed(2))
-						: 0,
-					spentPercentage: Number.isFinite(spentPercentage)
-						? parseFloat(spentPercentage.toFixed(2))
-						: 0
-				};
+			if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
+				spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
+					return iteratee + log.duration / 3600;
+				}, 0);
+			} else {
+				spent = timeLogs.reduce((iteratee: any, log: ITimeLog) => {
+					let amount = 0;
+					if (log.employee) {
+						amount = (log.duration / 3600) * log.employee.billRateValue;
+					}
+					return iteratee + amount;
+				}, 0);
 			}
-		);
+
+			spentPercentage = (spent * 100) / budget;
+			reamingBudget = Math.max(budget - spent, 0);
+
+			/** */
+			delete organizationProject['timeLogs'];
+			return {
+				project: organizationProject,
+				budgetType,
+				budget,
+				spent: parseFloat(spent.toFixed(2)),
+				reamingBudget: Number.isFinite(reamingBudget) ? parseFloat(reamingBudget.toFixed(2)) : 0,
+				spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0
+			};
+		});
 		return projects;
 	}
 
 	/**
-	 * Client budget report
+	 * Get Client budget report
 	 *
 	 * @param request
 	 * @returns
 	 */
-	async clientBudgetLimit(request: IGetTimeLogReportInput) {
+	async getClientBudgetLimit(request: IGetTimeLogReportInput) {
 		const {
 			organizationId,
 			employeeIds = [],
@@ -1000,252 +981,251 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 	}
 
-	getFilterTimeLogQuery(
-		query: SelectQueryBuilder<TimeLog>,
-		request: IGetTimeLogInput
-	) {
+	/**
+	 * Modifies the provided query to filter TimeLogs based on the given criteria.
+	 * @param query - The query to be modified.
+	 * @param request - The criteria for filtering TimeLogs.
+	 * @returns The modified query.
+	 */
+	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogInput) {
 		const { organizationId, projectIds = [] } = request;
 		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
 
-		let employeeIds: string[];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (isNotEmpty(request.employeeIds)) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Set employeeIds based on permissions and request
+		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+
 		if (isNotEmpty(request.timesheetId)) {
-			const { timesheetId } = request;
 			query.andWhere(`"${query.alias}"."timesheetId" = :timesheetId`, {
-				timesheetId
+				timesheetId: request.timesheetId
 			});
 		}
+
+		//
 		if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
 			const { start: startDate, end: endDate } = getDateRangeFormat(
 				moment.utc(request.startDate),
 				moment.utc(request.endDate)
 			);
-			query.andWhere(
-				`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`,
-				{
-					startDate,
-					endDate
-				}
-			);
+			query.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
+				startDate,
+				endDate
+			});
 		}
+
+		//
 		if (isNotEmpty(employeeIds)) {
-			query.andWhere(
-				`"${query.alias}"."employeeId" IN (:...employeeIds)`,
-				{
-					employeeIds
-				}
-			);
+			query.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+				employeeIds
+			});
 		}
+
+		//
 		if (isNotEmpty(projectIds)) {
 			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
 				projectIds
 			});
 		}
+
 		if (isNotEmpty(request.activityLevel)) {
 			/**
 			 * Activity Level should be 0-100%
-			 * So, we have convert it into 10 minutes timeslot by multiply by 6
+			 * Convert it into a 10-minute time slot by multiplying by 6
 			 */
 			const { activityLevel } = request;
-			const start = activityLevel.start * 6;
-			const end = activityLevel.end * 6;
 
 			query.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
-				start,
-				end
+				start: activityLevel.start * 6,
+				end: activityLevel.end * 6
 			});
 		}
+
+		//
 		if (isNotEmpty(request.source)) {
 			const { source } = request;
-			if (source instanceof Array) {
-				query.andWhere(`"${query.alias}"."source" IN (:...source)`, {
-					source
-				});
-			} else {
-				query.andWhere(`"${query.alias}"."source" = :source`, {
-					source
-				});
-			}
+			const condition = source instanceof Array ? `"${query.alias}"."source" IN (:...source)` : `"${query.alias}"."source" = :source`;
+
+			query.andWhere(condition, { source });
 		}
+
 		if (isNotEmpty(request.logType)) {
 			const { logType } = request;
-			if (logType instanceof Array) {
-				query.andWhere(`"${query.alias}"."logType" IN (:...logType)`, {
-					logType
-				});
-			} else {
-				query.andWhere(`"${query.alias}"."logType" = :logType`, {
-					logType
-				});
-			}
+			const condition = logType instanceof Array ? `"${query.alias}"."logType" IN (:...logType)` : `"${query.alias}"."logType" = :logType`;
+
+			query.andWhere(condition, { logType });
 		}
+
 		if (isNotEmpty(request.teamId)) {
 			const { teamId } = request;
-			/**
-			 * If used organization team filter
-			 */
-			query.andWhere(
-				`"organization_teams"."organizationTeamId" = :teamId`,
-				{
-					teamId
-				}
-			);
+
+			// Filter by organization team ID if used in the request
+			query.andWhere(`"organization_teams"."organizationTeamId" = :teamId`, {
+				teamId
+			});
 		}
+
+		//
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
 					tenantId
 				});
-				qb.andWhere(
-					`"${query.alias}"."organizationId" = :organizationId`,
-					{ organizationId }
-				);
-				qb.andWhere(`"${query.alias}"."deletedAt" IS NULL`);
+				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					organizationId
+				});
 			})
 		);
+
 		return query;
 	}
 
-	async addManualTime(request: IManualTimeInput): Promise<TimeLog> {
-		const tenantId = RequestContext.currentTenantId();
-		const { employeeId, startedAt, stoppedAt, organizationId } = request;
+	/**
+	 * Adds a manual time log entry.
+	 *
+	 * @param request The input data for the manual time log.
+	 * @returns The created time log entry.
+	 */
+	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { employeeId, startedAt, stoppedAt, organizationId } = request;
 
-		if (!startedAt || !stoppedAt) {
-			throw new BadRequestException('Please select valid Date, start time and end time');
-		}
-
-		/**
-		 * Get Employee
-		 */
-		const employee = await this.employeeRepository.findOne({
-			where: {
-				id: employeeId
-			},
-			relations: {
-				organization: true
+			// Validate input
+			if (!startedAt || !stoppedAt) {
+				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
-		});
-		const isDateAllow = this.allowDate(
-			startedAt,
-			stoppedAt,
-			employee.organization
-		);
 
-		if (!isDateAllow) {
-			throw new BadRequestException('Please select valid Date, start time and end time');
-		}
+			// Retrieve employee information
+			const employee = await this.employeeRepository.findOne({
+				where: { id: employeeId },
+				relations: { organization: true }
+			});
 
-		const conflicts = await this.checkConflictTime({
-			startDate: startedAt,
-			endDate: stoppedAt,
-			employeeId,
-			organizationId,
-			tenantId,
-			...(request.id ? { ignoreId: request.id } : {})
-		});
+			// Check if the selected date and time range is allowed for the organization
+			const isDateAllow = this.allowDate(startedAt, stoppedAt, employee.organization);
 
-		if (isNotEmpty(conflicts)) {
-			const times: IDateRange = {
-				start: new Date(startedAt),
-				end: new Date(stoppedAt)
-			};
-			for await (const timeLog of conflicts) {
-				const { timeSlots = [] } = timeLog;
-				for await (const timeSlot of timeSlots) {
-					await this.commandBus.execute(
-						new DeleteTimeSpanCommand(times, timeLog, timeSlot)
-					);
+			if (!isDateAllow) {
+				throw new BadRequestException('Please select valid Date, start time and end time');
+			}
+
+			// Check for conflicts with existing time logs
+			const conflicts = await this.checkConflictTime({
+				startDate: startedAt,
+				endDate: stoppedAt,
+				employeeId,
+				organizationId,
+				tenantId,
+				...(request.id ? { ignoreId: request.id } : {})
+			});
+
+			// Resolve conflicts by deleting conflicting time slots
+			if (conflicts && conflicts.length > 0) {
+				const times: IDateRange = {
+					start: new Date(startedAt),
+					end: new Date(stoppedAt)
+				};
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					for await (const timeSlot of timeSlots) {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
+						);
+					}
 				}
 			}
+
+			// Create the new time log entry
+			return await this.commandBus.execute(
+				new TimeLogCreateCommand(request)
+			);
+		} catch (error) {
+			// Handle exceptions appropriately
+			throw new BadRequestException('Failed to add manual time log');
 		}
-		return await this.commandBus.execute(new TimeLogCreateCommand(request));
 	}
 
+	/**
+	 * Updates a manual time log entry.
+	 *
+	 * @param id The ID of the time log entry to be updated.
+	 * @param request The updated data for the manual time log.
+	 * @returns The updated time log entry.
+	 */
 	async updateManualTime(
-		id: string,
+		id: ITimeLog['id'],
 		request: IManualTimeInput
-	): Promise<TimeLog> {
-		const tenantId = RequestContext.currentTenantId();
-		const { startedAt, stoppedAt, employeeId, organizationId } = request;
+	): Promise<ITimeLog> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { startedAt, stoppedAt, employeeId, organizationId } = request;
 
-		if (!startedAt || !stoppedAt) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
-		}
-
-		/**
-		 * Get Employee
-		 */
-		const employee = await this.employeeRepository.findOne({
-			where: {
-				id: employeeId
-			},
-			relations: {
-				organization: true
+			// Validate input
+			if (!startedAt || !stoppedAt) {
+				throw new BadRequestException('Please select valid Date start and end time');
 			}
-		});
-		/**
-		 * Check future date allow
-		 */
-		const isDateAllow = this.allowDate(
-			startedAt,
-			stoppedAt,
-			employee.organization
-		);
-		if (!isDateAllow) {
-			throw new BadRequestException(
-				'Please select valid Date start and end time'
-			);
-		}
 
-		/**
-		 * Check Conflicts TimeLogs
-		 */
-		const timeLog = await this.timeLogRepository.findOneBy({
-			id: id
-		});
-		const conflicts = await this.checkConflictTime({
-			startDate: startedAt,
-			endDate: stoppedAt,
-			employeeId,
-			organizationId,
-			tenantId,
-			...(id ? { ignoreId: id } : {})
-		});
-		if (isNotEmpty(conflicts)) {
-			const times: IDateRange = {
-				start: new Date(startedAt),
-				end: new Date(stoppedAt)
-			};
-			for await (const timeLog of conflicts) {
-				const { timeSlots = [] } = timeLog;
-				for await (const timeSlot of timeSlots) {
-					await this.commandBus.execute(
-						new DeleteTimeSpanCommand(times, timeLog, timeSlot)
-					);
+			// Retrieve employee information
+			const employee = await this.employeeRepository.findOne({
+				where: { id: employeeId },
+				relations: { organization: true }
+			});
+
+			// Check if the selected date and time range is allowed for the organization
+			const isDateAllow = this.allowDate(startedAt, stoppedAt, employee.organization);
+
+			if (!isDateAllow) {
+				throw new BadRequestException('Please select valid Date start and end time');
+			}
+
+			// Check for conflicts with existing time logs
+			const timeLog = await this.timeLogRepository.findOneBy({
+				id: id
+			});
+
+			const conflicts = await this.checkConflictTime({
+				startDate: startedAt,
+				endDate: stoppedAt,
+				employeeId,
+				organizationId,
+				tenantId,
+				...(id ? { ignoreId: id } : {})
+			});
+
+			// Resolve conflicts by deleting conflicting time slots
+			if (isNotEmpty(conflicts)) {
+				const times: IDateRange = {
+					start: new Date(startedAt),
+					end: new Date(stoppedAt)
+				};
+				for await (const timeLog of conflicts) {
+					const { timeSlots = [] } = timeLog;
+					for await (const timeSlot of timeSlots) {
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
+						);
+					}
 				}
 			}
+
+			// Update the last edited date for the manual time log
+			request.editedAt = new Date();
+
+			// Execute the command to update the time log
+			await this.commandBus.execute(
+				new TimeLogUpdateCommand(request, timeLog)
+			);
+
+			// Retrieve the updated time log entry
+			return await this.timeLogRepository.findOneBy({ id: request.id });
+		} catch (error) {
+			// Handle exceptions appropriately
+			throw new BadRequestException('Failed to update manual time log');
 		}
-
-		await this.commandBus.execute(
-			new TimeLogUpdateCommand(request, timeLog)
-		);
-
-		return await this.timeLogRepository.findOneBy({
-			id: request.id
-		});
 	}
 
 	async deleteTimeLogs(
