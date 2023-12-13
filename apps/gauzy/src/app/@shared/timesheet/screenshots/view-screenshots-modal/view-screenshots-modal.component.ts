@@ -131,7 +131,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			this.timeLogs = this.timeSlot.timeLogs;
 
 			// Retrieve and set unique apps from the screenshots of the time slot
-			this.apps = this.getScreenshotUniqueApps();
+			this.apps = this.getScreenshotUniqueApps() || [];
 		} catch (error) {
 			// Handle errors by logging and displaying a toastr message
 			console.error('Error while retrieving TimeSlot:', error);

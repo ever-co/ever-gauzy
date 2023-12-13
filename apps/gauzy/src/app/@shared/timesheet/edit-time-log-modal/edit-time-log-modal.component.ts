@@ -151,6 +151,9 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					const { start, end } = selectedRange;
 					const startMoment = moment(start);
 					const endMoment = moment(end);
+					if (!startMoment.isValid() || !endMoment.isValid()) {
+						return this.timeDiff = null;
+					}
 					this.timeDiff = new Date(
 						endMoment.diff(startMoment, 'seconds')
 					);
