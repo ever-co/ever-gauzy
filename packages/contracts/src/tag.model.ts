@@ -4,7 +4,7 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;
 	color: string;
-	textColor: string;
+	textColor?: string;
 	icon?: string;
 	description?: string;
 	isSystem?: boolean;
