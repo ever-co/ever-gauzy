@@ -7,7 +7,7 @@ export class ColorAdapter {
 			r: parseInt(hex.slice(1, 3), 16),
 			g: parseInt(hex.slice(3, 5), 16),
 			b: parseInt(hex.slice(5, 7), 16),
-			a: 1,
+			a: 1
 		});
 	}
 
@@ -26,9 +26,7 @@ export class ColorAdapter {
 		color = color.valid ? color : new Color(this.hex2Rgb(bgColor));
 		const MIN_THRESHOLD = 128;
 		const MAX_THRESHOLD = 186;
-		const contrast = color.rgb
-			? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114
-			: null;
+		const contrast = color.rgb ? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114 : null;
 		if (contrast < MIN_THRESHOLD) {
 			return '#ffffff';
 		} else if (contrast > MAX_THRESHOLD) {
@@ -45,5 +43,15 @@ export class ColorAdapter {
 		let color = new Color(hexColor);
 		color = color.valid ? color : new Color(this.hex2Rgb(hexColor));
 		return color.hslString();
+	}
+
+	public static randomColor(): string {
+		const color = new Color({
+			r: Math.floor(Math.random() * 256),
+			g: Math.floor(Math.random() * 256),
+			b: Math.floor(Math.random() * 256),
+			a: 1
+		});
+		return color.hexString().toString();
 	}
 }

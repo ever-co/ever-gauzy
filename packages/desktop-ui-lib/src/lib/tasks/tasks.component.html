@@ -217,10 +217,12 @@
 						</label>
 						<div class="form-group">
 							<ng-select
+								[addTag]="(hasAddTagPermission$ | async) ? createTag: null"
 								[clearable]="true"
 								[items]="tags"
 								[multiple]="true"
 								[placeholder]="'SM_TABLE.TAGS' | translate"
+								[loading]="isLoading"
 								bindLabel="name"
 								formControlName="tags"
 							>
