@@ -1,0 +1,6 @@
+:host {
+    ::ng-deep .tabset-container .route-tabset {
+        overflow-x: scroll;
+        overflow-y: hidden;
+    }
+}

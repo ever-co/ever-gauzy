@@ -4,9 +4,12 @@
   height: 100%;
   nb-card {
     background-color: var(--gauzy-card-2);
-    height: 100%;
+    border-radius: 0;
+
     nb-card-body {
-      height: 100%;
+      background-color: var(--card-background-color);
+      border-radius: 0.625rem;
+
       form {
         display: flex;
         flex-direction: column;

@@ -21,6 +21,8 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 	styles: [
 		`
 			:host {
+				margin: 1rem;
+				background-color: var(--gauzy-sidebar-background-2);
         		overflow-y: auto;
 				height: calc(100vh - 20.5rem);
 			}

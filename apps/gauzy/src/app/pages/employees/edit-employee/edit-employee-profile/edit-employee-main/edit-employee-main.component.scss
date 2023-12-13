@@ -19,9 +19,9 @@ $radius: nb-theme(border-radius);
 }
 
 .content {
-  background-color: var(--gauzy-card-2);
+  background-color: var(--card-background-color) !important;
   padding: 20px;
-  border-radius: 0 $radius $radius $radius;
+  border-radius: var(--border-radius) !important;
 }
 
 :host {
@@ -29,6 +29,7 @@ $radius: nb-theme(border-radius);
   overflow-y: auto;
   max-height: calc(100vh - 20.5rem);
   border-radius: 0 $radius $radius $radius;
+  background-color: var(--gauzy-card-2);
 
   ::ng-deep .employee-form{
     @include nb-ltr(padding-left, 1rem);
