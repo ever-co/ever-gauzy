@@ -1,21 +1,12 @@
-import { IGetTimeLogReportInput, ReportGroupFilterEnum } from "@gauzy/contracts";
-import { IntersectionType } from "@nestjs/swagger";
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsOptional } from "class-validator";
-import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "../../../../shared/dto";
+import { IGetTimeLogReportInput } from "@gauzy/contracts";
+import { ApiPropertyOptional, OmitType } from "@nestjs/swagger";
+import { IsOptional } from "class-validator";
+import { TimeLogQueryDTO } from "./time-log-query.dto";
 
 /**
- * Get time log daily/wewkly limit request DTO validation
+ * Get time log daily/weekly limit request DTO validation
  */
-export class TimeLogLimitQueryDTO extends IntersectionType(
-    FiltersQueryDTO,
-    IntersectionType(SelectorsQueryDTO, RelationsQueryDTO)
-) implements IGetTimeLogReportInput {
-
-    @ApiPropertyOptional({ type: () => String, enum: ReportGroupFilterEnum })
-    @IsOptional()
-    @IsEnum(ReportGroupFilterEnum)
-    readonly groupBy: ReportGroupFilterEnum;
+export class TimeLogLimitQueryDTO extends OmitType(TimeLogQueryDTO, ['timesheetId']) implements IGetTimeLogReportInput {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()

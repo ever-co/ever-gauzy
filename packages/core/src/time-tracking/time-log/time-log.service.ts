@@ -127,6 +127,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				...(request.relations ? request.relations : [])
 			],
 			order: {
+				// Order results by the 'startedAt' field in ascending order
 				startedAt: 'ASC'
 			}
 		});
@@ -185,6 +186,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			},
 			order: {
+				// Order results by the 'startedAt' field in ascending order
 				startedAt: 'ASC'
 			}
 		});
@@ -431,6 +433,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of owed amount report data.
 	 */
 	async getOwedAmountReport(request: IGetTimeLogReportInput): Promise<IAmountOwedReport[]> {
+		// Extract timezone from the request
+		const { timezone } = request;
+
 		// Create a query builder for the TimeLog entity
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 
@@ -454,6 +459,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			},
 			relations: {
+				// Related entities to be included in the result
 				employee: {
 					user: true
 				}
@@ -473,7 +479,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const timeLogs = await query.getMany();
 
 		const dailyLogs: any = chain(timeLogs)
-			.groupBy((log) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
+			.groupBy((log) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 			.map((byDateLogs: ITimeLog[], date: string) => {
 				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
 					// Calculate average duration for specific employee.
@@ -546,12 +552,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve time logs
 		const timeLogs = await query.getMany();
 
-		// Gets an array of days between the given start and end dates.
-		const { startDate, endDate } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
+		// Gets an array of days between the given start date, end date and timezone.
+		const { startDate, endDate, timezone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
 		const byDate: any = chain(timeLogs)
-			.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
 				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
 					// Calculate average duration for specific employee.
@@ -571,13 +577,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}).value();
 
 				// Calculate the total owed amount for all employees on a specific date
-				const value = byEmployee.reduce((iteratee: any, obj: any) => {
-					return iteratee + obj.amount;
+				const value = byEmployee.reduce((iteratee: any, item: any) => {
+					return iteratee + item.amount;
 				}, 0);
 
 				return { date, value };
-			})
-			.value();
+			}).value();
 
 		// Map the result to an array of owed amount report chart data
 		const dates = days.map((date) => ({
@@ -641,13 +646,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve time logs
 		const timeLogs = await query.getMany();
 
-		// Gets an array of days between the given start and end dates.
-		const { startDate, endDate } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
+		// Gets an array of days between the given start date, end date and timezone.
+		const { startDate, endDate, timezone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
 		// Process time log data and calculate time limits for each employee and date
 		const byDate: any = chain(timeLogs)
-			.groupBy((log) => moment(log.startedAt).startOf(request.duration).format('YYYY-MM-DD'))
+			.groupBy((log) => moment.utc(log.startedAt).tz(timezone).startOf(request.duration).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
 				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
 					// Calculate average duration for specific employee.

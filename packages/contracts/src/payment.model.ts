@@ -7,6 +7,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
 import { IEmployee } from './employee.model';
 import { ReportGroupByFilter } from './report.model';
+import { IGetTimeLogReportInput } from './timesheet.model';
 
 export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	invoice?: IInvoice;
@@ -57,15 +58,10 @@ export interface IPaymentReportChartData {
 	value: number;
 }
 
-export interface IGetPaymentInput extends IPaginationInput, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
+export interface IGetPaymentInput extends IPaginationInput, IGetTimeLogReportInput {
 	types?: string[];
 	titles?: string[];
-	groupBy?: ReportGroupByFilter;
 	date?: Date | string;
-	startDate?: Date | string;
-	endDate?: Date | string;
-	projectIds?: string[];
-	employeeIds?: string[];
 	contactIds?: string[];
 }
 
