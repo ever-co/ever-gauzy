@@ -242,6 +242,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of daily time log chart reports.
 	 */
 	async getDailyReportCharts(request: IGetTimeLogReportInput) {
+		// Extract timezone from the request
+		const { timezone } = request;
+
 		// Create a query builder for the TimeLog entity
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 
@@ -270,7 +273,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Group time logs by date and calculate tracked, manual, idle, and resumed durations
 		const byDate = chain(logs)
-			.groupBy((log) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
+			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 			.mapObject((logs: ITimeLog[], date) => {
 				const tracked = calculateDuration(logs, TimeLogType.TRACKED); //
 				const manual = calculateDuration(logs, TimeLogType.MANUAL); //
@@ -312,6 +315,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A report containing time logs grouped by specified filters.
 	 */
 	async getDailyReport(request: IGetTimeLogReportInput) {
+		// Extract timezone from the request
+		const { timezone } = request;
+
 		// Create a query builder for the TimeLog entity
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 
@@ -368,6 +374,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			},
 			relations: {
+				// Related entities to be included in the result
 				project: {
 					organizationContact: true
 				},
@@ -392,26 +399,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const logs = await query.getMany();
 
 		// Group time logs based on the specified 'groupBy' filter
-		let dailyLogs;
+		let dailyLogs: any;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
 				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByEmployeeCommand(logs)
+					new GetTimeLogGroupByEmployeeCommand(logs, timezone)
 				);
 				break;
 			case ReportGroupFilterEnum.project:
 				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByProjectCommand(logs)
+					new GetTimeLogGroupByProjectCommand(logs, timezone)
 				);
 				break;
 			case ReportGroupFilterEnum.client:
 				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByClientCommand(logs)
+					new GetTimeLogGroupByClientCommand(logs, timezone)
 				);
 				break;
 			default:
 				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByDateCommand(logs)
+					new GetTimeLogGroupByDateCommand(logs, timezone)
 				);
 				break;
 		}

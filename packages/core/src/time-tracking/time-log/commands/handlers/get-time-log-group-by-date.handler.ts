@@ -16,9 +16,10 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 	public async execute(
 		command: GetTimeLogGroupByDateCommand
 	): Promise<IReportDayGroupByDate> {
-		const { timeLogs } = command;
+		const { timeLogs, timezone = moment.tz.guess() } = command;
+
 		const dailyLogs: any = chain(timeLogs)
-			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
+			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 			.map((byDateLogs: ITimeLog[], date: string) => {
 				// Calculate average duration for specific date range.
 				const avgDuration = calculateAverage(pluck(byDateLogs, 'duration'));
@@ -26,21 +27,19 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 				// Calculate average activity for specific date range.
 				const avgActivity = calculateAverageActivity(chain(byDateLogs).pluck('timeSlots').flatten(true).value());
 
-				const byProject = chain(byDateLogs)
-					.groupBy('projectId')
-					.map((byProjectLogs: ITimeLog[]) => {
-						// Extract project information
-						const project = byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
+				const byProject = chain(byDateLogs).groupBy('projectId').map((byProjectLogs: ITimeLog[]) => {
+					// Extract project information
+					const project = byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
 
-						// Extract client information using optional chaining
-						const client = byProjectLogs.length > 0 ? byProjectLogs[0].organizationContact : project ? project.organizationContact : null;
+					// Extract client information using optional chaining
+					const client = byProjectLogs.length > 0 ? byProjectLogs[0].organizationContact : project ? project.organizationContact : null;
 
-						return {
-							project,
-							client,
-							employeeLogs: this.getGroupByEmployee(byProjectLogs)
-						};
-					}).value();
+					return {
+						project,
+						client,
+						employeeLogs: this.getGroupByEmployee(byProjectLogs)
+					};
+				}).value();
 
 				return {
 					date,

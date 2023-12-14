@@ -20,7 +20,7 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 	public async execute(
 		command: GetTimeLogGroupByClientCommand
 	): Promise<IReportDayGroupByClient> {
-		const { timeLogs } = command;
+		const { timeLogs, timezone = moment.tz.guess() } = command;
 
 		// Group timeLogs by organizationContactId
 		const dailyLogs: any = chain(timeLogs)
@@ -39,25 +39,24 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 				const client: IOrganizationContact | null = log?.organizationContact ?? (log?.project?.organizationContact ?? null);
 
 				// Group logs by projectId
-				const byClient = chain(logs).groupBy((log: ITimeLog) => log.projectId)
-					.map((projectLogs: ITimeLog[]) => {
-						// Retrieve the first log for further details
-						const project = projectLogs.length > 0 ? projectLogs[0].project : null;
+				const byClient = chain(logs).groupBy((log: ITimeLog) => log.projectId).map((projectLogs: ITimeLog[]) => {
+					// Retrieve the first log for further details
+					const project = projectLogs.length > 0 ? projectLogs[0].project : null;
 
-						// Group projectLogs by date
-						const byDate = chain(projectLogs)
-							.groupBy((log) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
-							.map((dateLogs: ITimeLog[], date) => ({
-								date,
-								projectLogs: this.getGroupByEmployee(dateLogs) // Group dateLogs by employeeId
-							}))
-							.value();
+					// Group projectLogs by date
+					const byDate = chain(projectLogs)
+						.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
+						.map((dateLogs: ITimeLog[], date) => ({
+							date,
+							projectLogs: this.getGroupByEmployee(dateLogs) // Group dateLogs by employeeId
+						}))
+						.value();
 
-						return {
-							project,
-							logs: byDate
-						};
-					}).value();
+					return {
+						project,
+						logs: byDate
+					};
+				}).value();
 
 				return {
 					client,
