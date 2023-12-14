@@ -104,7 +104,7 @@ export class TimeLogController {
 	async getDailyReportChartData(
 		@Query() options: TimeLogQueryDTO
 	): Promise<any | null> {
-		return await this.timeLogService.getDailyReportChartData(options);
+		return await this.timeLogService.getDailyReportCharts(options);
 	}
 
 	/**
@@ -148,7 +148,7 @@ export class TimeLogController {
 	async getOwedAmountReportChartData(
 		@Query() options: TimeLogQueryDTO
 	): Promise<any | null> {
-		return await this.timeLogService.getOwedAmountReportChartData(options);
+		return await this.timeLogService.getOwedAmountReportCharts(options);
 	}
 
 	/**

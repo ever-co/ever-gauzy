@@ -1,6 +1,6 @@
 import { pluck, reduce } from "underscore";
 import { ArraySum } from "@gauzy/common";
-import { ITimeSlot } from "@gauzy/contracts";
+import { ITimeLog, ITimeSlot, TimeLogType } from "@gauzy/contracts";
 
 /**
  * Calculates the average of an array of numbers.
@@ -20,4 +20,14 @@ export const calculateAverageActivity = (slots: ITimeSlot[]): number => {
     const overallSum = calculateAverage(pluck(slots, 'overall'));
     const durationSum = calculateAverage(pluck(slots, 'duration'));
     return (overallSum * 100) / durationSum || 0;
+};
+
+/**
+ * Calculate the total duration of a specific log type within a given array of time logs.
+ * @param logs Array of time logs.
+ * @param logType Type of the log (e.g., TRACKED, MANUAL, IDLE, RESUMED).
+ * @returns Total duration of the specified log type in seconds.
+ */
+export const calculateDuration = (logs: ITimeLog[], logType: TimeLogType): number => {
+    return logs.filter((log) => log.logType === logType).reduce((totalDuration, log) => totalDuration + log.duration, 0);
 };

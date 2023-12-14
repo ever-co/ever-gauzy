@@ -139,15 +139,12 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		const { organizationId, startDate, endDate } = request;
 		let { projectIds = [], contactIds = [] } = request;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		// Calculate start and end dates using a utility function
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where({

@@ -16,7 +16,8 @@ const routes: Routes = [
 				redirectTo: '/pages/employees/timesheets/daily'
 			},
 			selectors: {
-				project: false
+				project: false,
+				team: false
 			},
 			datePicker: {
 				unitOfTime: 'month',
@@ -34,4 +35,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ApprovalsRoutingModule {}
+export class ApprovalsRoutingModule { }

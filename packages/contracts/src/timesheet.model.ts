@@ -189,6 +189,7 @@ export interface ITimeLogFilters
 	endDate?: Date | string;
 	isCustomDate?: boolean;
 	projectIds?: string[];
+	teamIds?: string[];
 	employeeIds?: string[];
 	logType?: TimeLogType[];
 	source?: TimeLogSourceEnum[];
@@ -370,11 +371,9 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 	isBillable?: boolean;
 }
 
-export interface IGetTimeLogInput
-	extends ITimeLogFilters,
-	IBaseRelationsEntityModel {
+export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	timesheetId?: string;
-	teamId?: string;
+	timezone?: string;
 }
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
@@ -521,7 +520,7 @@ export interface IProjectBudgetLimitReport {
 	budget?: number;
 	spent?: number;
 	spentPercentage?: number;
-	reamingBudget?: number;
+	remainingBudget?: number;
 }
 
 export interface IClientBudgetLimitReport {
@@ -530,7 +529,7 @@ export interface IClientBudgetLimitReport {
 	budget?: number;
 	spent?: number;
 	spentPercentage?: number;
-	reamingBudget?: number;
+	remainingBudget?: number;
 }
 
 export interface IDeleteTimeSlot
