@@ -255,8 +255,6 @@ export function getDaysBetweenDates(
 	const end = moment.utc(endDate).tz(timezone).toDate();
 	const range = Array.from(moment.range(start, end).by('days'));
 
-	console.log({ range });
-
 	return range.map((date: moment.Moment) => date.format('YYYY-MM-DD'));
 }
 

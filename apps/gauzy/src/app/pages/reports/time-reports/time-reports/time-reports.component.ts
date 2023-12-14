@@ -99,8 +99,8 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	prepareRequest() {
-		// Check if organization or filters are not provided, return early if true
-		if (!this.organization || isEmpty(this.filters)) {
+		// Check if request or filters are not provided, return early if true
+		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
 		// Determine the current timezone using moment-timezone

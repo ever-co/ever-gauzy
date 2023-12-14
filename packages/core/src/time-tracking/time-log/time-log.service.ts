@@ -178,6 +178,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			},
 			relations: {
+				// Related entities to be included in the result
 				timeSlots: true,
 				employee: {
 					user: true
@@ -195,9 +196,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve time logs
 		const logs = await query.getMany();
 
-		// Gets an array of days between the given start and end dates.
-		const { startDate, endDate } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
+		// Gets an array of days between the given start date, end date and timezone.
+		const { startDate, endDate, timezone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs).groupBy('employeeId').map((logs: ITimeLog[]) => {
@@ -208,7 +209,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const weeklyActivity = calculateAverageActivity(chain(logs).pluck('timeSlots').flatten(true).value());
 
 			const byDate = chain(logs)
-				.groupBy((log: ITimeLog) => moment.utc(log.startedAt).format('YYYY-MM-DD'))
+				.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 				.mapObject((logs: ITimeLog[]) => {
 					// Calculate average duration of the employee for specific date range.
 					const sum = calculateAverage(pluck(logs, 'duration'));
@@ -242,9 +243,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns An array of daily time log chart reports.
 	 */
 	async getDailyReportCharts(request: IGetTimeLogReportInput) {
-		// Extract timezone from the request
-		const { timezone } = request;
-
 		// Create a query builder for the TimeLog entity
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
 
@@ -267,9 +265,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve time logs
 		const logs = await query.getMany();
 
-		// Gets an array of days between the given start and end dates.
-		const { startDate, endDate } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
+		// Gets an array of days between the given start date, end date and timezone.
+		const { startDate, endDate, timezone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
 		// Group time logs by date and calculate tracked, manual, idle, and resumed durations
 		const byDate = chain(logs)
