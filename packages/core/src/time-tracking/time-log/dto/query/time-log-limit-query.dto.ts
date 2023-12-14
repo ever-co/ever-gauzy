@@ -4,7 +4,7 @@ import { IsOptional } from "class-validator";
 import { TimeLogQueryDTO } from "./time-log-query.dto";
 
 /**
- * Get time log daily/wewkly limit request DTO validation
+ * Get time log daily/weekly limit request DTO validation
  */
 export class TimeLogLimitQueryDTO extends OmitType(TimeLogQueryDTO, ['timesheetId']) implements IGetTimeLogReportInput {
 
