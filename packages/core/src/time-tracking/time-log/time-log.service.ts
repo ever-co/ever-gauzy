@@ -644,13 +644,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve time logs
 		const timeLogs = await query.getMany();
 
-		// Gets an array of days between the given start and end dates.
-		const { startDate, endDate } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
+		// Gets an array of days between the given start date, end date and timezone.
+		const { startDate, endDate, timezone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
 		// Process time log data and calculate time limits for each employee and date
 		const byDate: any = chain(timeLogs)
-			.groupBy((log) => moment(log.startedAt).startOf(request.duration).format('YYYY-MM-DD'))
+			.groupBy((log) => moment.utc(log.startedAt).tz(timezone).startOf(request.duration).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
 				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
 					// Calculate average duration for specific employee.

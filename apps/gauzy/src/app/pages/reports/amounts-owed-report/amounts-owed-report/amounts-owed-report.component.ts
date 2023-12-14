@@ -91,7 +91,7 @@ export class AmountsOwedReportComponent extends BaseSelectorFilterComponent
 			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy,
 			// Set the 'timezone' property to the determined timezone
-			timezone: timezone
+			timezone
 		};
 		this.payloads$.next(request);
 	}
