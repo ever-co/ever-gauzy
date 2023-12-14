@@ -16,6 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
@@ -30,10 +31,13 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	loading: boolean;
-	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
-	dailyData: IAmountOwedReport[];
+	public loading: boolean;
+	public groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	public dailyData: IAmountOwedReport[];
 
+	/**
+	 *
+	 */
 	private _filters: ITimeLogFilters;
 	get filters(): ITimeLogFilters {
 		return this._filters;
@@ -43,7 +47,7 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	private payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -78,49 +82,69 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 * Get header selectors request
-	 * Get gauzy timesheet filters request
-	 *
-	 * @returns
+	 * Get header selectors request and Gauzy timesheet filters request.
 	 */
-	prepareRequest() {
+	prepareRequest(): void {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
+
+		// Determine the current timezone using moment-timezone
+		const timezone = moment.tz.guess();
+
+		// Create a request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
+			groupBy: this.groupBy,
+			// Set the 'timezone' property to the determined timezone
+			timezone
 		};
+
+		// Notify subscribers about the filter change
 		this.payloads$.next(request);
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * Updates Gauzy timesheet default filters and notifies subscribers about the change.
 	 *
-	 * @param filters
+	 * @param filters - An object representing time log filters (ITimeLogFilters).
 	 */
-	filtersChange(filters: ITimeLogFilters) {
-		this.filters = Object.assign({}, filters);
+	filtersChange(filters: ITimeLogFilters): void {
+		// Create a shallow copy of the filters and update the class property
+		this.filters = { ...filters };
+
+		// Notify subscribers about the filter change
 		this.subject$.next(true);
 	}
 
+
 	/**
-	 * Get amount owed report
+	 * Retrieves amounts owed reports, updates the 'dailyData' property, and handles loading state.
 	 *
 	 * @returns
 	 */
-	async getAmountsOwed() {
+	async getAmountsOwed(): Promise<void> {
+		// Check if organization or request is not provided, resolve the Promise without further action
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Set the loading flag to true
 		this.loading = true;
+
 		try {
+			// Get the current payloads from the observable
 			const payloads = this.payloads$.getValue();
+
+			// Fetch the owed amount report data from the timesheetService
 			this.dailyData = await this.timesheetService.getOwedAmountReport(payloads);
 		} catch (error) {
-			console.log('Error while retrieving amounts owed reports', error);
+			// Log any errors during the process
+			console.error('Error while retrieving amounts owed reports', error);
 		} finally {
+			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;
 		}
 	}
+
 }

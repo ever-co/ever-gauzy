@@ -143,7 +143,7 @@ export class TimeLogController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.',
 	})
-	@Get('report/owed-chart-data')
+	@Get('report/owed-charts')
 	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
 	async getOwedAmountReportChartData(
 		@Query() options: TimeLogQueryDTO
