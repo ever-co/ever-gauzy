@@ -248,13 +248,16 @@ export function getDateRangeFormat(
  */
 export function getDaysBetweenDates(
 	startDate: string | Date,
-	endDate: string | Date
+	endDate: string | Date,
+	timezone: string = moment.tz.guess()
 ): string[] {
-	const start = moment(startDate).add(1, 'day');
-	const end = moment(endDate).startOf('day');
+	const start = moment.utc(startDate).tz(timezone).toDate();
+	const end = moment.utc(endDate).tz(timezone).toDate();
 	const range = Array.from(moment.range(start, end).by('days'));
 
-	return range.map(date => date.format('YYYY-MM-DD'));
+	console.log({ range });
+
+	return range.map((date: moment.Moment) => date.format('YYYY-MM-DD'));
 }
 
 /**
