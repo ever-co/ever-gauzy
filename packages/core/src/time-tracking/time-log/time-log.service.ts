@@ -560,7 +560,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					// Retrieve employee details
 					const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
-					// Calculate the owed amount based on the employee's bill rate and dura
+					// Calculate the owed amount based on the employee's bill rate and duration
 					const amount = employee?.billRateValue * (durationSum / 3600);
 
 					return {
