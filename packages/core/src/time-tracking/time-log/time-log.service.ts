@@ -127,6 +127,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				...(request.relations ? request.relations : [])
 			],
 			order: {
+				// Order results by the 'startedAt' field in ascending order
 				startedAt: 'ASC'
 			}
 		});
@@ -185,6 +186,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}
 			},
 			order: {
+				// Order results by the 'startedAt' field in ascending order
 				startedAt: 'ASC'
 			}
 		});

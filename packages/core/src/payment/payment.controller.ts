@@ -97,12 +97,12 @@ export class PaymentController extends CrudController<Payment> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
-	@Get('report/chart-data')
+	@Get('report/charts')
 	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getDailyReportChartData(
+	async getDailyReportCharts(
 		@Query() options: PaymentReportQueryDTO
 	) {
-		return this.paymentService.getDailyReportChartData(options);
+		return this.paymentService.getDailyReportCharts(options);
 	}
 
 	/**
