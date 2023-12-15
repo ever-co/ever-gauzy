@@ -108,7 +108,7 @@ function getDbConfig(): DataSourceOptions {
 				// See https://typeorm.io/data-source-options#common-data-source-options
 				extra: {
 					// based on  https://node-postgres.com/api/pool max connection pool size
-					max: process.env.DB_POOL_SIZE || 20,
+					max: process.env.DB_POOL_SIZE || 40,
 					// connection timeout
 					connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
 						? parseInt(process.env.DB_CONNECTION_TIMEOUT)

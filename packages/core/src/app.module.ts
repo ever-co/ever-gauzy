@@ -237,7 +237,8 @@ if (environment.sentry && environment.sentry.dsn) {
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
-			path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			path: 'integration/github/webhook',
 			config: {
 				/** Client Configuration */
 				clientId: github.clientId,
@@ -267,14 +268,18 @@ if (environment.sentry && environment.sentry.dsn) {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		ThrottlerModule.forRootAsync({
-			inject: [ConfigService],
-			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-				({
-					ttl: config.get('THROTTLE_TTL'),
-					limit: config.get('THROTTLE_LIMIT')
-				} as ThrottlerModuleOptions)
-		}),
+		...(environment.THROTTLE_ENABLED
+			? [
+					ThrottlerModule.forRootAsync({
+						inject: [ConfigService],
+						useFactory: (config: ConfigService): ThrottlerModuleOptions =>
+							({
+								ttl: config.get('THROTTLE_TTL'),
+								limit: config.get('THROTTLE_LIMIT')
+							} as ThrottlerModuleOptions)
+					})
+			  ]
+			: []),
 		CoreModule,
 		AuthModule,
 		UserModule,
@@ -403,26 +408,34 @@ if (environment.sentry && environment.sentry.dsn) {
 	controllers: [AppController],
 	providers: [
 		AppService,
-		{
-			provide: APP_GUARD,
-			useClass: ThrottlerBehindProxyGuard
-		},
+		...(environment.THROTTLE_ENABLED
+			? [
+					{
+						provide: APP_GUARD,
+						useClass: ThrottlerBehindProxyGuard
+					}
+			  ]
+			: []),
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
 		},
-		{
-			provide: APP_INTERCEPTOR,
-			useFactory: () =>
-				new SentryInterceptor({
-					filters: [
-						{
-							type: HttpException,
-							filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
-						}
-					]
-				})
-		}
+		...(environment.sentry && environment.sentry.dsn
+			? [
+					{
+						provide: APP_INTERCEPTOR,
+						useFactory: () =>
+							new SentryInterceptor({
+								filters: [
+									{
+										type: HttpException,
+										filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
+									}
+								]
+							})
+					}
+			  ]
+			: [])
 	],
 	exports: []
 })
