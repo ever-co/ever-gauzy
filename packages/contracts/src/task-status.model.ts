@@ -8,6 +8,7 @@ export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel, I
 	description?: string;
 	icon?: string;
 	color?: string;
+	order?: number;
 	isSystem?: boolean;
 	fullIconUrl?: string;
 	project?: IOrganizationProject;
