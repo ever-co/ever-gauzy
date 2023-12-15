@@ -102,11 +102,11 @@
 											</div>
 											<div class="responsive-table-content day-col">
 											<span *ngIf="project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS">
-												{{ (project.reamingBudget * 3600) | durationFormat }}
+												{{ (project.remainingBudget * 3600) | durationFormat }}
 												{{ 'REPORT_PAGE.HOURS' | translate }}
 											</span>
 												<span *ngIf="project.budgetType === OrganizationProjectBudgetTypeEnum.COST">
-												{{ project.reamingBudget
+												{{ project.remainingBudget
 													| currency : organization?.currency
 													| position : organization?.currencyPosition
 													}}

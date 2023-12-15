@@ -6,6 +6,12 @@ import {
 	OnDestroy,
 	OnInit
 } from '@angular/core';
+import { filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { pick } from 'underscore';
+import * as moment from 'moment';
 import {
 	IGetTimeLogReportInput,
 	IReportDayData,
@@ -13,14 +19,9 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { pick } from 'underscore';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
 import { Environment } from '@env/model';
 import { environment } from '@env/environment';
-import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -105,22 +106,31 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	prepareRequest() {
+		// Check if organization or filters are not provided, return early if true
 		if (!this.organization || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+
+		// Determine the current timezone using moment-timezone
+		const timezone = moment.tz.guess();
+
+		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+
+		// Create a request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
+			// Set the 'groupBy' property from the current instance's 'groupBy' property
+			groupBy: this.groupBy,
+			// Set the 'timezone' property to the determined timezone
+			timezone
 		};
+
+		// Emit the request object to the observable
 		this.payloads$.next(request);
 	}
+
 
 	async getLogs() {
 		if (!this.organization || isEmpty(this.request)) {

@@ -1,5 +1,5 @@
 export const randomSeedConfig = {
-	tenants: 5, //The number of random tenants to be seeded.
+	tenants: parseInt(process.env.DB_SEED_RANDOM_TENANT) || 5, //The number of random tenants to be seeded.
 	superAdminPerTenant: 1, //The number of random super admins to be seeded.
 	adminPerOrganization: 1, //The number of random admins to be seeded per organization.
 	organizationsPerTenant: 2, //No of random organizations seeded will be (organizationsPerTenant * tenants)

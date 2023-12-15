@@ -19,7 +19,7 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 	public async execute(
 		command: GetTimeLogGroupByEmployeeCommand
 	): Promise<IReportDayGroupByEmployee> {
-		const { timeLogs } = command;
+		const { timeLogs, timezone = moment.tz.guess() } = command;
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => log.employeeId)
@@ -34,7 +34,7 @@ export class GetTimeLogGroupByEmployeeHandler implements ICommandHandler<GetTime
 				const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
 				const byDate = chain(byEmployeeLogs)
-					.groupBy((log: ITimeLog) => moment(log.startedAt).format('YYYY-MM-DD'))
+					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 					.map((byDateLogs: ITimeLog[], date) => ({
 						date,
 						projectLogs: this.getGroupByProject(byDateLogs)
