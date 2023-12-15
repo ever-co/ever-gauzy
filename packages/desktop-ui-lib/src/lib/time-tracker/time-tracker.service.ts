@@ -27,7 +27,6 @@ import {
 	EmployeeCacheService,
 	ProjectCacheService,
 	Store,
-	TagCacheService,
 	TaskCacheService,
 	TaskPriorityCacheService,
 	TaskSizeCacheService,
@@ -56,7 +55,6 @@ export class TimeTrackerService {
 		private readonly _projectCacheService: ProjectCacheService,
 		private readonly _timeSlotCacheService: TimeSlotCacheService,
 		private readonly _employeeCacheService: EmployeeCacheService,
-		private readonly _tagCacheService: TagCacheService,
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService,
@@ -183,28 +181,6 @@ export class TimeTrackerService {
 			this._employeeCacheService.setValue(employee$, params);
 		}
 		return firstValueFrom(employee$);
-	}
-
-	async getTags(values) {
-		const params = values.organizationId
-			? {
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-			  }
-			: {};
-		let tags$ = this._tagCacheService.getValue(params);
-		if (!tags$) {
-			tags$ = this.http
-				.get(`${API_PREFIX}/tags/level`, {
-					params: toParams(params),
-				})
-				.pipe(
-					map((response: any) => response),
-					shareReplay(1)
-				);
-			this._tagCacheService.setValue(tags$, params);
-		}
-		return firstValueFrom(tags$);
 	}
 
 	async getProjects(values) {

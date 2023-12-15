@@ -277,6 +277,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return selected;
 	}
 
+	public get tasks(): ITask[] {
+		return this._tasks$.getValue();
+	}
+
+	public get selectedTask(): ITask {
+		const [selected] = this.tasks.filter((task: ITask) => task.id === this.taskSelect);
+		return selected;
+	}
+
 	private _taskTable: Ng2SmartTableComponent;
 
 	@ViewChild('taskTable') set taskTable(content: Ng2SmartTableComponent) {
@@ -579,7 +588,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 			screenshots = screenshots.filter((screenshot) => !!screenshot);
 			if (screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -1699,6 +1707,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 				await this.sendActivities(activities);
 			}
+			await this.updateTaskStatus();
 			await this.updateOrganizationTeamEmployee();
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
@@ -2010,6 +2019,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {
+					this._store.userRolePermissions = res.role.rolePermissions;
 					this.userPermission = res.role.rolePermissions
 						.map((permission) =>
 							permission.enabled ? permission.permission : null
@@ -2649,7 +2659,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {
 		try {
-			if (!this.taskSelect && !this.teamSelect) {
+			if (!this.taskSelect || !this.teamSelect) {
 				return;
 			}
 			const organizationTeamId = this.teamSelect;
@@ -2711,6 +2721,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
 			console.log('ERROR', error);
+		}
+	}
+
+	private async updateTaskStatus() {
+		try {
+			const { tenantId, organizationId } = this._store;
+			if (!this.taskSelect || this.selectedTask.status === TaskStatusEnum.IN_PROGRESS) {
+				return;
+			}
+			const id = this.selectedTask.id;
+			const title = this.selectedTask.title;
+			const status = TaskStatusEnum.IN_PROGRESS;
+			const taskStatus = this._store.statuses.find((taskStatus) => taskStatus.name === status);
+			const taskUpdateInput: ITaskUpdateInput = {
+				organizationId,
+				tenantId,
+				status,
+				title,
+				taskStatus
+			};
+			await this.timeTrackerService.updateTask(id, taskUpdateInput);
+		} catch (error) {
+			this._loggerService.log.error(error);
 		}
 	}
 }

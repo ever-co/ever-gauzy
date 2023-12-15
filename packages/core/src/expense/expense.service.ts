@@ -28,17 +28,17 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-						where: {
-							valueDate: Between<Date>(startOfMonth, endOfMonth),
-							...(filter.where as Object)
-						},
-						relations: filter.relations
-				  })
+					where: {
+						valueDate: Between<Date>(startOfMonth, endOfMonth),
+						...(filter.where as Object)
+					},
+					relations: filter.relations
+				})
 				: await this.findAll({
-						where: {
-							valueDate: Between(startOfMonth, endOfMonth)
-						}
-				  });
+					where: {
+						valueDate: Between(startOfMonth, endOfMonth)
+					}
+				});
 		}
 		return await this.findAll(filter || {});
 	}
@@ -46,7 +46,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	public countStatistic(data: number[]) {
 		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
 			? data.filter(Number).reduce((a, b) => a + b, 0) /
-					data.filter(Number).length
+			data.filter(Number).length
 			: 0;
 	}
 
@@ -116,33 +116,29 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return dates;
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	private filterQuery(request: IGetExpenseInput) {
-		const { organizationId, startDate, endDate } = request;
-		let { employeeIds = [], projectIds = [] } = request;
+		const { organizationId, startDate, endDate, projectIds = [] } = request;
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const user = RequestContext.currentUser();
 
-		const { start, end } = (startDate && endDate) ?
-								getDateRangeFormat(
-									moment.utc(startDate),
-									moment.utc(endDate)
-								) :
-								getDateRangeFormat(
-									moment().startOf('week').utc(),
-									moment().endOf('week').utc()
-								);
+		// Calculate start and end dates using a utility function
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
 
-		const tenantId = RequestContext.currentTenantId();
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (request.employeeIds) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Set employeeIds based on permissions and request
+		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
 
 		const query = this.expenseRepository.createQueryBuilder();
 		if (request.limit > 0) {
@@ -158,7 +154,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		)
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(						{
+				qb.where({
 					valueDate: Between(start, end)
 				});
 			})

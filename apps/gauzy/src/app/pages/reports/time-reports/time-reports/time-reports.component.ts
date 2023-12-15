@@ -6,6 +6,12 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { pick, pluck } from 'underscore';
+import * as moment from 'moment';
 import {
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
@@ -13,11 +19,6 @@ import {
 	ReportGroupFilterEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
-import { TranslateService } from '@ngx-translate/core';
-import { pluck } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
@@ -98,14 +99,27 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 	 * @returns
 	 */
 	prepareRequest() {
+		// Check if request or filters are not provided, return early if true
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
+		// Determine the current timezone using moment-timezone
+		const timezone = moment.tz.guess();
+
+		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+
+		// Create a request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {
-			...this.filters,
+			...appliedFilter,
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
+			// Set the 'groupBy' property from the current instance's 'groupBy' property
+			groupBy: this.groupBy,
+			// Set the 'timezone' property to the determined timezone
+			timezone
 		};
+
+		// Emit the request object to the observable
 		this.payloads$.next(request);
 	}
 
@@ -167,5 +181,5 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

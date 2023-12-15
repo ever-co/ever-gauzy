@@ -7,15 +7,9 @@ import { Store } from '../services';
 @Injectable({
 	providedIn: 'root',
 })
-export class TagCacheService extends AbstractCacheService<{
-	items: ITag[];
-	total: number;
-}> {
+export class TagCacheService extends AbstractCacheService<ITag[]> {
 	constructor(
-		protected _storageService: StorageService<{
-			items: ITag[];
-			total: number;
-		}>,
+		protected _storageService: StorageService<ITag[]>,
 		protected _store: Store
 	) {
 		super(_storageService, _store);
