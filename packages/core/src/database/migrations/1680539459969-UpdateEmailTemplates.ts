@@ -16,17 +16,13 @@ export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         const templates = Object.values(EmailTemplateEnum);
-        await Promise.all(
-            templates.map(
-                async (template: EmailTemplateEnum) => {
-                    try {
-                        await EmailTemplateUtils.migrateEmailTemplates(queryRunner, template);
-                    } catch (error) {
-                        console.log(`Error while migrating missing email templates for ${template}`, error);
-                    }
-                }
-            )
-        );
+        for await (const template of templates) {
+            try {
+                await EmailTemplateUtils.migrateEmailTemplates(queryRunner, template);
+            } catch (error) {
+                console.log(`Error while migrating missing email templates for ${template}`, error);
+            }
+        }
     }
 
     /**

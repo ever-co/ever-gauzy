@@ -20,6 +20,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
+import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
@@ -37,10 +38,10 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 export class PaymentReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	loading: boolean;
-	chartData: IChartData;
-	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
-	filters: IGetPaymentInput;
+	public loading: boolean;
+	public chartData: IChartData;
+	private groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	public filters: IGetPaymentInput;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -80,43 +81,70 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 * Get header selectors request
-	 * Get gauzy timesheet filters request
-	 *
-	 * @returns
+	 * Prepares the request by applying filters, updating the groupBy property, and updating the payloads observable.
 	 */
-	prepareRequest() {
+	private prepareRequest(): void {
+		// Check if either this.request or this.filters is empty, resolve without further action
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
+
+		// Determine the current timezone using moment-timezone
+		const timezone: string = moment.tz.guess();
+
+		// Create the request object of type IGetPaymentInput
 		const request: IGetPaymentInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
+			groupBy: this.groupBy,
+			// Set the 'timezone' property to the determined timezone
+			timezone
 		};
+
+		// Update the payloads observable with the new request
 		this.payloads$.next(request);
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * Updates Gauzy timesheet default filters, saves the filters if configured to do so,
+	 * and notifies subscribers about the change.
 	 *
-	 * @param filters
+	 * @param filters - An object representing time log filters (ITimeLogFilters).
 	 */
-	filtersChange(filters: ITimeLogFilters) {
+	public filtersChange(filters: ITimeLogFilters): void {
+		// Save filters to the timesheetFilterService if configured to do so
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
 		}
-		this.filters = Object.assign({}, filters);
+
+		// Create a shallow copy of the filters and update the class property
+		this.filters = { ...filters };
+
+		// Notify subscribers about the filter change
 		this.subject$.next(true);
 	}
 
-	async updateChart() {
+	/**
+	 * Updates the chart with payment report data.
+	 *
+	 * @returns
+	 */
+	private async updateChart(): Promise<void> {
+		// Check if organization or request is not provided, resolve the Promise without further action
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Set the loading flag to true
 		this.loading = true;
+
 		try {
+			// Get the current payloads from the observable
 			const payloads = this.payloads$.getValue();
-			const logs: IPaymentReportChartData[] = await this.paymentService.getReportChartData(payloads);
+
+			// Fetch payment report chart data from the paymentService
+			const logs: IPaymentReportChartData[] = await this.paymentService.getPaymentsReportCharts(payloads);
+
+			// Extract payment values and create a dataset
 			const datasets = [{
 				label: this.getTranslation('REPORT_PAGE.PAYMENT'),
 				data: logs.map((log) => log.value['payment']),
@@ -124,13 +152,17 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 				backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
 				borderWidth: 1
 			}];
+
+			// Update the chart data with the retrieved data
 			this.chartData = {
 				labels: pluck(logs, 'date'),
 				datasets
 			};
 		} catch (error) {
-			console.log('Error while retrieving payment reports chart', error);
+			// Log any errors during the process
+			console.error('Error while retrieving payment reports chart', error);
 		} finally {
+			// Set the loading flag to false, regardless of success or failure
 			this.loading = false;
 		}
 	}
@@ -138,10 +170,10 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 	/*
 	 * On Changed Contact Event Emitter
 	 */
-	contactChanged(contact: IOrganizationContact) {}
+	contactChanged(contact: IOrganizationContact) { }
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged(currency: ICurrency) {}
+	currencyChanged(currency: ICurrency) { }
 }

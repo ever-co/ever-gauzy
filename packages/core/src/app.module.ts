@@ -1,7 +1,8 @@
 import { HttpException, Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
-import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
 import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
@@ -143,6 +144,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
+
 const { unleashConfig, github, jitsu, jira } = environment;
 
 if (unleashConfig.url) {
@@ -403,7 +405,7 @@ if (environment.sentry && environment.sentry.dsn) {
 		AppService,
 		{
 			provide: APP_GUARD,
-			useClass: ThrottlerGuard
+			useClass: ThrottlerBehindProxyGuard
 		},
 		{
 			provide: APP_INTERCEPTOR,

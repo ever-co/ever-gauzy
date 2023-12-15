@@ -36,7 +36,7 @@ export class TimesheetService {
 	private _updateLog$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public updateLog$: Observable<boolean> = this._updateLog$.asObservable();
 
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	updateLogs(value: boolean) {
 		this._updateLog$.next(value);
@@ -45,7 +45,7 @@ export class TimesheetService {
 	addTime(request: IManualTimeInput): Promise<ITimeLog> {
 		return firstValueFrom(
 			this.http
-			.post<ITimeLog>(`${API_PREFIX}/timesheet/time-log`, request)
+				.post<ITimeLog>(`${API_PREFIX}/timesheet/time-log`, request)
 		);
 	}
 
@@ -55,16 +55,16 @@ export class TimesheetService {
 	): Promise<ITimeLog> {
 		return firstValueFrom(
 			this.http
-			.put<ITimeLog>(`${API_PREFIX}/timesheet/time-log/` + id, request)
+				.put<ITimeLog>(`${API_PREFIX}/timesheet/time-log/` + id, request)
 		);
 	}
 
 	checkOverlaps(request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
 		return firstValueFrom(
 			this.http
-			.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log/conflict`, {
-				params: toParams(request)
-			})
+				.get<ITimeLog[]>(`${API_PREFIX}/timesheet/time-log/conflict`, {
+					params: toParams(request)
+				})
 		);
 	}
 
@@ -75,7 +75,7 @@ export class TimesheetService {
 	getTimeSheets(request?: IGetTimesheetInput) {
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet`, { params: toParams(request) })
+				.get(`${API_PREFIX}/timesheet`, { params: toParams(request) })
 		).then((data: ITimesheet[]) => {
 			return data;
 		});
@@ -84,7 +84,7 @@ export class TimesheetService {
 	getTimeSheetCount(request?: IGetTimesheetInput) {
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet/count`, { params: toParams(request) })
+				.get(`${API_PREFIX}/timesheet/count`, { params: toParams(request) })
 		).then((data: number) => {
 			return data;
 		});
@@ -114,86 +114,115 @@ export class TimesheetService {
 		);
 	}
 
-	getDailyReport(request?: IGetTimeLogInput): Promise<IReportDayData[]> {
+	/**
+	 * Fetches daily report data based on the provided request parameters.
+	 *
+	 * @param request - Parameters for customizing the request (IGetTimeLogInput).
+	 * @returns A Promise that resolves to the daily report data.
+	 */
+	async getDailyReport(request: IGetTimeLogInput): Promise<IReportDayData[]> {
+		// Convert the request parameters to URL query parameters
 		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get<IReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
+			this.http.get<IReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
 		);
 	}
 
-	getOwedAmountReport(request?: IGetTimeLogInput) {
+	/**
+	 * Fetches daily report chart data based on the provided request parameters.
+	 *
+	 * @param request - Parameters for customizing the request (IGetTimeLogReportInput).
+	 * @returns A Promise that resolves to the daily report chart data.
+	 */
+	async getDailyReportChart(request: IGetTimeLogReportInput) {
+		// Convert the request parameters to URL query parameters
 		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get<IAmountOwedReport[]>(
-				`${API_PREFIX}/timesheet/time-log/report/owed-report`,
-				{ params }
-			)
+			this.http.get(`${API_PREFIX}/timesheet/time-log/report/daily-chart`, { params })
 		);
 	}
 
-	getOwedAmountReportChartData(request?: IGetTimeLogInput) {
+	/**
+	 * Retrieves the amount owed report based on the provided request parameters.
+	 *
+	 * @param request - Optional parameters for customizing the request (IGetTimeLogInput).
+	 * @returns A Promise that resolves to the amount owed report data.
+	 */
+	async getOwedAmountReport(request: IGetTimeLogInput = {}): Promise<IAmountOwedReport[]> {
+		// Convert the request parameters to URL query parameters
 		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/report/owed-chart-data`, {
-				params
-			})
+			this.http.get<IAmountOwedReport[]>(`${API_PREFIX}/timesheet/time-log/report/owed-report`, { params })
 		);
 	}
 
-	getDailyReportChart(request: IGetTimeLogReportInput) {
+	/**
+	 * Retrieves chart data for the owed amount report based on the provided request parameters.
+	 *
+	 * @param request - Optional parameters for customizing the request (IGetTimeLogInput).
+	 * @returns A Promise that resolves to the chart data for the owed amount report.
+	 */
+	async getOwedAmountReportChartData(request: IGetTimeLogInput = {}): Promise<any> {
+		// Convert the request parameters to URL query parameters
 		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/report/daily-chart`, {
-				params
-			})
+			this.http.get(`${API_PREFIX}/timesheet/time-log/report/owed-charts`, { params })
 		);
 	}
 
-	getWeeklyReportChart(request?: IGetTimeLogInput) {
+	/**
+	 * Fetches weekly report chart data based on the provided request parameters.
+	 *
+	 * @param request - Optional parameters for customizing the request (IGetTimeLogInput).
+	 * @returns A Promise that resolves to the weekly report chart data.
+	 */
+	async getWeeklyReportChart(request?: IGetTimeLogInput) {
+		// Convert the request parameters to URL query parameters
 		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get<ReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
+			this.http.get<ReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/weekly`, { params })
 		);
 	}
 
-	getTimeLimit(request: IGetTimeLimitReportInput) {
+	/**
+	 * Fetches time limit report based on the provided request parameters.
+	 *
+	 * @param request - Parameters for customizing the request (IGetTimeLimitReportInput).
+	 * @returns A Promise that resolves to the time limit report data.
+	 */
+	async getTimeLimit(request: IGetTimeLimitReportInput) {
+		// Convert the request parameters to URL query parameters
+		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get<ITimeLimitReport[]>(
-				`${API_PREFIX}/timesheet/time-log/time-limit`,
-				{
-					params: toParams(request)
-				}
-			)
+			this.http.get<ITimeLimitReport[]>(`${API_PREFIX}/timesheet/time-log/time-limit`, { params })
 		);
 	}
 
-	getProjectBudgetLimit(request: IGetTimeLogReportInput) {
+	/**
+	 * Fetches project budget limit report based on the provided request parameters.
+	 *
+	 * @param request - Parameters for customizing the request (IGetTimeLogReportInput).
+	 * @returns A Promise that resolves to the project budget limit report data.
+	 */
+	async getProjectBudgetLimit(request: IGetTimeLogReportInput) {
+		// Convert the request parameters to URL query parameters
+		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get<IProjectBudgetLimitReport[]>(
-				`${API_PREFIX}/timesheet/time-log/project-budget-limit`,
-				{
-					params: toParams(request)
-				}
-			)
+			this.http.get<IProjectBudgetLimitReport[]>(`${API_PREFIX}/timesheet/time-log/project-budget-limit`, { params })
 		);
 	}
 
-	getClientBudgetLimit(request: IGetTimeLogReportInput) {
+	/**
+	 * Fetches client budget limit report based on the provided request parameters.
+	 *
+	 * @param request - Parameters for customizing the request (IGetTimeLogReportInput).
+	 * @returns A Promise that resolves to the client budget limit report data.
+	 */
+	async getClientBudgetLimit(request: IGetTimeLogReportInput): Promise<IClientBudgetLimitReport[]> {
+		// Convert the request parameters to URL query parameters
+		const params = toParams(request);
 		return firstValueFrom(
-			this.http
-			.get<IClientBudgetLimitReport[]>(
-				`${API_PREFIX}/timesheet/time-log/client-budget-limit`,
-				{
-					params: toParams(request)
-				}
-			)
+			this.http.get<IClientBudgetLimitReport[]>(`${API_PREFIX}/timesheet/time-log/client-budget-limit`, { params })
 		);
 	}
 
@@ -201,7 +230,7 @@ export class TimesheetService {
 		const params = toParams(findOptions);
 		return firstValueFrom(
 			this.http
-			.get(`${API_PREFIX}/timesheet/time-log/${id}`, { params })
+				.get(`${API_PREFIX}/timesheet/time-log/${id}`, { params })
 		).then((data: ITimeLog) => {
 			return data;
 		});
@@ -211,9 +240,9 @@ export class TimesheetService {
 		const params = toParams(request);
 		return firstValueFrom(
 			this.http
-			.get<ITimeSlot>(`${API_PREFIX}/timesheet/time-slot/${id}`, {
-				params
-			})
+				.get<ITimeSlot>(`${API_PREFIX}/timesheet/time-slot/${id}`, {
+					params
+				})
 		);
 	}
 
@@ -221,12 +250,12 @@ export class TimesheetService {
 		const params = toParams(request);
 		return firstValueFrom(
 			this.http
-			.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params })
+				.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params })
 		);
 	}
 
 	deleteTimeSlots(request) {
-		return firstValueFrom(this.http .delete(`${API_PREFIX}/timesheet/time-slot`, {
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
 			params: toParams(request)
 		}));
 	}

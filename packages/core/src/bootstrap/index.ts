@@ -34,9 +34,13 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	const config = await registerPluginConfig(pluginConfig);
 
 	const { BootstrapModule } = await import('./bootstrap.module');
+
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose']
 	});
+
+	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
+	app.set('trust proxy', 1);
 
 	// Starts listening for shutdown hooks
 	app.enableShutdownHooks();

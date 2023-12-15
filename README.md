@@ -23,7 +23,7 @@ It's built with a React / ReactNative (Expo) stack and connects to headless [Eve
 -   **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality.
 -   **Work and Project Management** software.
 
-![overview](https://docs.gauzy.co/docs/assets/overview.png)
+![overview](https://docs.gauzy.co/overview.png)
 
 Ever® Gauzy™ Platform is a part of our larger Open Platform for **Collaborative, On-Demand and Sharing Economies** - [Ever® Platform™](https://ever.co).
 
@@ -83,15 +83,15 @@ Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 
 ### Web UI
 
-![overview](https://docs.gauzy.co/docs/assets/overview.png)
+![overview](https://docs.gauzy.co/overview.png)
 
 ### Desktop Timer UI (Standard)
 
-![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-small.png)
+![timer](https://docs.gauzy.co/desktop/desktop-timer-small.png)
 
 ### Desktop Timer UI (Expanded)
 
-![timer](https://docs.gauzy.co/docs/assets/desktop/desktop-timer-expanded.png)
+![timer](https://docs.gauzy.co/desktop/desktop-timer-expanded.png)
 
 </details>
 
@@ -143,11 +143,11 @@ Note: it's currently in Alpha version / in testing mode, please use it with caut
 
 We have Gauzy Server and two Desktop Apps (for Windows/Mac/Linux):
 
--   Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser-based or Desktop based). It's recommended option if you want to setup the Ever Gauzy Platform in small to medium organizations.
+-   Ever® Gauzy™ Server - includes Gauzy API, SQLite DB (or connects to external PostgreSQL) and serves Guazy frontend. It allows to quickly run Gauzy Server for multiple clients (browser-based or Desktop-based). It's a recommended option if you want to setup the Ever Gauzy Platform in small to medium organizations.
 
--   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows you to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy Server with API / DB installed on a different computer or if you want to connect to our live API). It's recommended option if you want to try Gauzy quickly / for personal use or if you want to connect to Gauzy Server in the "client-server" configuration (and use Desktop App instead of web browser).
+-   Ever® Gauzy™ Desktop App - includes Gauzy frontend (UI), Gauzy API, SQLite DB, etc., all-in-one! It allows to quickly run the whole Gauzy solution locally, both UI and Timer (for time tracking, optionally of course). In addition, it allows you to connect to the external database (e.g. PostgreSQL) or external API (if you have Gauzy Server with API / DB installed on a different computer or if you want to connect to our live API). It's a recommended option if you want to try Gauzy quickly / for personal use or if you want to connect to Gauzy Server in the "client-server" configuration (and use Desktop App instead of web browser).
 
--   Ever® Gauzy™ Desktop Timer App - allows running Time & Activity Tracking for employees/contractors with screenshots and activity monitoring. Recommended to setup by organization employees as long as they are not interested in other Gauzy Platform features (e.g. accounting) and only need to track work time.
+-   Ever® Gauzy™ Desktop Timer App - allows running Time and Activity Tracking for employees/contractors with screenshots and activity monitoring. It is recommended to setup by organization employees as long as they are not interested in other Gauzy Platform features (e.g. accounting) and only need to track work time.
 
 More information about our Server & Desktop Apps:
 
@@ -155,9 +155,9 @@ More information about our Server & Desktop Apps:
 -   Setup Gauzy Server with default choices in Setup Wizard and run it.
 -   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
 -   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such an Admin user is not an employee, so you will not be able to track time.
--   You can login with `employee@ever.co` and password `123456` to check Employee related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
+-   You can login with `employee@ever.co` and password `123456` to check Employee-related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
 -   If you install Gauzy Server, it is possible to connect to it using a browser (by default on <http://localhost:4200>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:3000/api> because it's where Gauzy Server API runs by default).
--   You can read more information about our Desktop Apps on the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and about our Server on the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
+-   You can read more information about our Desktop Apps on the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and our Server at the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
 ## 🧱 Technology Stack and Requirements
 
@@ -180,7 +180,7 @@ Note: thanks to TypeORM, Gauzy will support lots of DBs: SQLite (default, for de
 
 ## 📄 Documentation
 
-Please refer to our official [Platform Documentation](https://docs.gauzy.co) and to our [Wiki](https://github.com/ever-co/ever-gauzy/wiki) (WIP).
+Please refer to our official [Platform Documentation](https://docs.gauzy.co) and our [Wiki](https://github.com/ever-co/ever-gauzy/wiki) (WIP).
 
 ## 🚀 Quick Start
 
@@ -188,8 +188,8 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 -   Clone repo.
 -   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install).
--   Run `docker-compose up`, if you want to run the platform in production configuration using our prebuild Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: docker compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
--   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuild Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: docker compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
+-   Run `docker-compose up`, if you want to run the platform in production configuration using our prebuild Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
+-   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuild Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Run `docker-compose -f docker-compose.build.yml up`, if you want to build everything (code and Docker images) locally. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
 -   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuild Docker images.
 -   Open <http://localhost:4200> in your browser.
@@ -204,7 +204,7 @@ Together with Gauzy, Docker Compose will run the following:
 -   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
 -   [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
 -   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
--   [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative. Fully-scriptable data ingestion engine for modern data teams.
+-   [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative. Fully scriptable data ingestion engine for modern data teams.
 -   [Redis](https://github.com/redis/redis) - In-memory data store/caching (also used by Jitsu)
 -   [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics, and other BI-related features, with UI available on <http://localhost:4000>.
 
@@ -227,13 +227,13 @@ Together with Gauzy, Docker Compose will run the following:
 Notes:
 
 -   during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
--   you can run seed any moment manually (e.g. if you changed entities schemas) with `yarn seed` command to re-initialize DB (warning: unsafe for production!).
+-   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!).
 -   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
 
 #### Optional / Recommended for Production
 
 -   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
--   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using an in-memory caching strategy instead of distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
+-   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using an in-memory caching strategy instead of a distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
 -   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
 -   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3-compatible storage using local filesystem-based storage (recommended for testing/demo purposes only). For production, we recommend using Wasabi or AWS S3 storage or another S3-compatible cloud storage.
 -   Optionally (recommended for production) install and run [Jitsu](https://github.com/jitsucom/jitsu). Note: the platform will work without Jitsu, however, data ingestion will be disabled for additional analyses / real-time pipelines.

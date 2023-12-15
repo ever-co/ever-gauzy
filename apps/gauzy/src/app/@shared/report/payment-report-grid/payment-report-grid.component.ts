@@ -5,6 +5,11 @@ import {
 	Input,
 	OnInit
 } from '@angular/core';
+import { filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
 import {
 	IGetTimeLogReportInput,
 	IPaymentReportData,
@@ -12,11 +17,7 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { DateRangePickerBuilderService, PaymentService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
@@ -77,18 +78,21 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 * Get header selectors request
-	 * Get gauzy timesheet filters request
-	 *
-	 * @returns
+	 * Prepares the request by applying filters and updating the payloads observable.
 	 */
 	prepareRequest() {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
+
+		// Determine the current timezone using moment-timezone
+		const timezone: string = moment.tz.guess();
+
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
+			groupBy: this.groupBy,
+			// Set the 'timezone' property to the determined timezone
+			timezone
 		};
 		this.payloads$.next(request);
 	}
@@ -98,8 +102,8 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent
 	 *
 	 * @param filters
 	 */
-	filtersChange(filters: ITimeLogFilters) {
-		this.filters = Object.assign({}, filters);
+	filtersChange(filters: ITimeLogFilters): void {
+		this.filters = { ...filters };
 		this.subject$.next(true);
 	}
 
@@ -111,21 +115,29 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 * Get payment report
+	 * Retrieves payment report based on the provided request parameters.
 	 *
-	 * @returns
+	 * @returns A Promise that resolves to the payment report data.
 	 */
-	async getPaymentReport() {
+	async getPaymentReport(): Promise<void> {
+		// Check if the organization and request are available
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Set loading to true
 		this.loading = true;
+
 		try {
+			// Get the request payloads
 			const payloads = this.payloads$.getValue();
-			this.dailyData = await this.paymentService.getReportData(payloads);
+
+			// Retrieve payments report using the service
+			this.dailyData = await this.paymentService.getPaymentsReport(payloads);
 		} catch (error) {
 			console.log('Error while retrieving payments reports', error);
 		} finally {
+			// Set loading to false
 			this.loading = false;
 		}
 	}

@@ -259,17 +259,22 @@ export function ipcMainHandler(
 				await timerService.update(
 					new Timer({
 						id: arg.id,
-						timelogId: arg.lastTimer?.id,
-						timesheetId: arg.lastTimer?.timesheetId,
 						synced: true,
+						...(arg.lastTimer && {
+							timelogId: arg.lastTimer?.id,
+							timesheetId: arg.lastTimer?.timesheetId
+						}),
 						...(arg.lastTimer?.startedAt && {
-							startedAt: new Date(arg.lastTimer?.startedAt),
+							startedAt: new Date(arg.lastTimer?.startedAt)
 						}),
 						...(!arg.lastTimer && {
 							synced: false,
 							isStartedOffline: arg.isStartedOffline,
-							isStoppedOffline: arg.isStoppedOffline,
+							isStoppedOffline: arg.isStoppedOffline
 						}),
+						...(arg.timeSlotId && {
+							timeslotId: arg.timeSlotId
+						})
 					})
 				);
 			}

@@ -32,4 +32,12 @@ export class SelectorsQueryDTO extends DateRangeQueryDTO implements ITimeLogFilt
     @IsOptional()
     @IsArray()
     readonly taskIds: string[];
+
+    /**
+     * An array of team IDs for filtering time logs.
+     */
+    @ApiPropertyOptional({ type: () => Array, isArray: true })
+    @IsOptional()
+    @IsArray()
+    readonly teamIds: string[];
 }
