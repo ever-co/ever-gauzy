@@ -37,7 +37,7 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.deploy/k8s/k8s-manifest.civo.demo.yaml | kubectl --context ever apply -f -
         env:
           # below we are using GitHub secrets for both frontend and backend
-          DB_NAME: 'gauzy_demo'
+          DB_NAME: '${{ secrets.DB_NAME }}'
           CLOUD_PROVIDER: 'CIVO'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
