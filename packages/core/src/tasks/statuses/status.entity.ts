@@ -28,6 +28,10 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@Column({ nullable: true })
 	description?: string;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@Column({ nullable: true, unique: true })
+	order?: number;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
