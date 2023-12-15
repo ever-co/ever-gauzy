@@ -55,8 +55,8 @@ export const environment: IEnvironment = {
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
-	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60,
-	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 300,
+	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60, // now it's 60 seconds, but in future versions of Throttle going to be 60ms!
+	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 3000,
 
 	/**
 	 * Jitsu Server Configuration
@@ -224,7 +224,8 @@ export const environment: IEnvironment = {
 		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
 		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
 		appLink: process.env.APP_LINK || 'http://localhost:4200/',
-		appEmailConfirmationUrl: process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
+		appEmailConfirmationUrl:
+			process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
 		companyLink: process.env.COMPANY_LINK || 'https://ever.co',
 		companyName: process.env.COMPANY_NAME || 'Ever Co. LTD'
