@@ -1,14 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindManyOptions, IsNull, Not, Repository } from 'typeorm';
 import {
-	IBasePerTenantAndOrganizationEntityModel,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
-	IntegrationEnum
+	IPagination
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
@@ -21,6 +20,26 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		protected readonly repository: Repository<IntegrationTenant>
 	) {
 		super(repository);
+	}
+
+	/**
+	 * Find and return a paginated list of IntegrationTenant entities.
+	 *
+	 * @param options - Optional query and pagination options.
+	 * @returns A Promise that resolves to a paginated list of IntegrationTenant entities.
+	 */
+	public async findAll(options?: FindManyOptions<IntegrationTenant>): Promise<IPagination<IntegrationTenant>> {
+		// Define where conditions by merging provided options with a condition for non-null integrationId.
+		const whereConditions = {
+			...options?.where,
+			integrationId: Not(IsNull())
+		};
+
+		// Call the superclass's findAll method with merged options and where conditions.
+		return await super.findAll({
+			...options,
+			where: whereConditions,
+		});
 	}
 
 	/**
@@ -72,7 +91,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
 
-			const integrationTenant = await this.findOneByOptions({
+			const integration = await this.findOneByOptions({
 				where: {
 					tenantId,
 					organizationId,
@@ -80,38 +99,46 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					isActive: true,
 					isArchived: false,
 					integration: {
+						provider: name,
 						isActive: true,
-						isArchived: false
-					}
+						isArchived: false,
+					},
 				},
-				order: {
-					updatedAt: 'DESC'
-				},
-				relations: {
-					integration: true
-				}
+				order: { updatedAt: 'DESC' },
+				relations: { integration: true },
 			});
-			return integrationTenant || false;
+
+			return integration || false;
 		} catch (error) {
 			return false;
 		}
 	}
 
 	/**
-	 *
-	 * @param options
-	 * @returns
+	 * Get integration tenant settings by specified options.
+	 * @param input - The input options for finding the integration tenant settings.
+	 * @returns The integration tenant settings if found.
+	 * @throws BadRequestException if not found or an error occurs.
 	 */
-	async getIntegrationSettings(
-		options: IBasePerTenantAndOrganizationEntityModel
+	async getIntegrationTenantSettings(
+		input: IIntegrationTenantFindInput
 	): Promise<IIntegrationTenant> {
 		try {
-			const { organizationId, tenantId } = options;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+			const { organizationId, name } = input;
+
 			return await this.findOneByOptions({
 				where: {
 					organizationId,
 					tenantId,
-					name: IntegrationEnum.GAUZY_AI
+					name,
+					isActive: true,
+					isArchived: false,
+					integration: {
+						provider: name,
+						isActive: true,
+						isArchived: false,
+					}
 				},
 				relations: {
 					settings: true

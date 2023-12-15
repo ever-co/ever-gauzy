@@ -4,7 +4,7 @@ import { IsObject, IsString, ValidateIf } from "class-validator";
 import { Employee } from "./../employee.entity";
 import { IsEmployeeBelongsToOrganization } from "./../../shared/validators";
 
-export class EmployeeFeatureDTO implements IRelationalEmployee  {
+export class EmployeeFeatureDTO implements IRelationalEmployee {
 
     @ApiPropertyOptional({ type: () => Employee })
     @ValidateIf((it) => !it.employeeId || it.employee)

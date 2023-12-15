@@ -65,6 +65,8 @@ spec:
                         value: 0.0.0.0
                       - name: DEMO
                         value: 'true'
+                      - name: CLOUD_PROVIDER
+                        value: '$CLOUD_PROVIDER'
                       - name: NODE_ENV
                         value: 'development'
                       - name: ADMIN_PASSWORD_RESET
@@ -89,6 +91,12 @@ spec:
                         value: 'refreshSecretKey'
                       - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
                         value: '86400'
+                      - name: OTEL_ENABLED
+                        value: '$OTEL_ENABLED'
+                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+                      - name: OTEL_EXPORTER_OTLP_HEADERS
+                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
                   ports:
                       - containerPort: 3000
                         protocol: TCP

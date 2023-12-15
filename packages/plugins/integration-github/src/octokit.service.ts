@@ -83,6 +83,40 @@ export class OctokitService {
 	}
 
 	/**
+	 * Delete a GitHub installation using the provided installationId.
+	 *
+	 * @param {number} installationId - The ID of the GitHub installation to be deleted.
+	 * @returns {Promise<OctokitResponse<any>>} A Promise that resolves with the OctokitResponse representing the result of the deletion.
+	 * @throws {Error} If there is an issue with the Octokit instance or if an error occurs during the deletion process.
+	 */
+	public async deleteInstallation(installationId: number): Promise<OctokitResponse<any>> {
+		try {
+			// Check if the Octokit instance is available
+			if (!this.app) {
+				throw new Error('Octokit instance is not available.');
+			}
+
+			// Get an Octokit instance for the installation
+			const octokit = await this.app.getInstallationOctokit(installationId);
+
+			// Define the endpoint for deleting the installation
+			const endpoint = `DELETE /app/installations/{installationId}`;
+
+			// Send a request to the GitHub API to delete the installation
+			return await octokit.request(endpoint, {
+				installationId,
+				headers: {
+					'X-GitHub-Api-Version': GITHUB_API_VERSION,
+				},
+			});
+		} catch (error) {
+			// Handle errors, log the error message, and throw a new error
+			this.logger.error('Failed to delete GitHub installation', error.message);
+			throw new Error('Failed to delete GitHub installation');
+		}
+	}
+
+	/**
 	 * Get GitHub repositories for a specific installation.
 	 *
 	 * @param installationId The installation ID for the GitHub App.
@@ -127,10 +161,9 @@ export class OctokitService {
 	 */
 	public async getRepositoryIssues(installationId: number, {
 		owner,
-		repo
-	}: {
-		owner: string;
-		repo: string;
+		repo,
+		page = 1,
+		per_page = 100
 	}): Promise<OctokitResponse<any>> {
 		if (!this.app) {
 			throw new Error('Octokit instance is not available.');
@@ -146,6 +179,8 @@ export class OctokitService {
 			return await octokit.request(endpoint, {
 				owner,
 				repo,
+				page,
+				per_page,
 				headers: {
 					'X-GitHub-Api-Version': GITHUB_API_VERSION,
 				},
@@ -203,7 +238,7 @@ export class OctokitService {
 	}
 
 	/**
-	 * Creates labels for a GitHub issue using an Octokit instance tied to a specific installation.
+	 * Add labels for a GitHub issue using an Octokit instance tied to a specific installation.
 	 *
 	 * @param installationId - The installation ID of the GitHub App.
 	 * @param options - Options object with 'owner,' 'repo,', 'issue_number' and 'labels' properties.
@@ -214,7 +249,7 @@ export class OctokitService {
 	 * @returns A promise that resolves to an OctokitResponse.
 	 * @throws An error if Octokit instance is not available or if the request fails.
 	 */
-	public async createLabelsForIssue(installationId: number, {
+	public async addLabelsForIssue(installationId: number, {
 		owner,
 		repo,
 		issue_number,

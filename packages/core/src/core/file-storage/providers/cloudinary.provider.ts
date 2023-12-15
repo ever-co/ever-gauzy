@@ -5,136 +5,151 @@ import { join } from 'path';
 import { URL } from 'url';
 import * as streamifier from 'streamifier';
 import axios from 'axios';
-import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import { ConfigOptions, UploadApiErrorResponse, UploadApiResponse, v2 as cloudinaryV2 } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from "@gauzy/contracts";
-import { ICloudinaryConfig, isNotEmpty } from '@gauzy/common';
+import { ICloudinaryConfig, isNotEmpty, trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from './../../../core/context';
 
+// Retrieve Cloudinary configuration from the environment
+const { cloudinary } = environment;
+
 export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 
-    public config: ICloudinaryConfig & FileSystem;
+    public instance: CloudinaryProvider;
     public readonly name = FileStorageProviderEnum.CLOUDINARY;
-    public static instance: CloudinaryProvider;
+    public config: ICloudinaryConfig & FileSystem;
 
     constructor() {
         super();
-        this.setDefaultConfig();
-    }
-
-    public getInstance() {
-        if (!CloudinaryProvider.instance) {
-            CloudinaryProvider.instance = new CloudinaryProvider();
-        }
-        this.setCloudinaryConfig();
-        return CloudinaryProvider.instance;
+        this.setDefaultConfiguration();
     }
 
     /**
-     * Get cloudinary instance
-     * @returns
+    * Get the singleton instance of CloudinaryProvider
+    * @returns {CloudinaryProvider} The singleton instance
+    */
+    getProviderInstance(): CloudinaryProvider {
+        if (!this.instance) {
+            this.instance = new CloudinaryProvider();
+        }
+        this.setCloudinaryConfiguration();
+        return this.instance;
+    }
+
+    /**
+     * Retrieves and configures a Cloudinary instance based on the provided configuration.
+     * The configuration includes cloud_name, api_key, api_secret, and secure settings.
+     *
+     * @returns ConfigOptions | undefined - The Cloudinary configuration object or undefined in case of an error.
      */
-    private getCloudinaryInstance(): ConfigOptions {
+    private getCloudinaryInstance(): ConfigOptions | undefined {
         try {
-            this.setCloudinaryConfig();
-            return cloudinary.config({
+            // Set the Cloudinary configuration based on the current instance's settings
+            this.setCloudinaryConfiguration();
+
+            // Use cloudinary.config to set the Cloudinary configuration
+            return cloudinaryV2.config({
                 cloud_name: this.config.cloud_name,
                 api_key: this.config.api_key,
                 api_secret: this.config.api_secret,
                 secure: this.config.secure
             });
         } catch (error) {
-            console.log(`Error while retrieving ${FileStorageProviderEnum.CLOUDINARY} instance:`, error);
+            // Log any errors that occur during the process
+            console.error(`Error while retrieving ${FileStorageProviderEnum.CLOUDINARY} instance:`, error);
         }
     }
 
     /**
-     *  Set Cloudinary Configuration
+     * Sets default Cloudinary configuration values based on environment settings.
+     * This function initializes the configuration object with values such as rootPath, baseUrl,
+     * cloud_name, api_key, api_secret, and secure, using the provided environment configuration.
      */
-    setDefaultConfig() {
-        const { cloudinaryConfig } = environment;
+    setDefaultConfiguration(): void {
+        // Set default values for the Cloudinary configuration object
         this.config = {
             rootPath: '',
-            baseUrl: cloudinaryConfig.delivery_url,
-            cloud_name: cloudinaryConfig.cloud_name,
-            api_key: cloudinaryConfig.api_key,
-            api_secret: cloudinaryConfig.api_secret,
-            secure: cloudinaryConfig.secure
-        }
+            baseUrl: cloudinary.delivery_url,
+            cloud_name: cloudinary.cloud_name,
+            api_key: cloudinary.api_key,
+            api_secret: cloudinary.api_secret,
+            secure: cloudinary.secure
+        };
     }
 
     /**
-     * Set Cloudinary Configuration Run Time
+     * Sets Cloudinary configuration by updating the existing configuration with values from the current request's tenant settings.
+     * The function uses default values and trims/validates the obtained settings before updating the configuration.
      */
-    setCloudinaryConfig() {
+    setCloudinaryConfiguration(): void {
+        // Use the default configuration as a starting point
+        this.config = {
+            rootPath: '',
+            ...this.config
+        };
+
+        // Check if there is a current request
         const request = RequestContext.currentRequest();
+
         if (request) {
-            const settings = request['tenantSettings'];
+            // Retrieve tenant settings from the request, defaulting to an empty object
+            const settings = request['tenantSettings'] || {};
+
+            // Check if there are non-empty tenant settings
             if (isNotEmpty(settings)) {
+                // Update the configuration with trimmed and valid values from tenant settings
                 this.config = {
-                    rootPath: '',
-                    ...this.config
+                    ...this.config,
+                    cloud_name: trimAndGetValue(settings.cloudinary_cloud_name),
+                    api_key: trimAndGetValue(settings.cloudinary_api_key),
+                    api_secret: trimAndGetValue(settings.cloudinary_api_secret),
+                    secure: settings.cloudinary_api_secure,
+                    ...(isNotEmpty(settings.cloudinary_delivery_url)
+                        ? {
+                            baseUrl: new URL(settings.cloudinary_delivery_url).toString()
+                        }
+                        : {}),
                 };
-                if (isNotEmpty(settings.cloudinary_cloud_name)) {
-                    this.config['cloud_name'] = settings.cloudinary_cloud_name.trim();
-                }
-                if (isNotEmpty(settings.cloudinary_api_key)) {
-                    this.config['api_key'] = settings.cloudinary_api_key.trim();
-                }
-                if (isNotEmpty(settings.cloudinary_api_secret)) {
-                    this.config['api_secret'] = settings.cloudinary_api_secret.trim();
-                }
-                if (isNotEmpty(settings.cloudinary_api_secure)) {
-                    this.config['secure'] = settings.cloudinary_api_secure;
-                }
-                if (isNotEmpty(settings.cloudinary_delivery_url)) {
-                    const baseUrl = new URL(settings.cloudinary_delivery_url).toString();
-                    this.config['baseUrl'] = baseUrl;
-                }
             }
-        } else {
-            this.config = {
-                rootPath: '',
-                ...this.config
-            };
         }
     }
 
     /**
-     * Handle file upload to the cloudinary storage
+     * Multer storage engine handler for Cloudinary.
      *
-     * @param param0
-     * @returns
+     * @param options - File storage options, including destination, filename, and prefix
+     * @returns multer.StorageEngine - Configured Cloudinary storage engine
      */
-    handler({
-        dest,
-        filename,
-        prefix = 'file'
-    }: FileStorageOption): multer.StorageEngine {
+    handler(options: FileStorageOption): multer.StorageEngine {
+        const { dest, filename, prefix = 'file' } = options;
+
         /** Get cloudinary instance */
         this.getCloudinaryInstance();
 
         return new CloudinaryStorage({
-            cloudinary: cloudinary,
+            cloudinary: cloudinaryV2,
             params: (_req: Request, file: Express.Multer.File) => {
-                // A file extension, or filename extension, is a suffix at the end of a file.
+                // Extract file format from original name
                 const format = file.originalname.split('.').pop();
 
-                // A string or function that determines the destination path for uploaded
+                // Determine destination path (string or function)
                 const destination = dest instanceof Function ? dest(file) : dest;
 
-                // A string or function that determines the destination image path for uploaded.
+                // Convert destination to folder format and replace backslashes with forward slashes
                 const folder = join(destination).replace(/\\/g, '/');
 
-                // A function that determines the name of the uploaded file.
+                // Determine the public_id (name) of the uploaded file
                 let public_id: string;
                 if (filename) {
                     public_id = (typeof filename === 'string') ? filename : filename(file, format);
                 } else {
                     public_id = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}`;
                 }
+
+                // Return Cloudinary parameters
                 return {
                     public_id,
                     folder,
@@ -145,87 +160,123 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
     }
 
     /**
+     * Generates a complete URL for a file based on the provided file URL.
      *
-     * @param fileURL
-     * @returns
+     * @param fileURL - The file URL to generate a complete URL for
+     * @returns Promise<string | null> - A promise resolving to the complete URL or null if input is invalid
      */
-    url(fileURL: string): string {
-        if (!fileURL) {
-            return null;
-        }
-        if (fileURL.startsWith('http')) {
+    public async url(fileURL: string): Promise<string | null> {
+        // If fileURL is null or starts with 'http', assume it's already a complete URL
+        if (!fileURL || fileURL.startsWith('http')) {
             return fileURL;
         }
+
+        // Construct a new URL using the Cloudinary configuration
         return new URL(join(this.config.cloud_name, fileURL), this.config.baseUrl).toString();
     }
 
     /**
+     * Generates a complete path or URL for a file based on the provided file path.
      *
-     * @param filePath
-     * @returns
+     * @param filePath - The file path to generate a complete path or URL for
+     * @returns string | null - The complete path or URL, or null if the input is invalid
      */
-    path(filePath: string): string {
+    public path(filePath: string): string | null {
         if (!filePath) {
             return null;
         }
+
+        // If filePath starts with 'http', assume it's already a complete URL
         if (filePath.startsWith('http')) {
             return filePath;
         }
-        return new URL(join(this.config.cloud_name, filePath), this.config.baseUrl).toString();
-    }
 
-    /**
-     *
-     * @param file
-     * @returns
-     */
-    async getFile(file: string): Promise<Buffer> {
         try {
-            const response = await axios.get(this.url(file), { responseType: 'arraybuffer' });
-            return Buffer.from(response.data, "utf-8");
+            // Attempt to construct a new URL using the Cloudinary configuration
+            return new URL(join(this.config.cloud_name, filePath), this.config.baseUrl).toString();
         } catch (error) {
-            console.log('Error while retrieving cloudinary image from serer', error);
+            console.error(`Error constructing URL for file path: ${filePath}`, error);
+            return null;
         }
     }
 
     /**
+     * Retrieves a file from Cloudinary and returns it as a Buffer.
      *
-     * @param file
-     * @param path
-     * @returns
+     * @param file - The file identifier
+     * @returns Promise<Buffer | any> - A promise resolving to the file content as a Buffer, or any if an error occurs
+     */
+    async getFile(file: string): Promise<Buffer | any> {
+        try {
+            // Get the complete URL for the file
+            const URL = await this.url(file);
+
+            // Fetch the file content from Cloudinary using axios
+            const response = await axios.get(URL, { responseType: 'arraybuffer' });
+
+            // Convert the response data to a Buffer
+            const fileBuffer = Buffer.from(response.data, "utf-8");
+
+            return fileBuffer;
+        } catch (error) {
+            console.error('Error while retrieving Cloudinary image from server', error);
+            // Return any value to indicate an error occurred
+            return null;
+        }
+    }
+
+    /**
+     * Uploads a file to Cloudinary and returns information about the uploaded file.
+     *
+     * @param file - The file to be uploaded
+     * @param path - The destination path for the uploaded file (default: '')
+     * @returns Promise<UploadedFile> - A promise resolving to information about the uploaded file
      */
     async putFile(file: any, path: string = ''): Promise<UploadedFile> {
         return new Promise((resolve, reject) => {
             // A string or function that determines the destination image path for uploaded.
             const public_id = join(path).replace(/\\/g, '/');
 
-            const stream = cloudinary.uploader.upload_stream({ public_id }, (error: UploadApiErrorResponse, result: UploadApiResponse) => {
-                if (error) return reject(error);
-
-                const uploaded_file = {
-                    key: result.public_id,
-                    size: result.bytes,
-                    filename: result.public_id,
-                    url: result.url,
-                    path: result.secure_url
-                };
-                resolve(uploaded_file as any);
+            // Create an upload stream to Cloudinary
+            const stream = cloudinaryV2.uploader.upload_stream({ public_id }, (error: UploadApiErrorResponse, result: UploadApiResponse) => {
+                if (error) {
+                    // Reject the promise with the error if the upload fails
+                    reject(error);
+                } else {
+                    // Resolve the promise with information about the uploaded file
+                    const uploadedFile = {
+                        key: result.public_id,
+                        size: result.bytes,
+                        filename: result.public_id,
+                        url: result.url,
+                        path: result.secure_url
+                    };
+                    resolve(uploadedFile as any);
+                }
             });
+
+            // Pipe the file content to the upload stream
             streamifier.createReadStream(file).pipe(stream);
         });
     }
 
     /**
-    * Delete Cloudinary Image
-    *
-    * @param file
-    */
+     * Deletes a file from Cloudinary.
+     *
+     * @param file - The identifier of the file to delete
+     * @returns Promise<void> - A promise indicating the success or failure of the deletion operation
+     */
     async deleteFile(file: string): Promise<void> {
         return new Promise((resolve, reject) => {
-            cloudinary.uploader.destroy(file, (error: any, result: any) => {
-                if (error) return reject(error);
-
-                resolve(result);
+            // Use the Cloudinary v2 SDK for better compatibility and features
+            cloudinaryV2.uploader.destroy(file, (error: any, result: any) => {
+                if (error) {
+                    // Reject the promise with the error if deletion fails
+                    reject(error);
+                } else {
+                    // Resolve the promise if deletion is successful
+                    resolve(result);
+                }
             });
         });
     }
@@ -236,7 +287,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
      * @param file
      * @returns
      */
-    mapUploadedFile(file: any): UploadedFile {
+    public async mapUploadedFile(file: any): Promise<UploadedFile> {
         if (isNotEmpty(file.filename)) {
             const filename = file.filename;
             file.key = filename;
@@ -244,6 +295,7 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
             const originalname = filename.split('/').pop();
             file.filename = originalname;
         }
+
         return file;
     }
 }

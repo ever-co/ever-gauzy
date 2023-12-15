@@ -19,16 +19,16 @@ import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gau
 import { Public, parseToBoolean } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
-import { AuthLoginCommand, AuthRegisterCommand, WorkspaceSigninSendCodeCommand, WorkspaceSigninVerifyTokenCommand } from './commands';
+import {
+	AuthLoginCommand,
+	AuthRegisterCommand,
+	WorkspaceSigninSendCodeCommand,
+	WorkspaceSigninVerifyTokenCommand
+} from './commands';
 import { RequestContext } from '../core/context';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
-import {
-	RegisterUserDTO,
-	UserEmailDTO,
-	UserLoginDTO,
-	UserSigninWorkspaceDTO
-} from './../user/dto';
+import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
 import {
 	HasPermissionsQueryDTO,
@@ -37,16 +37,17 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
+import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
+import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @ApiTags('Auth')
 @Controller()
 export class AuthController {
-
 	constructor(
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 * Check if the user is authenticated.
@@ -55,7 +56,7 @@ export class AuthController {
 	 */
 	@ApiOperation({ summary: 'Check if user is authenticated' })
 	@ApiOkResponse({ status: HttpStatus.OK, description: 'The success server response' })
-	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, })
+	@ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/authenticated')
 	@Public()
 	async authenticated(): Promise<boolean> {
@@ -74,9 +75,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/role')
 	@UsePipes(new ValidationPipe())
-	async hasRole(
-		@Query() query: HasRoleQueryDTO
-	): Promise<boolean> {
+	async hasRole(@Query() query: HasRoleQueryDTO): Promise<boolean> {
 		return await this.authService.hasRole(query.roles);
 	}
 
@@ -91,9 +90,7 @@ export class AuthController {
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST })
 	@Get('/permissions')
 	@UsePipes(new ValidationPipe())
-	async hasPermissions(
-		@Query() query: HasPermissionsQueryDTO
-	): Promise<boolean> {
+	async hasPermissions(@Query() query: HasPermissionsQueryDTO): Promise<boolean> {
 		return await this.authService.hasPermissions(query.permissions);
 	}
 
@@ -108,11 +105,11 @@ export class AuthController {
 	@ApiOperation({ summary: 'Register a new user' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.',
+		description: 'The record has been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, the response body may contain clues as to what went wrong',
+		description: 'Invalid input, the response body may contain clues as to what went wrong'
 	})
 	@Post('/register')
 	@Public()
@@ -123,9 +120,11 @@ export class AuthController {
 		@Headers('origin') origin: string
 	): Promise<IUser> {
 		return await this.commandBus.execute(
-			new AuthRegisterCommand({
-				originalUrl: origin, ...input
-			},
+			new AuthRegisterCommand(
+				{
+					originalUrl: origin,
+					...input
+				},
 				languageCode
 			)
 		);
@@ -141,12 +140,8 @@ export class AuthController {
 	@Post('/login')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async login(
-		@Body() input: UserLoginDTO
-	): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(
-			new AuthLoginCommand(input)
-		);
+	async login(@Body() input: UserLoginDTO): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(new AuthLoginCommand(input));
 	}
 
 	/**
@@ -159,9 +154,7 @@ export class AuthController {
 	@Post('/signin.email.password')
 	@Public()
 	@UsePipes(new ValidationPipe())
-	async signinWorkspacesByPassword(
-		@Body() input: UserSigninWorkspaceDTO
-	): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailPassword(input);
 	}
 
@@ -176,13 +169,8 @@ export class AuthController {
 	@Post('/signin.email')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async sendWorkspaceSigninCode(
-		@Body() entity: UserEmailDTO,
-		@I18nLang() locale: LanguagesEnum
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new WorkspaceSigninSendCodeCommand(entity, locale)
-		);
+	async sendWorkspaceSigninCode(@Body() entity: UserEmailDTO, @I18nLang() locale: LanguagesEnum): Promise<any> {
+		return await this.commandBus.execute(new WorkspaceSigninSendCodeCommand(entity, locale));
 	}
 
 	/**
@@ -196,12 +184,9 @@ export class AuthController {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async confirmWorkspaceSigninByCode(
 		@Query() query: Record<string, boolean>,
-		@Body() input: WorkspaceSigninEmailVerifyDTO,
+		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<any> {
-		return await this.authService.confirmWorkspaceSigninByCode(
-			input,
-			parseToBoolean(query.includeTeams)
-		);
+		return await this.authService.confirmWorkspaceSigninByCode(input, parseToBoolean(query.includeTeams));
 	}
 
 	/**
@@ -213,12 +198,8 @@ export class AuthController {
 	@Post('/signin.workspace')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async signinWorkspaceByToken(
-		@Body() input: WorkspaceSigninDTO
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new WorkspaceSigninVerifyTokenCommand(input)
-		);
+	async signinWorkspaceByToken(@Body() input: WorkspaceSigninDTO): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(new WorkspaceSigninVerifyTokenCommand(input));
 	}
 
 	/**
@@ -230,9 +211,7 @@ export class AuthController {
 	@Post('/reset-password')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async resetPassword(
-		@Body() request: ChangePasswordRequestDTO
-	) {
+	async resetPassword(@Body() request: ChangePasswordRequestDTO) {
 		return await this.authService.resetPassword(request);
 	}
 
@@ -250,13 +229,9 @@ export class AuthController {
 	async requestPassword(
 		@Body() body: ResetPasswordRequestDTO,
 		@Headers('origin') origin: string,
-		@I18nLang() languageCode: LanguagesEnum,
+		@I18nLang() languageCode: LanguagesEnum
 	): Promise<boolean | BadRequestException> {
-		return await this.authService.requestPassword(
-			body,
-			languageCode,
-			origin
-		);
+		return await this.authService.requestResetPassword(body, languageCode, origin);
 	}
 
 	/**
@@ -283,9 +258,7 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UsePipes(new ValidationPipe())
-	async refreshToken(
-		@Body() input: RefreshTokenDto
-	) {
+	async refreshToken(@Body() input: RefreshTokenDto) {
 		return await this.authService.getAccessTokenFromRefreshToken();
 	}
 }

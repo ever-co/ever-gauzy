@@ -235,11 +235,9 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		if (!this.selectedCandidate) {
 			return;
 		}
-		this.router.navigate([
-			'/pages/employees/candidates/edit/' +
-				this.selectedCandidate.id +
-				'/profile'
-		]);
+
+		const candidateId = this.selectedCandidate.id;
+		this.router.navigate(['/pages/employees/candidates/edit', candidateId, 'profile']);
 	}
 
 	async archive(selectedItem?: ICandidateViewModel) {
@@ -427,11 +425,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (value) => {
-						this.setFilter({
-							field: 'user.firstName',
-							search: value
-						});
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'user.name', search: value });
 					}
 				},
 				email: {
@@ -606,5 +601,5 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

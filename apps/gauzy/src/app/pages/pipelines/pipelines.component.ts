@@ -26,7 +26,7 @@ import {
 	ToastrService
 } from '../../@core/services';
 import { ServerDataSource } from '../../@core/utils/smart-table';
-import {InputFilterComponent} from '../../@shared/table-filters';
+import { InputFilterComponent } from '../../@shared/table-filters';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -42,8 +42,7 @@ import { AtLeastOneFieldValidator } from '../../@core/validators';
 })
 export class PipelinesComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	smartTableSettings: object;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -410,17 +409,17 @@ export class PipelinesComponent
 		if (data) {
 			id
 				? this.toastrService.success(
-						`TOASTR.MESSAGE.PIPELINE_UPDATED`,
-						{
-							name
-						}
-				  )
+					`TOASTR.MESSAGE.PIPELINE_UPDATED`,
+					{
+						name
+					}
+				)
 				: this.toastrService.success(
-						`TOASTR.MESSAGE.PIPELINE_CREATED`,
-						{
-							name: data.name
-						}
-				  );
+					`TOASTR.MESSAGE.PIPELINE_CREATED`,
+					{
+						name: data.name
+					}
+				);
 			this._refresh$.next(true);
 			this.pipelines$.next(true);
 		}
@@ -495,5 +494,5 @@ export class PipelinesComponent
 		this.pipelines$.next(true);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

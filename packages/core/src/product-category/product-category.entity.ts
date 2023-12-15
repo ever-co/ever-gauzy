@@ -64,7 +64,10 @@ export class ProductCategory extends TranslatableBase
 	 */
 	@ApiProperty({ type: () => ProductCategoryTranslation, isArray: true })
 	@OneToMany(() => ProductCategoryTranslation, (instance) => instance.reference, {
+		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
+
+		/** Database cascade action. */
 		cascade: true
 	})
 	translations: ProductCategoryTranslation[];

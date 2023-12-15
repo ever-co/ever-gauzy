@@ -402,6 +402,20 @@ export class Store {
 		);
 	}
 
+	hasPermissions(...permissions: PermissionsEnum[]) {
+		const { userRolePermissions } = this.appQuery.getValue();
+
+		// Check if userRolePermissions is defined and not an empty array
+		if (!userRolePermissions || userRolePermissions.length === 0) {
+			return false;
+		}
+
+		// Use some for a more concise check
+		return userRolePermissions.some(
+			(p) => p.enabled && permissions.includes(p.permission as PermissionsEnum) // Check if the permission is in the provided list
+		);
+	}
+
 	getDateFromOrganizationSettings() {
 		const dateObj = this.selectedDate;
 		switch (

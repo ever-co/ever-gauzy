@@ -24,3 +24,6 @@ export * from './time-zone-manager';
 export * from './task-status-cache.service';
 export * from './teams-cache.service';
 export * from './status-icon-service';
+export * from './task-priority-cache.service';
+export * from './task-size-cache.service';
+export * from './tag.service';

@@ -155,9 +155,13 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	// Organization Projects
+	/**
+	 * Organization Projects Relationship
+	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
-	@OneToMany(() => OrganizationProject, (it) => it.organizationContact, { cascade: true })
+	@OneToMany(() => OrganizationProject, (it) => it.organizationContact, {
+		cascade: true
+	})
 	projects?: IOrganizationProject[];
 
 	// Organization Invoices

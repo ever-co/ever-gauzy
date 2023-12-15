@@ -25,17 +25,17 @@ export class TaskSizeSubscriber implements EntitySubscriberInterface<TaskSize> {
 	 * @param entity
 	 * @param event
 	 */
-	afterLoad(
+	async afterLoad(
 		entity: TaskSize | Partial<TaskSize>,
 		event?: LoadEvent<TaskSize>
-	): void | Promise<any> {
+	): Promise<any | void> {
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				entity.fullIconUrl = store.getProviderInstance().url(entity.icon);
+				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('Error in afterLoad:', error);
 		}
 	}
 

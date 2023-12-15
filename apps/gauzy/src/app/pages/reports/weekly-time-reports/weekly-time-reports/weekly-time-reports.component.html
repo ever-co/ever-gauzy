@@ -9,10 +9,7 @@
 			<div>
 				<h5>
 					<ngx-header-title>
-						{{
-							'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT'
-								| translate
-						}}
+						{{ 'REPORT_PAGE.WEEKLY_TIME_AND_ACTIVITY_REPORT' | translate }}
 					</ngx-header-title>
 				</h5>
 				<ng-container *ngIf="request?.startDate && request?.endDate">
@@ -46,7 +43,7 @@
 					</nb-card>
 				</div>
 			</div>
-			<div class="table card" [ngClass]="{'not-found': !weekLogs?.length}">
+			<div class="table card" [ngClass]="{'not-found': !weekLogs?.length }">
 				<div
 					class="weekly-logs row-table weekly-time-grid"
 					[nbSpinner]="loading"
@@ -63,17 +60,14 @@
 						<nb-card-body class="weekly-time-container">
 							<div class="columns-header weekly-main-header">
 								<div class="table-inner-wrapper">
-									<div
-										class="responsive-table-row employee-column"
-									>
+									<div class="responsive-table-row employee-column">
 										{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 									</div>
-									<div
-										class="responsive-table-row day-column"
-										*ngFor="let date of weekDays"
-									>
-										{{ date | dateFormat }}
-									</div>
+									<ng-container *ngFor="let date of weekDays">
+										<div class="responsive-table-row day-column">
+											{{ date | dateFormat }}
+										</div>
+									</ng-container>
 									<div class="responsive-table-row day-column">
 										{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}
 									</div>
@@ -87,106 +81,67 @@
 							</div>
 							<div class="table-row" *ngFor="let log of weekLogs">
 								<div class="table-inner-wrapper">
-									<div
-										class="responsive-table-row employee-column"
-									>
+									<div class="responsive-table-row employee-column">
 										<div class="responsive-table-header">
 											{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 										</div>
-										<div
-											class="responsive-table-content mobile-padding"
-										>
+										<div class="responsive-table-content mobile-padding">
 											<div class="avatar-wrapper">
 												<ngx-avatar
 													class="report-table"
-													[src]="
-													log?.employee?.user
-														?.imageUrl
-												"
-													[name]="
-													log?.employee?.user?.name
-												"
+													[src]="log?.employee?.user ?.imageUrl"
+													[name]="log?.employee?.user?.name"
 													[id]="log?.employee?.id"
-												>
-												</ngx-avatar>
+												></ngx-avatar>
 												<ng-template #noProjects>
-												<span>{{
-													'REPORT_PAGE.NO_EMPLOYEE'
-														| translate
-													}}</span>
+													<span>
+														{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}
+													</span>
 												</ng-template>
 											</div>
 										</div>
 									</div>
-									<div
-										class="responsive-table-row day-column"
-										*ngFor="let date of weekDays"
-									>
-										<div class="responsive-table-header">
-											{{ date | date: 'E d MM, y' }}
+									<ng-container *ngFor="let date of weekDays">
+										<div class="responsive-table-row day-column">
+											<div class="responsive-table-header">
+												{{ date | date: 'E d MM, y' }}
+											</div>
+											<div class="responsive-table-content mobile-padding">
+												<span *ngIf=" log.dates[date]; else noLogsCol">
+													{{ log.dates[date]?.sum | durationFormat }}
+												</span>
+												<ng-template #noLogsCol> &#8212; </ng-template>
+											</div>
 										</div>
-										<div
-											class="responsive-table-content mobile-padding"
-										>
-										<span
-											*ngIf="
-												log.dates[date];
-												else noLogsCol
-											"
-										>
-											{{
-											log.dates[date]?.sum
-												| durationFormat
-											}}
-										</span>
-											<ng-template #noLogsCol>
-												&#8212;
-											</ng-template>
-										</div>
-									</div>
+									</ng-container>
 									<div class="responsive-table-row day-column">
 										<div class="responsive-table-header">
-											{{
-											'REPORT_PAGE.WEEKLY_TOTAL'
-												| translate
-											}}
+											{{ 'REPORT_PAGE.WEEKLY_TOTAL' | translate }}
 										</div>
-										<div
-											class="responsive-table-content mobile-padding"
-										>
-										<span>
-											{{ log?.sum | durationFormat }}
-										</span>
+										<div class="responsive-table-content mobile-padding">
+											<span>
+												{{ log?.sum | durationFormat }}
+											</span>
 										</div>
 									</div>
 									<div class="responsive-table-row day-column">
 										<div class="responsive-table-header">
 											{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 										</div>
-										<div
-											class="responsive-table-content mobile-padding"
-										>
-										<span>
-											<nb-badge
-												[status]="
-													getStatus(
-														log?.activity || 0
-													)
-												"
-												[text]="
-													(log?.activity || 0) + '%'
-												"
-											></nb-badge>
-										</span>
+										<div class="responsive-table-content mobile-padding">
+											<span>
+												<nb-badge
+													[status]="getStatus( log?.activity || 0 )"
+													[text]="(log?.activity || 0) + '%'"
+												></nb-badge>
+											</span>
 										</div>
 									</div>
 									<div class="responsive-table-row day-column">
 										<div class="responsive-table-header">
 											{{ 'REPORT_PAGE.SPENT' | translate }}
 										</div>
-										<div
-											class="responsive-table-content mobile-padding"
-										>
+										<div class="responsive-table-content mobile-padding">
 											<span> &#8212; </span>
 										</div>
 									</div>

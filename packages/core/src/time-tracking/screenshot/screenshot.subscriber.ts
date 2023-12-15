@@ -1,7 +1,18 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent, RemoveEvent } from "typeorm";
+import {
+    DataSourceOptions,
+    EntitySubscriberInterface,
+    EventSubscriber,
+    InsertEvent,
+    LoadEvent,
+    RemoveEvent,
+    UpdateEvent
+} from "typeorm";
 import { IScreenshot } from "@gauzy/contracts";
+import { getConfig } from "@gauzy/config";
+import { isJsObject } from "@gauzy/common";
 import { Screenshot } from "./screenshot.entity";
 import { FileStorage } from "./../../core/file-storage";
+import { isSqliteDB } from "./../../core/utils";
 
 @EventSubscriber()
 export class ScreenshotSubscriber implements EntitySubscriberInterface<Screenshot> {
@@ -14,21 +25,102 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     }
 
     /**
-     * Called after entity is loaded from the database.
      *
-     * @param entity
      * @param event
      */
-    afterLoad(entity: Screenshot | Partial<Screenshot>, event?: LoadEvent<Screenshot>): void | Promise<any> {
+    beforeInsert(event: InsertEvent<Screenshot>): void | Promise<any> {
         try {
-            if (entity instanceof Screenshot) {
-                const { storageProvider } = entity;
-                const store = new FileStorage().setProvider(storageProvider);
-                entity.fullUrl = store.getProviderInstance().url(entity.file);
-                entity.thumbUrl = store.getProviderInstance().url(entity.thumb);
+            if (event) {
+                const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+                const { entity } = event;
+
+                // Check if the database type is SQLite or better-sqlite3
+                if (entity && isSqliteDB(options.type)) {
+                    try {
+                        if (isJsObject(entity.apps)) {
+                            entity.apps = JSON.stringify(entity.apps);
+                        }
+                    } catch (error) {
+                        // Handle the error appropriately, set a default value or take another action.
+                        entity.apps = JSON.stringify([]);
+                    }
+                }
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in beforeInsert event:', error);
+        }
+    }
+
+    /**
+     * Called before a Screenshot entity is updated in the database.
+     *
+     * @param event The update event.
+     */
+    beforeUpdate(event: UpdateEvent<Screenshot>): void | Promise<any> {
+        try {
+            if (event) {
+                const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+                const { entity } = event;
+
+                // Check if the database type is SQLite or better-sqlite3
+                if (entity && isSqliteDB(options.type)) {
+                    try {
+                        if (isJsObject(entity.apps)) {
+                            entity.apps = JSON.stringify(entity.apps);
+                        }
+                    } catch (error) {
+                        // Handle the error appropriately, set a default value or take another action.
+                        entity.apps = JSON.stringify([]);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error in beforeUpdate event:', error);
+        }
+    }
+
+    /**
+     * Called after the entity is loaded from the database.
+     *
+     * @param entity The loaded Screenshot entity.
+     * @param event The LoadEvent.
+     */
+    async afterLoad(entity: Screenshot | Partial<Screenshot>, event?: LoadEvent<Screenshot>): Promise<any | void> {
+        try {
+            const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+
+            // Check if the entity is an instance of Screenshot
+            if (entity instanceof Screenshot) {
+                const { storageProvider, file, thumb, apps } = entity;
+
+                const store = new FileStorage().setProvider(storageProvider);
+
+                // Assuming store.getProviderInstance().url is asynchronous
+                const [fullUrl, thumbUrl] = await Promise.all([
+                    store.getProviderInstance().url(file),
+                    store.getProviderInstance().url(thumb)
+                ]);
+
+                // Assign the retrieved URLs to the entity properties
+                entity.fullUrl = fullUrl;
+                entity.thumbUrl = thumbUrl;
+
+                // Check if the database type is SQLite or better-sqlite3
+                if (isSqliteDB(options.type)) {
+                    // Check if 'apps' is a string and parse it as JSON
+                    if (typeof apps === 'string') {
+                        try {
+                            entity.apps = JSON.parse(apps);
+                        } catch (error) {
+                            // Handle the error by logging and setting a default value
+                            entity.apps = []; // Set a default value, adjust based on your requirements
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            // Handle any unexpected errors during the afterLoad process
+            console.error('Error in afterLoad:', error);
         }
     }
 
@@ -37,7 +129,7 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
      *
      * @param event
      */
-    async afterRemove(event: RemoveEvent<Screenshot>):  Promise<any | void> {
+    async afterRemove(event: RemoveEvent<Screenshot>): Promise<any | void> {
         try {
             if (event.entityId) {
                 console.log(`BEFORE SCREENSHOT ENTITY WITH ID ${event.entityId} REMOVED`);

@@ -8,7 +8,11 @@
 		"RESET_INTEGRATION": "Reset Integration",
 		"CREATE": "Create",
 		"REGISTER": "Register",
+		"CHANGE_PASSWORD": "Change password",
 		"LOGIN": "Log In",
+		"SIGNIN": "Sign in",
+		"SEND_CODE": "Send code",
+		"SENDING_CODE": "Sending code...",
 		"ADD_NOTE": "Add note",
 		"EDIT": "Edit",
 		"MANAGE": "Manage",
@@ -159,8 +163,9 @@
 		"FORWARD_PORTS": "Forward Ports",
 		"REPORT": "Report",
 		"IGNORE": "Ignore",
-		"ENABLE": "Enable",
-		"DISABLE": "Disable"
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled",
+		"RESYNC": "Resync"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -304,10 +309,13 @@
 		"SCREEN_CAPTURE": "Screen Capture",
 		"NUMBER": "Number",
 		"PROVIDER": "Provider",
-		"GITHUB_REPOSITORY": "Github Repository",
+		"GITHUB_REPOSITORY": "GitHub Repository",
 		"ISSUES_SYNC": "Issues in Sync",
 		"ISSUES_SYNC_COUNT": "{{ count }} Issues Auto Sync",
-		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync"
+		"RESYNC_ISSUES": "Resync Issues",
+		"ENABLED_DISABLED_SYNC": "Enabled / Disabled Sync",
+		"ENABLE_DISABLE_INTEGRATION": "Enable / Disable Integration",
+		"ACTIONS": "Actions"
 	},
 	"FORM": {
 		"USERNAME": "Username",
@@ -425,7 +433,7 @@
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
 			"TWITTER": "Twitter",
-			"GITHUB": "Github",
+			"GITHUB": "GitHub",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Upwork",
 			"STACK_OVERFLOW": "Stackoverflow",
@@ -473,8 +481,10 @@
 			"AUTO_SYNC_TASKS": "Auto-sync tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
 			"AUTO_SYNC_TAG": "Label",
-			"GITHUB_REPOSITORY": "Github Repository",
-			"PROJECT": "Project"
+			"GITHUB_REPOSITORY": "GitHub Repository",
+			"PROJECT": "Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Do you want to enable Jobs Search & Matching Analysis?",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Do you want to enable Employee Performance Analysis?"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Name",
@@ -579,7 +589,7 @@
 			"FACEBOOK": "Facebook",
 			"INSTAGRAM": "Instagram",
 			"TWITTER": "Twitter",
-			"GITHUB": "Github",
+			"GITHUB": "GitHub",
 			"GITLAB": "Gitlab",
 			"UPWORK": "Upwork",
 			"STACK_OVERFLOW": "Stackoverflow",
@@ -638,6 +648,7 @@
 			"UPWORK_SECRET": "Upwork Secret",
 			"GAUZY_API_KEY": "Gauzy AI Key",
 			"GAUZY_API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -666,7 +677,9 @@
 			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
 			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
 			"AUTO_SYNC_TAG": "Select Auto-sync Label",
-			"SELECT_PROJECT": "Select Project"
+			"SELECT_PROJECT": "Select Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enable Jobs Search & Matching Analysis",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Enable Employee Performance Analysis"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1236,15 +1249,33 @@
 			"DESCRIPTION": "Activate Upwork integration for freelance workforce management."
 		},
 		"GAUZY_AI_PAGE": {
+			"TITLE": "Gauzy AI Integration",
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret",
-			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting."
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enables advanced job search and matching analyses for enhanced accuracy. Disabling hides 'Browse' and 'Matching' menu items for a streamlined interface.",
+				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Manages the transmission of employee work metrics, including keyboard inputs, mouse movements, and screenshots, for analysis by Gauzy AI. Enable for comprehensive performance analysis; disable for strict user privacy and data control."
+			}
 		},
 		"GITHUB_PAGE": {
 			"TITLE": "GitHub Integration",
+			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Select repository",
 			"SEARCH_REPOSITORY": "Type to search repository",
 			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
+			"HAS_SYNCED_DISABLED": "'{{repository}}' sync successfully disabled",
 			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
 			"TAB": {
 				"AUTO_SYNC": "Auto sync",
@@ -1262,7 +1293,10 @@
 		"MESSAGE": {
 			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
 			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
-			"NO_INTEGRATIONS": "You have not configured any integrations"
+			"NO_INTEGRATIONS": "You have not configured any integrations",
+			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
+			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
 		},
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled"
@@ -1967,11 +2001,18 @@
 				"ACTIVITY_PROOF_DURATION": "Activity proof duration",
 				"ACTIVITY_PROOF_DURATION_INFO": "Duration of activity proof countdown dialog, it represent an amount of minutes given to prove activity",
 				"ENABLE_DETECTION_INACTIVITY": "Enable detection of employee inactivity",
-				"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
 				"DELETE_IDLE_TIME": "Enable deletion of idle time",
 				"DELETE_IDLE_TIME_INFO": "Enable - the system will delete idle time. Disable - the system will not delete idle time",
 				"ALLOW_SCREEN_CAPTURE": "Allow Screen Capture",
 				"ALLOW_SCREEN_CAPTURE_INFO": "Enable - the timer will take screenshot. Disable - the timer will run without to take screenshot for all organization members",
+				"SCREENSHOT_FREQUENCY": "Screenshot Frequency",
+				"SCREENSHOT_FREQUENCY_INFO": "Specify the update frequency or time intervals synchronization.",
+				"RANDOM_SCREENSHOT": "Random Screenshot",
+				"RANDOM_SCREENSHOT_INFO": "Enable - Taking screenshots at random intervals. Disable - Taking screenshots at regular intervals",
+				"TRACK_ON_SLEEP": "Track On Sleep",
+				"TRACK_ON_SLEEP_INFO": "Enable - Tracking when the device goes to sleep. Disable - Timer Stop tracking time when device goes sleep.",
+				"ENFORCED": "Enforced",
+				"ENFORCED_INFO": "Enabled - Ensures that track on sleep, random screenshot and screenshot frequency settings, specify by the admin are mandatory and cannot be overridden or ignored by users.",
 				"TASK_SETTING": "Task Settings",
 				"TASK_PRIVACY": "Task Privacy",
 				"MULTIPLE_ASSIGNEE": "Multiple Assignees",
@@ -1997,7 +2038,29 @@
 				"AUTO_CLOSE_ISSUE_PERIOD": "Auto Close Issue Period (in Days)",
 				"AUTO_ARCHIVE_ISSUE": "Auto Archive Issue",
 				"AUTO_ARCHIVE_ISSUE_PERIOD": "Auto Archive Issue Period (in Days)",
-				"AUTO_STATUS": "Auto Status"
+				"AUTO_STATUS": "Auto Status",
+				"TOOLTIP": {
+					"ENABLE_DETECTION_INACTIVITY_INFO": "Enabled - the system will detect inactivity and display a warning. Disabled - no warning will be displayed when an employee is inactive.",
+					"ALLOW_MANUAL_TIME_INFO": "Indicates whether manual time entry is allowed for time tracking.",
+					"ALLOW_MODIFY_TIME_INFO": "Indicates whether modification of time entries is allowed for time tracking.",
+					"ALLOW_DELETE_TIME_INFO": "Indicates whether deletion of time entries is allowed for time tracking.",
+					"TASK_PRIVACY_ENABLED_INFO": "Indicates whether tasks privacy features are enabled.",
+					"TASK_MULTIPLE_ASSIGNEE_ENABLED_INFO": "Indicates whether tasks allow multiple assignees.",
+					"TASK_MANUAL_TIME_ENABLED_INFO": "Indicates whether manual time tracking is enabled for tasks.",
+					"TASK_GROUP_ESTIMATION_ENABLED_INFO": "Indicates whether group estimation is enabled for tasks.",
+					"TASK_ESTIMATION_IN_HOUR_ENABLED_INFO": "Indicates whether task estimation in hours is enabled.",
+					"TASK_ESTIMATION_IN_STORY_POINT_ENABLED_INFO": "Indicates whether task estimation in story points is enabled.",
+					"TASK_PROOF_OF_COMPLETION_ENABLED_INFO": "Indicates whether proof of completion is enabled for tasks.",
+					"TASK_LINKED_ISSUE_ENABLED_INFO": "Indicates whether the linking of tasks is enabled.",
+					"TASK_COMMENTS_ENABLED_INFO": "Indicates whether comments on tasks are enabled.",
+					"TASK_HISTORY_ENABLED_INFO": "Indicates whether the tracking of task history is enabled.",
+					"TASK_ACCEPTANCE_CRITERIA_ENABLED_INFO": "Indicates whether the use of acceptance criteria for tasks is enabled.",
+					"TASK_DRAFT_ISSUE_ENABLED_INFO": "Indicates whether the use of drafts for tasks is enabled.",
+					"TASK_AUTO_STATUS_ENABLED_INFO": "Indicates whether automatic status updates are enabled for tasks.",
+					"TASK_NOTIFY_LEFT_ENABLED_INFO": "Indicates whether notifications about tasks approaching their due date are enabled.",
+					"TASK_AUTO_CLOSE_ENABLED_INFO": "Indicates whether tasks may automatically close after a specified period.",
+					"TASK_AUTO_ARCHIVE_ENABLED_INFO": "Indicates whether tasks may automatically be archived after a specified period."
+				}
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
@@ -2757,6 +2820,45 @@
 		"CHAT": "Support Chat",
 		"FAQ": "FAQ",
 		"HELP": "Help"
+	},
+	"QUICK_ACTIONS_MENU": {
+		"CREATE_INVOICE": "Create Invoice",
+		"RECEIVED_INVOICES": "Received Invoices",
+		"CREATE_INCOME": "Create Income",
+		"CREATE_EXPENSE": "Create Expense",
+		"CREATE_ESTIMATE": "Create Estimate",
+		"RECEIVED_ESTIMATES": "Received Estimates",
+		"CREATE_PAYMENT": "Create Payment",
+		"ADD_EMPLOYEE": "Add Employee",
+		"ADD_INVENTORY": "Add Inventory",
+		"ADD_EQUIPMENT": "Add Equipment",
+		"ADD_VENDOR": "Add Vendor",
+		"ADD_DEPARTMENT": "Add Department",
+		"CREATE_TEAM": "Create Team",
+		"CREATE_TASK": "Create Task",
+		"CREATE_PROJECT": "Create Project",
+		"VIEW_TASKS": "View Tasks",
+		"VIEW_TEAM_TASKS": "View Team's Tasks",
+		"CREATE_CANDIDATE": "Create Candidate",
+		"CREATE_PROPOSAL": "Create Proposal",
+		"CREATE_CONTRACT": "Create Contract",
+		"CREATE_LEAD": "Create Lead",
+		"CREATE_CUSTOMER": "Create Customer",
+		"CREATE_CLIENT": "Create Client",
+		"VIEW_CLIENTS": "View Clients",
+		"START_TIMER": "Start Timer",
+		"STOP_TIMER": "Stop Timer",
+		"TIME_LOG": "Time Log",
+		"VIEW_APPOINTMENTS": "View Appointments",
+		"VIEW_TIME_ACTIVITY": "View Time Activity"
+	},
+	"QUICK_ACTIONS_GROUP": {
+		"ACCOUNTING": "Accounting",
+		"ORGANIZATION": "Organization",
+		"PROJECT_MANAGEMENT": "Project Management",
+		"JOBS": "Jobs",
+		"CONTACTS": "Contacts",
+		"TIME_TRACKING": "Time Tracking"
 	},
 	"PROFILE_PAGE": {
 		"FIRST_NAME": "First Name",
@@ -3797,9 +3899,9 @@
 			"READY_FOR_ADVANCED_SETTINGS": "Are you ready for some advanced settings?",
 			"FINAL_STEP_GP": "This is the final step where you can get to the nitty-gritty of your Gauzy Platform.",
 			"PORT": "Port",
-			"PORT_API": "Port Api",
+			"PORT_API": "Port API",
 			"UI": "Ui",
-			"API_HOST": "Api Host",
+			"API_HOST": "API Host",
 			"HOST": "Host",
 			"DB_NAME": "Database Name",
 			"DB_PORT": "Database Port",
@@ -3850,14 +3952,14 @@
 			"ADVANCED_SETTINGS": "Advanced Settings",
 			"WARNING_STOP_TIMER": "Please Stop Timer if you want to change config",
 			"GENERAL": "General",
-			"API_CONFIG": "Api Configuration",
+			"API_CONFIG": "API Configuration",
 			"SERVER_ACCESS_CONFIG": "Server Access Configuration",
 			"API_SERVER_PORT": "API Server Port",
 			"UI_SERVER_PORT": "UI Server Port",
 			"SERVER_HOSTNAME": "Server Hostname/ IP Address",
 			"AUTO_START_STARTUP": "Auto Start On Startup",
 			"SERVER_TYPE": "Server Type",
-			"LOCAL_API_PORT": "Local Api Port",
+			"LOCAL_API_PORT": "Local API Port",
 			"UI_PORT": "UI Port",
 			"SERVER_URL": "Server URL",
 			"DB_CONFIG": "Database Configuration",
@@ -4036,6 +4138,7 @@
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
 		"REASON": "Reason",
 		"NOTES": "Notes",
+		"APPS": "Apps",
 		"TIME_OVERLAPS": "Time overlaps",
 		"TIME_TRACKING": "Time Tracking",
 		"MEMBERS_WORKED": "Members worked",
@@ -4220,6 +4323,7 @@
 		"TEMPLATE_NAMES": {
 			"password": "Password Reset",
 			"password-less-authentication": "Password Less Authentication",
+			"multi-tenant-password": "Multi-Tenant Forgot Password",
 			"welcome-user": "Welcome User",
 			"email-verification": "Email Confirmation",
 			"invite-organization-client": "Invite Organization Client",
@@ -4290,7 +4394,8 @@
 	"DIALOG": {
 		"CONFIRM": "Confirm",
 		"ALERT": "Alert",
-		"DELETE_CONFIRM": "Alert"
+		"DELETE_CONFIRM": "Alert",
+		"QUICK_ACTIONS": "Quick Actions"
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "File provider",
@@ -4396,30 +4501,87 @@
 			"receipt": "Receipt"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Register",
+		"HAVE_AN_ACCOUNT": "Already have an account?",
+		"LABELS": {
+			"FULL_NAME": "Full name:",
+			"EMAIL": "Email address:",
+			"PASSWORD": "Password",
+			"CONFIRM_PASSWORD":"Confirm Password:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Full name",
+			"EMAIL": "Email address",
+			"PASSWORD": "Password",
+			"CONFIRM_PASSWORD": "Confirm password"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Full name is required!",
+			"FULL_NAME_SHOULD_CONTAIN": "Full name should contain from {{ minLength }} to {{ maxLength }} characters",
+			"EMAIL_REQUIRED": "Email is required!",
+			"EMAIL_SHOULD_BE_REAL":"Email should be a real one!",
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces!",
+			"PASSWORD_REQUIRED": "Password is required!",
+			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
+			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
+			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO":"Agree to",
+				"TERMS_AND_CONDITIONS":"Terms & Conditions",
+				"AND": " and ",
+				"PRIVACY_POLICY": "Privacy Policy"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
 		"SUB_TITLE": "Hello! Log in with your email.",
 		"REMEMBER_ME_TITLE": "Remember me",
 		"DO_NOT_HAVE_ACCOUNT_TITLE": "Don't have an account?",
 		"FORGOT_PASSWORD_TITLE": "Forgot Password?",
+		"OR_SIGN_IN_WITH": "Or Sign In with",
+		"FORGOT_EMAIL_TITLE": "Forgot Email?",
+		"LOGIN_MAGIC": {
+			"TITLE": "Log in with a magic code.",
+			"DESCRIPTION_TITLE": "We'll email you a magic code for a password-free sign-in. Or you can ",
+			"OR_SIGN_IN_WITH_PASSWORD": "sign in using password instead.",
+			"RESEND_CODE_TITLE": "Resend code",
+			"SUCCESS_SENT_CODE_TITLE": "A 6-character code sent to: ",
+			"SUCCESS_SENT_CODE_SUB_TITLE": "The code expires shortly, so please enter it soon.",
+			"REQUEST_NEW_CODE_TITLE": "Request a new code in {{ countdown }} seconds."
+		},
 		"LABELS": {
 			"EMAIL": "Email address:",
-			"PASSWORD": "Password:"
+			"PASSWORD": "Password:",
+			"CODE": "Code:"
 		},
 		"PLACEHOLDERS": {
-			"EMAIL": "Email address",
-			"PASSWORD": "Password"
+			"EMAIL": "Enter your email address...",
+			"PASSWORD": "Enter password...",
+			"CODE": "Enter magic code..."
 		},
 		"VALIDATION": {
-			"EMAIL_REQUIRED": "Email is required!",
-			"EMAIL_REAL_REQUIRED": "Email should be the real one!",
+			"EMAIL_REQUIRED": "Email address is required!",
+			"CODE_REQUIRED": "Code is required to log in.",
+			"EMAIL_REAL_REQUIRED": "Email address should be the real one!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
-			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces."
+			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces.",
+			"CODE_REQUIRED_LENGTH": "Code should contain {{ requiredLength }} characters."
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
-			"SUB_TITLE": "Please select account type below."
+			"SUB_TITLE": "Please select account type below.",
+			"SUPER_ADMIN_TITLE": "Super Admin",
+			"ADMIN_TITLE": "Admin",
+			"EMPLOYEE_TITLE": "Employee",
+			"DEMO_TITLE": "Demo",
+			"CREDENTIALS_TITLE": "Credentials",
+			"LABELS": {
+				"EMAIL":"Email: ",
+				"PASSWORD": "Password: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4440,6 +4602,25 @@
 		"VALIDATION": {
 			"EMAIL_REQUIRED": "Email is required!",
 			"EMAIL_REAL_REQUIRED": "Email should be the real one!"
+		}
+	},
+	"RESET_PASSWORD_PAGE": {
+		"TITLE": "Change Password",
+		"SUB_TITLE": "Please set a new password",
+		"LABELS": {
+			"NEW_PASSWORD": "New Password:",
+			"CONFIRM_PASSWORD": "Confirm Password:",
+			"BACK_TO": "Back to"
+		},
+		"PLACEHOLDERS": {
+			"NEW_PASSWORD": "New Password",
+			"CONFIRM_PASSWORD": "Confirm Password"
+		},
+		"VALIDATION": {
+			"NEW_PASSWORD_REQUIRED": "New password is required!",
+			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
+			"PASSWORDS_NOT_MATCH": "Password does not match with the confirm password!",
+			"PASSWORD_SHOULD_CONTAIN": "New password should contain from {{ minLength }} to {{ maxLength }} characters!"
 		}
 	},
 	"PAGINATION": {
@@ -4467,7 +4648,24 @@
 			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
-		}
+		},
+		"LABELS": {
+			"EMAIL": "Enter your email address:",
+			"PASSWORD": "Enter your password:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "Password"
+		},
+		"SIGN_IN_TITLE": "Sign in to Workspace",
+		"BACK_TO": "Back to ",
+		"SUCCESS_SIGNIN_TITLE": "Congrats! you’ve successfully signed in to your workspace.",
+		"SUCCESS_SIGNIN_SUB_TITLE": "Please be patient while we are preparing the workspace...",
+		"FAIL_SIGNIN_TITLE": "Error! the magic code or link you provided is expired or invalid.",
+		"FAIL_SIGNIN_SUB_TITLE": "Please initiate the process again.",
+		"THANKING_TEXT": "Thank you for choosing us.",
+		"UNKNOWN_WORKSPACE": "Don't know your workspace?",
+		"FIND_WORKSPACE": "Find your workspaces"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

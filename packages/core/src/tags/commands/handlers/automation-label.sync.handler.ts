@@ -1,7 +1,7 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IOrganization, ITag, ITagCreateInput, ITagUpdateInput, IntegrationEntity } from '@gauzy/contracts';
+import { IOrganization, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
 import { IntegrationMap } from 'core/entities/internal';
 import { RequestContext } from 'core/context';
 import { Tag } from './../../tag.entity';
@@ -44,7 +44,6 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 						tenantId
 					});
 				} catch (error) {
-					console.log(`${IntegrationEntity.LABEL} Not Found for integration GauzyID %s: `, integrationMap.gauzyId);
 					// Create a new tag with the provided entity data
 					return await this.createTag({
 						organizationId,

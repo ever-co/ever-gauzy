@@ -33,9 +33,8 @@ import { Store, ToastrService } from '../../../@core/services';
 	templateUrl: './edit-time-log-modal.component.html',
 	styleUrls: ['./edit-time-log-modal.component.scss']
 })
-export class EditTimeLogModalComponent
-	implements OnInit, AfterViewInit, OnDestroy
-{
+export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {
+
 	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
@@ -152,6 +151,9 @@ export class EditTimeLogModalComponent
 					const { start, end } = selectedRange;
 					const startMoment = moment(start);
 					const endMoment = moment(end);
+					if (!startMoment.isValid() || !endMoment.isValid()) {
+						return this.timeDiff = null;
+					}
 					this.timeDiff = new Date(
 						endMoment.diff(startMoment, 'seconds')
 					);
@@ -251,7 +253,7 @@ export class EditTimeLogModalComponent
 							);
 						}
 					}
-					timeLog.overlapDuration = overlapDuration;
+					timeLog['overlapDuration'] = overlapDuration;
 					return timeLog;
 				});
 			} catch (error) {
@@ -332,5 +334,5 @@ export class EditTimeLogModalComponent
 		return this.form.get(control).value;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -1,49 +1,33 @@
-import {
-	BrowserWindow,
-	ipcMain,
-	screen,
-	desktopCapturer,
-	app,
-	systemPreferences,
-} from 'electron';
-import { TimerData } from './desktop-timer-activity';
+import { BrowserWindow, ipcMain, screen, desktopCapturer, app, systemPreferences } from 'electron';
 import TimerHandler from './desktop-timer';
 import moment from 'moment';
 import { LocalStore } from './desktop-store';
 import { notifyScreenshot, takeshot } from './desktop-screenshot';
 import { resetPermissions } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
-import {
-	ScreenCaptureNotification,
-	loginPage,
-} from '@gauzy/desktop-window';
+import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
 // Import logging for electron and override default console logging
 import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
 import { DesktopPowerManager } from './desktop-power-manager';
-import {
-	PowerManagerPreventDisplaySleep,
-	PowerManagerDetectInactivity,
-} from './decorators';
+import { PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity } from './decorators';
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
-import { DesktopOfflineModeHandler } from './offline/desktop-offline-mode-handler';
-import { IntervalTO } from './offline/dto/interval.dto';
-import {
-	Interval,
-	IntervalService,
-	Timer,
-	TimerService,
-	TimerTO,
-	User,
-	UserService,
-} from './offline';
-import { DialogStopTimerLogoutConfirmation } from './decorators/concretes/dialog-stop-timer-logout-confirmation';
+import { DesktopOfflineModeHandler, IntervalTO } from './offline';
+import { Interval, IntervalService, Timer, TimerService, TimerTO, User, UserService } from './offline';
+import { DialogStopTimerLogoutConfirmation } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
 import { TranslateService } from './translation';
-import { IPowerManager } from './interfaces';
+import { IPowerManager, IDesktopEvent } from './interfaces';
 import { SleepInactivityTracking } from './contexts';
 import { RemoteSleepTracking } from './strategies';
 import { UIError } from './error-handler';
+import {
+	ActivityWatchAfkService,
+	ActivityWatchEventAdapter,
+	ActivityWatchEventManager,
+	ActivityWatchEventTableList
+} from './integrations';
+import { IActivityWatchEventResult } from '@gauzy/contracts';
 
 const timerHandler = new TimerHandler();
 
@@ -62,7 +46,6 @@ export function ipcMainHandler(
 	config,
 	timeTrackerWindow
 ) {
-	ipcMain.removeAllListeners('remove_afk_local_Data');
 	ipcMain.removeAllListeners('return_time_sheet');
 	ipcMain.removeAllListeners('return_toggle_api');
 	ipcMain.removeAllListeners('set_project_task');
@@ -81,16 +64,6 @@ export function ipcMainHandler(
 		} catch (error) {
 			console.error(error);
 			return null;
-		}
-	});
-
-	ipcMain.on('remove_afk_local_Data', async (event, arg) => {
-		try {
-			await TimerData.deleteAfk(knex, {
-				idAfk: arg.idAfk,
-			});
-		} catch (error) {
-			throw new UIError('500', error, 'IPCRMAFK');
 		}
 	});
 
@@ -192,10 +165,7 @@ export function ipcMainHandler(
 				TranslateService.preferredLanguage
 			);
 
-			const lastTime = await TimerData.getLastCaptureTimeSlot(
-				knex,
-				LocalStore.beforeRequestParams()
-			);
+			const lastTime = await timerService.findLastOne();
 
 			console.log('Last Capture Time (Desktop IPC):', lastTime);
 
@@ -241,7 +211,7 @@ export function ipcMainHandler(
 			if (process.platform === 'darwin') {
 				if (isScreenUnauthorized()) {
 					event.sender.send('stop_from_tray', {
-						quitApp: true,
+						quitApp: false,
 					});
 					// Trigger macOS to ask user for screen capture permission
 					try {
@@ -289,17 +259,22 @@ export function ipcMainHandler(
 				await timerService.update(
 					new Timer({
 						id: arg.id,
-						timelogId: arg.lastTimer?.id,
-						timesheetId: arg.lastTimer?.timesheetId,
 						synced: true,
+						...(arg.lastTimer && {
+							timelogId: arg.lastTimer?.id,
+							timesheetId: arg.lastTimer?.timesheetId
+						}),
 						...(arg.lastTimer?.startedAt && {
-							startedAt: new Date(arg.lastTimer?.startedAt),
+							startedAt: new Date(arg.lastTimer?.startedAt)
 						}),
 						...(!arg.lastTimer && {
 							synced: false,
 							isStartedOffline: arg.isStartedOffline,
-							isStoppedOffline: arg.isStoppedOffline,
+							isStoppedOffline: arg.isStoppedOffline
 						}),
+						...(arg.timeSlotId && {
+							timeslotId: arg.timeSlotId
+						})
 					})
 				);
 			}
@@ -314,12 +289,7 @@ export function ipcMainHandler(
 
 	ipcMain.handle('TAKE_SCREEN_CAPTURE', async (event, { quitApp }) => {
 		try {
-			await timerHandler.makeScreenshot(
-				null,
-				knex,
-				timeTrackerWindow,
-				quitApp
-			);
+			return await timerHandler.makeScreenshot(knex, quitApp);
 		} catch (error) {
 			throw new UIError('500', error, 'IPCTKSCAPTURE');
 		}
@@ -481,22 +451,22 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('delete_time_slot', async (event, intervalId: number) => {
+	ipcMain.handle('DELETE_TIME_SLOT', async (event, intervalId: number | string) => {
 		try {
 			const count = await intervalService.countNoSynced();
+			const notify = new NotificationDesktop();
+			const notification = {
+				message: TranslateService.instant(
+					'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
+				),
+				title: process.env.DESCRIPTION,
+			};
 			if (
 				typeof intervalId === 'number' &&
 				intervalId &&
 				count > 0 &&
 				offlineMode.enabled
 			) {
-				const notification = {
-					message: TranslateService.instant(
-						'TIMER_TRACKER.NATIVE_NOTIFICATION.SCREENSHOT_REMOVED'
-					),
-					title: process.env.DESCRIPTION,
-				};
-				const notify = new NotificationDesktop();
 				await intervalService.remove(intervalId);
 				await countIntervalQueue(timeTrackerWindow, false);
 				await latestScreenshots(timeTrackerWindow);
@@ -505,58 +475,147 @@ export function ipcTimer(
 					notification.title
 				);
 			}
-			if (!offlineMode.enabled) {
+			if (!offlineMode.enabled && typeof intervalId === 'string') {
+				await intervalService.removeByRemoteId(intervalId);
 				const lastTimer = await timerService.findLastCapture();
-				await timerService.remove(new Timer(lastTimer));
+				const lastInterval = await intervalService.findLastInterval();
+				if (lastTimer) {
+					lastTimer.timeslotId = lastInterval.remoteId;
+					await timerService.update(new Timer(lastTimer));
+				}
+				notify.customNotification(notification.message, notification.title);
+				return lastInterval.remoteId;
 			}
 		} catch (error) {
 			throw new UIError('400', error, 'IPCRMSLOT');
 		}
 	});
 
-	ipcMain.on('data_push_activity', async (event, arg) => {
-		const collections = arg.windowEvent.map((item) => {
-			return {
-				eventId: item.id,
-				timerId: arg.timerId,
-				duration: item.duration,
-				data: JSON.stringify(item.data),
-				created_at: new Date(),
-				updated_at: new Date(),
-				activityId: null,
-				type: arg.type,
-			};
-		});
-		if (collections.length > 0) {
-			try {
-				await timerHandler.createQueue(
-					'sqlite-queue',
-					{
-						data: collections,
-						type: 'window-events',
-					},
-					knex
-				);
-			} catch (error) {
-				throw new UIError('500', error, 'IPCQWIN');
-			}
+	ActivityWatchEventManager.onPushWindowActivity(async (_, result: IActivityWatchEventResult) => {
+		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
+		if (!collections.length) return;
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: collections,
+					type: ActivityWatchEventTableList.WINDOW
+				},
+				knex
+			);
+
+		} catch (error) {
+			throw new UIError('500', error, 'IPCQWIN');
 		}
 	});
 
-	ipcMain.on('remove_aw_local_data', async (event, arg) => {
+	ActivityWatchEventManager.onPushAfkActivity(async (_, result: IActivityWatchEventResult) => {
+		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
+		if (!collections.length) return;
 		try {
-			if (arg.idsAw && arg.idsAw.length > 0) {
-				await timerHandler.createQueue(
-					'sqlite-queue',
-					{
-						type: 'remove-window-events',
-						data: arg.idsAw,
-					},
-					knex
-				);
-			}
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: collections,
+					type: ActivityWatchEventTableList.AFK
+				},
+				knex
+			);
+
+		} catch (error) {
+			throw new UIError('500', error, 'IPCQWIN');
+		}
+	});
+
+	ActivityWatchEventManager.onPushFirefoxActivity(async (_, result: IActivityWatchEventResult) => {
+		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
+		if (!collections.length) return;
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: collections,
+					type: ActivityWatchEventTableList.FIREFOX
+				},
+				knex
+			);
+
+		} catch (error) {
+			throw new UIError('500', error, 'IPCQWIN');
+		}
+	});
+
+	ActivityWatchEventManager.onPushChromeActivity(async (_, result: IActivityWatchEventResult) => {
+		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
+		if (!collections.length) return;
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: collections,
+					type: ActivityWatchEventTableList.CHROME
+				},
+				knex
+			);
+
+		} catch (error) {
+			throw new UIError('500', error, 'IPCQWIN');
+		}
+	});
+
+	ActivityWatchEventManager.onRemoveAfkLocalData(async (_, value: any) => {
+		try {
+			const afkService = new ActivityWatchAfkService();
+			await afkService.clear();
+		} catch (error) {
+			throw new UIError('500', error, 'IPCRMAFK');
+		}
+	});
+
+	ActivityWatchEventManager.onRemoveLocalData(async (_, value: any) => {
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					type: 'remove-window-events'
+				},
+				knex
+			);
 		} catch (error) {
 			throw new UIError('500', error, 'IPCRMAW');
+		}
+	});
+
+	ActivityWatchEventManager.onStatusChange((_, value: boolean) => {
+		LocalStore.updateApplicationSetting({
+			awIsConnected: value
+		});
+	});
+
+	ActivityWatchEventManager.onSet((_, aw) => {
+		const projectInfo = LocalStore.getStore('project');
+		store.set({
+			project: {
+				...projectInfo,
+				aw
+			}
+		});
+	});
+
+	ActivityWatchEventManager.onPushEdgeActivity(async (_, result: IActivityWatchEventResult) => {
+		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
+		if (!collections.length) return;
+		try {
+			await timerHandler.createQueue(
+				'sqlite-queue',
+				{
+					data: collections,
+					type: ActivityWatchEventTableList.EDGE
+				},
+				knex
+			);
+		} catch (error) {
+			throw new UIError('500', error, 'IPCQWIN');
 		}
 	});
 
@@ -724,26 +783,6 @@ export function ipcTimer(
 		imageView.hide();
 	});
 
-	ipcMain.on('failed_save_time_slot', async (event, arg) => {
-		try {
-			/* save failed request time slot */
-			await timerHandler.createQueue(
-				'sqlite-queue',
-				{
-					type: 'save-failed-request',
-					data: {
-						type: 'timeslot',
-						params: arg.params,
-						message: arg.message,
-					},
-				},
-				knex
-			);
-		} catch (error) {
-			throw new UIError('400', error, 'IPCSAVESLOT');
-		}
-	});
-
 	ipcMain.on('save_temp_screenshot', async (event, arg) => {
 		try {
 			await takeshot(
@@ -756,21 +795,6 @@ export function ipcTimer(
 			);
 		} catch (error) {
 			throw new UIError('400', error, 'IPCSAVESHOT');
-		}
-	});
-
-	ipcMain.on('save_temp_img', async (event, arg) => {
-		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
-				{
-					type: 'save-failed-request',
-					data: arg,
-				},
-				knex
-			);
-		} catch (error) {
-			throw new UIError('400', error, 'IPCQSAVEIMG');
 		}
 	});
 
@@ -838,7 +862,8 @@ export function ipcTimer(
 
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
-		const { height, width } = display.workArea;
+		const { height, width } = display.workAreaSize;
+		console.log('workAreaSize', { height, width });
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1280 - 50 : 1280;
@@ -864,17 +889,14 @@ export function ipcTimer(
 				break;
 			default:
 				{
-					window.setBounds(
-						{
-							width: isExpanded ? widthLarge : maxWidth,
-							height: maxHeight,
-							x:
-								(width - (isExpanded ? widthLarge : maxWidth)) *
-								0.5,
-							y: (height - maxHeight) * 0.5,
-						},
-						true
-					);
+					const bounds = {
+						width: isExpanded ? widthLarge : maxWidth,
+						height: maxHeight,
+						x: (width - (isExpanded ? widthLarge : maxWidth)) * 0.5,
+						y: (height - maxHeight) * 0.5
+					};
+					console.log('Bounds',JSON.stringify(bounds));
+					window.setBounds(bounds, true);
 				}
 				break;
 		}
@@ -886,10 +908,7 @@ export function ipcTimer(
 
 	ipcMain.on('refresh-timer', async (event) => {
 		try {
-			const lastTime = await TimerData.getLastCaptureTimeSlot(
-				knex,
-				LocalStore.beforeRequestParams()
-			);
+			const lastTime = await timerService.findLastCapture();
 			console.log(
 				'Last Capture Time Start Tracking Time (Desktop Try):',
 				lastTime
@@ -912,24 +931,8 @@ export function ipcTimer(
 		}
 	});
 
-	ipcMain.on('aw_status', (event, arg) => {
-		LocalStore.updateApplicationSetting({
-			awIsConnected: arg,
-		});
-	});
-
 	ipcMain.on('update_timer_auth_config', (event, arg) => {
 		LocalStore.updateAuthSetting({ ...arg });
-	});
-
-	ipcMain.on('set_tp_aw', (event, arg) => {
-		const projectInfo = LocalStore.getStore('project');
-		store.set({
-			project: {
-				...projectInfo,
-				aw: arg,
-			},
-		});
 	});
 
 	ipcMain.on('notify', (event, notification) => {
@@ -1016,7 +1019,6 @@ export function ipcTimer(
 export function removeMainListener() {
 	const mainListeners = [
 		'update_timer_auth_config',
-		'remove_afk_local_Data',
 		'return_time_sheet',
 		'return_toggle_api',
 		'set_project_task',
@@ -1036,17 +1038,13 @@ export function removeMainListener() {
 export function removeTimerListener() {
 	removeTimerHandlers();
 	const timerListeners = [
-		'data_push_activity',
-		'remove_aw_local_data',
 		'remove_wakatime_local_data',
 		'return_time_slot',
 		'show_screenshot_notif_window',
 		'save_screen_shoot',
 		'show_image',
 		'close_image_view',
-		'failed_save_time_slot',
 		'save_temp_screenshot',
-		'save_temp_img',
 		'open_setting_window',
 		'switch_aw_option',
 		'logout_desktop',
@@ -1075,7 +1073,7 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP'];
+	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT'];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});

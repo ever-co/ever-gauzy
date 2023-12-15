@@ -242,11 +242,14 @@ export class AppModule {
 	}
 }
 
-export function serverConnectionFactory(
-	provider: ServerConnectionService,
-	store: Store,
-	router: Router
-) {
+/**
+ *
+ * @param provider
+ * @param store
+ * @param router
+ * @returns
+ */
+export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router) {
 	return () =>
 		provider
 			.checkServerConnection(environment.API_BASE_URL)
@@ -258,14 +261,22 @@ export function serverConnectionFactory(
 			.catch(() => { });
 }
 
+/**
+ *
+ * @param provider
+ * @returns
+ */
 export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
 	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 
-export function featureToggleLoaderFactory(
-	provider: FeatureService,
-	store: Store
-) {
+/**
+ *
+ * @param provider
+ * @param store
+ * @returns
+ */
+export function featureToggleLoaderFactory(provider: FeatureService, store: Store) {
 	return () =>
 		provider
 			.getFeatureToggleDefinition()

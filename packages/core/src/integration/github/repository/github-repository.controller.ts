@@ -1,6 +1,8 @@
 import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, Put, UsePipes, ValidationPipe } from '@nestjs/common';
+import { UUIDValidationPipe } from 'shared/pipes';
 import { GithubRepositoryService } from './github-repository.service';
+import { UpdateGithubRepositoryDTO } from './dto';
 
 @Controller('repository')
 export class GitHubRepositoryController {
@@ -24,6 +26,33 @@ export class GitHubRepositoryController {
         } catch (error) {
             // Handle errors, e.g., return an error response.
             throw new Error('Failed to sync GitHub repository');
+        }
+    }
+
+    /**
+     * Handle an HTTP PUT request to update a GitHub repository by its unique identifier.
+     * @param id - A string representing the unique identifier of the GitHub repository.
+     * @param input - An object representing the data to update the GitHub repository with.
+     * @returns A Promise that resolves to the updated GitHub repository data.
+     */
+    @Put('/:id')
+    @UsePipes(new ValidationPipe({ whitelist: true }))
+    async update(
+        @Param('id', UUIDValidationPipe) id: string,
+        @Body() input: UpdateGithubRepositoryDTO,
+    ): Promise<IOrganizationGithubRepository> {
+        try {
+            // Ensure that a GitHub repository with the provided identifier exists.
+            await this._githubRepositoryService.findOneByIdString(id);
+
+            // Attempt to update the GitHub repository using the provided data.
+            return await this._githubRepositoryService.create({
+                ...input,
+                id
+            });
+        } catch (error) {
+            // Handle errors, e.g., return an error response.
+            throw new Error('Failed to update GitHub repository fields');
         }
     }
 }

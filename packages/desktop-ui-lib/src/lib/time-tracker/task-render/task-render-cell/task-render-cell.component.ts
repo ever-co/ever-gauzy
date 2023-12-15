@@ -4,7 +4,8 @@ import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITaskPriority, ITaskSize } from '@gauzy/contracts';
-import { NbPopoverDirective } from '@nebular/theme';
+import {NbDialogService, NbPopoverDirective} from '@nebular/theme';
+import {TaskDetailComponent} from "../task-detail/task-detail.component";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,6 +15,10 @@ import { NbPopoverDirective } from '@nebular/theme';
 })
 export class TaskRenderCellComponent extends TaskRenderComponent {
 	private _popover: NbPopoverDirective;
+
+	constructor(private _dialogService: NbDialogService) {
+		super();
+	}
 
 	public get popover(): NbPopoverDirective {
 		return this._popover;
@@ -55,7 +60,12 @@ export class TaskRenderCellComponent extends TaskRenderComponent {
 			.toUpperCase();
 	}
 
-	public hideDetails() {
-		this.popover.hide();
+	public showDetail(){
+		this._dialogService.open(TaskDetailComponent, {
+			context: {
+				task: this.task
+			},
+			backdropClass: 'backdrop-blur',
+		})
 	}
 }

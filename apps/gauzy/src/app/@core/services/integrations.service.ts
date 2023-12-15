@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -71,16 +71,17 @@ export class IntegrationsService {
 	}
 
 	/**
+	 * Get an IntegrationTenant by ID with optional relations.
 	 *
-	 * @param integrationId
-	 * @param relations
-	 * @returns
+	 * @param id - The ID of the IntegrationTenant.
+	 * @param relations - Optional relations for the request.
+	 * @returns {Observable<any>} An Observable of the HTTP response.
 	 */
-	fetchIntegrationTenant(
-		integrationId: IIntegrationTenant['id'],
+	getIntegrationTenant(
+		id: IIntegrationTenant['id'],
 		relations: IBaseRelationsEntityModel
-	) {
-		return this._http.get<any>(`${API_PREFIX}/integration-tenant/${integrationId}`, {
+	): Observable<IIntegrationTenant> {
+		return this._http.get<any>(`${API_PREFIX}/integration-tenant/${id}`, {
 			params: toParams({ ...relations })
 		});
 	}

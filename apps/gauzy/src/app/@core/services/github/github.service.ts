@@ -5,12 +5,14 @@ import {
     IBasePerTenantAndOrganizationEntityModel,
     IGithubAppInstallInput,
     IGithubIssue,
+    IGithubIssueFindInput,
     IGithubRepository,
     IGithubRepositoryResponse,
     IIntegrationMapSyncRepository,
     IIntegrationTenant,
     IOrganization,
     IOrganizationGithubRepository,
+    IOrganizationGithubRepositoryUpdateInput,
     IOrganizationProject
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/common-angular';
@@ -65,7 +67,7 @@ export class GithubService {
         integrationId: IIntegrationTenant['id'],
         owner: string,
         repo: string,
-        query: IBasePerTenantAndOrganizationEntityModel
+        query: IGithubIssueFindInput
     ): Observable<IGithubIssue[]> {
         const url = `${API_PREFIX}/integration/github/${integrationId}/${owner}/${repo}/issues`;
         const params = toParams(query);
@@ -84,6 +86,21 @@ export class GithubService {
     }
 
     /**
+     * Update a GitHub repository's information.
+     *
+     * @param id - A string representing the unique identifier of the GitHub repository to be updated.
+     * @param input - An object containing the data to update the GitHub repository.
+     * @returns An Observable that emits the updated GitHub repository data.
+     */
+    updateGithubRepository(id: string, input: IOrganizationGithubRepositoryUpdateInput): Observable<IOrganizationGithubRepository> {
+        // Construct the URL for the API endpoint.
+        const url = `${API_PREFIX}/integration/github/repository/${id}`;
+
+        // Send an HTTP PUT request to update the GitHub repository using the provided input.
+        return this._http.put<IOrganizationGithubRepository>(url, input);
+    }
+
+    /**
      * Auto-synchronize GitHub issues for a specific repository.
      *
      * @param integrationId - The ID of the integration tenant.
@@ -93,7 +110,7 @@ export class GithubService {
      */
     public autoSyncIssues(
         integrationId: IIntegrationTenant['id'],
-        repository: IGithubRepository,
+        repository: IOrganizationGithubRepository,
         options: {
             organizationId: IOrganization['id'];
             tenantId: IOrganization['tenantId'];
@@ -102,7 +119,7 @@ export class GithubService {
     ): Observable<any> {
         return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/auto-sync/issues`, {
             integrationId,
-            repository: this._mapRepositoryPayload(repository),
+            repository,
             projectId: options.projectId,
             organizationId: options.organizationId,
             tenantId: options.tenantId
@@ -118,7 +135,7 @@ export class GithubService {
      */
     public manualSyncIssues(
         integrationId: IIntegrationTenant['id'],
-        repository: IGithubRepository,
+        repository: IOrganizationGithubRepository,
         options: {
             organizationId: IOrganization['id'];
             tenantId: IOrganization['tenantId'];
@@ -126,9 +143,9 @@ export class GithubService {
             projectId?: IOrganizationProject['id'];
         },
     ): Observable<any> {
-        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/sync/issues`, {
+        return this._http.post(`${API_PREFIX}/integration/github/${integrationId}/manual-sync/issues`, {
             integrationId,
-            repository: this._mapRepositoryPayload(repository),
+            repository,
             issues: this._mapIssuePayload(options.issues),
             projectId: options.projectId,
             organizationId: options.organizationId,
@@ -164,12 +181,13 @@ export class GithubService {
      * @returns An array of mapped issue payload data.
      */
     private _mapIssuePayload(data: IGithubIssue[]): any[] {
-        return data.map(({ id, number, title, state, body }) => ({
-            sourceId: id,
+        return data.map(({ id, number, title, state, body, labels = [] }) => ({
+            id,
             number,
             title,
             state,
-            body
+            body,
+            labels
         }));
     }
 }

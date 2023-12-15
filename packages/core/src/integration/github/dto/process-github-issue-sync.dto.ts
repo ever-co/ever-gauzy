@@ -1,4 +1,4 @@
-import { IGithubIssue, IGithubRepository, IGithubSyncIssuePayload, IOrganizationProject } from "@gauzy/contracts";
+import { IGithubIssue, IGithubSyncIssuePayload, IOrganizationGithubRepository, IOrganizationProject } from "@gauzy/contracts";
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsArray, IsObject, IsOptional, IsUUID } from "class-validator";
 import { TenantOrganizationBaseDTO } from "core/dto";
@@ -19,7 +19,7 @@ export class ProcessGithubIssueSyncDTO extends TenantOrganizationBaseDTO impleme
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
     @IsObject()
-    readonly repository: IGithubRepository;
+    readonly repository: IOrganizationGithubRepository;
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()

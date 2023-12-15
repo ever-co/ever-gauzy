@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ITaskRender } from '../task-render.component';
 import { ITag, ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { NbDialogRef } from '@nebular/theme';
 
 @Component({
 	selector: 'gauzy-task-detail',
@@ -10,12 +11,12 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class TaskDetailComponent {
 	@Input()
-	private task: ITaskRender;
+	public task: ITaskRender;
 
 	@Output()
 	public hidden: EventEmitter<Boolean>;
 
-	constructor(private _translateService: TranslateService) {
+	constructor(private _translateService: TranslateService, private _dialogRef: NbDialogRef<TaskDetailComponent>) {
 		this.hidden = new EventEmitter<Boolean>();
 	}
 
@@ -52,5 +53,10 @@ export class TaskDetailComponent {
 
 	public hide(): void {
 		this.hidden.emit(true);
+	}
+
+	public dismiss(): void {
+		this.hide();
+		this._dialogRef.close();
 	}
 }

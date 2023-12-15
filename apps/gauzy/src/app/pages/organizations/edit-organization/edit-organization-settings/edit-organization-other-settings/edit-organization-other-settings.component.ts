@@ -41,6 +41,7 @@ import {
     TaskProofOfCompletionTypeEnum,
     DEFAULT_AUTO_CLOSE_ISSUE_PERIOD,
     DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
+    DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS,
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -103,6 +104,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     regionCodes = Object.keys(RegionsEnum);
     regionCode: string;
     regions = Object.values(RegionsEnum);
+    screenshotFrequencyOptions = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS
 
     /*
      * Organization Mutation Form
@@ -198,6 +200,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
             allowScreenshotCapture: [true],
             upworkOrganizationId: [null],
             upworkOrganizationName: [null],
+            randomScreenshot: [false],
+            trackOnSleep: [false],
+            screenshotFrequency: [10],
+            enforced: [false]
         });
     }
 
@@ -485,26 +491,38 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     }
 
     /**
-    * Update organization task settings
-    */
+     * Update organization task settings.
+     *
+     * @returns A subscription for the create or update operation.
+     *
+     * @throws Throws an error and displays a toastr message if the operation fails.
+     */
     updateOrganizationTaskSetting() {
+        // Check if the organization is available.
         if (!this.organization) {
             return;
         }
-        let taskSettingInputFormObj: IOrganizationTaskSetting = {
+
+        // Extract organization information from the current organization.
+        const { id: organizationId, tenantId } = this.organization;
+
+        let input: IOrganizationTaskSetting = {
             ...this.taskSettingForm.value,
-            organizationId: this.organization.id,
+            organizationId,
+            tenantId
         };
 
-        if (this.organizationTaskSetting) {
-            taskSettingInputFormObj.id = this.organizationTaskSetting.id;
-        }
+        // Determine the service method based on the existence of organizationTaskSetting.
+        const method$ = this.organizationTaskSetting
+            ? this.organizationTaskSettingService.update(this.organizationTaskSetting.id, input)
+            : this.organizationTaskSettingService.create(input);
 
-        return (this.organizationTaskSetting ? this.organizationTaskSettingService.edit(taskSettingInputFormObj) : this.organizationTaskSettingService.create(taskSettingInputFormObj)).subscribe({
+        // Perform the create or update operation and subscribe to the result.
+        return method$.subscribe({
+            // Handle errors during the create or update operation.
             error: () => {
-                this.toastrService.error(
-                    `TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`
-                );
+                // Display a toastr error message if the operation fails.
+                this.toastrService.error(`TOASTR.MESSAGE.ORGANIZATION_TASK_SETTINGS_UPDATE_ERROR`);
             }
         });
     }
@@ -811,6 +829,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
             allowScreenshotCapture: this.organization.allowScreenshotCapture,
             upworkOrganizationId: this.organization.upworkOrganizationId,
             upworkOrganizationName: this.organization.upworkOrganizationName,
+            randomScreenshot: this.organization.randomScreenshot,
+            trackOnSleep: this.organization.trackOnSleep,
+            screenshotFrequency: this.organization.screenshotFrequency,
+            enforced: this.organization.enforced
         });
         this.form.updateValueAndValidity();
 
@@ -905,6 +927,10 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
                 }
             );
         }
+    }
+
+    public get isEnforced(): boolean {
+        return this.form.get('enforced').value;
     }
 
     ngOnDestroy(): void { }

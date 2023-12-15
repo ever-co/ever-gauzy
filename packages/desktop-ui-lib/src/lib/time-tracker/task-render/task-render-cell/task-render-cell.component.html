@@ -1,11 +1,5 @@
 <div class="task-render">
-	<div [nbPopover]="detail" class="detail">
-		<nb-icon
-			*ngIf="isSelected$ | async"
-			class="running-task"
-			icon="arrow-right-outline"
-			status="primary"
-		></nb-icon>
+	<div (click)="showDetail()" class="detail">
 		<div *ngIf="number" class="task-number">
 			{{ number }}
 		</div>
@@ -24,7 +18,3 @@
 		</div>
 	</div>
 </div>
-
-<ng-template #detail>
-	<gauzy-task-detail [task]="task$ | async" (hidden)="hideDetails()"></gauzy-task-detail>
-</ng-template>

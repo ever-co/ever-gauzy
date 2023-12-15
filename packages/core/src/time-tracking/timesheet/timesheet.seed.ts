@@ -67,7 +67,6 @@ export const createDefaultTimeSheet = async (
 				timesheet.lockedAt = null;
 				timesheet.isBilled = isBilled;
 				timesheet.status = TimesheetStatus[status];
-				timesheet.deletedAt = null;
 				timesheets.push(timesheet);
 			}
 		}
@@ -173,7 +172,6 @@ export const createRandomTimesheet = async (
 						timesheet.lockedAt = null;
 						timesheet.isBilled = isBilled;
 						timesheet.status = TimesheetStatus[status];
-						timesheet.deletedAt = null;
 						timesheets.push(timesheet);
 					});
 			}

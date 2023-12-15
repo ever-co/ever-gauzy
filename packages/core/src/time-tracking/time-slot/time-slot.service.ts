@@ -31,45 +31,39 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		super(timeSlotRepository);
 	}
 
+	/**
+	 * Retrieves time slots based on the provided input parameters.
+	 * @param request - Input parameters for querying time slots.
+	 * @returns A list of time slots matching the specified criteria.
+	 */
 	async getTimeSlots(request: IGetTimeSlotInput) {
+
+		// Extract parameters from the request object
 		const { organizationId, startDate, endDate, syncSlots = false } = request;
 		const tenantId = RequestContext.currentTenantId();
+		const user = RequestContext.currentUser();
 
-		let employeeIds: string[];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (request.employeeIds) {
-				employeeIds = request.employeeIds;
-			}
-		} else {
-			const user = RequestContext.currentUser();
-			employeeIds = [user.employeeId];
-		}
+		// Calculate start and end dates using a utility function
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('day')),
+			moment.utc(endDate || moment().endOf('day'))
+		);
 
-		const { start, end } = (startDate && endDate) ?
-								getDateRangeFormat(
-									moment.utc(startDate),
-									moment.utc(endDate)
-								) :
-								getDateRangeFormat(
-									moment().startOf('day').utc(),
-									moment().endOf('day').utc()
-								);
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
 
+		// Set employeeIds based on permissions and request
+		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+
+		// Create a query builder for the TimeSlot entity
 		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		query.leftJoin(`${query.alias}.employee`, 'employee');
+		query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
+
 		query.setFindOptions({
-			join: {
-				alias: 'time_slot',
-				leftJoin: {
-					employee: 'time_slot.employee'
-				},
-				innerJoin: {
-					time_log: 'time_slot.timeLogs'
-				}
-			},
+			// Define selected fields for the result
 			select: {
 				organization: {
 					id: true,
@@ -124,53 +118,45 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			);
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
+					// Filters records based on the overall column, representing the activity level.
 					if (isNotEmpty(request.activityLevel)) {
 						/**
 						 * Activity Level should be 0-100%
-						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
+						 * Convert it into a 10-minute time slot by multiplying by 6
 						 */
 						const { activityLevel } = request;
-						const start = (activityLevel.start * 6);
-						const end = (activityLevel.end * 6);
 
 						web.andWhere(`"${qb.alias}"."overall" BETWEEN :start AND :end`, {
-							start,
-							end
+							start: activityLevel.start * 6,
+							end: activityLevel.end * 6
 						});
 					}
+
+					// Filters records based on the source column.
 					if (isNotEmpty(request.source)) {
 						const { source } = request;
-						if (source instanceof Array) {
-							web.andWhere('"time_log"."source" IN (:...source)', {
-								source
-							});
-						} else {
-							web.andWhere('"time_log"."source" = :source', {
-								source
-							});
-						}
+
+						const condition = source instanceof Array ? `"time_log"."source" IN (:...source)` : `"time_log"."source" = :source`;
+						web.andWhere(condition, { source });
 					}
+
+					// Filters records based on the logType column.
 					if (isNotEmpty(request.logType)) {
 						const { logType } = request;
-						if (logType instanceof Array) {
-							web.andWhere('"time_log"."logType" IN (:...logType)', {
-								logType
-							});
-						} else {
-							web.andWhere('"time_log"."logType" = :logType', {
-								logType
-							});
-						}
+						const condition = logType instanceof Array ? `"time_log"."logType" IN (:...logType)` : `"time_log"."logType" = :logType`;
+
+						web.andWhere(condition, { logType });
 					}
 				})
 			);
+			// Additional conditions for filtering by tenantId and organizationId
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
 					web.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
-					web.andWhere(`"time_log"."deletedAt" IS NULL`);
 				})
 			);
+			// Additional conditions for filtering by tenantId and organizationId
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
@@ -178,7 +164,6 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 				})
 			);
 			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
-			console.log('Get Screenshots Query And Parameters', qb.getQueryAndParameters());
 		});
 		const slots = await query.getMany();
 		return slots;

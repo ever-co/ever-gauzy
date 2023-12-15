@@ -71,7 +71,7 @@
 
 :host .actions-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   position: absolute;
   align-items: center;
   @include nb-rtl(left, 1rem);

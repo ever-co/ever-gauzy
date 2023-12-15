@@ -36,7 +36,6 @@ import {
 	ipcTimer,
 	TrayIcon,
 	LocalStore,
-	DataModel,
 	AppMenu,
 	DesktopUpdater,
 	removeMainListener,
@@ -84,7 +83,7 @@ const provider = ProviderFactory.instance;
 const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
-
+const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 const store = new Store();
 
 const args = process.argv.slice(1);
@@ -130,7 +129,7 @@ const pathWindow = {
 };
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'icons', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
 });
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
@@ -241,8 +240,6 @@ eventErrorManager.onShowError(async (message) => {
 });
 
 async function startServer(value, restart = false) {
-	const dataModel = new DataModel();
-	await dataModel.createNewTable(knex);
 	try {
 		const config: any = {
 			...value,
@@ -250,7 +247,7 @@ async function startServer(value, restart = false) {
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw,
+			isAw: !!value.aw?.isAw,
 		};
 		const projectConfig = store.get('project');
 		store.set({
@@ -391,9 +388,13 @@ app.on('ready', async () => {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
 		IS_INTEGRATED_DESKTOP: configs?.isLocalServer,
 	};
-	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-	await splashScreen.loadURL();
-	splashScreen.show();
+	try {
+		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+		await splashScreen.loadURL();
+		splashScreen.show();
+	} catch (error) {
+		console.error(error);
+	}
 	if (!settings) {
 		launchAtStartup(true, false);
 	}
@@ -740,9 +741,9 @@ function launchAtStartup(autoLaunch, hidden) {
 	}
 }
 
-app.on('web-contents-created', (e, contents) => {
-	contents.on('will-redirect', async (e, url) => {
-		const defaultBrowserConfig: any = {
+app.on('web-contents-created', (event, contents) => {
+	contents.on('will-redirect', async (event, url) => {
+		const defaultBrowserConfig = {
 			title: '',
 			width: 1280,
 			height: 600,
@@ -753,44 +754,48 @@ app.on('web-contents-created', (e, contents) => {
 				javascript: true,
 				webSecurity: false,
 				webviewTag: false,
-			},
+				nodeIntegration: true
+			}
 		};
-		if (
-			[
-				'https://www.linkedin.com/oauth',
-				'https://accounts.google.com',
-			].findIndex((str) => url.indexOf(str) > -1) > -1
-		) {
+
+		const isLinkedInOAuth = url.includes('https://www.linkedin.com/oauth');
+		const isGoogleOAuth = url.includes('https://accounts.google.com');
+		const isSignInSuccess = url.includes('sign-in/success?jwt');
+		const isAuthRegister = url.includes('/auth/register');
+		const targetUrl = new URL(url);
+
+		if (!ALLOWED_PROTOCOLS.has(targetUrl.protocol)) {
+			return;
+		}
+
+		if (isLinkedInOAuth || isGoogleOAuth) {
 			try {
-				e.preventDefault();
+				event.preventDefault();
 				await showPopup(url, defaultBrowserConfig);
-			} catch (error) {
-				throw new AppError('MAINWB', error);
+			} catch (_) {
+				// Soft fail
 			}
 			return;
 		}
 
-		if (url.indexOf('sign-in/success?jwt') > -1) {
-			if (popupWin) popupWin.destroy();
+		if (isSignInSuccess) {
 			const urlParse = Url.parse(url, true);
-			const urlParsed = Url.parse(
-				urlFormat(urlParse.hash, urlParse.host),
-				true
-			);
-			const query = urlParsed.query;
+			const urlParsed = Url.parse(urlFormat(urlParse.hash, urlParse.host), true);
+			const { jwt, userId } = urlParsed.query;
+			if (popupWin) popupWin.destroy();
 			const params = LocalStore.beforeRequestParams();
 			timeTrackerWindow.webContents.send('social_auth_success', {
 				...params,
-				token: query.jwt,
-				userId: query.userId,
+				token: jwt,
+				userId
 			});
 		}
 
-		if (url.indexOf('/auth/register') > -1) {
+		if (isAuthRegister) {
 			try {
 				await shell.openExternal(url);
 			} catch (error) {
-				console.log('ERROR', error);
+				console.error('Error opening external URL:', error);
 			}
 		}
 	});
@@ -801,13 +806,26 @@ const urlFormat = (hash: string, host: string) => {
 	return `${host}${uri}`;
 };
 
-const showPopup = async (url: string, options: any) => {
-	options.width = 1280;
-	options.height = 768;
-	if (popupWin) popupWin.destroy();
-	popupWin = new BrowserWindow(options);
-	const userAgentWb = 'Chrome/104.0.0.0';
-	await popupWin.loadURL(url, { userAgent: userAgentWb });
+const showPopup = async (url: string, options: Electron.BrowserWindowConstructorOptions) => {
+	const { width = 1280, height = 768, ...otherOptions } = options;
+
+	// Close existing popup window if it exists
+	if (popupWin) {
+		popupWin.destroy();
+	}
+
+	// Create a new BrowserWindow with specified options
+	popupWin = new BrowserWindow({
+		width,
+		height,
+		...otherOptions
+	});
+
+	// Set a custom user agent to emulate a specific browser version
+	const userAgent = 'Chrome/104.0.0.0';
+	await popupWin.loadURL(url, { userAgent });
+
+	// Show the popup window
 	popupWin.show();
 };
 

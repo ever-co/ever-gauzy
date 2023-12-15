@@ -7,6 +7,7 @@ import { environment as env } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { Screenshot } from '../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';
+import { AppsNames } from './../activity/activity.seed';
 
 let fileList: string[] = [];
 
@@ -87,8 +88,10 @@ export const createRandomScreenshot = async (
 		screenshot.thumb = file;
 		screenshot.thumbUrl = file;
 		screenshot.recordedAt = faker.date.between({ from: startedAt, to: stoppedAt });
-		screenshot.deletedAt = null;
 		screenshot.storageProvider = FileStorageProviderEnum.LOCAL;
+		screenshot.isWorkRelated = faker.helpers.arrayElement([true, false]);
+		screenshot.apps = faker.helpers.arrayElements(AppsNames, 2);
+		screenshot.description = faker.lorem.sentences({ min: 1, max: 3 });
 		screenshots.push(screenshot);
 	}
 	return screenshots;

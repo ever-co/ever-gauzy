@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
+import { isNotEmpty } from '@gauzy/common';
 import {
 	IGetTimesheetInput,
 	PermissionsEnum,
@@ -83,47 +84,36 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		qb: SelectQueryBuilder<Timesheet>,
 		request: IGetTimesheetInput
 	) {
-		const user = RequestContext.currentUser();
-		const tenantId = RequestContext.currentTenantId();
-
 		const { organizationId, startDate, endDate } = request;
-		const { start, end } = (startDate && endDate) ?
-								getDateRangeFormat(
-									moment.utc(startDate),
-									moment.utc(endDate)
-								) :
-								// use current start of the month if startDate not found
-								// use current end of the month if endDate not found
-								getDateRangeFormat(
-									moment().startOf('month').utc(),
-									moment().endOf('month').utc()
-								);
+		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+		const user = RequestContext.currentUser();
 
-		const employeeIds: string[] = [];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			if (request.employeeIds) {
-				employeeIds.push(...request.employeeIds);
-			}
-		} else {
-			employeeIds.push(user.employeeId);
-		}
+		// Calculate start and end dates using a utility function
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('month')), // use current start of the month if startDate not found
+			moment.utc(endDate || moment().endOf('month')) // use current end of the month if endDate not found
+		);
+
+		// Check if the current user has the permission to change the selected employee
+		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+
+		// Set employeeIds based on permissions and request
+		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
 
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(						{
+				qb.where({
 					startedAt: Between(start, end),
 					...(employeeIds.length > 0 ? { employeeId: In(employeeIds) } : {})
 				});
 			})
 		);
 
+		// Additional conditions for filtering by tenantId and organizationId
 		qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
 		qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-		qb.andWhere(`"${qb.alias}"."deletedAt" IS NULL`);
 		return qb;
 	}
 }

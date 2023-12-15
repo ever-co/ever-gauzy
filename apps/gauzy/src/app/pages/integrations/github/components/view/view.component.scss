@@ -1,3 +1,5 @@
+@import 'gauzy/_gauzy-table.scss';
+
 :host {
 	nb-card,
 	nb-card-body {
@@ -12,7 +14,7 @@
 	}
 }
 ::ng-deep {
-	.issues-container {
+	.table-scroll-container {
 		input[type="checkbox"] {
 			box-shadow: none !important;
 			height: auto !important;

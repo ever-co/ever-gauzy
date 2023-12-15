@@ -1,5 +1,5 @@
-
 import { MigrationInterface, QueryRunner } from "typeorm";
+import * as chalk from "chalk";
 
 export class AddImageAssetColumnToTables1679406665415 implements MigrationInterface {
 
@@ -11,6 +11,8 @@ export class AddImageAssetColumnToTables1679406665415 implements MigrationInterf
     * @param queryRunner
     */
     public async up(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
         } else {
