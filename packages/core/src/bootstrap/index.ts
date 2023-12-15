@@ -40,7 +40,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	});
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
-	app.set('trust proxy', 1);
+	app.set('trust proxy', true);
 
 	// Starts listening for shutdown hooks
 	app.enableShutdownHooks();

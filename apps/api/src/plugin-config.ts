@@ -90,16 +90,30 @@ function getDbConfig(): DataSourceOptions {
 
 			const postgresConnectionOptions: PostgresConnectionOptions = {
 				type: dbType,
+				ssl: ssl ? sslParams : undefined,
 				host: process.env.DB_HOST || 'localhost',
 				port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
 				database: process.env.DB_NAME || 'postgres',
 				username: process.env.DB_USER || 'postgres',
 				password: process.env.DB_PASS || 'root',
-				ssl: ssl ? sslParams : undefined,
-				logging: 'all',
-				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
+				logging: process.env.DB_LOGGING == 'all' ? 'all' : ['query', 'error'],
+				logger: 'advanced-console',
+				// log queries that take more than 3 sec as warnings
+				maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+					? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+					: 3000,
 				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
-				uuidExtension: 'pgcrypto'
+				uuidExtension: 'pgcrypto',
+				// NOTE: in new TypeORM version this unified too `poolSize` in the root of connections option object.
+				// See https://typeorm.io/data-source-options#common-data-source-options
+				extra: {
+					// based on  https://node-postgres.com/api/pool max connection pool size
+					max: process.env.DB_POOL_SIZE || 20,
+					// connection timeout
+					connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
+						? parseInt(process.env.DB_CONNECTION_TIMEOUT)
+						: 1000
+				}
 			};
 
 			return postgresConnectionOptions;
