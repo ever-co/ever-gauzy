@@ -45,7 +45,12 @@ switch (dbType) {
 			database: process.env.DB_NAME || 'postgres',
 			username: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
-			logging: process.env.DB_LOGGING == 'all' ? 'all' : ['query', 'error'],
+			logging:
+				process.env.DB_LOGGING == 'false'
+					? false
+					: process.env.DB_LOGGING == 'all'
+					? 'all'
+					: ['query', 'error'],
 			logger: 'advanced-console',
 			// log queries that take more than 3 sec as warnings
 			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
