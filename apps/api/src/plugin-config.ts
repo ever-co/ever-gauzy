@@ -101,7 +101,9 @@ function getDbConfig(): DataSourceOptions {
 						? false
 						: process.env.DB_LOGGING == 'all'
 						? 'all'
-						: ['query', 'error'],
+						: process.env.DB_LOGGING == 'query'
+						? ['query', 'error']
+						: ['error'], // by default set to error only
 				logger: 'advanced-console',
 				// log queries that take more than 3 sec as warnings
 				maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
