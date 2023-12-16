@@ -412,7 +412,17 @@
 		"pantone",
 		"msedge",
 		"openai",
-		"OPENAI"
+		"OPENAI",
+		"initdb",
+		"cubejs",
+		"CUBEJS",
+		"jitsucom",
+		"configurator",
+		"eventnative",
+		"airbyte",
+		"ulimits",
+		"memlock",
+		"appbaseio"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

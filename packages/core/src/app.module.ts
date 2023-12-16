@@ -1,7 +1,8 @@
 import { HttpException, Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
-import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
 import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
@@ -143,6 +144,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
+
 const { unleashConfig, github, jitsu, jira } = environment;
 
 if (unleashConfig.url) {
@@ -235,7 +237,8 @@ if (environment.sentry && environment.sentry.dsn) {
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
-			path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			path: 'integration/github/webhook',
 			config: {
 				/** Client Configuration */
 				clientId: github.clientId,
@@ -265,14 +268,18 @@ if (environment.sentry && environment.sentry.dsn) {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		ThrottlerModule.forRootAsync({
-			inject: [ConfigService],
-			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-				({
-					ttl: config.get('THROTTLE_TTL'),
-					limit: config.get('THROTTLE_LIMIT')
-				} as ThrottlerModuleOptions)
-		}),
+		...(environment.THROTTLE_ENABLED
+			? [
+					ThrottlerModule.forRootAsync({
+						inject: [ConfigService],
+						useFactory: (config: ConfigService): ThrottlerModuleOptions =>
+							({
+								ttl: config.get('THROTTLE_TTL'),
+								limit: config.get('THROTTLE_LIMIT')
+							} as ThrottlerModuleOptions)
+					})
+			  ]
+			: []),
 		CoreModule,
 		AuthModule,
 		UserModule,
@@ -401,26 +408,34 @@ if (environment.sentry && environment.sentry.dsn) {
 	controllers: [AppController],
 	providers: [
 		AppService,
-		{
-			provide: APP_GUARD,
-			useClass: ThrottlerGuard
-		},
+		...(environment.THROTTLE_ENABLED
+			? [
+					{
+						provide: APP_GUARD,
+						useClass: ThrottlerBehindProxyGuard
+					}
+			  ]
+			: []),
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
 		},
-		{
-			provide: APP_INTERCEPTOR,
-			useFactory: () =>
-				new SentryInterceptor({
-					filters: [
-						{
-							type: HttpException,
-							filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
-						}
-					]
-				})
-		}
+		...(environment.sentry && environment.sentry.dsn
+			? [
+					{
+						provide: APP_INTERCEPTOR,
+						useFactory: () =>
+							new SentryInterceptor({
+								filters: [
+									{
+										type: HttpException,
+										filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
+									}
+								]
+							})
+					}
+			  ]
+			: [])
 	],
 	exports: []
 })

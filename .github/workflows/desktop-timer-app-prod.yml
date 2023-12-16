@@ -141,7 +141,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [windows-latest-l]
+        os: [windows-latest]
 
     steps:
       - name: Check out Git repository

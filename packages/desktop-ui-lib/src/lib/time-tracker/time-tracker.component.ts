@@ -277,6 +277,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return selected;
 	}
 
+	public get tasks(): ITask[] {
+		return this._tasks$.getValue();
+	}
+
+	public get selectedTask(): ITask {
+		const [selected] = this.tasks.filter((task: ITask) => task.id === this.taskSelect);
+		return selected;
+	}
+
 	private _taskTable: Ng2SmartTableComponent;
 
 	@ViewChild('taskTable') set taskTable(content: Ng2SmartTableComponent) {
@@ -579,7 +588,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 			screenshots = screenshots.filter((screenshot) => !!screenshot);
 			if (screenshots.length > 0) {
-				screenshots = _.sortBy(screenshots, 'recordedAt');
 				const [lastCaptureScreen] = screenshots;
 				console.log('Last Capture Screen:', lastCaptureScreen);
 				this.lastScreenCapture$.next(lastCaptureScreen);
@@ -811,12 +819,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				tap(async (tasks) => {
 					if (tasks.length > 0) {
-						const idx = tasks.findIndex(
-							(row) => row.id === this.taskSelect
-						);
-						if (idx > -1) {
-							tasks[idx].isSelected = true;
-						}
+						tasks = tasks.map((row) => ({ ...row, isSelected: row.id === this.taskSelect }));
 					} else {
 						tasks = [];
 						this.taskSelect = null;
@@ -1704,6 +1707,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 				await this.sendActivities(activities);
 			}
+			await this.updateTaskStatus();
 			await this.updateOrganizationTeamEmployee();
 			this.electronService.ipcRenderer.send('request_permission');
 		} catch (error) {
@@ -1872,14 +1876,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public setTask(item: string): void {
 		this.taskSelect = item;
 		this.electronService.ipcRenderer.send('update_project_on', {
-			taskId: this.taskSelect,
+			taskId: this.taskSelect
 		});
 		if (item) this.errors.task = false;
 	}
 
 	public descriptionChange(e): void {
 		if (e) this.errors.note = false;
-		this.setTask(null);
+		this.clearSelectedTaskAndRefresh();
 		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
 			note: this.note,
@@ -2015,6 +2019,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			if (res.employee && res.employee.organization) {
 				this.userData = res;
 				if (res.role && res.role.rolePermissions) {
+					this._store.userRolePermissions = res.role.rolePermissions;
 					this.userPermission = res.role.rolePermissions
 						.map((permission) =>
 							permission.enabled ? permission.permission : null
@@ -2142,26 +2147,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.send('expand', !this.isExpand);
 	}
 
-	public rowSelect(value): void {
-		if (!value?.source?.data?.length) {
-			this.taskSelect = null;
-			return;
+	public handleRowSelection(selectionEvent): void {
+		if (this.isNoRowSelected(selectionEvent)) {
+			this.clearSelectedTaskAndRefresh();
+		} else {
+			const selectedRow = selectionEvent.selected[0];
+			this.handleSelectedTaskChange(selectedRow.id);
 		}
-		this.taskSelect = value.data.id;
-		value.data.isSelected = true;
-		const selectedLast = value.source.data.findIndex(
-			(row) => row.isSelected && row.id !== value.data.id
-		);
-		if (selectedLast > -1) {
-			value.source.data[selectedLast].isSelected = false;
+	}
+
+	private isNoRowSelected(selectionEvent): boolean {
+		return !selectionEvent.selected.length;
+	}
+
+	private clearSelectedTaskAndRefresh(): void {
+		this.setTask(null);
+	}
+
+	private handleSelectedTaskChange(selectedTaskId): void {
+		if (this.isDifferentTask(selectedTaskId)) {
+			this.setTask(selectedTaskId);
 		}
-		const idx = value.source.data.findIndex(
-			(row) => row.id === value.data.id
-		);
-		value.source.data.splice(idx, 1);
-		value.source.data.unshift(value.data);
-		value.source.data[idx].isSelected = true;
-		this.setTask(value.data.id);
+	}
+
+	private isDifferentTask(selectedTaskId): boolean {
+		return this.taskSelect !== selectedTaskId;
 	}
 
 	public onSearch(query: string = ''): void {
@@ -2649,7 +2659,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {
 		try {
-			if (!this.taskSelect && !this.teamSelect) {
+			if (!this.taskSelect || !this.teamSelect) {
 				return;
 			}
 			const organizationTeamId = this.teamSelect;
@@ -2711,6 +2721,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
 			console.log('ERROR', error);
+		}
+	}
+
+	private async updateTaskStatus() {
+		try {
+			const { tenantId, organizationId } = this._store;
+			if (!this.taskSelect || this.selectedTask.status === TaskStatusEnum.IN_PROGRESS) {
+				return;
+			}
+			const id = this.selectedTask.id;
+			const title = this.selectedTask.title;
+			const status = TaskStatusEnum.IN_PROGRESS;
+			const taskStatus = this._store.statuses.find((taskStatus) => taskStatus.name === status);
+			const taskUpdateInput: ITaskUpdateInput = {
+				organizationId,
+				tenantId,
+				status,
+				title,
+				taskStatus
+			};
+			await this.timeTrackerService.updateTask(id, taskUpdateInput);
+		} catch (error) {
+			this._loggerService.log.error(error);
 		}
 	}
 }

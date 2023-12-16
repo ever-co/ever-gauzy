@@ -25,7 +25,6 @@ import {
 } from './@core/services';
 import { environment } from '../environments/environment';
 import { JitsuService } from './@core/services/analytics/jitsu.service';
-import { moment } from './@core/moment-extend';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -110,9 +109,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 			 * It also sets the loading flag to false after language change.
 			 */
 			this.translate.onLangChange.subscribe((langChangeEvent: LangChangeEvent) => {
-				// Translate date when the language changes
-				moment.locale(langChangeEvent.lang);
-
 				// Set the loading flag to false after the language change
 				this.loading = false;
 			});

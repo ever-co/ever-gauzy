@@ -110,12 +110,13 @@
     text-align: left;
     border: none;
   }
-}
 
-.gauzy-action {
-  position: absolute;
-  right: 1rem;
-  top: -0.75rem;
+  .gauzy-action {
+    position: absolute;
+    @include nb-rtl(left, 1rem);
+    @include nb-ltr(right, 1rem);
+    top: -0.75rem;
+  }
 }
 
 @media screen and (max-width: 1280px) {

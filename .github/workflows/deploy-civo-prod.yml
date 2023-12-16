@@ -49,7 +49,7 @@ jobs:
           DB_HOST: '${{ secrets.DB_HOST_CIVO }}'
           DB_USER: '${{ secrets.DB_USER }}'
           DB_PASS: '${{ secrets.DB_PASS }}'
-          DB_NAME: 'gauzy-pool'
+          DB_NAME: '${{ secrets.DB_NAME }}'
           DB_PORT: '${{ secrets.DB_PORT }}'
           DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
           DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'

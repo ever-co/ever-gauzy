@@ -423,7 +423,7 @@
 								<div class="table-scroll-container">
 									<ng2-smart-table
 										#taskTable
-										(userRowSelect)="rowSelect($event)"
+										(userRowSelect)="handleRowSelection($event)"
 										[settings]="smartTableSettings"
 										[source]="sourceData$ | async"
 										style="cursor: pointer"

@@ -75,18 +75,24 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@Column()
 	color: string;
 
-	@ApiPropertyOptional({ type: () => String, required: false })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@Column({ nullable: true })
+	textColor?: string;
+
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
 	description?: string;
 
-	@ApiPropertyOptional({ type: () => String, required: false })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
 	icon?: string;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false, required: false })
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ default: false })
 	isSystem?: boolean;
 
@@ -101,7 +107,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.labels, {
+	@ManyToOne(() => OrganizationTeam, (it) => it.labels, {
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 	})
 	organizationTeam?: IOrganizationTeam;
@@ -123,8 +130,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Candidate
 	 */
-	@ApiProperty({ type: () => Candidate, isArray: true })
-	@ManyToMany(() => Candidate, (candidate) => candidate.tags, {
+	@ManyToMany(() => Candidate, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	candidates?: ICandidate[];
@@ -132,8 +139,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee, isArray: true })
-	@ManyToMany(() => Employee, (employee) => employee.tags, {
+	@ManyToMany(() => Employee, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	employees?: IEmployee[];
@@ -141,8 +148,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Equipment
 	 */
-	@ApiProperty({ type: () => Equipment, isArray: true })
-	@ManyToMany(() => Equipment, (equipment) => equipment.tags, {
+	@ManyToMany(() => Equipment, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	equipments?: IEquipment[];
@@ -150,8 +157,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * EventType
 	 */
-	@ApiProperty({ type: () => EventType, isArray: true })
-	@ManyToMany(() => EventType, (eventType) => eventType.tags, {
+	@ManyToMany(() => EventType, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	eventTypes?: IEventType[];
@@ -159,8 +166,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Income
 	 */
-	@ApiProperty({ type: () => Income, isArray: true })
-	@ManyToMany(() => Income, (income) => income.tags, {
+	@ManyToMany(() => Income, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	incomes?: IIncome[];
@@ -168,8 +175,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Expense
 	 */
-	@ApiProperty({ type: () => Expense, isArray: true })
-	@ManyToMany(() => Expense, (expense) => expense.tags, {
+	@ManyToMany(() => Expense, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	expenses?: IExpense[];
@@ -177,8 +184,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Invoice
 	 */
-	@ApiProperty({ type: () => Invoice, isArray: true })
-	@ManyToMany(() => Invoice, (invoice) => invoice.tags, {
+	@ManyToMany(() => Invoice, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	invoices?: IInvoice[];
@@ -186,8 +193,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Income
 	 */
-	@ApiProperty({ type: () => Task, isArray: true })
-	@ManyToMany(() => Task, (task) => task.tags, {
+	@ManyToMany(() => Task, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	tasks?: ITask[];
@@ -195,8 +202,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Proposal
 	 */
-	@ApiProperty({ type: () => Proposal, isArray: true })
-	@ManyToMany(() => Proposal, (proposal) => proposal.tags, {
+	@ManyToMany(() => Proposal, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	proposals?: IProposal[];
@@ -204,8 +211,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationVendor
 	 */
-	@ApiProperty({ type: () => OrganizationVendor, isArray: true })
-	@ManyToMany(() => OrganizationVendor, (organizationVendor) => organizationVendor.tags, {
+	@ManyToMany(() => OrganizationVendor, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationVendors?: IOrganizationVendor[];
@@ -213,8 +220,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationTeam
 	 */
-	@ApiProperty({ type: () => OrganizationTeam, isArray: true })
-	@ManyToMany(() => OrganizationTeam, (organizationTeam) => organizationTeam.tags, {
+	@ManyToMany(() => OrganizationTeam, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationTeams?: IOrganizationTeam[];
@@ -222,7 +229,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationProject
 	 */
-	@ApiProperty({ type: () => OrganizationProject, isArray: true })
 	@ManyToMany(() => OrganizationProject, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
@@ -232,8 +238,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationPosition
 	 */
-	@ApiProperty({ type: () => OrganizationPosition, isArray: true })
-	@ManyToMany(() => OrganizationPosition, (organizationPosition) => organizationPosition.tags, {
+	@ManyToMany(() => OrganizationPosition, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationPositions?: IOrganizationPosition[];
@@ -241,8 +247,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * ExpenseCategory
 	 */
-	@ApiProperty({ type: () => ExpenseCategory, isArray: true })
-	@ManyToMany(() => ExpenseCategory, (expenseCategory) => expenseCategory.tags, {
+	@ManyToMany(() => ExpenseCategory, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	expenseCategories?: IExpenseCategory[];
@@ -250,8 +256,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationEmploymentType
 	 */
-	@ApiProperty({ type: () => OrganizationEmploymentType, isArray: true })
-	@ManyToMany(() => OrganizationEmploymentType, (organizationEmploymentType) => organizationEmploymentType.tags, {
+	@ManyToMany(() => OrganizationEmploymentType, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
@@ -259,8 +265,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * EmployeeLevel
 	 */
-	@ApiProperty({ type: () => EmployeeLevel, isArray: true })
-	@ManyToMany(() => EmployeeLevel, (employeeLevel) => employeeLevel.tags, {
+	@ManyToMany(() => EmployeeLevel, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	employeeLevels?: IEmployeeLevel[];
@@ -268,8 +274,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationDepartment
 	 */
-	@ApiProperty({ type: () => OrganizationDepartment, isArray: true })
-	@ManyToMany(() => OrganizationDepartment, (organizationDepartment) => organizationDepartment.tags, {
+	@ManyToMany(() => OrganizationDepartment, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationDepartments?: IOrganizationDepartment[];
@@ -277,8 +283,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationContact
 	 */
-	@ApiProperty({ type: () => OrganizationContact, isArray: true })
-	@ManyToMany(() => OrganizationContact, (organizationContact) => organizationContact.tags, {
+	@ManyToMany(() => OrganizationContact, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizationContacts?: IOrganizationContact[];
@@ -286,8 +292,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Product
 	 */
-	@ApiProperty({ type: () => Product, isArray: true })
-	@ManyToMany(() => Product, (product) => product.tags, {
+	@ManyToMany(() => Product, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	products?: IProduct[];
@@ -295,8 +301,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Payment
 	 */
-	@ApiProperty({ type: () => Payment, isArray: true })
-	@ManyToMany(() => Payment, (payment) => payment.tags, {
+	@ManyToMany(() => Payment, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	payments?: IPayment[];
@@ -304,8 +310,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * RequestApproval
 	 */
-	@ApiProperty({ type: () => RequestApproval, isArray: true })
-	@ManyToMany(() => RequestApproval, (requestApproval) => requestApproval.tags, {
+	@ManyToMany(() => RequestApproval, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	requestApprovals?: IRequestApproval[];
@@ -313,8 +319,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * User
 	 */
-	@ApiProperty({ type: () => User, isArray: true })
-	@ManyToMany(() => User, (user) => user.tags, {
+	@ManyToMany(() => User, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	users?: IUser[];
@@ -322,8 +328,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Integration
 	 */
-	@ApiProperty({ type: () => Integration, isArray: true })
-	@ManyToMany(() => Integration, (integration) => integration.tags, {
+	@ManyToMany(() => Integration, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	integrations?: IIntegration[];
@@ -331,8 +337,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Merchant
 	 */
-	@ApiProperty({ type: () => Merchant, isArray: true })
-	@ManyToMany(() => Merchant, (merchant) => merchant.tags, {
+	@ManyToMany(() => Merchant, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	merchants?: IMerchant[];
@@ -340,8 +346,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Warehouse
 	 */
-	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@ManyToMany(() => Warehouse, (warehouse) => warehouse.tags, {
+	@ManyToMany(() => Warehouse, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	warehouses?: IWarehouse[];
@@ -349,8 +355,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Organization
 	 */
-	@ApiProperty({ type: () => Organization, isArray: true })
-	@ManyToMany(() => Organization, (organization) => organization.tags, {
+	@ManyToMany(() => Organization, (it) => it.tags, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	organizations?: IOrganization[];

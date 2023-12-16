@@ -7,6 +7,7 @@ import {
 	NbIconModule,
 	NbInputModule,
 	NbTabsetModule,
+	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from './../../../@shared/translate/translate.module';
@@ -34,6 +35,8 @@ import { GauzyAIViewComponent } from './components/view/view.component';
 		NbIconModule,
 		NbInputModule,
 		NbTabsetModule,
+		NbToggleModule,
+		NbToggleModule,
 		NbTooltipModule,
 		GauzyAIRoutingModule,
 		TranslateModule,

@@ -7,20 +7,22 @@ import {
 	IOrganizationProject,
 	IOrganizationTeam,
 	ITag,
+	ITagCreateInput,
 	ITaskPriority,
 	ITaskSize,
 	ITaskStatus,
 	IUserOrganization,
-	TaskStatusEnum,
+	PermissionsEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { NbDialogRef, NbToastrService } from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { CkEditorConfig, ColorAdapter } from '../utils';
-import { Store } from '../services';
+import { Store, TagService } from '../services';
 import { GAUZY_ENV } from '../constants';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { tap, from } from 'rxjs';
+import { tap, from, Observable, map } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,6 +46,7 @@ export class TasksComponent implements OnInit {
 	}> = new EventEmitter();
 	public isSaving: boolean;
 	public editorConfig = CkEditorConfig.minimal();
+	public hasAddTagPermission$: Observable<boolean>;
 
 	form: FormGroup;
 	projects: IOrganizationProject[] = [];
@@ -80,6 +83,7 @@ export class TasksComponent implements OnInit {
 			name: this._formatStatus(TaskStatusEnum.COMPLETED),
 		},
 	];
+	public isLoading = false;
 
 	constructor(
 		private timeTrackerService: TimeTrackerService,
@@ -88,7 +92,8 @@ export class TasksComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private store: Store,
-		private _dialogRef: NbDialogRef<TasksComponent>
+		private _dialogRef: NbDialogRef<TasksComponent>,
+		private _tagService: TagService
 	) {
 		this.isSaving = false;
 	}
@@ -108,10 +113,9 @@ export class TasksComponent implements OnInit {
 		}
 	}
 
-	private async _tags(user: IUserOrganization): Promise<void> {
+	private async _tags(): Promise<void> {
 		try {
-			const tagsRes = await this.timeTrackerService.getTags(user);
-			this.tags = tagsRes.items;
+			this.tags =  await this._tagService.getTags();
 		} catch (error) {
 			console.error('[error]', 'while get tags::' + error.message);
 		}
@@ -174,7 +178,7 @@ export class TasksComponent implements OnInit {
 		from(
 			Promise.allSettled([
 				this._projects(this.userData),
-				this._tags(this.userData),
+				this._tags(),
 				this._employees(this.userData),
 				this._clients(this.userData),
 				this._teams(),
@@ -220,6 +224,9 @@ export class TasksComponent implements OnInit {
 			organizationContactId: new FormControl(this.selected.contactId),
 			organizationTeamId: new FormControl(this.selected.teamId),
 		});
+		this.hasAddTagPermission$ = this.store.userRolePermissions$.pipe(
+			map(() => this.store.hasPermissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
+		);
 	}
 
 	public close(res?: any): void {
@@ -317,4 +324,33 @@ export class TasksComponent implements OnInit {
 	public backgroundContrast(bgColor: string) {
 		return ColorAdapter.contrast(bgColor);
 	}
+
+	/**
+	 * Create new tag
+	 *
+	 * @param name
+	 * @returns
+	 */
+	public createTag = async (name: ITagCreateInput['name']): Promise<void> => {
+		if (!name) {
+			return;
+		}
+		this.isLoading = true;
+
+		const { organizationId, tenantId } = this.store;
+
+		try {
+			this.tags = await this._tagService.create({
+				name,
+				color: ColorAdapter.randomColor(),
+				description: '',
+				tenantId,
+				organizationId
+			});
+		} catch (error) {
+			console.log('Error while creating tags', error);
+		} finally {
+			this.isLoading = false;
+		}
+	};
 }
