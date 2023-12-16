@@ -7,58 +7,66 @@ import { IntegrationTenantService } from 'integration-tenant/integration-tenant.
 
 @Injectable()
 export class GithubMiddleware implements NestMiddleware {
+	constructor(private readonly _integrationTenantService: IntegrationTenantService) {}
 
-    constructor(
-        private readonly _integrationTenantService: IntegrationTenantService,
-    ) { }
+	async use(request: Request, _response: Response, next: NextFunction) {
+		try {
+			const integrationId = request.params['integrationId'];
 
-    async use(
-        request: Request,
-        _response: Response,
-        next: NextFunction
-    ) {
-        try {
-            const integrationId = request.params['integrationId'];
-            const queryParameters = request.query;
+			if (integrationId) {
+				const queryParameters = request.query;
 
-            const tenantId = queryParameters.tenantId ? queryParameters.tenantId.toString() : request.header('Tenant-Id');
-            const organizationId = queryParameters.organizationId ? queryParameters.organizationId.toString() : request.header('Organization-Id');
+				const tenantId = queryParameters.tenantId
+					? queryParameters.tenantId.toString()
+					: request.header('Tenant-Id');
+				const organizationId = queryParameters.organizationId
+					? queryParameters.organizationId.toString()
+					: request.header('Organization-Id');
 
-            // Check if tenant and organization IDs are not empty
-            if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
-                try {
-                    // Fetch integration settings from the service
-                    const { settings = [] } = await this._integrationTenantService.findOneByIdString(integrationId, {
-                        where: {
-                            tenantId,
-                            organizationId,
-                            isActive: true,
-                            isArchived: false,
-                            integration: {
-                                isActive: true,
-                                isArchived: false,
-                            }
-                        },
-                        relations: {
-                            settings: true
-                        }
-                    });
-                    /** Create an 'integration' object and assign properties to it. */
-                    request['integration'] = new Object({
-                        // Assign properties to the integration object
-                        id: integrationId,
-                        name: IntegrationEnum.GITHUB,
-                        // Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
-                        settings: arrayToObject(settings, 'settingsName', 'settingsValue')
-                    });
-                } catch (error) { }
-            }
-        } catch (error) {
-            console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);
-            console.log(request.path, request.url);
-        }
+				// Check if tenant and organization IDs are not empty
+				if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
+					try {
+						// Fetch integration settings from the service
+						const { settings = [] } = await this._integrationTenantService.findOneByIdString(
+							integrationId,
+							{
+								where: {
+									tenantId,
+									organizationId,
+									isActive: true,
+									isArchived: false,
+									integration: {
+										isActive: true,
+										isArchived: false
+									}
+								},
+								relations: {
+									settings: true
+								}
+							}
+						);
+						/** Create an 'integration' object and assign properties to it. */
+						request['integration'] = new Object({
+							// Assign properties to the integration object
+							id: integrationId,
+							name: IntegrationEnum.GITHUB,
+							// Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
+							settings: arrayToObject(settings, 'settingsName', 'settingsValue')
+						});
+					} catch (error) {
+						console.log('Error while getting AI integration settings: %s', error?.message);
+					}
+				}
+			}
+		} catch (error) {
+			console.log(
+				`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`,
+				error?.message
+			);
+			console.log(request.path, request.url);
+		}
 
-        // Continue to the next middleware or route handler
-        next();
-    }
+		// Continue to the next middleware or route handler
+		next();
+	}
 }

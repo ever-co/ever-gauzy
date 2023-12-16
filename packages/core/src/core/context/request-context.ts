@@ -5,12 +5,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
 import { Request, Response } from 'express';
-import {
-	IUser,
-	PermissionsEnum,
-	LanguagesEnum,
-	RolesEnum
-} from '@gauzy/contracts';
+import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
@@ -56,28 +51,34 @@ export class RequestContext {
 	}
 
 	static currentUserId(): string {
-		const user: IUser = RequestContext.currentUser();
-		if (user) {
-			return user.id;
+		try {
+			const user: IUser = RequestContext.currentUser();
+			if (user) {
+				return user.id;
+			}
+			return null;
+		} catch (error) {
+			return null;
 		}
-		return null;
 	}
 
 	static currentRoleId(): string {
-		const user: IUser = RequestContext.currentUser();
-		if (user) {
-			return user.roleId;
+		try {
+			const user: IUser = RequestContext.currentUser();
+			if (user) {
+				return user.roleId;
+			}
+			return null;
+		} catch (error) {
+			return null;
 		}
-		return null;
 	}
 
 	static currentEmployeeId(): string {
 		try {
 			const user: IUser = RequestContext.currentUser();
 			if (isNotEmpty(user)) {
-				if (!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)) {
+				if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					return user.employeeId;
 				}
 			}
@@ -106,10 +107,7 @@ export class RequestContext {
 		return null;
 	}
 
-	static hasPermission(
-		permission: PermissionsEnum,
-		throwError?: boolean
-	): boolean {
+	static hasPermission(permission: PermissionsEnum, throwError?: boolean): boolean {
 		return this.hasPermissions([permission], throwError);
 	}
 
@@ -129,72 +127,70 @@ export class RequestContext {
 		return lang;
 	}
 
-	static hasPermissions(
-		findPermissions: PermissionsEnum[],
-		throwError?: boolean
-	): boolean {
+	static hasPermissions(findPermissions: PermissionsEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
 
 		if (requestContext) {
-			// tslint:disable-next-line
-			const token = ExtractJwt.fromAuthHeaderAsBearerToken()(
-				requestContext.request as any
-			);
+			try {
+				// tslint:disable-next-line
+				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any);
 
-			if (token) {
-				const { permissions } = verify(token, env.JWT_SECRET) as {
-					id: string;
-					permissions: PermissionsEnum[];
-				};
-				if (permissions) {
-					const found = permissions.filter(
-						(value) => findPermissions.indexOf(value) >= 0
-					);
+				if (token) {
+					const { permissions } = verify(token, env.JWT_SECRET) as {
+						id: string;
+						permissions: PermissionsEnum[];
+					};
+					if (permissions) {
+						const found = permissions.filter((value) => findPermissions.indexOf(value) >= 0);
 
-					if (found.length === findPermissions.length) {
-						return true;
+						if (found.length === findPermissions.length) {
+							return true;
+						}
+					} else {
+						return false;
 					}
-				} else {
-					return false;
 				}
+			} catch (error) {
+				// Do nothing here, we throw below anyway if needed
+				console.log(error);
 			}
 		}
 
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
+
 		return false;
 	}
 
-	static hasAnyPermission(
-		findPermissions: PermissionsEnum[],
-		throwError?: boolean
-	): boolean {
+	static hasAnyPermission(findPermissions: PermissionsEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
 
 		if (requestContext) {
-			// tslint:disable-next-line
-			const token = ExtractJwt.fromAuthHeaderAsBearerToken()(
-				requestContext.request as any
-			);
+			try {
+				// tslint:disable-next-line
+				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any);
 
-			if (token) {
-				const { permissions } = verify(token, env.JWT_SECRET) as {
-					id: string;
-					permissions: PermissionsEnum[];
-				};
-				const found = permissions.filter(
-					(value) => findPermissions.indexOf(value) >= 0
-				);
-				if (found.length > 0) {
-					return true;
+				if (token) {
+					const { permissions } = verify(token, env.JWT_SECRET) as {
+						id: string;
+						permissions: PermissionsEnum[];
+					};
+					const found = permissions.filter((value) => findPermissions.indexOf(value) >= 0);
+					if (found.length > 0) {
+						return true;
+					}
 				}
+			} catch (error) {
+				// Do nothing here, we throw below anyway if needed
+				console.log(error);
 			}
 		}
 
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
+
 		return false;
 	}
 
@@ -202,15 +198,19 @@ export class RequestContext {
 		const requestContext = RequestContext.currentRequestContext();
 
 		if (requestContext) {
-			// tslint:disable-next-line
-			return ExtractJwt.fromAuthHeaderAsBearerToken()(
-				requestContext.request as any
-			);
+			try {
+				// tslint:disable-next-line
+				return ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any);
+			} catch (error) {
+				// Do nothing here, we throw below anyway if needed
+				console.log(error);
+			}
 		}
 
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
+
 		return null;
 	}
 

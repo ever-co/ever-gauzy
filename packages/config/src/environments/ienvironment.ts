@@ -90,6 +90,7 @@ export interface IEnvironment {
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
+	THROTTLE_ENABLED?: boolean;
 	THROTTLE_TTL?: number;
 	THROTTLE_LIMIT?: number;
 

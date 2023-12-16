@@ -6,7 +6,7 @@ import slugify from 'slugify';
  * @returns {boolean}
  */
 export function isFunction(item: any): boolean {
-	return (item && typeof item === 'function' && !Array.isArray(item));
+	return item && typeof item === 'function' && !Array.isArray(item);
 }
 
 /**
@@ -16,7 +16,7 @@ export function isFunction(item: any): boolean {
  * From https://stackoverflow.com/a/34749873/772859
  */
 export function isObject(item: any) {
-	return (item && typeof item === 'object' && !Array.isArray(item));
+	return item && typeof item === 'object' && !Array.isArray(item);
 }
 
 /**
@@ -57,28 +57,18 @@ export function isEmpty(item: any) {
 		return item.length === 0;
 	} else if (item && typeof item === 'object') {
 		for (var key in item) {
-			if (
-				item[key] === null ||
-				item[key] === undefined ||
-				item[key] === ''
-			) {
+			if (item[key] === null || item[key] === undefined || item[key] === '') {
 				delete item[key];
 			}
 		}
 		return Object.keys(item).length === 0;
 	} else {
-		return (
-			!item ||
-			(item + '').toLocaleLowerCase() === 'null' ||
-			(item + '').toLocaleLowerCase() === 'undefined'
-		);
+		return !item || (item + '').toLocaleLowerCase() === 'null' || (item + '').toLocaleLowerCase() === 'undefined';
 	}
 }
 
 export function isJsObject(object: any) {
-	return (
-		object !== null && object !== undefined && typeof object === 'object'
-	);
+	return object !== null && object !== undefined && typeof object === 'object';
 }
 
 /*
@@ -136,7 +126,7 @@ export function removeDuplicates(data: string[]) {
  * @returns
  */
 export function isNullOrUndefined<T>(string: T | null | undefined): string is null | undefined {
-	return typeof string === "undefined" || string === null
+	return typeof string === 'undefined' || string === null;
 }
 
 /**
@@ -151,9 +141,7 @@ export function chunks(items: any[], size: number): any[] {
 	const chunks = [];
 	items = [].concat(...items);
 	while (items.length) {
-		chunks.push(
-			items.splice(0, size)
-		)
+		chunks.push(items.splice(0, size));
 	}
 	return chunks;
 }
@@ -199,7 +187,7 @@ export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  */
 export const trimAndGetValue = (value?: string): string | undefined => {
 	return isNotEmpty(value) ? value.trim() : undefined;
-}
+};
 
 /**
  * Adds "http://" prefix to a URL if it's missing.
@@ -207,8 +195,9 @@ export const trimAndGetValue = (value?: string): string | undefined => {
  * @returns The URL with the "http://" prefix.
  */
 export const addHttpsPrefix = (url: string, prefix = 'https'): string => {
-	if (!url.startsWith('http://') && !url.startsWith('https://')) {
+	if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
 		return `${prefix}://${url}`;
 	}
+
 	return url;
-}
+};

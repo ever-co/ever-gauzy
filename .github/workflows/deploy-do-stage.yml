@@ -45,7 +45,7 @@ jobs:
           DB_USER: '${{ secrets.DB_USER }}'
           DB_PASS: '${{ secrets.DB_PASS }}'
           # Note that for staging we are using for now same server, just different DB name
-          DB_NAME: 'gauzy-stage-pool'
+          DB_NAME: '${{ secrets.DB_NAME }}'
           DB_PORT: '${{ secrets.DB_PORT }}'
           DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
           DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'

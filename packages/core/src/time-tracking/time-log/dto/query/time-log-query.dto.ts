@@ -1,6 +1,7 @@
-import { IGetTimeLogReportInput, IOrganizationTeam, ITimesheet, ReportGroupFilterEnum } from "@gauzy/contracts";
 import { ApiPropertyOptional, IntersectionType } from "@nestjs/swagger";
-import { IsEnum, IsOptional, IsUUID } from "class-validator";
+import { IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from "class-validator";
+import * as moment from 'moment';
+import { IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from "@gauzy/contracts";
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "../../../../shared/dto";
 
 /**
@@ -11,7 +12,7 @@ export class TimeLogQueryDTO extends IntersectionType(
     IntersectionType(SelectorsQueryDTO, RelationsQueryDTO)
 ) implements IGetTimeLogReportInput {
 
-    @ApiPropertyOptional({ type: () => Array, enum: ReportGroupFilterEnum })
+    @ApiPropertyOptional({ type: () => String, enum: ReportGroupFilterEnum })
     @IsOptional()
     @IsEnum(ReportGroupFilterEnum)
     readonly groupBy: ReportGroupFilterEnum;
@@ -23,6 +24,7 @@ export class TimeLogQueryDTO extends IntersectionType(
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @IsUUID()
-    readonly teamId: IOrganizationTeam['id'];
+    @IsString()
+    @IsTimeZone()
+    readonly timezone: string = moment.tz.guess();
 }
