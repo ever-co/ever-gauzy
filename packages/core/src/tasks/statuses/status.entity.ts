@@ -47,6 +47,10 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@Column({ default: false, update: false })
 	isSystem?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({ default: false })
+	isCollapsed?: boolean;
+
 	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
