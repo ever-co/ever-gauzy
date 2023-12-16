@@ -9,6 +9,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		order: 0,
 		color: '#D6E4F9',
 		isSystem: true,
+		isCollapsed: false
 	},
 	{
 		name: TaskStatusEnum.IN_PROGRESS,
@@ -18,6 +19,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		order: 1,
 		color: '#ECE8FC',
 		isSystem: true,
+		isCollapsed: false
 	},
 	{
 		name: TaskStatusEnum.READY_FOR_REVIEW,
@@ -27,6 +29,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		order: 2,
 		color: '#F5F1CB',
 		isSystem: true,
+		isCollapsed: false
 	},
 	{
 		name: TaskStatusEnum.IN_REVIEW,
@@ -36,6 +39,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		order: 3,
 		color: '#F3D8B0',
 		isSystem: true,
+		isCollapsed: false
 	},
 	{
 		name: TaskStatusEnum.BLOCKED,
@@ -45,6 +49,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		order: 4,
 		color: '#F5B8B8',
 		isSystem: true,
+		isCollapsed: false
 	},
 	{
 		name: TaskStatusEnum.COMPLETED,
@@ -54,5 +59,6 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		order: 5,
 		color: '#D4EFDF',
 		isSystem: true,
+		isCollapsed: false
 	},
 ];
