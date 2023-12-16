@@ -51,8 +51,8 @@ export const environment: IEnvironment = {
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
-	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60, // 60ms
-	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 3000,
+	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60, // now it's 60 seconds, but in future versions of Throttle going to be 60ms!
+	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 10000,
 
 	/**
 	 * Jitsu Server Configuration
