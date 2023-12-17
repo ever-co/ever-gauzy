@@ -4,6 +4,10 @@ import { HealthController } from './health.controller';
 
 @Module({
 	controllers: [HealthController],
-	imports: [TerminusModule]
+	imports: [
+		TerminusModule.forRoot({
+			// gracefulShutdownTimeoutMs: 1000
+		})
+	]
 })
 export class HealthIndicatorModule {}
