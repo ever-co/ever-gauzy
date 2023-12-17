@@ -111,11 +111,11 @@ function getDbConfig(): DataSourceOptions {
 					: 3000,
 				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
 				uuidExtension: 'pgcrypto',
-				// NOTE: in new TypeORM version this unified too `poolSize` in the root of connections option object.
 				// See https://typeorm.io/data-source-options#common-data-source-options
+				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40,
 				extra: {
 					// based on  https://node-postgres.com/api/pool max connection pool size
-					max: process.env.DB_POOL_SIZE || 40,
+					max: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40,
 					// connection timeout
 					connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
 						? parseInt(process.env.DB_CONNECTION_TIMEOUT)
