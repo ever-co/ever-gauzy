@@ -6,20 +6,18 @@ import { faker } from '@faker-js/faker';
 import { v4 as uuidV4 } from 'uuid';
 
 export class LanguageUtils {
-	private static async addLanguages(
-		queryRunner: QueryRunner,
-		languages: ILanguage[]
-	): Promise<void> {
+	private static async addLanguages(queryRunner: QueryRunner, languages: ILanguage[]): Promise<void> {
 		for await (const language of languages) {
 			const { name, code, is_system, description, color } = language;
-			const payload = [name, code, is_system, description, color];
+
 			let insertOrUpdateQuery = '';
-			if (
-				['sqlite', 'better-sqlite3'].includes(
-					queryRunner.connection.options.type
-				)
-			) {
+			if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
+				const payload = [name, code, is_system ? 1 : 0, description, color];
+
 				payload.push(uuidV4());
+
+				console.log('Inserting languages: ', JSON.stringify(payload));
+
 				insertOrUpdateQuery = `
 					INSERT INTO language (name, code, is_system, description, color, id)
 					VALUES (?, ?, ?, ?, ?, ?)
@@ -30,7 +28,11 @@ export class LanguageUtils {
 						description = EXCLUDED.description,
 						color = EXCLUDED.color;
 				`;
+
+				await queryRunner.connection.manager.query(insertOrUpdateQuery, payload);
 			} else {
+				const payload = [name, code, is_system, description, color];
+
 				insertOrUpdateQuery = `
 					INSERT INTO language (name, code, is_system, description, color)
 					VALUES ($1, $2, $3, $4, $5)
@@ -41,11 +43,9 @@ export class LanguageUtils {
 						description = EXCLUDED.description,
 						color = EXCLUDED.color;
 				`;
+
+				await queryRunner.connection.manager.query(insertOrUpdateQuery, payload);
 			}
-			await queryRunner.connection.manager.query(
-				insertOrUpdateQuery,
-				payload
-			);
 		}
 	}
 
@@ -67,9 +67,7 @@ export class LanguageUtils {
 		return languages;
 	}
 
-	public static async migrateLanguages(
-		queryRunner: QueryRunner
-	): Promise<void> {
+	public static async migrateLanguages(queryRunner: QueryRunner): Promise<void> {
 		await this.addLanguages(queryRunner, this.registeredLanguages);
 	}
 }

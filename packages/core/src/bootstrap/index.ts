@@ -69,7 +69,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
-	// TODO: enable csurf is not good idea because it was depricated.
+	// TODO: enable csurf is not good idea because it was deprecated.
 	// Maybe review https://github.com/Psifi-Solutions/csrf-csrf as alternative?
 	// As explained on the csurf middleware page https://github.com/expressjs/csurf#csurf,
 	// the csurf module requires either a session middleware or cookie-parser to be initialized first.
