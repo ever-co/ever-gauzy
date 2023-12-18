@@ -75,14 +75,13 @@
 		"moment-timezone": "^0.5.40",
 		"ngx-electron": "^2.2.0",
 		"node-static": "^0.7.11",
-		"pg": "^8.8.0",
-		"pg-query-stream": "^4.2.4",
+		"pg": "^8.11.3",
+		"pg-query-stream": "^4.5.3",
 		"rxjs": "^7.4.0",
 		"sqlite3": "^5.1.5",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"typeorm": "0.3.7",
-		"typeorm-express-query-builder": "https://github.com/ever-co/typeorm-express-query-builder.git"
+		"typeorm": "^0.3.17"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
