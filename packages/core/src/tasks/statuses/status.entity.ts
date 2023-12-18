@@ -28,6 +28,11 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@Column({ nullable: true })
 	description?: string;
 
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@Column({ nullable: true, unique: true })
+	order?: number;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Column({ nullable: true })
@@ -41,6 +46,10 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@Column({ default: false, update: false })
 	isSystem?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@Column({ default: false })
+	isCollapsed?: boolean;
 
 	fullIconUrl?: string;
 	/*
