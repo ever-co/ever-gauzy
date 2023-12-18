@@ -48,7 +48,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 32
+    replicas: 16
     selector:
         matchLabels:
             app: gauzy-prod-api
@@ -66,7 +66,7 @@ spec:
                           cpu: "1000m"
                       limits:
                           memory: "1536Mi"
-                          cpu: "1500m"
+                          cpu: "1200m"
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
