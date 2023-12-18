@@ -103,7 +103,7 @@
 
 :host {
   @include nb-card_overrides(
-    scroll,
+    hidden,
     calc($default-card-height + 3.5rem),
     $default-radius
   );

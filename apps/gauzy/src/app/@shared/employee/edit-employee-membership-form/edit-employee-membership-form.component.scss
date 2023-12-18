@@ -24,9 +24,7 @@
   height: 100%;
   @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
 
-  nb-card-body {
-      background-color: var(--card-background-color);
+  nb-card {
       margin: 1rem;
-      border-radius: 0.625rem;
   }
 }
