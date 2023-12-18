@@ -60,6 +60,13 @@ spec:
             containers:
                 - name: gauzy-prod-api
                   image: registry.digitalocean.com/ever/gauzy-api:latest
+                  resources:
+                      requests:
+                          memory: "1024Mi"
+                          cpu: "1000m"
+                      limits:
+                          memory: "1536Mi"
+                          cpu: "1500m"
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
