@@ -114,7 +114,7 @@ export const LocalStore = {
 					prerelease: false,
 					preferredLanguage: 'en',
 					zone: 'local',
-					autoStart: true,
+					autoStart: false,
 					alwaysOn: true,
 					enforced: false
 				};

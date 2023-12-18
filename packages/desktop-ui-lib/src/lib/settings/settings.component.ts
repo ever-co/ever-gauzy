@@ -392,7 +392,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	progressDownload = 0;
 	showProgressBar = false;
 	autoLaunch = null;
-	autoStart = null;
+	autoStart = false;
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
