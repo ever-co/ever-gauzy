@@ -1,6 +1,6 @@
 <div class="actions-container">
 	<div class="transition-container">
-		<div 
+		<div
 			[ngClass]="
 				!isDisable ? 'transition show' : 'transition hide'
 			">
@@ -9,17 +9,17 @@
 					!isDisable ? 'transition show' : 'transition show-button'
 				"
 			>
-				<ng-content 
+				<ng-content
 					select="[buttonTemplateVisible]"
 				></ng-content>
 				<ng-container
 					*ngTemplateOutlet="buttonTemplateVisible"
 				></ng-container>
 			</span>
-			<ng-container 
+			<ng-container
 				*ngTemplateOutlet="buttonTemplate"
 			></ng-container>
-			<ng-content 
+			<ng-content
 				select="[buttonTemplate]"
 			></ng-content>
 		</div>

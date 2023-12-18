@@ -62,8 +62,8 @@ switch (dbType) {
 			uuidExtension: 'pgcrypto',
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
-			// NOTE: in new TypeORM version this unified too `poolSize` in the root of connections option object.
 			// See https://typeorm.io/data-source-options#common-data-source-options
+			poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40,
 			extra: {
 				// based on  https://node-postgres.com/api/pool max connection pool size
 				max: process.env.DB_POOL_SIZE || 40,
