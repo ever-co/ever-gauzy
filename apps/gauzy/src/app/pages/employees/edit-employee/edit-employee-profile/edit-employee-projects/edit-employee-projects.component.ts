@@ -22,6 +22,18 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 		`
 			:host {
 				height: calc(100vh - 20.5rem);
+
+				.container-projects {
+					padding: 1rem;
+    				background-color: var(--gauzy-card-2);
+					height: 100%;
+				}
+
+				nb-card {
+					margin: 0 !important;
+					background-color: var(--gauzy-card-3) !important;
+					border-radius: var(--card-border-radius);
+				}
 			}
 		`
 	]

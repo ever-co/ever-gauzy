@@ -27,12 +27,18 @@ $radius: nb-theme(border-radius);
     $default-radius
   );
 
-  nb-card-body {
-    background-color: var(--gauzy-sidebar-background-2);
-    border-radius: var(--border-radius);
+  nb-card {
+    border-radius: 0;
+  }
 
-    form {
-      margin-bottom: 1.6rem;
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+
+    .form-container {
+      background-color: var(--gauzy-sidebar-background-2);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
     }
   }
 }

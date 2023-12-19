@@ -12,4 +12,14 @@
       }
     }
   }
+
+  ::ng-deep {
+    nb-card {
+      padding: 1.6rem;
+
+      nb-card-body {
+        margin: 0 !important;
+      }
+    }
+  }
 }
