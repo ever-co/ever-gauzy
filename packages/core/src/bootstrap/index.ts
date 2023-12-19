@@ -6,6 +6,8 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
+import RedisStore from 'connect-redis';
+import { createClient } from 'redis';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
 import { join } from 'path';
@@ -76,14 +78,48 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	// app.use(csurf());
 
 	// We use sessions for Passport Auth
-	app.use(
-		expressSession({
-			secret: env.EXPRESS_SESSION_SECRET,
-			resave: true, // we use this because Memory store does not support 'touch' method
-			saveUninitialized: true
-			// cookie: { secure: true } // TODO
-		})
-	);
+	// For production we use RedisStore
+	// https://github.com/tj/connect-redis
+
+	let redisWorked = false;
+
+	if (env.REDIS_ENABLED) {
+		try {
+			const redisClient = createClient();
+			redisClient.connect();
+
+			const redisStore = new RedisStore({
+				client: redisClient,
+				prefix: 'gauzysess:'
+			});
+
+			app.use(
+				expressSession({
+					store: redisStore,
+					secret: env.EXPRESS_SESSION_SECRET,
+					resave: false, // required: force lightweight session keep alive (touch)
+					saveUninitialized: true
+					// cookie: { secure: true } // TODO
+				})
+			);
+
+			redisWorked = true;
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	if (!redisWorked) {
+		app.use(
+			// this runs in memory, so we lose sessions on restart of server/pod
+			expressSession({
+				secret: env.EXPRESS_SESSION_SECRET,
+				resave: true, // we use this because Memory store does not support 'touch' method
+				saveUninitialized: true
+				// cookie: { secure: true } // TODO
+			})
+		);
+	}
 
 	app.use(helmet());
 	const globalPrefix = 'api';
@@ -165,7 +201,7 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 		}
 	});
 
-	let registeredConfig = getConfig();
+	const registeredConfig = getConfig();
 	return registeredConfig;
 }
 

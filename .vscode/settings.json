@@ -26,5 +26,5 @@
 		"**/public/**/*.pdf": true
 	},
 	"angular.enable-strict-mode-prompt": false,
-	"cSpell.words": []
+	"cSpell.words": ["gauzysess"]
 }
