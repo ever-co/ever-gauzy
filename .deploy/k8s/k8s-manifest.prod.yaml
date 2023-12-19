@@ -62,11 +62,10 @@ spec:
                   image: registry.digitalocean.com/ever/gauzy-api:latest
                   resources:
                       requests:
-                          memory: "1024Mi"
+                          memory: "2048Mi"
                           cpu: "1000m"
                       limits:
-                          memory: "1536Mi"
-                          cpu: "1200m"
+                          memory: "3072Mi"
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
