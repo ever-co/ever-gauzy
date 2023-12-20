@@ -83,7 +83,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 	let redisWorked = false;
 
-	if (env.REDIS_ENABLED) {
+	if (process.env.REDIS_ENABLED) {
 		try {
 			const redisClient = createClient();
 			redisClient.connect();
