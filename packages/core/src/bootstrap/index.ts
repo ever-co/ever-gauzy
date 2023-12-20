@@ -4,6 +4,7 @@ import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
+import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import RedisStore from 'connect-redis';
@@ -58,6 +59,30 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	if (sentry && sentry.dsn) {
 		// Attach the Sentry logger to the app
 		app.useLogger(app.get(SentryService));
+
+		// NOTE: possible below is not needed because already included inside SentryService constructor
+
+		process.on('uncaughtException', (error) => {
+			console.error('Uncaught Exception:', error);
+			Sentry.captureException(error);
+			Sentry.flush(2000).then(() => {
+				process.exit(1);
+			});
+		});
+
+		process.on('unhandledRejection', (reason, promise) => {
+			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+			Sentry.captureException(reason);
+		});
+	} else {
+		process.on('uncaughtException', (error) => {
+			console.error('Uncaught Exception:', error);
+			process.exit(1);
+		});
+
+		process.on('unhandledRejection', (reason, promise) => {
+			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+		});
 	}
 
 	app.use(json({ limit: '50mb' }));
