@@ -10,10 +10,6 @@ import { Component } from '@angular/core';
 			:host {
         		overflow-y: auto;
 				height: calc(100vh - 20.5rem);
-
-				.actions {
-					margin-bottom: 1.6rem;
-				}
 			}
 		`
 	]

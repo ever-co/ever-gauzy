@@ -30,7 +30,6 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 				}
 
 				nb-card {
-					margin: 0 !important;
 					background-color: var(--gauzy-card-3) !important;
 					border-radius: var(--card-border-radius);
 				}
