@@ -17,10 +17,16 @@
 }
 
 .entities {
-  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 :host{
   height: 100%;
   @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
+  nb-card-header,
+  nb-card-body {
+    padding: 1rem;
+  }
 }

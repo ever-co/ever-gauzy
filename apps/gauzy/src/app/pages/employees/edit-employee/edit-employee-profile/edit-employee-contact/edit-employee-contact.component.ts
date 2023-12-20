@@ -22,6 +22,18 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 			:host {
         		overflow-y: auto;
 				height: calc(100vh - 20.5rem);
+
+				.container-contact {
+    				background-color: var(--gauzy-card-2);
+					padding: 1rem;
+					height: 100%;
+				}
+
+				nb-card {
+					margin: 0 !important;
+					background-color: var(--gauzy-card-3) !important;
+					border-radius: var(--card-border-radius);
+				}
 			}
 		`
 	]
