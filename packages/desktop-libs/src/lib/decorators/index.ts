@@ -12,3 +12,5 @@ export * from './concretes/dialog-stop-timer-exit-confirmation';
 export * from './concretes/dialog-stop-timer-logout-confirmation';
 export * from './concretes/dialog-stop-server-exit-confirmation';
 export * from './concretes/dialog-error-handler';
+export * from './concretes/dialog-open-file';
+export * from './abstracts/base-reverse-proxy';
