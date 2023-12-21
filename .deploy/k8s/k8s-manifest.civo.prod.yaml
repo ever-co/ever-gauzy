@@ -83,6 +83,10 @@ spec:
                         value: '$DB_NAME'
                       - name: DB_PORT
                         value: '$DB_PORT'
+                      - name: REDIS_ENABLED
+                        value: '$REDIS_ENABLED'
+                      - name: REDIS_URL
+                        value: '$REDIS_URL'
                       - name: AWS_ACCESS_KEY_ID
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY

@@ -110,12 +110,35 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 	if (process.env.REDIS_ENABLED) {
 		try {
-			const redisClient = createClient();
-			redisClient.connect();
+			const redisClient = await createClient({
+				url: process.env.REDIS_URL
+			})
+				.on('error', (err) => {
+					console.log('Redis Client Error: ', err);
+				})
+				.on('connect', () => {
+					console.log('Redis Client Connected');
+				})
+				.on('ready', () => {
+					console.log('Redis Client ready');
+				})
+				.on('reconnecting', () => {
+					console.log('Redis Client reconnecting');
+				})
+				.on('end', () => {
+					console.log('Redis Client end');
+				});
+
+			// connecting to Redis
+			await redisClient.connect();
+
+			// ping Redis
+			const res = await redisClient.ping();
+			console.log('Redis Client ping: ', res);
 
 			const redisStore = new RedisStore({
 				client: redisClient,
-				prefix: 'gauzysess:'
+				prefix: env.production ? 'gauzyprodsess:' : 'gauzydevsess:'
 			});
 
 			app.use(
