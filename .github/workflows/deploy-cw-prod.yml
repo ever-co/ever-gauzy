@@ -53,6 +53,8 @@ jobs:
           DB_PORT: '${{ secrets.DB_PORT }}'
           DB_CA_CERT: '${{ secrets.DB_CA_CERT }}'
           DB_SSL_MODE: '${{ secrets.DB_SSL_MODE }}'
+          REDIS_ENABLED: '${{ secrets.REDIS_ENABLED }}'
+          REDIS_URL: '${{ secrets.REDIS_URL }}'
           CLOUD_PROVIDER: 'CW'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'

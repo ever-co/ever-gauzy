@@ -381,6 +381,9 @@
 	"overrides": {
 		"prebuild": {
 			"node-gyp": "$node-gyp"
+		},
+		"iconv": {
+			"node-gyp": "9.3.1"
 		}
 	},
 	"engines": {

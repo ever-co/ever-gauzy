@@ -8,7 +8,7 @@ import { IntegrationTenantService } from 'integration-tenant/integration-tenant.
 
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
-	private logging: boolean = true;
+	private logging = true;
 
 	constructor(
 		private readonly integrationTenantService: IntegrationTenantService,
@@ -16,34 +16,35 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 	) {}
 
 	async use(request: Request, _response: Response, next: NextFunction) {
-		// Extract tenant and organization IDs from request headers and body
-		const tenantId = request.header('tenant-id') || request.body?.tenantId;
-		const organizationId = request.header('organization-id') || request.body?.organizationId;
-
-		if (this.logging) {
-			// Log tenant and organization IDs
-			console.log('Auth Tenant-ID Header: %s', tenantId);
-			console.log('Auth Organization-ID Header: %s', organizationId);
-		}
-
-		// Initialize custom headers
-		request.headers['X-APP-ID'] = null;
-		request.headers['X-API-KEY'] = null;
-
 		try {
+			// Extract tenant and organization IDs from request headers and body
+			const tenantId = request.header('tenant-id') || request.body?.tenantId;
+			const organizationId = request.header('organization-id') || request.body?.organizationId;
+
+			if (this.logging) {
+				// Log tenant and organization IDs
+				console.log('Auth Tenant-ID Header: %s', tenantId);
+				console.log('Auth Organization-ID Header: %s', organizationId);
+			}
+
+			// Initialize custom headers
+			request.headers['X-APP-ID'] = null;
+			request.headers['X-API-KEY'] = null;
+
 			// Check if tenant and organization IDs are not empty
 			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 				// Fetch integration settings from the service
-				const { settings = [] } = await this.integrationTenantService.getIntegrationTenantSettings({
+
+				const integrationTenant = await this.integrationTenantService.getIntegrationTenantSettings({
 					tenantId,
 					organizationId,
 					name: IntegrationEnum.GAUZY_AI
 				});
 
-				if (settings && settings.length > 0) {
+				if (integrationTenant && integrationTenant.settings && integrationTenant.settings.length > 0) {
 					// Convert settings array to an object
 					const { apiKey, apiSecret, openAiApiSecretKey } = arrayToObject(
-						settings,
+						integrationTenant.settings,
 						'settingsName',
 						'settingsValue'
 					);
@@ -76,6 +77,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 			}
 		} catch (error) {
 			console.log('Error while getting AI integration settings: %s', error?.message);
+			console.log(request.path, request.url);
 		}
 
 		// Continue to the next middleware or route handler

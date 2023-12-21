@@ -3,7 +3,7 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
+import { GraphqlInterceptor, SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations as SentryIntegrations } from '@sentry/node';
@@ -230,7 +230,12 @@ if (environment.sentry && environment.sentry.dsn) {
 						integrations: sentryIntegrations,
 						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
 							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-							: 0.01
+							: 0.01,
+						close: {
+							enabled: true,
+							// Time in milliseconds to forcefully quit the application
+							timeout: 3000
+						}
 					})
 			  ]
 			: []),
@@ -427,12 +432,18 @@ if (environment.sentry && environment.sentry.dsn) {
 						useFactory: () =>
 							new SentryInterceptor({
 								filters: [
+									/* Note: It is possible to filter exceptions, e.g. only those that error codes are bigger than 499, but for now we want to see all of them
 									{
 										type: HttpException,
 										filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
 									}
+									*/
 								]
 							})
+					},
+					{
+						provide: APP_INTERCEPTOR,
+						useFactory: () => new GraphqlInterceptor()
 					}
 			  ]
 			: [])
