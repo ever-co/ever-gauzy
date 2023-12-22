@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { GraphqlInterceptor, SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
+import { SentryModule } from '@travelerdev/nestjs-sentry';
+import { GraphqlInterceptor } from '@travelerdev/nestjs-sentry-graphql';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations } from '@sentry/node';
 import { ProfilingIntegration } from '@sentry/profiling-node';
+import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
@@ -189,25 +191,48 @@ if (environment.sentry && environment.sentry.dsn) {
 	if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
 		sentryIntegrations.push(
 			// enable HTTP calls tracing
-			new Integrations.Http({ tracing: true })
+			new Integrations.Http({
+				tracing: true,
+				breadcrumbs: true
+			})
 		);
+		console.log('Sentry HTTP Tracing Enabled');
 	}
 
 	if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
 		if (process.env.DB_TYPE === 'postgres') {
 			sentryIntegrations.push(new Integrations.Postgres());
+			console.log('Sentry Postgres Tracking Enabled');
 		}
 	}
 
 	if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
 		sentryIntegrations.push(new ProfilingIntegration());
+		console.log('Sentry Profiling Enabled');
 	}
 
-	sentryIntegrations.push(new Integrations.GraphQL());
-	sentryIntegrations.push(new Integrations.Apollo());
+	sentryIntegrations.push(new Integrations.Console());
+	console.log('Sentry Console Enabled');
 
-	// TODO: we can also integrate Express routes, but not sure how to pass here app instance
-	// sentryIntegrations.push(new Integrations.Express());
+	sentryIntegrations.push(new Integrations.GraphQL());
+	console.log('Sentry GraphQL Enabled');
+
+	sentryIntegrations.push(new Integrations.Apollo({ useNestjs: true }));
+	console.log('Sentry Apollo Enabled');
+
+	sentryIntegrations.push(
+		new Integrations.LocalVariables({
+			captureAllExceptions: true
+		})
+	);
+	console.log('Sentry Local Variables Enabled');
+
+	sentryIntegrations.push(
+		new Integrations.RequestData({
+			ip: true
+		})
+	);
+	console.log('Sentry Request Data Enabled');
 }
 
 @Module({
@@ -230,22 +255,35 @@ if (environment.sentry && environment.sentry.dsn) {
 		}),
 		...(environment.sentry && environment.sentry.dsn
 			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dsn,
-						debug: !environment.production,
-						environment: environment.production ? 'production' : 'development',
-						// TODO: we should use some internal function which returns version of Gauzy
-						release: 'gauzy@' + process.env.npm_package_version,
-						logLevels: ['error'],
-						integrations: sentryIntegrations,
-						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-							: 0.01,
-						close: {
-							enabled: true,
-							// Time in milliseconds to forcefully quit the application
-							timeout: 3000
-						}
+					SentryModule.forRootAsync({
+						inject: [ConfigService, HttpAdapterHost],
+						useFactory: async (config: ConfigService, host: HttpAdapterHost) => ({
+							dsn: environment.sentry.dsn,
+							debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
+							environment: environment.production ? 'production' : 'development',
+							// TODO: we should use some internal function which returns version of Gauzy
+							release: 'gauzy@' + process.env.npm_package_version,
+							logLevels: ['error'],
+							integrations: [
+								...sentryIntegrations,
+								host?.httpAdapter
+									? new Integrations.Express({
+											app: host.httpAdapter.getInstance()
+									  })
+									: null
+							].filter((i) => !!i),
+							tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+								? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
+								: 0.01,
+							profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE
+								? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE)
+								: 1,
+							close: {
+								enabled: true,
+								// Time in milliseconds to forcefully quit the application
+								timeout: 3000
+							}
+						})
 					})
 			  ]
 			: []),
@@ -439,17 +477,7 @@ if (environment.sentry && environment.sentry.dsn) {
 			? [
 					{
 						provide: APP_INTERCEPTOR,
-						useFactory: () =>
-							new SentryInterceptor({
-								filters: [
-									/* Note: It is possible to filter exceptions, e.g. only those that error codes are bigger than 499, but for now we want to see all of them
-									{
-										type: HttpException,
-										filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
-									}
-									*/
-								]
-							})
+						useFactory: () => new SentryCustomInterceptor()
 					},
 					{
 						provide: APP_INTERCEPTOR,

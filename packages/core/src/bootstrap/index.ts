@@ -3,7 +3,7 @@ import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SentryService } from '@ntegral/nestjs-sentry';
+import { SentryService } from '@travelerdev/nestjs-sentry';
 import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -29,9 +29,9 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
 		await tracer.start();
-		console.log('Tracing started');
+		console.log('OTEL/Signoz Tracing started');
 	} else {
-		console.log('Tracing not enabled');
+		console.log('OTEL/Signoz Tracing not enabled');
 	}
 
 	const config = await registerPluginConfig(pluginConfig);
