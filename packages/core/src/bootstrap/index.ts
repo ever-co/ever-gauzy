@@ -26,7 +26,7 @@ import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
-	if (process.env.OTEL_ENABLED) {
+	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
 		await tracer.start();
 		console.log('Tracing started');
@@ -108,7 +108,9 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 	let redisWorked = false;
 
-	if (process.env.REDIS_ENABLED) {
+	console.log('REDIS_ENABLED: ', process.env.REDIS_ENABLED);
+
+	if (process.env.REDIS_ENABLED === 'true') {
 		try {
 			const redisClient = await createClient({
 				url: process.env.REDIS_URL
@@ -120,13 +122,13 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 					console.log('Redis Client Connected');
 				})
 				.on('ready', () => {
-					console.log('Redis Client ready');
+					console.log('Redis Client Ready');
 				})
 				.on('reconnecting', () => {
-					console.log('Redis Client reconnecting');
+					console.log('Redis Client Reconnecting');
 				})
 				.on('end', () => {
-					console.log('Redis Client end');
+					console.log('Redis Client End');
 				});
 
 			// connecting to Redis

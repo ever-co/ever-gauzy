@@ -9,7 +9,7 @@ export abstract class IconGenerator {
 	private downloadContext: DownloadContext;
 	protected destination: string;
 	protected imageUrl: string;
-	protected desktop: string;
+	protected desktop: string | null;
 
 	protected constructor() {
 		this.desktop = isUndefined(argv.desktop) ? null : String(argv.desktop);
@@ -25,10 +25,7 @@ export abstract class IconGenerator {
 		await new Promise((resolve, reject) =>
 			fs.rm(filePath, (error) => {
 				if (error) {
-					console.error(
-						'ERROR: An error occurred while removing the file:',
-						error
-					);
+					console.error('ERROR: An error occurred while removing the file:', error);
 					reject(error);
 				}
 				resolve(true);
@@ -66,21 +63,16 @@ export abstract class IconGenerator {
 		}
 	}
 
-	public async downloadImage(): Promise<string> {
+	public async downloadImage(): Promise<string | null> {
 		if (!this.desktop) {
-			console.warn(
-				'WARNING: A desktop application variant must be selected, process exit.'
-			);
+			console.warn('WARNING: A desktop application variant must be selected, process exit.');
 			process.exit(0);
 		}
 		if (!this.checkUrlValidity(this.imageUrl)) {
 			return null;
 		}
 
-		return this.downloadContext.strategy.download(
-			this.imageUrl,
-			this.destination
-		);
+		return this.downloadContext.strategy.download(this.imageUrl, this.destination);
 	}
 
 	public async generate(): Promise<void> {

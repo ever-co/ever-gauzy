@@ -105,7 +105,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 			});
 
 			return integration || false;
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}
@@ -138,10 +138,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					settings: true
 				}
 			});
-		} catch (error) {
-			console.log(
-				`Error while getting integration settings: ${error?.message}. Parameters: ${JSON.stringify(input)}`
-			);
+		} catch {
 			return null;
 		}
 	}
