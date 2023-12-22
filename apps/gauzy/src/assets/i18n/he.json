@@ -3900,7 +3900,18 @@
 			"TIMEZONE_LOCAL": "מקומי",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "ווידג'ט",
-			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור."
+			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור.",
+			"SSL": {
+				"SSL_CONFIG": "תצורת SSL",
+				"USE_SSL": "השתמש ב-SSL",
+				"USE_SSL_INFO": "מפעיל הצפנה SSL.",
+				"SSL_KEY_FILE": "קובץ מפתח SSL",
+				"SSL_KEY_FILE_INFO": "נתיב לקובץ המפתח של הלקוח עבור SSL.",
+				"SSL_CERT_FILE": "קובץ תעודת SSL",
+				"SSL_CERT_FILE_INFO": "נתיב לקובץ תעודת הלקוח עבור SSL.",
+				"SECURE": "מאובטח",
+				"SECURE_INFO": "נכון, אם ברצונך לאמת את תעודות ה-SSL."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "הגעת למגבלת השבוע",
 		"OF_HRS": "מתוך {{ limit }} שעות",
