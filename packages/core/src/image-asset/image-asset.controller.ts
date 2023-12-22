@@ -40,11 +40,7 @@ import { UploadImageAsset } from './dto';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_ADD)
 @Controller()
 export class ImageAssetController extends CrudController<ImageAsset> {
-
-	constructor(
-		private readonly _commandBus: CommandBus,
-		private readonly _imageAssetService: ImageAssetService
-	) {
+	constructor(private readonly _commandBus: CommandBus, private readonly _imageAssetService: ImageAssetService) {
 		super(_imageAssetService);
 	}
 
@@ -64,14 +60,11 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				return new FileStorage().storage({
 					dest: () => path.join('uploads', folder, RequestContext.currentTenantId() || uuid())
 				});
-			},
+			}
 		})
 	)
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async upload(
-		@UploadedFileStorage() file,
-		@Body() entity: UploadImageAsset
-	) {
+	async upload(@UploadedFileStorage() file, @Body() entity: UploadImageAsset) {
 		const provider = new FileStorage().getProvider();
 		let thumbnail: UploadedFile;
 
@@ -81,28 +74,29 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 			const outputFile = await tempFile('media-asset-thumb');
 
 			await fs.promises.writeFile(inputFile, fileContent);
-			await new Promise(async (resolve, reject) => {
-				const image = await Jimp.read(inputFile);
 
-				// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
-				image.resize(250, Jimp.AUTO);
-				try {
-					await image.writeAsync(outputFile);
-					resolve(image);
-				} catch (error) {
-					reject(error);
-				}
-			});
+			const image = await Jimp.read(inputFile);
+
+			// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
+			image.resize(250, Jimp.AUTO);
+
+			await image.writeAsync(outputFile);
+
 			const data = await fs.promises.readFile(outputFile);
-			await fs.promises.unlink(inputFile);
-			await fs.promises.unlink(outputFile);
+
+			try {
+				await fs.promises.unlink(inputFile);
+				await fs.promises.unlink(outputFile);
+			} catch (error) {
+				console.error('Error while unlinking temp files:', error);
+			}
 
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
 
 			thumbnail = await provider.putFile(data, path.join(thumbDir, thumbName));
 		} catch (error) {
-			console.log('Error while uploading media asset into file storage provider:', error);
+			console.error('Error while uploading media asset into file storage provider:', error);
 		}
 
 		return await this._commandBus.execute(
@@ -110,7 +104,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				...entity,
 				name: file.filename,
 				url: file.key,
-				thumb: thumbnail.key,
+				thumb: thumbnail ? thumbnail.key : null,
 				size: file.size,
 				storageProvider: provider.name
 			})
@@ -130,9 +124,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<ImageAsset>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<ImageAsset>): Promise<number> {
 		return await this._imageAssetService.countBy(options);
 	}
 
@@ -155,9 +147,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<ImageAsset>
-	): Promise<IPagination<IImageAsset>> {
+	async pagination(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.paginate(params);
 	}
 
@@ -170,9 +160,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<ImageAsset>
-	): Promise<IPagination<IImageAsset>> {
+	async findAll(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.findAll(params);
 	}
 
@@ -185,9 +173,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@HttpCode(HttpStatus.OK)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: IImageAsset['id']
-	): Promise<IImageAsset> {
+	async findById(@Param('id', UUIDValidationPipe) id: IImageAsset['id']): Promise<IImageAsset> {
 		return await this._imageAssetService.findOneByIdString(id);
 	}
 
@@ -199,9 +185,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(
-		@Body() entity: ImageAsset
-	): Promise<IImageAsset> {
+	async create(@Body() entity: ImageAsset): Promise<IImageAsset> {
 		return await this._imageAssetService.create(entity);
 	}
 
@@ -214,9 +198,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.MEDIA_GALLERY_DELETE)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IImageAsset['id']
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: IImageAsset['id']): Promise<any> {
 		return await this._imageAssetService.deleteAsset(id);
 	}
 }

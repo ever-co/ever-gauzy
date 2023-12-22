@@ -58,9 +58,11 @@ spec:
                       - name: SENTRY_DSN
                         value: '$SENTRY_DSN'
                       - name: SENTRY_HTTP_TRACING_ENABLED
-                        value: 'false'
+                        value: '$SENTRY_HTTP_TRACING_ENABLED'
+                      - name: SENTRY_PROFILING_ENABLED
+                        value: '$SENTRY_PROFILING_ENABLED'
                       - name: SENTRY_POSTGRES_TRACKING_ENABLED
-                        value: 'false'
+                        value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
                       - name: API_BASE_URL
                         value: 'https://apicivo.gauzy.co'
                       - name: CLIENT_BASE_URL
