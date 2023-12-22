@@ -48,7 +48,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 16
+    replicas: 24
     selector:
         matchLabels:
             app: gauzy-prod-api
@@ -62,11 +62,10 @@ spec:
                   image: registry.digitalocean.com/ever/gauzy-api:latest
                   resources:
                       requests:
-                          memory: "1024Mi"
-                          cpu: "1000m"
+                          memory: '1536Mi'
+                          cpu: '1000m'
                       limits:
-                          memory: "1536Mi"
-                          cpu: "1200m"
+                          memory: '2048Mi'
                   env:
                       - name: API_HOST
                         value: 0.0.0.0
@@ -83,9 +82,11 @@ spec:
                       - name: SENTRY_DSN
                         value: '$SENTRY_DSN'
                       - name: SENTRY_HTTP_TRACING_ENABLED
-                        value: 'false'
+                        value: '$SENTRY_HTTP_TRACING_ENABLED'
+                      - name: SENTRY_PROFILING_ENABLED
+                        value: '$SENTRY_PROFILING_ENABLED'
                       - name: SENTRY_POSTGRES_TRACKING_ENABLED
-                        value: 'false'
+                        value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
                       - name: API_BASE_URL
                         value: 'https://api.gauzy.co'
                       - name: CLIENT_BASE_URL
@@ -108,6 +109,10 @@ spec:
                         value: '$DB_NAME'
                       - name: DB_PORT
                         value: '$DB_PORT'
+                      - name: REDIS_ENABLED
+                        value: '$REDIS_ENABLED'
+                      - name: REDIS_URL
+                        value: '$REDIS_URL'
                       - name: AWS_ACCESS_KEY_ID
                         value: '$AWS_ACCESS_KEY_ID'
                       - name: AWS_SECRET_ACCESS_KEY
@@ -256,7 +261,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-webapp
 spec:
-    replicas: 8
+    replicas: 6
     selector:
         matchLabels:
             app: gauzy-prod-webapp

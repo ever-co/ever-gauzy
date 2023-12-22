@@ -19,6 +19,7 @@ export class GithubMiddleware implements NestMiddleware {
 				const tenantId = queryParameters.tenantId
 					? queryParameters.tenantId.toString()
 					: request.header('Tenant-Id');
+
 				const organizationId = queryParameters.organizationId
 					? queryParameters.organizationId.toString()
 					: request.header('Organization-Id');
@@ -27,7 +28,7 @@ export class GithubMiddleware implements NestMiddleware {
 				if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 					try {
 						// Fetch integration settings from the service
-						const { settings = [] } = await this._integrationTenantService.findOneByIdString(
+						const integrationTenant = await this._integrationTenantService.findOneByIdString(
 							integrationId,
 							{
 								where: {
@@ -45,16 +46,23 @@ export class GithubMiddleware implements NestMiddleware {
 								}
 							}
 						);
-						/** Create an 'integration' object and assign properties to it. */
-						request['integration'] = new Object({
-							// Assign properties to the integration object
-							id: integrationId,
-							name: IntegrationEnum.GITHUB,
-							// Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
-							settings: arrayToObject(settings, 'settingsName', 'settingsValue')
-						});
+
+						if (integrationTenant && integrationTenant.settings.length > 0) {
+							/** Create an 'integration' object and assign properties to it. */
+							request['integration'] = new Object({
+								// Assign properties to the integration object
+								id: integrationId,
+								name: IntegrationEnum.GITHUB,
+								// Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
+								settings: arrayToObject(integrationTenant.settings, 'settingsName', 'settingsValue')
+							});
+						}
 					} catch (error) {
-						console.log('Error while getting AI integration settings: %s', error?.message);
+						console.log(
+							`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`,
+							error?.message
+						);
+						console.log(request.path, request.url);
 					}
 				}
 			}

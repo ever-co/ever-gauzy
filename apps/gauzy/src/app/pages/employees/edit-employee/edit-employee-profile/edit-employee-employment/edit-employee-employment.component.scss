@@ -13,14 +13,32 @@ $radius: nb-theme(border-radius);
   font-weight: 600;
   text-align: justify;
 }
-.card{
+.card {
   background-color: var(--gauzy-card-2);
   border: unset;
 }
 :host {
+  background: var(--gauzy-card-2);
+  overflow-y: auto;
+
   @include nb-card_overrides(
     auto,
     calc($default-card-height + 0.25rem),
     $default-radius
   );
+
+  nb-card {
+    border-radius: 0;
+  }
+
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+    padding: 1rem;
+
+    .form-container {
+      background-color: var(--gauzy-sidebar-background-2);
+      border-radius: var(--border-radius);
+      padding: 1rem;
+    }
+  }
 }

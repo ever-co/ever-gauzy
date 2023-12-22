@@ -4,8 +4,11 @@ import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SentryService } from '@ntegral/nestjs-sentry';
+import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
+import RedisStore from 'connect-redis';
+import { createClient } from 'redis';
 import * as helmet from 'helmet';
 import * as chalk from 'chalk';
 import { join } from 'path';
@@ -23,7 +26,7 @@ import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
-	if (process.env.OTEL_ENABLED) {
+	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
 		await tracer.start();
 		console.log('Tracing started');
@@ -56,6 +59,30 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	if (sentry && sentry.dsn) {
 		// Attach the Sentry logger to the app
 		app.useLogger(app.get(SentryService));
+
+		// NOTE: possible below is not needed because already included inside SentryService constructor
+
+		process.on('uncaughtException', (error) => {
+			console.error('Uncaught Exception:', error);
+			Sentry.captureException(error);
+			Sentry.flush(2000).then(() => {
+				process.exit(1);
+			});
+		});
+
+		process.on('unhandledRejection', (reason, promise) => {
+			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+			Sentry.captureException(reason);
+		});
+	} else {
+		process.on('uncaughtException', (error) => {
+			console.error('Uncaught Exception:', error);
+			process.exit(1);
+		});
+
+		process.on('unhandledRejection', (reason, promise) => {
+			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+		});
 	}
 
 	app.use(json({ limit: '50mb' }));
@@ -76,14 +103,73 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	// app.use(csurf());
 
 	// We use sessions for Passport Auth
-	app.use(
-		expressSession({
-			secret: env.EXPRESS_SESSION_SECRET,
-			resave: true, // we use this because Memory store does not support 'touch' method
-			saveUninitialized: true
-			// cookie: { secure: true } // TODO
-		})
-	);
+	// For production we use RedisStore
+	// https://github.com/tj/connect-redis
+
+	let redisWorked = false;
+
+	console.log('REDIS_ENABLED: ', process.env.REDIS_ENABLED);
+
+	if (process.env.REDIS_ENABLED === 'true') {
+		try {
+			const redisClient = await createClient({
+				url: process.env.REDIS_URL
+			})
+				.on('error', (err) => {
+					console.log('Redis Client Error: ', err);
+				})
+				.on('connect', () => {
+					console.log('Redis Client Connected');
+				})
+				.on('ready', () => {
+					console.log('Redis Client Ready');
+				})
+				.on('reconnecting', () => {
+					console.log('Redis Client Reconnecting');
+				})
+				.on('end', () => {
+					console.log('Redis Client End');
+				});
+
+			// connecting to Redis
+			await redisClient.connect();
+
+			// ping Redis
+			const res = await redisClient.ping();
+			console.log('Redis Client ping: ', res);
+
+			const redisStore = new RedisStore({
+				client: redisClient,
+				prefix: env.production ? 'gauzyprodsess:' : 'gauzydevsess:'
+			});
+
+			app.use(
+				expressSession({
+					store: redisStore,
+					secret: env.EXPRESS_SESSION_SECRET,
+					resave: false, // required: force lightweight session keep alive (touch)
+					saveUninitialized: true
+					// cookie: { secure: true } // TODO
+				})
+			);
+
+			redisWorked = true;
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	if (!redisWorked) {
+		app.use(
+			// this runs in memory, so we lose sessions on restart of server/pod
+			expressSession({
+				secret: env.EXPRESS_SESSION_SECRET,
+				resave: true, // we use this because Memory store does not support 'touch' method
+				saveUninitialized: true
+				// cookie: { secure: true } // TODO
+			})
+		);
+	}
 
 	app.use(helmet());
 	const globalPrefix = 'api';
@@ -165,7 +251,7 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 		}
 	});
 
-	let registeredConfig = getConfig();
+	const registeredConfig = getConfig();
 	return registeredConfig;
 }
 
