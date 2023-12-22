@@ -10,12 +10,11 @@ import { Screenshot } from './screenshot.entity';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
-
 	constructor(
 		@InjectRepository(Screenshot) protected readonly screenshotRepository: Repository<Screenshot>,
 		/** */
 		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _gauzyAIService: GauzyAIService
 	) {
 		super(screenshotRepository);
 	}
@@ -27,25 +26,18 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	 * @param options
 	 * @returns
 	 */
-	async deleteScreenshot(
-		id: IScreenshot['id'],
-		options?: FindOptionsWhere<Screenshot>
-	): Promise<IScreenshot> {
+	async deleteScreenshot(id: IScreenshot['id'], options?: FindOptionsWhere<Screenshot>): Promise<IScreenshot> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const query = this.repository.createQueryBuilder(this.alias);
 			query.setFindOptions({
 				where: {
-					...(
-						(options) ? options : {}
-					),
+					...(options ? options : {}),
 					id,
 					tenantId
 				}
 			});
-			if (!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)) {
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				query.leftJoin(`${query.alias}.timeSlot`, 'time_slot');
 				query.andWhere(`"time_slot"."employeeId" = :employeeId`, {
 					employeeId: RequestContext.currentEmployeeId()
@@ -85,8 +77,14 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 
 			// Check if integration exists
 			if (!!integration) {
+				console.log('Screenshot/Image Analyze Starting. AI Integration Tenant: %s', integration);
+
 				// Analyze image using Gauzy AI service
 				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
+
+				if (!analysis.success) {
+					console.log('Screenshot/Image Analyze Failed. AI Integration Tenant: %s', integration);
+				}
 
 				if (analysis.success && callback) {
 					// Call the callback function if provided
@@ -95,8 +93,11 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 
 				return analysis;
 			}
+
+			return null;
 		} catch (error) {
 			// If needed, consider throwing or handling the error appropriately.
+			console.error('Failed to get AI Integration for provided options: %s', error?.message);
 		}
 	}
 }

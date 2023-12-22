@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import * as chalk from 'chalk';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -9,7 +10,6 @@ import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
-
 	private config = getConfig();
 	name = 'SeedDafaultGlobalIssueType1680622389221';
 
@@ -19,6 +19,8 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 * @param queryRunner
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
+		console.log(chalk.yellow(this.name + ' start running!'));
+
 		await this.seedDefaultIssueTypes(queryRunner);
 	}
 
@@ -27,7 +29,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 	 *
 	 * @param queryRunner
 	 */
-	public async down(queryRunner: QueryRunner): Promise<any> { }
+	public async down(queryRunner: QueryRunner): Promise<any> {}
 
 	/**
 	 * Default global issue types
@@ -47,25 +49,11 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				const { height, width } = imageSize(iconPath);
 				const { size } = fs.statSync(iconPath);
 
-				const imageAsset = [
-					name,
-					filepath,
-					FileStorageProviderEnum.LOCAL,
-					height,
-					width,
-					size
-				];
-
-				const payload = [
-					name,
-					value,
-					description,
-					filepath,
-					color,
-					isSystem
-				];
+				const imageAsset = [name, filepath, FileStorageProviderEnum.LOCAL, height, width, size];
 
 				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
+					const payload = [name, value, description, filepath, color, isSystem ? 1 : 0];
+
 					const imageAssetId = uuidv4();
 					imageAsset.push(imageAssetId);
 
@@ -77,16 +65,23 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 							?, ?, ?, ?, ?, ?, ?
 						);
 					`;
+
 					await queryRunner.connection.manager.query(insertQuery, imageAsset);
 
 					payload.push(uuidv4(), imageAssetId);
-					await queryRunner.connection.manager.query(`
+
+					await queryRunner.connection.manager.query(
+						`
 						INSERT INTO "issue_type" (
 							"name", "value", "description", "icon", "color", "isSystem", "id", "imageId"
 						) VALUES (
 							?, ?, ?, ?, ?, ?, ?, ?);
-						`, payload);
+						`,
+						payload
+					);
 				} else {
+					const payload = [name, value, description, filepath, color, isSystem];
+
 					const insertQuery = `
 						INSERT INTO "image_asset" (
 							"name", "url", "storageProvider", "height", "width", "size"
@@ -99,13 +94,16 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 					const imageAssetId = image_asset[0]['id'];
 
 					payload.push(imageAssetId);
-					await queryRunner.connection.manager.query(`
+					await queryRunner.connection.manager.query(
+						`
 						INSERT INTO "issue_type" (
 							"name", "value", "description", "icon", "color", "isSystem", "imageId"
 						) VALUES (
 							$1, $2, $3, $4, $5, $6, $7
 						);
-					`, payload);
+					`,
+						payload
+					);
 				}
 			}
 		} catch (error) {

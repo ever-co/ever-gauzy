@@ -26,13 +26,16 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	}
 
 	/**
-	 * Get payments
+	 * Retrieves payments based on the provided request parameters.
 	 *
-	 * @param request
-	 * @returns
+	 * @param request - Request parameters for filtering payments.
+	 * @returns A Promise that resolves to an array of payments.
 	 */
 	async getPayments(request: IGetPaymentInput) {
+		// Create a query builder for the Payment entity
 		const query = this.paymentRepository.createQueryBuilder(this.alias);
+
+		// Set up the find options for the query
 		query.setFindOptions({
 			...(
 				(request && request.limit > 0) ? {
@@ -67,14 +70,27 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				paymentDate: 'ASC'
 			}
 		});
+
+		// Set up the where clause using the provided filter function
 		query.where((qb: SelectQueryBuilder<Payment>) => {
 			this.getFilterQuery(qb, request);
 		});
+
+		// Set up the where clause using the provided filter function
 		return await query.getMany();
 	}
 
-	async getDailyReportChartData(request: IGetPaymentInput) {
+	/**
+	 * Retrieves daily payment report charts based on the provided request parameters.
+	 *
+	 * @param request - Request parameters for filtering data.
+	 * @returns A Promise that resolves to an array of daily payment report charts.
+	 */
+	async getDailyReportCharts(request: IGetPaymentInput) {
+		// Create a query builder for the Payment entity
 		const query = this.paymentRepository.createQueryBuilder(this.alias);
+
+		// Set up the find options for the query
 		query.setFindOptions({
 			...(
 				(request.limit > 0) ? {
@@ -83,21 +99,26 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				} : {}
 			),
 			order: {
+				// Order results by the 'startedAt' field in ascending order
 				paymentDate: 'ASC'
 			}
 		});
+
+		// Set up the where clause using the provided filter function
 		query.where((qb: SelectQueryBuilder<Payment>) => {
 			this.getFilterQuery(qb, request);
 		});
+
+		// Set up the where clause using the provided filter function
 		const payments = await query.getMany();
 
-		const { startDate, endDate } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
+		// Gets an array of days between the given start date, end date and timezone.
+		const { startDate, endDate, timezone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
+		// Group payments by date and calculate sum
 		const byDate = chain(payments)
-			.groupBy((payment) =>
-				moment(payment.paymentDate).format('YYYY-MM-DD')
-			)
+			.groupBy((payment: IPayment) => moment.utc(payment.paymentDate).tz(timezone).format('YYYY-MM-DD'))
 			.mapObject((payments: Payment[], date) => {
 				const sum = payments.reduce((iteratee: any, payment: any) => {
 					return iteratee + parseFloat(payment.amount);
@@ -108,20 +129,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 						payment: sum.toFixed(1)
 					}
 				};
-			})
-			.value();
-		const dates = days.map((date) => {
-			if (byDate[date]) {
-				return byDate[date];
-			} else {
-				return {
-					date: date,
-					value: {
-						payment: 0
-					}
-				};
-			}
-		});
+			}).value();
+		// Map dates to the required format
+		const dates = days.map((date) => byDate[date] || { date, value: { payment: 0 } });
 		return dates;
 	}
 
@@ -139,15 +149,12 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		const { organizationId, startDate, endDate } = request;
 		let { projectIds = [], contactIds = [] } = request;
 
-		const { start, end } = (startDate && endDate) ?
-			getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			) :
-			getDateRangeFormat(
-				moment().startOf('week').utc(),
-				moment().endOf('week').utc()
-			);
+		// Calculate start and end dates using a utility function
+		const { start, end } = getDateRangeFormat(
+			moment.utc(startDate || moment().startOf('week')),
+			moment.utc(endDate || moment().endOf('week'))
+		);
+
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where({

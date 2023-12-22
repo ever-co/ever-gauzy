@@ -11,7 +11,7 @@
       @include nb-ltr(padding, 0.5rem 0.5rem 0.5rem 1rem);
 
       .body {
-        height: 59vh;
+        min-height: 59vh;
         overflow: auto;
         overflow-x: hidden;
         @include nb-rtl(padding, 0 0 0 0.5rem);
@@ -22,7 +22,7 @@
 
         .selector-container {
           width: 60%;
-          height: 59vh;
+          min-height: 59vh;
           overflow: overlay;
           overflow-x: hidden;
           @include nb-rtl(padding, 0 0 0 0.6875rem);

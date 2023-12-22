@@ -38,7 +38,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		// Call the superclass's findAll method with merged options and where conditions.
 		return await super.findAll({
 			...options,
-			where: whereConditions,
+			where: whereConditions
 		});
 	}
 
@@ -47,9 +47,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param input The data for creating the integration tenant.
 	 * @returns A promise that resolves to the created integration tenant.
 	 */
-	async create(
-		input: IIntegrationTenantCreateInput
-	): Promise<IIntegrationTenant> {
+	async create(input: IIntegrationTenantCreateInput): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			let { organizationId, entitySettings = [], settings = [] } = input;
@@ -84,9 +82,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param input - The input options for finding the integration tenant.
 	 * @returns The integration tenant if found, or `false` if not found or an error occurs.
 	 */
-	public async getIntegrationByOptions(
-		input: IIntegrationTenantFindInput
-	): Promise<IIntegrationTenant | boolean> {
+	public async getIntegrationByOptions(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | boolean> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const { organizationId, name } = input;
@@ -101,15 +97,15 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					integration: {
 						provider: name,
 						isActive: true,
-						isArchived: false,
-					},
+						isArchived: false
+					}
 				},
 				order: { updatedAt: 'DESC' },
-				relations: { integration: true },
+				relations: { integration: true }
 			});
 
 			return integration || false;
-		} catch (error) {
+		} catch {
 			return false;
 		}
 	}
@@ -117,14 +113,12 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	/**
 	 * Get integration tenant settings by specified options.
 	 * @param input - The input options for finding the integration tenant settings.
-	 * @returns The integration tenant settings if found.
-	 * @throws BadRequestException if not found or an error occurs.
+	 * @returns The integration tenant settings if found. null if not found or an error occurs.
 	 */
-	async getIntegrationTenantSettings(
-		input: IIntegrationTenantFindInput
-	): Promise<IIntegrationTenant> {
+	async getIntegrationTenantSettings(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
 			const { organizationId, name } = input;
 
 			return await this.findOneByOptions({
@@ -137,16 +131,15 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					integration: {
 						provider: name,
 						isActive: true,
-						isArchived: false,
+						isArchived: false
 					}
 				},
 				relations: {
 					settings: true
 				}
 			});
-		} catch (error) {
-			console.log('Error while getting integration settings: %s', error?.message);
-			throw new BadRequestException(error?.message);
+		} catch {
+			return null;
 		}
 	}
 }

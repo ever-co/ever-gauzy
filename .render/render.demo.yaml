@@ -22,6 +22,8 @@ services:
             value: https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292
           - key: SENTRY_HTTP_TRACING_ENABLED
             value: false
+          - key: SENTRY_PROFILING_ENABLED
+            value: false
           - key: API_BASE_URL
             value: https://ever-gauzy-api.onrender.com
           - key: CLIENT_BASE_URL

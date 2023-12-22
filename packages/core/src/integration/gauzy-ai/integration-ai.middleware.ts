@@ -8,54 +8,79 @@ import { IntegrationTenantService } from 'integration-tenant/integration-tenant.
 
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
+	private logging = true;
 
-    constructor(
-        private readonly integrationTenantService: IntegrationTenantService,
-        private readonly requestConfigProvider: RequestConfigProvider,
-    ) { }
+	constructor(
+		private readonly integrationTenantService: IntegrationTenantService,
+		private readonly requestConfigProvider: RequestConfigProvider
+	) {}
 
-    async use(
-        request: Request,
-        _response: Response,
-        next: NextFunction
-    ) {
-        // Extract tenant and organization IDs from request headers
-        const tenantId = request.header('tenant-id');
-        const organizationId = request.header('organization-id');
+	async use(request: Request, _response: Response, next: NextFunction) {
+		try {
+			// Extract tenant and organization IDs from request headers and body
+			const tenantId = request.header('tenant-id') || request.body?.tenantId;
+			const organizationId = request.header('organization-id') || request.body?.organizationId;
 
-        // Log tenant and organization IDs
-        console.log('Auth Tenant-ID Header: %s', tenantId);
-        console.log('Auth Organization-ID Header: %s', organizationId);
+			if (this.logging) {
+				// Log tenant and organization IDs
+				console.log('Auth Tenant-ID Header: %s', tenantId);
+				console.log('Auth Organization-ID Header: %s', organizationId);
+			}
 
-        // Initialize custom headers
-        request.headers['X-APP-ID'] = null;
-        request.headers['X-API-KEY'] = null;
+			// Initialize custom headers
+			request.headers['X-APP-ID'] = null;
+			request.headers['X-API-KEY'] = null;
 
-        try {
-            // Check if tenant and organization IDs are not empty
-            if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
-                // Fetch integration settings from the service
-                const { settings = [] } = await this.integrationTenantService.getIntegrationTenantSettings({
-                    tenantId,
-                    organizationId,
-                    name: IntegrationEnum.GAUZY_AI
-                });
-                // Convert settings array to an object
-                const { apiKey: ApiKey, apiSecret: ApiSecret } = arrayToObject(settings, 'settingsName', 'settingsValue');
+			// Check if tenant and organization IDs are not empty
+			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
+				// Fetch integration settings from the service
 
-                if (ApiKey && ApiSecret) {
-                    // Update custom headers and request configuration with API key and secret
-                    request.headers['X-APP-ID'] = ApiKey;
-                    request.headers['X-API-KEY'] = ApiSecret;
+				const integrationTenant = await this.integrationTenantService.getIntegrationTenantSettings({
+					tenantId,
+					organizationId,
+					name: IntegrationEnum.GAUZY_AI
+				});
 
-                    this.requestConfigProvider.setConfig({ ApiKey, ApiSecret });
-                }
-            }
-        } catch (error) {
-            console.log('Error while getting AI integration settings: %s', error?.message);
-        }
+				if (integrationTenant && integrationTenant.settings && integrationTenant.settings.length > 0) {
+					// Convert settings array to an object
+					const { apiKey, apiSecret, openAiApiSecretKey } = arrayToObject(
+						integrationTenant.settings,
+						'settingsName',
+						'settingsValue'
+					);
 
-        // Continue to the next middleware or route handler
-        next();
-    }
+					if (this.logging) {
+						console.log('AI Integration API Key: %s', apiKey);
+						console.log('AI Integration API Secret: %s', apiSecret);
+					}
+
+					if (apiKey && apiSecret) {
+						// Update custom headers and request configuration with API key and secret
+						request.headers['X-APP-ID'] = apiKey;
+						request.headers['X-API-KEY'] = apiSecret;
+
+						if (isNotEmpty(openAiApiSecretKey)) {
+							request.headers['X-OPENAI-SECRET-KEY'] = openAiApiSecretKey;
+						}
+
+						if (this.logging) {
+							console.log('AI Integration Config Settings: %s', { apiKey, apiSecret });
+						}
+
+						this.requestConfigProvider.setConfig({
+							apiKey,
+							apiSecret,
+							...(isNotEmpty(openAiApiSecretKey) && { openAiApiSecretKey })
+						});
+					}
+				}
+			}
+		} catch (error) {
+			console.log('Error while getting AI integration settings: %s', error?.message);
+			console.log(request.path, request.url);
+		}
+
+		// Continue to the next middleware or route handler
+		next();
+	}
 }

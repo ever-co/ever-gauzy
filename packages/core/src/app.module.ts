@@ -1,12 +1,13 @@
-import { HttpException, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
-import { ThrottlerGuard, ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
-import { SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
+import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
+import { GraphqlInterceptor, SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
-import { Integrations as SentryIntegrations } from '@sentry/node';
-import { Integrations as TrackingIntegrations } from '@sentry/tracing';
+import { Integrations } from '@sentry/node';
+import { ProfilingIntegration } from '@sentry/profiling-node';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
@@ -143,6 +144,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
+
 const { unleashConfig, github, jitsu, jira } = environment;
 
 if (unleashConfig.url) {
@@ -187,15 +189,25 @@ if (environment.sentry && environment.sentry.dsn) {
 	if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
 		sentryIntegrations.push(
 			// enable HTTP calls tracing
-			new SentryIntegrations.Http({ tracing: true })
+			new Integrations.Http({ tracing: true })
 		);
 	}
 
-	if (process.env.DB_TYPE === 'postgres') {
-		if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
-			sentryIntegrations.push(new TrackingIntegrations.Postgres());
+	if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
+		if (process.env.DB_TYPE === 'postgres') {
+			sentryIntegrations.push(new Integrations.Postgres());
 		}
 	}
+
+	if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
+		sentryIntegrations.push(new ProfilingIntegration());
+	}
+
+	sentryIntegrations.push(new Integrations.GraphQL());
+	sentryIntegrations.push(new Integrations.Apollo());
+
+	// TODO: we can also integrate Express routes, but not sure how to pass here app instance
+	// sentryIntegrations.push(new Integrations.Express());
 }
 
 @Module({
@@ -228,14 +240,20 @@ if (environment.sentry && environment.sentry.dsn) {
 						integrations: sentryIntegrations,
 						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
 							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-							: 0.01
+							: 0.01,
+						close: {
+							enabled: true,
+							// Time in milliseconds to forcefully quit the application
+							timeout: 3000
+						}
 					})
 			  ]
 			: []),
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
-			path: 'integration/github/webhook', // Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			path: 'integration/github/webhook',
 			config: {
 				/** Client Configuration */
 				clientId: github.clientId,
@@ -265,14 +283,18 @@ if (environment.sentry && environment.sentry.dsn) {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		ThrottlerModule.forRootAsync({
-			inject: [ConfigService],
-			useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-				({
-					ttl: config.get('THROTTLE_TTL'),
-					limit: config.get('THROTTLE_LIMIT')
-				} as ThrottlerModuleOptions)
-		}),
+		...(environment.THROTTLE_ENABLED
+			? [
+					ThrottlerModule.forRootAsync({
+						inject: [ConfigService],
+						useFactory: (config: ConfigService): ThrottlerModuleOptions =>
+							({
+								ttl: config.get('THROTTLE_TTL'),
+								limit: config.get('THROTTLE_LIMIT')
+							} as ThrottlerModuleOptions)
+					})
+			  ]
+			: []),
 		CoreModule,
 		AuthModule,
 		UserModule,
@@ -401,26 +423,40 @@ if (environment.sentry && environment.sentry.dsn) {
 	controllers: [AppController],
 	providers: [
 		AppService,
-		{
-			provide: APP_GUARD,
-			useClass: ThrottlerGuard
-		},
+		...(environment.THROTTLE_ENABLED
+			? [
+					{
+						provide: APP_GUARD,
+						useClass: ThrottlerBehindProxyGuard
+					}
+			  ]
+			: []),
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
 		},
-		{
-			provide: APP_INTERCEPTOR,
-			useFactory: () =>
-				new SentryInterceptor({
-					filters: [
-						{
-							type: HttpException,
-							filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
-						}
-					]
-				})
-		}
+		...(environment.sentry && environment.sentry.dsn
+			? [
+					{
+						provide: APP_INTERCEPTOR,
+						useFactory: () =>
+							new SentryInterceptor({
+								filters: [
+									/* Note: It is possible to filter exceptions, e.g. only those that error codes are bigger than 499, but for now we want to see all of them
+									{
+										type: HttpException,
+										filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
+									}
+									*/
+								]
+							})
+					},
+					{
+						provide: APP_INTERCEPTOR,
+						useFactory: () => new GraphqlInterceptor()
+					}
+			  ]
+			: [])
 	],
 	exports: []
 })

@@ -1,141 +1,92 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { chain, pluck, reduce } from 'underscore';
+import { chain, pluck } from 'underscore';
 import * as moment from 'moment';
 import {
 	IReportDayGroupByProject,
-	ITimeLog,
-	ITimeSlot
+	ITimeLog
 } from '@gauzy/contracts';
 import { GetTimeLogGroupByProjectCommand } from '../get-time-log-group-by-project.command';
-import { ArraySum } from '@gauzy/common';
+import { calculateAverage, calculateAverageActivity } from './../../time-log.utils';
 
 @CommandHandler(GetTimeLogGroupByProjectCommand)
-export class GetTimeLogGroupByProjectHandler
-	implements ICommandHandler<GetTimeLogGroupByProjectCommand>
-{
-	constructor() { }
+export class GetTimeLogGroupByProjectHandler implements ICommandHandler<GetTimeLogGroupByProjectCommand> {
 
+	/**
+	 * Executes the command to generate a time log report grouped by project.
+	 * @param command The command containing time logs and other parameters.
+	 * @returns A Promise that resolves to the generated report grouped by project.
+	 */
 	public async execute(
 		command: GetTimeLogGroupByProjectCommand
 	): Promise<IReportDayGroupByProject> {
-		const { timeLogs } = command;
+		const { timeLogs, timezone = moment.tz.guess() } = command;
 
+		// Group timeLogs by projectId
 		const dailyLogs: any = chain(timeLogs)
-			.groupBy((log) => log.projectId)
+			.groupBy((log: ITimeLog) => log.projectId)
 			.map((byProjectLogs: ITimeLog[]) => {
-				/**
-				 * calculate average duration for specific project.
-				 */
-				const avgDuration = reduce(
-					pluck(byProjectLogs, 'duration'),
-					ArraySum,
-					0
-				);
-				/**
-				 * calculate average activity for specific project.
-				 */
-				const slots: ITimeSlot[] = chain(byProjectLogs)
-					.pluck('timeSlots')
-					.flatten(true)
-					.value();
-				const avgActivity =
-					(reduce(pluck(slots, 'overall'), ArraySum, 0) * 100) /
-					reduce(pluck(slots, 'duration'), ArraySum, 0) || 0;
+				// Calculate average duration for specific project.
+				const avgDuration = calculateAverage(pluck(byProjectLogs, 'duration'));
 
-				const project =
-					byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
+				// Calculate average activity for specific project.
+				const avgActivity = calculateAverageActivity(chain(byProjectLogs).pluck('timeSlots').flatten(true).value());
 
-				const client =
-					byProjectLogs.length > 0
-						? byProjectLogs[0].organizationContact
-						: project
-							? project.organizationContact
-							: null;
+				// Extract project information
+				const project = byProjectLogs.length > 0 ? byProjectLogs[0].project : null;
 
+				// Extract client information using optional chaining
+				const client = byProjectLogs.length > 0 ? byProjectLogs[0].organizationContact : project ? project.organizationContact : null;
+
+				// Group projectLogs by date
 				const byDate = chain(byProjectLogs)
-					.groupBy((log) =>
-						moment(log.startedAt).format('YYYY-MM-DD')
-					)
-					.map((byDateLogs: ITimeLog[], date) => {
-						const byEmployee = chain(byDateLogs)
-							.groupBy('employeeId')
-							.map((byEmployeeLogs: ITimeLog[]) => {
-								/**
-								 * calculate average duration of the employee
-								 */
-								const sum = reduce(
-									pluck(byEmployeeLogs, 'duration'),
-									ArraySum,
-									0
-								);
-								/**
-								 * calculate average activity of the employee
-								 */
-								const slots: ITimeSlot[] = chain(byEmployeeLogs)
-									.pluck('timeSlots')
-									.flatten(true)
-									.value();
-								/**
-								 * Calculate average activity of the employee
-								 */
-								const avgActivity =
-									(reduce(
-										pluck(slots, 'overall'),
-										ArraySum,
-										0
-									) *
-										100) /
-									reduce(
-										pluck(slots, 'duration'),
-										ArraySum,
-										0
-									) || 0;
-
-								const task =
-									byEmployeeLogs.length > 0
-										? byEmployeeLogs[0].task
-										: null;
-
-								const employee =
-									byEmployeeLogs.length > 0
-										? byEmployeeLogs[0].employee
-										: null;
-
-								const description = byEmployeeLogs.length > 0
-									? byEmployeeLogs[0].description
-									: null;
-
-
-								return {
-									description,
-									task,
-									employee,
-									sum,
-									activity: parseFloat(
-										parseFloat(avgActivity + '').toFixed(2)
-									)
-								};
-							})
-							.value();
-
-						return {
-							date,
-							employeeLogs: byEmployee
-						};
-					})
+					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
+					.map((byDateLogs: ITimeLog[], date) => ({
+						date,
+						employeeLogs: this.getGroupByEmployee(byDateLogs)
+					}))
 					.value();
+
 				return {
 					project,
 					client,
 					logs: byDate,
 					sum: avgDuration || null,
-					activity: parseFloat(
-						parseFloat(avgActivity + '').toFixed(2)
-					)
+					activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))
 				};
 			})
 			.value();
 
 		return dailyLogs;
+	}
+
+	/**
+	 * Groups time logs by employee and calculates average duration and activity for each employee.
+	 * @param logs An array of time logs.
+	 * @returns An array containing logs grouped by employee with calculated averages.
+	 */
+	getGroupByEmployee(logs: ITimeLog[]) {
+		const byEmployee = chain(logs).groupBy('employeeId').map((timeLogs: ITimeLog[]) => {
+
+			// Calculate average duration of the employee for specific employee.
+			const sum = calculateAverage(pluck(timeLogs, 'duration'));
+
+			// Calculate Average activity of the employee
+			const avgActivity = calculateAverageActivity(chain(timeLogs).pluck('timeSlots').flatten(true).value());
+
+			// Retrieve employee details
+			const task = timeLogs.length > 0 ? timeLogs[0].task : null;
+			const employee = timeLogs.length > 0 ? timeLogs[0].employee : null;
+			const description = timeLogs.length > 0 ? timeLogs[0].description : null;
+
+			return {
+				description,
+				task,
+				employee,
+				sum,
+				activity: parseFloat(parseFloat(avgActivity + '').toFixed(2))
+			};
+		}).value();
+
+		return byEmployee;
 	}
 }

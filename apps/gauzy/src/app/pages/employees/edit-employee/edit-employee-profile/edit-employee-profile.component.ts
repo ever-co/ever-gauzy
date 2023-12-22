@@ -25,6 +25,7 @@ import {
 	selector: 'ngx-edit-employee-profile',
 	templateUrl: './edit-employee-profile.component.html',
 	styleUrls: [
+		'./edit-employee-profile.component.scss',
 		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	],
 	providers: [EmployeeStore]

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-// import { environment } from '../../../environments/environment';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
@@ -28,7 +27,6 @@ import {
 	EmployeeCacheService,
 	ProjectCacheService,
 	Store,
-	TagCacheService,
 	TaskCacheService,
 	TaskPriorityCacheService,
 	TaskSizeCacheService,
@@ -40,17 +38,15 @@ import {
 } from '../services';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
 import { LoggerService } from '../electron/services';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '../constants';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TimeTrackerService {
-	AW_HOST = 'http://localhost:5600';
 	token = '';
 	userId = '';
 	employeeId = '';
-	buckets: any = {};
 
 	constructor(
 		private readonly http: HttpClient,
@@ -59,7 +55,6 @@ export class TimeTrackerService {
 		private readonly _projectCacheService: ProjectCacheService,
 		private readonly _timeSlotCacheService: TimeSlotCacheService,
 		private readonly _employeeCacheService: EmployeeCacheService,
-		private readonly _tagCacheService: TagCacheService,
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _timeLogService: TimeLogCacheService,
 		private readonly _loggerService: LoggerService,
@@ -186,28 +181,6 @@ export class TimeTrackerService {
 			this._employeeCacheService.setValue(employee$, params);
 		}
 		return firstValueFrom(employee$);
-	}
-
-	async getTags(values) {
-		const params = values.organizationId
-			? {
-					organizationId: values.organizationId,
-					tenantId: values.tenantId,
-			  }
-			: {};
-		let tags$ = this._tagCacheService.getValue(params);
-		if (!tags$) {
-			tags$ = this.http
-				.get(`${API_PREFIX}/tags/level`, {
-					params: toParams(params),
-				})
-				.pipe(
-					map((response: any) => response),
-					shareReplay(1)
-				);
-			this._tagCacheService.setValue(tags$, params);
-		}
-		return firstValueFrom(tags$);
 	}
 
 	async getProjects(values) {
@@ -451,76 +424,6 @@ export class TimeTrackerService {
 		);
 	}
 
-	collectFromAW(tpURL, start, end) {
-		if (!this.buckets.windowBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.windowBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-		);
-	}
-
-	getAwBuckets(tpURL): Promise<any> {
-		return firstValueFrom(this.http.get(`${tpURL}/api/0/buckets`));
-	}
-
-	parseBuckets(buckets) {
-		Object.keys(buckets).forEach((key) => {
-			const keyParse = key.split('_')[0];
-			switch (keyParse) {
-				case 'aw-watcher-window':
-					this.buckets.windowBucket = buckets[key];
-					break;
-				case 'aw-watcher-afk':
-					this.buckets.afkBucket = buckets[key];
-					break;
-				case 'aw-watcher-web-chrome':
-					this.buckets.chromeBucket = buckets[key];
-					break;
-				case 'aw-watcher-web-firefox':
-					this.buckets.firefoxBucket = buckets[key];
-					break;
-				default:
-					break;
-			}
-		});
-	}
-
-	async collectEvents(tpURL, tp, start, end): Promise<any> {
-		if (!this.buckets.windowBucket) {
-			const allBuckets = await this.getAwBuckets(tpURL);
-			this.parseBuckets(allBuckets);
-		}
-		return this.collectFromAW(tpURL, start, end);
-	}
-
-	collectChromeActivityFromAW(tpURL, start, end): Promise<any> {
-		if (!this.buckets.chromeBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.chromeBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-		);
-	}
-
-	collectFirefoxActivityFromAw(tpURL, start, end): Promise<any> {
-		if (!this.buckets.firefoxBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.firefoxBucket.id}/events?start=${start}&end=${end}&limit=-1`
-			)
-		);
-	}
-
-	collectAfkFromAW(tpURL, start, end) {
-		if (!this.buckets.afkBucket) return Promise.resolve([]);
-		return firstValueFrom(
-			this.http.get(
-				`${tpURL}/api/0/buckets/${this.buckets.afkBucket.id}/events?events?start=${start}&end=${end}&limit=1`
-			)
-		);
-	}
-
 	pushToTimeSlot(values) {
 		console.log('✅ - TimeSlot', values);
 		const params = {
@@ -541,12 +444,6 @@ export class TimeTrackerService {
 		};
 
 		console.log('Params', params);
-
-		// if (!values.isAw || !values.isAwConnected) {
-		// 	delete params.overall;
-		// 	delete params.mouse;
-		// 	delete params.keyboard;
-		// }
 
 		return firstValueFrom(
 			this.http.post(`${API_PREFIX}/timesheet/time-slot`, params).pipe(

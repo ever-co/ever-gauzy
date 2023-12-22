@@ -8,6 +8,7 @@
 		"REGISTER": "注册",
 		"CHANGE_PASSWORD": "更改密码",
 		"LOGIN": "登录",
+		"SIGNIN": "登录",
 		"SEND_CODE": "使用电子邮件登录",
 		"ADD_NOTE": "添加笔记",
 		"EDIT": "编辑",
@@ -4398,6 +4399,39 @@
 			"receipt": "收据"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "注册",
+		"HAVE_AN_ACCOUNT": "已经有账户？",
+		"LABELS": {
+			"FULL_NAME": "全名：",
+			"EMAIL": "电子邮件地址：",
+			"PASSWORD": "密码",
+			"CONFIRM_PASSWORD": "确认密码："
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "全名",
+			"EMAIL": "电子邮件地址",
+			"PASSWORD": "密码",
+			"CONFIRM_PASSWORD": "确认密码"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "需要全名！",
+			"FULL_NAME_SHOULD_CONTAIN": "全名应包含 {{ minLength }} 到 {{ maxLength }} 个字符",
+			"EMAIL_REQUIRED": "需要电子邮件地址！",
+			"EMAIL_SHOULD_BE_REAL": "电子邮件地址应为真实的！",
+			"PASSWORD_NO_SPACE_EDGES": "密码不能以空格开头或结尾！",
+			"PASSWORD_REQUIRED": "需要密码！",
+			"PASSWORD_SHOULD_CONTAIN": "密码应包含 {{ minLength }} 到 {{ maxLength }} 个字符",
+			"CONFIRM_PASSWORD_REQUIRED": "需要确认密码！",
+			"PASSWORDS_NOT_MATCH": "密码与确认密码不匹配！",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "同意",
+				"TERMS_AND_CONDITIONS": "条款和条件",
+				"AND": " 和 ",
+				"PRIVACY_POLICY": "隐私政策"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "登录",
 		"SUB_TITLE": "你好！使用你的邮箱登录。",
@@ -4436,7 +4470,16 @@
 		},
 		"DEMO": {
 			"TITLE": "自动登录到演示账户。",
-			"SUB_TITLE": "请在下方选择帐户类型。"
+			"SUB_TITLE": "请在下方选择帐户类型。",
+			"SUPER_ADMIN_TITLE": "超级管理员",
+			"ADMIN_TITLE": "管理员",
+			"EMPLOYEE_TITLE": "员工",
+			"DEMO_TITLE": "演示",
+			"CREDENTIALS_TITLE": "凭证",
+			"LABELS": {
+				"EMAIL": "电子邮件：",
+				"PASSWORD": "密码："
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4504,11 +4547,23 @@
 			"CREATE_NEW_WORKSPACE": "创建一个新的工作空间",
 			"FIND_WORKSPACE": "寻找工作空间"
 		},
+		"LABELS": {
+			"EMAIL": "输入您的电子邮件地址：",
+			"PASSWORD": "输入您的密码："
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "密码"
+		},
+		"SIGN_IN_TITLE": "登录工作区",
+		"BACK_TO": "返回",
 		"SUCCESS_SIGNIN_TITLE": "恭喜！您已成功登录到您的工作区。",
 		"SUCCESS_SIGNIN_SUB_TITLE": "请耐心等待，我们正在准备工作区...",
 		"FAIL_SIGNIN_TITLE": "错误！您提供的魔法代码或链接已过期或无效。",
 		"FAIL_SIGNIN_SUB_TITLE": "请重新启动流程。",
-		"THANKING_TEXT": "感谢您选择我们。"
+		"THANKING_TEXT": "感谢您选择我们。",
+		"UNKNOWN_WORKSPACE": "不知道您的工作区？",
+		"FIND_WORKSPACE": "查找您的工作区"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "添加或删除图像",

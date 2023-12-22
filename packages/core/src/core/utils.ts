@@ -240,29 +240,22 @@ export function getDateRangeFormat(
 }
 
 /**
- * Get All Dates Between Two Dates in Moment JS
+ * Get all dates between two dates using Moment.js.
  *
- * @param startDate
- * @param endDate
- * @returns
+ * @param startDate - The start date.
+ * @param endDate - The end date.
+ * @returns An array of string representations of dates.
  */
 export function getDaysBetweenDates(
 	startDate: string | Date,
-	endDate: string | Date
+	endDate: string | Date,
+	timezone: string = moment.tz.guess()
 ): string[] {
-	const start = moment(moment(startDate).format('YYYY-MM-DD')).add(1, 'day');
-	const end = moment(moment(endDate).format('YYYY-MM-DD'));
-	const range = Array.from(moment.range(start, end).by('day'));
+	const start = moment.utc(startDate).tz(timezone).toDate();
+	const end = moment.utc(endDate).tz(timezone).toDate();
+	const range = Array.from(moment.range(start, end).by('days'));
 
-	const days: Array<string> = new Array();
-	let i = 0;
-	while (i < range.length) {
-		const date = range[i].format('YYYY-MM-DD');
-		days.push(date);
-		i++;
-	}
-
-	return days;
+	return range.map((date: moment.Moment) => date.format('YYYY-MM-DD'));
 }
 
 /**
@@ -346,4 +339,14 @@ export function findIntersection(arr1: any[], arr2: any[]) {
 	const set1 = new Set(arr1);
 	const intersection = arr2.filter((element) => set1.has(element));
 	return intersection;
+}
+
+/**
+ * Check if the given database connection type is SQLite.
+ *
+ * @param {string} connectionType - The database connection type.
+ * @returns {boolean} - Returns true if the database connection type is SQLite.
+ */
+export function isSqliteDB(connectionType: string): boolean {
+	return ['sqlite', 'better-sqlite3'].includes(connectionType);
 }

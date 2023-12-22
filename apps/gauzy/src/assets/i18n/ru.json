@@ -8,6 +8,7 @@
 		"REGISTER": "Регистрация",
 		"CHANGE_PASSWORD": "Изменить пароль",
 		"LOGIN": "Войти",
+		"SIGNIN": "Вход",
 		"SEND_CODE": "Войти по электронной почте",
 		"ADD_NOTE": "Добавить заметку",
 		"EDIT": "Редактировать",
@@ -454,7 +455,14 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto-sync tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
+			"AUTO_SYNC_TAG": "Label",
+			"GITHUB_REPOSITORY": "GitHub Repository",
+			"PROJECT": "Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Хотите включить поиск вакансий и анализ соответствия?",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Хотите включить анализ эффективности сотрудников?"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "Имя",
@@ -639,7 +647,13 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
+			"AUTO_SYNC_TAG": "Select Auto-sync Label",
+			"SELECT_PROJECT": "Select Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Включить поиск вакансий и анализ соответствия",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Включить анализ производительности сотрудников"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Стандартная ставка",
@@ -1198,6 +1212,40 @@
 			"DATE_RANGE_PLACEHOLDER": "Выберите дату между",
 			"HOURLY": "Почасовой"
 		},
+		"GAUZY_AI_PAGE": {
+			"TITLE": "Gauzy AI Integration",
+			"API_KEY": "Gauzy AI key",
+			"API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "Ключ API служит идентификатором вашего приложения для запросов API, оставаясь постоянно скрытым, с видимыми некоторыми символами.",
+				"API_SECRET": "Секретный ключ API служит идентификатором вашего приложения для запросов API, оставаясь постоянно скрытым, с видимыми некоторыми символами.",
+				"OPEN_AI_API_SECRET_KEY": "Секретный ключ API OpenAI служит идентификатором вашего приложения для запросов API, оставаясь постоянно скрытым, с видимыми некоторыми символами.",
+				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Включает расширенные анализы поиска работы и сопоставления для повышения точности. При отключении скрывает пункты меню 'Просмотр' и 'Сопоставление' для удобного интерфейса.",
+				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Управляет передачей метрик работы сотрудника, включая нажатия клавиш, движения мыши и снимки экрана, для анализа Gauzy AI. Включите для полного анализа производительности; отключите для строгой конфиденциальности и контроля за данными пользователя."
+			}
+		},
+		"GITHUB_PAGE": {
+			"TITLE": "GitHub Integration",
+			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
+			"SELECT_REPOSITORY": "Select repository",
+			"SEARCH_REPOSITORY": "Type to search repository",
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
+			"HAS_SYNCED_DISABLED": "'{{repository}}' sync successfully disabled",
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
+			"TAB": {
+				"AUTO_SYNC": "Auto sync",
+				"MANUAL_SYNC": "Manual sync"
+			}
+		},
 		"COMING_SOON": "Скоро появится",
 		"RE_INTEGRATE": "Переинтегрировать",
 		"SETTINGS": "Настройки",
@@ -1205,7 +1253,17 @@
 		"FILTER_INTEGRATIONS": "Фильтровать интеграцию",
 		"SEARCH_INTEGRATIONS": "Интеграции поиска",
 		"PAID": "Оплачено",
-		"INTEGRATION": "Интеграция"
+		"INTEGRATION": "Интеграция",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Обновлены настройки для '{{provider}}' интеграция",
+			"INTEGRATION_DELETED": "Интеграция '{{provider}}' успешно удалено",
+			"NO_INTEGRATIONS": "Вы не настроили ни одной интеграции",
+			"INTEGRATION_ENABLED": "Интеграция '{{provider}}' успешно включена",
+			"INTEGRATION_DISABLED": "Интеграция '{{provider}}' успешно отключена",
+			"INTEGRATION_ADDED": "Интеграция '{{provider}}' добавлена ​​в '{{organization}}'"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Бухгалтер",
@@ -3982,6 +4040,7 @@
 		"OVERLAP_MESSAGE": "Эта запись перекрывает деятельность в других проектах/задачах, которые будут заменены:",
 		"REASON": "Причина",
 		"NOTES": "Заметки",
+		"APPS": "Программы",
 		"TIME_OVERLAPS": "Перекрытие времени",
 		"TIME_TRACKING": "Время отслеживания",
 		"MEMBERS_WORKED": "Пользователи работали",
@@ -4323,6 +4382,39 @@
 			"receipt": "Квитанция"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "Регистрация",
+		"HAVE_AN_ACCOUNT": "Уже есть аккаунт?",
+		"LABELS": {
+			"FULL_NAME": "Полное имя:",
+			"EMAIL": "Адрес электронной почты:",
+			"PASSWORD": "Пароль",
+			"CONFIRM_PASSWORD": "Подтвердите пароль:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "Полное имя",
+			"EMAIL": "Адрес электронной почты",
+			"PASSWORD": "Пароль",
+			"CONFIRM_PASSWORD": "Подтвердите пароль"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "Полное имя обязательно!",
+			"FULL_NAME_SHOULD_CONTAIN": "Полное имя должно содержать от {{ minLength }} до {{ maxLength }} символов",
+			"EMAIL_REQUIRED": "Требуется адрес электронной почты!",
+			"EMAIL_SHOULD_BE_REAL": "Адрес электронной почты должен быть реальным!",
+			"PASSWORD_NO_SPACE_EDGES": "Пароль не должен начинаться или заканчиваться пробелами!",
+			"PASSWORD_REQUIRED": "Требуется пароль!",
+			"PASSWORD_SHOULD_CONTAIN": "Пароль должен содержать от {{ minLength }} до {{ maxLength }} символов",
+			"CONFIRM_PASSWORD_REQUIRED": "Требуется подтверждение пароля!",
+			"PASSWORDS_NOT_MATCH": "Пароли не совпадают!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "Согласен с",
+				"TERMS_AND_CONDITIONS": "Условиями использования",
+				"AND": " и ",
+				"PRIVACY_POLICY": "Политикой конфиденциальности"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Логин",
 		"SUB_TITLE": "Привет! Войдите с помощью электронной почты.",
@@ -4361,7 +4453,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Автоматически входить в демо-аккаунты",
-			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже."
+			"SUB_TITLE": "Пожалуйста, выберите тип счета ниже.",
+			"SUPER_ADMIN_TITLE": "Супер Администратор",
+			"ADMIN_TITLE": "Администратор",
+			"EMPLOYEE_TITLE": "Сотрудник",
+			"DEMO_TITLE": "Демо",
+			"CREDENTIALS_TITLE": "Учетные данные",
+			"LABELS": {
+				"EMAIL": "Электронная почта: ",
+				"PASSWORD": "Пароль: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4428,11 +4529,23 @@
 			"CREATE_NEW_WORKSPACE": "Создать новую рабочую область",
 			"FIND_WORKSPACE": "Найти рабочую область"
 		},
+		"LABELS": {
+			"EMAIL": "Введите ваш адрес электронной почты:",
+			"PASSWORD": "Введите ваш пароль:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "Пароль"
+		},
+		"SIGN_IN_TITLE": "Вход в Рабочее пространство",
+		"BACK_TO": "Назад к",
 		"SUCCESS_SIGNIN_TITLE": "Поздравляю! Вы успешно вошли в свое рабочее пространство.",
 		"SUCCESS_SIGNIN_SUB_TITLE": "Пожалуйста, будьте терпеливы, пока мы готовим рабочее пространство...",
 		"FAIL_SIGNIN_TITLE": "Ошибка! Магический код или ссылка, которую вы предоставили, устарели или недействительны.",
 		"FAIL_SIGNIN_SUB_TITLE": "Пожалуйста, начните процесс заново.",
-		"THANKING_TEXT": "Спасибо, что выбрали нас."
+		"THANKING_TEXT": "Спасибо, что выбрали нас.",
+		"UNKNOWN_WORKSPACE": "Не знаете своего рабочего пространства?",
+		"FIND_WORKSPACE": "Найти ваши рабочие пространства"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Добавить или выложить изображение",

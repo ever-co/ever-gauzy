@@ -1,5 +1,5 @@
 import { IRelationalImageAsset } from './image-asset.model';
-import { IImportRecord } from 'import-export.model';
+import { IImportRecord } from './import-export.model';
 import { IFeatureOrganization } from './feature.model';
 import {
 	FileStorageProviderEnum,

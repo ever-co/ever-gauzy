@@ -13,7 +13,7 @@
 	"files.trimFinalNewlines": true,
 	"files.trimTrailingWhitespace": true,
 	"editor.codeActionsOnSave": {
-		"source.fixAll": true
+		"source.fixAll": "explicit"
 	},
 	"vsicons.presets.angular": true,
 	"deepscan.enable": true,
@@ -25,6 +25,5 @@
 		"**/public/**/*.jpg": true,
 		"**/public/**/*.pdf": true
 	},
-	"angular.enable-strict-mode-prompt": false,
-	"cSpell.words": []
+	"angular.enable-strict-mode-prompt": false
 }

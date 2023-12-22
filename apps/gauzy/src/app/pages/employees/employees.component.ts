@@ -15,7 +15,8 @@ import {
 	CrudActionEnum,
 	IEmployee,
 	ITag,
-	IEmployeeUpdateInput
+	IEmployeeUpdateInput,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -186,6 +187,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	haveBtnActionPermissions() {
+		return !this.store.hasAllPermissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_INVITE_EDIT);
 	}
 
 	setView() {

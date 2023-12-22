@@ -8,6 +8,7 @@
 		"REGISTER": "Register",
 		"CHANGE_PASSWORD": "שנה סיסמה",
 		"LOGIN": "Log In",
+		"SIGNIN": "התחברות",
 		"SEND_CODE": "התחבר עם דואר אלקטרוני",
 		"ADD_NOTE": "Add note",
 		"EDIT": "ערוך",
@@ -454,7 +455,14 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto-sync tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Is tasks Auto-sync based on Label?",
+			"AUTO_SYNC_TAG": "Label",
+			"GITHUB_REPOSITORY": "GitHub Repository",
+			"PROJECT": "Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "האם ברצונך להפעיל חיפוש משרות וניתוח התאמה?",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "האם ברצונך להפעיל ניתוח ביצועי עובדים?"
 		},
 		"PLACEHOLDERS": {
 			"NAME": "שם",
@@ -639,7 +647,13 @@
 			"UPWORK_ORGANIZATION_ID": "Upwork Organization ID",
 			"UPWORK_ORGANIZATION_NAME": "Upwork Organization Name",
 			"UPWORK_ID": "Upwork ID",
-			"LINKEDIN_ID": "LinkedIn ID"
+			"LINKEDIN_ID": "LinkedIn ID",
+			"AUTO_SYNC_TASKS": "Auto Sync Tasks",
+			"AUTO_SYNC_TASKS_BASED_ON_LABEL": "Auto-sync Tasks On Label",
+			"AUTO_SYNC_TAG": "Select Auto-sync Label",
+			"SELECT_PROJECT": "Select Project",
+			"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "אפשר חיפוש משרות וניתוח התאמהs",
+			"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "אפשר ניתוח ביצועי עובדים"
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
@@ -1198,6 +1212,40 @@
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
 		},
+		"GAUZY_AI_PAGE": {
+			"TITLE": "Gauzy AI Integration",
+			"API_KEY": "Gauzy AI key",
+			"API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
+			"CONSUMER_KEYS": "Consumer Keys",
+			"GENERATED": "Generated",
+			"TAB": {
+				"KEYS": "Keys",
+				"SETTINGS": "Settings"
+			},
+			"TOOLTIP": {
+				"API_KEY": "ה-API Key משמש כזהות האפליקציה שלך לבקשות API, נשמרת מסתירה לצמיתות, עם חלק מהתווים נראים.",
+				"API_SECRET": "ה-API Secret משמש כזהות האפליקציה שלך לבקשות API, נשמרת מסתירה לצמיתות, עם חלק מהתווים נראים.",
+				"OPEN_AI_API_SECRET_KEY": "ה-OpenAI API Secret משמש כזהות האפליקציה שלך לבקשות API, נשמרת מסתירה לצמיתות, עם חלק מהתווים נראים.",
+				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "מאפשר ניתוח מתקדם של חיפוש והתאמה למשתמש לשיפור הדיוק. בהשבתה, פריטי התפריט 'גלישה' ו-'התאמה' בתפריט המשרות ייחבאו כדי להבטיח ממשק משתמש קל ופשוט.",
+				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "ניהול העברת מדדי עבודה של עובד, כולל קלטי מקלדת, תנועות עכבר וצילומי מסך, לניתוח על ידי Gauzy AI. הפעלה מאפשרת ניתוח ביצועים מקיף. בכיבוי, Gauzy AI לא יקבל ולא ינתח צילומי מסך או כל קלט פרטני נוסף, מבטיח פרטיות מחמירה ושליטה מוחלטת על שיתוף המידע."
+			}
+		},
+		"GITHUB_PAGE": {
+			"TITLE": "GitHub Integration",
+			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
+			"SELECT_REPOSITORY": "Select repository",
+			"SEARCH_REPOSITORY": "Type to search repository",
+			"SYNCED_ISSUES": "'{{repository}}' issues & labels synced successfully",
+			"HAS_SYNCED_ENABLED": "'{{repository}}' sync successfully enabled",
+			"HAS_SYNCED_DISABLED": "'{{repository}}' sync successfully disabled",
+			"DESCRIPTION": "Activate GitHub integration for project & repository sync.",
+			"TAB": {
+				"AUTO_SYNC": "Auto sync",
+				"MANUAL_SYNC": "Manual sync"
+			}
+		},
 		"COMING_SOON": "Coming soon",
 		"RE_INTEGRATE": "Re-integrate",
 		"SETTINGS": "הגדרות",
@@ -1205,7 +1253,17 @@
 		"FILTER_INTEGRATIONS": "Filter integrations",
 		"SEARCH_INTEGRATIONS": "Search integrations",
 		"PAID": "Paid",
-		"INTEGRATION": "Integration"
+		"INTEGRATION": "Integration",
+		"MESSAGE": {
+			"SETTINGS_UPDATED": "Updated settings for '{{provider}}' integration",
+			"INTEGRATION_DELETED": "Integration '{{provider}}' deleted successfully",
+			"NO_INTEGRATIONS": "You have not configured any integrations",
+			"INTEGRATION_ENABLED": "'{{provider}}' integration successfully enabled",
+			"INTEGRATION_DISABLED": "'{{provider}}' integration successfully disabled",
+			"INTEGRATION_ADDED": "Integration '{{provider}}' has been added to '{{organization}}'"
+		},
+		"ENABLED": "Enabled",
+		"DISABLED": "Disabled"
 	},
 	"DASHBOARD_PAGE": {
 		"ACCOUNTING": "Accounting",
@@ -3982,6 +4040,7 @@
 		"OVERLAP_MESSAGE": "רישום זמן זה מתנגש עם פעילות בפרויקטים / משימות אחרות, שייעוף:",
 		"REASON": "סיבה",
 		"NOTES": "הערות",
+		"APPS": "אפליקציות",
 		"TIME_OVERLAPS": "התמוטטות זמן",
 		"TIME_TRACKING": "מעקב זמן",
 		"MEMBERS_WORKED": "חברים עבדו",
@@ -4322,6 +4381,39 @@
 			"receipt": "Receipt"
 		}
 	},
+	"REGISTER_PAGE": {
+		"TITLE": "הרשמה",
+		"HAVE_AN_ACCOUNT": "כבר יש לך חשבון?",
+		"LABELS": {
+			"FULL_NAME": "שם מלא:",
+			"EMAIL": "כתובת דוא\"ל:",
+			"PASSWORD": "סיסמה",
+			"CONFIRM_PASSWORD": "אשר סיסמה:"
+		},
+		"PLACEHOLDERS": {
+			"FULL_NAME": "שם מלא",
+			"EMAIL": "כתובת דוא\"ל",
+			"PASSWORD": "סיסמה",
+			"CONFIRM_PASSWORD": "אשר סיסמה"
+		},
+		"VALIDATIONS": {
+			"FULL_NAME_REQUIRED": "שם מלא נדרש!",
+			"FULL_NAME_SHOULD_CONTAIN": "שם מלא צריך להכיל בין {{ minLength }} ל-{{ maxLength }} תווים",
+			"EMAIL_REQUIRED": "כתובת דוא\"ל נדרשת!",
+			"EMAIL_SHOULD_BE_REAL": "כתובת דוא\"ל צריכה להיות אמיתית!",
+			"PASSWORD_NO_SPACE_EDGES": "סיסמאות לא יכולות להתחיל או להסתיים עם רווחים!",
+			"PASSWORD_REQUIRED": "סיסמה נדרשת!",
+			"PASSWORD_SHOULD_CONTAIN": "סיסמה צריכה להכיל בין {{ minLength }} ל-{{ maxLength }} תווים",
+			"CONFIRM_PASSWORD_REQUIRED": "אישור סיסמה נדרש!",
+			"PASSWORDS_NOT_MATCH": "הסיסמה לא תואמת לאישור הסיסמה!",
+			"CHECK_BOX_TEXTS": {
+				"AGREE_TO": "הסכמה",
+				"TERMS_AND_CONDITIONS": "תנאים והגבלות",
+				"AND": " וגם ",
+				"PRIVACY_POLICY": "מדיניות פרטיות"
+			}
+		}
+	},
 	"LOGIN_PAGE": {
 		"TITLE": "Login",
 		"SUB_TITLE": "Hello! Log in with your email.",
@@ -4360,7 +4452,16 @@
 		},
 		"DEMO": {
 			"TITLE": "Login Automatically into Demo accounts",
-			"SUB_TITLE": "Please select account type below."
+			"SUB_TITLE": "Please select account type below.",
+			"SUPER_ADMIN_TITLE": "מנהל ראשי",
+			"ADMIN_TITLE": "מנהל",
+			"EMPLOYEE_TITLE": "עובד",
+			"DEMO_TITLE": "הדגמה",
+			"CREDENTIALS_TITLE": "פרטי כניסה",
+			"LABELS": {
+				"EMAIL": "אימייל: ",
+				"PASSWORD": "סיסמה: "
+			}
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
@@ -4427,11 +4528,23 @@
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		},
+		"LABELS": {
+			"EMAIL": "הזן את כתובת הדוא\"ל שלך:",
+			"PASSWORD": "הזן את הסיסמה שלך:"
+		},
+		"PLACEHOLDERS": {
+			"EMAIL": "name@workspace-email.com",
+			"PASSWORD": "סיסמה"
+		},
+		"SIGN_IN_TITLE": "התחבר למרחב העבודה",
+		"BACK_TO": "חזרה אל",
 		"SUCCESS_SIGNIN_TITLE": ".מזל טוב! נכנסת למערכת בהצלחה",
 		"SUCCESS_SIGNIN_SUB_TITLE": "...אנא התאזרי בסבלנות בזמן שאנו מכינים את המערכת",
 		"FAIL_SIGNIN_TITLE": ".שגיאה! קוד הקסם או הקישור שסיפקת פג או אינו תקף",
 		"FAIL_SIGNIN_SUB_TITLE": ".אנא התחל/י את התהליך מחדש",
-		"THANKING_TEXT": ".תודה על בחירתך בנו"
+		"THANKING_TEXT": ".תודה על בחירתך בנו",
+		"UNKNOWN_WORKSPACE": "אין לך מושג מה המרחב שלך?",
+		"FIND_WORKSPACE": "מצא את המרחב שלך"
 	},
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",

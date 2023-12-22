@@ -23,21 +23,30 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after an Employee entity is loaded from the database.
      *
-     * @param entity
-     * @param event
+     * @param entity - The loaded Employee entity.
+     * @param event - The LoadEvent associated with the entity loading.
      */
     afterLoad(entity: Employee, event?: LoadEvent<Employee>): void | Promise<any> {
         try {
+            // Set fullName based on user name if available
             if (entity.user) {
                 entity.fullName = entity.user.name;
             }
+
+            // Set isDeleted based on the presence of deletedAt property
             if ('deletedAt' in entity) {
                 entity.isDeleted = !!entity.deletedAt;
             }
+
+            // Ensure billRateValue is initialized to 0 if not set
+            if ('billRateValue' in entity) {
+                entity.billRateValue = entity.billRateValue || 0;
+            }
         } catch (error) {
-            console.log(error);
+            // Handle or log the error as needed
+            console.log("Error in afterLoad:", error.message);
         }
     }
 
@@ -134,22 +143,22 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
      */
     createSlug(entity: Employee) {
         try {
-			if (!entity || !entity.user) {
-				console.error("Entity or User object is not defined.");
-				return;
-			}
+            if (!entity || !entity.user) {
+                console.error("Entity or User object is not defined.");
+                return;
+            }
 
-			const { user } = entity;
+            const { user } = entity;
 
-			if (user.firstName || user.lastName) { // Use first &/or last name to create slug
-				entity.profile_link = sluggable(`${user.firstName || ''} ${user.lastName || ''}`.trim());
-			} else if (user.username) { // Use username to create slug if first & last name not found
-				entity.profile_link = sluggable(user.username);
+            if (user.firstName || user.lastName) { // Use first &/or last name to create slug
+                entity.profile_link = sluggable(`${user.firstName || ''} ${user.lastName || ''}`.trim());
+            } else if (user.username) { // Use username to create slug if first & last name not found
+                entity.profile_link = sluggable(user.username);
             } else { // Use email to create slug if nothing found
-				entity.profile_link = sluggable(retrieveNameFromEmail(user.email));
+                entity.profile_link = sluggable(retrieveNameFromEmail(user.email));
             }
         } catch (error) {
-			console.error(`Error creating slug for entity with id ${entity.id}: `, error);
+            console.error(`Error creating slug for entity with id ${entity.id}: `, error);
         }
     }
 
