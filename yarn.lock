@@ -5899,7 +5899,7 @@
   dependencies:
     uuid "9.0.0"
 
-"@nestjs/graphql@^10.1.6":
+"@nestjs/graphql@^10.0.20", "@nestjs/graphql@^10.1.6":
   version "10.2.1"
   resolved "https://registry.yarnpkg.com/@nestjs/graphql/-/graphql-10.2.1.tgz#703315b21ebdea2b8d0ebc8bc725da668f665b3d"
   integrity sha512-FBzYTymT4oopiGMpej7GTRyhz1BgJxLlXZPUueamC5J9u1WxCwJyETkzBI/zeUkUydlklF/xd5zDd/Md6//hEw==
@@ -6827,6 +6827,13 @@
   dependencies:
     "@nstudio/focus" "13.4.3"
     "@nstudio/xplat-utils" "13.4.3"
+
+"@ntegral/nestjs-sentry@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@ntegral/nestjs-sentry/-/nestjs-sentry-4.0.0.tgz#db2747ec57e128f82801682187a61265e061d385"
+  integrity sha512-6WHZcK7NLeg7ue1y3Z61msEBzCGZeXQ0hWhliH1ddQH0kPbZ6lXLxduGMWYb0N/fPjXAX1Astz8urqnoTOZBQw==
+  optionalDependencies:
+    "@nestjs/graphql" "^10.0.20"
 
 "@nuxtjs/opencollective@0.3.2":
   version "0.3.2"
@@ -9316,18 +9323,6 @@
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-2.0.0.tgz#f544a148d3ab35801c1f633a7441fd87c2e484bf"
   integrity sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==
-
-"@travelerdev/nestjs-sentry-graphql@^4.3.0":
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/@travelerdev/nestjs-sentry-graphql/-/nestjs-sentry-graphql-4.3.0.tgz#7e2202b30dc6d4d474f3f4d473029faffc61888b"
-  integrity sha512-iwknvzvJ+JWEHQEgWM1MLnmQscFIcKlkk+WGQCC1wxM0NLqOeOMMe32Ata1Obc8U+LTMvFVnTUAoV2qUiHlj/w==
-  dependencies:
-    "@travelerdev/nestjs-sentry" "^4.3.0"
-
-"@travelerdev/nestjs-sentry@^4.3.0":
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/@travelerdev/nestjs-sentry/-/nestjs-sentry-4.3.0.tgz#238dc9ce30b311efd090e51dab1261c18d95ac5c"
-  integrity sha512-F55V6oaCzqjPlnuvKBGH/y9chKZyIHf/AqoQfNuqkneJxPQtXMHpgjKz+OfRs8kYVtvVtGJc7/ay63IKna8/7w==
 
 "@trysound/sax@0.2.0":
   version "0.2.0"
