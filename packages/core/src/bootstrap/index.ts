@@ -29,9 +29,9 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
 		await tracer.start();
-		console.log('Tracing started');
+		console.log('OTEL/Signoz Tracing started');
 	} else {
-		console.log('Tracing not enabled');
+		console.log('OTEL/Signoz Tracing not enabled');
 	}
 
 	const config = await registerPluginConfig(pluginConfig);
