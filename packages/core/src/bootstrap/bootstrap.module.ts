@@ -31,7 +31,7 @@ export class BootstrapModule implements NestModule, OnApplicationShutdown {
 			if (signal === 'SIGTERM') {
 				Logger.log('SIGTERM shutting down. Please wait...');
 
-				if (process.env.OTEL_ENABLED) {
+				if (process.env.OTEL_ENABLED === 'true') {
 					try {
 						await tracer.shutdown();
 					} catch (error) {

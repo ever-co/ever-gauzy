@@ -53,7 +53,7 @@ const sdk = new NodeSDK({
 	})
 });
 
-if (process.env.OTEL_ENABLED) {
+if (process.env.OTEL_ENABLED === 'true') {
 	// initialize the SDK and register with the OpenTelemetry API
 	// this enables the API to record telemetry
 	sdk.start();
