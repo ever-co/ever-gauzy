@@ -1,4 +1,4 @@
-import { HttpException, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
@@ -6,8 +6,8 @@ import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guar
 import { GraphqlInterceptor, SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
-import { Integrations as SentryIntegrations } from '@sentry/node';
-import { Integrations as TrackingIntegrations } from '@sentry/tracing';
+import { Integrations } from '@sentry/node';
+import { ProfilingIntegration } from '@sentry/profiling-node';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
@@ -189,15 +189,25 @@ if (environment.sentry && environment.sentry.dsn) {
 	if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
 		sentryIntegrations.push(
 			// enable HTTP calls tracing
-			new SentryIntegrations.Http({ tracing: true })
+			new Integrations.Http({ tracing: true })
 		);
 	}
 
-	if (process.env.DB_TYPE === 'postgres') {
-		if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
-			sentryIntegrations.push(new TrackingIntegrations.Postgres());
+	if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
+		if (process.env.DB_TYPE === 'postgres') {
+			sentryIntegrations.push(new Integrations.Postgres());
 		}
 	}
+
+	if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
+		sentryIntegrations.push(new ProfilingIntegration());
+	}
+
+	sentryIntegrations.push(new Integrations.GraphQL());
+	sentryIntegrations.push(new Integrations.Apollo());
+
+	// TODO: we can also integrate Express routes, but not sure how to pass here app instance
+	// sentryIntegrations.push(new Integrations.Express());
 }
 
 @Module({
