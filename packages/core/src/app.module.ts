@@ -5,7 +5,7 @@ import { APP_GUARD, APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { SentryModule } from './core/sentry/ntegral';
+import { SentryModule, SentryModuleOptions, SENTRY_MODULE_OPTIONS } from './core/sentry/ntegral';
 import { GraphqlInterceptor } from './core/sentry/ntegral';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
@@ -237,6 +237,36 @@ if (environment.sentry && environment.sentry.dsn) {
 	console.log('Sentry Request Data Enabled');
 }
 
+function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
+	return {
+		dsn: environment.sentry.dsn,
+		debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
+		environment: environment.production ? 'production' : 'development',
+		// TODO: we should use some internal function which returns version of Gauzy
+		release: 'gauzy@' + process.env.npm_package_version,
+		logLevels: ['error'],
+		integrations: [
+			...sentryIntegrations,
+			host?.httpAdapter
+				? new Integrations.Express({
+						app: host.httpAdapter.getInstance()
+				  })
+				: null
+		].filter((i) => !!i),
+		tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+			? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
+			: 0.01,
+		profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE
+			? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE)
+			: 1,
+		close: {
+			enabled: true,
+			// Time in milliseconds to forcefully quit the application
+			timeout: 3000
+		}
+	};
+}
+
 @Module({
 	imports: [
 		...(process.env.REDIS_ENABLED === 'true'
@@ -283,10 +313,31 @@ if (environment.sentry && environment.sentry.dsn) {
 								url: url,
 								username: username,
 								password: password,
-								ttl: 60 * 60 * 24 * 7 // 1 week
+								ttl: 60 * 60 * 24 * 7 // 1 week,
 							};
 
 							const store = await redisStore(storeOptions);
+
+							store.client
+								.on('error', (err) => {
+									console.log('Redis Client Error: ', err);
+								})
+								.on('connect', () => {
+									console.log('Redis Client Connected');
+								})
+								.on('ready', () => {
+									console.log('Redis Client Ready');
+								})
+								.on('reconnecting', () => {
+									console.log('Redis Client Reconnecting');
+								})
+								.on('end', () => {
+									console.log('Redis Client End');
+								});
+
+							// ping Redis
+							const res = await store.client.ping();
+							console.log('Redis Client Cache Ping: ', res);
 
 							return {
 								store: () => store
@@ -315,33 +366,7 @@ if (environment.sentry && environment.sentry.dsn) {
 			? [
 					SentryModule.forRootAsync({
 						inject: [ConfigService, HttpAdapterHost],
-						useFactory: async (config: ConfigService, host: HttpAdapterHost) => ({
-							dsn: environment.sentry.dsn,
-							debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
-							environment: environment.production ? 'production' : 'development',
-							// TODO: we should use some internal function which returns version of Gauzy
-							release: 'gauzy@' + process.env.npm_package_version,
-							logLevels: ['error'],
-							integrations: [
-								...sentryIntegrations,
-								host?.httpAdapter
-									? new Integrations.Express({
-											app: host.httpAdapter.getInstance()
-									  })
-									: null
-							].filter((i) => !!i),
-							tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-								? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-								: 0.01,
-							profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE
-								? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE)
-								: 1,
-							close: {
-								enabled: true,
-								// Time in milliseconds to forcefully quit the application
-								timeout: 3000
-							}
-						})
+						useFactory: createSentryOptions
 					})
 			  ]
 			: []),
@@ -533,6 +558,11 @@ if (environment.sentry && environment.sentry.dsn) {
 		},
 		...(environment.sentry && environment.sentry.dsn
 			? [
+					{
+						provide: SENTRY_MODULE_OPTIONS,
+						useFactory: createSentryOptions,
+						inject: [HttpAdapterHost]
+					},
 					{
 						provide: APP_INTERCEPTOR,
 						useFactory: () => new SentryCustomInterceptor()
