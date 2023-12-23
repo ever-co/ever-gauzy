@@ -3,9 +3,9 @@ import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@
 import { ConfigModule, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { AppModule } from './../app.module';
-import { HealthIndicatorModule } from '../health-indicator';
 import { Logger, LoggerModule } from '../logger';
 import { SharedModule } from './../shared/shared.module';
+import { HealthModule } from 'health';
 
 @Module({
 	imports: [
@@ -13,7 +13,7 @@ import { SharedModule } from './../shared/shared.module';
 		AppModule,
 		LoggerModule.forRoot(),
 		PluginModule.forRoot(getConfig()),
-		HealthIndicatorModule,
+		HealthModule,
 		SharedModule
 	]
 })
