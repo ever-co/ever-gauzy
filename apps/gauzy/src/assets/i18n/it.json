@@ -3898,7 +3898,18 @@
 			"TIMEZONE_LOCAL": "Locale",
 			"TIMEZONE_UTC": "UTC (Coordinated Universal Time)",
 			"WIDGET": "Widget",
-			"WIDGET_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante."
+			"WIDGET_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante.",
+			"SSL": {
+				"SSL_CONFIG": "Configurazione SSL",
+				"USE_SSL": "Usa SSL",
+				"USE_SSL_INFO": "Attiva la crittografia SSL.",
+				"SSL_KEY_FILE": "File chiave SSL",
+				"SSL_KEY_FILE_INFO": "Percorso del file chiave client per SSL.",
+				"SSL_CERT_FILE": "File certificato SSL",
+				"SSL_CERT_FILE_INFO": "Percorso del file certificato client per SSL.",
+				"SECURE": "Sicuro",
+				"SECURE_INFO": "True, se desideri verificare i certificati SSL."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Limite settimanale superato",
 		"OF_HRS": "Di {{ limit }} ore",

@@ -1339,6 +1339,10 @@
 											</nb-card-body>
 										</nb-card>
 									</div>
+									<div *ngIf="isServer" class="col-12 mb-3">
+										<gauzy-ssl [config]="config?.secureProxy"
+												   (update)="updateSslSetting($event)"></gauzy-ssl>
+									</div>
 								</div>
 							</nb-tab>
 							<nb-tab

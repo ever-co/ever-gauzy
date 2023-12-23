@@ -1,0 +1,91 @@
+<nb-card class="mb-0">
+	<nb-card-body>
+		<div class="row">
+			<div class="col-12">
+				<p class="subtitle-tile">
+					{{ 'TIMER_TRACKER.SETTINGS.SSL.SSL_CONFIG' | translate }}
+				</p>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<nb-toggle [(ngModel)]="config.enable" (ngModelChange)="onUpdate()" status="basic">
+					<div class="ga-flex">
+						<div>{{ 'TIMER_TRACKER.SETTINGS.SSL.USE_SSL' | translate }}</div>
+						<nb-icon
+							[nbTooltip]="'TIMER_TRACKER.SETTINGS.SSL.USE_SSL_INFO' | translate"
+							icon="info-outline"
+						></nb-icon>
+					</div>
+				</nb-toggle>
+			</div>
+		</div>
+		<ng-container *ngIf="config.enable">
+			<div class="row">
+				<div class="col-5 ga-flex centered-text">
+					<p>
+						{{ 'TIMER_TRACKER.SETTINGS.SSL.SSL_KEY_FILE' | translate }}
+					</p>
+					<nb-icon
+						[nbTooltip]="'TIMER_TRACKER.SETTINGS.SSL.SSL_KEY_FILE_INFO' | translate"
+						icon="info-outline"
+					></nb-icon>
+				</div>
+				<div class="col-7 form-group ga-flex file">
+					<input
+						[(ngModel)]="config.ssl.key"
+						(ngModelChange)="onUpdate()"
+						type="text"
+						nbInput
+						fullWidth
+						status="basic"
+						placeholder="path/to/valid-ssl-key.pem"
+					/>
+					<button nbButton size="small" (click)="save('key')">
+						<nb-icon icon="folder-outline"></nb-icon>
+						...
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-5 ga-flex centered-text">
+					<p>
+						{{ 'TIMER_TRACKER.SETTINGS.SSL.SSL_CERT_FILE' | translate }}
+					</p>
+					<nb-icon
+						[nbTooltip]="'TIMER_TRACKER.SETTINGS.SSL.SSL_CERT_FILE_INFO' | translate"
+						icon="info-outline"
+					></nb-icon>
+				</div>
+				<div class="col-7 ga-flex file form-group">
+					<input
+						[(ngModel)]="config.ssl.cert"
+						(ngModelChange)="onUpdate()"
+						type="text"
+						nbInput
+						fullWidth
+						status="basic"
+						placeholder="path/to/valid-ssl-cert.pem"
+					/>
+					<button nbButton size="small" (click)="save('cert')">
+						<nb-icon icon="folder-outline"></nb-icon>
+						...
+					</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col">
+					<nb-toggle [(ngModel)]="config.secure" (ngModelChange)="onUpdate()" status="basic">
+						<div class="ga-flex">
+							<div>{{ 'TIMER_TRACKER.SETTINGS.SSL.SECURE' | translate }}</div>
+							<nb-icon
+								[nbTooltip]="'TIMER_TRACKER.SETTINGS.SSL.SECURE_INFO' | translate"
+								icon="info-outline"
+							></nb-icon>
+						</div>
+					</nb-toggle>
+				</div>
+			</div>
+		</ng-container>
+	</nb-card-body>
+</nb-card>
