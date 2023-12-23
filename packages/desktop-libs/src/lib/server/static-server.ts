@@ -3,9 +3,9 @@ import { IncomingMessage, Server, ServerResponse } from 'http';
 import { ILocalServer } from '../interfaces';
 
 export class StaticServer implements ILocalServer {
-	private _app: Express;
+	private readonly _app: Express;
 	private _port: number;
-	private _isRunning: boolean;
+	protected _isRunning: boolean;
 	private _server: Server<typeof IncomingMessage, typeof ServerResponse>;
 
 	protected constructor() {
@@ -56,5 +56,9 @@ export class StaticServer implements ILocalServer {
 
 	protected get server(): Server<typeof IncomingMessage, typeof ServerResponse> {
 		return this._server;
+	}
+
+	protected set server(value: Server<typeof IncomingMessage, typeof ServerResponse>) {
+		 this._server = value;
 	}
 }

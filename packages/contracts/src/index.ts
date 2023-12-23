@@ -132,3 +132,5 @@ export {
 	IBaseSoftDeleteEntityModel,
 	IBaseRelationsEntityModel,
 } from './base-entity.model';
+
+export * from './proxy.model';
