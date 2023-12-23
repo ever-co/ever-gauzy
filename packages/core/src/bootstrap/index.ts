@@ -178,7 +178,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 			// ping Redis
 			const res = await redisClient.ping();
-			console.log('Redis Client ping: ', res);
+			console.log('Redis Client Sessions Ping: ', res);
 
 			const redisStore = new RedisStore({
 				client: redisClient,
