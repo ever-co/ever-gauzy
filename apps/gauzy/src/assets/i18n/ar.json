@@ -3897,7 +3897,18 @@
 			"TIMEZONE_LOCAL": "محلي",
 			"TIMEZONE_UTC": "توقيت عالمي متناسق (UTC)",
 			"WIDGET": "القطعة",
-			"WIDGET_LABEL": "تعكس هذه النافذة حالة المؤقت وتشير إلى ما إذا كان قيد التشغيل أم تم إيقافه وتعمل كزر"
+			"WIDGET_LABEL": "تعكس هذه النافذة حالة المؤقت وتشير إلى ما إذا كان قيد التشغيل أم تم إيقافه وتعمل كزر",
+			"SSL": {
+				"SSL_CONFIG": "تكوين SSL",
+				"USE_SSL": "استخدام SSL",
+				"USE_SSL_INFO": "تشغيل تشفير SSL.",
+				"SSL_KEY_FILE": "ملف مفتاح SSL",
+				"SSL_KEY_FILE_INFO": "مسار ملف مفتاح العميل لـ SSL.",
+				"SSL_CERT_FILE": "ملف شهادة SSL",
+				"SSL_CERT_FILE_INFO": "مسار ملف شهادة العميل لـ SSL.",
+				"SECURE": "آمن",
+				"SECURE_INFO": "صحيح إذا كنت ترغب في التحقق من شهادات SSL."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",

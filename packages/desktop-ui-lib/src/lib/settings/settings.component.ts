@@ -381,7 +381,15 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		awHost: null,
 		port: 3000,
 		portUi: 4200,
-		host: '0.0.0.0'
+		host: '0.0.0.0',
+		secureProxy: {
+			ssl: {
+				key: '',
+				cert: ''
+			},
+			secure: false,
+			enable: false
+		}
 	};
 	version = '0.0.0';
 	message = {
@@ -392,7 +400,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	progressDownload = 0;
 	showProgressBar = false;
 	autoLaunch = null;
-	autoStart = null;
+	autoStart = false;
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
@@ -1298,5 +1306,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get isRestart$(): Observable<boolean> {
 		return this._isRestart$.asObservable();
+	}
+
+	public updateSslSetting(value) {
+		this.updateSetting(value, 'secureProxy');
 	}
 }

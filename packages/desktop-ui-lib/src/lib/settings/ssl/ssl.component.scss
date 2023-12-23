@@ -1,0 +1,16 @@
+@import '../settings.component';
+
+.ga-flex {
+  display: flex;
+  gap: 0.25rem;
+  align-items: baseline;
+
+  &.file {
+    gap: 1rem;
+    align-items: center;
+  }
+}
+
+nb-icon {
+  font-size: 1rem;
+}

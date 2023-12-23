@@ -3999,7 +3999,18 @@
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
-			"WIDGET_LABEL": "This window reflect the status of the timer, indicating whether it is running or stopped, and function as a button."
+			"WIDGET_LABEL": "This window reflect the status of the timer, indicating whether it is running or stopped, and function as a button.",
+			"SSL": {
+				"SSL_CONFIG": "SSL Configuration",
+				"USE_SSL": "Use SSL",
+				"USE_SSL_INFO": "Turns on SSL Encryption.",
+				"SSL_KEY_FILE": "SSL Key File",
+				"SSL_KEY_FILE_INFO": "Path to Client Key file for SSL.",
+				"SSL_CERT_FILE": "SSL Cert File",
+				"SSL_CERT_FILE_INFO": "Path to Client Certificate file for SSL.",
+				"SECURE": "Secure",
+				"SECURE_INFO": "True, if you want to verify the SSL Certs."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",
@@ -4045,7 +4056,8 @@
 			"INACTIVITY_HANDLER": "Inactivity Handler",
 			"WANT_LOGOUT": "Are you sure you want to logout?",
 			"ERROR_HANDLER": "Error Handler",
-			"ERROR_OCCURRED": "Error Occurred"
+			"ERROR_OCCURRED": "Error Occurred",
+			"SELECT_FILE": "Select file"
 		},
 		"NO_LIMIT": "∞ No Limit",
 		"TASK": "Task",

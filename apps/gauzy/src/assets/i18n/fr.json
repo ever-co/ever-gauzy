@@ -3899,7 +3899,18 @@
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "Temps universel coordonné",
 			"WIDGET": "Widget",
-			"WIDGET_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton."
+			"WIDGET_LABEL": "Cette fenêtre reflète l'état du minuteur, indiquant s'il est en marche ou arrêté, et fonctionne comme un bouton.",
+			"SSL": {
+				"SSL_CONFIG": "Configuration SSL",
+				"USE_SSL": "Utiliser le chiffrement SSL",
+				"USE_SSL_INFO": "Active le chiffrement SSL.",
+				"SSL_KEY_FILE": "Fichier de la clé SSL",
+				"SSL_KEY_FILE_INFO": "Chemin du fichier de clé client pour SSL.",
+				"SSL_CERT_FILE": "Fichier du certificat SSL",
+				"SSL_CERT_FILE_INFO": "Chemin du fichier de certificat client pour SSL.",
+				"SECURE": "Sécurisé",
+				"SECURE_INFO": "Vrai, si vous souhaitez vérifier les certificats SSL."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "La limite hebdomadaire est dépassée.",
 		"OF_HRS": "De {{ limit }} heures",
