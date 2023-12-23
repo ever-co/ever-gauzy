@@ -7,7 +7,7 @@ import {
 	SentryInterceptor
 	// ,InjectSentry
 	// ,SentryService
-} from '@ntegral/nestjs-sentry';
+} from './ntegral';
 import { Handlers } from '@sentry/node';
 import { Observable, catchError, throwError } from 'rxjs';
 // import { EntityNotFoundError } from 'typeorm';

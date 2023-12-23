@@ -3,7 +3,7 @@ import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SentryService } from '@ntegral/nestjs-sentry';
+import { SentryService } from '../core/sentry/ntegral';
 import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -63,9 +63,9 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		// NOTE: possible below is not needed because already included inside SentryService constructor
 
 		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception:', error);
+			console.error('Uncaught Exception Handler in Bootstrap:', error);
 			Sentry.captureException(error);
-			Sentry.flush(2000).then(() => {
+			Sentry.flush(3000).then(() => {
 				process.exit(1);
 			});
 		});
@@ -76,8 +76,11 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		});
 	} else {
 		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception:', error);
-			process.exit(1);
+			console.error('Uncaught Exception Handler in Bootstrap:', error);
+
+			setTimeout(() => {
+				process.exit(1);
+			}, 3000);
 		});
 
 		process.on('unhandledRejection', (reason, promise) => {

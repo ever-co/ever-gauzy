@@ -5904,7 +5904,7 @@
   dependencies:
     uuid "9.0.0"
 
-"@nestjs/graphql@^10.0.20", "@nestjs/graphql@^10.1.6":
+"@nestjs/graphql@^10.1.6":
   version "10.2.1"
   resolved "https://registry.yarnpkg.com/@nestjs/graphql/-/graphql-10.2.1.tgz#703315b21ebdea2b8d0ebc8bc725da668f665b3d"
   integrity sha512-FBzYTymT4oopiGMpej7GTRyhz1BgJxLlXZPUueamC5J9u1WxCwJyETkzBI/zeUkUydlklF/xd5zDd/Md6//hEw==
@@ -6832,13 +6832,6 @@
   dependencies:
     "@nstudio/focus" "13.4.3"
     "@nstudio/xplat-utils" "13.4.3"
-
-"@ntegral/nestjs-sentry@^4.0.0":
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/@ntegral/nestjs-sentry/-/nestjs-sentry-4.0.0.tgz#db2747ec57e128f82801682187a61265e061d385"
-  integrity sha512-6WHZcK7NLeg7ue1y3Z61msEBzCGZeXQ0hWhliH1ddQH0kPbZ6lXLxduGMWYb0N/fPjXAX1Astz8urqnoTOZBQw==
-  optionalDependencies:
-    "@nestjs/graphql" "^10.0.20"
 
 "@nuxtjs/opencollective@0.3.2":
   version "0.3.2"
@@ -9790,6 +9783,7 @@
   integrity sha512-3OlOD518lF2IQmZndRvoO5ZJzgUowLPIRMH4T8LTjTkgbZwZlKMR52/KLml0dJN/Bt6e9R10NxzjOQnDG2DDgg==
 
 "@types/ioredis4@npm:@types/ioredis@^4.28.10", "@types/ioredis@^4.27.1":
+  name "@types/ioredis4"
   version "4.28.10"
   resolved "https://registry.yarnpkg.com/@types/ioredis/-/ioredis-4.28.10.tgz#40ceb157a4141088d1394bb87c98ed09a75a06ff"
   integrity sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==
@@ -31944,7 +31938,7 @@ prismjs@^1.29.0:
   resolved "https://registry.yarnpkg.com/prismjs/-/prismjs-1.29.0.tgz#f113555a8fa9b57c35e637bba27509dcf802dd12"
   integrity sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q==
 
-probot@^12.3.1:
+probot@^12.3.3:
   version "12.3.3"
   resolved "https://registry.yarnpkg.com/probot/-/probot-12.3.3.tgz#f5a430cd34efa27d9abb2318417be029bfe3d511"
   integrity sha512-cdtKd+xISzi8sw6++BYBXleRknCA6hqUMoHj/sJqQBrjbNxQLhfeFCq9O2d0Z4eShsy5YFRR3MWwDKJ9uAE0CA==
