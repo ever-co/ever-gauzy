@@ -39,7 +39,8 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	const { BootstrapModule } = await import('./bootstrap.module');
 
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose']
+		logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+		bufferLogs: true
 	});
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
