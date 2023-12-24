@@ -1,20 +1,8 @@
-import {
-	IEmployee,
-	IOrganizationTeam,
-	IOrganizationTeamEmployee,
-	IRole,
-	ITask,
-} from '@gauzy/contracts';
+import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
 import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import {
-	Employee,
-	OrganizationTeam,
-	Role,
-	Task,
-	TenantOrganizationBaseEntity,
-} from '../core/entities/internal';
+import { Employee, OrganizationTeam, Role, Task, TenantOrganizationBaseEntity } from '../core/entities/internal';
 
 @Entity('organization_team_employee')
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity implements IOrganizationTeamEmployee {
@@ -39,7 +27,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => Task })
 	@ManyToOne(() => Task, (it) => it.organizationTeamEmployees, {
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	public activeTask?: ITask;
 
@@ -75,7 +63,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, (employee) => employee.teams, {
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	public employee: IEmployee;
 
@@ -94,7 +82,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	public role?: IRole;
 
@@ -105,4 +93,8 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@Index()
 	@Column({ nullable: true })
 	public roleId?: IRole['id'];
+
+	@ApiPropertyOptional({ type: () => Number })
+	@Column({ nullable: true, default: 0 })
+	public index: number;
 }
