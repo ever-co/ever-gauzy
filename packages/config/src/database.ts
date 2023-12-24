@@ -63,10 +63,11 @@ switch (dbType) {
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			// See https://typeorm.io/data-source-options#common-data-source-options
-			poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40,
+			poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
 			extra: {
 				// based on  https://node-postgres.com/api/pool max connection pool size
-				max: process.env.DB_POOL_SIZE || 40,
+				max: process.env.DB_POOL_SIZE || 80,
+				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
 				// connection timeout
 				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
 					? parseInt(process.env.DB_CONNECTION_TIMEOUT)

@@ -31,29 +31,47 @@ export class HealthController {
 			await queryRunner.connect();
 
 			const checks = [
-				async () =>
-					await this.disk.checkStorage('storage', {
+				async () => {
+					console.log(`Checking ${uniqueLabel} Storage...`);
+					const resStorage = await this.disk.checkStorage('storage', {
 						path: path.resolve(__dirname),
 						// basically will fail if disk is full
 						thresholdPercent: 99.999999
-					}),
-				async () =>
-					await this.db.pingCheck('database', {
+					});
+					console.log(`Storage check ${uniqueLabel} completed`);
+					return resStorage;
+				},
+				async () => {
+					console.log(`Checking ${uniqueLabel} Database...`);
+					const resDatabase = await this.db.pingCheck('database', {
 						connection: queryRunner.connection,
 						timeout: 60000
-					}),
-				async () => await this.cacheHealthIndicator.isHealthy('cache')
+					});
+					console.log(`Database check ${uniqueLabel} completed`);
+					return resDatabase;
+				},
+				async () => {
+					console.log(`Checking ${uniqueLabel} Cache...`);
+					const resCache = await this.cacheHealthIndicator.isHealthy('cache');
+					console.log(`Cache check ${uniqueLabel} completed`);
+					return resCache;
+				}
 			];
 
 			if (process.env.REDIS_ENABLED === 'true') {
-				checks.push(async () => await this.redisHealthIndicator.isHealthy('redis'));
+				checks.push(async () => {
+					console.log(`Checking ${uniqueLabel} Redis...`);
+					const resRedis = await this.redisHealthIndicator.isHealthy('redis');
+					console.log(`Redis check ${uniqueLabel} completed`);
+					return resRedis;
+				});
 			}
 
 			const result = await this.health.check(checks);
 
 			console.timeEnd(uniqueLabel);
 
-			console.log('Health check result: ', JSON.stringify(result));
+			console.log(`Health check ${uniqueLabel} result: ${JSON.stringify(result)}`);
 
 			return result;
 		} finally {
