@@ -14,7 +14,7 @@ export interface IOrganizationTeamEmployee
 	isTrackingEnabled?: boolean;
 	activeTaskId?: ITask['id'];
 	activeTask?: ITask;
-	index?: number;
+	order?: number;
 }
 
 export interface IOrganizationTeamEmployeeFindInput

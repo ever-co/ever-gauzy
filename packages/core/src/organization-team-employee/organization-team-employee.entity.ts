@@ -96,5 +96,5 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({ nullable: true, default: 0 })
-	public index: number;
+	public order: number;
 }
