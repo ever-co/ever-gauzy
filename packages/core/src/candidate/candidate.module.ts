@@ -1,6 +1,6 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CandidateController } from './candidate.controller';
 import { CandidateService } from './candidate.service';
@@ -16,9 +16,7 @@ import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/candidate', module: CandidateModule }
-		]),
+		RouterModule.register([{ path: '/candidate', module: CandidateModule }]),
 		TypeOrmModule.forFeature([Candidate]),
 		EmailSendModule,
 		CqrsModule,
@@ -30,10 +28,7 @@ import { RoleModule } from './../role/role.module';
 		AuthModule
 	],
 	controllers: [CandidateController],
-	providers: [
-		CandidateService,
-		...CommandHandlers
-	],
+	providers: [CandidateService, ...CommandHandlers],
 	exports: [TypeOrmModule, CandidateService]
 })
-export class CandidateModule { }
+export class CandidateModule {}

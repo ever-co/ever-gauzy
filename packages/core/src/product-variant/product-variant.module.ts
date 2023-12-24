@@ -1,7 +1,7 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { ProductVariant } from './product-variant.entity';
 import { ProductVariantController } from './product-variant.controller';
 import { ProductVariantService } from './product-variant.service';
@@ -13,12 +13,8 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/product-variants', module: ProductVariantModule }
-		]),
-		TypeOrmModule.forFeature([
-			ProductVariant
-		]),
+		RouterModule.register([{ path: '/product-variants', module: ProductVariantModule }]),
+		TypeOrmModule.forFeature([ProductVariant]),
 		CqrsModule,
 		TenantModule,
 		ProductVariantPriceModule,
@@ -26,10 +22,7 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => ProductModule)
 	],
 	controllers: [ProductVariantController],
-	providers: [
-		ProductVariantService,
-		...CommandHandlers
-	],
+	providers: [ProductVariantService, ...CommandHandlers],
 	exports: [ProductVariantService]
 })
 export class ProductVariantModule {}

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
@@ -12,19 +12,14 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/candidate-feedbacks', module: CandidateFeedbacksModule }
-		]),
-		TypeOrmModule.forFeature([ CandidateFeedback ]),
+		RouterModule.register([{ path: '/candidate-feedbacks', module: CandidateFeedbacksModule }]),
+		TypeOrmModule.forFeature([CandidateFeedback]),
 		TenantModule,
 		UserModule,
 		CandidateInterviewModule,
 		CqrsModule
 	],
-	providers: [
-		CandidateFeedbacksService,
-		...CommandHandlers
-	],
+	providers: [CandidateFeedbacksService, ...CommandHandlers],
 	controllers: [CandidateFeedbacksController],
 	exports: [CandidateFeedbacksService]
 })

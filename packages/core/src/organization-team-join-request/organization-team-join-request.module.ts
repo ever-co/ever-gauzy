@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
@@ -16,26 +16,23 @@ import { RoleModule } from 'role/role.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/organization-team-join',
-				module: OrganizationTeamJoinRequestModule,
-			},
+				module: OrganizationTeamJoinRequestModule
+			}
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationTeamJoinRequest,
-			OrganizationTeamEmployee,
-		]),
+		TypeOrmModule.forFeature([OrganizationTeamJoinRequest, OrganizationTeamEmployee]),
 		CqrsModule,
 		TenantModule,
 		UserModule,
 		OrganizationTeamModule,
 		EmailSendModule,
 		InviteModule,
-		RoleModule,
+		RoleModule
 	],
 	controllers: [OrganizationTeamJoinRequestController],
 	providers: [OrganizationTeamJoinRequestService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationTeamJoinRequestService],
+	exports: [TypeOrmModule, OrganizationTeamJoinRequestService]
 })
-export class OrganizationTeamJoinRequestModule { }
+export class OrganizationTeamJoinRequestModule {}

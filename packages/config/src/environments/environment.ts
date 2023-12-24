@@ -55,7 +55,7 @@ export const environment: IEnvironment = {
 	/**
 	 * Throttler (Rate Limiting) Options
 	 */
-	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60, // now it's 60 seconds, but in future versions of Throttle going to be 60ms!
+	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
 	THROTTLE_ENABLED: process.env.THROTTLE_ENABLED == 'true',
 

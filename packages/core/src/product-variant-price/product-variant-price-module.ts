@@ -1,6 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { ProductVariantPrice } from './product-variant-price.entity';
 import { ProductVariantPriceController } from './product-variant-price.controller';
 import { ProductVariantPriceService } from './product-variant-price.service';
@@ -8,7 +8,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/product-variant-prices',
 				module: ProductVariantPriceModule

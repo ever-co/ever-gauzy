@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { GauzyAIModule } from '@gauzy/integration-ai';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPostController } from './employee-job.controller';
@@ -9,9 +9,7 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/employee-job', module: EmployeeJobPostModule }
-		]),
+		RouterModule.register([{ path: '/employee-job', module: EmployeeJobPostModule }]),
 		CountryModule,
 		EmployeeModule,
 		IntegrationTenantModule,
@@ -21,4 +19,4 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 	providers: [EmployeeJobPostService],
 	exports: [EmployeeJobPostService]
 })
-export class EmployeeJobPostModule { }
+export class EmployeeJobPostModule {}

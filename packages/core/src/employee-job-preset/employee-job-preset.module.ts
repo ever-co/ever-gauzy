@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { GauzyAIModule } from '@gauzy/integration-ai';
 import { EmployeeModule } from './../employee/employee.module';
 import { Handlers } from './commands/handlers';
@@ -20,9 +20,7 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/job-preset', module: EmployeeJobPresetModule }
-		]),
+		RouterModule.register([{ path: '/job-preset', module: EmployeeJobPresetModule }]),
 		TypeOrmModule.forFeature([
 			JobPreset,
 			JobPresetUpworkJobSearchCriterion,
@@ -40,16 +38,7 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 		EmployeePresetController,
 		JobSearchPresetController
 	],
-	providers: [
-		...Handlers,
-		JobPresetService,
-		JobSearchCategoryService,
-		JobSearchOccupationService
-	],
-	exports: [
-		JobPresetService,
-		JobSearchCategoryService,
-		JobSearchOccupationService
-	]
+	providers: [...Handlers, JobPresetService, JobSearchCategoryService, JobSearchOccupationService],
+	exports: [JobPresetService, JobSearchCategoryService, JobSearchOccupationService]
 })
-export class EmployeeJobPresetModule { }
+export class EmployeeJobPresetModule {}

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CandidateInterviewService } from './candidate-interview.service';
 import { CandidateInterviewController } from './candidate-interview.controller';
 import { CandidateInterview } from './candidate-interview.entity';
@@ -9,10 +9,8 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/candidate-interview', module: CandidateInterviewModule }
-		]),
-		TypeOrmModule.forFeature([ CandidateInterview ]),
+		RouterModule.register([{ path: '/candidate-interview', module: CandidateInterviewModule }]),
+		TypeOrmModule.forFeature([CandidateInterview]),
 		TenantModule,
 		UserModule
 	],

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CandidateEducationService } from './candidate-education.service';
 import { CandidateEducation } from './candidate-education.entity';
 import { CandidateEducationController } from './candidate-education.controller';
@@ -9,20 +9,13 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/candidate-educations', module: CandidateEducationModule }
-		]),
-		TypeOrmModule.forFeature([
-			CandidateEducation
-		]),
+		RouterModule.register([{ path: '/candidate-educations', module: CandidateEducationModule }]),
+		TypeOrmModule.forFeature([CandidateEducation]),
 		TenantModule,
 		UserModule
 	],
 	controllers: [CandidateEducationController],
 	providers: [CandidateEducationService],
-	exports: [
-		TypeOrmModule,
-		CandidateEducationService
-	]
+	exports: [TypeOrmModule, CandidateEducationService]
 })
 export class CandidateEducationModule {}

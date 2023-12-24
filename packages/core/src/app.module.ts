@@ -408,11 +408,18 @@ function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
 			? [
 					ThrottlerModule.forRootAsync({
 						inject: [ConfigService],
-						useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-							({
-								ttl: config.get('THROTTLE_TTL'),
-								limit: config.get('THROTTLE_LIMIT')
-							} as ThrottlerModuleOptions)
+						useFactory: (config: ConfigService) => [
+							{
+								ttl: () => {
+									const ttlValue = config.get<number>('THROTTLE_TTL') as number;
+									return ttlValue;
+								},
+								limit: () => {
+									const limitValue = config.get<number>('THROTTLE_LIMIT') as number;
+									return limitValue;
+								}
+							}
+						]
 					})
 			  ]
 			: []),

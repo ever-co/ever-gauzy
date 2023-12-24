@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { WarehouseService } from './warehouse.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { WarehouseController } from './warehouse.controller';
@@ -13,15 +13,8 @@ import { WarehouseProductService } from './warehouse-product-service';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/warehouses', module: WarehouseModule }
-		]),
-		TypeOrmModule.forFeature([
-			Warehouse,
-			Product,
-			WarehouseProduct,
-			WarehouseProductVariant
-		]),
+		RouterModule.register([{ path: '/warehouses', module: WarehouseModule }]),
+		TypeOrmModule.forFeature([Warehouse, Product, WarehouseProduct, WarehouseProductVariant]),
 		TenantModule,
 		UserModule
 	],

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
@@ -12,25 +12,14 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/product-categories', module: ProductCategoryModule }
-		]),
-		TypeOrmModule.forFeature([
-			ProductCategory,
-			ProductCategoryTranslation
-		]),
+		RouterModule.register([{ path: '/product-categories', module: ProductCategoryModule }]),
+		TypeOrmModule.forFeature([ProductCategory, ProductCategoryTranslation]),
 		TenantModule,
 		UserModule,
 		CqrsModule
 	],
 	controllers: [ProductCategoryController],
-	providers: [
-		ProductCategoryService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		ProductCategoryService
-	]
+	providers: [ProductCategoryService, ...CommandHandlers],
+	exports: [TypeOrmModule, ProductCategoryService]
 })
 export class ProductCategoryModule {}
