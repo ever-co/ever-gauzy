@@ -119,7 +119,7 @@ function getDbConfig(): DataSourceOptions {
 					// connection timeout
 					connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
 						? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-						: 1000
+						: 60000 // 60 seconds
 				}
 			};
 

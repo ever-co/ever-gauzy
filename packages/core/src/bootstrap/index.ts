@@ -148,6 +148,10 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 				url: url,
 				username: username,
 				password: password,
+				isolationPoolOptions: {
+					min: 10,
+					max: 100
+				},
 				socket: {
 					tls: isTls,
 					host: host,

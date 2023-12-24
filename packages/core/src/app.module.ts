@@ -238,6 +238,8 @@ if (environment.sentry && environment.sentry.dsn) {
 }
 
 function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
+	console.log('Creating Sentry Options');
+
 	return {
 		dsn: environment.sentry.dsn,
 		debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
@@ -265,6 +267,16 @@ function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
 			timeout: 3000
 		}
 	};
+}
+
+if (environment.THROTTLE_ENABLED) {
+	console.log('Throttle Enabled');
+
+	const ttlValue = environment.THROTTLE_TTL;
+	console.log('Throttle TTL: ', ttlValue);
+
+	const limit = environment.THROTTLE_LIMIT;
+	console.log('Throttle Limit: ', limit);
 }
 
 @Module({
@@ -313,6 +325,10 @@ function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
 								url: url,
 								username: username,
 								password: password,
+								isolationPoolOptions: {
+									min: 10,
+									max: 100
+								},
 								ttl: 60 * 60 * 24 * 7 // 1 week,
 							};
 
@@ -348,6 +364,7 @@ function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
 			: [CacheModule.register({ isGlobal: true })]),
 		ServeStaticModule.forRootAsync({
 			useFactory: async (configService: ConfigService): Promise<ServeStaticModuleOptions[]> => {
+				console.log('Serve Static Module Creating');
 				return await resolveServeStaticPath(configService);
 			},
 			inject: [ConfigService],
@@ -396,30 +413,30 @@ function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
 			}
 		}),
 		/** Jitsu Configuration */
-		JitsuAnalyticsModule.forRoot({
-			config: {
-				host: jitsu.serverHost,
-				writeKey: jitsu.serverWriteKey,
-				debug: jitsu.debug,
-				echoEvents: jitsu.echoEvents
-			}
-		}),
+		...(environment.jitsu.serverHost && environment.jitsu.serverWriteKey
+			? [
+					JitsuAnalyticsModule.forRoot({
+						config: {
+							host: jitsu.serverHost,
+							writeKey: jitsu.serverWriteKey,
+							debug: jitsu.debug,
+							echoEvents: jitsu.echoEvents
+						}
+					})
+			  ]
+			: []),
 		...(environment.THROTTLE_ENABLED
 			? [
 					ThrottlerModule.forRootAsync({
 						inject: [ConfigService],
-						useFactory: (config: ConfigService) => [
-							{
-								ttl: () => {
-									const ttlValue = config.get<number>('THROTTLE_TTL') as number;
-									return ttlValue;
-								},
-								limit: () => {
-									const limitValue = config.get<number>('THROTTLE_LIMIT') as number;
-									return limitValue;
+						useFactory: () => {
+							return [
+								{
+									ttl: environment.THROTTLE_TTL,
+									limit: environment.THROTTLE_LIMIT
 								}
-							}
-						]
+							];
+						}
 					})
 			  ]
 			: []),
