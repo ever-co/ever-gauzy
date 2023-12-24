@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { v4 as uuid } from 'uuid';
 import { createClient } from 'redis';
 
@@ -8,7 +8,14 @@ export class RedisHealthIndicator extends HealthIndicator {
 	async isHealthy(key: string): Promise<HealthIndicatorResult> {
 		if (key == 'redis') {
 			const isHealthy = await this.checkRedis();
-			return this.getStatus(key, isHealthy);
+
+			const result = this.getStatus(key, isHealthy, {});
+
+			if (isHealthy) {
+				return result;
+			}
+
+			throw new HealthCheckError('Cache Health failed', result);
 		}
 	}
 

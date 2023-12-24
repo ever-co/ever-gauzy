@@ -42,8 +42,7 @@ export class HealthController {
 						connection: queryRunner.connection,
 						timeout: 60000
 					}),
-				async () => await this.cacheHealthIndicator.isHealthy('cache'),
-				async () => await this.redisHealthIndicator.isHealthy('redis')
+				async () => await this.cacheHealthIndicator.isHealthy('cache')
 			];
 
 			if (process.env.REDIS_ENABLED === 'true') {
