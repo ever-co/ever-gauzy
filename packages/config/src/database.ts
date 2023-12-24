@@ -68,10 +68,13 @@ switch (dbType) {
 				// based on  https://node-postgres.com/api/pool max connection pool size
 				max: process.env.DB_POOL_SIZE || 80,
 				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
-				// connection timeout
+				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
 				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
 					? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-					: 60000 // 60 seconds
+					: 60000, // 60 seconds
+				// number of milliseconds a client must sit idle in the pool and not be checked out
+				// before it is disconnected from the backend and discarded
+				idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000 // 10 seconds
 			}
 		};
 
