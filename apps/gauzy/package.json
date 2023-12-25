@@ -176,7 +176,7 @@
 		"@angular-devkit/core": "^13.2.2",
 		"@angular-devkit/schematics": "^13.2.2",
 		"@angular/cli": "13.2.2",
-		"@angular/compiler-cli": "14.3.0",
+		"@angular/compiler-cli": "15.2.10",
 		"@types/async": "^3.2.5",
 		"@types/bcrypt": "^5.0.0",
 		"@types/chart.js": "^2.9.37",
