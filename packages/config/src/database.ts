@@ -11,6 +11,7 @@ if (process.env.DB_TYPE) dbType = process.env.DB_TYPE;
 else dbType = 'sqlite';
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
+console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 
 // `process` is a built-in global in Node.js, no need to `require()`
 console.log(chalk.magenta(`Currently running Node.js version %s`), process.version);
@@ -49,16 +50,16 @@ switch (dbType) {
 				process.env.DB_LOGGING == 'false'
 					? false
 					: process.env.DB_LOGGING == 'all'
-					? 'all'
-					: process.env.DB_LOGGING == 'query'
-					? ['query', 'error']
-					: ['error'], // by default set to error only
+						? 'all'
+						: process.env.DB_LOGGING == 'query'
+							? ['query', 'error']
+							: ['error'], // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 3 sec as warnings
 			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
 				? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
 				: 3000,
-			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
+			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			uuidExtension: 'pgcrypto',
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
@@ -68,9 +69,7 @@ switch (dbType) {
 				// based on  https://node-postgres.com/api/pool max connection pool size
 				max: process.env.DB_POOL_SIZE || 40,
 				// connection timeout
-				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
-					? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-					: 1000
+				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 1000
 			}
 		};
 
@@ -88,7 +87,7 @@ switch (dbType) {
 			database: dbPath,
 			logging: 'all',
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false // We are using migrations, synchronize should be set to false.
+			synchronize: process.env.DB_SYNCHRONIZE === 'true' // We are using migrations, synchronize should be set to false.
 		};
 
 		connectionConfig = sqliteConfig;

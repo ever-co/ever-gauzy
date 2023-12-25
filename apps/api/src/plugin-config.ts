@@ -12,8 +12,8 @@ import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
 
-let assetPath;
-let assetPublicPath;
+let assetPath: any;
+let assetPublicPath: any;
 
 console.log('Plugin Config -> __dirname: ' + __dirname);
 console.log('Plugin Config -> process.cwd: ' + process.cwd());
@@ -100,16 +100,16 @@ function getDbConfig(): DataSourceOptions {
 					process.env.DB_LOGGING === 'false'
 						? false
 						: process.env.DB_LOGGING === 'all'
-						? 'all'
-						: process.env.DB_LOGGING === 'query'
-						? ['query', 'error']
-						: ['error'], // by default set to error only
+							? 'all'
+							: process.env.DB_LOGGING === 'query'
+								? ['query', 'error']
+								: ['error'], // by default set to error only
 				logger: 'advanced-console',
 				// log queries that take more than 3 sec as warnings
 				maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
 					? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
 					: 3000,
-				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
+				synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 				uuidExtension: 'pgcrypto',
 				// See https://typeorm.io/data-source-options#common-data-source-options
 				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40,
@@ -126,27 +126,25 @@ function getDbConfig(): DataSourceOptions {
 			return postgresConnectionOptions;
 
 		case 'sqlite':
-			const sqlitePath =
-				process.env.DB_PATH || path.join(path.resolve('.', ...['apps', 'api', 'data']), 'gauzy.sqlite3');
+			const sqlitePath = process.env.DB_PATH || path.join(path.resolve('.', ...['apps', 'api', 'data']), 'gauzy.sqlite3');
 
 			return {
 				type: dbType,
 				database: sqlitePath,
 				logging: 'all',
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
-				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false // We are using migrations, synchronize should be set to false.
+				synchronize: process.env.DB_SYNCHRONIZE === 'true' // We are using migrations, synchronize should be set to false.
 			};
 
 		case 'better-sqlite3':
-			const betterSqlitePath =
-				process.env.DB_PATH || path.join(path.resolve('.', ...['apps', 'api', 'data']), 'gauzy.sqlite3');
+			const betterSqlitePath = process.env.DB_PATH || path.join(path.resolve('.', ...['apps', 'api', 'data']), 'gauzy.sqlite3');
 
 			return {
 				type: dbType,
 				database: betterSqlitePath,
 				logging: 'all',
 				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
-				synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
+				synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 				prepareDatabase: (db) => {
 					if (!process.env.IS_ELECTRON) {
 						// Enhance performance

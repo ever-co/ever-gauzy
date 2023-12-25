@@ -7,6 +7,7 @@ import {
 } from '@gauzy/common';
 import { dbConnectionConfig } from '@gauzy/config';
 
+// Define the dev configuration
 export const devConfig: IPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.API_HOST || DEFAULT_API_HOST,
