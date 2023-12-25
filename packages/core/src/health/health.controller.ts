@@ -69,7 +69,7 @@ export class HealthController {
 					console.log(`Redis check ${uniqueLabel} completed`);
 					return resRedis;
 				});
-			}			
+			}
 
 			const result = await this.health.check(checks);
 

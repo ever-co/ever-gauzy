@@ -168,16 +168,15 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		startedAt: Date,
 		stoppedAt: Date,
 		user: UserTO
-	): Promise<{ remoteId }[]> {
+	): Promise<Pick<IntervalTO, 'remoteId'>[]> {
 		try {
 			const remotesIds = await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('remoteId')
+				.distinct('remoteId')
 				.where('employeeId', user.employeeId)
 				.where((qb) =>
-					qb
-						.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)])
-						.andWhere('synced', true)
+					qb.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)]).andWhere('synced', true)
 				);
 			await this.deleteLocallyIdlesTime(startedAt, stoppedAt, user);
 			return remotesIds;
