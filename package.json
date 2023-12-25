@@ -253,8 +253,8 @@
         ]
     },
     "resolutions": {
-        "@angular-devkit/build-angular": "15.2.10",
-        "@angular-devkit/architect": "0.1502.10",
+        "@angular-devkit/build-angular": "^15.0.0",
+        "@angular-devkit/architect": "^0.1500.0",
         "@angular-devkit/core": "^15.2.10",
         "rxjs": "^7.4.0",
         "autoprefixer": "10.4.13"
@@ -282,8 +282,8 @@
         "yargs": "^17.5.0"
     },
     "devDependencies": {
-        "@angular-devkit/architect": "0.1502.10",
-        "@angular-devkit/build-angular": "15.2.10",
+        "@angular-devkit/architect": "^0.1500.0",
+        "@angular-devkit/build-angular": "^15.0.0",
         "@angular-devkit/core": "^15.2.10",
         "@angular-devkit/schematics": "15.2.10",
         "@angular-eslint/eslint-plugin": "14.0.4",

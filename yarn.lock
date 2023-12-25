@@ -111,15 +111,15 @@
     tsconfig-paths "^3.9.0"
     webpack-merge "^5.7.3"
 
-"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1502.10", "@angular-devkit/architect@>=0.1300.0 < 0.1400.0":
-  version "0.1502.10"
-  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1502.10.tgz#4c25ba881635937d922b18e7959b38a476badc82"
-  integrity sha512-S8lN73WYCfpEpw1Q41ZcUinw7JfDeSM8LyGs797OVshnW75QcOkOecWj/3CKR23G44IgFrHN6sqtzWxKmMxLig==
+"@angular-devkit/architect@0.1002.0", "@angular-devkit/architect@0.1502.10", "@angular-devkit/architect@>=0.1300.0 < 0.1400.0", "@angular-devkit/architect@^0.1500.0":
+  version "0.1500.5"
+  resolved "https://registry.yarnpkg.com/@angular-devkit/architect/-/architect-0.1500.5.tgz#a0945b695ff05017625f9ff6f9ae7b34539b8c79"
+  integrity sha512-n1L3Q2d7HoWFRRqihu3BAUB5xZFfz8LqQoHpVNl6HN1ugtmvqDUDoKrpYVH9LCKCqfJW2Cxssy+FERiDsihIJQ==
   dependencies:
-    "@angular-devkit/core" "15.2.10"
+    "@angular-devkit/core" "15.0.5"
     rxjs "6.6.7"
 
-"@angular-devkit/build-angular@15.2.10", "@angular-devkit/build-angular@^13.0.0", "@angular-devkit/build-angular@^15.2.10":
+"@angular-devkit/build-angular@^13.0.0", "@angular-devkit/build-angular@^15.0.0":
   version "15.2.10"
   resolved "https://registry.yarnpkg.com/@angular-devkit/build-angular/-/build-angular-15.2.10.tgz#af4080a4811461bd1cab4f3b1b10edef53f31da8"
   integrity sha512-3pCPVEJilVwHIJC6Su1/PIEqvFfU1Lxew9yItxX4s6dud8HY+fuKrsDnao4NNMFNqCLqL4el5QbSBKnnpWH1sg==
@@ -203,7 +203,7 @@
     "@angular-devkit/architect" "0.1502.10"
     rxjs "6.6.7"
 
-"@angular-devkit/core@13.3.11", "@angular-devkit/core@14.2.12", "@angular-devkit/core@15.2.10", "@angular-devkit/core@16.0.1", "@angular-devkit/core@16.2.8", "@angular-devkit/core@8.3.29", "@angular-devkit/core@^13.0.0", "@angular-devkit/core@^15.2.10", "@angular-devkit/core@^8.3.8":
+"@angular-devkit/core@13.3.11", "@angular-devkit/core@14.2.12", "@angular-devkit/core@15.0.5", "@angular-devkit/core@15.2.10", "@angular-devkit/core@16.0.1", "@angular-devkit/core@16.2.8", "@angular-devkit/core@8.3.29", "@angular-devkit/core@^13.0.0", "@angular-devkit/core@^15.2.10", "@angular-devkit/core@^8.3.8":
   version "15.2.10"
   resolved "https://registry.yarnpkg.com/@angular-devkit/core/-/core-15.2.10.tgz#e2c1fadaaa87ae62b3f3c752fa6fafc31197151b"
   integrity sha512-bFPm7wjvfBds9km2rCJxUhzkqe4h3h/199yJtzC1bNvwRr2LMHvtyoQAzftda+gs7Ulqac5wzUEZX/cVV3WrsA==
@@ -789,10 +789,10 @@
   resolved "https://registry.yarnpkg.com/@assemblyscript/loader/-/loader-0.10.1.tgz#70e45678f06c72fa2e350e8553ec4a4d72b92e06"
   integrity sha512-H71nDOOL8Y7kWRLqf6Sums+01Q5msqBW2KhDUTemh1tvY04eSkSXrK0uj/4mmY0Xr16/3zyZmsrxN7CKuRbNRg==
 
-"@asymmetrik/ngx-leaflet@^13.0.2":
-  version "13.0.2"
-  resolved "https://registry.yarnpkg.com/@asymmetrik/ngx-leaflet/-/ngx-leaflet-13.0.2.tgz#30ce965d296cf84984868daf4d24f6ebceebd455"
-  integrity sha512-7JUucZeODTpCrKh1OdhJpzFl6vnawpmramX+ow47AG2R73p5ZNxymTjD6fmevJLL9H6w2PeD2i4Vt6s4V018Kg==
+"@asymmetrik/ngx-leaflet@^15.0.1":
+  version "15.0.1"
+  resolved "https://registry.yarnpkg.com/@asymmetrik/ngx-leaflet/-/ngx-leaflet-15.0.1.tgz#7041b4841ac854089f21d644cece16389588c1b8"
+  integrity sha512-vlwk6lxt+KtBBeGOX6XX1pRBfkH3c41kp29UsY/tj/pVGrMZ3tGH9heeal0vUMIr3ERAZzExJEqwjzoqoU2IMw==
   dependencies:
     tslib "^2.3.0"
 
@@ -29263,10 +29263,10 @@ ngx-color-picker@^12.0.1:
   dependencies:
     tslib "^2.3.0"
 
-ngx-cookie-service@^13.2.1:
-  version "13.2.1"
-  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-13.2.1.tgz#4b62263b855c4d938f4f0be00ef0bff1c0b251be"
-  integrity sha512-whl7sYcSlAmPa12zoBfBeSn+9ENxRjKAzuwRPRTL6Oe/f9dtSui2lBmOgoPfSD1umiTV38JpJee9nu3WbGsgwg==
+ngx-cookie-service@^15.0.0:
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-cookie-service/-/ngx-cookie-service-15.0.0.tgz#d5b1ec8745c93119c28fb6e630b6e5ea5d2f7899"
+  integrity sha512-KU1JCjfpDTvD6L0FhHN9W/oP3Sue8yMAAK6XY3h/MEhrPS7vx6t3+h0ulY8l8R/9d1cmlQVyTHn1Jd1Jdf5K+g==
   dependencies:
     tslib "^2.0.0"
 
@@ -29285,10 +29285,10 @@ ngx-daterangepicker-material@^6.0.4:
     dayjs "^1.11.5"
     tslib "^2.0.0"
 
-ngx-draggable-dom@2.4.6:
-  version "2.4.6"
-  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-2.4.6.tgz#1460486b6f1a4065b9d5c677b92fb64f8829dd90"
-  integrity sha512-yL+pVl+jOJqnqXSLwSu5OYdrsvH3NhgMQND7MhcXkJD7sWDX/U/HRnGS383uzrIMRraNCm4qSvsQHGO9PK8fMg==
+ngx-draggable-dom@^3.1.0:
+  version "3.2.3"
+  resolved "https://registry.yarnpkg.com/ngx-draggable-dom/-/ngx-draggable-dom-3.2.3.tgz#27137c5f759526e47681c330a5971c159151083b"
+  integrity sha512-uMpzKFEuWGckloL9J+355wX0hBM6yxl7X+Jq7c0j5nb468a/i40m6M9yUy1G3yAwhUHjppgLGZ5azoLm0YNVyw==
   dependencies:
     tslib "^2.3.1"
 
