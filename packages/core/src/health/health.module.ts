@@ -1,6 +1,7 @@
 import { ConsoleLogger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { CustomHealthIndicator } from './custom-health.indicator';
+import { CacheHealthIndicator } from './indicators/cache-health.indicator';
+import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -12,6 +13,6 @@ import { HealthController } from './health.controller';
 			// gracefulShutdownTimeoutMs: 1000
 		})
 	],
-	providers: [CustomHealthIndicator]
+	providers: [CacheHealthIndicator, RedisHealthIndicator]
 })
 export class HealthModule {}
