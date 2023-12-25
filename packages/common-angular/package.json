@@ -28,7 +28,7 @@
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"dependencies": {
-        "@angular/common": "14.3.0",
+		"@angular/common": "15.2.10",
 		"moment": "^2.29.4",
 		"moment-timezone": "^0.5.40",
 		"moment-duration-format": "^2.3.2",
