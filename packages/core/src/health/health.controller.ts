@@ -30,33 +30,36 @@ export class HealthController {
 		try {
 			await queryRunner.connect();
 
-			const checks = [
-				async () => {
-					console.log(`Checking ${uniqueLabel} Storage...`);
-					const resStorage = await this.disk.checkStorage('storage', {
-						path: path.resolve(__dirname),
-						// basically will fail if disk is full
-						thresholdPercent: 99.999999
-					});
-					console.log(`Storage check ${uniqueLabel} completed`);
-					return resStorage;
-				},
-				async () => {
-					console.log(`Checking ${uniqueLabel} Database...`);
-					const resDatabase = await this.db.pingCheck('database', {
-						connection: queryRunner.connection,
-						timeout: 60000
-					});
-					console.log(`Database check ${uniqueLabel} completed`);
-					return resDatabase;
-				},
-				async () => {
-					console.log(`Checking ${uniqueLabel} Cache...`);
-					const resCache = await this.cacheHealthIndicator.isHealthy('cache');
-					console.log(`Cache check ${uniqueLabel} completed`);
-					return resCache;
-				}
-			];
+			const checks = [];
+
+			checks.push(async () => {
+				console.log(`Checking ${uniqueLabel} Database...`);
+				const resDatabase = await this.db.pingCheck('database', {
+					connection: queryRunner.connection,
+					timeout: 60000
+				});
+				console.log(`Database check ${uniqueLabel} completed`);
+				return resDatabase;
+			});
+
+			/*
+			checks.push(async () => {
+				console.log(`Checking ${uniqueLabel} Storage...`);
+				const resStorage = await this.disk.checkStorage('storage', {
+					path: path.resolve(__dirname),
+					// basically will fail if disk is full
+					thresholdPercent: 99.999999
+				});
+				console.log(`Storage check ${uniqueLabel} completed`);
+				return resStorage;
+			});
+
+			checks.push(async () => {
+				console.log(`Checking ${uniqueLabel} Cache...`);
+				const resCache = await this.cacheHealthIndicator.isHealthy('cache');
+				console.log(`Cache check ${uniqueLabel} completed`);
+				return resCache;
+			});
 
 			if (process.env.REDIS_ENABLED === 'true') {
 				checks.push(async () => {
@@ -66,6 +69,7 @@ export class HealthController {
 					return resRedis;
 				});
 			}
+			*/
 
 			const result = await this.health.check(checks);
 

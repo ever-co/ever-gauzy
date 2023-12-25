@@ -26,17 +26,9 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
-	assetPath = path.join(
-		path.resolve(
-			__dirname,
-			'../../../',
-			...['apps', 'api', 'src', 'assets']
-		)
-	);
+	assetPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets']));
 
-	assetPublicPath = path.join(
-		path.resolve(__dirname, '../../../', ...['apps', 'api', 'public'])
-	);
+	assetPublicPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']));
 }
 
 console.log('Default Config -> assetPath: ' + assetPath);
@@ -59,6 +51,10 @@ export const defaultConfiguration: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
+		retryAttempts: 100,
+		retryDelay: 3000,
+		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
+		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
 		...dbConnectionConfig
 	},
 	plugins: [],
