@@ -38,7 +38,7 @@ export class OrganizationTaskSettingService extends TenantAwareCrudService<Organ
             return await this.findOneByOptions({ where: whereConditions });
         } catch (error) {
             // Handle errors during the retrieving operation.
-            console.error('Error during organization task settings retrieval:', error);
+            console.error('Error during organization task settings retrieval:', error.message);
         }
     }
 }
