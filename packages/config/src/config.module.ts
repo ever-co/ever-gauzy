@@ -12,10 +12,11 @@ import configs from './config';
 		 */
 		NestConfigModule.forRoot({
 			isGlobal: true,
-			load: [...configs],
-		}),
+			cache: true,
+			load: [...configs]
+		})
 	],
 	providers: [ConfigService],
 	exports: [ConfigService]
 })
-export class ConfigModule { }
+export class ConfigModule {}

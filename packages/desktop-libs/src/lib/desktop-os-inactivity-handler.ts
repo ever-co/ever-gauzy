@@ -161,18 +161,21 @@ export class DesktopOsInactivityHandler {
 		return auth && auth.isRemoveIdleTime;
 	}
 
-	private async _removeIdleTime(isStillWorking: boolean): Promise<void> {
-		if (!isStillWorking) this._powerManager.pauseTracking();
+	private async _removeIdleTime(isWorking: boolean): Promise<void> {
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
+		const now = moment().clone();
+		const idleDuration = now.diff(this._startedAt, 'minutes');
 		this._stoppedAt = new Date();
-		this._startedAt = moment(this._startedAt).subtract(inactivityTimeLimit, 'minutes').toDate();
+		this._startedAt = now.subtract(inactivityTimeLimit + idleDuration, 'minutes').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
 		const timer = await this._timerService.findLastOne();
+		const lastInterval = await this._intervalService.findLastInterval();
+		timer.timeslotId = lastInterval?.remoteId;
 		this._powerManager.window.webContents.send('remove_idle_time', {
-			timer: timer,
-			isWorking: isStillWorking,
-			timeslotIds
+			timeslotIds,
+			isWorking,
+			timer
 		});
 	}
 
