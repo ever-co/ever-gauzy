@@ -6955,7 +6955,7 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@nebular/auth@^11.0.0":
+"@nebular/auth@^11.0.1":
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-11.0.1.tgz#7c54bf3db03c9a24474842bf022097e0e274a4c8"
   integrity sha512-h7gbh5aoCk95Xr9I4+ep8TABrAwfsxzSSt91s2s6SHVmddggvASUAHbK9UEbdf6oL0zPQPkInWETuMIG5VZUvA==
@@ -6967,21 +6967,21 @@
   resolved "https://registry.yarnpkg.com/@nebular/bootstrap/-/bootstrap-9.0.3.tgz#142bc5dce95a30203dde0b4b0d0ef849dda51471"
   integrity sha512-JDmCnfmg3Yh9P8pDpWTcmbVpcA8PiT/MJdfJc13hgTlGD48aC6wKDbHN9h0FpiN+uEoIaPwJ/+zXVbwJK6buLw==
 
-"@nebular/eva-icons@^11.0.0":
+"@nebular/eva-icons@^11.0.1":
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-11.0.1.tgz#bfd12fad33c94e5938732738d1efb038f94f8836"
   integrity sha512-dLPhQy0ciVv9jmskFIdaHJlFoEzOHNQv64/mUf70I551TMp9Xl3wubz2iL/DfS5SgTl+F3ZkzUUdGZu0yAAx2g==
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/security@^11.0.0":
+"@nebular/security@^11.0.1":
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/@nebular/security/-/security-11.0.1.tgz#264aafea8b9d11df5f08be0ae6381425c1599eb8"
   integrity sha512-iIgf44hEpMklQDyN52MrOK/P1AP/DKo2raK86S3Rj+LGja18tbP6nZxZGcG6dba/Bt5espFDfg4ymQ0C3pAKsA==
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/theme@^11.0.0":
+"@nebular/theme@^11.0.1":
   version "11.0.1"
   resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-11.0.1.tgz#a9263d2f626b95eb3f51ae442e51697d823decb7"
   integrity sha512-ncKqg25LdPAsbP2SEAso5xrQgJsjoGXnOLBIGU4uyT0p8k8oAO2VZ5+8lH60j/HfOk1JbZnuUpA5gMbgo/hjNA==

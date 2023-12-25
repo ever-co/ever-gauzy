@@ -40,7 +40,7 @@ export class TeamsMutationComponent implements OnInit {
 			],
 			imageId: [],
 		});
-		form.get('memberIds').setValue([]);
+		form.get('memberIds').setValue(null);
 		form.get('managerIds').setValue([]);
 		form.get('projects').setValue([]);
 		form.get('tags').setValue([]);
