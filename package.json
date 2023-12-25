@@ -255,7 +255,7 @@
     "resolutions": {
         "@angular-devkit/build-angular": "15.2.10",
         "@angular-devkit/architect": "0.1502.10",
-        "@angular-devkit/core": "15.2.10",
+        "@angular-devkit/core": "^15.2.10",
         "rxjs": "^7.4.0",
         "autoprefixer": "10.4.13"
     },
@@ -284,7 +284,7 @@
     "devDependencies": {
         "@angular-devkit/architect": "0.1502.10",
         "@angular-devkit/build-angular": "15.2.10",
-        "@angular-devkit/core": "15.2.10",
+        "@angular-devkit/core": "^15.2.10",
         "@angular-devkit/schematics": "15.2.10",
         "@angular-eslint/eslint-plugin": "14.0.4",
         "@angular-eslint/eslint-plugin-template": "14.0.4",
