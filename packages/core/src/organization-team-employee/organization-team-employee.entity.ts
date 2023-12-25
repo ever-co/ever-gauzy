@@ -95,6 +95,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	public roleId?: IRole['id'];
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true, default: 0 })
+	@IsOptional()
+	@Column({ nullable: true })
 	public order: number;
 }
