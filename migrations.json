@@ -1,36 +1,20 @@
 {
   "migrations": [
     {
-      "version": "13.6.0-beta.0",
-      "description": "Remove old options that are no longer used",
+      "version": "14.0.0-beta.2",
       "cli": "nx",
-      "implementation": "./src/migrations/update-13-6-0/remove-old-task-runner-options",
-      "package": "@nrwl/workspace",
-      "name": "13-6-0-remove-old-task-runner-options"
-    },
-    {
-      "cli": "nx",
-      "version": "13.4.5-beta.7",
-      "description": "Remove the default for the invalid 'style' option for the library generator if configured.",
-      "factory": "./src/migrations/update-13-5-0/remove-library-generator-style-default",
-      "package": "@nrwl/angular",
-      "name": "remove-library-generator-style-default"
-    },
-    {
-      "cli": "nx",
-      "version": "13.5.0-beta.0",
-      "description": "A lot of changes to how MFEs operate were discovered and merged without appropriate migrations. This should cover migrating existing MFEs to the latest, using ESM and optmized production bundles.",
-      "factory": "./src/migrations/update-13-5-0/update-mfe-configs",
-      "package": "@nrwl/angular",
-      "name": "fix-incorrect-mfe-setups"
-    },
-    {
-      "version": "13.4.4-beta.0",
-      "cli": "nx",
-      "description": "Create a root babel config file if it doesn't exist and using babel-jest in jest.config.js and add @nrwl/web as needed",
-      "factory": "./src/migrations/update-13-4-4/add-missing-root-babel-config",
+      "description": "Update move jest config files to .ts files.",
+      "factory": "./src/migrations/update-14-0-0/update-jest-config-ext",
       "package": "@nrwl/jest",
-      "name": "add-missing-root-babel-config"
+      "name": "update-jest-config-extensions"
+    },
+    {
+      "cli": "nx",
+      "version": "14.0.0-beta.1",
+      "description": "Rename mfe.config.js to module-federation.config.js for consistent terminology.",
+      "factory": "./src/migrations/update-14-0-0/rename-mf-config",
+      "package": "@nrwl/angular",
+      "name": "rename-module-federation-config"
     }
   ]
 }
