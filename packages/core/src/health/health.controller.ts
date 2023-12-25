@@ -6,10 +6,12 @@ import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { v4 as uuid } from 'uuid';
 import { DataSource } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @Controller('health')
 export class HealthController {
 	constructor(
+		@InjectDataSource()
 		private readonly dataSource: DataSource,
 		private readonly health: HealthCheckService,
 		private readonly db: TypeOrmHealthIndicator,
@@ -42,7 +44,6 @@ export class HealthController {
 				return resDatabase;
 			});
 
-			/*
 			checks.push(async () => {
 				console.log(`Checking ${uniqueLabel} Storage...`);
 				const resStorage = await this.disk.checkStorage('storage', {
@@ -68,8 +69,7 @@ export class HealthController {
 					console.log(`Redis check ${uniqueLabel} completed`);
 					return resRedis;
 				});
-			}
-			*/
+			}			
 
 			const result = await this.health.check(checks);
 
