@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 
-export class AlterTableOrganisationTeamEmployee1703423944296 implements MigrationInterface {
-	name = 'AlterTableOrganisationTeamEmployee1703423944296';
+export class AlterTableOrganizationTeamEmployee1703423944296 implements MigrationInterface {
+	name = 'AlterTableOrganizationTeamEmployee1703423944296';
 
 	/**
 	 * Up Migration
@@ -11,6 +11,7 @@ export class AlterTableOrganisationTeamEmployee1703423944296 implements Migratio
 	 */
 	public async up(queryRunner: QueryRunner): Promise<any> {
 		console.log(chalk.yellow(this.name + ' start running!'));
+
 		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
 			await this.sqliteUpQueryRunner(queryRunner);
 		} else {
@@ -55,7 +56,6 @@ export class AlterTableOrganisationTeamEmployee1703423944296 implements Migratio
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// some sql queries here
 	}
 
 	/**
@@ -64,6 +64,5 @@ export class AlterTableOrganisationTeamEmployee1703423944296 implements Migratio
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		// some sql queries here
 	}
 }
