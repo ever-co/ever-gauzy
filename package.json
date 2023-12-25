@@ -253,9 +253,9 @@
         ]
     },
     "resolutions": {
-        "@angular-devkit/build-angular": "13.2.2",
-        "@angular-devkit/architect": "^0.1302.2",
-        "@angular-devkit/core": "^13.2.2",
+        "@angular-devkit/build-angular": "15.2.10",
+        "@angular-devkit/architect": "0.1502.10",
+        "@angular-devkit/core": "15.2.10",
         "rxjs": "^7.4.0",
         "autoprefixer": "10.4.5"
     },

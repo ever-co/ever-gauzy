@@ -449,13 +449,6 @@
   resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-15.2.10.tgz#829a802aaf40bfab21d71463023a3b517500ffa9"
   integrity sha512-G0g0teF4pBqLTgfyLcoBl55g91sCZvBK+V4VgTD/hXGpXyMNlNpOsgECSMliGQoJlsRLEugFsSlBNqy7CRoBtw==
 
-"@angular/material@14.2.7":
-  version "14.2.7"
-  resolved "https://registry.yarnpkg.com/@angular/material/-/material-14.2.7.tgz#678c657197268eba6814c757152f8d178ff08866"
-  integrity sha512-WXHh8pEStpgkXZJmYOg2cI8BSHkV82ET4XTJCNPdveumaCn1UYnaNzsXD13kw5z+zmy8CufhFEzdXTrv/yt7KQ==
-  dependencies:
-    tslib "^2.3.0"
-
 "@angular/material@15.2.9":
   version "15.2.9"
   resolved "https://registry.yarnpkg.com/@angular/material/-/material-15.2.9.tgz#d49f18660053bf9eae008e4738ebc65334a28491"
