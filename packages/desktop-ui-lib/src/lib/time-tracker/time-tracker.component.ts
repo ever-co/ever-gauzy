@@ -1360,98 +1360,103 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					try {
 						const { tenantId, organizationId } = this._store;
 						const { employeeId } = this.userData;
-						const payload = {
-							timeslotIds: [..._.uniq(arg.timeslotIds)],
+
+						const timeSlotPayload = {
+							timeslotIds: [...new Set(arg.timeslotIds)],
 							token: this.token,
 							apiHost: this.apiHost,
 							tenantId,
-							organizationId,
+							organizationId
 						};
+
 						const notification = {
 							message: 'Idle time successfully deleted',
-							title: this._environment.DESCRIPTION,
+							title: this._environment.DESCRIPTION
 						};
-						const isReadyForDeletion =
-							!this._isOffline && payload.timeslotIds.length > 0;
+
+						const isReadyForDeletion = !this._isOffline && timeSlotPayload.timeslotIds.length > 0;
+
 						if (isReadyForDeletion) {
-							let timelog = null;
-							// Silent delete and restart
-							if (arg.isWorking && this.start) {
-								const params = {
-									token: this.token,
-									note: this.note,
-									projectId: this.projectSelect,
-									taskId: this.taskSelect,
-									organizationId: this._store.organizationId,
-									tenantId: this._store.tenantId,
-									organizationContactId:
-										this.organizationContactId,
-									apiHost: this.apiHost,
-								};
-								this.timeTrackerService
-									.toggleApiStop({
-										...params,
+							const apiParams = {
+								token: this.token,
+								note: this.note,
+								projectId: this.projectSelect,
+								taskId: this.taskSelect,
+								organizationId,
+								tenantId,
+								organizationContactId: this.organizationContactId,
+								apiHost: this.apiHost
+							};
+
+							let timeLog = null;
+
+							if (arg.isWorking) {
+								if (this.start) {
+									await this.timeTrackerService.toggleApiStop({
+										...apiParams,
 										...arg.timer,
-										stoppedAt: new Date(),
-									})
-									.then(() =>
-										this.timeTrackerService
-											.deleteTimeSlots(payload)
-											.then(async () => {
-												console.log('Deleted');
-												timelog =
-													await this.timeTrackerService.toggleApiStart(
-														{
-															...params,
-															startedAt:
-																new Date(),
-														}
-													);
-												await this.getTodayTime(
-													{ ...payload, employeeId },
-													true
-												);
-											})
-									);
-							} else {
-								do {
-									await this.getTimerStatus(payload);
-									console.log('Waiting...');
-								} while (this.timerStatus.running);
-								const isDeleted =
-									await this.timeTrackerService.deleteTimeSlots(
-										payload
-									);
+										stoppedAt: new Date()
+									});
+								}
+
+								const isDeleted = await this.timeTrackerService.deleteTimeSlots(timeSlotPayload);
+
 								if (isDeleted) {
-									timelog = this.timerStatus.lastLog;
+									console.log('SUCCESS: Deleted');
+								} else {
+									console.warn('WARN: Unexpected error appears.');
+								}
+
+								timeLog = await this.timeTrackerService.toggleApiStart({
+									...apiParams,
+									startedAt: new Date()
+								});
+
+								await this.getTodayTime({ ...timeSlotPayload, employeeId }, true);
+							} else {
+								const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', {
+									quitApp: this.quitApp
+								});
+
+								timeLog = await this.timeTrackerService.toggleApiStop({
+									...apiParams,
+									...timer,
+									stoppedAt: new Date()
+								});
+
+								const isDeleted = await this.timeTrackerService.deleteTimeSlots(timeSlotPayload);
+
+								if (isDeleted) {
+									console.log('SUCCESS: Deleted');
+								} else {
+									console.warn('WARN: Unexpected error appears.');
 								}
 							}
+
 							asapScheduler.schedule(async () => {
-								event.sender.send('update_session', {
-									...timelog,
-								});
+								event.sender.send('update_session', { ...timeLog });
+
 								try {
-									await this.electronService.ipcRenderer.invoke(
-										'UPDATE_SYNCED_TIMER',
-										{
-											lastTimer: timelog,
-											...arg.timer,
-										}
-									);
+									const timeSlotId = arg.timer?.timeslotId;
+
+									await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+										lastTimer: timeLog,
+										...arg.timer,
+										...(timeSlotId && { timeSlotId })
+									});
 								} catch (error) {
-									this._errorHandlerService.handleError(
-										error
-									);
+									this._errorHandlerService.handleError(error);
 								}
 							});
 						}
+
 						if (this._isOffline || isReadyForDeletion) {
 							this.refreshTimer();
 							this._toastrNotifier.success(notification.message);
 							this._nativeNotifier.success(notification.message);
 						}
 					} catch (error) {
-						console.log('ERROR', error);
+						this._errorHandlerService.handleError(error);
 					}
 				});
 			}

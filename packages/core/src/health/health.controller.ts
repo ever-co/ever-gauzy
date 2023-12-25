@@ -1,97 +1,83 @@
 import { Public } from '@gauzy/common';
 import { Controller, Get } from '@nestjs/common';
-import {
-	HealthCheckService,
-	TypeOrmHealthIndicator,
-	DiskHealthIndicator,
-	MicroserviceHealthIndicator,
-	MicroserviceHealthIndicatorOptions
-} from '@nestjs/terminus';
+import { HealthCheckService, TypeOrmHealthIndicator, DiskHealthIndicator } from '@nestjs/terminus';
 import * as path from 'path';
-import { RedisOptions, Transport } from '@nestjs/microservices';
-import { ConnectionOptions } from 'tls';
-import { CustomHealthIndicator } from './custom-health.indicator';
+import { CacheHealthIndicator } from './indicators/cache-health.indicator';
+import { RedisHealthIndicator } from './indicators/redis-health.indicator';
+import { v4 as uuid } from 'uuid';
+import { DataSource } from 'typeorm';
 
 @Controller('health')
 export class HealthController {
 	constructor(
+		private readonly dataSource: DataSource,
 		private readonly health: HealthCheckService,
 		private readonly db: TypeOrmHealthIndicator,
 		private readonly disk: DiskHealthIndicator,
-		private microservice: MicroserviceHealthIndicator,
-		private customHealthIndicator: CustomHealthIndicator
+		private readonly cacheHealthIndicator: CacheHealthIndicator,
+		private readonly redisHealthIndicator: RedisHealthIndicator
 	) {}
 
 	@Public()
 	@Get()
 	async check() {
-		const checks = [
-			async () =>
-				await this.disk.checkStorage('storage', { path: path.resolve(__dirname), thresholdPercent: 99.999999 }), // basically will fail if disk is full
-			async () => await this.db.pingCheck('database', { timeout: 300 }),
-			async () => await this.customHealthIndicator.isHealthy('cache')
-		];
+		const uniqueLabel = `HealthCheckExecutionTimer-${uuid()}`;
+		console.log('Health check started: ', uniqueLabel);
+		console.time(uniqueLabel);
 
-		// NOTE: for some reason can't connect to Redis in my tests (even though it works in the other places)
-		if (false && process.env.REDIS_ENABLED === 'true') {
-			const url =
-				process.env.REDIS_URL ||
-				(process.env.REDIS_TLS === 'true'
-					? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-					: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+		const queryRunner = this.dataSource.createQueryRunner();
 
-			console.log('REDIS_URL: ', url);
+		try {
+			await queryRunner.connect();
 
-			let host, port, username, password;
+			const checks = [];
 
-			const isTls = url.startsWith('rediss://');
+			checks.push(async () => {
+				console.log(`Checking ${uniqueLabel} Database...`);
+				const resDatabase = await this.db.pingCheck('database', {
+					connection: queryRunner.connection,
+					timeout: 60000
+				});
+				console.log(`Database check ${uniqueLabel} completed`);
+				return resDatabase;
+			});
 
-			// Removing the protocol part
-			let authPart = url.split('://')[1];
+			checks.push(async () => {
+				console.log(`Checking ${uniqueLabel} Storage...`);
+				const resStorage = await this.disk.checkStorage('storage', {
+					path: path.resolve(__dirname),
+					// basically will fail if disk is full
+					thresholdPercent: 99.999999
+				});
+				console.log(`Storage check ${uniqueLabel} completed`);
+				return resStorage;
+			});
 
-			// Check if the URL contains '@' (indicating the presence of username/password)
-			if (authPart.includes('@')) {
-				// Splitting user:password and host:port
-				let [userPass, hostPort] = authPart.split('@');
-				[username, password] = userPass.split(':');
-				[host, port] = hostPort.split(':');
-			} else {
-				// If there is no '@', it means there is no username/password
-				[host, port] = authPart.split(':');
+			checks.push(async () => {
+				console.log(`Checking ${uniqueLabel} Cache...`);
+				const resCache = await this.cacheHealthIndicator.isHealthy('cache');
+				console.log(`Cache check ${uniqueLabel} completed`);
+				return resCache;
+			});
+
+			if (process.env.REDIS_ENABLED === 'true') {
+				checks.push(async () => {
+					console.log(`Checking ${uniqueLabel} Redis...`);
+					const resRedis = await this.redisHealthIndicator.isHealthy('redis');
+					console.log(`Redis check ${uniqueLabel} completed`);
+					return resRedis;
+				});
 			}
 
-			port = parseInt(port);
+			const result = await this.health.check(checks);
 
-			const connection: ConnectionOptions = {
-				host: host,
-				port: port,
-				passphrase: password,
-				rejectUnauthorized: process.env.NODE_ENV === 'production'
-			};
+			console.timeEnd(uniqueLabel);
 
-			const options: MicroserviceHealthIndicatorOptions<RedisOptions> = {
-				transport: Transport.REDIS,
-				timeout: 300,
-				options: {
-					host: host,
-					port: port,
-					username: username,
-					password: password,
-					tls: isTls ? connection : undefined
-				}
-			};
+			console.log(`Health check ${uniqueLabel} result: ${JSON.stringify(result)}`);
 
-			console.log('REDIS_OPTIONS: ', JSON.stringify(options));
-
-			const redisCheck = this.microservice.pingCheck<RedisOptions>('redis', options);
-
-			checks.push(async () => redisCheck);
+			return result;
+		} finally {
+			await queryRunner.release();
 		}
-
-		const result = await this.health.check(checks);
-
-		console.log('Health check result: ', JSON.stringify(result));
-
-		return result;
 	}
 }

@@ -5,7 +5,7 @@ import { Cache } from 'cache-manager';
 import { v4 as uuid } from 'uuid';
 
 @Injectable()
-export class CustomHealthIndicator extends HealthIndicator {
+export class CacheHealthIndicator extends HealthIndicator {
 	constructor(
 		@Inject(CACHE_MANAGER)
 		private cacheManager: Cache
@@ -17,9 +17,15 @@ export class CustomHealthIndicator extends HealthIndicator {
 		if (key == 'cache') {
 			const randomKey = 'health-check-' + uuid();
 
-			await this.cacheManager.set(randomKey, 'health', 1000);
+			let isHealthy = false;
 
-			const isHealthy = (await this.cacheManager.get(randomKey)) === 'health';
+			try {
+				// we try to save data and load it again
+				await this.cacheManager.set(randomKey, 'health', 60 * 1000);
+				isHealthy = (await this.cacheManager.get(randomKey)) === 'health';
+			} catch (err) {
+				console.error('Error to save / get data from Cache', err);
+			}
 
 			const result = this.getStatus(key, isHealthy, {
 				cacheType: process.env.REDIS_ENABLED === 'true' ? 'redis' : 'memory'
