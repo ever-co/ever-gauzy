@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
-import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import {
 	OrganizationProject,
 	OrganizationTeam,
@@ -30,7 +30,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
-	@Column({ nullable: true, unique: true })
+	@Column({ nullable: true })
 	order?: number;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -51,6 +51,9 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@Column({ default: false })
 	isCollapsed?: boolean;
 
+	/**
+	 * Additional Property
+	 */
 	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
@@ -84,7 +87,11 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.statuses, {
+	@ManyToOne(() => OrganizationTeam, (it) => it.statuses, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
