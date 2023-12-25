@@ -260,17 +260,17 @@
     "autoprefixer": "10.4.5"
   },
   "dependencies": {
-    "@angular/animations": "13.2.2",
+    "@angular/animations": "14.3.0",
     "@angular/cdk": "13.2.2",
-    "@angular/common": "13.2.2",
-    "@angular/compiler": "13.2.2",
-    "@angular/core": "13.2.2",
-    "@angular/forms": "13.2.2",
-    "@angular/language-service": "13.2.2",
-    "@angular/platform-browser": "13.2.2",
-    "@angular/platform-browser-dynamic": "13.2.2",
-    "@angular/router": "13.2.2",
-    "@angular/service-worker": "13.2.2",
+    "@angular/common": "14.3.0",
+    "@angular/compiler": "14.3.0",
+    "@angular/core": "14.3.0",
+    "@angular/forms": "14.3.0",
+    "@angular/language-service": "14.3.0",
+    "@angular/platform-browser": "14.3.0",
+    "@angular/platform-browser-dynamic": "14.3.0",
+    "@angular/router": "14.3.0",
+    "@angular/service-worker": "14.3.0",
     "autoprefixer": "10.4.5",
     "bcrypt": "^5.1.0",
     "dotenv": "^16.0.3",
@@ -289,7 +289,7 @@
     "@angular-eslint/eslint-plugin": "^13.0.1",
     "@angular-eslint/eslint-plugin-template": "^13.0.1",
     "@angular/cli": "13.2.2",
-    "@angular/compiler-cli": "13.2.2",
+    "@angular/compiler-cli": "14.3.0",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^17.6.6",
     "@commitlint/config-lerna-scopes": "^17.6.6",
@@ -371,7 +371,7 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-language-service": "^0.9.9",
     "typedoc": "^0.23.24",
-    "typescript": "4.5.5",
+    "typescript": "4.8.4",
     "webpack": "^5.58.1",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.9.0",
@@ -423,4 +423,3 @@
     "framework": "angular"
   }
 }
-
