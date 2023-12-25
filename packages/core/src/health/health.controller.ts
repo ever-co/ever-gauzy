@@ -42,7 +42,6 @@ export class HealthController {
 				return resDatabase;
 			});
 
-			/*
 			checks.push(async () => {
 				console.log(`Checking ${uniqueLabel} Storage...`);
 				const resStorage = await this.disk.checkStorage('storage', {
@@ -69,7 +68,6 @@ export class HealthController {
 					return resRedis;
 				});
 			}
-			*/
 
 			const result = await this.health.check(checks);
 
