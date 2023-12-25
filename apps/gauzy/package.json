@@ -175,7 +175,7 @@
 		"@angular-devkit/build-ng-packagr": "^0.1002.0",
 		"@angular-devkit/core": "^13.2.2",
 		"@angular-devkit/schematics": "^13.2.2",
-		"@angular/cli": "14.2.13",
+		"@angular/cli": "15.2.10",
 		"@angular/compiler-cli": "15.2.10",
 		"@types/async": "^3.2.5",
 		"@types/bcrypt": "^5.0.0",
