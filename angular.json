@@ -5,9 +5,11 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nstudio/xplat",
 		"packageManager": "yarn",
-		"analytics": false
+		"analytics": false,
+		"schematicCollections": [
+			"@nstudio/xplat"
+		]
 	},
 	"version": 1,
 	"newProjectRoot": "",
@@ -1053,6 +1055,5 @@
 			"linter": "eslint",
 			"unitTestRunner": "jest"
 		}
-	},
-	"defaultProject": "gauzy"
+	}
 }

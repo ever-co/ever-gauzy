@@ -288,7 +288,7 @@
         "@angular-devkit/schematics": "14.2.13",
         "@angular-eslint/eslint-plugin": "14.0.4",
         "@angular-eslint/eslint-plugin-template": "14.0.4",
-        "@angular/cli": "13.2.2",
+        "@angular/cli": "14.2.13",
         "@angular/compiler-cli": "15.2.10",
         "@commitlint/cli": "^17.6.6",
         "@commitlint/config-conventional": "^17.6.6",
