@@ -186,7 +186,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			return statuses;
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
-			console.error('Error while creating task statuses', error.message);
+			console.error('Error while creating task statuses', error);
 		}
 	}
 }
