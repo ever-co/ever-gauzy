@@ -1,0 +1,152 @@
+{
+	"name": "gauzy",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"projectType": "application",
+	"generators": {
+		"@nrwl/workspace:component": {
+			"style": "scss"
+		}
+	},
+	"sourceRoot": "apps/gauzy/src",
+	"prefix": "gauzy",
+	"targets": {
+		"build": {
+			"executor": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
+			"options": {
+				"verbose": true,
+				"aot": true,
+				"customWebpackConfig": {
+					"path": "apps/gauzy/config/custom-webpack.config.js"
+				},
+				"outputPath": "dist/apps/gauzy",
+				"index": "apps/gauzy/src/index.html",
+				"main": "apps/gauzy/src/main.ts",
+				"polyfills": "apps/gauzy/src/polyfills.ts",
+				"tsConfig": "apps/gauzy/tsconfig.app.json",
+				"stylePreprocessorOptions": {
+					"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+				},
+				"assets": [
+					"apps/gauzy/src/favicon.ico",
+					"apps/gauzy/src/assets",
+					"apps/gauzy/src/manifest.json",
+					"apps/gauzy/src/silent-refresh.html"
+				],
+				"styles": [
+					"node_modules/@nebular/theme/styles/prebuilt/default.css",
+					"node_modules/bootstrap/dist/css/bootstrap.css",
+					"node_modules/typeface-exo/index.css",
+					"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+					"node_modules/ionicons/dist/scss/ionicons.scss",
+					"node_modules/@fortawesome/fontawesome-free/css/all.css",
+					"node_modules/socicon/css/socicon.css",
+					"node_modules/nebular-icons/scss/nebular-icons.scss",
+					"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+					"node_modules/leaflet/dist/leaflet.css",
+					"apps/gauzy/src/app/@theme/styles/styles.scss"
+				],
+				"scripts": [
+					"node_modules/echarts/dist/echarts.min.js",
+					"node_modules/echarts/dist/extension/bmap.min.js",
+					"node_modules/chart.js/dist/Chart.min.js"
+				],
+				"allowedCommonJsDependencies": [
+					"underscore.string",
+					"moment-timezone",
+					"@gauzy/contracts",
+					"cloudinary-core",
+					"angular2-chartjs",
+					"brace/mode/handlebars"
+				]
+			},
+			"configurations": {
+				"production": {
+					"fileReplacements": [
+						{
+							"replace": "apps/gauzy/src/environments/environment.ts",
+							"with": "apps/gauzy/src/environments/environment.prod.ts"
+						}
+					],
+					"optimization": true,
+					"outputHashing": "all",
+					"serviceWorker": false,
+					"sourceMap": false,
+					"namedChunks": false,
+					"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
+					"showCircularDependencies": false,
+					"aot": true,
+					"verbose": true,
+					"extractLicenses": true,
+					"vendorChunk": true,
+					"buildOptimizer": true,
+					"statsJson": false,
+					"progress": true,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "100kb",
+							"maximumError": "1mb"
+						}
+					]
+				},
+				"local": {
+					"optimization": false,
+					"buildOptimizer": false,
+					"vendorChunk": true,
+					"extractLicenses": false,
+					"sourceMap": true,
+					"namedChunks": true,
+					"budgets": [
+						{
+							"type": "initial",
+							"maximumWarning": "20mb",
+							"maximumError": "40mb"
+						},
+						{
+							"type": "anyComponentStyle",
+							"maximumWarning": "1000kb",
+							"maximumError": "20mb"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:dev-server",
+			"options": {
+				"browserTarget": "gauzy:build",
+				"proxyConfig": "apps/gauzy/proxy.conf.json"
+			},
+			"configurations": {
+				"production": {
+					"browserTarget": "gauzy:build:production",
+					"proxyConfig": "apps/gauzy/proxy.prod.conf.json"
+				},
+				"local": {
+					"browserTarget": "gauzy:build:local",
+					"proxyConfig": "apps/gauzy/proxy.conf.json"
+				}
+			},
+			"defaultConfiguration": "local"
+		},
+		"extract-i18n": {
+			"executor": "@angular-devkit/build-angular:extract-i18n",
+			"options": {
+				"browserTarget": "gauzy:build"
+			}
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"options": {
+				"jestConfig": "apps/gauzy/jest.config.js",
+				"tsConfig": "apps/gauzy/tsconfig.spec.json",
+				"setupFile": "apps/gauzy/src/test-setup.ts"
+			}
+		}
+	}
+}

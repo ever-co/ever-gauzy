@@ -1,0 +1,49 @@
+{
+	"name": "api-desktop",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/desktop-api/src",
+	"projectType": "application",
+	"prefix": "api-desktop",
+	"generators": {},
+	"targets": {
+		"build": {
+			"executor": "@nrwl/node:webpack",
+			"options": {
+				"maxWorkers": 4,
+				"memoryLimit": 4000,
+				"webpackConfig": "tools/build/webpack.config.js",
+				"outputPath": "dist/apps/desktop/desktop-api",
+				"main": "packages/desktop-api/src/main.ts",
+				"tsConfig": "packages/desktop-api/tsconfig.app.json",
+				"assets": ["packages/desktop-api/src/assets"]
+			},
+			"configurations": {
+				"production": {
+					"optimization": true,
+					"extractLicenses": false,
+					"inspect": false,
+					"fileReplacements": [
+						{
+							"replace": "packages/desktop-api/src/environments/environment.ts",
+							"with": "packages/desktop-api/src/environments/environment.prod.ts"
+						}
+					]
+				}
+			}
+		},
+		"serve": {
+			"executor": "@nrwl/node:node",
+			"options": {
+				"buildTarget": "api-desktop:build"
+			}
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"options": {
+				"jestConfig": "packages/desktop-api/jest.config.js",
+				"tsConfig": "packages/desktop-api/tsconfig.spec.json",
+				"passWithNoTests": true
+			}
+		}
+	}
+}
