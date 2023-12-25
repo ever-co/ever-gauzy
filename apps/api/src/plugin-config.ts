@@ -1,4 +1,3 @@
-import { TlsOptions } from 'tls';
 import {
 	IPluginConfig,
 	DEFAULT_API_PORT,
@@ -6,8 +5,7 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_BASE_URL
 } from '@gauzy/common';
-import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
-import { DataSourceOptions } from 'typeorm';
+import { dbConnectionConfig } from '@gauzy/config';
 import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
@@ -49,9 +47,11 @@ export const pluginConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
+		retryAttempts: 100,
+		retryDelay: 3000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
-		...getDbConfig()
+		...dbConnectionConfig
 	},
 	assetOptions: {
 		assetPath: assetPath,
@@ -59,102 +59,3 @@ export const pluginConfig: IPluginConfig = {
 	},
 	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
 };
-
-function getDbConfig(): DataSourceOptions {
-	let dbType: string;
-
-	if (process.env.DB_TYPE) dbType = process.env.DB_TYPE;
-	else dbType = 'better-sqlite3';
-
-	console.log('DB Type: ' + dbType);
-
-	switch (dbType) {
-		case 'mongodb':
-			throw 'MongoDB not supported yet';
-
-		case 'postgres':
-			const ssl = process.env.DB_SSL_MODE === 'true' ? true : undefined;
-
-			let sslParams: TlsOptions;
-
-			if (ssl) {
-				const base64data = process.env.DB_CA_CERT;
-				const buff = Buffer.from(base64data, 'base64');
-				const sslCert = buff.toString('ascii');
-
-				sslParams = {
-					rejectUnauthorized: true,
-					ca: sslCert
-				};
-			}
-
-			const postgresConnectionOptions: PostgresConnectionOptions = {
-				type: dbType,
-				ssl: ssl ? sslParams : undefined,
-				host: process.env.DB_HOST || 'localhost',
-				port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-				database: process.env.DB_NAME || 'postgres',
-				username: process.env.DB_USER || 'postgres',
-				password: process.env.DB_PASS || 'root',
-				logging:
-					process.env.DB_LOGGING === 'false'
-						? false
-						: process.env.DB_LOGGING === 'all'
-							? 'all'
-							: process.env.DB_LOGGING === 'query'
-								? ['query', 'error']
-								: ['error'], // by default set to error only
-				logger: 'advanced-console',
-				// log queries that take more than 3 sec as warnings
-				maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-					? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-					: 3000,
-				synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
-				uuidExtension: 'pgcrypto',
-				// See https://typeorm.io/data-source-options#common-data-source-options
-				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
-				extra: {
-					// based on  https://node-postgres.com/api/pool max connection pool size
-					max: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
-					poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
-					// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-					connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
-						? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-						: 60000, // 60 seconds
-					// number of milliseconds a client must sit idle in the pool and not be checked out
-					// before it is disconnected from the backend and discarded
-					idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000 // 10 seconds
-				}
-			};
-
-			return postgresConnectionOptions;
-
-		case 'sqlite':
-			const sqlitePath = process.env.DB_PATH || path.join(path.resolve('.', ...['apps', 'api', 'data']), 'gauzy.sqlite3');
-
-			return {
-				type: dbType,
-				database: sqlitePath,
-				logging: 'all',
-				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
-				synchronize: process.env.DB_SYNCHRONIZE === 'true' // We are using migrations, synchronize should be set to false.
-			};
-
-		case 'better-sqlite3':
-			const betterSqlitePath = process.env.DB_PATH || path.join(path.resolve('.', ...['apps', 'api', 'data']), 'gauzy.sqlite3');
-
-			return {
-				type: dbType,
-				database: betterSqlitePath,
-				logging: 'all',
-				logger: 'file', // Removes console logging, instead logs all queries in a file ormlogs.log
-				synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
-				prepareDatabase: (db) => {
-					if (!process.env.IS_ELECTRON) {
-						// Enhance performance
-						db.pragma('journal_mode = WAL');
-					}
-				}
-			};
-	}
-}

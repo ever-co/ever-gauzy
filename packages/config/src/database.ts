@@ -50,13 +50,15 @@ switch (dbType) {
 				process.env.DB_LOGGING == 'false'
 					? false
 					: process.env.DB_LOGGING == 'all'
-						? 'all'
-						: process.env.DB_LOGGING == 'query'
-							? ['query', 'error']
-							: ['error'], // by default set to error only
+					? 'all'
+					: process.env.DB_LOGGING == 'query'
+					? ['query', 'error']
+					: ['error'], // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 3 sec as warnings
-			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 3000,
+			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+				? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+				: 10000,
 			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			uuidExtension: 'pgcrypto',
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
@@ -65,10 +67,14 @@ switch (dbType) {
 			poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
 			extra: {
 				// based on  https://node-postgres.com/api/pool max connection pool size
-				max: process.env.DB_POOL_SIZE || 80,
+				max: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
+				minConnection: 10,
+				maxConnection: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
 				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 60000, // 60 seconds
+				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
+					? parseInt(process.env.DB_CONNECTION_TIMEOUT)
+					: 5000, // 5 seconds
 				// number of milliseconds a client must sit idle in the pool and not be checked out
 				// before it is disconnected from the backend and discarded
 				idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000 // 10 seconds
