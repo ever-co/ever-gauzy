@@ -30,13 +30,13 @@
 		"terser-webpack-plugin": "^5.2.5"
 	},
 	"dependencies": {
-		"@angular/animations": "13.2.2",
+        "@angular/animations": "14.3.0",
 		"@angular/cdk": "13.2.2",
-		"@angular/common": "13.2.2",
-		"@angular/core": "13.2.2",
-		"@angular/forms": "13.2.2",
+        "@angular/common": "14.3.0",
+		"@angular/core": "14.3.0",
+		"@angular/forms": "14.3.0",
 		"@angular/material": "13.2.2",
-		"@angular/router": "13.2.2",
+		"@angular/router": "14.3.0",
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
