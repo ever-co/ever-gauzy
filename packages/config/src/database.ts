@@ -11,6 +11,7 @@ if (process.env.DB_TYPE) dbType = process.env.DB_TYPE;
 else dbType = 'sqlite';
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
+console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 
 // `process` is a built-in global in Node.js, no need to `require()`
 console.log(chalk.magenta(`Currently running Node.js version %s`), process.version);
@@ -49,16 +50,14 @@ switch (dbType) {
 				process.env.DB_LOGGING == 'false'
 					? false
 					: process.env.DB_LOGGING == 'all'
-					? 'all'
-					: process.env.DB_LOGGING == 'query'
-					? ['query', 'error']
-					: ['error'], // by default set to error only
+						? 'all'
+						: process.env.DB_LOGGING == 'query'
+							? ['query', 'error']
+							: ['error'], // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 3 sec as warnings
-			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-				? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-				: 3000,
-			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false, // We are using migrations, synchronize should be set to false.
+			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 3000,
+			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			uuidExtension: 'pgcrypto',
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
@@ -69,9 +68,7 @@ switch (dbType) {
 				max: process.env.DB_POOL_SIZE || 80,
 				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
-					? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-					: 60000, // 60 seconds
+				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 60000, // 60 seconds
 				// number of milliseconds a client must sit idle in the pool and not be checked out
 				// before it is disconnected from the backend and discarded
 				idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000 // 10 seconds
@@ -92,7 +89,7 @@ switch (dbType) {
 			database: dbPath,
 			logging: 'all',
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-			synchronize: process.env.DB_SYNCHRONIZE === 'true' ? true : false // We are using migrations, synchronize should be set to false.
+			synchronize: process.env.DB_SYNCHRONIZE === 'true' // We are using migrations, synchronize should be set to false.
 		};
 
 		connectionConfig = sqliteConfig;
