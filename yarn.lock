@@ -6962,36 +6962,29 @@
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/auth@^9.0.3":
-  version "9.0.3"
-  resolved "https://registry.yarnpkg.com/@nebular/auth/-/auth-9.0.3.tgz#f8aae8cb317c127dbefe602066681e58bfd85b95"
-  integrity sha512-2kEvoG7rBX5hoHd4V0kAUSG8eLwd2tfV/gdxB9tUdyZzQMBz1XD91Yc68vewelNXr8qpRNEaIHWw5ONTAcx5jA==
-  dependencies:
-    tslib "^2.3.0"
-
 "@nebular/bootstrap@^9.0.3":
   version "9.0.3"
   resolved "https://registry.yarnpkg.com/@nebular/bootstrap/-/bootstrap-9.0.3.tgz#142bc5dce95a30203dde0b4b0d0ef849dda51471"
   integrity sha512-JDmCnfmg3Yh9P8pDpWTcmbVpcA8PiT/MJdfJc13hgTlGD48aC6wKDbHN9h0FpiN+uEoIaPwJ/+zXVbwJK6buLw==
 
-"@nebular/eva-icons@^9.0.3":
-  version "9.0.3"
-  resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-9.0.3.tgz#bd79b11df2b95c8768f5f7258099ef168b78ab5f"
-  integrity sha512-aFvMcpyobHCviZKiQx4U3eH/zcj/WkgPuDX1XBDs5RVotlgZ4fcAWql/KbS26W74i6n8rUec6I9EkzxXBU9psw==
+"@nebular/eva-icons@^11.0.0":
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/@nebular/eva-icons/-/eva-icons-11.0.1.tgz#bfd12fad33c94e5938732738d1efb038f94f8836"
+  integrity sha512-dLPhQy0ciVv9jmskFIdaHJlFoEzOHNQv64/mUf70I551TMp9Xl3wubz2iL/DfS5SgTl+F3ZkzUUdGZu0yAAx2g==
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/security@^9.0.3":
-  version "9.0.3"
-  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-9.0.3.tgz#07ff0a5293906703f544f624696495e5088d11b7"
-  integrity sha512-dm47eBX9dz8YxE3xENeKuMue3V50rsiAvTV3jctKDj1AVeankjvpco1PBcFSV2TuNHZxUC5uGF5y1ZaUMoq3pA==
+"@nebular/security@^11.0.0":
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/@nebular/security/-/security-11.0.1.tgz#264aafea8b9d11df5f08be0ae6381425c1599eb8"
+  integrity sha512-iIgf44hEpMklQDyN52MrOK/P1AP/DKo2raK86S3Rj+LGja18tbP6nZxZGcG6dba/Bt5espFDfg4ymQ0C3pAKsA==
   dependencies:
     tslib "^2.3.0"
 
-"@nebular/theme@^9.0.0", "@nebular/theme@^9.0.3":
-  version "9.0.3"
-  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-9.0.3.tgz#504d5b73428ac8515f0cc27a84d491e035ee35ee"
-  integrity sha512-ILUfVkpTeVBg5H3Pr/HKnItdFEIXfHfYO2HJA07mhavuKw0gupYw2v6Ox+nxoww8VTXz8svLKTIta7YYBcpjzg==
+"@nebular/theme@^11.0.0":
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/@nebular/theme/-/theme-11.0.1.tgz#a9263d2f626b95eb3f51ae442e51697d823decb7"
+  integrity sha512-ncKqg25LdPAsbP2SEAso5xrQgJsjoGXnOLBIGU4uyT0p8k8oAO2VZ5+8lH60j/HfOk1JbZnuUpA5gMbgo/hjNA==
   dependencies:
     tslib "^2.3.0"
 
@@ -13783,13 +13776,13 @@ auto-launch@5.0.5:
     untildify "^3.0.2"
     winreg "1.2.4"
 
-autoprefixer@10.4.13, autoprefixer@10.4.5, autoprefixer@^10.2.5, autoprefixer@^10.4.12, autoprefixer@^10.4.9:
-  version "10.4.5"
-  resolved "https://registry.yarnpkg.com/autoprefixer/-/autoprefixer-10.4.5.tgz#662193c744094b53d3637f39be477e07bd904998"
-  integrity sha512-Fvd8yCoA7lNX/OUllvS+aS1I7WRBclGXsepbvT8ZaPgrH24rgXpZzF0/6Hh3ZEkwg+0AES/Osd196VZmYoEFtw==
+autoprefixer@10.4.13, autoprefixer@^10.2.5, autoprefixer@^10.4.12, autoprefixer@^10.4.9:
+  version "10.4.13"
+  resolved "https://registry.yarnpkg.com/autoprefixer/-/autoprefixer-10.4.13.tgz#b5136b59930209a321e9fa3dca2e7c4d223e83a8"
+  integrity sha512-49vKpMqcZYsJjwotvt4+h/BCjJVnhGwcLpDt5xkcaOG3eLrG/HUYLagrihYsQ+qrIBgIzX1Rw7a6L8I/ZA1Atg==
   dependencies:
-    browserslist "^4.20.2"
-    caniuse-lite "^1.0.30001332"
+    browserslist "^4.21.4"
+    caniuse-lite "^1.0.30001426"
     fraction.js "^4.2.0"
     normalize-range "^0.1.2"
     picocolors "^1.0.0"
@@ -14777,7 +14770,7 @@ browserslist@4.21.5:
     node-releases "^2.0.8"
     update-browserslist-db "^1.0.10"
 
-browserslist@^4.0.0, browserslist@^4.14.5, browserslist@^4.16.6, browserslist@^4.20.2, browserslist@^4.21.4, browserslist@^4.21.9, browserslist@^4.22.1:
+browserslist@^4.0.0, browserslist@^4.14.5, browserslist@^4.16.6, browserslist@^4.21.4, browserslist@^4.21.9, browserslist@^4.22.1:
   version "4.22.1"
   resolved "https://registry.yarnpkg.com/browserslist/-/browserslist-4.22.1.tgz#ba91958d1a59b87dab6fed8dfbcb3da5e2e9c619"
   integrity sha512-FEVc202+2iuClEhZhrWy6ZiAcRLvNMyYcxZ8raemul1DYVOVdFsbqckWLdsixQZCpJlwe77Z3UTalE7jsjnKfQ==
@@ -15327,12 +15320,12 @@ caniuse-api@^3.0.0:
     lodash.memoize "^4.1.2"
     lodash.uniq "^4.5.0"
 
-caniuse-lite@^1.0.0, caniuse-lite@^1.0.30001251, caniuse-lite@^1.0.30001332, caniuse-lite@^1.0.30001541:
+caniuse-lite@^1.0.0, caniuse-lite@^1.0.30001251, caniuse-lite@^1.0.30001541:
   version "1.0.30001565"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001565.tgz#a528b253c8a2d95d2b415e11d8b9942acc100c4f"
   integrity sha512-xrE//a3O7TP0vaJ8ikzkD2c2NgcVUvsEe2IvFTntV4Yd1Z9FVzh+gW+enX96L0psrbaFMcVcH2l90xNuGDWc8w==
 
-caniuse-lite@^1.0.30001449, caniuse-lite@^1.0.30001565:
+caniuse-lite@^1.0.30001426, caniuse-lite@^1.0.30001449, caniuse-lite@^1.0.30001565:
   version "1.0.30001571"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001571.tgz#4182e93d696ff42930f4af7eba515ddeb57917ac"
   integrity sha512-tYq/6MoXhdezDLFZuCO/TKboTzuQ/xR5cFdgXPfDtM7/kchBO3b4VWghE/OAi/DV7tTdhmLjZiZBZi1fA/GheQ==
