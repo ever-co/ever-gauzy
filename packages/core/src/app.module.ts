@@ -3,7 +3,7 @@ import { redisStore } from 'cache-manager-redis-yet';
 import { Module } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
-import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
 import { SentryModule, SentryModuleOptions, SENTRY_MODULE_OPTIONS } from './core/sentry/ntegral';
 import { GraphqlInterceptor } from './core/sentry/ntegral';
@@ -251,8 +251,8 @@ function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
 			...sentryIntegrations,
 			host?.httpAdapter
 				? new Integrations.Express({
-						app: host.httpAdapter.getInstance()
-				  })
+					app: host.httpAdapter.getInstance()
+				})
 				: null
 		].filter((i) => !!i),
 		tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
@@ -283,84 +283,84 @@ if (environment.THROTTLE_ENABLED) {
 	imports: [
 		...(process.env.REDIS_ENABLED === 'true'
 			? [
-					CacheModule.registerAsync({
-						isGlobal: true,
-						useFactory: async () => {
-							const url =
-								process.env.REDIS_URL ||
-								(process.env.REDIS_TLS === 'true'
-									? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-									: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+				CacheModule.registerAsync({
+					isGlobal: true,
+					useFactory: async () => {
+						const url =
+							process.env.REDIS_URL ||
+							(process.env.REDIS_TLS === 'true'
+								? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+								: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
 
-							console.log('REDIS_URL: ', url);
+						console.log('REDIS_URL: ', url);
 
-							let host, port, username, password;
+						let host, port, username, password;
 
-							const isTls = url.startsWith('rediss://');
+						const isTls = url.startsWith('rediss://');
 
-							// Removing the protocol part
-							let authPart = url.split('://')[1];
+						// Removing the protocol part
+						let authPart = url.split('://')[1];
 
-							// Check if the URL contains '@' (indicating the presence of username/password)
-							if (authPart.includes('@')) {
-								// Splitting user:password and host:port
-								let [userPass, hostPort] = authPart.split('@');
-								[username, password] = userPass.split(':');
-								[host, port] = hostPort.split(':');
-							} else {
-								// If there is no '@', it means there is no username/password
-								[host, port] = authPart.split(':');
-							}
-
-							port = parseInt(port);
-
-							const storeOptions = {
-								socket: {
-									tls: isTls,
-									host: host,
-									port: port,
-									passphrase: password,
-									rejectUnauthorized: process.env.NODE_ENV === 'production'
-								},
-								url: url,
-								username: username,
-								password: password,
-								isolationPoolOptions: {
-									min: 10,
-									max: 100
-								},
-								ttl: 60 * 60 * 24 * 7 // 1 week,
-							};
-
-							const store = await redisStore(storeOptions);
-
-							store.client
-								.on('error', (err) => {
-									console.log('Redis Client Error: ', err);
-								})
-								.on('connect', () => {
-									console.log('Redis Client Connected');
-								})
-								.on('ready', () => {
-									console.log('Redis Client Ready');
-								})
-								.on('reconnecting', () => {
-									console.log('Redis Client Reconnecting');
-								})
-								.on('end', () => {
-									console.log('Redis Client End');
-								});
-
-							// ping Redis
-							const res = await store.client.ping();
-							console.log('Redis Client Cache Ping: ', res);
-
-							return {
-								store: () => store
-							};
+						// Check if the URL contains '@' (indicating the presence of username/password)
+						if (authPart.includes('@')) {
+							// Splitting user:password and host:port
+							let [userPass, hostPort] = authPart.split('@');
+							[username, password] = userPass.split(':');
+							[host, port] = hostPort.split(':');
+						} else {
+							// If there is no '@', it means there is no username/password
+							[host, port] = authPart.split(':');
 						}
-					})
-			  ]
+
+						port = parseInt(port);
+
+						const storeOptions = {
+							socket: {
+								tls: isTls,
+								host: host,
+								port: port,
+								passphrase: password,
+								rejectUnauthorized: process.env.NODE_ENV === 'production'
+							},
+							url: url,
+							username: username,
+							password: password,
+							isolationPoolOptions: {
+								min: 10,
+								max: 100
+							},
+							ttl: 60 * 60 * 24 * 7 // 1 week,
+						};
+
+						const store = await redisStore(storeOptions);
+
+						store.client
+							.on('error', (err) => {
+								console.log('Redis Client Error: ', err);
+							})
+							.on('connect', () => {
+								console.log('Redis Client Connected');
+							})
+							.on('ready', () => {
+								console.log('Redis Client Ready');
+							})
+							.on('reconnecting', () => {
+								console.log('Redis Client Reconnecting');
+							})
+							.on('end', () => {
+								console.log('Redis Client End');
+							});
+
+						// ping Redis
+						const res = await store.client.ping();
+						console.log('Redis Client Cache Ping: ', res);
+
+						return {
+							store: () => store
+						};
+					}
+				})
+			]
 			: [CacheModule.register({ isGlobal: true })]),
 		ServeStaticModule.forRootAsync({
 			useFactory: async (configService: ConfigService): Promise<ServeStaticModuleOptions[]> => {
@@ -381,11 +381,11 @@ if (environment.THROTTLE_ENABLED) {
 		}),
 		...(environment.sentry && environment.sentry.dsn
 			? [
-					SentryModule.forRootAsync({
-						inject: [ConfigService, HttpAdapterHost],
-						useFactory: createSentryOptions
-					})
-			  ]
+				SentryModule.forRootAsync({
+					inject: [ConfigService, HttpAdapterHost],
+					useFactory: createSentryOptions
+				})
+			]
 			: []),
 		// Probot Configuration
 		ProbotModule.forRoot({
@@ -415,30 +415,30 @@ if (environment.THROTTLE_ENABLED) {
 		/** Jitsu Configuration */
 		...(environment.jitsu.serverHost && environment.jitsu.serverWriteKey
 			? [
-					JitsuAnalyticsModule.forRoot({
-						config: {
-							host: jitsu.serverHost,
-							writeKey: jitsu.serverWriteKey,
-							debug: jitsu.debug,
-							echoEvents: jitsu.echoEvents
-						}
-					})
-			  ]
+				JitsuAnalyticsModule.forRoot({
+					config: {
+						host: jitsu.serverHost,
+						writeKey: jitsu.serverWriteKey,
+						debug: jitsu.debug,
+						echoEvents: jitsu.echoEvents
+					}
+				})
+			]
 			: []),
 		...(environment.THROTTLE_ENABLED
 			? [
-					ThrottlerModule.forRootAsync({
-						inject: [ConfigService],
-						useFactory: () => {
-							return [
-								{
-									ttl: environment.THROTTLE_TTL,
-									limit: environment.THROTTLE_LIMIT
-								}
-							];
-						}
-					})
-			  ]
+				ThrottlerModule.forRootAsync({
+					inject: [ConfigService],
+					useFactory: () => {
+						return [
+							{
+								ttl: environment.THROTTLE_TTL,
+								limit: environment.THROTTLE_LIMIT
+							}
+						];
+					}
+				})
+			]
 			: []),
 		CoreModule,
 		AuthModule,
@@ -570,11 +570,11 @@ if (environment.THROTTLE_ENABLED) {
 		AppService,
 		...(environment.THROTTLE_ENABLED
 			? [
-					{
-						provide: APP_GUARD,
-						useClass: ThrottlerBehindProxyGuard
-					}
-			  ]
+				{
+					provide: APP_GUARD,
+					useClass: ThrottlerBehindProxyGuard
+				}
+			]
 			: []),
 		{
 			provide: APP_INTERCEPTOR,
@@ -582,20 +582,20 @@ if (environment.THROTTLE_ENABLED) {
 		},
 		...(environment.sentry && environment.sentry.dsn
 			? [
-					{
-						provide: SENTRY_MODULE_OPTIONS,
-						useFactory: createSentryOptions,
-						inject: [HttpAdapterHost]
-					},
-					{
-						provide: APP_INTERCEPTOR,
-						useFactory: () => new SentryCustomInterceptor()
-					},
-					{
-						provide: APP_INTERCEPTOR,
-						useFactory: () => new GraphqlInterceptor()
-					}
-			  ]
+				{
+					provide: SENTRY_MODULE_OPTIONS,
+					useFactory: createSentryOptions,
+					inject: [HttpAdapterHost]
+				},
+				{
+					provide: APP_INTERCEPTOR,
+					useFactory: () => new SentryCustomInterceptor()
+				},
+				{
+					provide: APP_INTERCEPTOR,
+					useFactory: () => new GraphqlInterceptor()
+				}
+			]
 			: [])
 	],
 	exports: []
