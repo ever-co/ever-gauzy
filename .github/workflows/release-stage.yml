@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Bump version and push tag
         uses: mathieudutour/github-tag-action@v6.1
