@@ -7076,10 +7076,10 @@
   resolved "https://registry.yarnpkg.com/@nestjsx/util/-/util-5.0.0-alpha.3.tgz#d1182280e9254f0d335efa369da17fa25d260135"
   integrity sha512-UTYIxtyx80M42gOZ0VIInSiOLn78P6k1BCziiN8gE3FglzivQ1RGvPpmsRwioYEWG27gOgnMwOQnXv8Zbq8dzQ==
 
-"@ng-select/ng-select@^8.1.1":
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-8.3.0.tgz#900a160738dc059a4cefaf019d67643534652d01"
-  integrity sha512-AwAuDs+86++D2kEsik2/ZiQuRk0khd1HESofOm1yMBwbzsw+xLSyVOMml/OehDFSOxli7fAkk07wYtzAhxSB3Q==
+"@ng-select/ng-select@^10.0.4":
+  version "10.0.4"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-10.0.4.tgz#46ab5e7bfcf6473868d1584cf5d7f63291346217"
+  integrity sha512-Vc/JIgcFkSgf47cX7+pQQo9HYhDktfqrY7o/ZPGMvu63P7E9d1MibVipqmcLbgms6Ac9lu621CDZPGHdxag7hA==
   dependencies:
     tslib "^2.3.1"
 

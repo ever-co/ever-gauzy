@@ -48,7 +48,7 @@
 		"@nebular/eva-icons": "^11.0.1",
 		"@nebular/security": "^11.0.1",
 		"@nebular/theme": "^11.0.1",
-		"@ng-select/ng-select": "^8.1.1",
+		"@ng-select/ng-select": "^10.0.4",
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
