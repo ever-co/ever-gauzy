@@ -81,5 +81,30 @@
 	"cypress-cucumber-preprocessor": {
 		"nonGlobalStepDefinitions": true,
 		"step_definitions": "src/support/step_definitions/"
+	},
+	"nx": {
+		"targets": {
+			"e2e": {
+				"executor": "@nrwl/cypress:cypress",
+				"options": {
+					"cypressConfig": "apps/gauzy-e2e/cypress.json",
+					"tsConfig": "apps/gauzy-e2e/tsconfig.e2e.json",
+					"devServerTarget": "gauzy:serve"
+				},
+				"configurations": {
+					"production": {
+						"devServerTarget": "gauzy:serve:production"
+					}
+				}
+			},
+			"lint": {
+				"executor": "@nrwl/linter:eslint",
+				"options": {
+					"lintFilePatterns": [
+						"apps/gauzy-e2e/**/*.{js,ts}"
+					]
+				}
+			}
+		}
 	}
 }

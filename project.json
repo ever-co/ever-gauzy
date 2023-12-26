@@ -39,5 +39,6 @@
 		"gauzy-server-api": {
 			"tags": []
 		}
-	}
+	},
+	"name": "."
 }

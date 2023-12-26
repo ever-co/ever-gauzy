@@ -35,5 +35,50 @@
 		"@gauzy/integration-wakatime": "^0.1.0",
 		"@nestjs/testing": "^10.3.0",
 		"@types/node": "^17.0.33"
+	},
+	"nx": {
+		"targets": {
+			"build": {
+				"executor": "@nrwl/node:webpack",
+				"options": {
+					"maxWorkers": 4,
+					"memoryLimit": 4000,
+					"webpackConfig": "tools/build/webpack.config.js",
+					"outputPath": "dist/apps/desktop/desktop-api",
+					"main": "packages/desktop-api/src/main.ts",
+					"tsConfig": "packages/desktop-api/tsconfig.app.json",
+					"assets": [
+						"packages/desktop-api/src/assets"
+					]
+				},
+				"configurations": {
+					"production": {
+						"optimization": true,
+						"extractLicenses": false,
+						"inspect": false,
+						"fileReplacements": [
+							{
+								"replace": "packages/desktop-api/src/environments/environment.ts",
+								"with": "packages/desktop-api/src/environments/environment.prod.ts"
+							}
+						]
+					}
+				}
+			},
+			"serve": {
+				"executor": "@nrwl/node:node",
+				"options": {
+					"buildTarget": "api-desktop:build"
+				}
+			},
+			"test": {
+				"executor": "@nrwl/jest:jest",
+				"options": {
+					"jestConfig": "packages/desktop-api/jest.config.js",
+					"tsConfig": "packages/desktop-api/tsconfig.spec.json",
+					"passWithNoTests": true
+				}
+			}
+		}
 	}
 }

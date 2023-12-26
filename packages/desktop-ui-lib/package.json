@@ -64,5 +64,23 @@
 		"ngx-electron": "^2.2.0",
 		"rxjs": "^7.4.0",
 		"underscore": "^1.13.3"
+	},
+	"nx": {
+		"targets": {
+			"build": {
+				"executor": "@angular-devkit/build-angular:ng-packagr",
+				"options": {
+					"tsConfig": "packages/desktop-ui-lib/tsconfig.lib.json",
+					"project": "packages/desktop-ui-lib/ng-package.json"
+				}
+			},
+			"test": {
+				"executor": "@nrwl/jest:jest",
+				"options": {
+					"jestConfig": "libs/desktop-ui-lib/jest.config.js",
+					"passWithNoTests": true
+				}
+			}
+		}
 	}
 }
