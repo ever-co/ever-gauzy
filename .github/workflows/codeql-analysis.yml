@@ -1,44 +1,44 @@
 name: 'CodeQL Analysis'
 
 on:
-    push:
-        branches: [test]
-    pull_request:
-        # The branches below must be a subset of the branches above
-        branches: [test]
+  push:
+    branches: [test]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [test]
 
 concurrency:
-    group: ${{ github.ref }}-${{ github.workflow }}
-    cancel-in-progress: true
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
 
 jobs:
-    analyze:
-        name: Analyze
-        runs-on: ubuntu-latest
+  analyze:
+    name: Analyze
+    runs-on: buildjet-2vcpu-ubuntu-2204
 
-        strategy:
-            fail-fast: false
-            matrix:
-                language: ['javascript']
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript']
 
-        permissions:
-            security-events: write
+    permissions:
+      security-events: write
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Initialize CodeQL
-              uses: github/codeql-action/init@v2
-              with:
-                  languages: ${{ matrix.language }}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
 
-            - name: Autobuild
-              uses: github/codeql-action/autobuild@v2
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
 
-            #- run: |
-            #   make bootstrap
-            #   make release
+      #- run: |
+      #   make bootstrap
+      #   make release
 
-            - name: Perform CodeQL Analysis
-              uses: github/codeql-action/analyze@v2
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
