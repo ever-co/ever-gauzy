@@ -44,7 +44,7 @@ export class AddArticleComponent
 	) {
 		super(translateService);
 	}
-	form: FormGroup;
+	form: UntypedFormGroup;
 	public data = {
 		name: '',
 		description: '',

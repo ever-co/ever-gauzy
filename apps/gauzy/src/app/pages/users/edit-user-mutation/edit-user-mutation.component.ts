@@ -34,7 +34,7 @@ export class EditUserMutationComponent
 	@Output()
 	addOrEditUser = new EventEmitter();
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	users: string[];
 	selectedUsersIds: string[];
 	selectedOrganizationId: string;

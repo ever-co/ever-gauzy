@@ -35,7 +35,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	loading: boolean = false;
 	linear: boolean = true;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employees: IEmployeeCreateInput[] = [];
 	public organization: IOrganization;
 

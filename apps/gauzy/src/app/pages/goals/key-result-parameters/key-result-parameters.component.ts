@@ -24,8 +24,8 @@ import { Store } from '../../../@core/services/store.service';
 	styleUrls: ['../edit-keyresults/edit-keyresults.component.scss']
 })
 export class KeyResultParametersComponent implements OnInit, OnDestroy {
-	weightForm: FormGroup;
-	typeForm: FormGroup;
+	weightForm: UntypedFormGroup;
+	typeForm: UntypedFormGroup;
 	data: {
 		selectedKeyResult: IKeyResult;
 		allKeyResults: IKeyResult[];

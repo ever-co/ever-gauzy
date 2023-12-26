@@ -21,7 +21,7 @@ export class CandidateTechnologiesComponent
 	technologiesList: ICandidateTechnologies[];
 	existedTechNames: string[];
 	technologyNames: string[] = [];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	editId = null;
 	organization: IOrganization;
 	constructor(

@@ -49,8 +49,8 @@ export class AcceptClientInviteFormComponent
 	organizationCreateInput: IOrganizationCreateInput;
 	addedOrganization: boolean;
 
-	public readonly form: FormGroup = AcceptClientInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public readonly form: UntypedFormGroup = AcceptClientInviteFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			fullName: ['', Validators.required],
 			password: ['', Validators.compose([

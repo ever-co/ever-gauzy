@@ -14,8 +14,8 @@ import { NbDialogRef } from '@nebular/theme';
 	styleUrls: ['./goal-templates.component.scss']
 })
 export class GoalTemplatesComponent implements OnInit {
-	goalTemplateForm: FormGroup;
-	keyResultTemplateForm: FormGroup;
+	goalTemplateForm: UntypedFormGroup;
+	keyResultTemplateForm: UntypedFormGroup;
 	goalLevelEnum = GoalLevelEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	keyResultTypeEnum = KeyResultTypeEnum;

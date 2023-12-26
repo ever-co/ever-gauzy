@@ -12,13 +12,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./goal-custom-unit-select.component.scss']
 })
 export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
-	@Input() parentFormGroup: FormGroup;
+	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() numberUnits: string[];
 	keyResultTypeEnum = KeyResultTypeEnum;
 	createNew = false;
 	defaultCurrency: string;
 
-	constructor(private readonly store: Store) {}
+	constructor(private readonly store: Store) { }
 
 	ngOnInit() {
 		this.defaultCurrency = this.store.selectedOrganization.currency;
@@ -44,5 +44,5 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 		this.createNew = false;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -96,9 +96,9 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('candidateNotificationForm')
 	candidateNotificationForm: CandidateNotificationFormComponent;
 
-	form: FormGroup;
-	candidateForm: FormGroup;
-	interviewerForm: FormGroup;
+	form: UntypedFormGroup;
+	candidateForm: UntypedFormGroup;
+	interviewerForm: UntypedFormGroup;
 	interview: any;
 	employees: IEmployee[] = [];
 	candidates: ICandidate[] = [];

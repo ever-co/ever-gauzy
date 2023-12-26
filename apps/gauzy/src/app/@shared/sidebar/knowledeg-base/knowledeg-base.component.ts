@@ -43,7 +43,7 @@ export class KnowledgeBaseComponent
 		this._parentId = value;
 	}
 
-	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			name: [
 				'',
@@ -71,7 +71,7 @@ export class KnowledgeBaseComponent
 		super(translateService);
 	}
 
-	public form: FormGroup = KnowledgeBaseComponent.buildForm(this.formBuilder);
+	public form: UntypedFormGroup = KnowledgeBaseComponent.buildForm(this.formBuilder);
 	public icons = [
 		{
 			label: 'Book Open',

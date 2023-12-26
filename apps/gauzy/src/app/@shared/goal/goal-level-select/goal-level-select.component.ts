@@ -10,7 +10,7 @@ import { OrganizationTeamsService, Store } from '../../../@core';
 })
 export class GoalLevelSelectComponent {
 
-	@Input() parentFormGroup: FormGroup;
+	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() orgId: string;
 	@Input() teams: IOrganizationTeam[] = [];
 	@Input() hideOrg = false;
@@ -27,7 +27,7 @@ export class GoalLevelSelectComponent {
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private readonly store: Store
-	) {}
+	) { }
 
 	async getTeams() {
 		const { tenantId } = this.store.user;

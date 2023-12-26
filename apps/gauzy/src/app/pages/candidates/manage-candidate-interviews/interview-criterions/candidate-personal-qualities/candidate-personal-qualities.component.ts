@@ -19,7 +19,7 @@ export class CandidatePersonalQualitiesComponent
 	implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	personalQualitiesList: ICandidatePersonalQualities[];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	editId = null;
 	existedQualNames: string[];
 	qualityNames: string[] = [];

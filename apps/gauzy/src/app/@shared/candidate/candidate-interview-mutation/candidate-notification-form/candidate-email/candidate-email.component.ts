@@ -15,7 +15,7 @@ export class CandidateEmailComponent implements OnInit {
 	@Input() templateData: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate;
 	@Input() employees: IEmployee[];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employeeList: string;
 	dateTemplate: string;
 	candidateName: string;

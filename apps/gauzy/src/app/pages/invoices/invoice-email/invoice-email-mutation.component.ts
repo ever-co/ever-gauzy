@@ -23,7 +23,7 @@ export class InvoiceEmailMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
 	invoice: IInvoice;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	isEstimate: boolean;
 	invoiceItems: IInvoiceItem[];
 	createdInvoice: IInvoice;

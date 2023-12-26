@@ -109,12 +109,12 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     /*
      * Organization Mutation Form
      */
-    public form: FormGroup = EditOrganizationOtherSettingsComponent.buildForm(this.fb);
+    public form: UntypedFormGroup = EditOrganizationOtherSettingsComponent.buildForm(this.fb);
 
     /*
      * Organization Task Setting
      */
-    public taskSettingForm: FormGroup = EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this.fb);
+    public taskSettingForm: UntypedFormGroup = EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this.fb);
 
     /**
      * Nebular Accordion Item Components
@@ -140,7 +140,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         }
     }
 
-    static buildForm(fb: UntypedFormBuilder): FormGroup {
+    static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
         return fb.group({
             name: [],
             currency: [],
@@ -207,7 +207,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         });
     }
 
-    static buildTaskSettingForm(fb: UntypedFormBuilder): FormGroup {
+    static buildTaskSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {
         return fb.group({
             isTasksPrivacyEnabled: [],
             isTasksMultipleAssigneesEnabled: [],

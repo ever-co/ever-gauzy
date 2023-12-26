@@ -18,8 +18,8 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	public rememberState: boolean;
 	public organization: IOrganization;
 
-	readonly form: FormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = UpworkAuthorizeComponent.buildForm(this._fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			consumerKey: [null, Validators.required],
 			consumerSecret: [null, Validators.required],

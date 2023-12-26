@@ -85,8 +85,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	/*
 	* Project Mutation Form
 	*/
-	public form: FormGroup = ProjectMutationComponent.buildForm(this._fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = ProjectMutationComponent.buildForm(this._fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			imageUrl: [],
 			imageId: [],
@@ -133,8 +133,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	* Project Setting Mutation Form
 	*/
 
-	public projectSettingForm: FormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
-	static buildSettingForm(fb: UntypedFormBuilder): FormGroup {
+	public projectSettingForm: UntypedFormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
+	static buildSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			isTasksAutoSync: [],
 			isTasksAutoSyncOnLabel: [],

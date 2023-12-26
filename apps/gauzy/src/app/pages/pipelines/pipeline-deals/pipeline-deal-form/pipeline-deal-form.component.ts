@@ -21,7 +21,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 export class PipelineDealFormComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	pipeline: IPipeline;
 	clients: IContact[];
 	selectedClient: IContact;

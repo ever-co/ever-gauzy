@@ -20,7 +20,7 @@ export class SprintDialogComponent implements OnInit {
 	@Input() options?: any = {
 		sprintIndex: 0
 	};
-	form: FormGroup;
+	form: UntypedFormGroup;
 	private defaults = DEFAULTS;
 	moment: any = moment;
 

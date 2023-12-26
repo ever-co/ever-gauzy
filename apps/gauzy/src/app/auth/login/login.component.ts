@@ -25,7 +25,7 @@ import { patterns } from '../../@shared/regex/regex-patterns.const';
 	styleUrls: ['./login.component.scss'],
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
-	@ViewChild('form') private readonly form: FormGroupDirective;
+	@ViewChild('form') private readonly form: UntypedFormGroupDirective;
 
 	isShown = false;
 	RolesEnum = RolesEnum;

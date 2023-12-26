@@ -21,8 +21,8 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 
-	public form: FormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			linkedInUrl: [],
 			facebookUrl: [],

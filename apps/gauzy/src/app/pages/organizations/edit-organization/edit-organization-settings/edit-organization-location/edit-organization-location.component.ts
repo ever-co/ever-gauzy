@@ -27,7 +27,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 
 	@Input() organization: IOrganization;
 
-	readonly form: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly form: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;

@@ -78,8 +78,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	public proposalTemplate: IEmployeeProposalTemplate;
 
 	/** Apply Job Manually Mutation Form */
-	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			proposal: [], // Cover Letter
 			details: [], // Proposal details
@@ -109,7 +109,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	/** Form group directive */
-	@ViewChild('formDirective') formDirective: FormGroupDirective;
+	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
 
 	/** Ckeditor component */
 	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;

@@ -21,7 +21,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 	selectedCandidate: ICandidate;
 
-	readonly form: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly form: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;

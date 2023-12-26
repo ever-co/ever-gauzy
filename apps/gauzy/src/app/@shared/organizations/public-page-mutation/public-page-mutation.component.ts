@@ -37,7 +37,7 @@ export class PublicPageMutationComponent
 	languageExist: boolean;
 	organizationId: string;
 	tenantId: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedLanguage: ILanguage;
 	awards: IOrganizationAward[];
 	organization_languages: IOrganizationLanguage[];

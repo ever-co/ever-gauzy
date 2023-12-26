@@ -48,7 +48,7 @@ export class TasksComponent implements OnInit {
 	public editorConfig = CkEditorConfig.minimal();
 	public hasAddTagPermission$: Observable<boolean>;
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	projects: IOrganizationProject[] = [];
 	employees: IEmployee[] = [];
 	tags: ITag[] = [];

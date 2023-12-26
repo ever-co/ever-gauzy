@@ -61,7 +61,7 @@ import {
 export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	invoice?: IInvoice;
 	createdInvoice: IInvoice;
 	formInvoiceNumber: number;

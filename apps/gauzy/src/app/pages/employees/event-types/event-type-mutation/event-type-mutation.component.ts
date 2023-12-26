@@ -21,11 +21,11 @@ export class EventTypeMutationComponent
 	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 
-	readonly form: FormGroup = EventTypeMutationComponent.buildForm(this.fb, this);
+	readonly form: UntypedFormGroup = EventTypeMutationComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: EventTypeMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			title: [],
 			description: [],

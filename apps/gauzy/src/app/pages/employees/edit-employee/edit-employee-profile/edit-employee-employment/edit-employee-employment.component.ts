@@ -45,7 +45,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		height: "200"
 	};
 
-	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			organizationEmploymentTypes: [],
 			employeeLevel: [],
@@ -60,7 +60,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		});
 		return form;
 	}
-	public form: FormGroup = EditEmployeeEmploymentComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditEmployeeEmploymentComponent.buildForm(this.fb);
 
 
 	constructor(

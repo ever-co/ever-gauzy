@@ -47,7 +47,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 export class ManageAppointmentComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employees: IEmployee[];
 	@Input() employee: IEmployee;
 	@Input() employeeAppointment: IEmployeeAppointment;

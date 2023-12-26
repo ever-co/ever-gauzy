@@ -11,7 +11,7 @@ export class FormHelpers {
 	 *
 	 */
 	static deepMark(
-		formGroup: FormGroup | FormArray,
+		formGroup: UntypedFormGroup | FormArray,
 		markAs: 'touched' | 'untouched' | 'dirty' | 'pristine' | 'pending',
 		opts = { onlySelf: false }
 	): void {

@@ -44,7 +44,7 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	implements OnInit, OnDestroy {
 
 	employee: IEmployee;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employmentTypes$: Observable<IOrganizationEmploymentType[]>;
 	employeeLevels: IEmployeeLevel[] = [];
 	payPeriods = Object.values(PayPeriodEnum);

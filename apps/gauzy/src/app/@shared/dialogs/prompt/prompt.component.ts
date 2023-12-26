@@ -33,7 +33,7 @@ export interface PromptDialogOptions {
 export class PromptComponent implements OnInit {
 	@Input() data: PromptDialogOptions;
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	showPassword = false;
 
 	constructor(

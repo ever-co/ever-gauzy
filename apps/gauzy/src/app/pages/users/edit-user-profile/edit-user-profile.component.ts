@@ -23,7 +23,7 @@ export class EditUserProfileComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	params: Params;
 	user: IUser;
 
@@ -90,7 +90,7 @@ export class EditUserProfileComponent
 	private async getUserProfile() {
 		const { id } = this.params;
 		const user = await this.usersService.getUserById(id, ['role', 'tags']);
-		
+
 		if (user.role.name === RolesEnum.SUPER_ADMIN) {
 			/**
 			 * Redirect If Edit Super Admin Without Permission
@@ -115,5 +115,5 @@ export class EditUserProfileComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

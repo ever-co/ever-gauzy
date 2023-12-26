@@ -26,7 +26,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class EditKpiComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	kpiForm: FormGroup;
+	kpiForm: UntypedFormGroup;
 	employees: IEmployee[];
 	selectedKPI: IKPI;
 	type: string;

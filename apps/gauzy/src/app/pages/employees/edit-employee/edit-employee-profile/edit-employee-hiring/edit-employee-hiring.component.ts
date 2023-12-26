@@ -18,8 +18,8 @@ import { CompareDateValidator } from './../../../../../@core/validators';
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 
-	public form: FormGroup = EditEmployeeHiringComponent.buildForm(this.fb);
-	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditEmployeeHiringComponent.buildForm(this.fb);
+	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		return formBuilder.group({
 			offerDate: [],
 			acceptDate: [],

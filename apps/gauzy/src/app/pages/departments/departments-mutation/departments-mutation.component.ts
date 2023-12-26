@@ -33,8 +33,8 @@ export class DepartmentsMutationComponent implements OnInit {
 	/*
 	* Department Mutation Form
 	*/
-	public form: FormGroup = DepartmentsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = DepartmentsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			members: [[], Validators.required],

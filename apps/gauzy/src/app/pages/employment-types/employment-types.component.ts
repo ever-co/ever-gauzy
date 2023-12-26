@@ -43,7 +43,7 @@ export class EmploymentTypesComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 	organizationEmploymentTypes: IOrganizationEmploymentType[] = [];

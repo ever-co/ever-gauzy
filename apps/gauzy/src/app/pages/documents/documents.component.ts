@@ -49,7 +49,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	@ViewChild('addEditTemplate') addEditTemplate: TemplateRef<any>;
 
 	addEditDialogRef: NbDialogRef<any>;
-	formDocument: FormGroup;
+	formDocument: UntypedFormGroup;
 	documentUrl = '';
 	documentId = null;
 	documentList: IOrganizationDocument[] = [];
@@ -71,8 +71,8 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	/*
 	 * Organization Document Mutation Form
 	 */
-	public form: FormGroup = DocumentsComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = DocumentsComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			documents: fb.array([])
 		});

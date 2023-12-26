@@ -28,10 +28,10 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	/*
 	* Employee Main Mutation Form
 	*/
-	public form: FormGroup = EditEmployeeMainComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditEmployeeMainComponent.buildForm(this.fb);
 	static buildForm(
 		fb: UntypedFormBuilder
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			username: [],
 			email: [null, Validators.required],

@@ -32,7 +32,7 @@ export class EditTimeFrameComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	timeFrameForm: FormGroup;
+	timeFrameForm: UntypedFormGroup;
 	timeFrame: IGoalTimeFrame;
 	type: string;
 	predefinedTimeFrames = [];

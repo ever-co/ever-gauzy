@@ -55,7 +55,7 @@ export class EquipmentSharingMutationComponent
 		super(translationService);
 	}
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	equipmentSharing: IEquipmentSharing;
 	employees: IEmployee[] = [];
 	disabled: boolean;

@@ -77,11 +77,11 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	/*
 	* Recurring Expense Mutation Form
 	*/
-	public form: FormGroup = RecurringExpenseMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = RecurringExpenseMutationComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: RecurringExpenseMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		const { startDate } = self.dateRangePickerBuilderService.selectedDateRange;
 		return fb.group({
 			categoryName: [null, Validators.required],

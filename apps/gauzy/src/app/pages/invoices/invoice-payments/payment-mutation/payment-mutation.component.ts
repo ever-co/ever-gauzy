@@ -43,11 +43,11 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	/*
 	* Payment Mutation Form
 	*/
-	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = PaymentMutationComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: PaymentMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			amount: [null, Validators.compose([
 				Validators.required,

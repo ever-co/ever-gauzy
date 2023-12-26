@@ -11,7 +11,7 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedCandidate: ICandidate;
 
 	constructor(

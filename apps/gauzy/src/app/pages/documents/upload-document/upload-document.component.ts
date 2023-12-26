@@ -12,8 +12,8 @@ export class UploadDocumentComponent implements OnInit {
 	@Input() documentId: string;
 	@Input() isDocument: boolean = false;
 
-	public form: FormGroup = UploadDocumentComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = UploadDocumentComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			docUrl: [
 				null,

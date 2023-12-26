@@ -37,7 +37,7 @@ export class GoalSettingsComponent
 	extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();
-	generalSettingsForm: FormGroup;
+	generalSettingsForm: UntypedFormGroup;
 	smartTableSettings: object;
 	selectedTimeFrame: any = null;
 	selectedKPI: any = null;

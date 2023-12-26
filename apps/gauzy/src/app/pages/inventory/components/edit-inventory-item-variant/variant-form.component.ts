@@ -42,7 +42,7 @@ export class InventoryVariantFormComponent
 	hoverState: boolean;
 	billingInvoicingPolicies = Object.values(BillingInvoicingPolicyEnum);
 	defaultCurrency: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	organization: IOrganization;
 	image: IImageAsset;
 	loading = true;

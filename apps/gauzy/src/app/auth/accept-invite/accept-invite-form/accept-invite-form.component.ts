@@ -41,8 +41,8 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 	tenant: ITenant;
 	tags: ITag[];
 
-	public readonly form: FormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
-	static buildForm(fb: UntypedFormBuilder, self: AcceptInviteFormComponent): FormGroup {
+	public readonly form: UntypedFormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
+	static buildForm(fb: UntypedFormBuilder, self: AcceptInviteFormComponent): UntypedFormGroup {
 		return fb.group({
 			fullName: [self?.invitation?.fullName, Validators.required],
 			password: ['', Validators.compose([

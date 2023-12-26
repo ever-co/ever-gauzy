@@ -58,7 +58,7 @@ export class TeamTaskDialogComponent
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() task: Partial<ITask> = {};
 
-	public form: FormGroup = TeamTaskDialogComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = TeamTaskDialogComponent.buildForm(this.fb);
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<TeamTaskDialogComponent>,
@@ -74,7 +74,7 @@ export class TeamTaskDialogComponent
 		super(translateService);
 	}
 
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],

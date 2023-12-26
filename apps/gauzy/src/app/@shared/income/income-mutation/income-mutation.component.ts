@@ -46,11 +46,11 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	/*
 	* Income Mutation Form
 	*/
-	public form: FormGroup = IncomeMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = IncomeMutationComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: IncomeMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			amount: ['', Validators.required],

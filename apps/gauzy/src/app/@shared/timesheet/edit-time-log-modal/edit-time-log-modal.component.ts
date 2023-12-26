@@ -64,11 +64,11 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	/*
 	 * TimeLog Mutation Form
 	 */
-	public form: FormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: EditTimeLogModalComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			isBillable: [true],
 			employeeId: [],

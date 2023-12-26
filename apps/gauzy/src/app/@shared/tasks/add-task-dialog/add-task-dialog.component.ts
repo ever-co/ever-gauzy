@@ -50,7 +50,7 @@ export class AddTaskDialogComponent
 	/*
 	 * Payment Mutation Form
 	 */
-	public form: FormGroup = AddTaskDialogComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = AddTaskDialogComponent.buildForm(this.fb);
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
@@ -64,7 +64,7 @@ export class AddTaskDialogComponent
 		super(translateService);
 	}
 
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],

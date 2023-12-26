@@ -31,7 +31,7 @@ export class EditCandidateSkillsComponent
 	skillId = null;
 	candidateId: string;
 	skillList: ISkill[] = [];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;

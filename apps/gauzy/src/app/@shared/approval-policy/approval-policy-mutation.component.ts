@@ -25,7 +25,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	public organization: IOrganization;
 
-	@ViewChild('formDirective') formDirective: FormGroupDirective;
+	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/
@@ -41,8 +41,8 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	/*
 	* Approval Policy Mutation Form
 	*/
-	public form: FormGroup = ApprovalPolicyMutationComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = ApprovalPolicyMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			description: [],

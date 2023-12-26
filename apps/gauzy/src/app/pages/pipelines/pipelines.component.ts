@@ -70,8 +70,8 @@ export class PipelinesComponent
 	/*
 	 * Search Tab Form
 	 */
-	public searchForm: FormGroup = PipelinesComponent.searchBuildForm(this.fb);
-	static searchBuildForm(fb: UntypedFormBuilder): FormGroup {
+	public searchForm: UntypedFormGroup = PipelinesComponent.searchBuildForm(this.fb);
+	static searchBuildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
 				name: [],

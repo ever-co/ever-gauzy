@@ -18,7 +18,7 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 export class ImageAssetComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	@Input() imageAsset: IImageAsset;
 
 	constructor(

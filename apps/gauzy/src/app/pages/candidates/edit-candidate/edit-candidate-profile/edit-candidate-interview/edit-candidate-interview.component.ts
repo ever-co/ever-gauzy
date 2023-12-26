@@ -51,7 +51,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	selectedOrganization: IOrganization;
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	loading: boolean;
 	onlyPast = false;
 	onlyFuture = false;
@@ -495,7 +495,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	selectInterview(interview: any) {
 		this.disabled = !interview.isSelected;

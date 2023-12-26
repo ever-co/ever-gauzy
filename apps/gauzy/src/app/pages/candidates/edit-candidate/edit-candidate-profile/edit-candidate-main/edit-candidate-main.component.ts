@@ -36,10 +36,10 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	/*
 	* Candidate Main Mutation Form
 	*/
-	public form: FormGroup = EditCandidateMainComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditCandidateMainComponent.buildForm(this.fb);
 	static buildForm(
 		fb: UntypedFormBuilder
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			username: [],
 			email: [null, Validators.required],

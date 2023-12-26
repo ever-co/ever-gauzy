@@ -17,7 +17,7 @@ export class AddInternalNoteComponent extends TranslationBaseComponent
 	implements OnInit {
 
 	invoice: IInvoice;
-	form: FormGroup;
+	form: UntypedFormGroup;
 
 	constructor(
 		readonly translateService: TranslateService,

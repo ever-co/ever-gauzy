@@ -80,8 +80,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	/*
 	 * Search Tab Form
 	 */
-	public form: FormGroup = SearchComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = SearchComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
 				title: [],

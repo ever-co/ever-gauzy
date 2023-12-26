@@ -75,11 +75,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	/*
 	* Expense Mutation Form
 	*/
-	public form: FormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: ExpensesMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			amount: ['', Validators.required],
 			vendor: [],

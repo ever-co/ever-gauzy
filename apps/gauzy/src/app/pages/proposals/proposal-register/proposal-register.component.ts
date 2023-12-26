@@ -47,11 +47,11 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	/*
 	* Payment Mutation Form
 	*/
-	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
 	static buildForm(
 		fb: UntypedFormBuilder,
 		self: ProposalRegisterComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			jobPostUrl: [],
 			valueDate: [

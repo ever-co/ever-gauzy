@@ -54,13 +54,13 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	/*
 	* Location Mutation Form
 	*/
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
 	* Warehouse Mutation Form
 	*/
-	public form: FormGroup = WarehouseFormComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = WarehouseFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			tags: [],

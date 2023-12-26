@@ -34,8 +34,8 @@ export class AccountingTemplatesComponent
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
-	readonly form: FormGroup = AccountingTemplatesComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = AccountingTemplatesComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			templateType: [AccountingTemplateTypeEnum.INVOICE],
 			languageCode: [LanguagesEnum.ENGLISH],

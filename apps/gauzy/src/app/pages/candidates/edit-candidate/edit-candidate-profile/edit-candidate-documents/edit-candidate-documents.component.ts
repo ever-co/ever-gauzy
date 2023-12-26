@@ -37,7 +37,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	showAddCard: boolean;
 	documentList: ICandidateDocument[] = [];
 	candidateId: string;
-	formCv: FormGroup;
+	formCv: UntypedFormGroup;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -49,8 +49,8 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	/*
 	* Candidate Document Mutation Form
 	*/
-	public form: FormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			documents: fb.array([])
 		});

@@ -27,8 +27,8 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 	public showAddCard: boolean;
 	public organization: IOrganization = this.store.selectedOrganization;
 
-	public form: FormGroup = EditEmployeeMembershipFormComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditEmployeeMembershipFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			departments: ['', Validators.required]
 		});

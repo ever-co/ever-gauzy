@@ -53,7 +53,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	feedbackList: ICandidateFeedback[] = [];
 	allFeedbacks: ICandidateFeedback[] = [];
 	candidateId: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	status: string;
 	disableButton = true;
 	currentInterview: ICandidateInterview;

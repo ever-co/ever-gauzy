@@ -24,7 +24,7 @@ export class EditUserOrganizationsMutationComponent
 	@Output()
 	addOrg = new EventEmitter();
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	organizations: IOrganization[];
 	selectedOrganizationsId: string[];
 	selectedUserId: string;

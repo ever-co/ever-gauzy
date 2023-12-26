@@ -19,7 +19,7 @@ import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-
 export class EquipmentMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	equipment: IEquipment;
 	image: IImageAsset;
 	selectedCurrency: string;

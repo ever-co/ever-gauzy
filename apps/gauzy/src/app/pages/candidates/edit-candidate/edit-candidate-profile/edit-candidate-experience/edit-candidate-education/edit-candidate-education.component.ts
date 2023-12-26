@@ -32,7 +32,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	showAddCard: boolean;
 	candidateId: string;
 	educationList: ICandidateEducation[] = [];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	viewComponentName: ComponentEnum;

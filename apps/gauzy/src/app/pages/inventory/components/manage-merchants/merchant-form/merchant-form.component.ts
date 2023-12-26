@@ -50,13 +50,13 @@ export class MerchantFormComponent extends TranslationBaseComponent
 	/**
 	 * Location Mutation Form
 	 */
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/**
 	 * Merchant Mutation Form
 	 */
-	public form: FormGroup = MerchantFormComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = MerchantFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			logo: [],
 			tags: [],

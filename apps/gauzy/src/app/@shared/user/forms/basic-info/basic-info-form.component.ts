@@ -82,8 +82,8 @@ export class BasicInfoFormComponent
 	public excludes: RolesEnum[] = [];
 	public organization: IOrganization;
 
-	public form: FormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
-	static buildForm(fb: UntypedFormBuilder, self: BasicInfoFormComponent): FormGroup {
+	public form: UntypedFormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
+	static buildForm(fb: UntypedFormBuilder, self: BasicInfoFormComponent): UntypedFormGroup {
 		return fb.group({
 			firstName: [],
 			lastName: [],

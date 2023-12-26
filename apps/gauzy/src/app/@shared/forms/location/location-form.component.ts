@@ -43,7 +43,7 @@ export class LocationFormComponent
 	public countries: ICountry[] = [];
 
 	@Input()
-	readonly form: FormGroup;
+	readonly form: UntypedFormGroup;
 
 	@Input()
 	set showAutocompleteSearch(val: boolean) {
@@ -73,7 +73,7 @@ export class LocationFormComponent
 
 	@ViewChild('autocomplete') searchElement: ElementRef;
 
-	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			country: [],
 			city: [],

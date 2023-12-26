@@ -12,7 +12,7 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 	styleUrls: ['./keyresult-type-select.component.sass']
 })
 export class KeyresultTypeSelectComponent {
-	@Input() parentFormGroup: FormGroup;
+	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() settings: IGoalGeneralSetting;
 	@Input() orgId: string;
 	@Input() KPIs: Array<IKPI>;

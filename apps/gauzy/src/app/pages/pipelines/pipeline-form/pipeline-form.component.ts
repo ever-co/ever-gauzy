@@ -20,7 +20,7 @@ export class PipelineFormComponent implements OnInit {
 	pipeline: IPipelineCreateInput & { id?: string };
 
 	userOrganizations: IUserOrganization[];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	icon: string;
 	isActive: boolean;
 	organization: IOrganization;

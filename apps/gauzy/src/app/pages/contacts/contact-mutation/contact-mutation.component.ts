@@ -113,8 +113,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/**
 	* Main Content Stepper Form Group
 	*/
-	public contMainForm: FormGroup = ContactMutationComponent.buildMainForm(this.fb);
-	static buildMainForm(formBuilder: UntypedFormBuilder): FormGroup {
+	public contMainForm: UntypedFormGroup = ContactMutationComponent.buildMainForm(this.fb);
+	static buildMainForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			imageUrl: [null],
 			tags: [],
@@ -133,13 +133,13 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/**
 	* Location Stepper Form Group
 	*/
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/**
 	* Budget Stepper Form Group
 	*/
-	readonly budgetForm: FormGroup = ContactMutationComponent.buildBudgetForm(this.fb);
-	static buildBudgetForm(formBuilder: UntypedFormBuilder): FormGroup {
+	readonly budgetForm: UntypedFormGroup = ContactMutationComponent.buildBudgetForm(this.fb);
+	static buildBudgetForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			budget: [],
 			budgetType: []

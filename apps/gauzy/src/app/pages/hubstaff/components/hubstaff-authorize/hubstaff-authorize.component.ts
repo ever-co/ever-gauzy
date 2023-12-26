@@ -18,16 +18,16 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;
 
 	/** */
-	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
-	static buildClientIdForm(fb: UntypedFormBuilder): FormGroup {
+	public clientIdForm: UntypedFormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
+	static buildClientIdForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			client_id: ['', Validators.required],
 		});
 	}
 
 	/** */
-	public clientSecretForm: FormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
-	static buildClientSecretForm(fb: UntypedFormBuilder): FormGroup {
+	public clientSecretForm: UntypedFormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
+	static buildClientSecretForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			client_secret: ['', Validators.required],
 			authorization_code: ['', Validators.required],

@@ -27,7 +27,7 @@ export interface IEstimateInput {
 export class TaskEstimateInputComponent implements OnInit, AfterViewInit {
 	@Output()
 	public submit: EventEmitter<number>;
-	public timeForm: FormGroup;
+	public timeForm: UntypedFormGroup;
 	@Input()
 	public estimate$: Observable<number>;
 	private estimate: number;

@@ -36,8 +36,8 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	/*
 	* Proposal Mutation Form
 	*/
-	public form: FormGroup = ProposalEditComponent.buildForm(this.fb, this);
-	static buildForm(fb: UntypedFormBuilder, self: ProposalEditComponent): FormGroup {
+	public form: UntypedFormGroup = ProposalEditComponent.buildForm(this.fb, this);
+	static buildForm(fb: UntypedFormBuilder, self: ProposalEditComponent): UntypedFormGroup {
 		return fb.group({
 			jobPostUrl: [],
 			valueDate: [

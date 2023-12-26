@@ -53,7 +53,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	invoiceId: string;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	form: FormGroup;
+	form: UntypedFormGroup;
 	invoice: IInvoice;
 	organization: IOrganization;
 	itemsToDelete: string[] = [];

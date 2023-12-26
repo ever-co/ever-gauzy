@@ -38,7 +38,7 @@ import { patterns } from '../regex/regex-patterns.const';
 export class SMTPComponent extends TranslationBaseComponent
 	implements OnInit, OnChanges, AfterViewInit {
 
-	@ViewChild('formDirective') formDirective: FormGroupDirective;
+	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
 
 	@Input() organization?: IOrganization;
 	@Input() isOrganization?: boolean;
@@ -59,8 +59,8 @@ export class SMTPComponent extends TranslationBaseComponent
 	/*
 	* SMTP Mutation Form
 	*/
-	public form: FormGroup = SMTPComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = SMTPComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			id: [],
 			organizationId: [],

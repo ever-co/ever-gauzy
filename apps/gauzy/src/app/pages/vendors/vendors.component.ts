@@ -65,7 +65,7 @@ export class VendorsComponent
 	tags: ITag[] = [];
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selected = {
 		vendor: null,
 		state: false

@@ -30,7 +30,7 @@ export class EditCandidateExperienceFormComponent
 	experienceList: ICandidateExperience[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedExperience: ICandidateExperience;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;

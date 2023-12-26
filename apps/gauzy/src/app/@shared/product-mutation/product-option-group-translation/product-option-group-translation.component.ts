@@ -21,7 +21,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 	styleUrls: ['./product-option-group-translation.component.scss']
 })
 export class ProductOptionGroupTranslationsComponent extends TranslationBaseComponent {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	@Input() productOptionGroup: IProductOptionGroupTranslatable;
 	languages: any[] = [];
 	activeGroupValueLng: string = '';

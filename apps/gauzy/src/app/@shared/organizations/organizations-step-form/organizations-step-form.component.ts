@@ -104,8 +104,8 @@ export class OrganizationsStepFormComponent
 	/*
 	* Organization Main Mutation Form
 	*/
-	public readonly orgMainForm: FormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
-	static buildOrgMainForm(fb: UntypedFormBuilder): FormGroup {
+	public readonly orgMainForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
+	static buildOrgMainForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			imageUrl: [
 				{ value: null, disabled: true }
@@ -122,13 +122,13 @@ export class OrganizationsStepFormComponent
 	/**
 	* Location Mutation Form
 	*/
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
 	* Organization Bonus Form
 	*/
-	public readonly orgBonusForm: FormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
-	static buildOrgBonusForm(fb: UntypedFormBuilder): FormGroup {
+	public readonly orgBonusForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
+	static buildOrgBonusForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			bonusType: [],
 			bonusPercentage: [
@@ -140,8 +140,8 @@ export class OrganizationsStepFormComponent
 	/*
 	* Organization Settings Form
 	*/
-	public readonly orgSettingsForm: FormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
-	static buildOrgSettingsForm(fb: UntypedFormBuilder): FormGroup {
+	public readonly orgSettingsForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
+	static buildOrgSettingsForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			timeZone: [],
 			startWeekOn: [],
@@ -174,8 +174,8 @@ export class OrganizationsStepFormComponent
 	/*
 	* Employee Feature Form
 	*/
-	readonly employeeFeatureForm: FormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
-	static buildEmployeeFeatureForm(fb: UntypedFormBuilder): FormGroup {
+	readonly employeeFeatureForm: UntypedFormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
+	static buildEmployeeFeatureForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			registerAsEmployee: [true],
 			startedWorkOn: [new Date(), Validators.required]

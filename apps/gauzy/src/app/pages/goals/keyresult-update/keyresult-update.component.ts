@@ -23,7 +23,7 @@ import { Store } from '../../../@core/services/store.service';
 export class KeyResultUpdateComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	keyResultUpdateForm: FormGroup;
+	keyResultUpdateForm: UntypedFormGroup;
 	keyResult: IKeyResult;
 	KPI: IKPI;
 	keyResultTypeEnum = KeyResultTypeEnum;

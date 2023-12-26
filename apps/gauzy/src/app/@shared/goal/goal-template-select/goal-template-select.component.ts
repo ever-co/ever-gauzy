@@ -56,8 +56,8 @@ export class GoalTemplateSelectComponent
 	/*
 	* Goal Template Selection Mutation Form
 	*/
-	public form: FormGroup = GoalTemplateSelectComponent.buildForm(this.fb, this);
-	static buildForm(fb: UntypedFormBuilder, self: GoalTemplateSelectComponent): FormGroup {
+	public form: UntypedFormGroup = GoalTemplateSelectComponent.buildForm(this.fb, this);
+	static buildForm(fb: UntypedFormBuilder, self: GoalTemplateSelectComponent): UntypedFormGroup {
 		return fb.group({
 			deadline: ['', Validators.required],
 			ownerId: ['', Validators.required],

@@ -14,7 +14,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 export class EquipmentSharingPolicyMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	isHasType = true;
 	selectedOrganization: IOrganization;

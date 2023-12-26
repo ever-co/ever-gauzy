@@ -39,8 +39,8 @@ export class ProductTypeMutationComponent
 	translations: any = [];
 	public organization: IOrganization;
 
-	readonly form: FormGroup = ProductTypeMutationComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = ProductTypeMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			icon: [ProductTypesIconsEnum.STAR],

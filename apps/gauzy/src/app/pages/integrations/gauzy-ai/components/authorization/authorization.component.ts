@@ -22,14 +22,14 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	/**
 	 * The form property is a readonly FormGroup that is built using the buildForm static method.
 	 */
-	readonly form: FormGroup = GauzyAIAuthorizationComponent.buildForm(this._formBuilder);
+	readonly form: UntypedFormGroup = GauzyAIAuthorizationComponent.buildForm(this._formBuilder);
 
 	/**
 	 * Static method to build the Angular FormGroup using the FormBuilder.
 	 * @param fb The FormBuilder instance used to build the form.
 	 * @returns A FormGroup containing form controls for client_id, client_secret, and openai_api_secret_key.
 	 */
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			client_id: [null, Validators.required],
 			client_secret: [null, Validators.required],
@@ -38,7 +38,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	// Using @ViewChild to get a reference to the FormGroupDirective with the template reference variable 'formDirective'
-	@ViewChild('formDirective') formDirective: FormGroupDirective;
+	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
 
 	constructor(
 		private readonly _formBuilder: UntypedFormBuilder,

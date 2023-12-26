@@ -23,7 +23,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
     public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
 
     /** The FormGroup for the sign-in form */
-    public form: FormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
+    public form: UntypedFormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
 
     /**
      * Static method to build a FormGroup for the sign-in form.
@@ -31,7 +31,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
      * @param fb - The FormBuilder service for creating form controls.
      * @returns A FormGroup for the sign-in form.
      */
-    static buildForm(fb: UntypedFormBuilder): FormGroup {
+    static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
         return fb.group({
             email: [null, [Validators.required, Validators.email]],      // Email input with email validation
             password: [null, Validators.required] // Password input with required validation

@@ -59,7 +59,7 @@ export class OptionsFormComponent implements OnInit {
 
 	activeLanguageCode: string = LanguagesEnum.ENGLISH;
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 
 	optionGroups: any[] = [];
 

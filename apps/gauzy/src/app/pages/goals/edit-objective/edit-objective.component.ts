@@ -50,8 +50,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	/*
 	* Objective Mutation Form
 	*/
-	public form: FormGroup = EditObjectiveComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditObjectiveComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			description: [''],

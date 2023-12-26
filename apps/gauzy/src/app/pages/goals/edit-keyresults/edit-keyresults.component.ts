@@ -39,7 +39,7 @@ import { endOfTomorrow } from 'date-fns';
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: IEmployee[];
-	keyResultsForm: FormGroup;
+	keyResultsForm: UntypedFormGroup;
 	data: IKeyResult;
 	showAllEmployees = false;
 	settings: IGoalGeneralSetting;

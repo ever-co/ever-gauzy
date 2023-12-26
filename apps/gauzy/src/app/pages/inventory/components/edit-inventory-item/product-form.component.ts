@@ -38,7 +38,7 @@ import {
 export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit {
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	inventoryItem: IProductTranslatable;
 	hoverState: boolean;
 	selectedLanguage: string;

@@ -29,8 +29,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 	user: IUser;
 	settings: ITenantSetting = new Object();
 
-	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public readonly form: UntypedFormGroup = FileStorageComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			fileStorageProvider: [
 				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,

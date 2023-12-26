@@ -17,8 +17,8 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	/**
 	 * Tag mutation form
 	 */
-	public form: FormGroup = TagsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): FormGroup {
+	public form: UntypedFormGroup = TagsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			color: [null, Validators.required],
