@@ -283,7 +283,9 @@
         "dotenv": "^16.0.3",
         "ffi-napi": "^4.0.3",
         "iconv": "^3.0.1",
+        "jsdom": "^23.0.1",
         "ng2-smart-table": "^1.7.2",
+        "parse5": "^7.1.2",
         "rxjs": "^7.4.0",
         "unleash": "^2.0.2",
         "yargs": "^17.5.0"
@@ -326,6 +328,7 @@
         "@semantic-release/github": "^7.2.1",
         "@semantic-release/npm": "^7.1.1",
         "@types/jest": "^29.4.4",
+        "@types/jsdom": "^21.1.6",
         "@types/yargs": "^15.0.9",
         "ajv-formats": "^2.1.1",
         "cloc": "^2.7.0",
