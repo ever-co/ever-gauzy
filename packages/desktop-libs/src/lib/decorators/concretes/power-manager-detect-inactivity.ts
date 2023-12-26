@@ -21,16 +21,14 @@ export class PowerManagerDetectInactivity extends BasePowerManagerDecorator {
 			: Infinity;
 		this._activityProofDuration = this.activityProofDuration * 60; // activityProofDuration fixed to 1 minutes
 		this._detectionEmitter = new EventEmitter();
-		this._detectionEmitter.on('activity-proof-result', async (res) => {
+		this._detectionEmitter.on('activity-proof-result',(isWorking: boolean) => {
 			if (this._activityProofTimeoutIntervalId) {
 				clearTimeout(this._activityProofTimeoutIntervalId);
 				this._activityProofTimeoutIntervalId = null;
 			}
-			if (res) {
-				this._detectionEmitter.emit(
-					'activity-proof-result-accepted',
-					true
-				);
+			if (isWorking) {
+				this._detectionEmitter.emit('activity-proof-result-accepted', true);
+				this.stopInactivityDetection();
 				this.startInactivityDetection();
 			} else {
 				this._detectionEmitter.emit('activity-proof-result-not-accepted');
