@@ -150,7 +150,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 			});
 	}
 	private _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			feedbacks: this.fb.array([])
 		});
 		const feedbackForm = this.feedbacks;

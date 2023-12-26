@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { KeyResultTypeEnum, KeyResultNumberUnitsEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';

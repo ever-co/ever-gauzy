@@ -65,7 +65,7 @@ export class EditCandidateExperienceFormComponent
 			});
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			experiences: this.fb.array([])
 		});
 		const experienceForm = this.experiences;

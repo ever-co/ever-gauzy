@@ -5,7 +5,7 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
-import { UntypedFormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';

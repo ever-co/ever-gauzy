@@ -39,7 +39,7 @@ export class DepartmentsMutationComponent implements OnInit {
 			name: ['', Validators.required],
 			members: [[], Validators.required],
 			tags: [[]]
-		}) as FormGroup;
+		});
 	}
 
 	employees: IEmployee[] = [];

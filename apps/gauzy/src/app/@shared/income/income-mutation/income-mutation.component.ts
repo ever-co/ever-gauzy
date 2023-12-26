@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import {
 	Validators,
 	UntypedFormBuilder,
-	FormGroup
+	UntypedFormGroup
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {

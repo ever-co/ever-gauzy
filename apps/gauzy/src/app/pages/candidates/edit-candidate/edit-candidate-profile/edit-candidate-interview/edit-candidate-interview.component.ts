@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom, tap } from 'rxjs';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ICandidate,

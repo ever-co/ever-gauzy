@@ -50,7 +50,7 @@ export class CandidateTechnologiesComponent
 		(this.form.controls.technologies as FormArray).reset();
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			technologies: this.fb.array([])
 		});
 		const technologyForm = this.form.controls.technologies as FormArray;

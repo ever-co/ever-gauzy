@@ -51,7 +51,7 @@ export class CandidatePersonalQualitiesComponent
 	}
 
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			qualities: this.fb.array([])
 		});
 		const qualitiesForm = this.qualities as FormArray;

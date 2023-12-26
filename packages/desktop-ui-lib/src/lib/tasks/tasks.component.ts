@@ -194,7 +194,7 @@ export class TasksComponent implements OnInit {
 			)
 			.subscribe();
 
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			description: new FormControl(null),
 			dueDate: new FormControl(moment().add(1, 'day').utc().toDate()),
 			estimate: new FormControl(null),

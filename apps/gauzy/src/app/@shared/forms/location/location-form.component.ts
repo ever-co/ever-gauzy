@@ -10,17 +10,17 @@ import {
 	Renderer2,
 	ChangeDetectorRef,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { FormHelpers } from '../helpers';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick, isEmpty } from 'underscore';
+import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
+import { FormHelpers } from '../helpers';
 import { environment as env } from '../../../../environments/environment';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
 import { CountryService } from '../../../@core/services/country.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
-import { DOCUMENT } from '@angular/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -73,16 +73,16 @@ export class LocationFormComponent
 
 	@ViewChild('autocomplete') searchElement: ElementRef;
 
-	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
-		const form = formBuilder.group({
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		const form = fb.group({
 			country: [],
 			city: [],
 			address: [],
 			address2: [],
 			postcode: [],
-			loc: UntypedFormBuilder.group({
+			loc: fb.group({
 				type: ['Point'],
-				coordinates: UntypedFormBuilder.array([null, null]),
+				coordinates: fb.array([null, null]),
 			}),
 		});
 		return form;

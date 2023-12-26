@@ -63,7 +63,7 @@ export class EditCandidateSkillsComponent
 			});
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			skills: this.fb.array([])
 		});
 		const skillForm = this.skills;

@@ -17,7 +17,7 @@ import {
 	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
-import { UntypedFormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';

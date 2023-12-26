@@ -18,7 +18,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { UntypedFormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

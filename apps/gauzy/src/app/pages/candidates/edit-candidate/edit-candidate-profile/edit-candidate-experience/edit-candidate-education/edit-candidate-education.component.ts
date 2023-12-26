@@ -76,7 +76,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 			});
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			educations: this.fb.array([])
 		});
 		const educationForm = this.educations;

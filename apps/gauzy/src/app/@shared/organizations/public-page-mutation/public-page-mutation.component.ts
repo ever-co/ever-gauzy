@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Validators, UntypedFormBuilder, FormGroup } from '@angular/forms';
+import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
 	IIncome,

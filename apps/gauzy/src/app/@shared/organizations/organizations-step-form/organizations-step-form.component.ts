@@ -236,7 +236,7 @@ export class OrganizationsStepFormComponent
 		/**
 		 * location controls value changes
 		 */
-		const locationForm = <FormGroup>this.locationForm;
+		const locationForm = <UntypedFormGroup>this.locationForm;
 		locationForm.valueChanges.subscribe((value) => {
 			if (value.hasOwnProperty('loc')) {
 				delete value['loc'];

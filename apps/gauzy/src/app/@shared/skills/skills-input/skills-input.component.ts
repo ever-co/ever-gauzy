@@ -6,8 +6,8 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
+import { NgModel, UntypedFormGroup } from '@angular/forms';
 import { SkillsService } from '../../../@core/services/skills.service';
-import { NgModel, FormGroup } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-skills-input',
