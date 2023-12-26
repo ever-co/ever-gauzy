@@ -257,7 +257,8 @@
 		"@angular-devkit/architect": "^0.1302.2",
 		"@angular-devkit/core": "^13.2.2",
 		"rxjs": "^7.4.0",
-		"autoprefixer": "10.4.5"
+		"autoprefixer": "10.4.5",
+		"meow": "12.1.1"
 	},
 	"dependencies": {
 		"@angular/animations": "13.2.2",
@@ -279,7 +280,8 @@
 		"ng2-smart-table": "^1.7.2",
 		"rxjs": "^7.4.0",
 		"unleash": "^2.0.2",
-		"yargs": "^17.5.0"
+		"yargs": "^17.5.0",
+		"meow": "12.1.1"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1302.2",
