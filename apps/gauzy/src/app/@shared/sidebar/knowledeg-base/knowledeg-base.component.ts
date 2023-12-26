@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, ILanguage } from '@gauzy/contracts';
-import { FormGroup, FormBuilder, Validators, AbstractControl } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
 
 @Component({
@@ -43,7 +43,7 @@ export class KnowledgeBaseComponent
 		this._parentId = value;
 	}
 
-	static buildForm(formBuilder: FormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			name: [
 				'',
@@ -65,13 +65,13 @@ export class KnowledgeBaseComponent
 		protected dialogRef: NbDialogRef<KnowledgeBaseComponent>,
 		readonly translateService: TranslateService,
 		private helpCenterService: HelpCenterService,
-		private readonly formBuilder: FormBuilder,
+		private readonly formBuilder: UntypedFormBuilder,
 		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
-	public form: FormGroup = KnowledgeBaseComponent.buildForm(this.formBuilder);
+	public form: UntypedFormGroup = KnowledgeBaseComponent.buildForm(this.formBuilder);
 	public icons = [
 		{
 			label: 'Book Open',
@@ -116,7 +116,7 @@ export class KnowledgeBaseComponent
 	}
 
 	patchValue(data: any) {
- 		const { name, description, color, language, icon, privacy } = data;
+		const { name, description, color, language, icon, privacy } = data;
 		const selectedIcon = this.icons.find((item) => item.value === icon);
 		this.form.setValue({
 			name,
@@ -205,5 +205,5 @@ export class KnowledgeBaseComponent
 		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

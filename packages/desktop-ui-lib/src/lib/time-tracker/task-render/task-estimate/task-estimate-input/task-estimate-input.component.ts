@@ -6,7 +6,7 @@ import {
 	OnInit,
 	Output,
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import * as moment from 'moment';
 import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -27,12 +27,12 @@ export interface IEstimateInput {
 export class TaskEstimateInputComponent implements OnInit, AfterViewInit {
 	@Output()
 	public submit: EventEmitter<number>;
-	public timeForm: FormGroup;
+	public timeForm: UntypedFormGroup;
 	@Input()
 	public estimate$: Observable<number>;
 	private estimate: number;
 
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.submit = new EventEmitter<number>();
 	}
 

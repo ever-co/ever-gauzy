@@ -1,5 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	ICreateEmailInvitesOutput,
 	InvitationTypeEnum,
@@ -58,8 +58,8 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	 * Build email invite form group
 	 *
 	 */
-	public form: FormGroup = EmailInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EmailInviteFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			emails: ['', Validators.required],
 			projects: [],
@@ -87,7 +87,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	excludes: RolesEnum[] = [];
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly inviteService: InviteService,
 		private readonly rolesService: RoleService,
 		private readonly store: Store,
@@ -233,9 +233,9 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 		const { id: organizationId } = this.organization;
 
 		const role = await firstValueFrom(this.rolesService.getRoleByOptions({
-				name: this.getRoleFromForm(),
-				tenantId
-			})
+			name: this.getRoleFromForm(),
+			tenantId
+		})
 		);
 
 		const {

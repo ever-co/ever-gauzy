@@ -5,7 +5,7 @@ import {
 	OnDestroy,
 	TemplateRef
 } from '@angular/core';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import {
 	IOrganizationDocument,
 	ComponentLayoutStyleEnum,
@@ -49,7 +49,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	@ViewChild('addEditTemplate') addEditTemplate: TemplateRef<any>;
 
 	addEditDialogRef: NbDialogRef<any>;
-	formDocument: FormGroup;
+	formDocument: UntypedFormGroup;
 	documentUrl = '';
 	documentId = null;
 	documentList: IOrganizationDocument[] = [];
@@ -71,8 +71,8 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	/*
 	 * Organization Document Mutation Form
 	 */
-	public form: FormGroup = DocumentsComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = DocumentsComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			documents: fb.array([])
 		});
@@ -88,7 +88,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,

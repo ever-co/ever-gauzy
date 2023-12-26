@@ -1,6 +1,6 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { Component, Input } from '@angular/core';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
 	IProductCategoryTranslatable,
 	IProductOptionGroupTranslatable
@@ -21,7 +21,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 	styleUrls: ['./product-option-group-translation.component.scss']
 })
 export class ProductOptionGroupTranslationsComponent extends TranslationBaseComponent {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	@Input() productOptionGroup: IProductOptionGroupTranslatable;
 	languages: any[] = [];
 	activeGroupValueLng: string = '';
@@ -31,7 +31,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 	constructor(
 		public dialogRef: NbDialogRef<IProductCategoryTranslatable>,
 		readonly translationService: TranslateService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private productCategoryService: ProductCategoryService,
 		private store: Store,
 		private toastrService: ToastrService
@@ -72,8 +72,8 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 
 					let optionTranslation = this.activeOption
 						? this.activeOption.translations.find(
-								(tr) => tr.languageCode == lg.value
-						  )
+							(tr) => tr.languageCode == lg.value
+						)
 						: '';
 
 					if (groupTranslation && this.activeGroupValueLng) {

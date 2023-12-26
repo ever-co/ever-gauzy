@@ -7,7 +7,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -59,7 +59,7 @@ export class OptionsFormComponent implements OnInit {
 
 	activeLanguageCode: string = LanguagesEnum.ENGLISH;
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 
 	optionGroups: any[] = [];
 
@@ -74,11 +74,11 @@ export class OptionsFormComponent implements OnInit {
 	constructor(
 		private dialogService: NbDialogService,
 		private inventoryStore: InventoryStore,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store,
 		private translateService: TranslateService,
 		private eRef: ElementRef
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.initForm();
@@ -155,7 +155,7 @@ export class OptionsFormComponent implements OnInit {
 			});
 	}
 
-	onSaveOption() {}
+	onSaveOption() { }
 
 	async onTranslateOptionClick(
 		optionGroupData: IProductOptionGroupTranslatable
@@ -226,7 +226,7 @@ export class OptionsFormComponent implements OnInit {
 		this.updateOptionGroupInStore();
 	}
 
-	resetOptionForm() {}
+	resetOptionForm() { }
 
 	onEditOption(option: IProductOption) {
 		this.editOption = option;

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, Input, ViewChild } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { ICandidateInterview, ICandidate } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
@@ -11,8 +11,8 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate;
 	@Input() employees: any[];
-	candidateForm: FormGroup;
-	interviewerForm: FormGroup;
+	candidateForm: UntypedFormGroup;
+	interviewerForm: UntypedFormGroup;
 	isCandidateNotification = false;
 	isInterviewerNotification = false;
 
@@ -22,7 +22,7 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 	@ViewChild('emailInterviewerForm')
 	emailInterviewerForm: CandidateEmailComponent;
 
-	constructor() {}
+	constructor() { }
 
 	notification() {
 		if (this.emailCandidateForm) {
@@ -41,5 +41,5 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 		this.isInterviewerNotification = checked;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

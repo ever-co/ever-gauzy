@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	ComponentType,
 	IRecurringExpenseModel,
@@ -77,11 +77,11 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	/*
 	* Recurring Expense Mutation Form
 	*/
-	public form: FormGroup = RecurringExpenseMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = RecurringExpenseMutationComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: RecurringExpenseMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		const { startDate } = self.dateRangePickerBuilderService.selectedDateRange;
 		return fb.group({
 			categoryName: [null, Validators.required],
@@ -99,7 +99,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<RecurringExpenseMutationComponent>,
 		private readonly store: Store,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
@@ -173,9 +173,9 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void {}
+	ngAfterViewInit(): void { }
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	/**
 	 * GET expense categories by organization
@@ -275,7 +275,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 
-			const createdCategory =  await firstValueFrom(
+			const createdCategory = await firstValueFrom(
 				this.expenseCategoriesStore.create({
 					tenantId,
 					organizationId,

@@ -6,7 +6,7 @@ import {
 	SecurityContext,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
 	EmailTemplateEnum,
@@ -46,8 +46,8 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	/**
 	 * Email Template Mutation Form
 	 */
-	readonly form: FormGroup = EmailTemplatesComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = EmailTemplatesComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [EmailTemplateEnum.WELCOME_USER],
 			languageCode: [LanguagesEnum.ENGLISH],
@@ -63,7 +63,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly sanitizer: DomSanitizer,
 		private readonly store: Store,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly emailTemplateService: EmailTemplateService,
 		private readonly themeService: NbThemeService

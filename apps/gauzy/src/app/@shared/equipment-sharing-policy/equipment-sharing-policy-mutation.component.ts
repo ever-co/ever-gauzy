@@ -1,6 +1,6 @@
 import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,7 +14,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 export class EquipmentSharingPolicyMutationComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	isHasType = true;
 	selectedOrganization: IOrganization;
@@ -22,7 +22,7 @@ export class EquipmentSharingPolicyMutationComponent
 	constructor(
 		public dialogRef: NbDialogRef<EquipmentSharingPolicyMutationComponent>,
 		private equipmentSharingPolicyService: EquipmentSharingPolicyService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translationService: TranslateService
 	) {
 		super(translationService);

@@ -9,9 +9,10 @@
 		"downlevelIteration": true,
 		"esModuleInterop": true,
 		"module": "commonjs",
-		"target": "es2020",
+		"target": "ES2022",
 		"typeRoots": ["../../node_modules/@types"]
 	},
 	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload"]
+	"include": ["src/index.ts", "src/preload"],
+	"exclude": ["jest.config.ts"]
 }

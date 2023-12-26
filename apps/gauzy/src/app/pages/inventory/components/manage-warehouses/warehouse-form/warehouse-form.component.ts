@@ -6,7 +6,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	ITag,
 	IWarehouse,
@@ -54,13 +54,13 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	/*
 	* Location Mutation Form
 	*/
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
 	* Warehouse Mutation Form
 	*/
-	public form: FormGroup = WarehouseFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = WarehouseFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			tags: [],
@@ -99,7 +99,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly dialogService: NbDialogService,
 		private readonly imageAssetService: ImageAssetService
@@ -155,7 +155,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 		});
 
 		let selectedImage = await firstValueFrom(dialog.onClose);
-		if(selectedImage) {
+		if (selectedImage) {
 			this.logo = selectedImage;
 		}
 	}
@@ -223,7 +223,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 		const { coordinates } = locationFormValue['loc'];
 		delete locationFormValue['loc'];
 
-		const [ latitude, longitude ] = coordinates;
+		const [latitude, longitude] = coordinates;
 
 		let request = {
 			...this.form.value,
@@ -307,5 +307,5 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 		return this.warehouse && this.warehouse.id;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

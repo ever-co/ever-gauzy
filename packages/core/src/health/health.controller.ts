@@ -1,10 +1,10 @@
 import { Public } from '@gauzy/common';
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheckService, TypeOrmHealthIndicator, DiskHealthIndicator } from '@nestjs/terminus';
-import * as path from 'path';
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { v4 as uuid } from 'uuid';
+import path from 'path';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 

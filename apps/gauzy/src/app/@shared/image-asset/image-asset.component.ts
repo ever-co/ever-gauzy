@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 
@@ -18,11 +18,11 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 export class ImageAssetComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	@Input() imageAsset: IImageAsset;
 
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translateService: TranslateService,
 		private imageAssetService: ImageAssetService,
 		private dialogRef: NbDialogRef<ImageAssetComponent>,

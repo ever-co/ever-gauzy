@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IBaseEntityWithMembers,
 	IEditEntityByMemberInput,
@@ -27,19 +27,19 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 	public showAddCard: boolean;
 	public organization: IOrganization = this.store.selectedOrganization;
 
-	public form: FormGroup = EditEmployeeMembershipFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditEmployeeMembershipFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			departments: ['', Validators.required]
 		});
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store
-	) {}
+	) { }
 
-	ngOnInit(): void {}
+	ngOnInit(): void { }
 
 	async removeDepartment(id: string) {
 		if (!this.organization) {

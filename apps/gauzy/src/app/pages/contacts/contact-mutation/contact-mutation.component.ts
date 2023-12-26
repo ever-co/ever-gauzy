@@ -6,7 +6,7 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
 	IOrganizationProject,
@@ -113,8 +113,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/**
 	* Main Content Stepper Form Group
 	*/
-	public contMainForm: FormGroup = ContactMutationComponent.buildMainForm(this.fb);
-	static buildMainForm(formBuilder: FormBuilder): FormGroup {
+	public contMainForm: UntypedFormGroup = ContactMutationComponent.buildMainForm(this.fb);
+	static buildMainForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			imageUrl: [null],
 			tags: [],
@@ -133,13 +133,13 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/**
 	* Location Stepper Form Group
 	*/
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/**
 	* Budget Stepper Form Group
 	*/
-	readonly budgetForm: FormGroup = ContactMutationComponent.buildBudgetForm(this.fb);
-	static buildBudgetForm(formBuilder: FormBuilder): FormGroup {
+	readonly budgetForm: UntypedFormGroup = ContactMutationComponent.buildBudgetForm(this.fb);
+	static buildBudgetForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			budget: [],
 			budgetType: []
@@ -150,19 +150,19 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/*
 	* Getter form control value for budgetType
 	*/
-	get budgetType (): string {
+	get budgetType(): string {
 		return this.budgetForm.get('budgetType').value;
 	}
 
 	/*
 	* Getter form control value for budgetType
 	*/
-	get tags (): ITag[] {
+	get tags(): ITag[] {
 		return this.contMainForm.get('tags').value;
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly organizationProjectsService: OrganizationProjectsService,
 		private readonly toastrService: ToastrService,
@@ -228,51 +228,51 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		}
 		this.contMainForm.patchValue({
 			imageUrl: this.organizationContact
-						? this.organizationContact.imageUrl
-						: null,
+				? this.organizationContact.imageUrl
+				: null,
 			tags: this.organizationContact
-					? (this.organizationContact.tags)
-					: [],
+				? (this.organizationContact.tags)
+				: [],
 			name: this.organizationContact
-						? this.organizationContact.name
-						: '',
+				? this.organizationContact.name
+				: '',
 			primaryEmail: this.organizationContact
-								? this.organizationContact.primaryEmail
-								: '',
+				? this.organizationContact.primaryEmail
+				: '',
 			primaryPhone: this.organizationContact
-								? this.organizationContact.primaryPhone
-								: '',
+				? this.organizationContact.primaryPhone
+				: '',
 			projects: this.organizationContact
-							? this.organizationContact.projects || []
-							: [],
+				? this.organizationContact.projects || []
+				: [],
 			contactType: this.organizationContact
-							? this.organizationContact.contactType
-							: this.contactType,
+				? this.organizationContact.contactType
+				: this.contactType,
 			fax: this.organizationContact
-					? this.organizationContact.contact
-						? this.organizationContact.contact.fax
-						: ''
-					: '',
+				? this.organizationContact.contact
+					? this.organizationContact.contact.fax
+					: ''
+				: '',
 			website: this.organizationContact
-						? this.organizationContact.contact
-							? this.organizationContact.contact.website
-							: ''
-						: '',
+				? this.organizationContact.contact
+					? this.organizationContact.contact.website
+					: ''
+				: '',
 			fiscalInformation: this.organizationContact
-									? this.organizationContact.contact
-										? this.organizationContact.contact.fiscalInformation
-										: ''
-									: ''
+				? this.organizationContact.contact
+					? this.organizationContact.contact.fiscalInformation
+					: ''
+				: ''
 		});
 		this.contMainForm.updateValueAndValidity();
 
 		this.budgetForm.patchValue({
 			budgetType: this.organizationContact
-							? this.organizationContact.budgetType
-							: OrganizationContactBudgetTypeEnum.HOURS,
+				? this.organizationContact.budgetType
+				: OrganizationContactBudgetTypeEnum.HOURS,
 			budget: this.organizationContact
-						? this.organizationContact.budget
-						: null
+				? this.organizationContact.budget
+				: null
 		});
 		this.budgetForm.updateValueAndValidity();
 
@@ -354,7 +354,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		const { name, primaryEmail, primaryPhone, fax, tags = [] } = this.contMainForm.getRawValue();
 
 		let { imageUrl } = this.contMainForm.getRawValue();
-		
+
 		const location = this.locationFormDirective.getValue();
 		const { coordinates } = location['loc'];
 		delete location['loc'];
@@ -367,9 +367,9 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		};
 
 		let members = (this.members || this.selectedEmployeeIds || [])
-						.map((id) => this.employees.find((e) => e.id === id))
-						.filter((e) => !!e);
-		if(!members.length) members = this.selectedMembers;
+			.map((id) => this.employees.find((e) => e.id === id))
+			.filter((e) => !!e);
+		if (!members.length) members = this.selectedMembers;
 
 		let { projects = [] } = this.contMainForm.getRawValue();
 		projects.map((project: IOrganizationProject) => {
@@ -456,5 +456,5 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) {}
+	onGeometrySend(geometry: any) { }
 }

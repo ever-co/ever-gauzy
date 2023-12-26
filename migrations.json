@@ -1,36 +1,68 @@
 {
-  "migrations": [
-    {
-      "version": "13.6.0-beta.0",
-      "description": "Remove old options that are no longer used",
-      "cli": "nx",
-      "implementation": "./src/migrations/update-13-6-0/remove-old-task-runner-options",
-      "package": "@nrwl/workspace",
-      "name": "13-6-0-remove-old-task-runner-options"
-    },
-    {
-      "cli": "nx",
-      "version": "13.4.5-beta.7",
-      "description": "Remove the default for the invalid 'style' option for the library generator if configured.",
-      "factory": "./src/migrations/update-13-5-0/remove-library-generator-style-default",
-      "package": "@nrwl/angular",
-      "name": "remove-library-generator-style-default"
-    },
-    {
-      "cli": "nx",
-      "version": "13.5.0-beta.0",
-      "description": "A lot of changes to how MFEs operate were discovered and merged without appropriate migrations. This should cover migrating existing MFEs to the latest, using ESM and optmized production bundles.",
-      "factory": "./src/migrations/update-13-5-0/update-mfe-configs",
-      "package": "@nrwl/angular",
-      "name": "fix-incorrect-mfe-setups"
-    },
-    {
-      "version": "13.4.4-beta.0",
-      "cli": "nx",
-      "description": "Create a root babel config file if it doesn't exist and using babel-jest in jest.config.js and add @nrwl/web as needed",
-      "factory": "./src/migrations/update-13-4-4/add-missing-root-babel-config",
-      "package": "@nrwl/jest",
-      "name": "add-missing-root-babel-config"
-    }
-  ]
+    "migrations": [
+        {
+            "cli": "nx",
+            "version": "14.0.6",
+            "description": "Remove root property from project.json files",
+            "implementation": "./src/migrations/update-14-0-6/remove-roots",
+            "package": "nx",
+            "name": "14-0-6-remove-root"
+        },
+        {
+            "cli": "nx",
+            "version": "14.2.0-beta.0",
+            "description": "Add JSON Schema to Nx configuration files",
+            "implementation": "./src/migrations/update-14-2-0/add-json-schema",
+            "package": "nx",
+            "name": "14-2-0-add-json-schema"
+        },
+        {
+            "cli": "nx",
+            "version": "14.2.0-beta.0",
+            "description": "Remove default collection from configuration to switch to prompts for collection",
+            "implementation": "./src/migrations/update-14-2-0/remove-default-collection",
+            "package": "nx",
+            "name": "14-2-0-remove-default-collection"
+        },
+        {
+            "cli": "nx",
+            "version": "14.2.0-beta.5",
+            "description": "Replace all ./ and ../ in outputs with absolute paths",
+            "implementation": "./src/migrations/update-14-2-0/replace-all-relative-outputs-with-absolute",
+            "package": "nx",
+            "name": "14-2-0-replace-relative-outputs-with-absolute"
+        },
+        {
+            "cli": "nx",
+            "version": "14.3.4-beta.1",
+            "description": "Replace targetDependencies with targetDefaults",
+            "implementation": "./src/migrations/update-14-3-4/create-target-defaults",
+            "package": "nx",
+            "name": "14.3.4-create-target-defaults"
+        },
+        {
+            "cli": "nx",
+            "version": "15.0.0-beta.1",
+            "description": "Replace implicitDependencies with namedInputs + target inputs",
+            "implementation": "./src/migrations/update-15-0-0/migrate-to-inputs",
+            "package": "nx",
+            "name": "15.0.0-migrate-to-inputs"
+        },
+        {
+            "cli": "nx",
+            "version": "15.0.0-beta.1",
+            "description": "Prefix outputs with {workspaceRoot}/{projectRoot} if needed",
+            "implementation": "./src/migrations/update-15-0-0/prefix-outputs",
+            "package": "nx",
+            "name": "15.0.0-prefix-outputs"
+        },
+        {
+            "cli": "nx",
+            "version": "15.0.12-beta.1",
+            "description": "Set project names in project.json files",
+            "implementation": "./src/migrations/update-15-1-0/set-project-names",
+            "package": "nx",
+            "name": "15.1.0-set-project-names"
+        }
+    ]
 }

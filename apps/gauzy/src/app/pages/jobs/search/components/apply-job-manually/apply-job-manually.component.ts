@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, SecurityContext, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -78,8 +78,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	public proposalTemplate: IEmployeeProposalTemplate;
 
 	/** Apply Job Manually Mutation Form */
-	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			proposal: [], // Cover Letter
 			details: [], // Proposal details
@@ -126,7 +126,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	private retryUntil$: Subscription;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly _sanitizer: DomSanitizer,
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
 		public readonly translateService: TranslateService,
