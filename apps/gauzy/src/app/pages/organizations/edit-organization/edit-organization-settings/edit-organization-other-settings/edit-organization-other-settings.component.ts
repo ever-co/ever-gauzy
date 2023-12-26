@@ -9,7 +9,7 @@ import {
 import {
     UntypedFormBuilder,
     FormControl,
-    FormGroup,
+    UntypedFormGroup,
     Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';

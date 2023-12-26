@@ -6,7 +6,7 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
 	IOrganizationProject,

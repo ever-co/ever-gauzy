@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';

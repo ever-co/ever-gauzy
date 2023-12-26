@@ -10,7 +10,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {

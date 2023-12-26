@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { LatLng } from 'leaflet';
 import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';

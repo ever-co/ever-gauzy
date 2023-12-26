@@ -6,7 +6,7 @@ import {
 	SecurityContext,
 	ViewChild
 } from '@angular/core';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
 	EmailTemplateEnum,

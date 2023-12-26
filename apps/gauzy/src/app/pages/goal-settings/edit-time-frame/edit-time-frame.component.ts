@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	IGoalTimeFrame,
 	IOrganization,

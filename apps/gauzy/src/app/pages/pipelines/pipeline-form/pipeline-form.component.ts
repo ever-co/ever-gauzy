@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { Store } from '../../../@core/services/store.service';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
 import { NbDialogRef } from '@nebular/theme';
 

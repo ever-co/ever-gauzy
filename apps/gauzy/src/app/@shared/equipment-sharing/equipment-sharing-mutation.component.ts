@@ -1,6 +1,6 @@
 import { OnInit, Component, OnDestroy } from '@angular/core';
 import {
-	FormGroup,
+	UntypedFormGroup,
 	UntypedFormBuilder,
 	Validators,
 	AbstractControl

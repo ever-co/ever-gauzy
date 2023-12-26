@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { AbstractControl, UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';

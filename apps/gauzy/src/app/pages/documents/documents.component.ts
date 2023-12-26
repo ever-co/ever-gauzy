@@ -5,7 +5,7 @@ import {
 	OnDestroy,
 	TemplateRef
 } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import {
 	IOrganizationDocument,
 	ComponentLayoutStyleEnum,

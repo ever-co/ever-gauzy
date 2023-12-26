@@ -6,7 +6,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	ITag,
 	IWarehouse,

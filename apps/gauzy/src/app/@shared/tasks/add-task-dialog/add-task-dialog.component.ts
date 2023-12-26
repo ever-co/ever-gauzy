@@ -10,7 +10,7 @@ import {
 	TaskParticipantEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';

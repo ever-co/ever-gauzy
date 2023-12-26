@@ -8,7 +8,7 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { AbstractControl, UntypedFormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';

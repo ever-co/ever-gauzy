@@ -14,7 +14,7 @@ import { formatDate, Location } from '@angular/common';
 import {
 	UntypedFormBuilder,
 	FormControl,
-	FormGroup,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, Inject } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import {
 	IEmployee,
@@ -115,7 +115,7 @@ export class TasksComponent implements OnInit {
 
 	private async _tags(): Promise<void> {
 		try {
-			this.tags =  await this._tagService.getTags();
+			this.tags = await this._tagService.getTags();
 		} catch (error) {
 			console.error('[error]', 'while get tags::' + error.message);
 		}

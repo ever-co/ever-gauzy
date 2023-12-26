@@ -1,5 +1,5 @@
 import { OnInit, Component, Input, ViewChild } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IApprovalPolicy,
 	IApprovalPolicyCreateInput,

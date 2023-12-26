@@ -32,7 +32,7 @@ export class FormHelpers {
 	 * @returns
 	 */
 	static isInvalidControl(
-		formGroup: FormGroup,
+		formGroup: UntypedFormGroup,
 		control: string
 	): boolean {
 		if (!formGroup.contains(control)) {
@@ -55,7 +55,7 @@ export class FormHelpers {
 	 * @returns
 	 */
 	static isValidControl(
-		formGroup: FormGroup,
+		formGroup: UntypedFormGroup,
 		control: string
 	): boolean {
 		if (!formGroup.contains(control)) {

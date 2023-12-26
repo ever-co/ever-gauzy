@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import {
 	UntypedFormBuilder,
-	FormGroup,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import {

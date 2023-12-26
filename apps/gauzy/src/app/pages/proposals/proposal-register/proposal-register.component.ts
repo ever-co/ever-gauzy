@@ -5,7 +5,7 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef
 } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	ITag,
 	IOrganization,

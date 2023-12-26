@@ -1,6 +1,6 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IRequestApproval,
 	IEmployee,

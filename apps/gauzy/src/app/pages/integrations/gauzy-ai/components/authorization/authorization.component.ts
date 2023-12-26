@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { FormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

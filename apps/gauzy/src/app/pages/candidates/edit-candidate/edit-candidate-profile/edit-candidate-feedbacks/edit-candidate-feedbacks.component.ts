@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
 	UntypedFormBuilder,
 	Validators,
-	FormGroup,
+	UntypedFormGroup,
 	FormArray,
 	FormControl
 } from '@angular/forms';

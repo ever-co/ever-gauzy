@@ -2,7 +2,7 @@ import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, FormBuilder } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UsersOrganizationsService } from '../../../../../@core/services/users-organizations.service';
 import { UserIdService } from '../../../../../@core/services/edit-user-data.service';

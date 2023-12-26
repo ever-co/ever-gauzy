@@ -1,5 +1,5 @@
 import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

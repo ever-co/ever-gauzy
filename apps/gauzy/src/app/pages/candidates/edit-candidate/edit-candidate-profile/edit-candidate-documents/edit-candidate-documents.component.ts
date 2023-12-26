@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
-import { UntypedFormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup, FormArray } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
 import {

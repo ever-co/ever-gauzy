@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { takeUntil } from 'rxjs/operators';
-import { FormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
 import {
 	ISkill,

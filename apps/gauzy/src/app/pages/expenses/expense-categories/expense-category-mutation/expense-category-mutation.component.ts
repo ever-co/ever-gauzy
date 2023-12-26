@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
 	UntypedFormBuilder,
-	FormGroup,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';

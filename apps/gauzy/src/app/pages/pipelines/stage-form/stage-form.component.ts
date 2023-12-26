@@ -3,7 +3,7 @@ import {
 	ControlContainer,
 	FormArray,
 	UntypedFormBuilder,
-	FormGroup,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import { IPipelineStageUpdateInput } from '@gauzy/contracts';

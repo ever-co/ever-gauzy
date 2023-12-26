@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, FormBuilder } from '@angular/forms';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
 import { ckEditorConfig } from "../../../../ckeditor.config";
@@ -27,7 +27,7 @@ export class CandidateEmailComponent implements OnInit {
 	constructor(
 		protected candidatesService: CandidatesService,
 		private readonly fb: FormBuilder
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.loadFormData();

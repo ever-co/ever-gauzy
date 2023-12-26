@@ -6,7 +6,7 @@ import {
 	IImageAsset
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/product-variant-price.service';

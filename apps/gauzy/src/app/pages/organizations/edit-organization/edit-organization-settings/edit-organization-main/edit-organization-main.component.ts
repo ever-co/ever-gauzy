@@ -6,7 +6,7 @@ import {
 	OnDestroy,
 	OnInit
 } from '@angular/core';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import {
 	ICurrency,

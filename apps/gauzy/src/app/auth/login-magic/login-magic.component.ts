@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AbstractControl, UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, Subscription, finalize, firstValueFrom, interval } from "rxjs";
 import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';

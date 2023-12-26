@@ -18,7 +18,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { Router, RouterEvent, NavigationEnd } from '@angular/router';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, FormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -35,8 +35,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 })
 export class GoalSettingsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	smartTableData = new LocalDataSource();
 	generalSettingsForm: FormGroup;
 	smartTableSettings: object;
@@ -497,7 +496,7 @@ export class GoalSettingsComponent
 			});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	async addTemplate() {
 		const goalTemplateDialog = this.dialogService.open(

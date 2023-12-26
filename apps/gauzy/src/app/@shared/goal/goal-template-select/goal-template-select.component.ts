@@ -26,7 +26,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';

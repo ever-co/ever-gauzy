@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { FormGroup, Validators, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, Validators, FormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 
 export interface InputOptions {
@@ -9,14 +9,14 @@ export interface InputOptions {
 
 export interface PromptDialogOptions {
 	inputType?:
-		| 'text'
-		| 'email'
-		| 'number'
-		| 'checkbox'
-		| 'radio'
-		| 'password'
-		| 'textarea'
-		| 'select';
+	| 'text'
+	| 'email'
+	| 'number'
+	| 'checkbox'
+	| 'radio'
+	| 'password'
+	| 'textarea'
+	| 'select';
 	title?: string;
 	label?: string;
 	okText?: string;
@@ -45,7 +45,7 @@ export class PromptComponent implements OnInit {
 		});
 	}
 
-	ngOnInit() {}
+	ngOnInit() { }
 
 	close() {
 		this.dialogRef.close();
@@ -59,11 +59,11 @@ export class PromptComponent implements OnInit {
 
 	getInputType() {
 		if (this.showPassword) {
-		  	return 'text';
+			return 'text';
 		}
 		return 'password';
 	}
-	
+
 	toggleShowPassword() {
 		this.showPassword = !this.showPassword;
 	}

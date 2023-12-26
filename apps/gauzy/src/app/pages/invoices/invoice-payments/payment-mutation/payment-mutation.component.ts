@@ -13,7 +13,7 @@ import {
 	ITag,
 	ICurrency
 } from '@gauzy/contracts';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';

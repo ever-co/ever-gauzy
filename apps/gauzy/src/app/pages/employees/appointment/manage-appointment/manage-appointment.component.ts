@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import {
-	FormGroup,
+	UntypedFormGroup,
 	UntypedFormBuilder,
 	Validators,
 	AbstractControl

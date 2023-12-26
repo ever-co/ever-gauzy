@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IInvoice,
 	IOrganizationContact,

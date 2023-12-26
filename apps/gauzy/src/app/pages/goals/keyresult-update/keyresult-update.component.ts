@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, FormBuilder } from '@angular/forms';
 import {
 	IKeyResult,
 	IKeyResultUpdate,

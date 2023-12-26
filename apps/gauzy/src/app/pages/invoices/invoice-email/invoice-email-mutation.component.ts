@@ -7,7 +7,7 @@ import {
 	IInvoiceItem
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { Store } from '../../../@core/services/store.service';

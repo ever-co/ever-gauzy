@@ -5,7 +5,7 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IEmployee,

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import {
-	FormGroup,
+	UntypedFormGroup,
 	UntypedFormBuilder,
 	Validators,
 	AbstractControl,

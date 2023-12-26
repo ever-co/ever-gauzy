@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, NgForm } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

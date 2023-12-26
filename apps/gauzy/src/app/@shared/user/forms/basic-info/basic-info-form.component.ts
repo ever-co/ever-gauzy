@@ -6,7 +6,7 @@ import {
 	OnInit,
 	AfterViewInit
 } from '@angular/core';
-import { Validators, UntypedFormBuilder, FormGroup, FormControl } from '@angular/forms';
+import { Validators, UntypedFormBuilder, UntypedFormGroup, FormControl } from '@angular/forms';
 import { Location } from '@angular/common';
 import {
 	RolesEnum,

@@ -8,7 +8,7 @@ import {
 	StatusTypesEnum,
 	IImageAsset as IDocumentAsset
 } from '@gauzy/contracts';
-import { UntypedFormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';

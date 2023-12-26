@@ -10,7 +10,7 @@ import {
 import {
 	UntypedFormBuilder,
 	FormControl,
-	FormGroup,
+	UntypedFormGroup,
 	FormGroupDirective,
 	Validators
 } from '@angular/forms';

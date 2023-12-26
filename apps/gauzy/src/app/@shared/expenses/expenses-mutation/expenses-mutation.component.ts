@@ -9,7 +9,7 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import {
 	UntypedFormBuilder,
 	Validators,
-	FormGroup,
+	UntypedFormGroup,
 	FormControl
 } from '@angular/forms';
 import {
