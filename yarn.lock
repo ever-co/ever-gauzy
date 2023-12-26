@@ -7067,6 +7067,13 @@
   dependencies:
     tslib "^2.3.1"
 
+"@ng-select/ng-select@^8.1.1":
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-8.3.0.tgz#900a160738dc059a4cefaf019d67643534652d01"
+  integrity sha512-AwAuDs+86++D2kEsik2/ZiQuRk0khd1HESofOm1yMBwbzsw+xLSyVOMml/OehDFSOxli7fAkk07wYtzAhxSB3Q==
+  dependencies:
+    tslib "^2.3.1"
+
 "@ngneat/until-destroy@^9.2.0":
   version "9.2.3"
   resolved "https://registry.yarnpkg.com/@ngneat/until-destroy/-/until-destroy-9.2.3.tgz#c435b686b6c714c9004e82b23a341595a49ba5b5"

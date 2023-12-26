@@ -277,6 +277,7 @@
         "@nebular/eva-icons": "^11.0.1",
         "@nebular/security": "^11.0.1",
         "@nebular/theme": "^11.0.1",
+		"@ng-select/ng-select": "^8.1.1",
         "autoprefixer": "10.4.13",
         "bcrypt": "^5.1.0",
         "dotenv": "^16.0.3",
