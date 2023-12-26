@@ -64,7 +64,7 @@ export class AddTaskDialogComponent
 		super(translateService);
 	}
 
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],

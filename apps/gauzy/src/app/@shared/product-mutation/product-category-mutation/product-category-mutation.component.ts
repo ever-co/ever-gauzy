@@ -40,7 +40,7 @@ export class ProductCategoryMutationComponent
 	translations: any = [];
 
 	readonly form: FormGroup = ProductCategoryMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			imageUrl: [

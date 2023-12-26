@@ -54,7 +54,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	* Time Off Holiday Mutation Form
 	*/
 	public form: FormGroup = TimeOffHolidayMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			start: ['', Validators.required],
 			end: ['', Validators.required],

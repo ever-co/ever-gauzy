@@ -71,7 +71,7 @@ export class PipelinesComponent
 	 * Search Tab Form
 	 */
 	public searchForm: FormGroup = PipelinesComponent.searchBuildForm(this.fb);
-	static searchBuildForm(fb: FormBuilder): FormGroup {
+	static searchBuildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group(
 			{
 				name: [],

@@ -140,7 +140,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         }
     }
 
-    static buildForm(fb: FormBuilder): FormGroup {
+    static buildForm(fb: UntypedFormBuilder): FormGroup {
         return fb.group({
             name: [],
             currency: [],
@@ -207,7 +207,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         });
     }
 
-    static buildTaskSettingForm(fb: FormBuilder): FormGroup {
+    static buildTaskSettingForm(fb: UntypedFormBuilder): FormGroup {
         return fb.group({
             isTasksPrivacyEnabled: [],
             isTasksMultipleAssigneesEnabled: [],

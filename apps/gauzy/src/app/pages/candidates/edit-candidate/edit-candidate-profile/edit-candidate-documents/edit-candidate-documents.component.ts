@@ -50,7 +50,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	* Candidate Document Mutation Form
 	*/
 	public form: FormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			documents: fb.array([])
 		});

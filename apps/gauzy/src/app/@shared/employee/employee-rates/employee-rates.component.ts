@@ -23,7 +23,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	 * Employee Rates Form
 	 */
 	public form: FormGroup = EmployeeRatesComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			payPeriod: [],
 			billRateValue: ['', Validators.min(0)],

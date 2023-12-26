@@ -59,7 +59,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent
 	 *
 	 */
 	public form: FormGroup = EmailInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			emails: ['', Validators.required],
 			projects: [],

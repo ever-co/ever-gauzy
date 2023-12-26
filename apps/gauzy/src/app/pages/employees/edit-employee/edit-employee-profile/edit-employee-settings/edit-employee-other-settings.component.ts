@@ -37,7 +37,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	 * Employee other settings settings
 	 */
 	public form: FormGroup = EditEmployeeOtherSettingsComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			timeZone: [],
 			upworkId: [],

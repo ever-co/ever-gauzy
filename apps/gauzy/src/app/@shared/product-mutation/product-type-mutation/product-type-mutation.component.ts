@@ -40,7 +40,7 @@ export class ProductTypeMutationComponent
 	public organization: IOrganization;
 
 	readonly form: FormGroup = ProductTypeMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			icon: [ProductTypesIconsEnum.STAR],

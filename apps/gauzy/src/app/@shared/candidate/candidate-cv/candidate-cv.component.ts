@@ -9,7 +9,7 @@ export class CandidateCvComponent implements OnInit {
 	@Input() isDocument: false;
 	form: any;
 	cvUrl: any;
-	constructor(private readonly fb: FormBuilder) {}
+	constructor(private readonly fb: UntypedFormBuilder) { }
 
 	ngOnInit(): void {
 		this.loadFormData();

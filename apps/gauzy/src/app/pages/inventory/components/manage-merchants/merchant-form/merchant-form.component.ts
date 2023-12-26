@@ -56,7 +56,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 	 * Merchant Mutation Form
 	 */
 	public form: FormGroup = MerchantFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			logo: [],
 			tags: [],

@@ -29,7 +29,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	 * @param fb The FormBuilder instance used to build the form.
 	 * @returns A FormGroup containing form controls for client_id, client_secret, and openai_api_secret_key.
 	 */
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			client_id: [null, Validators.required],
 			client_secret: [null, Validators.required],

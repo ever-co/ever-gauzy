@@ -45,7 +45,7 @@ export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 	* Expense Category Mutation Form
 	*/
 	public form: FormGroup = ExpenseCategoryMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			tags: []

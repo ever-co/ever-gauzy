@@ -41,7 +41,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	* Edit Candidate Employment Mutation Form
 	*/
 	public form: FormGroup = EditCandidateEmploymentComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			organizationEmploymentTypes: [],
 			candidateLevel: [],

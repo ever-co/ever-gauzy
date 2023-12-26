@@ -42,7 +42,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	* Approval Policy Mutation Form
 	*/
 	public form: FormGroup = ApprovalPolicyMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			description: [],

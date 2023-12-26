@@ -78,7 +78,7 @@ export class EditProfileFormComponent
 	userSubmitted = new EventEmitter<void>();
 
 	public form: FormGroup = EditProfileFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			firstName: [],
 			lastName: [],

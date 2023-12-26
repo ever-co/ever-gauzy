@@ -29,7 +29,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			employeeId: [null, Validators.required],
 			name: [null, Validators.required],

@@ -43,7 +43,7 @@ export class KnowledgeBaseComponent
 		this._parentId = value;
 	}
 
-	static buildForm(formBuilder: FormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
 		const form = formBuilder.group({
 			name: [
 				'',

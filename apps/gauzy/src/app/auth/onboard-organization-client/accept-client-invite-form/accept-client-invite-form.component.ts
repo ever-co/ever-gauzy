@@ -50,7 +50,7 @@ export class AcceptClientInviteFormComponent
 	addedOrganization: boolean;
 
 	public readonly form: FormGroup = AcceptClientInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			fullName: ['', Validators.required],
 			password: ['', Validators.compose([

@@ -30,7 +30,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	*/
 	public form: FormGroup = EditEmployeeMainComponent.buildForm(this.fb);
 	static buildForm(
-		fb: FormBuilder
+		fb: UntypedFormBuilder
 	): FormGroup {
 		return fb.group({
 			username: [],

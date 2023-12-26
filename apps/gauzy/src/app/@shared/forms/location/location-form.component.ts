@@ -73,16 +73,16 @@ export class LocationFormComponent
 
 	@ViewChild('autocomplete') searchElement: ElementRef;
 
-	static buildForm(formBuilder: FormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
 		const form = formBuilder.group({
 			country: [],
 			city: [],
 			address: [],
 			address2: [],
 			postcode: [],
-			loc: formBuilder.group({
+			loc: UntypedFormBuilder.group({
 				type: ['Point'],
-				coordinates: formBuilder.array([null, null]),
+				coordinates: UntypedFormBuilder.array([null, null]),
 			}),
 		});
 		return form;

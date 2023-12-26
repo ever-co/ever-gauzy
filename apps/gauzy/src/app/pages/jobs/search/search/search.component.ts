@@ -81,7 +81,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	 * Search Tab Form
 	 */
 	public form: FormGroup = SearchComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group(
 			{
 				title: [],

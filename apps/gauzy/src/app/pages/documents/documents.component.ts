@@ -72,7 +72,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	 * Organization Document Mutation Form
 	 */
 	public form: FormGroup = DocumentsComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			documents: fb.array([])
 		});

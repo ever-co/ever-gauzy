@@ -28,7 +28,7 @@ export class TeamsMutationComponent implements OnInit {
 	* Team Mutation Form
 	*/
 	public form: FormGroup = TeamsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			name: [null, Validators.required],
 			memberIds: [null, Validators.required],

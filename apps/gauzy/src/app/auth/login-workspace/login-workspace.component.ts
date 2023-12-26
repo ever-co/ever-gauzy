@@ -31,7 +31,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
      * @param fb - The FormBuilder service for creating form controls.
      * @returns A FormGroup for the sign-in form.
      */
-    static buildForm(fb: FormBuilder): FormGroup {
+    static buildForm(fb: UntypedFormBuilder): FormGroup {
         return fb.group({
             email: [null, [Validators.required, Validators.email]],      // Email input with email validation
             password: [null, Validators.required] // Password input with required validation

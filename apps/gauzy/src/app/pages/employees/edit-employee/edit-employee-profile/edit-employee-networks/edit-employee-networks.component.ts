@@ -22,7 +22,7 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 
 	public form: FormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			linkedInUrl: [],
 			facebookUrl: [],

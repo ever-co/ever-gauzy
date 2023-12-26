@@ -70,7 +70,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	* Time Off Request Mutation Form
 	*/
 	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			start: [null, Validators.required],
 			end: [null, Validators.required],

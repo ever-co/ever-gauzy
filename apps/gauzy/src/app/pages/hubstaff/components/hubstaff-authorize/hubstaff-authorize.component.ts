@@ -19,7 +19,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 
 	/** */
 	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
-	static buildClientIdForm(fb: FormBuilder): FormGroup {
+	static buildClientIdForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			client_id: ['', Validators.required],
 		});
@@ -27,7 +27,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 
 	/** */
 	public clientSecretForm: FormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
-	static buildClientSecretForm(fb: FormBuilder): FormGroup {
+	static buildClientSecretForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			client_secret: ['', Validators.required],
 			authorization_code: ['', Validators.required],

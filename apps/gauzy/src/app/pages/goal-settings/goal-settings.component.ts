@@ -71,7 +71,7 @@ export class GoalSettingsComponent
 		private toastrService: ToastrService,
 		private store: Store,
 		private router: Router,
-		private fb: FormBuilder
+		private fb: UntypedFormBuilder
 	) {
 		super(translateService);
 		this.setView();

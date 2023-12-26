@@ -79,7 +79,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 	/** Apply Job Manually Mutation Form */
 	public form: FormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			proposal: [], // Cover Letter
 			details: [], // Proposal details

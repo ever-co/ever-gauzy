@@ -30,7 +30,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	settings: ITenantSetting = new Object();
 
 	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		const form = fb.group({
 			fileStorageProvider: [
 				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,

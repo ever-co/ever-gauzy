@@ -48,7 +48,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	* Organization Mutation Form
 	*/
 	public form: FormGroup = EditOrganizationMainComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			tags: [null],
 			currency: [null, Validators.required],

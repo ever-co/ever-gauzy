@@ -60,7 +60,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	* Warehouse Mutation Form
 	*/
 	public form: FormGroup = WarehouseFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			tags: [],

@@ -19,7 +19,7 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 
 	public form: FormGroup = EditEmployeeHiringComponent.buildForm(this.fb);
-	static buildForm(formBuilder: FormBuilder): FormGroup {
+	static buildForm(formBuilder: UntypedFormBuilder): FormGroup {
 		return formBuilder.group({
 			offerDate: [],
 			acceptDate: [],

@@ -38,7 +38,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	*/
 	public form: FormGroup = EditCandidateMainComponent.buildForm(this.fb);
 	static buildForm(
-		fb: FormBuilder
+		fb: UntypedFormBuilder
 	): FormGroup {
 		return fb.group({
 			username: [],

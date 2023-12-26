@@ -60,7 +60,7 @@ export class SMTPComponent extends TranslationBaseComponent
 	* SMTP Mutation Form
 	*/
 	public form: FormGroup = SMTPComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			id: [],
 			organizationId: [],

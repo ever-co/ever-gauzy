@@ -127,7 +127,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	 * Search Tab Form
 	 */
 	public searchForm: FormGroup = InvoicesComponent.searchBuildForm(this.fb);
-	static searchBuildForm(fb: FormBuilder): FormGroup {
+	static searchBuildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			invoiceNumber: [],
 			organizationContact: [],
@@ -144,7 +144,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	 * History Tab Form
 	 */
 	public historyForm: FormGroup = InvoicesComponent.historyBuildForm(this.fb);
-	static historyBuildForm(fb: FormBuilder): FormGroup {
+	static historyBuildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			comment: ['', Validators.required],
 			title: ['', Validators.required],

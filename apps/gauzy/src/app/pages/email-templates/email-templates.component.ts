@@ -47,7 +47,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 	 * Email Template Mutation Form
 	 */
 	readonly form: FormGroup = EmailTemplatesComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			name: [EmailTemplateEnum.WELCOME_USER],
 			languageCode: [LanguagesEnum.ENGLISH],

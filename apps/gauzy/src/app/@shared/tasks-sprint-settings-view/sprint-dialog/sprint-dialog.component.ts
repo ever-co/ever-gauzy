@@ -24,7 +24,7 @@ export class SprintDialogComponent implements OnInit {
 	private defaults = DEFAULTS;
 	moment: any = moment;
 
-	constructor(private fb: FormBuilder) { }
+	constructor(private fb: UntypedFormBuilder) { }
 
 	ngOnInit(): void {
 		this.initForm();

@@ -105,7 +105,7 @@ export class OrganizationsStepFormComponent
 	* Organization Main Mutation Form
 	*/
 	public readonly orgMainForm: FormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
-	static buildOrgMainForm(fb: FormBuilder): FormGroup {
+	static buildOrgMainForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			imageUrl: [
 				{ value: null, disabled: true }
@@ -128,7 +128,7 @@ export class OrganizationsStepFormComponent
 	* Organization Bonus Form
 	*/
 	public readonly orgBonusForm: FormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
-	static buildOrgBonusForm(fb: FormBuilder): FormGroup {
+	static buildOrgBonusForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			bonusType: [],
 			bonusPercentage: [
@@ -141,7 +141,7 @@ export class OrganizationsStepFormComponent
 	* Organization Settings Form
 	*/
 	public readonly orgSettingsForm: FormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
-	static buildOrgSettingsForm(fb: FormBuilder): FormGroup {
+	static buildOrgSettingsForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			timeZone: [],
 			startWeekOn: [],
@@ -175,7 +175,7 @@ export class OrganizationsStepFormComponent
 	* Employee Feature Form
 	*/
 	readonly employeeFeatureForm: FormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
-	static buildEmployeeFeatureForm(fb: FormBuilder): FormGroup {
+	static buildEmployeeFeatureForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			registerAsEmployee: [true],
 			startedWorkOn: [new Date(), Validators.required]

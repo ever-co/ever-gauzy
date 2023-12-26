@@ -38,7 +38,7 @@ export class PromptComponent implements OnInit {
 
 	constructor(
 		private dialogRef: NbDialogRef<PromptComponent>,
-		private fb: FormBuilder
+		private fb: UntypedFormBuilder
 	) {
 		this.form = this.fb.group({
 			input: ['', Validators.required]

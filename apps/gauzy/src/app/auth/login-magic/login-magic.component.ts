@@ -35,7 +35,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	 * @param fb - Angular FormBuilder instance.
 	 * @returns {FormGroup} - The built magic login form.
 	 */
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			email: [
 				null, Validators.compose([

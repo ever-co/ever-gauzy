@@ -32,7 +32,7 @@ export class TaskEstimateInputComponent implements OnInit, AfterViewInit {
 	public estimate$: Observable<number>;
 	private estimate: number;
 
-	constructor(private formBuilder: FormBuilder) {
+	constructor(private formBuilder: UntypedFormBuilder) {
 		this.submit = new EventEmitter<number>();
 	}
 

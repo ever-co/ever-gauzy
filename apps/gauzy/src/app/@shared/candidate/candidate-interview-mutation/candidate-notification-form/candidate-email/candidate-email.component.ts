@@ -26,7 +26,7 @@ export class CandidateEmailComponent implements OnInit {
 
 	constructor(
 		protected candidatesService: CandidatesService,
-		private readonly fb: FormBuilder
+		private readonly fb: UntypedFormBuilder
 	) { }
 
 	ngOnInit() {

@@ -13,7 +13,7 @@ export class UploadDocumentComponent implements OnInit {
 	@Input() isDocument: boolean = false;
 
 	public form: FormGroup = UploadDocumentComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): FormGroup {
 		return fb.group({
 			docUrl: [
 				null,
@@ -39,7 +39,7 @@ export class UploadDocumentComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder
+		private readonly fb: UntypedFormBuilder
 	) { }
 
 	ngOnInit(): void { }
