@@ -38,6 +38,24 @@ switch (dbType) {
 			};
 		}
 
+		// We set default pool size as 80. Usually PG has 100 connections max by default.
+		const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
+
+		const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
+			? parseInt(process.env.DB_CONNECTION_TIMEOUT)
+			: 5000; // 5 seconds default
+
+		const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+
+		const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+			: 10000; // 10 seconds default
+
+		console.log('DB Pool Size: ' + dbPoolSize);
+		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
+		console.log('DB Idle Timeout: ' + idleTimeoutMillis);
+		console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
+
 		const postgresConnectionOptions: PostgresConnectionOptions = {
 			type: dbType,
 			ssl: ssl ? sslParams : undefined,
@@ -55,29 +73,25 @@ switch (dbType) {
 					? ['query', 'error']
 					: ['error'], // by default set to error only
 			logger: 'advanced-console',
-			// log queries that take more than 3 sec as warnings
-			maxQueryExecutionTime: process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-				? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-				: 10000,
+			// log queries that take more than 10 sec as warnings
+			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
 			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			uuidExtension: 'pgcrypto',
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			// See https://typeorm.io/data-source-options#common-data-source-options
-			poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
+			poolSize: dbPoolSize,
 			extra: {
 				// based on  https://node-postgres.com/api/pool max connection pool size
-				max: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
+				max: dbPoolSize,
 				minConnection: 10,
-				maxConnection: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
-				poolSize: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80,
+				maxConnection: dbPoolSize,
+				poolSize: dbPoolSize,
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-				connectionTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT
-					? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-					: 5000, // 5 seconds
+				connectionTimeoutMillis: dbConnectionTimeout,
 				// number of milliseconds a client must sit idle in the pool and not be checked out
 				// before it is disconnected from the backend and discarded
-				idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000 // 10 seconds
+				idleTimeoutMillis: idleTimeoutMillis
 			}
 		};
 
