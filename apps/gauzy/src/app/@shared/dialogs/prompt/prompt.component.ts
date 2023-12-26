@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { UntypedFormGroup, Validators, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, Validators, UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 
 export interface InputOptions {

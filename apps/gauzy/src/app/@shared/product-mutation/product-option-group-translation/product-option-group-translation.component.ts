@@ -1,6 +1,6 @@
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { Component, Input } from '@angular/core';
-import { UntypedFormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
 	IProductCategoryTranslatable,
 	IProductOptionGroupTranslatable

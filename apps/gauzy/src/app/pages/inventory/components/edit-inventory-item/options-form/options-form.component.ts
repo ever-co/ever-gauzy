@@ -7,7 +7,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
-import { UntypedFormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';

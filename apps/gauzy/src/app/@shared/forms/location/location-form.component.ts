@@ -10,7 +10,7 @@ import {
 	Renderer2,
 	ChangeDetectorRef,
 } from '@angular/core';
-import { FormArray, UntypedFormBuilder, FormGroup } from '@angular/forms';
+import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'underscore';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';

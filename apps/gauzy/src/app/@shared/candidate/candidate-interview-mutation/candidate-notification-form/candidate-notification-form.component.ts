@@ -1,5 +1,5 @@
 import { Component, OnDestroy, Input, ViewChild } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { ICandidateInterview, ICandidate } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
