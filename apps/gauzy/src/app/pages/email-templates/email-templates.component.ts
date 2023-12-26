@@ -6,7 +6,7 @@ import {
 	SecurityContext,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
 	EmailTemplateEnum,
@@ -63,7 +63,7 @@ export class EmailTemplatesComponent extends TranslationBaseComponent
 		readonly translateService: TranslateService,
 		private readonly sanitizer: DomSanitizer,
 		private readonly store: Store,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly emailTemplateService: EmailTemplateService,
 		private readonly themeService: NbThemeService

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
@@ -27,7 +27,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _upworkService: UpworkService,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,

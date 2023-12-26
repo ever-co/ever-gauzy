@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup } from '@angular/forms';
 import { IEmployee } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,7 +12,7 @@ import { CompareDateValidator } from './../../../../../@core/validators';
 	templateUrl: './edit-employee-hiring.component.html',
 	styleUrls: [
 		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-    './edit-employee-hiring.component.scss'
+		'./edit-employee-hiring.component.scss'
 	]
 })
 export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
@@ -33,10 +33,10 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly employeeStore: EmployeeStore,
 		private readonly store: Store
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$

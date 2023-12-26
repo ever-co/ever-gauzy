@@ -10,7 +10,7 @@ import {
 	TaskParticipantEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -36,8 +36,7 @@ import { richTextCKEditorConfig } from '../../ckeditor.config';
 })
 export class AddTaskDialogComponent
 	extends TranslationBaseComponent
-	implements OnInit
-{
+	implements OnInit {
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];
@@ -55,7 +54,7 @@ export class AddTaskDialogComponent
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,

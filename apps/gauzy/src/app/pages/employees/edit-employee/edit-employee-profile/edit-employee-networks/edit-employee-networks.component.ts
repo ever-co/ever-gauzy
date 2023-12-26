@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup } from '@angular/forms';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -14,7 +14,7 @@ import { UrlPatternValidator } from './../../../../../@core/validators';
 	templateUrl: './edit-employee-networks.component.html',
 	styleUrls: [
 		'../../../../organizations/edit-organization/edit-organization-settings/edit-organization-main/edit-organization-main.component.scss',
-    './edit-employee-networks.component.scss'
+		'./edit-employee-networks.component.scss'
 	]
 })
 export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
@@ -47,10 +47,10 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore
-	) {}
+	) { }
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -106,5 +106,5 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

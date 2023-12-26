@@ -7,7 +7,7 @@ import {
 	Output
 } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormGroup,
 	Validators
 } from '@angular/forms';
@@ -54,9 +54,9 @@ export class AcceptClientInviteFormComponent
 		return fb.group({
 			fullName: ['', Validators.required],
 			password: ['', Validators.compose([
-					Validators.required,
-					Validators.minLength(4)
-				])
+				Validators.required,
+				Validators.minLength(4)
+			])
 			],
 			repeatPassword: ['', Validators.required],
 			agreeTerms: [false, Validators.requiredTrue]
@@ -71,7 +71,7 @@ export class AcceptClientInviteFormComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly dialogService: NbDialogService,
 		public readonly translateService: TranslateService
 	) {
@@ -83,10 +83,10 @@ export class AcceptClientInviteFormComponent
 	async addClientOrganization() {
 		this.organizationCreateInput = await firstValueFrom(
 			this.dialogService
-			.open(OrganizationsMutationComponent, {
-				closeOnBackdropClick: false
-			})
-			.onClose
+				.open(OrganizationsMutationComponent, {
+					closeOnBackdropClick: false
+				})
+				.onClose
 		);
 		this.addedOrganization = !!this.organizationCreateInput;
 	}
@@ -116,5 +116,5 @@ export class AcceptClientInviteFormComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

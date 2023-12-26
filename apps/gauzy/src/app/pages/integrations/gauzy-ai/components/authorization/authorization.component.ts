@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -41,7 +41,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	constructor(
-		private readonly _formBuilder: FormBuilder,
+		private readonly _formBuilder: UntypedFormBuilder,
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,

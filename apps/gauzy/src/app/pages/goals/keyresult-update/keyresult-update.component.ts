@@ -32,7 +32,7 @@ export class KeyResultUpdateComponent
 
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultUpdateComponent>,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translateService: TranslateService,
 		private keyResultUpdateService: KeyResultUpdateService,
 		private goalSettingsService: GoalSettingsService,

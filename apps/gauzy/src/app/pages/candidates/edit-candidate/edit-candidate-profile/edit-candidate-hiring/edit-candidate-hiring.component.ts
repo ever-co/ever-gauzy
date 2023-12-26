@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { ICandidate } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-stor
 @Component({
 	selector: 'ga-edit-candidate-hiring',
 	templateUrl: './edit-candidate-hiring.component.html',
-	styleUrls:['./edit-candidate-hiring.component.scss']
+	styleUrls: ['./edit-candidate-hiring.component.scss']
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
@@ -15,9 +15,9 @@ export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 	selectedCandidate: ICandidate;
 
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private candidateStore: CandidateStore
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$

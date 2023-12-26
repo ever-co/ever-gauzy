@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormGroup,
 	Validators
 } from '@angular/forms';
@@ -53,7 +53,7 @@ export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<ExpenseCategoryMutationComponent>,
 		readonly translateService: TranslateService,
 		private readonly store: Store

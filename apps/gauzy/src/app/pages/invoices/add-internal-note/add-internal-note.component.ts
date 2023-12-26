@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup } from '@angular/forms';
 import { IInvoice } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +22,7 @@ export class AddInternalNoteComponent extends TranslationBaseComponent
 	constructor(
 		readonly translateService: TranslateService,
 		protected dialogRef: NbDialogRef<InvoiceEmailMutationComponent>,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private toastrService: ToastrService,
 		private invoiceService: InvoicesService
 	) {

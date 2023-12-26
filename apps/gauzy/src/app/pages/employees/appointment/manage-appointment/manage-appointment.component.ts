@@ -14,7 +14,7 @@ import {
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import {
 	FormGroup,
-	FormBuilder,
+	UntypedFormBuilder,
 	Validators,
 	AbstractControl
 } from '@angular/forms';
@@ -80,7 +80,7 @@ export class ManageAppointmentComponent
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeService: EmployeesService,
@@ -205,9 +205,9 @@ export class ManageAppointmentComponent
 					tenantId,
 					organizationId
 				})
-				.pipe(
-					untilDestroyed(this)
-				)
+					.pipe(
+						untilDestroyed(this)
+					)
 			)
 		).items;
 	}

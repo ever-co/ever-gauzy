@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 
@@ -22,7 +22,7 @@ export class ImageAssetComponent
 	@Input() imageAsset: IImageAsset;
 
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translateService: TranslateService,
 		private imageAssetService: ImageAssetService,
 		private dialogRef: NbDialogRef<ImageAssetComponent>,

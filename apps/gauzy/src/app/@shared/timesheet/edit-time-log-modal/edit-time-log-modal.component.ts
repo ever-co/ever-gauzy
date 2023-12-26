@@ -66,7 +66,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	 */
 	public form: FormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: EditTimeLogModalComponent
 	): FormGroup {
 		return fb.group({
@@ -82,7 +82,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly timesheetService: TimesheetService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,

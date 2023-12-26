@@ -6,7 +6,7 @@ import {
 	OnInit,
 	AfterViewInit
 } from '@angular/core';
-import { Validators, FormBuilder, FormGroup, FormControl } from '@angular/forms';
+import { Validators, UntypedFormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { Location } from '@angular/common';
 import {
 	RolesEnum,
@@ -83,7 +83,7 @@ export class BasicInfoFormComponent
 	public organization: IOrganization;
 
 	public form: FormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
-	static buildForm(fb: FormBuilder, self: BasicInfoFormComponent): FormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: BasicInfoFormComponent): FormGroup {
 		return fb.group({
 			firstName: [],
 			lastName: [],
@@ -123,7 +123,7 @@ export class BasicInfoFormComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly authService: AuthService,
 		private readonly roleService: RoleService,
 		private readonly employeesService: EmployeesService,

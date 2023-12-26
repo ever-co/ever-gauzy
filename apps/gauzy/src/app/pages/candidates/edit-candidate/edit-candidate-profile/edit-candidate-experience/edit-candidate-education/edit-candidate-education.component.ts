@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ICandidateEducation,
@@ -53,7 +53,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly candidateStore: CandidateStore,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly candidateEducationsService: CandidateEducationsService
 	) {
@@ -303,5 +303,5 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

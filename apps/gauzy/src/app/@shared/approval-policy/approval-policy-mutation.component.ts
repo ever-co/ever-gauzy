@@ -1,5 +1,5 @@
 import { OnInit, Component, Input, ViewChild } from '@angular/core';
-import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IApprovalPolicy,
 	IApprovalPolicyCreateInput,
@@ -17,7 +17,7 @@ import { TranslationBaseComponent } from '../language-base';
 @Component({
 	selector: 'ngx-approval-policy-mutation',
 	templateUrl: './approval-policy-mutation.component.html',
-  	styleUrls:['./approval-policy-mutation.component.scss']
+	styleUrls: ['./approval-policy-mutation.component.scss']
 })
 export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	implements OnInit {
@@ -52,7 +52,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	constructor(
 		private readonly dialogRef: NbDialogRef<ApprovalPolicyMutationComponent>,
 		private readonly approvalPolicyService: ApprovalPolicyService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translationService: TranslateService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
@@ -70,7 +70,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
- 	patchForm() {
+	patchForm() {
 		this.form.setValue({
 			name: this.approvalPolicy ? this.approvalPolicy.name : '',
 			description: this.approvalPolicy ? this.approvalPolicy.description : ''

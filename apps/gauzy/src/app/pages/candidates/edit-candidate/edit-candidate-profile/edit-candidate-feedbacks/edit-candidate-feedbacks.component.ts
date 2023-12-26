@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	Validators,
 	FormGroup,
 	FormArray,
@@ -89,7 +89,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
@@ -234,16 +234,16 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 					interviewTitle: interview ? interview.title : null,
 					employees: fb.interviewer
 						? [
-								this.employeeList.find(
-									(emp) =>
-										emp.id === fb.interviewer.employeeId
-								)
-						  ]
+							this.employeeList.find(
+								(emp) =>
+									emp.id === fb.interviewer.employeeId
+							)
+						]
 						: null
 				});
 			});
 			this.sourceSmartTable.load(feedbacksForTable);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID){
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				this._loadGridLayoutData();
 			}
 			this.setPagination({
@@ -316,12 +316,12 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		const techSum =
 			technologies.length > 0
 				? technologies.reduce((sum, current) => sum + current, 0) /
-				  technologies.length
+				technologies.length
 				: 0;
 		const qualSum =
 			qualities.length > 0
 				? qualities.reduce((sum, current) => sum + current, 0) /
-				  qualities.length
+				qualities.length
 				: 0;
 		const isSomeEmpty =
 			(technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
@@ -441,7 +441,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 				description: formValue.description,
 				rating:
 					this.technologiesList.length === 0 &&
-					this.personalQualitiesList.length === 0
+						this.personalQualitiesList.length === 0
 						? formValue.rating
 						: this.averageRating,
 				interviewer: this.feedbackInterviewer,
@@ -600,5 +600,5 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

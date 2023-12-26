@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import {
 	FormGroup,
-	FormBuilder,
+	UntypedFormBuilder,
 	Validators,
 	AbstractControl,
 	ValidationErrors
@@ -55,7 +55,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	constructor(
 		public readonly translationService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly productService: ProductService,
 		private readonly route: ActivatedRoute,

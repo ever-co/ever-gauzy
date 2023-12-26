@@ -31,7 +31,7 @@ export class EditUserOrganizationsMutationComponent
 	userId: string;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly organizationsService: OrganizationsService,
 		private readonly usersOrganizationService: UsersOrganizationsService,
 		public readonly translateService: TranslateService,

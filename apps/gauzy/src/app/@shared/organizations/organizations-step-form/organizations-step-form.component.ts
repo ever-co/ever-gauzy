@@ -12,7 +12,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { formatDate, Location } from '@angular/common';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormControl,
 	FormGroup,
 	Validators
@@ -183,7 +183,7 @@ export class OrganizationsStepFormComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly store: Store,

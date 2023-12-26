@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { Store } from '../../../@core/services/store.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
 import { NbDialogRef } from '@nebular/theme';
 
@@ -29,9 +29,9 @@ export class PipelineFormComponent implements OnInit {
 		public dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
 		private usersOrganizationsService: UsersOrganizationsService,
 		private pipelinesService: PipelinesService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		const { id, isActive } = this.pipeline;

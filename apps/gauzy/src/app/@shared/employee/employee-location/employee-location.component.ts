@@ -1,5 +1,5 @@
 import { OnInit, OnDestroy, Component, Input, ViewChild } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,7 +12,7 @@ import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
 @Component({
 	selector: 'ga-employee-location',
 	templateUrl: './employee-location.component.html',
-  	styleUrls:['./employee-location.component.scss']
+	styleUrls: ['./employee-location.component.scss']
 })
 export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	@Input() public isEmployee: boolean;
@@ -30,11 +30,11 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	leafletTemplate: LeafletMapComponent;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly candidateStore: CandidateStore,
 		private readonly employeeStore: EmployeeStore,
 		private readonly store: Store
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
@@ -161,7 +161,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) {}
+	onGeometrySend(geometry: any) { }
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

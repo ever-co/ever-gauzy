@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	IEmployee,
 	IGoal,
@@ -31,7 +31,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./edit-objective.component.scss']
 })
 export class EditObjectiveComponent implements OnInit, OnDestroy {
-	
+
 	employees: IEmployee[] = [];
 	data: IGoal;
 	timeFrames: IGoalTimeFrame[] = [];
@@ -64,12 +64,12 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<EditObjectiveComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly goalSettingService: GoalSettingsService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly organizationTeamsService: OrganizationTeamsService
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -184,12 +184,12 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			this.form.value.level === GoalLevelEnum.EMPLOYEE
 				? 'ownerEmployee'
 				: this.form.value.level === GoalLevelEnum.TEAM
-				? 'ownerTeam'
-				: 'organization'
+					? 'ownerTeam'
+					: 'organization'
 		] = this.form.value.owner;
 		delete objectiveData.owner;
 		delete objectiveData.organization;
-   	 	if(this.form.invalid) return;
+		if (this.form.invalid) return;
 		this.closeDialog(objectiveData);
 	}
 

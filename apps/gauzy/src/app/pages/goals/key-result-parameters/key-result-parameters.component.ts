@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	KeyResultTypeEnum,
 	IKeyResult,
@@ -40,13 +40,13 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private dialogRef: NbDialogRef<KeyResultParametersComponent>,
 		private keyResultService: KeyResultService,
 		private taskService: TasksService,
 		private goalSettingsService: GoalSettingsService,
 		private store: Store
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;

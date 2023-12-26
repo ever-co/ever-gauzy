@@ -10,7 +10,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -158,7 +158,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	actionButtons: TemplateRef<any>;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,

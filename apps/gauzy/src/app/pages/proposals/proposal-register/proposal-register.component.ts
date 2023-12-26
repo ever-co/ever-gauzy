@@ -5,7 +5,7 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef
 } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	ITag,
 	IOrganization,
@@ -41,7 +41,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	organization: IOrganization;
 	tags: ITag[] = [];
 	ckConfig: CKEditor4.Config = ckEditorConfig;
-	minDate : Date;
+	minDate: Date;
 	selectedEmployee: IEmployee;
 
 	/*
@@ -49,7 +49,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	*/
 	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: ProposalRegisterComponent
 	): FormGroup {
 		return fb.group({
@@ -71,17 +71,17 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly router: Router,
 		private readonly proposalsService: ProposalsService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly cdRef: ChangeDetectorRef,
-    	private readonly dateService: NbDateService<Date>
+		private readonly dateService: NbDateService<Date>
 	) {
 		super(translateService);
-    	this.minDate =  this.dateService.addMonth(this.dateService.today(), 0);
+		this.minDate = this.dateService.addMonth(this.dateService.today(), 0);
 	}
 
 	ngOnInit(): void {
@@ -175,5 +175,5 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 		this.form.get('tags').updateValueAndValidity();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

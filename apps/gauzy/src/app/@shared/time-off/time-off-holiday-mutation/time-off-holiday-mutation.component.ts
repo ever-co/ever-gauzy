@@ -8,7 +8,7 @@ import {
 	StatusTypesEnum,
 	IUser
 } from '@gauzy/contracts';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -33,19 +33,19 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffHolidayMutationComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
-    	private readonly dateService: NbDateService<Date>
+		private readonly dateService: NbDateService<Date>
 	) {
-    	this.minDate = this.dateService.addMonth(this.dateService.today(),0);
-  	}
+		this.minDate = this.dateService.addMonth(this.dateService.today(), 0);
+	}
 
 	orgEmployees: IEmployee[] = [];
 	employeesArr: IEmployee[] = [];
 	holidays = [];
-	minDate : Date;
+	minDate: Date;
 	public organization: IOrganization;
 	countryCode: string;
 	employeeIds: string[] = [];
@@ -74,7 +74,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user.employee),
-				tap(({ employee : { contact } }: IUser) => {
+				tap(({ employee: { contact } }: IUser) => {
 					if (contact && contact.country) {
 						this.countryCode = contact.country;
 					}
@@ -88,7 +88,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization) => this.organization = organization),
-				tap(({ contact } : IOrganization) => {
+				tap(({ contact }: IOrganization) => {
 					if (contact && contact.country) {
 						this.countryCode = contact.country;
 					}
@@ -158,11 +158,11 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 			organizationId,
 			tenantId
 		})
-		.pipe(
-			first(),
-			tap(({ items }) => this.orgEmployees = items)
-		)
-		.subscribe();
+			.pipe(
+				first(),
+				tap(({ items }) => this.orgEmployees = items)
+			)
+			.subscribe();
 	}
 
 	onPolicySelected(policy: ITimeOffPolicy) {

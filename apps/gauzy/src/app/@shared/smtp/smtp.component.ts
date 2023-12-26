@@ -8,7 +8,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormControl,
 	FormGroup,
 	FormGroupDirective,
@@ -82,7 +82,7 @@ export class SMTPComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly customSmtpService: CustomSmtpService,
 		public readonly translate: TranslateService,
 		private readonly toastrService: ToastrService,
@@ -162,9 +162,9 @@ export class SMTPComponent extends TranslationBaseComponent
 			.getSMTPSetting({
 				tenantId,
 				...(this.organization && this.isOrganization
-					? 	{
-							organizationId: this.organization.id
-					  	}
+					? {
+						organizationId: this.organization.id
+					}
 					: {})
 			})
 			.then((setting) => {

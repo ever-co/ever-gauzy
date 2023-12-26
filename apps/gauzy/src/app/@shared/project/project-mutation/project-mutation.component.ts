@@ -8,7 +8,7 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { EMPTY, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
@@ -178,7 +178,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly _router: Router,
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService,

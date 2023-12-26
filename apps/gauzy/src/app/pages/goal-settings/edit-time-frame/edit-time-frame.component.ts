@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	IGoalTimeFrame,
 	IOrganization,
@@ -41,7 +41,7 @@ export class EditTimeFrameComponent
 
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private goalSettingsService: GoalSettingsService,
 		private dateService: NbDateService<Date>,
 		readonly translate: TranslateService,
@@ -121,7 +121,7 @@ export class EditTimeFrameComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	updateTimeFrameValues(timeFrame, event) {
 		event.stopPropagation();

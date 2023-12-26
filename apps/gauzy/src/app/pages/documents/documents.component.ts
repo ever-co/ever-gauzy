@@ -5,7 +5,7 @@ import {
 	OnDestroy,
 	TemplateRef
 } from '@angular/core';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import {
 	IOrganizationDocument,
 	ComponentLayoutStyleEnum,
@@ -88,7 +88,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IInvoice,
 	IOrganizationContact,
@@ -119,7 +119,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly router: Router,
@@ -608,11 +608,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				await this.invoiceEstimateHistoryService.add({
 					action: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-								name: organizationContact.name
-						  })
+							name: organizationContact.name
+						})
 						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-								name: organizationContact.name
-						  }),
+							name: organizationContact.name
+						}),
 					invoice: this.createdInvoice,
 					invoiceId: this.createdInvoice.id,
 					user: this.store.user,
@@ -1149,5 +1149,5 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

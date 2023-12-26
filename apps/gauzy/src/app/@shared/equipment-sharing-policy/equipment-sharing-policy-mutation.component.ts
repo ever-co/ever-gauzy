@@ -1,6 +1,6 @@
 import { OnInit, Component } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +22,7 @@ export class EquipmentSharingPolicyMutationComponent
 	constructor(
 		public dialogRef: NbDialogRef<EquipmentSharingPolicyMutationComponent>,
 		private equipmentSharingPolicyService: EquipmentSharingPolicyService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translationService: TranslateService
 	) {
 		super(translationService);

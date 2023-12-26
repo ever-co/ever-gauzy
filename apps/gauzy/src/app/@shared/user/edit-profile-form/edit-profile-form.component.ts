@@ -7,7 +7,7 @@ import {
 	EventEmitter
 } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormGroup,
 	Validators
 } from '@angular/forms';
@@ -107,7 +107,7 @@ export class EditProfileFormComponent
 	public excludes: RolesEnum[] = [];
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly authService: AuthService,
 		private readonly userService: UsersService,
 		private readonly store: Store,

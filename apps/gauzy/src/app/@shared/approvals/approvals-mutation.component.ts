@@ -1,6 +1,6 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '../language-base/translation-base.component';
-import { FormGroup, FormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IRequestApproval,
 	IEmployee,
@@ -55,7 +55,7 @@ export class RequestApprovalMutationComponent
 		private readonly requestApprovalService: RequestApprovalService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translationService: TranslateService,
 		public readonly store: Store
 	) {
@@ -78,7 +78,7 @@ export class RequestApprovalMutationComponent
 		this.loadApprovalPolicies();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	async loadEmployees() {
 		this.employeesService
@@ -112,11 +112,11 @@ export class RequestApprovalMutationComponent
 				}
 			}
 		}
-		if(!this.requestApproval && this.approvalPolicies && this.approvalPolicies.length > 0) {
+		if (!this.requestApproval && this.approvalPolicies && this.approvalPolicies.length > 0) {
 			this.approvalPolicies.filter(item => {
-				if(item.approvalType == "DEFAULT_APPROVAL_POLICY") {
+				if (item.approvalType == "DEFAULT_APPROVAL_POLICY") {
 					this.form.patchValue({
-						approvalPolicyId:  item.id
+						approvalPolicyId: item.id
 					});
 				}
 			});
@@ -133,7 +133,7 @@ export class RequestApprovalMutationComponent
 		this.tenantId = tenantId;
 	}
 
-	onApprovalPolicySelected(approvalPolicySelection: string[]) {		
+	onApprovalPolicySelected(approvalPolicySelection: string[]) {
 		this.selectedApprovalPolicy = approvalPolicySelection;
 	}
 
@@ -156,17 +156,17 @@ export class RequestApprovalMutationComponent
 			],
 			employees: [
 				this.requestApproval &&
-				this.requestApproval.employeeApprovals &&
-				this.requestApproval.employeeApprovals.length > 0
+					this.requestApproval.employeeApprovals &&
+					this.requestApproval.employeeApprovals.length > 0
 					? this.requestApproval.employeeApprovals.map(
-							(emp) => emp.id
-					  )
+						(emp) => emp.id
+					)
 					: []
 			],
 			teams: [
 				this.requestApproval &&
-				this.requestApproval.teamApprovals &&
-				this.requestApproval.teamApprovals.length > 0
+					this.requestApproval.teamApprovals &&
+					this.requestApproval.teamApprovals.length > 0
 					? this.requestApproval.teamApprovals.map((team) => team.id)
 					: []
 			],
@@ -192,9 +192,9 @@ export class RequestApprovalMutationComponent
 					? [this.requestApproval.tags]
 					: []
 		});
-		this.participants = (this.requestApproval && this.requestApproval.teamApprovals.length > 0) 
-							? "teams" 
-							: "employees"
+		this.participants = (this.requestApproval && this.requestApproval.teamApprovals.length > 0)
+			? "teams"
+			: "employees"
 		this.tags = this.form.get('tags').value || [];
 
 		if (this.requestApproval) {
@@ -280,7 +280,7 @@ export class RequestApprovalMutationComponent
 
 	onParticipantsChange(participants: string) {
 		this.participants = participants;
-		if(participants === "employees") {
+		if (participants === "employees") {
 			this.form.get('teams').setValue([]);
 		} else {
 			this.form.get('employees').setValue([]);

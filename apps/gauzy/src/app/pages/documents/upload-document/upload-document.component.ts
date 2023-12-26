@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Validators, FormBuilder, FormGroup, AbstractControl } from '@angular/forms';
+import { Validators, UntypedFormBuilder, FormGroup, AbstractControl } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 
 @Component({

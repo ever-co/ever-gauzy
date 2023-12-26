@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import {
 	ControlContainer,
 	FormArray,
-	FormBuilder,
+	UntypedFormBuilder,
 	FormGroup,
 	Validators
 } from '@angular/forms';
@@ -31,9 +31,9 @@ export class StageFormComponent implements OnInit {
 	constructor(
 		private readonly controlContainer: ControlContainer,
 		private dialogService: NbDialogService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.control = this.controlContainer.control as FormArray;

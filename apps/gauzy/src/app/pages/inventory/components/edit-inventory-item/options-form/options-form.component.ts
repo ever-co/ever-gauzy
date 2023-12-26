@@ -74,11 +74,11 @@ export class OptionsFormComponent implements OnInit {
 	constructor(
 		private dialogService: NbDialogService,
 		private inventoryStore: InventoryStore,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store,
 		private translateService: TranslateService,
 		private eRef: ElementRef
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.initForm();
@@ -155,7 +155,7 @@ export class OptionsFormComponent implements OnInit {
 			});
 	}
 
-	onSaveOption() {}
+	onSaveOption() { }
 
 	async onTranslateOptionClick(
 		optionGroupData: IProductOptionGroupTranslatable
@@ -226,7 +226,7 @@ export class OptionsFormComponent implements OnInit {
 		this.updateOptionGroupInStore();
 	}
 
-	resetOptionForm() {}
+	resetOptionForm() { }
 
 	onEditOption(option: IProductOption) {
 		this.editOption = option;

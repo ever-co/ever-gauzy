@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IBaseEntityWithMembers,
 	IEditEntityByMemberInput,
@@ -35,11 +35,11 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store
-	) {}
+	) { }
 
-	ngOnInit(): void {}
+	ngOnInit(): void { }
 
 	async removeDepartment(id: string) {
 		if (!this.organization) {

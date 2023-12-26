@@ -6,7 +6,7 @@ import {
 	OnDestroy,
 	OnInit
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import {
 	ICurrency,
@@ -74,7 +74,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly organizationService: OrganizationsService,
 		private readonly toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,

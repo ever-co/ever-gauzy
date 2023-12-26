@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
 	IEmployeeProposalTemplate,
 	IOrganization,
@@ -68,7 +68,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,

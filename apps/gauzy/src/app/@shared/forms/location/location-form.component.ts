@@ -10,7 +10,7 @@ import {
 	Renderer2,
 	ChangeDetectorRef,
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { FormArray, UntypedFormBuilder, FormGroup } from '@angular/forms';
 import { FormHelpers } from '../helpers';
 import { pick, isEmpty } from 'underscore';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
@@ -30,8 +30,7 @@ import { DOCUMENT } from '@angular/common';
 })
 export class LocationFormComponent
 	extends TranslationBaseComponent
-	implements AfterViewInit
-{
+	implements AfterViewInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	private _lastUsedAddressText: string;
@@ -268,7 +267,7 @@ export class LocationFormComponent
 		this.mapGeometryEmitter.emit(geometry);
 	}
 
-	private _popInvalidAddressMessage() {}
+	private _popInvalidAddressMessage() { }
 
 	private _setupGoogleAutocompleteOptions(
 		autocomplete: google.maps.places.Autocomplete

@@ -17,7 +17,7 @@ import {
 	NavigationEnd,
 	ActivatedRoute
 } from '@angular/router';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -78,7 +78,7 @@ export class VendorsComponent
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
 		private readonly toastrService: ToastrService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly dialogService: NbDialogService,
 		private readonly errorHandlingService: ErrorHandlingService,

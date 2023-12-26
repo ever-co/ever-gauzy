@@ -7,7 +7,7 @@ import {
     ViewChild,
 } from '@angular/core';
 import {
-    FormBuilder,
+    UntypedFormBuilder,
     FormControl,
     FormGroup,
     Validators,
@@ -235,7 +235,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     constructor(
         private readonly route: ActivatedRoute,
         private readonly router: Router,
-        private readonly fb: FormBuilder,
+        private readonly fb: UntypedFormBuilder,
         private readonly cdr: ChangeDetectorRef,
         private readonly organizationService: OrganizationsService,
         private readonly organizationTaskSettingService: OrganizationTaskSettingService,

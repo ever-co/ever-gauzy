@@ -37,7 +37,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _hubstaffService: HubstaffService,
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _router: Router,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService

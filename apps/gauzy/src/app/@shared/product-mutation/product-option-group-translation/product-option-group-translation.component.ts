@@ -31,7 +31,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 	constructor(
 		public dialogRef: NbDialogRef<IProductCategoryTranslatable>,
 		readonly translationService: TranslateService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private productCategoryService: ProductCategoryService,
 		private store: Store,
 		private toastrService: ToastrService
@@ -72,8 +72,8 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 
 					let optionTranslation = this.activeOption
 						? this.activeOption.translations.find(
-								(tr) => tr.languageCode == lg.value
-						  )
+							(tr) => tr.languageCode == lg.value
+						)
 						: '';
 
 					if (groupTranslation && this.activeGroupValueLng) {

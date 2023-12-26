@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
 	IImageAsset,
@@ -54,7 +54,7 @@ export class ProductCategoryMutationComponent
 	constructor(
 		public readonly dialogRef: NbDialogRef<IProductCategoryTranslatable>,
 		public readonly translationService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly productCategoryService: ProductCategoryService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService

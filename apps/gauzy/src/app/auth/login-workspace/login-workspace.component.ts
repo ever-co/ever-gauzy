@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { UntypedFormBuilder, FormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { EMPTY, filter } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
@@ -44,7 +44,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
     constructor(
         private readonly _router: Router,
         private readonly _store: Store,
-        private readonly _fb: FormBuilder,
+        private readonly _fb: UntypedFormBuilder,
         private readonly _authService: AuthService,
         private readonly _errorHandlingService: ErrorHandlingService,
     ) { }

@@ -4,7 +4,7 @@ import {
 	Component,
 	OnInit
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
@@ -37,7 +37,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	* Proposal Mutation Form
 	*/
 	public form: FormGroup = ProposalEditComponent.buildForm(this.fb, this);
-	static buildForm(fb: FormBuilder, self: ProposalEditComponent): FormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: ProposalEditComponent): FormGroup {
 		return fb.group({
 			jobPostUrl: [],
 			valueDate: [
@@ -59,7 +59,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly store: Store,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,
 		private readonly proposalsService: ProposalsService,
@@ -122,7 +122,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 				const { organizationId } = this.proposal;
 
 				const { jobPostContent, jobPostUrl, proposalContent, tags } = this.form.getRawValue();
-				const {  organizationContact } = this.form.getRawValue();
+				const { organizationContact } = this.form.getRawValue();
 
 				try {
 					await this.proposalsService.update(this.proposal.id, {

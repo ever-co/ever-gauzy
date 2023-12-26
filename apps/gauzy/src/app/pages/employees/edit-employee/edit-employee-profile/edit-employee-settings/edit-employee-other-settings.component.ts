@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, NgForm } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, NgForm } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -47,7 +47,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly employeeStore: EmployeeStore
 	) { }
 

@@ -13,7 +13,7 @@ import {
 	ITag,
 	ICurrency
 } from '@gauzy/contracts';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -45,7 +45,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	*/
 	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: PaymentMutationComponent
 	): FormGroup {
 		return fb.group({
@@ -68,7 +68,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<PaymentMutationComponent>,
 		private readonly store: Store,
 		private readonly invoicesService: InvoicesService
@@ -215,5 +215,5 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

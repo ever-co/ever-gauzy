@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { IPipeline, IContact } from '@gauzy/contracts';
@@ -39,7 +39,7 @@ export class PipelineDealFormComponent
 	constructor(
 		public translateService: TranslateService,
 		private router: Router,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private appStore: AppStore,
 		private store: Store,
 		private dealsService: DealsService,
@@ -170,24 +170,24 @@ export class PipelineDealFormComponent
 		this.form.disable();
 		await (this.dealId
 			? this.dealsService.update(
-					this.dealId,
-					Object.assign(
-						{
-							organizationId: this.organizationId,
-							tenantId: this.tenantId
-						},
-						value
-					)
-			  )
+				this.dealId,
+				Object.assign(
+					{
+						organizationId: this.organizationId,
+						tenantId: this.tenantId
+					},
+					value
+				)
+			)
 			: this.dealsService.create(
-					Object.assign(
-						{
-							organizationId: this.organizationId,
-							tenantId: this.tenantId
-						},
-						value
-					)
-			  )
+				Object.assign(
+					{
+						organizationId: this.organizationId,
+						tenantId: this.tenantId
+					},
+					value
+				)
+			)
 		)
 			.then(() => {
 				if (this.dealId) {

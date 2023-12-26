@@ -6,7 +6,7 @@ import {
 	ITask,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -41,8 +41,7 @@ const initialTaskValue = {
 })
 export class MyTaskDialogComponent
 	extends TranslationBaseComponent
-	implements OnInit
-{
+	implements OnInit {
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
@@ -59,7 +58,7 @@ export class MyTaskDialogComponent
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<MyTaskDialogComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly _organizationsStore: Store,
 		private readonly organizationProjectsService: OrganizationProjectsService,
