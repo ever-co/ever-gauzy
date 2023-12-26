@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"types": ["node", "jest"],
 		"emitDecoratorMetadata": true,
-		"target": "es2016",
+		"target": "es2022",
 		"experimentalDecorators": true
 	},
 	"include": ["**/*.ts"]

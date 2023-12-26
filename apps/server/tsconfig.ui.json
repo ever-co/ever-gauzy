@@ -2,7 +2,7 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"types": ["node", "jest", "googlemaps"],
-		"target": "es2020"
+		"target": "es2022"
 	},
 	"include": ["**/*.ts"]
 }
