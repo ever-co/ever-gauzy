@@ -8,7 +8,7 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
 	ICandidate,

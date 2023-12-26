@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
-import { UntypedFormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
 import { ckEditorConfig } from "../../../../ckeditor.config";

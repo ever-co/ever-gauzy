@@ -42,7 +42,7 @@ export class StageFormComponent implements OnInit {
 		});
 	}
 
-	reorder(event: CdkDragDrop<FormGroup>) {
+	reorder(event: CdkDragDrop<UntypedFormGroup>) {
 		const index = this.control.controls.indexOf(event.item.data);
 
 		this.control.removeAt(index);

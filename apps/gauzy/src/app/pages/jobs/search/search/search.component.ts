@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { UntypedFormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';

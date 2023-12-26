@@ -6,7 +6,7 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
-import { UntypedFormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
