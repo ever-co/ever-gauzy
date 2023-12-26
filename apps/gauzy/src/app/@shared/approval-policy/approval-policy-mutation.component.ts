@@ -25,7 +25,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	public organization: IOrganization;
 
-	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
+	@ViewChild('formDirective') formDirective: FormGroupDirective;
 	/*
 	* Getter & Setter for dynamic enabled/disabled element
 	*/

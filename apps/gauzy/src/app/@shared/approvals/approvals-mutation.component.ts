@@ -33,7 +33,7 @@ export class RequestApprovalMutationComponent
 	implements OnInit, OnDestroy {
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
-	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
+	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	form: UntypedFormGroup;
 	requestApproval: IRequestApproval;

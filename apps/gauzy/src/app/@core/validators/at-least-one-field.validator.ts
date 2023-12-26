@@ -1,4 +1,4 @@
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 
 export function AtLeastOneFieldValidator(group: UntypedFormGroup): { [key: string]: any } {
 	let isAtLeastOne = false;

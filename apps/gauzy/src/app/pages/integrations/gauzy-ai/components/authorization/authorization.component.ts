@@ -38,7 +38,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	}
 
 	// Using @ViewChild to get a reference to the FormGroupDirective with the template reference variable 'formDirective'
-	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
+	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	constructor(
 		private readonly _formBuilder: UntypedFormBuilder,

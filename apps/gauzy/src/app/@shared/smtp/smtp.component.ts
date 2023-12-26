@@ -38,7 +38,7 @@ import { patterns } from '../regex/regex-patterns.const';
 export class SMTPComponent extends TranslationBaseComponent
 	implements OnInit, OnChanges, AfterViewInit {
 
-	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
+	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	@Input() organization?: IOrganization;
 	@Input() isOrganization?: boolean;

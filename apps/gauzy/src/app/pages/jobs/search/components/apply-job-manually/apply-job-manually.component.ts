@@ -109,7 +109,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	/** Form group directive */
-	@ViewChild('formDirective') formDirective: UntypedFormGroupDirective;
+	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	/** Ckeditor component */
 	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
