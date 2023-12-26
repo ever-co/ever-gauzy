@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { UntypedFormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
