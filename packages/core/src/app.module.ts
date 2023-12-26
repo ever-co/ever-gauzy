@@ -10,7 +10,7 @@ import { GraphqlInterceptor } from './core/sentry/ntegral';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations } from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
+// import { ProfilingIntegration } from '@sentry/profiling-node';
 import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
@@ -208,10 +208,12 @@ if (environment.sentry && environment.sentry.dsn) {
 		}
 	}
 
+	/*
 	if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
 		sentryIntegrations.push(new ProfilingIntegration());
 		console.log('Sentry Profiling Enabled');
 	}
+	*/
 
 	sentryIntegrations.push(new Integrations.Console());
 	console.log('Sentry Console Enabled');
