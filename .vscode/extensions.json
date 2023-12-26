@@ -3,7 +3,6 @@
 		"nrwl.angular-console",
 		"DeepScan.vscode-deepscan",
 		"angular.ng-template",
-		"ms-vscode.vscode-typescript-tslint-plugin",
 		"folke.vscode-monorepo-workspace",
 		"seatonjiang.gitmoji-vscode",
 		"dbaeumer.vscode-eslint",
