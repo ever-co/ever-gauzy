@@ -111,10 +111,14 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			// Find entities by parameters, filtering by tenant ID.
 			const { items = [] } = await this.findEntitiesByParams({ tenantId });
 
+			// Initialize an index variable.
+			let index = 0;
+
 			// Iterate over each found entity.
 			for (const item of items) {
+
 				// Extract relevant properties from the entity.
-				const { tenantId, name, value, description, icon, color, order, isCollapsed } = item;
+				const { tenantId, name, value, description, icon, color, order = index, isCollapsed } = item;
 
 				// Create a new TaskStatus instance with modified properties.
 				const status = new TaskStatus({
@@ -129,6 +133,9 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					order,
 					isCollapsed,
 				});
+
+				// Increment the index.
+				index++;
 
 				// Add the new status to the array.
 				statuses.push(status);
@@ -160,10 +167,13 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			// Find entities by parameters, filtering by tenant ID and organization ID.
 			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
 
+			// Initialize an index variable.
+			let index = 0;
+
 			// Iterate over each found entity.
 			for await (const item of items) {
 				// Extract properties from the entity.
-				const { name, value, description, icon, color, order, isCollapsed } = item;
+				const { name, value, description, icon, color, order = index, isCollapsed } = item;
 
 				// Create a new TaskStatus instance with modified properties.
 				const status = await this.create({
@@ -177,6 +187,9 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					order,
 					isCollapsed,
 				});
+
+				// Increment the index.
+				index++;
 
 				// Add the new status to the array.
 				statuses.push(status);
