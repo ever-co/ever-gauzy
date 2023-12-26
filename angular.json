@@ -58,7 +58,8 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"apps/gauzy/node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
 							"node_modules/echarts/dist/echarts.min.js",
@@ -371,7 +372,8 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"apps/gauzy/node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
 							"node_modules/echarts/dist/echarts.min.js",
@@ -506,7 +508,8 @@
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"apps/gauzy/node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
 					},
@@ -701,7 +704,8 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/desktop-timer/src/assets/styles/styles.scss"
+							"apps/desktop-timer/src/assets/styles/styles.scss",
+							"apps/gauzy/node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
 					},
@@ -819,7 +823,8 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/server/src/assets/styles/styles.scss"
+							"apps/server/src/assets/styles/styles.scss",
+							"apps/gauzy/node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [],
 						"stylePreprocessorOptions": {
@@ -937,7 +942,8 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"apps/gauzy/node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
 							"node_modules/echarts/dist/echarts.min.js",
