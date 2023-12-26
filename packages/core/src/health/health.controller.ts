@@ -4,6 +4,7 @@ import { HealthCheckService, TypeOrmHealthIndicator, DiskHealthIndicator } from 
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { v4 as uuid } from 'uuid';
+import path from 'path';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 
@@ -17,7 +18,7 @@ export class HealthController {
 		private readonly disk: DiskHealthIndicator,
 		private readonly cacheHealthIndicator: CacheHealthIndicator,
 		private readonly redisHealthIndicator: RedisHealthIndicator
-	) { }
+	) {}
 
 	@Public()
 	@Get()
