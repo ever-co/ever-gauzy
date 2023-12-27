@@ -114,7 +114,6 @@ export const LocalStore = {
 					prerelease: false,
 					preferredLanguage: 'en',
 					zone: 'local',
-					autoStart: false,
 					alwaysOn: true,
 					enforced: false
 				};
@@ -208,5 +207,20 @@ export const LocalStore = {
 		store.set({
 			filePath: filePath
 		});
+	},
+
+	setDefaultServerConfig: () => {
+		const configs = {
+			autoStart: true,
+			secureProxy: {
+				secure: true,
+				enable: false,
+				ssl: {
+					key: '',
+					cert: ''
+				}
+			}
+		};
+		store.set({ configs });
 	}
 };
