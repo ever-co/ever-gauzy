@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import {
-	FormGroup,
-	FormBuilder,
+	UntypedFormGroup,
+	UntypedFormBuilder,
 	Validators,
 	FormControl
 } from '@angular/forms';
@@ -39,7 +39,7 @@ import { endOfTomorrow } from 'date-fns';
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	employees: IEmployee[];
-	keyResultsForm: FormGroup;
+	keyResultsForm: UntypedFormGroup;
 	data: IKeyResult;
 	showAllEmployees = false;
 	settings: IGoalGeneralSetting;
@@ -62,7 +62,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 	constructor(
 		private dialogRef: NbDialogRef<EditKeyResultsComponent>,
-		public fb: FormBuilder,
+		public fb: UntypedFormBuilder,
 		private employeeService: EmployeesService,
 		private taskService: TasksService,
 		private organizationTeamsService: OrganizationTeamsService,
@@ -70,7 +70,7 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 		private goalService: GoalService,
 		private goalSettingsService: GoalSettingsService,
 		private keyResultUpdateService: KeyResultUpdateService
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;
@@ -240,8 +240,8 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 				this.keyResultsForm.value.level === GoalLevelEnum.EMPLOYEE
 					? 'ownerEmployee'
 					: this.keyResultsForm.value.level === GoalLevelEnum.TEAM
-					? 'ownerTeam'
-					: 'organization'
+						? 'ownerTeam'
+						: 'organization'
 			] = this.keyResultsForm.value.alignedGoalOwner;
 			await this.goalService.createGoal(objectiveData);
 		}
@@ -278,12 +278,12 @@ export class EditKeyResultsComponent implements OnInit, OnDestroy {
 			this.keyResultsForm.patchValue({
 				targetValue:
 					this.keyResultsForm.value.type ===
-					this.keyResultTypeEnum.TRUE_OR_FALSE
+						this.keyResultTypeEnum.TRUE_OR_FALSE
 						? 1
 						: this.keyResultsForm.value.type ===
-						  this.keyResultTypeEnum.TASK
-						? 1
-						: this.keyResultsForm.value.targetValue
+							this.keyResultTypeEnum.TASK
+							? 1
+							: this.keyResultsForm.value.targetValue
 			});
 			this.closeDialog({
 				...this.keyResultsForm.value,

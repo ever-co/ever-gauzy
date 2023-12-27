@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import { AppointmentEmployeesController } from './appointment-employees.controller';
 import { AppointmentEmployeesService } from './appointment-employees.service';
@@ -8,7 +8,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/appointment-employees',
 				module: AppointmentEmployeesModule

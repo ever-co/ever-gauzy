@@ -1,6 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from 'tenant/tenant.module';
 import { UserModule } from 'user/user.module';
@@ -16,9 +16,10 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
-				path: '/integration', module: IntegrationModule,
+				path: '/integration',
+				module: IntegrationModule,
 				children: [
 					{ path: '/hubstaff', module: HubstaffModule },
 					{ path: '/github', module: GithubModule },
@@ -27,10 +28,7 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 				]
 			}
 		]),
-		TypeOrmModule.forFeature([
-			Integration,
-			IntegrationType
-		]),
+		TypeOrmModule.forFeature([Integration, IntegrationType]),
 		IntegrationTenantModule,
 		TenantModule,
 		UserModule,
@@ -39,16 +37,8 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 		forwardRef(() => IntegrationAIModule),
 		CqrsModule
 	],
-	controllers: [
-		IntegrationController
-	],
-	providers: [
-		IntegrationService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		IntegrationService
-	]
+	controllers: [IntegrationController],
+	providers: [IntegrationService, ...CommandHandlers],
+	exports: [TypeOrmModule, IntegrationService]
 })
-export class IntegrationModule { }
+export class IntegrationModule {}

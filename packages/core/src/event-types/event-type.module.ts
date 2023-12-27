@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
@@ -15,21 +15,14 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/event-type', module: EventTypeModule }
-		]),
+		RouterModule.register([{ path: '/event-type', module: EventTypeModule }]),
 		UserModule,
 		TypeOrmModule.forFeature([EventType, Employee, Organization]),
 		CqrsModule,
 		TenantModule
 	],
 	controllers: [EventTypeController],
-	providers: [
-		EventTypeService,
-		EmployeeService,
-		OrganizationService,
-		...CommandHandlers
-	],
+	providers: [EventTypeService, EmployeeService, OrganizationService, ...CommandHandlers],
 	exports: [EventTypeService]
 })
 export class EventTypeModule {}

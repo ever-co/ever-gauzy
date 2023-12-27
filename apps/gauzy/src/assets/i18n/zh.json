@@ -3898,7 +3898,18 @@
 			"TIMEZONE_LOCAL": "本地",
 			"TIMEZONE_UTC": "世界协调时间 (UTC)",
 			"WIDGET": "小部件",
-			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。"
+			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。",
+			"SSL": {
+				"SSL_CONFIG": "SSL 配置",
+				"USE_SSL": "使用 SSL",
+				"USE_SSL_INFO": "开启 SSL 加密。",
+				"SSL_KEY_FILE": "SSL 密钥文件",
+				"SSL_KEY_FILE_INFO": "SSL 客户端密钥文件路径。",
+				"SSL_CERT_FILE": "SSL 证书文件",
+				"SSL_CERT_FILE_INFO": "SSL 客户端证书文件路径。",
+				"SECURE": "安全",
+				"SECURE_INFO": "True，如果您想要验证 SSL 证书。"
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "每周限制已超过。",
 		"OF_HRS": "的{{ limit }}小时",

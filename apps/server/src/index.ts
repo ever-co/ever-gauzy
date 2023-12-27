@@ -50,7 +50,9 @@ import {
 	ErrorReportRepository,
 	DialogErrorHandler,
 	AppError,
-	UIError
+	UIError,
+	DialogOpenFile,
+	ReverseUiProxy
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -106,6 +108,7 @@ const serverConfig: IServerConfig = new ServerConfig(
 	new ReadWriteFile(pathWindow)
 );
 const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
+const reverseUiProxy: ILocalServer = new ReverseUiProxy(serverConfig);
 
 const executableName = path.basename(process.execPath);
 
@@ -205,12 +208,11 @@ eventErrorManager.onShowError(async (message) => {
 })
 
 const runSetup = async () => {
-	if (setupWindow) {
-		setupWindow.show();
-		splashScreen.close();
-		return;
+	// Set default configuration
+	LocalStore.setDefaultServerConfig();
+	if (!setupWindow) {
+		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	}
-	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	setupWindow.show();
 	splashScreen.close();
 };
@@ -442,6 +444,10 @@ app.on('ready', async () => {
 			LocalStore.setDefaultApplicationSetting();
 			launchAtStartup(true, false);
 		}
+		global.variableGlobal = {
+			API_BASE_URL: serverConfig.apiPort,
+			IS_INTEGRATED_DESKTOP: false
+		};
 		if (!settingsWindow) {
 			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
 		}
@@ -540,10 +546,12 @@ ipcMain.on('running_state', (event, arg) => {
 		const start = trayContextMenu[3];
 		start.enabled = false;
 		reverseProxy.start();
+		reverseUiProxy.start();
 	} else {
 		const stop = trayContextMenu[4];
 		stop.enabled = false;
 		reverseProxy.stop();
+		reverseUiProxy.stop();
 	}
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu));
 	isServerRun = arg;
@@ -673,7 +681,7 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
 
-ipcMain.on('auto_start_on_startup', (event, arg) => {
+ipcMain.on('update_server_config', (event, arg) => {
 	serverConfig.setting = arg;
 });
 
@@ -705,3 +713,21 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 			break;
 	}
 }
+
+ipcMain.on('save_encrypted_file', (event, value) => {
+	try {
+		const { secureProxy = { enable: false, secure: true, ssl: { key: '', cert: '' } } } =
+			serverConfig.setting || {};
+		const dialog = new DialogOpenFile(settingsWindow, 'ssl');
+		const filePath = dialog.save();
+		if (filePath) {
+			secureProxy.ssl[value] = filePath;
+			serverConfig.setting = {
+				secureProxy
+			};
+			event.reply('app_setting', LocalStore.getApplicationConfig());
+		}
+	} catch (error) {
+		console.error(error);
+	}
+})

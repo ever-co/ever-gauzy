@@ -8,7 +8,7 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
 import {
 	ICandidate,
@@ -96,9 +96,9 @@ export class CandidateInterviewMutationComponent
 	@ViewChild('candidateNotificationForm')
 	candidateNotificationForm: CandidateNotificationFormComponent;
 
-	form: FormGroup;
-	candidateForm: FormGroup;
-	interviewerForm: FormGroup;
+	form: UntypedFormGroup;
+	candidateForm: UntypedFormGroup;
+	interviewerForm: UntypedFormGroup;
 	interview: any;
 	employees: IEmployee[] = [];
 	candidates: ICandidate[] = [];

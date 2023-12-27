@@ -1,7 +1,7 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 
 import { TenantModule } from './../../tenant/tenant.module';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
@@ -11,16 +11,14 @@ import { UserModule } from '../../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/task-linked-issue', module: TaskLinkedIssueModule },
-		]),
+		RouterModule.register([{ path: '/task-linked-issue', module: TaskLinkedIssueModule }]),
 		TypeOrmModule.forFeature([TaskLinkedIssue]),
 		TenantModule,
 		CqrsModule,
-		UserModule,
+		UserModule
 	],
 	controllers: [TaskLinkedIssueController],
 	providers: [TaskLinkedIssueService],
-	exports: [TaskLinkedIssueService],
+	exports: [TaskLinkedIssueService]
 })
 export class TaskLinkedIssueModule {}

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IEmployee, IOrganization, IOrganizationDepartment, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -31,24 +31,24 @@ export class DepartmentsMutationComponent implements OnInit {
 	addOrEditDepartment = new EventEmitter();
 
 	/*
-	* Department Mutation Form 
+	* Department Mutation Form
 	*/
-	public form: FormGroup = DepartmentsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = DepartmentsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			members: [[], Validators.required],
 			tags: [[]]
-		}) as FormGroup;
+		});
 	}
 
 	employees: IEmployee[] = [];
 	organization: IOrganization;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -78,8 +78,8 @@ export class DepartmentsMutationComponent implements OnInit {
 
 	/**
 	 * Load employees from multiple selected employees
-	 * 
-	 * @param employees 
+	 *
+	 * @param employees
 	 */
 	public onLoadEmployees(employees: IEmployee[]) {
 		this.employees = employees;
@@ -87,14 +87,14 @@ export class DepartmentsMutationComponent implements OnInit {
 
 	/**
 	 * On submit form
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	onSubmit() {
 		if (this.form.invalid || !this.organization) {
 			return;
 		}
-	
+
 		const { id: organizationId } = this.organization;
 		const { name, tags, members } = this.form.getRawValue();
 
@@ -112,8 +112,8 @@ export class DepartmentsMutationComponent implements OnInit {
 
 	/**
 	 * Members selection handler
-	 * 
-	 * @param members 
+	 *
+	 * @param members
 	 */
 	onMembersSelected(members: string[]) {
 		this.form.get('members').setValue(members);
@@ -122,8 +122,8 @@ export class DepartmentsMutationComponent implements OnInit {
 
 	/**
 	 * Tag selection handler
-	 * 
-	 * @param selectedTags 
+	 *
+	 * @param selectedTags
 	 */
 	selectedTagsEvent(selectedTags: ITag[]) {
 		this.form.get('tags').setValue(selectedTags);

@@ -1,5 +1,7 @@
 {
 	"language": "ts",
+	"builder": "swc",
+	"typeCheck": true,
 	"collection": "@nestjs/schematics",
 	"sourceRoot": "apps/api/src",
 	"compilerOptions": {

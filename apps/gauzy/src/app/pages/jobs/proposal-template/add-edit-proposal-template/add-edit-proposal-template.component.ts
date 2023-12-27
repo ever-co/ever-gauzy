@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployeeProposalTemplate,
 	IOrganization,
@@ -28,8 +28,8 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 	public organization: IOrganization;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
-	public form: FormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = AddEditProposalTemplateComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			employeeId: [null, Validators.required],
 			name: [null, Validators.required],
@@ -68,7 +68,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly dialogRef: NbDialogRef<AddEditProposalTemplateComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,

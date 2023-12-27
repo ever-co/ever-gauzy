@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffRequest } from './time-off-request.entity';
 import { Employee } from '../employee/employee.entity';
@@ -15,16 +15,8 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: 'time-off-request', module: TimeOffRequestModule }
-		]),
-		TypeOrmModule.forFeature([
-			TimeOffRequest,
-			Employee,
-			TimeOffPolicy,
-			RequestApproval,
-			ApprovalPolicy
-		]),
+		RouterModule.register([{ path: 'time-off-request', module: TimeOffRequestModule }]),
+		TypeOrmModule.forFeature([TimeOffRequest, Employee, TimeOffPolicy, RequestApproval, ApprovalPolicy]),
 		CqrsModule,
 		TenantModule,
 		UserModule

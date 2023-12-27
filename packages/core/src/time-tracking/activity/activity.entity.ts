@@ -1,13 +1,5 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	JoinColumn,
-	CreateDateColumn,
-	Index
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -19,14 +11,7 @@ import {
 	IOrganizationProject
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsString,
-	IsEnum,
-	IsOptional,
-	IsNumber,
-	IsDateString,
-	IsUUID
-} from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
 import { getConfig } from '@gauzy/config';
 import {
 	Employee,
@@ -38,12 +23,13 @@ import {
 
 let options: TypeOrmModuleOptions;
 try {
-	options = getConfig().dbConnectionOptions
-} catch (error) { }
+	options = getConfig().dbConnectionOptions;
+} catch (error) {
+	console.error('Cannot load DB connection options', error);
+}
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
-
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -58,18 +44,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	description?: string;
 
 	@ApiPropertyOptional({
-		type: () =>
-			['sqlite', 'better-sqlite3'].includes(options.type)
-				? 'text'
-				: 'json',
+		type: () => (['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json')
 	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: ['sqlite', 'better-sqlite3'].includes(options.type)
-			? 'text'
-			: 'json',
+		type: ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 
@@ -101,7 +82,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({
 		type: () => String,
 		enum: TimeLogSourceEnum,
-		default: TimeLogSourceEnum.WEB_TIMER,
+		default: TimeLogSourceEnum.WEB_TIMER
 	})
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)

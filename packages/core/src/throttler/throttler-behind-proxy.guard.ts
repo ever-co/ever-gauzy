@@ -4,7 +4,7 @@ import { environment } from '@gauzy/config';
 
 @Injectable()
 export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
-	protected getTracker(req: Record<string, any>): string {
+	protected async getTracker(req: Record<string, any>): Promise<string> {
 		let tracker: string;
 
 		// Handle Cloudflare proxy
@@ -17,13 +17,13 @@ export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
 				}
 			} else {
 				tracker = req.ips.length > 0 ? req.ips[0] : req.ip;
-				if (!environment.production) {
+				if (!environment.production && tracker !== '::1') {
 					console.log(`Request IP: ${tracker}`);
 				}
 			}
 		} else {
 			tracker = req.ips.length > 0 ? req.ips[0] : req.ip;
-			if (!environment.production) {
+			if (!environment.production && tracker !== '::1') {
 				console.log(`Request IP: ${tracker}`);
 			}
 		}

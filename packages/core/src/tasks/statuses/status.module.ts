@@ -1,7 +1,7 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule } from '../../tenant/tenant.module';
 import { TaskStatus } from './status.entity';
 import { TaskStatusController } from './status.controller';
@@ -11,15 +11,13 @@ import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/task-statuses', module: TaskStatusModule }
-		]),
-		TypeOrmModule.forFeature([ TaskStatus ]),
+		RouterModule.register([{ path: '/task-statuses', module: TaskStatusModule }]),
+		TypeOrmModule.forFeature([TaskStatus]),
 		TenantModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [TaskStatusController],
 	providers: [TaskStatusService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TaskStatusService],
+	exports: [TaskStatusService]
 })
 export class TaskStatusModule {}

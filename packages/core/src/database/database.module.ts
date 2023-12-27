@@ -17,13 +17,14 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 			// to configure the DataSourceOptions.
 			useFactory: async (configService: ConfigService) => {
 				const { dbConnectionOptions } = configService.config;
+
+				console.log('DB Connection Options: ', dbConnectionOptions);
+
 				return dbConnectionOptions;
 			}
 		} as TypeOrmModuleAsyncOptions)
 	],
 	providers: [],
-	exports: [
-		TypeOrmModule
-	]
+	exports: [TypeOrmModule]
 })
 export class DatabaseModule {}

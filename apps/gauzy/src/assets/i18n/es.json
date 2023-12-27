@@ -3900,7 +3900,18 @@
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
-			"WIDGET_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón."
+			"WIDGET_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón.",
+			"SSL": {
+				"SSL_CONFIG": "Configuración SSL",
+				"USE_SSL": "Usar SSL",
+				"USE_SSL_INFO": "Activa el cifrado SSL.",
+				"SSL_KEY_FILE": "Archivo de clave SSL",
+				"SSL_KEY_FILE_INFO": "Ruta al archivo de clave de cliente para SSL.",
+				"SSL_CERT_FILE": "Archivo de certificado SSL",
+				"SSL_CERT_FILE_INFO": "Ruta al archivo de certificado de cliente para SSL.",
+				"SECURE": "Seguro",
+				"SECURE_INFO": "Verdadero, si desea verificar los certificados SSL."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Límite semanal excedido",
 		"OF_HRS": "De {{ limit }} horas.",

@@ -1,13 +1,17 @@
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
-import { ThrottlerModule, ThrottlerModuleOptions } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { GraphqlInterceptor, SentryInterceptor, SentryModule } from '@ntegral/nestjs-sentry';
+import { SentryModule, SentryModuleOptions, SENTRY_MODULE_OPTIONS } from './core/sentry/ntegral';
+import { GraphqlInterceptor } from './core/sentry/ntegral';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations } from '@sentry/node';
-import { ProfilingIntegration } from '@sentry/profiling-node';
+// import { ProfilingIntegration } from '@sentry/profiling-node';
+import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
@@ -189,31 +193,180 @@ if (environment.sentry && environment.sentry.dsn) {
 	if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
 		sentryIntegrations.push(
 			// enable HTTP calls tracing
-			new Integrations.Http({ tracing: true })
+			new Integrations.Http({
+				tracing: true,
+				breadcrumbs: true
+			})
 		);
+		console.log('Sentry HTTP Tracing Enabled');
 	}
 
 	if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
 		if (process.env.DB_TYPE === 'postgres') {
 			sentryIntegrations.push(new Integrations.Postgres());
+			console.log('Sentry Postgres Tracking Enabled');
 		}
 	}
 
+	/*
 	if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
 		sentryIntegrations.push(new ProfilingIntegration());
+		console.log('Sentry Profiling Enabled');
 	}
+	*/
+
+	sentryIntegrations.push(new Integrations.Console());
+	console.log('Sentry Console Enabled');
 
 	sentryIntegrations.push(new Integrations.GraphQL());
-	sentryIntegrations.push(new Integrations.Apollo());
+	console.log('Sentry GraphQL Enabled');
 
-	// TODO: we can also integrate Express routes, but not sure how to pass here app instance
-	// sentryIntegrations.push(new Integrations.Express());
+	sentryIntegrations.push(new Integrations.Apollo({ useNestjs: true }));
+	console.log('Sentry Apollo Enabled');
+
+	sentryIntegrations.push(
+		new Integrations.LocalVariables({
+			captureAllExceptions: true
+		})
+	);
+	console.log('Sentry Local Variables Enabled');
+
+	sentryIntegrations.push(
+		new Integrations.RequestData({
+			ip: true
+		})
+	);
+	console.log('Sentry Request Data Enabled');
+}
+
+function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
+	console.log('Creating Sentry Options');
+
+	return {
+		dsn: environment.sentry.dsn,
+		debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
+		environment: environment.production ? 'production' : 'development',
+		// TODO: we should use some internal function which returns version of Gauzy
+		release: 'gauzy@' + process.env.npm_package_version,
+		logLevels: ['error'],
+		integrations: [
+			...sentryIntegrations,
+			host?.httpAdapter
+				? new Integrations.Express({
+					app: host.httpAdapter.getInstance()
+				})
+				: null
+		].filter((i) => !!i),
+		tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+			? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
+			: 0.01,
+		profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE
+			? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE)
+			: 1,
+		close: {
+			enabled: true,
+			// Time in milliseconds to forcefully quit the application
+			timeout: 3000
+		}
+	};
+}
+
+if (environment.THROTTLE_ENABLED) {
+	console.log('Throttle Enabled');
+
+	const ttlValue = environment.THROTTLE_TTL;
+	console.log('Throttle TTL: ', ttlValue);
+
+	const limit = environment.THROTTLE_LIMIT;
+	console.log('Throttle Limit: ', limit);
 }
 
 @Module({
 	imports: [
+		...(process.env.REDIS_ENABLED === 'true'
+			? [
+				CacheModule.registerAsync({
+					isGlobal: true,
+					useFactory: async () => {
+						const url =
+							process.env.REDIS_URL ||
+							(process.env.REDIS_TLS === 'true'
+								? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+								: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+
+						console.log('REDIS_URL: ', url);
+
+						let host, port, username, password;
+
+						const isTls = url.startsWith('rediss://');
+
+						// Removing the protocol part
+						let authPart = url.split('://')[1];
+
+						// Check if the URL contains '@' (indicating the presence of username/password)
+						if (authPart.includes('@')) {
+							// Splitting user:password and host:port
+							let [userPass, hostPort] = authPart.split('@');
+							[username, password] = userPass.split(':');
+							[host, port] = hostPort.split(':');
+						} else {
+							// If there is no '@', it means there is no username/password
+							[host, port] = authPart.split(':');
+						}
+
+						port = parseInt(port);
+
+						const storeOptions = {
+							socket: {
+								tls: isTls,
+								host: host,
+								port: port,
+								passphrase: password,
+								rejectUnauthorized: process.env.NODE_ENV === 'production'
+							},
+							url: url,
+							username: username,
+							password: password,
+							isolationPoolOptions: {
+								min: 10,
+								max: 100
+							},
+							ttl: 60 * 60 * 24 * 7 // 1 week,
+						};
+
+						const store = await redisStore(storeOptions);
+
+						store.client
+							.on('error', (err) => {
+								console.log('Redis Client Error: ', err);
+							})
+							.on('connect', () => {
+								console.log('Redis Client Connected');
+							})
+							.on('ready', () => {
+								console.log('Redis Client Ready');
+							})
+							.on('reconnecting', () => {
+								console.log('Redis Client Reconnecting');
+							})
+							.on('end', () => {
+								console.log('Redis Client End');
+							});
+
+						// ping Redis
+						const res = await store.client.ping();
+						console.log('Redis Client Cache Ping: ', res);
+
+						return {
+							store: () => store
+						};
+					}
+				})
+			]
+			: [CacheModule.register({ isGlobal: true })]),
 		ServeStaticModule.forRootAsync({
 			useFactory: async (configService: ConfigService): Promise<ServeStaticModuleOptions[]> => {
+				console.log('Serve Static Module Creating');
 				return await resolveServeStaticPath(configService);
 			},
 			inject: [ConfigService],
@@ -230,24 +383,11 @@ if (environment.sentry && environment.sentry.dsn) {
 		}),
 		...(environment.sentry && environment.sentry.dsn
 			? [
-					SentryModule.forRoot({
-						dsn: environment.sentry.dsn,
-						debug: !environment.production,
-						environment: environment.production ? 'production' : 'development',
-						// TODO: we should use some internal function which returns version of Gauzy
-						release: 'gauzy@' + process.env.npm_package_version,
-						logLevels: ['error'],
-						integrations: sentryIntegrations,
-						tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-							? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-							: 0.01,
-						close: {
-							enabled: true,
-							// Time in milliseconds to forcefully quit the application
-							timeout: 3000
-						}
-					})
-			  ]
+				SentryModule.forRootAsync({
+					inject: [ConfigService, HttpAdapterHost],
+					useFactory: createSentryOptions
+				})
+			]
 			: []),
 		// Probot Configuration
 		ProbotModule.forRoot({
@@ -275,25 +415,32 @@ if (environment.sentry && environment.sentry.dsn) {
 			}
 		}),
 		/** Jitsu Configuration */
-		JitsuAnalyticsModule.forRoot({
-			config: {
-				host: jitsu.serverHost,
-				writeKey: jitsu.serverWriteKey,
-				debug: jitsu.debug,
-				echoEvents: jitsu.echoEvents
-			}
-		}),
+		...(environment.jitsu.serverHost && environment.jitsu.serverWriteKey
+			? [
+				JitsuAnalyticsModule.forRoot({
+					config: {
+						host: jitsu.serverHost,
+						writeKey: jitsu.serverWriteKey,
+						debug: jitsu.debug,
+						echoEvents: jitsu.echoEvents
+					}
+				})
+			]
+			: []),
 		...(environment.THROTTLE_ENABLED
 			? [
-					ThrottlerModule.forRootAsync({
-						inject: [ConfigService],
-						useFactory: (config: ConfigService): ThrottlerModuleOptions =>
-							({
-								ttl: config.get('THROTTLE_TTL'),
-								limit: config.get('THROTTLE_LIMIT')
-							} as ThrottlerModuleOptions)
-					})
-			  ]
+				ThrottlerModule.forRootAsync({
+					inject: [ConfigService],
+					useFactory: () => {
+						return [
+							{
+								ttl: environment.THROTTLE_TTL,
+								limit: environment.THROTTLE_LIMIT
+							}
+						];
+					}
+				})
+			]
 			: []),
 		CoreModule,
 		AuthModule,
@@ -425,11 +572,11 @@ if (environment.sentry && environment.sentry.dsn) {
 		AppService,
 		...(environment.THROTTLE_ENABLED
 			? [
-					{
-						provide: APP_GUARD,
-						useClass: ThrottlerBehindProxyGuard
-					}
-			  ]
+				{
+					provide: APP_GUARD,
+					useClass: ThrottlerBehindProxyGuard
+				}
+			]
 			: []),
 		{
 			provide: APP_INTERCEPTOR,
@@ -437,25 +584,20 @@ if (environment.sentry && environment.sentry.dsn) {
 		},
 		...(environment.sentry && environment.sentry.dsn
 			? [
-					{
-						provide: APP_INTERCEPTOR,
-						useFactory: () =>
-							new SentryInterceptor({
-								filters: [
-									/* Note: It is possible to filter exceptions, e.g. only those that error codes are bigger than 499, but for now we want to see all of them
-									{
-										type: HttpException,
-										filter: (exception: HttpException) => 500 > exception.getStatus() // Only report 500 errors
-									}
-									*/
-								]
-							})
-					},
-					{
-						provide: APP_INTERCEPTOR,
-						useFactory: () => new GraphqlInterceptor()
-					}
-			  ]
+				{
+					provide: SENTRY_MODULE_OPTIONS,
+					useFactory: createSentryOptions,
+					inject: [HttpAdapterHost]
+				},
+				{
+					provide: APP_INTERCEPTOR,
+					useFactory: () => new SentryCustomInterceptor()
+				},
+				{
+					provide: APP_INTERCEPTOR,
+					useFactory: () => new GraphqlInterceptor()
+				}
+			]
 			: [])
 	],
 	exports: []

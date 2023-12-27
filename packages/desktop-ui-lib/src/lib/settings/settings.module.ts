@@ -29,9 +29,10 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '../services';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import {TaskRenderModule} from "../time-tracker/task-render";
+import { SslComponent } from './ssl/ssl.component';
 
 @NgModule({
-	declarations: [SettingsComponent],
+	declarations: [SettingsComponent, SslComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,

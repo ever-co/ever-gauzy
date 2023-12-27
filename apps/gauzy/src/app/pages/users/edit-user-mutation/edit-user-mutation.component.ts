@@ -6,7 +6,7 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
@@ -34,14 +34,14 @@ export class EditUserMutationComponent
 	@Output()
 	addOrEditUser = new EventEmitter();
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	users: string[];
 	selectedUsersIds: string[];
 	selectedOrganizationId: string;
 	disableButton = true;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private usersOrganizationsService: UsersOrganizationsService,
 		readonly translateService: TranslateService,
 		private readonly store: Store
@@ -104,10 +104,10 @@ export class EditUserMutationComponent
 
 	onUsersSelected(users: string[]) {
 		this.selectedUsersIds = users;
-		
-		if(this.selectedUsersIds.length > 0){
-			this.disableButton =  false;
-		}else{
+
+		if (this.selectedUsersIds.length > 0) {
+			this.disableButton = false;
+		} else {
 			this.disableButton = true;
 		}
 	}

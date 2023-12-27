@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TimeOffPolicyService } from './time-off-policy.service';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TimeOffPolicyController } from './time-off-policy.controller';
@@ -11,7 +11,7 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: 'time-off-policy', module: TimeOffPolicyModule }]),
+		RouterModule.register([{ path: 'time-off-policy', module: TimeOffPolicyModule }]),
 		TypeOrmModule.forFeature([TimeOffPolicy]),
 		TenantModule,
 		UserModule,

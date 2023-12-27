@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { SocialAuthModule } from '@gauzy/auth';
 import { Organization, OrganizationTeam, UserOrganization } from './../core/entities/internal';
 import { EmailSendModule } from './../email-send/email-send.module';
@@ -17,33 +17,22 @@ import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from './../feature/feature.module';
 
-const providers = [
-	AuthService,
-	EmailConfirmationService,
-	UserOrganizationService
-];
+const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
 
-const strategies = [
-	JwtStrategy,
-	JwtRefreshTokenStrategy
-];
+const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/auth',
 				module: AuthModule,
-				children: [
-					{ path: '/', module: SocialAuthModule }
-				]
+				children: [{ path: '/', module: SocialAuthModule }]
 			}
 		]),
 		SocialAuthModule.registerAsync({
 			imports: [
-				TypeOrmModule.forFeature([
-					OrganizationTeam
-				]),
+				TypeOrmModule.forFeature([OrganizationTeam]),
 				AuthModule,
 				EmailSendModule,
 				UserModule,
@@ -53,11 +42,7 @@ const strategies = [
 			],
 			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([
-			UserOrganization,
-			Organization,
-			OrganizationTeam
-		]),
+		TypeOrmModule.forFeature([UserOrganization, Organization, OrganizationTeam]),
 		EmailSendModule,
 		UserModule,
 		RoleModule,
@@ -69,4 +54,4 @@ const strategies = [
 	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })
-export class AuthModule { }
+export class AuthModule {}

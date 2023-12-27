@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Merchant } from './merchant.entity';
 import { MerchantController } from './merchant.controller';
@@ -11,9 +11,7 @@ import { ImageAssetModule } from './../image-asset/image-asset.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/merchants', module: MerchantModule }
-		]),
+		RouterModule.register([{ path: '/merchants', module: MerchantModule }]),
 		TypeOrmModule.forFeature([Merchant]),
 		TenantModule,
 		UserModule,

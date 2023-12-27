@@ -8,7 +8,7 @@
 }
 /*  Apply style on scrollbar for Chrome */
 *::-webkit-scrollbar {
-  width: nb-theme(scrollbar-width);
+  width: 6px;
   height: nb-theme(scrollbar-width);
 }
 
@@ -261,7 +261,8 @@ body {
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-    background-color: unset !important;
+    color: var(--gauzy-text-color-1);
+    background-color: var(--background-basic-color-1) !important;
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
@@ -675,3 +676,7 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
   }
 }
 
+.backdrop-blur {
+	backdrop-filter: blur(4px);
+	background-color: #0000004a;
+}

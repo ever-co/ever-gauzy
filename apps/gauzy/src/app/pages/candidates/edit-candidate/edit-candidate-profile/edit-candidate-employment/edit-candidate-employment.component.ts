@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
 	IOrganization,
 	IOrganizationDepartment,
@@ -28,7 +28,7 @@ import {
 	styleUrls: ['./edit-candidate-employment.component.scss']
 })
 export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
-	
+
 	selectedCandidate: ICandidate;
 	employmentTypes: IOrganizationEmploymentType[] = [];
 	organization: IOrganization;
@@ -40,8 +40,8 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	/*
 	* Edit Candidate Employment Mutation Form
 	*/
-	public form: FormGroup = EditCandidateEmploymentComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditCandidateEmploymentComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			organizationEmploymentTypes: [],
 			candidateLevel: [],
@@ -52,7 +52,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly candidateStore: CandidateStore,
@@ -60,7 +60,7 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly organizationEmploymentTypeService: OrganizationEmploymentTypesService,
 		private readonly employeeLevelService: EmployeeLevelService
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$
@@ -173,5 +173,5 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

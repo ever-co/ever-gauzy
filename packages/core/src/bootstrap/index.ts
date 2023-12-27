@@ -3,7 +3,7 @@ import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SentryService } from '@ntegral/nestjs-sentry';
+import { SentryService } from '../core/sentry/ntegral';
 import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -29,9 +29,9 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
 		await tracer.start();
-		console.log('Tracing started');
+		console.log('OTEL/Signoz Tracing started');
 	} else {
-		console.log('Tracing not enabled');
+		console.log('OTEL/Signoz Tracing not enabled');
 	}
 
 	const config = await registerPluginConfig(pluginConfig);
@@ -39,7 +39,8 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	const { BootstrapModule } = await import('./bootstrap.module');
 
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose']
+		logger: ['log', 'error', 'warn', 'debug', 'verbose'],
+		bufferLogs: true
 	});
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
@@ -63,9 +64,9 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		// NOTE: possible below is not needed because already included inside SentryService constructor
 
 		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception:', error);
+			console.error('Uncaught Exception Handler in Bootstrap:', error);
 			Sentry.captureException(error);
-			Sentry.flush(2000).then(() => {
+			Sentry.flush(3000).then(() => {
 				process.exit(1);
 			});
 		});
@@ -76,8 +77,11 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		});
 	} else {
 		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception:', error);
-			process.exit(1);
+			console.error('Uncaught Exception Handler in Bootstrap:', error);
+
+			setTimeout(() => {
+				process.exit(1);
+			}, 3000);
 		});
 
 		process.on('unhandledRejection', (reason, promise) => {
@@ -112,9 +116,52 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 	if (process.env.REDIS_ENABLED === 'true') {
 		try {
-			const redisClient = await createClient({
-				url: process.env.REDIS_URL
-			})
+			const url =
+				process.env.REDIS_URL ||
+				(process.env.REDIS_TLS === 'true'
+					? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+					: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+
+			console.log('REDIS_URL: ', url);
+
+			let host, port, username, password;
+
+			const isTls = url.startsWith('rediss://');
+
+			// Removing the protocol part
+			let authPart = url.split('://')[1];
+
+			// Check if the URL contains '@' (indicating the presence of username/password)
+			if (authPart.includes('@')) {
+				// Splitting user:password and host:port
+				let [userPass, hostPort] = authPart.split('@');
+				[username, password] = userPass.split(':');
+				[host, port] = hostPort.split(':');
+			} else {
+				// If there is no '@', it means there is no username/password
+				[host, port] = authPart.split(':');
+			}
+
+			port = parseInt(port);
+
+			const redisConnectionOptions = {
+				url: url,
+				username: username,
+				password: password,
+				isolationPoolOptions: {
+					min: 10,
+					max: 100
+				},
+				socket: {
+					tls: isTls,
+					host: host,
+					port: port,
+					passphrase: password,
+					rejectUnauthorized: process.env.NODE_ENV === 'production'
+				}
+			};
+
+			const redisClient = await createClient(redisConnectionOptions)
 				.on('error', (err) => {
 					console.log('Redis Client Error: ', err);
 				})
@@ -136,7 +183,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 			// ping Redis
 			const res = await redisClient.ping();
-			console.log('Redis Client ping: ', res);
+			console.log('Redis Client Sessions Ping: ', res);
 
 			const redisStore = new RedisStore({
 				client: redisClient,

@@ -8,7 +8,7 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
@@ -85,8 +85,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	/*
 	* Project Mutation Form
 	*/
-	public form: FormGroup = ProjectMutationComponent.buildForm(this._fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = ProjectMutationComponent.buildForm(this._fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			imageUrl: [],
 			imageId: [],
@@ -133,8 +133,8 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	* Project Setting Mutation Form
 	*/
 
-	public projectSettingForm: FormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
-	static buildSettingForm(fb: FormBuilder): FormGroup {
+	public projectSettingForm: UntypedFormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
+	static buildSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			isTasksAutoSync: [],
 			isTasksAutoSyncOnLabel: [],
@@ -178,7 +178,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly _router: Router,
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
 		public readonly translateService: TranslateService,

@@ -1,6 +1,6 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentController } from './employee-appointment.controller';
@@ -13,12 +13,8 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/employee-appointment', module: EmployeeAppointmentModule }
-		]),
-		TypeOrmModule.forFeature([
-			EmployeeAppointment
-		]),
+		RouterModule.register([{ path: '/employee-appointment', module: EmployeeAppointmentModule }]),
+		TypeOrmModule.forFeature([EmployeeAppointment]),
 		EmailSendModule,
 		EmployeeModule,
 		OrganizationModule,
@@ -26,10 +22,7 @@ import { TenantModule } from '../tenant/tenant.module';
 		TenantModule
 	],
 	controllers: [EmployeeAppointmentController],
-	providers: [
-		EmployeeAppointmentService,
-		...CommandHandlers
-	],
+	providers: [EmployeeAppointmentService, ...CommandHandlers],
 	exports: [EmployeeAppointmentService]
 })
-export class EmployeeAppointmentModule { }
+export class EmployeeAppointmentModule {}

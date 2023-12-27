@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import * as moment from 'moment';
 import { IOrganizationSprint } from '@gauzy/contracts';
 
@@ -20,11 +20,11 @@ export class SprintDialogComponent implements OnInit {
 	@Input() options?: any = {
 		sprintIndex: 0
 	};
-	form: FormGroup;
+	form: UntypedFormGroup;
 	private defaults = DEFAULTS;
 	moment: any = moment;
 
-	constructor(private fb: FormBuilder) {}
+	constructor(private fb: UntypedFormBuilder) { }
 
 	ngOnInit(): void {
 		this.initForm();

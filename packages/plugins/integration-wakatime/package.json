@@ -29,13 +29,13 @@
 	"keywords": [],
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
-		"@nestjs/common": "^9.2.1",
-		"@nestjs/typeorm": "^9.0.1",
+		"@nestjs/common": "^10.3.0",
+		"@nestjs/typeorm": "^10.0.1",
 		"typeorm": "^0.3.17"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
 		"rimraf": "^3.0.2",
-		"typescript": "4.5.5"
+		"typescript": "4.8.4"
 	}
 }

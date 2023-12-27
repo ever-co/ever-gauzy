@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { Currency } from './currency.entity';
 import { CurrencyController } from './currency.controller';
 import { CurrencyService } from './currency.service';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([{ path: '/currency', module: CurrencyModule }]),
+		RouterModule.register([{ path: '/currency', module: CurrencyModule }]),
 		TypeOrmModule.forFeature([Currency])
 	],
 	controllers: [CurrencyController],

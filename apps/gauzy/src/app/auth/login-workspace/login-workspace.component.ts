@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from "@angular/core";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from "@angular/forms";
 import { Router } from "@angular/router";
 import { EMPTY, filter } from "rxjs";
 import { catchError, tap } from "rxjs/operators";
@@ -23,7 +23,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
     public workspaces: IWorkspaceResponse[] = []; // Array of workspace users
 
     /** The FormGroup for the sign-in form */
-    public form: FormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
+    public form: UntypedFormGroup = NgxLoginWorkspaceComponent.buildForm(this._fb);
 
     /**
      * Static method to build a FormGroup for the sign-in form.
@@ -31,7 +31,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
      * @param fb - The FormBuilder service for creating form controls.
      * @returns A FormGroup for the sign-in form.
      */
-    static buildForm(fb: FormBuilder): FormGroup {
+    static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
         return fb.group({
             email: [null, [Validators.required, Validators.email]],      // Email input with email validation
             password: [null, Validators.required] // Password input with required validation
@@ -44,7 +44,7 @@ export class NgxLoginWorkspaceComponent implements OnInit {
     constructor(
         private readonly _router: Router,
         private readonly _store: Store,
-        private readonly _fb: FormBuilder,
+        private readonly _fb: UntypedFormBuilder,
         private readonly _authService: AuthService,
         private readonly _errorHandlingService: ErrorHandlingService,
     ) { }

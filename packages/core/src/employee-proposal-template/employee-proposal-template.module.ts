@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from './../tenant/tenant.module';
 import { EmployeeProposalTemplateController } from './employee-proposal-template.controller';
@@ -10,10 +10,8 @@ import { EmployeeProposalTemplateService } from './employee-proposal-template.se
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/employee-proposal-template', module: EmployeeProposalTemplateModule }
-		]),
-		TypeOrmModule.forFeature([ EmployeeProposalTemplate ]),
+		RouterModule.register([{ path: '/employee-proposal-template', module: EmployeeProposalTemplateModule }]),
+		TypeOrmModule.forFeature([EmployeeProposalTemplate]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule

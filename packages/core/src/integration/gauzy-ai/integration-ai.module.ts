@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
 import { GauzyAIModule } from '@gauzy/integration-ai';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
@@ -9,7 +8,6 @@ import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationModule } from './../integration.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
 import { IntegrationAIMiddleware } from './integration-ai.middleware';
-import { EmployeeJobPostController } from './../../employee-job/employee-job.controller';
 
 @Module({
 	imports: [
@@ -20,22 +18,40 @@ import { EmployeeJobPostController } from './../../employee-job/employee-job.con
 		forwardRef(() => IntegrationModule),
 		CqrsModule
 	],
-	controllers: [
-		IntegrationAIController
-	],
-	providers: [
-		IntegrationAIService,
-		IntegrationAIMiddleware
-	]
+	controllers: [IntegrationAIController],
+	providers: [IntegrationAIService, IntegrationAIMiddleware]
 })
 export class IntegrationAIModule implements NestModule {
-
 	configure(consumer: MiddlewareConsumer) {
-		// Apply middlewares to specific controllers
 		consumer.apply(IntegrationAIMiddleware).forRoutes(
-			RouterModule.resolvePath(EmployeeJobPostController) // Apply to EmployeeJobPostController
-		);
-		consumer.apply(IntegrationAIMiddleware).forRoutes(
+			{
+				path: '/employee-job',
+				method: RequestMethod.GET
+			},
+			{
+				path: '/employee-job/apply',
+				method: RequestMethod.POST
+			},
+			{
+				path: '/employee-job/updateApplied',
+				method: RequestMethod.POST
+			},
+			{
+				path: '/employee-job/hide',
+				method: RequestMethod.POST
+			},
+			{
+				path: '/employee-job/pre-process',
+				method: RequestMethod.POST
+			},
+			{
+				path: '/employee-job/application/:employeeJobApplicationId',
+				method: RequestMethod.GET
+			},
+			{
+				path: '/employee-job/generate-proposal/:employeeJobApplicationId',
+				method: RequestMethod.POST
+			},
 			{
 				path: '/employee/job-statistics',
 				method: RequestMethod.GET
@@ -60,6 +76,6 @@ export class IntegrationAIModule implements NestModule {
 				path: '/timesheet/screenshot',
 				method: RequestMethod.POST
 			}
-		); // Apply to specific routes and methods
+		);
 	}
 }

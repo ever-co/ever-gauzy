@@ -1,32 +1,30 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { filter, firstValueFrom, tap } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IEmployee,
 	IOrganization,
 	IOrganizationTeam,
 	ITimeOffPolicy
 } from '@gauzy/contracts';
-import { EmployeesService } from '../../../@core/services';
-import { takeUntil } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
-import { Subject, firstValueFrom } from 'rxjs';
+import { EmployeesService, Store } from '../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-time-off-settings-mutation',
 	templateUrl: './time-off-settings-mutation.component.html',
 	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
+
 	constructor(
-		protected dialogRef: NbDialogRef<TimeOffSettingsMutationComponent>,
-		private employeesService: EmployeesService,
-		private store: Store
+		protected readonly dialogRef: NbDialogRef<TimeOffSettingsMutationComponent>,
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store
 	) { }
 
-	private _ngDestroy$ = new Subject<void>();
-
-	@Input()
-	team?: IOrganizationTeam;
+	@Input() team?: IOrganizationTeam;
 
 	policy: ITimeOffPolicy;
 	organizationId: string;
@@ -40,12 +38,15 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((org) => {
-				this.organization = org;
-				this.organizationId = org.id;
-			});
-
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+					this.organizationId = organization.id;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.loadEmployees();
 		this._initializeForm();
 	}
@@ -94,9 +95,13 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 			});
 		} else {
 			this.showWarning = true;
-			setTimeout(() => {
+
+			const timeoutId: NodeJS.Timeout = setTimeout(() => {
 				this.closeWarning();
-			}, 3000);
+			}, 3000); // 3000 milliseconds, adjust as needed
+
+			// Later, if you want to cancel the timeout
+			clearTimeout(timeoutId);
 		}
 	}
 
@@ -121,8 +126,5 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	}
 
 	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-		clearTimeout();
 	}
 }

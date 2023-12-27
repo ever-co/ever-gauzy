@@ -3898,7 +3898,18 @@
 			"TIMEZONE_LOCAL": "Lokaal",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
-			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop."
+			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop.",
+			"SSL": {
+				"SSL_CONFIG": "SSL-configuratie",
+				"USE_SSL": "Gebruik SSL",
+				"USE_SSL_INFO": "Schakelt SSL-encryptie in.",
+				"SSL_KEY_FILE": "SSL-sleutelbestand",
+				"SSL_KEY_FILE_INFO": "Pad naar het client-sleutelbestand voor SSL.",
+				"SSL_CERT_FILE": "SSL-certificaatbestand",
+				"SSL_CERT_FILE_INFO": "Pad naar het client-certificaatbestand voor SSL.",
+				"SECURE": "Veilig",
+				"SECURE_INFO": "True, als je de SSL-certificaten wilt verifiëren."
+			}
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weeklimiet overschreden",
 		"OF_HRS": "Van {{ limit }} uur",

@@ -1,7 +1,7 @@
 import { OnInit, Component, OnDestroy } from '@angular/core';
 import {
-	FormGroup,
-	FormBuilder,
+	UntypedFormGroup,
+	UntypedFormBuilder,
 	Validators,
 	AbstractControl
 } from '@angular/forms';
@@ -46,7 +46,7 @@ export class EquipmentSharingMutationComponent
 		private readonly equipmentSharingService: EquipmentSharingService,
 		private readonly equipmentService: EquipmentService,
 		private readonly store: Store,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translationService: TranslateService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -55,7 +55,7 @@ export class EquipmentSharingMutationComponent
 		super(translationService);
 	}
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	equipmentSharing: IEquipmentSharing;
 	employees: IEmployee[] = [];
 	disabled: boolean;
@@ -108,7 +108,7 @@ export class EquipmentSharingMutationComponent
 		return parseInt(value, 10);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	async initializeForm() {
 		this.form = this.fb.group({
@@ -118,7 +118,7 @@ export class EquipmentSharingMutationComponent
 			],
 			equipmentSharingPolicyId: [
 				this.equipmentSharing &&
-				this.equipmentSharing.equipmentSharingPolicyId
+					this.equipmentSharing.equipmentSharingPolicyId
 					? this.equipmentSharing.equipmentSharingPolicyId
 					: '',
 				Validators.required
@@ -281,7 +281,7 @@ export class EquipmentSharingMutationComponent
 		if (
 			this.equipmentSharing &&
 			this.equipmentSharing.status ===
-				RequestApprovalStatusTypesEnum.REFUSED
+			RequestApprovalStatusTypesEnum.REFUSED
 		) {
 			this.requestStatus = RequestApprovalStatusTypesEnum.REFUSED;
 			return;
@@ -296,7 +296,7 @@ export class EquipmentSharingMutationComponent
 
 	onEmployeesSelected(employees: string[]) {
 		this.selectedEmployees = employees;
-		
+
 		this.form.get('employees').setValue(employees);
 		this.form.get('employees').updateValueAndValidity();
 	}
@@ -366,7 +366,7 @@ export class EquipmentSharingMutationComponent
 				const diffDays = Math.ceil(
 					Math.abs(
 						(this.shareEndDay.value - this.shareStartDay.value) /
-							oneDay
+						oneDay
 					)
 				);
 

@@ -1301,16 +1301,16 @@
 													</div>
 													<div *ngIf="isServer" class="col-6">
 														<nb-toggle
-															[(ngModel)]="autoStart"
+															[(ngModel)]="config.autoStart"
 															(ngModelChange)="
 																toggleAutoStartOnStartup(
 																	$event
 																)
 															"
 															status="basic"
-															>{{
-																'TIMER_TRACKER.SETTINGS.AUTO_START_STARTUP'
-																	| translate
+														>{{
+															'TIMER_TRACKER.SETTINGS.AUTO_START_STARTUP'
+																| translate
 															}}
 														</nb-toggle>
 													</div>
@@ -1338,6 +1338,10 @@
 												</div>
 											</nb-card-body>
 										</nb-card>
+									</div>
+									<div *ngIf="isServer" class="col-12 mb-3">
+										<gauzy-ssl [config]="config?.secureProxy"
+												   (update)="updateSslSetting($event)"></gauzy-ssl>
 									</div>
 								</div>
 							</nb-tab>

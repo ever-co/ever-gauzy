@@ -381,7 +381,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		awHost: null,
 		port: 3000,
 		portUi: 4200,
-		host: '0.0.0.0'
+		host: '0.0.0.0',
+		secureProxy: {
+			ssl: {
+				key: '',
+				cert: ''
+			},
+			secure: true,
+			enable: false
+		},
+		autoStart: true
 	};
 	version = '0.0.0';
 	message = {
@@ -392,7 +401,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	progressDownload = 0;
 	showProgressBar = false;
 	autoLaunch = null;
-	autoStart = null;
 	minimizeOnStartup = null;
 	authSetting = null;
 	currentUser$: BehaviorSubject<any> = new BehaviorSubject(null);
@@ -552,7 +560,6 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.screenshotNotification = setting?.screenshotNotification;
 				this.muted = setting?.mutedNotification;
 				this.autoLaunch = setting?.autoLaunch;
-				this.autoStart = setting?.autoStart;
 				this.minimizeOnStartup = setting?.minimizeOnStartup;
 				this._automaticUpdate$.next(setting?.automaticUpdate);
 				this._automaticUpdateDelay$.next(setting?.automaticUpdateDelay);
@@ -854,10 +861,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	toggleAutoStartOnStartup(value: boolean) {
-		this.updateSetting(value, 'autoStart');
-		this.electronService.ipcRenderer.send('auto_start_on_startup', {
-			autoStart: value,
-		});
+		this.updateServerConfig(value, 'autoStart');
 	}
 
 	toggleAutomaticUpdate(value) {
@@ -1298,5 +1302,19 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	public get isRestart$(): Observable<boolean> {
 		return this._isRestart$.asObservable();
+	}
+
+	public updateSslSetting(value) {
+		this.updateServerConfig(value, 'secureProxy');
+	}
+
+	public updateServerConfig(value, type: string, showNotification = true) {
+		this.config[type] = value;
+		this.electronService.ipcRenderer.send('update_server_config', this.config);
+		if (showNotification) {
+			this._notifier.success(
+				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
+			);
+		}
 	}
 }

@@ -7,9 +7,9 @@ import {
     ViewChild,
 } from '@angular/core';
 import {
-    FormBuilder,
+    UntypedFormBuilder,
     FormControl,
-    FormGroup,
+    UntypedFormGroup,
     Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -109,12 +109,12 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     /*
      * Organization Mutation Form
      */
-    public form: FormGroup = EditOrganizationOtherSettingsComponent.buildForm(this.fb);
+    public form: UntypedFormGroup = EditOrganizationOtherSettingsComponent.buildForm(this.fb);
 
     /*
      * Organization Task Setting
      */
-    public taskSettingForm: FormGroup = EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this.fb);
+    public taskSettingForm: UntypedFormGroup = EditOrganizationOtherSettingsComponent.buildTaskSettingForm(this.fb);
 
     /**
      * Nebular Accordion Item Components
@@ -140,7 +140,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         }
     }
 
-    static buildForm(fb: FormBuilder): FormGroup {
+    static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
         return fb.group({
             name: [],
             currency: [],
@@ -207,7 +207,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
         });
     }
 
-    static buildTaskSettingForm(fb: FormBuilder): FormGroup {
+    static buildTaskSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {
         return fb.group({
             isTasksPrivacyEnabled: [],
             isTasksMultipleAssigneesEnabled: [],
@@ -235,7 +235,7 @@ export class EditOrganizationOtherSettingsComponent extends NotesWithTagsCompone
     constructor(
         private readonly route: ActivatedRoute,
         private readonly router: Router,
-        private readonly fb: FormBuilder,
+        private readonly fb: UntypedFormBuilder,
         private readonly cdr: ChangeDetectorRef,
         private readonly organizationService: OrganizationsService,
         private readonly organizationTaskSettingService: OrganizationTaskSettingService,

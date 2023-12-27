@@ -5,7 +5,7 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef
 } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	ITag,
 	IOrganization,
@@ -41,17 +41,17 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	organization: IOrganization;
 	tags: ITag[] = [];
 	ckConfig: CKEditor4.Config = ckEditorConfig;
-	minDate : Date;
+	minDate: Date;
 	selectedEmployee: IEmployee;
 
 	/*
 	* Payment Mutation Form
 	*/
-	public form: FormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: ProposalRegisterComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			jobPostUrl: [],
 			valueDate: [
@@ -71,17 +71,17 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly router: Router,
 		private readonly proposalsService: ProposalsService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly cdRef: ChangeDetectorRef,
-    	private readonly dateService: NbDateService<Date>
+		private readonly dateService: NbDateService<Date>
 	) {
 		super(translateService);
-    	this.minDate =  this.dateService.addMonth(this.dateService.today(), 0);
+		this.minDate = this.dateService.addMonth(this.dateService.today(), 0);
 	}
 
 	ngOnInit(): void {
@@ -175,5 +175,5 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 		this.form.get('tags').updateValueAndValidity();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -18,6 +18,7 @@ import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy
 import { isNotEmpty, trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
+import { th } from 'date-fns/locale';
 
 /**
  * Configuration interface for AWS S3 storage.
@@ -40,7 +41,6 @@ export interface IS3ProviderConfig {
 }
 
 export class S3Provider extends Provider<S3Provider> {
-
 	public instance: S3Provider;
 	public readonly name = FileStorageProviderEnum.S3;
 	public config: IS3ProviderConfig;
@@ -58,9 +58,9 @@ export class S3Provider extends Provider<S3Provider> {
 	}
 
 	/**
-	* Get the singleton instance of S3Provider
-	* @returns {S3Provider} The singleton instance
-	*/
+	 * Get the singleton instance of S3Provider
+	 * @returns {S3Provider} The singleton instance
+	 */
 	getProviderInstance(): S3Provider {
 		if (!this.instance) {
 			this.instance = new S3Provider();
@@ -81,24 +81,28 @@ export class S3Provider extends Provider<S3Provider> {
 			...this.defaultConfig
 		};
 
-		// Check if there is a current request
-		const request = RequestContext.currentRequest();
+		try {
+			const request = RequestContext.currentRequest();
 
-		if (request) {
-			// Retrieve tenant settings from the request, defaulting to an empty object
-			const settings = request['tenantSettings'] || {};
+			if (request) {
+				const settings = request['tenantSettings'];
 
-			// Check if there are non-empty tenant settings
-			if (isNotEmpty(settings)) {
-				// Update the configuration with trimmed and valid values from tenant settings
-				this.config = {
-					...this.defaultConfig,
-					aws_access_key_id: trimAndGetValue(settings.aws_access_key_id),
-					aws_secret_access_key: trimAndGetValue(settings.aws_secret_access_key),
-					aws_default_region: trimAndGetValue(settings.aws_default_region),
-					aws_bucket: trimAndGetValue(settings.aws_bucket),
-				};
+				if (settings) {
+					if (trimAndGetValue(settings.aws_access_key_id))
+						this.config.aws_access_key_id = trimAndGetValue(settings.aws_access_key_id);
+
+					if (trimAndGetValue(settings.aws_secret_access_key))
+						this.config.aws_secret_access_key = trimAndGetValue(settings.aws_secret_access_key);
+
+					if (trimAndGetValue(settings.aws_default_region))
+						this.config.aws_default_region = trimAndGetValue(settings.aws_default_region);
+
+					if (trimAndGetValue(settings.aws_bucket))
+						this.config.aws_bucket = trimAndGetValue(settings.aws_bucket);
+				}
 			}
+		} catch (error) {
+			console.error('Error while setting S3 configuration. Default configuration will be used', error);
 		}
 	}
 
@@ -116,12 +120,16 @@ export class S3Provider extends Provider<S3Provider> {
 		try {
 			const s3Client = this.getS3Instance();
 
-			const signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
-				Bucket: this.getS3Bucket(),
-				Key: fileURL,
-			}), {
-				expiresIn: 3600
-			});
+			const signedUrl = await getSignedUrl(
+				s3Client,
+				new GetObjectCommand({
+					Bucket: this.getS3Bucket(),
+					Key: fileURL
+				}),
+				{
+					expiresIn: 3600
+				}
+			);
 
 			return signedUrl;
 		} catch (error) {
@@ -149,34 +157,49 @@ export class S3Provider extends Provider<S3Provider> {
 	public handler(options: FileStorageOption): StorageEngine {
 		const { dest, filename, prefix = 'file' } = options;
 
-		return multerS3({
-			s3: this.getS3Instance(),
-			bucket: this.getS3Bucket(),
-			metadata: function (_req, file, cb) {
-				cb(null, { fieldName: file.fieldname });
-			},
-			key: (_req, file, callback) => {
-				// A string or function that determines the destination path for uploaded
-				const destination = dest instanceof Function ? dest(file) : dest;
+		try {
+			const s3Client = this.getS3Instance();
 
-				// A file extension, or filename extension, is a suffix at the end of a file.
-				const extension = file.originalname.split('.').pop();
+			if (s3Client) {
+				return multerS3({
+					s3: s3Client,
+					bucket: this.getS3Bucket(),
+					metadata: function (_req, file, cb) {
+						cb(null, { fieldName: file.fieldname });
+					},
+					key: (_req, file, callback) => {
+						// A string or function that determines the destination path for uploaded
+						const destination = dest instanceof Function ? dest(file) : dest;
 
-				// A function that determines the name of the uploaded file.
-				let fileName: string;
+						// A file extension, or filename extension, is a suffix at the end of a file.
+						const extension = file.originalname.split('.').pop();
 
-				if (filename) {
-					fileName = (typeof filename === 'string') ? filename : filename(file, extension);
-				} else {
-					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
-				}
+						// A function that determines the name of the uploaded file.
+						let fileName: string;
 
-				// Replace double backslashes with single forward slashes
-				const fullPath = join(destination, fileName).replace(/\\/g, '/');
+						if (filename) {
+							fileName = typeof filename === 'string' ? filename : filename(file, extension);
+						} else {
+							fileName = `${prefix}-${moment().unix()}-${parseInt(
+								'' + Math.random() * 1000,
+								10
+							)}.${extension}`;
+						}
 
-				callback(null, fullPath);
+						// Replace double backslashes with single forward slashes
+						const fullPath = join(destination, fileName).replace(/\\/g, '/');
+
+						callback(null, fullPath);
+					}
+				});
+			} else {
+				console.error('Error while retrieving Multer for S3: s3Client is null');
+				return null;
 			}
-		});
+		} catch (error) {
+			console.error('Error while retrieving Multer for S3:', error);
+			return null;
+		}
 	}
 
 	/**
@@ -192,7 +215,7 @@ export class S3Provider extends Provider<S3Provider> {
 			// Input parameters when using the GetObjectCommand to retrieve an object from Wasabi storage.
 			const command = new GetObjectCommand({
 				Bucket: this.getS3Bucket(), // The name of the bucket from which to retrieve the object.
-				Key: key, // The key (path) of the object to retrieve from the bucket.
+				Key: key // The key (path) of the object to retrieve from the bucket.
 			});
 
 			/**
@@ -248,7 +271,7 @@ export class S3Provider extends Provider<S3Provider> {
 				key: key // Full path of the file
 			};
 
-			return await this.mapUploadedFile(file)
+			return await this.mapUploadedFile(file);
 		} catch (error) {
 			console.log('Error while put file for aws S3 provider', error);
 		}
@@ -268,7 +291,7 @@ export class S3Provider extends Provider<S3Provider> {
 			const command = new DeleteObjectCommand({
 				Bucket: this.getS3Bucket(), // The name of the bucket from which to delete the object.
 				Key: key // The key (path) of the object to delete from the bucket.
-			})
+			});
 
 			/**
 			 * Send a DeleteObjectCommand to AWS S3 to delete an object
@@ -277,11 +300,13 @@ export class S3Provider extends Provider<S3Provider> {
 			return new Object({
 				status: HttpStatus.OK,
 				message: `file with key: ${key} is successfully deleted`,
-				data,
+				data
 			});
 		} catch (error) {
 			console.error(`Error while deleting file with key '${key}':`, error);
-			throw new HttpException(error, HttpStatus.BAD_REQUEST, { description: `Error while deleting file with key: '${key}'` });
+			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
+				description: `Error while deleting file with key: '${key}'`
+			});
 		}
 	}
 
@@ -295,18 +320,22 @@ export class S3Provider extends Provider<S3Provider> {
 			this.setAwsS3Configuration();
 
 			// Create S3 region
-			const region = this.config.aws_default_region;
+			const region = this.config.aws_default_region || 'us-east-1';
 
-			// Create S3 client service object
-			const s3Client = new S3Client({
-				credentials: {
-					accessKeyId: this.config.aws_access_key_id,
-					secretAccessKey: this.config.aws_secret_access_key,
-				},
-				region,
-			});
+			if (this.config.aws_access_key_id && this.config.aws_secret_access_key) {
+				const s3Client = new S3Client({
+					credentials: {
+						accessKeyId: this.config.aws_access_key_id,
+						secretAccessKey: this.config.aws_secret_access_key
+					},
+					region
+				});
 
-			return s3Client;
+				return s3Client;
+			} else {
+				console.log(`Can't retrieve ${FileStorageProviderEnum.S3} instance: AWS credentials are missing`);
+				return null;
+			}
 		} catch (error) {
 			console.error(`Error while retrieving ${FileStorageProviderEnum.S3} instance:`, error);
 			return null;

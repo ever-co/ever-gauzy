@@ -1,4 +1,4 @@
-import { FormArray, FormGroup } from '@angular/forms';
+import { FormArray, UntypedFormGroup } from '@angular/forms';
 import * as _ from 'underscore.string';
 
 export class FormHelpers {
@@ -11,12 +11,12 @@ export class FormHelpers {
 	 *
 	 */
 	static deepMark(
-		formGroup: FormGroup | FormArray,
+		formGroup: UntypedFormGroup | FormArray,
 		markAs: 'touched' | 'untouched' | 'dirty' | 'pristine' | 'pending',
 		opts = { onlySelf: false }
 	): void {
 		Object.values(formGroup.controls).forEach((c) => {
-			if (c instanceof FormGroup || c instanceof FormArray) {
+			if (c instanceof UntypedFormGroup || c instanceof FormArray) {
 				FormHelpers.deepMark(c, markAs, opts);
 			} else {
 				c[`markAs${_.capitalize(markAs)}`](opts);
@@ -32,7 +32,7 @@ export class FormHelpers {
 	 * @returns
 	 */
 	static isInvalidControl(
-		formGroup: FormGroup,
+		formGroup: UntypedFormGroup,
 		control: string
 	): boolean {
 		if (!formGroup.contains(control)) {
@@ -55,7 +55,7 @@ export class FormHelpers {
 	 * @returns
 	 */
 	static isValidControl(
-		formGroup: FormGroup,
+		formGroup: UntypedFormGroup,
 		control: string
 	): boolean {
 		if (!formGroup.contains(control)) {

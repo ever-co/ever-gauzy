@@ -8,7 +8,7 @@ import {
 	StatusTypesEnum,
 	IImageAsset as IDocumentAsset
 } from '@gauzy/contracts';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
@@ -27,7 +27,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly documentsService: OrganizationDocumentsService,
 		private readonly store: Store,
 		private dateService: NbDateService<Date>
@@ -69,8 +69,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	/*
 	* Time Off Request Mutation Form
 	*/
-	public form: FormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			start: [null, Validators.required],
 			end: [null, Validators.required],

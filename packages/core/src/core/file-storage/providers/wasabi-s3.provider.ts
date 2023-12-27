@@ -131,7 +131,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	}
 
 	/**
-	 * Set Wasabi details based on the current request's tenantSettings
+	 * Set Wasabi details based on the current request's tenantSettings.
+	 * If such settings does not have any Wasabi details, use the default configuration.
+	 * If they have Wasabi details, use them to override the default configuration.
 	 */
 	private setWasabiConfiguration() {
 		// Use the default configuration as a starting point
@@ -139,25 +141,62 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			...this.defaultConfig
 		};
 
-		// Check if there is a current request
-		const request = RequestContext.currentRequest();
+		console.log(`setWasabiConfiguration this.config value: ${JSON.stringify(this.config)}`);
 
-		if (request) {
-			// Retrieve tenant settings from the request, defaulting to an empty object
-			const settings = request['tenantSettings'] || {};
+		try {
+			const request = RequestContext.currentRequest();
 
-			// Check if there are non-empty tenant settings
-			if (isNotEmpty(settings)) {
-				// Update the configuration with trimmed and valid values from tenant settings
-				this.config = {
-					...this.defaultConfig,
-					wasabi_aws_access_key_id: trimAndGetValue(settings.wasabi_aws_access_key_id),
-					wasabi_aws_secret_access_key: trimAndGetValue(settings.wasabi_aws_secret_access_key),
-					wasabi_aws_service_url: addHttpsPrefix(trimAndGetValue(settings.wasabi_aws_service_url)),
-					wasabi_aws_default_region: trimAndGetValue(settings.wasabi_aws_default_region),
-					wasabi_aws_bucket: trimAndGetValue(settings.wasabi_aws_bucket)
-				};
+			if (request) {
+				const settings = request['tenantSettings'];
+
+				console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+
+				if (settings) {
+					if (trimAndGetValue(settings.wasabi_aws_access_key_id)) {
+						this.config.wasabi_aws_access_key_id = trimAndGetValue(settings.wasabi_aws_access_key_id);
+						console.log(
+							`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
+						);
+					}
+
+					if (trimAndGetValue(settings.wasabi_aws_secret_access_key)) {
+						this.config.wasabi_aws_secret_access_key = trimAndGetValue(
+							settings.wasabi_aws_secret_access_key
+						);
+						console.log(
+							`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
+						);
+					}
+
+					if (trimAndGetValue(settings.wasabi_aws_service_url)) {
+						this.config.wasabi_aws_service_url = addHttpsPrefix(
+							trimAndGetValue(settings.wasabi_aws_service_url)
+						);
+						console.log(
+							'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
+							this.config.wasabi_aws_service_url
+						);
+					}
+
+					if (trimAndGetValue(settings.wasabi_aws_default_region)) {
+						this.config.wasabi_aws_default_region = trimAndGetValue(settings.wasabi_aws_default_region);
+						console.log(
+							'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
+							this.config.wasabi_aws_default_region
+						);
+					}
+
+					if (trimAndGetValue(settings.wasabi_aws_bucket)) {
+						this.config.wasabi_aws_bucket = trimAndGetValue(settings.wasabi_aws_bucket);
+						console.log(
+							'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
+							this.config.wasabi_aws_bucket
+						);
+					}
+				}
 			}
+		} catch (error) {
+			console.error('Error while setting Wasabi configuration. Default configuration will be used', error);
 		}
 	}
 
@@ -217,36 +256,51 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	public handler(options: FileStorageOption): StorageEngine {
 		const { dest, filename, prefix = 'file' } = options;
 
-		return multerS3({
-			s3: this.getWasabiInstance(),
-			bucket: (_req, _file, callback) => {
-				callback(null, this.getWasabiBucket());
-			},
-			metadata: function (_req, _file, callback) {
-				callback(null, { fieldName: _file.fieldname });
-			},
-			key: (_req, file, callback) => {
-				// A string or function that determines the destination path for uploaded
-				const destination = dest instanceof Function ? dest(file) : dest;
+		try {
+			const s3Client = this.getWasabiInstance();
 
-				// A file extension, or filename extension, is a suffix at the end of a file.
-				const extension = file.originalname.split('.').pop();
+			if (s3Client) {
+				return multerS3({
+					s3: s3Client,
+					bucket: (_req, _file, callback) => {
+						callback(null, this.getWasabiBucket());
+					},
+					metadata: function (_req, _file, callback) {
+						callback(null, { fieldName: _file.fieldname });
+					},
+					key: (_req, file, callback) => {
+						// A string or function that determines the destination path for uploaded
+						const destination = dest instanceof Function ? dest(file) : dest;
 
-				// A function that determines the name of the uploaded file.
-				let fileName: string;
+						// A file extension, or filename extension, is a suffix at the end of a file.
+						const extension = file.originalname.split('.').pop();
 
-				if (filename) {
-					fileName = typeof filename === 'string' ? filename : filename(file, extension);
-				} else {
-					fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
-				}
+						// A function that determines the name of the uploaded file.
+						let fileName: string;
 
-				// Replace double backslashes with single forward slashes
-				const fullPath = join(destination, fileName).replace(/\\/g, '/');
+						if (filename) {
+							fileName = typeof filename === 'string' ? filename : filename(file, extension);
+						} else {
+							fileName = `${prefix}-${moment().unix()}-${parseInt(
+								'' + Math.random() * 1000,
+								10
+							)}.${extension}`;
+						}
 
-				callback(null, fullPath);
+						// Replace double backslashes with single forward slashes
+						const fullPath = join(destination, fileName).replace(/\\/g, '/');
+
+						callback(null, fullPath);
+					}
+				});
+			} else {
+				console.error('Error while retrieving Multer for Wasabi: s3Client is null');
+				return null;
 			}
-		});
+		} catch (error) {
+			console.error('Error while retrieving Multer for Wasabi:', error);
+			return null;
+		}
 	}
 
 	/**
@@ -379,27 +433,26 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		try {
 			this.setWasabiConfiguration();
 
-			if (this.config.wasabi_aws_service_url) {
-				// Create S3 wasabi endpoint
+			if (
+				this.config.wasabi_aws_service_url &&
+				this.config.wasabi_aws_access_key_id &&
+				this.config.wasabi_aws_secret_access_key
+			) {
 				const endpoint = addHttpsPrefix(this.config.wasabi_aws_service_url);
 
-				// Create S3 wasabi region
-				const region = this.config.wasabi_aws_default_region; // Specify your Wasabi region
-
-				// Create S3 client service object
 				const s3Client = new S3Client({
 					credentials: {
 						accessKeyId: this.config.wasabi_aws_access_key_id,
 						secretAccessKey: this.config.wasabi_aws_secret_access_key
 					},
-					region, // Specify your Wasabi region
+					region: this.config.wasabi_aws_default_region || 'us-east-1',
 					endpoint
 				});
 
 				return s3Client;
 			} else {
-				console.warn(
-					`Error while retrieving ${FileStorageProviderEnum.WASABI} instance: this.config.wasabi_aws_service_url is undefined`
+				console.log(
+					`Can't retrieve ${FileStorageProviderEnum.WASABI} instance for tenant: this.config.wasabi_aws_service_url, wasabi_aws_access_key_id or wasabi_aws_secret_access_key undefined in that tenant settings`
 				);
 
 				return null;

@@ -1,6 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
@@ -16,14 +16,8 @@ import { TaskController } from './task.controller';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/tasks', module: TaskModule }
-		]),
-		TypeOrmModule.forFeature([
-			Task,
-			TaskStatus,
-			IntegrationMap
-		]),
+		RouterModule.register([{ path: '/tasks', module: TaskModule }]),
+		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		RoleModule,
@@ -32,11 +26,7 @@ import { TaskController } from './task.controller';
 		CqrsModule
 	],
 	controllers: [TaskController],
-	providers: [
-		TaskService,
-		...CommandHandlers,
-		...EventHandlers
-	],
-	exports: [TypeOrmModule, TaskService],
+	providers: [TaskService, ...CommandHandlers, ...EventHandlers],
+	exports: [TypeOrmModule, TaskService]
 })
-export class TaskModule { }
+export class TaskModule {}

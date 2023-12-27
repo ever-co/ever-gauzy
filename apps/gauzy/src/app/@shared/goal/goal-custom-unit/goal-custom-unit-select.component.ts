@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { KeyResultTypeEnum, KeyResultNumberUnitsEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { environment as ENV } from 'apps/gauzy/src/environments/environment';
@@ -12,13 +12,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./goal-custom-unit-select.component.scss']
 })
 export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
-	@Input() parentFormGroup: FormGroup;
+	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() numberUnits: string[];
 	keyResultTypeEnum = KeyResultTypeEnum;
 	createNew = false;
 	defaultCurrency: string;
 
-	constructor(private readonly store: Store) {}
+	constructor(private readonly store: Store) { }
 
 	ngOnInit() {
 		this.defaultCurrency = this.store.selectedOrganization.currency;
@@ -44,5 +44,5 @@ export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {
 		this.createNew = false;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

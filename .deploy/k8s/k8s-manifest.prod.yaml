@@ -48,7 +48,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 24
+    replicas: 12
     selector:
         matchLabels:
             app: gauzy-prod-api

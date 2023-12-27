@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { ReportCategory } from './report-category.entity';
 import { Report } from './report.entity';
 import { ReportController } from './report.controller';
@@ -13,24 +13,16 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ 
-				path: '/report', 
-				module: ReportModule 
+		RouterModule.register([
+			{
+				path: '/report',
+				module: ReportModule
 			}
 		]),
-		TypeOrmModule.forFeature([
-			Report, 
-			ReportCategory, 
-			ReportOrganization
-		]),
+		TypeOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
 		TenantModule
 	],
 	controllers: [ReportCategoryController, ReportController],
-	providers: [
-		ReportService, 
-		ReportCategoryService,
-		...CommandHandlers
-	]
+	providers: [ReportService, ReportCategoryService, ...CommandHandlers]
 })
 export class ReportModule {}
