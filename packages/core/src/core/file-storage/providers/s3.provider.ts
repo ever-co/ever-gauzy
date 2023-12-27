@@ -18,6 +18,7 @@ import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy
 import { isNotEmpty, trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
+import { th } from 'date-fns/locale';
 
 /**
  * Configuration interface for AWS S3 storage.
@@ -80,24 +81,28 @@ export class S3Provider extends Provider<S3Provider> {
 			...this.defaultConfig
 		};
 
-		// Check if there is a current request
-		const request = RequestContext.currentRequest();
+		try {
+			const request = RequestContext.currentRequest();
 
-		if (request) {
-			// Retrieve tenant settings from the request, defaulting to an empty object
-			const settings = request['tenantSettings'] || {};
+			if (request) {
+				const settings = request['tenantSettings'];
 
-			// Check if there are non-empty tenant settings
-			if (isNotEmpty(settings)) {
-				// Update the configuration with trimmed and valid values from tenant settings
-				this.config = {
-					...this.defaultConfig,
-					aws_access_key_id: trimAndGetValue(settings.aws_access_key_id),
-					aws_secret_access_key: trimAndGetValue(settings.aws_secret_access_key),
-					aws_default_region: trimAndGetValue(settings.aws_default_region),
-					aws_bucket: trimAndGetValue(settings.aws_bucket)
-				};
+				if (settings) {
+					if (trimAndGetValue(settings.aws_access_key_id))
+						this.config.aws_access_key_id = trimAndGetValue(settings.aws_access_key_id);
+
+					if (trimAndGetValue(settings.aws_secret_access_key))
+						this.config.aws_secret_access_key = trimAndGetValue(settings.aws_secret_access_key);
+
+					if (trimAndGetValue(settings.aws_default_region))
+						this.config.aws_default_region = trimAndGetValue(settings.aws_default_region);
+
+					if (trimAndGetValue(settings.aws_bucket))
+						this.config.aws_bucket = trimAndGetValue(settings.aws_bucket);
+				}
 			}
+		} catch (error) {
+			console.error('Error while setting S3 configuration. Default configuration will be used', error);
 		}
 	}
 
