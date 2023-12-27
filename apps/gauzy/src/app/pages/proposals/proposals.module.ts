@@ -17,7 +17,7 @@ import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ProposalsService } from '../../@core/services/proposals.service';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
@@ -61,7 +61,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbTooltipModule,
 		EmployeeSelectorsModule,
 		NgSelectModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		UserFormsModule,
 		CKEditorModule,
 		ChartModule,
@@ -73,7 +73,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		PaginationModule,
 		ContactSelectModule,
 		TableFiltersModule,
-    	GauzyButtonActionModule
+		GauzyButtonActionModule
 	],
 	declarations: [
 		ProposalsComponent,
@@ -86,4 +86,4 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 	],
 	providers: [ProposalsService]
 })
-export class ProposalsModule {}
+export class ProposalsModule { }

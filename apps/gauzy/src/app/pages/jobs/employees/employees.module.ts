@@ -12,7 +12,7 @@ import {
 	NbTabsetModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from '../../../@shared/shared.module';
 import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.module';
@@ -36,7 +36,7 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		TranslateModule,
 		SharedModule,
 		FormsModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		SmartTableToggleModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
@@ -44,4 +44,4 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		WorkInProgressModule
 	]
 })
-export class EmployeesModule {}
+export class EmployeesModule { }

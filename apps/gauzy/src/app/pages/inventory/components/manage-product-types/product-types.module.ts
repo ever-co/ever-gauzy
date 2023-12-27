@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from './../../../../@shared/translate/translate.module';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 import {
     NbCardModule,
@@ -38,7 +38,7 @@ const NB_MODULES = [
     imports: [
         ProductTypesRoutingModule,
         ReactiveFormsModule,
-        Ng2SmartTableModule,
+        Angular2SmartTableModule,
         CommonModule,
         TranslateModule,
         ...NB_MODULES,

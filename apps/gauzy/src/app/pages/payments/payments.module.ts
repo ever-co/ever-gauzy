@@ -8,7 +8,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { PaymentsRoutingModule } from './payments-routing.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { PaymentService } from '../../@core/services/payment.service';
 import { OrganizationContactService } from '../../@core/services/organization-contact.service';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
@@ -27,7 +27,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		TranslateModule,
 		NbCardModule,
 		PaymentsRoutingModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		CardGridModule,
 		ThemeModule,
 		NbIconModule,
@@ -38,7 +38,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		HeaderTitleModule,
 		PaginationModule,
 		TableFiltersModule,
-    	GauzyButtonActionModule
+		GauzyButtonActionModule
 	],
 	providers: [
 		PaymentService,
@@ -48,4 +48,4 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 	],
 	declarations: [PaymentsComponent]
 })
-export class PaymentsModule {}
+export class PaymentsModule { }

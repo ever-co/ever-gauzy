@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { IncomeModule } from '../../../pages/income/income.module';
 import { NbIconModule, NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { ProfitHistoryComponent } from './profit-history.component';
@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 @NgModule({
 	imports: [
 		CommonModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		IncomeModule,
 		NbIconModule,
 		NbCardModule,
@@ -28,4 +28,4 @@ import { CommonModule } from '@angular/common';
 	],
 	providers: [ProfitHistoryComponent]
 })
-export class ProfitHistoryModule {}
+export class ProfitHistoryModule { }

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { SharedModule } from '../../shared.module';
 import { TableComponentsModule } from '../../table-components/table-components.module';
@@ -10,7 +10,7 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 @NgModule({
 	imports: [
 		ThemeModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		TableComponentsModule,
 		NbIconModule,
 		TranslateModule,
@@ -20,4 +20,4 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 	declarations: [RecurringExpenseHistoryComponent],
 	providers: []
 })
-export class RecurringExpenseHistoryModule {}
+export class RecurringExpenseHistoryModule { }

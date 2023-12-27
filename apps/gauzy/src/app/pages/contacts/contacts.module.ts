@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import {
 	InviteService,
 	OrganizationContactService,
@@ -60,7 +60,7 @@ const COMPONENTS = [
 		NbToggleModule,
 		NbTooltipModule,
 
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NgSelectModule,
 
 		CardGridModule,
@@ -86,4 +86,4 @@ const COMPONENTS = [
 		InviteService
 	]
 })
-export class ContactsModule {}
+export class ContactsModule { }

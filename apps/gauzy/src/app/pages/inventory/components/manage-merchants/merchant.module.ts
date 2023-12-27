@@ -14,7 +14,7 @@ import {
     NbTabsetModule,
     NbTooltipModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { MerchantComponent } from './merchant.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
@@ -33,16 +33,16 @@ import { TranslateModule } from './../../../../@shared/translate/translate.modul
 import { InventoryTableComponentsModule } from '../inventory-table-components';
 
 const NB_MODULES = [
-	NbCardModule,
-	NbButtonModule,
-	NbIconModule,
-	NbSpinnerModule,
-	NbDialogModule,
-	NbCheckboxModule,
-	NbSelectModule,
-	NbTabsetModule,
-	NbInputModule,
-	NbStepperModule,
+    NbCardModule,
+    NbButtonModule,
+    NbIconModule,
+    NbSpinnerModule,
+    NbDialogModule,
+    NbCheckboxModule,
+    NbSelectModule,
+    NbTabsetModule,
+    NbInputModule,
+    NbStepperModule,
     NbTooltipModule
 ];
 
@@ -57,7 +57,7 @@ const NB_MODULES = [
         FormsModule,
         ReactiveFormsModule,
         ...NB_MODULES,
-        Ng2SmartTableModule,
+        Angular2SmartTableModule,
         NgxPermissionsModule.forChild(),
         MerchantRoutingModule,
         SharedModule,

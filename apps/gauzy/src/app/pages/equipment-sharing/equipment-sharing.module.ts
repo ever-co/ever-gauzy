@@ -13,7 +13,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
@@ -43,7 +43,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentSharingMutationModule,
 		TableComponentsModule,
@@ -68,4 +68,4 @@ import { SharedModule } from '../../@shared/shared.module';
 		EquipmentSharingStatusComponent
 	]
 })
-export class EquipmentSharingModule {}
+export class EquipmentSharingModule { }

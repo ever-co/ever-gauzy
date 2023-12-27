@@ -22,7 +22,7 @@ import { DepartmentsRoutingModule } from './departments-routing.module';
 import { DepartmentsMutationComponent } from './departments-mutation/departments-mutation.component';
 import { OrganizationDepartmentsService } from '../../@core/services/organization-departments.service';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationModule } from '../../@shared/pagination/pagination.module';
@@ -49,7 +49,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		CardGridModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
@@ -63,4 +63,4 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 	declarations: [...COMPONENTS],
 	providers: [OrganizationDepartmentsService]
 })
-export class DepartmentsModule {}
+export class DepartmentsModule { }
