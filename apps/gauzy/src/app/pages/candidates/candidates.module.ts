@@ -70,7 +70,7 @@ import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-mu
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
-import { ChartModule } from 'angular2-chartjs';
+import { NgChartsModule } from 'ng2-charts';
 import { CandidateTechnologiesService } from '../../@core/services/candidate-technologies.service';
 import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
 import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
@@ -144,7 +144,7 @@ const COMPONENTS = [
 		FullCalendarModule,
 		TableComponentsModule,
 		SharedModule,
-		ChartModule,
+		NgChartsModule,
 		CandidatesRoutingModule,
 		ThemeModule,
 		NbCardModule,

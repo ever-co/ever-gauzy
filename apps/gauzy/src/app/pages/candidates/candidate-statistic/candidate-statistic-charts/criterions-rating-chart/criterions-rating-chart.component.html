@@ -46,10 +46,11 @@
 		}}
 	</span>
 </div>
-<chart
+<canvas
 	*ngIf="rating.length > 0"
 	style="height: 400px; width: 100%"
-	type="bar"
+	baseChart
+	[type]="'bar'"
 	[data]="data"
 	[options]="options"
-></chart>
+></canvas>

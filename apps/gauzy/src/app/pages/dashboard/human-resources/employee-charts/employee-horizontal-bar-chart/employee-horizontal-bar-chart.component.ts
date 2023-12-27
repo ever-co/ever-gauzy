@@ -19,13 +19,14 @@ import { TranslateService } from '@ngx-translate/core';
 				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
 			</div>
 		</div>
-		<chart
+		<canvas
 			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
-			type="horizontalBar"
+			baseChart
+			[type]="'horizontalBar'"
 			[data]="data"
 			[options]="options"
-		></chart>
+		></canvas>
 	`
 })
 export class EmployeeHorizontalBarChartComponent
@@ -79,11 +80,11 @@ export class EmployeeHorizontalBarChartComponent
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.REVENUE'
-								  )}: ${this.incomeStatistics}`
+									'DASHBOARD_PAGE.CHARTS.REVENUE'
+								)}: ${this.incomeStatistics}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.REVENUE'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.REVENUE'
+								),
 							backgroundColor: '#089c17',
 							borderWidth: 1,
 							data: this.incomeStatistics
@@ -91,33 +92,33 @@ export class EmployeeHorizontalBarChartComponent
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.EXPENSES'
-								  )}: ${this.expenseStatistics}`
+									'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								)}: ${this.expenseStatistics}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.EXPENSES'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								),
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.PROFIT'
-								  )}: ${this.profitStatistics}`
+									'DASHBOARD_PAGE.CHARTS.PROFIT'
+								)}: ${this.profitStatistics}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.PROFIT'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.PROFIT'
+								),
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						},
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.BONUS'
-								  )}: ${this.bonusStatistics}`
+									'DASHBOARD_PAGE.CHARTS.BONUS'
+								)}: ${this.bonusStatistics}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.BONUS'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.BONUS'
+								),
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						}
@@ -163,21 +164,21 @@ export class EmployeeHorizontalBarChartComponent
 					},
 					tooltips: this.selectedDate
 						? {
-								enabled: true,
-								mode: 'dataset',
-								callbacks: {
-									label: function (tooltipItem, data) {
-										const label =
-											data.datasets[
-												tooltipItem.datasetIndex
-											].label || '';
-										return label;
-									}
+							enabled: true,
+							mode: 'dataset',
+							callbacks: {
+								label: function (tooltipItem, data) {
+									const label =
+										data.datasets[
+											tooltipItem.datasetIndex
+										].label || '';
+									return label;
 								}
-						  }
+							}
+						}
 						: {
-								enabled: true
-						  }
+							enabled: true
+						}
 				};
 			});
 	}

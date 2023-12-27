@@ -20,13 +20,14 @@ import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-ba
 			</div>
 		</div>
 		<span *ngIf="!noData">{{ displayDate }}</span>
-		<chart
+		<canvas
 			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
-			type="doughnut"
+			baseChart
+			[type]="'doughnut'"
 			[data]="data"
 			[options]="options"
-		></chart>
+		></canvas>
 	`
 })
 export class EmployeeDoughnutChartComponent
@@ -80,8 +81,8 @@ export class EmployeeDoughnutChartComponent
 			: 0;
 		this.displayDate = this.employeeStatistics[0]
 			? monthNames[this.employeeStatistics[0].month] +
-			  ', ' +
-			  this.employeeStatistics[0].year
+			', ' +
+			this.employeeStatistics[0].year
 			: '';
 	}
 

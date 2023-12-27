@@ -5,7 +5,6 @@ import {
 } from '@gauzy/contracts';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ChartComponent } from 'angular2-chartjs';
 import { ChartUtil } from "./chart-utils";
 
 export interface IChartData {
@@ -55,7 +54,7 @@ export class LineChartComponent implements OnInit, OnDestroy {
 
 	logRequest: ITimeLogFilters = {};
 
-	@ViewChild('chart') chart: ChartComponent;
+	@ViewChild('chart') chart: any;
 
 	private _data: IChartData;
 
@@ -74,7 +73,7 @@ export class LineChartComponent implements OnInit, OnDestroy {
 	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 	weekDayList: string[];
 
-	constructor(private themeService: NbThemeService) {}
+	constructor(private themeService: NbThemeService) { }
 
 	getTooltip(tooltipItem, data) {
 		let tooltip = tooltipItem.label;
@@ -181,20 +180,20 @@ export class LineChartComponent implements OnInit, OnDestroy {
 
 					tooltips: this.selectedDate
 						? {
-						...this.tooltipStyles,
-						callbacks: {
-							title: this.getTooltip,
-							label: function (tooltipItem, data) {
-								const label = data.datasets[tooltipItem.datasetIndex].label || '';
-								return label;
-							},
-						}
-					} : {
+							...this.tooltipStyles,
+							callbacks: {
+								title: this.getTooltip,
+								label: function (tooltipItem, data) {
+									const label = data.datasets[tooltipItem.datasetIndex].label || '';
+									return label;
+								},
+							}
+						} : {
 							...this.tooltipStyles,
 							callbacks: {
 								label: (tooltipItem, data) => this.getTooltip(tooltipItem, data),
 							}
-					},
+						},
 				};
 				if (this.chart && this.chart.chart) {
 					this.chart.chart.update();
@@ -202,5 +201,5 @@ export class LineChartComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -35,7 +35,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { KeyResultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
-import { ChartModule } from 'angular2-chartjs';
+import { NgChartsModule } from 'ng2-charts';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
@@ -85,7 +85,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbTooltipModule,
 		NbFormFieldModule,
 		NbBadgeModule,
-		ChartModule,
+		NgChartsModule,
 		GoalSettingsModule,
 		ProjectSelectModule,
 		GoalCustomUnitModule,
@@ -102,4 +102,4 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NoDataMessageModule
 	]
 })
-export class GoalsModule {}
+export class GoalsModule { }

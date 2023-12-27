@@ -5,7 +5,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 
 @Component({
 	selector: 'ngx-proposals-pie-chart',
-	template: ` <chart [options]="options" class="echart"></chart> `,
+	template: `<canvas baseChart [options]="options" class="echart"></canvas>`,
 	styleUrls: ['./proposals-pie-chart.component.scss']
 })
 export class ProposalsPieChartComponent
