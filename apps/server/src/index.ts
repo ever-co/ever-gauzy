@@ -208,12 +208,11 @@ eventErrorManager.onShowError(async (message) => {
 })
 
 const runSetup = async () => {
-	if (setupWindow) {
-		setupWindow.show();
-		splashScreen.close();
-		return;
+	// Set default configuration
+	LocalStore.setDefaultServerConfig();
+	if (!setupWindow) {
+		setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	}
-	setupWindow = await createSetupWindow(setupWindow, false, pathWindow.ui);
 	setupWindow.show();
 	splashScreen.close();
 };
@@ -682,7 +681,7 @@ ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
 
-ipcMain.on('auto_start_on_startup', (event, arg) => {
+ipcMain.on('update_server_config', (event, arg) => {
 	serverConfig.setting = arg;
 });
 
@@ -717,7 +716,8 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 
 ipcMain.on('save_encrypted_file', (event, value) => {
 	try {
-		const { secureProxy = { enable: false, ssl: { key: '', cert: '' } } } = serverConfig.setting || {};
+		const { secureProxy = { enable: false, secure: true, ssl: { key: '', cert: '' } } } =
+			serverConfig.setting || {};
 		const dialog = new DialogOpenFile(settingsWindow, 'ssl');
 		const filePath = dialog.save();
 		if (filePath) {
