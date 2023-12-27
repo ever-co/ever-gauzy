@@ -13,18 +13,20 @@ const config = getConfig();
  *
  */
 export class LocalProvider extends Provider<LocalProvider> {
-
 	public instance: LocalProvider;
 	public readonly name = FileStorageProviderEnum.LOCAL;
 	public config = {
-		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
+		rootPath:
+			(environment.isElectron
+				? resolve(environment.gauzyUserPath, 'public')
+				: config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
 		baseUrl: environment.baseUrl
 	};
 
 	/**
-	* Get the singleton instance of LocalProvider
-	* @returns {LocalProvider} The singleton instance
-	*/
+	 * Get the singleton instance of LocalProvider
+	 * @returns {LocalProvider} The singleton instance
+	 */
 	getProviderInstance(): LocalProvider {
 		if (!this.instance) {
 			this.instance = new LocalProvider();
@@ -70,30 +72,39 @@ export class LocalProvider extends Provider<LocalProvider> {
 	handler(options: FileStorageOption): multer.StorageEngine {
 		const { dest, filename, prefix = 'file' } = options;
 
-		return multer.diskStorage({
-			destination: (_req, file, callback) => {
-				// A string or function that determines the destination path for uploaded
-				const dir = dest instanceof Function ? dest(file) : dest;
+		try {
+			return multer.diskStorage({
+				destination: (_req, file, callback) => {
+					// A string or function that determines the destination path for uploaded
+					const dir = dest instanceof Function ? dest(file) : dest;
 
-				// Ensure the destination directory exists, create if not
-				const fullPath = join(this.config.rootPath, dir);
-				fs.mkdirSync(fullPath, { recursive: true });
+					// Ensure the destination directory exists, create if not
+					const fullPath = join(this.config.rootPath, dir);
+					fs.mkdirSync(fullPath, { recursive: true });
 
-				callback(null, fullPath);
-			},
-			filename: (_req, file, callback) => {
-				// A file extension, or filename extension, is a suffix at the end of a file
-				const extension = file.originalname.split('.').pop();
+					callback(null, fullPath);
+				},
+				filename: (_req, file, callback) => {
+					// A file extension, or filename extension, is a suffix at the end of a file
+					const extension = file.originalname.split('.').pop();
 
-				/**
-				 * A function that determines the name of the uploaded file.
-				 * Simplified and optimized filename assignment
-				 */
-				let fileName: string = filename ? (typeof filename === 'string' ? filename : filename(file, extension)) : `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+					/**
+					 * A function that determines the name of the uploaded file.
+					 * Simplified and optimized filename assignment
+					 */
+					let fileName: string = filename
+						? typeof filename === 'string'
+							? filename
+							: filename(file, extension)
+						: `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 
-				callback(null, fileName);
-			}
-		});
+					callback(null, fileName);
+				}
+			});
+		} catch (error) {
+			console.error(`Error while creating multer disk storage:`, error);
+			return null;
+		}
 	}
 
 	/**
@@ -129,13 +140,15 @@ export class LocalProvider extends Provider<LocalProvider> {
 				originalname: baseName, // original file name
 				size: stats.size, // files in bytes
 				filename: baseName,
-				path: fullPath, // Full path of the file
+				path: fullPath // Full path of the file
 			};
 
-			return await this.mapUploadedFile(file)
+			return await this.mapUploadedFile(file);
 		} catch (error) {
 			console.error(`Error while putting file at path "${path}":`, error);
-			throw new HttpException(error, HttpStatus.BAD_REQUEST, { description: `Error while putting file at path "${path}":` });
+			throw new HttpException(error, HttpStatus.BAD_REQUEST, {
+				description: `Error while putting file at path "${path}":`
+			});
 		}
 	}
 
