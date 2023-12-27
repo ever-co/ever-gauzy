@@ -3036,7 +3036,7 @@
     mobx "~4.14.1"
     tslib "^2.0.0"
 
-"@cloudinary/angular-5.x@^1.5.2":
+"@cloudinary/angular-5.x@^1.5.3":
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/@cloudinary/angular-5.x/-/angular-5.x-1.5.3.tgz#0fe97c166d4782f3affa585de303e33ab8bf5331"
   integrity sha512-OsEljqvUib/Dk843HFodlwWBiLv+hve9ncaqcQaDaqwCwIp8mk/bZs7C82funhniltlIXcxkWv/rZXZbTcVtNQ==
@@ -12240,6 +12240,13 @@ analytics@0.8.9:
   dependencies:
     "@analytics/core" "^0.12.7"
     "@analytics/storage-utils" "^0.4.2"
+
+angular2-smart-table@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/angular2-smart-table/-/angular2-smart-table-3.2.0.tgz#85f7e2d31c3e74c41a8d30ae5ad7a3aa87ada16b"
+  integrity sha512-4UPYY1kYpZbRMZFhCQaVRpTKhesbt42oX4APz09dbpusD3wlhOmPvSG4+U+Fxqy/7+SHtdzlVEf/L++NqCRWwQ==
+  dependencies:
+    tslib "^2.6.0"
 
 angular2-toaster@^11.0.1:
   version "11.0.1"
@@ -25765,6 +25772,11 @@ locutus@^2.0.11:
   resolved "https://registry.yarnpkg.com/locutus/-/locutus-2.0.16.tgz#1da15532f1d735712a27e35a1caf0ccb7041f6b3"
   integrity sha512-pGfl6Hb/1mXLzrX5kl5lH7gz25ey0vwQssZp8Qo2CEF59di6KrAgdFm+0pW8ghLnvNzzJGj5tlWhhv2QbK3jeQ==
 
+lodash-es@^4.17.15, lodash-es@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.yarnpkg.com/lodash-es/-/lodash-es-4.17.21.tgz#43e626c46e6591b7750beb2b50117390c609e3ee"
+  integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
+
 lodash._basecopy@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/lodash._basecopy/-/lodash._basecopy-3.0.1.tgz#8da0e6a876cf344c0ad8a54882111dd3c5c7ca36"
@@ -28069,10 +28081,18 @@ ng-packagr@16.2.3:
   optionalDependencies:
     esbuild "^0.19.0"
 
-ng2-file-upload@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/ng2-file-upload/-/ng2-file-upload-1.4.0.tgz#8dea28d573234c52af474ad2a4001b335271e5c4"
-  integrity sha512-3J/KPU/tyh/ad6TFeUbrxX+SihUj0iOEt2Zsg4EX7mB3GFiQscXOfcUOxCkBtPWWWaqt3azrYbVGzsYa3/7NzQ==
+ng2-charts@^5.0.4:
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/ng2-charts/-/ng2-charts-5.0.4.tgz#306431e8b28532e22bcd877622b990c306516508"
+  integrity sha512-AnOZ2KSRw7QjiMMNtXz9tdnO+XrIKP/2MX1TfqEEo2fwFU5c8LFJIYqmkMPkIzAEm/U9y/1psA5TDNmxxjEdgA==
+  dependencies:
+    lodash-es "^4.17.15"
+    tslib "^2.3.0"
+
+ng2-file-upload@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/ng2-file-upload/-/ng2-file-upload-5.0.0.tgz#8d52062bca192e4fb2774c230c4fb051ae176403"
+  integrity sha512-M2JaX0unB/30GmQUScfXko2vseaPlU1R5jnhL5cfvOLNw8BBSVJAdOSmcavJzicgTZWCYz7y7Fvpr939bd4eCA==
   dependencies:
     tslib "^2.3.0"
 
@@ -33006,11 +33026,6 @@ reflect-metadata@^0.1.13, reflect-metadata@^0.1.2:
   version "0.1.13"
   resolved "https://registry.yarnpkg.com/reflect-metadata/-/reflect-metadata-0.1.13.tgz#67ae3ca57c972a2aa1642b10fe363fe32d49dc08"
   integrity sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==
-
-reflect-metadata@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/reflect-metadata/-/reflect-metadata-0.2.1.tgz#8d5513c0f5ef2b4b9c3865287f3c0940c1f67f74"
-  integrity sha512-i5lLI6iw9AU3Uu4szRNPPEkomnkjRTaVt9hy/bn5g/oSzekBSMeLZblcjP74AW0vBabqERLLIrz+gR8QYR54Tw==
 
 regenerate-unicode-properties@^10.1.0:
   version "10.1.1"
