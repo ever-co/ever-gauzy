@@ -17,7 +17,6 @@ import {
 	IGoalGeneralSetting,
 	IOrganization
 } from '@gauzy/contracts';
-import { Router } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';

@@ -1,8 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
 	Router,
-	RouterEvent,
-	NavigationEnd,
 	ActivatedRoute
 } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';

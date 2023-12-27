@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Router, NavigationEnd, RouterEvent } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
