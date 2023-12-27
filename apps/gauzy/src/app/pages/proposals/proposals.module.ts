@@ -25,7 +25,7 @@ import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { ProposalsPieChartComponent } from './proposals-pie-chart/proposals-pie-chart.component';
-import { ChartModule } from 'angular2-chartjs';
+import { NgChartsModule } from 'ng2-charts';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -64,7 +64,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		Ng2SmartTableModule,
 		UserFormsModule,
 		CKEditorModule,
-		ChartModule,
+		NgChartsModule,
 		CardGridModule,
 		TranslateModule,
 		NgxPermissionsModule.forChild(),
@@ -73,7 +73,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		PaginationModule,
 		ContactSelectModule,
 		TableFiltersModule,
-    	GauzyButtonActionModule
+		GauzyButtonActionModule
 	],
 	declarations: [
 		ProposalsComponent,
@@ -86,4 +86,4 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 	],
 	providers: [ProposalsService]
 })
-export class ProposalsModule {}
+export class ProposalsModule { }
