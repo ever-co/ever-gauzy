@@ -52,18 +52,16 @@ export class FileStorage {
 			if (request && isNotEmpty(request['tenantSettings'])) {
 				const provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
 				if (isEmpty(provider) || !providers.includes(provider)) {
-					this.config.provider = (
-						environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum ||
-						FileStorageProviderEnum.LOCAL
-					);
+					this.config.provider =
+						(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
+						FileStorageProviderEnum.LOCAL;
 				} else {
 					this.config.provider = provider.toUpperCase() as FileStorageProviderEnum;
 				}
 			} else {
-				this.config.provider = (
-					environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum ||
-					FileStorageProviderEnum.LOCAL
-				);
+				this.config.provider =
+					(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
+					FileStorageProviderEnum.LOCAL;
 			}
 		} else {
 			if (providers.includes(providerName)) {
@@ -96,10 +94,16 @@ export class FileStorage {
 		this.setConfig(option);
 
 		if (this.config.provider && this.providers[this.config.provider]) {
-			return this.providers[this.config.provider].handler(this.config);
+			try {
+				return this.providers[this.config.provider].handler(this.config);
+			} catch (error) {
+				console.error(`Error while get Multer file storage provider: ${error.message}`, error);
+				return null;
+			}
 		} else {
 			const providers = Object.values(FileStorageProviderEnum).join(', ');
-			throw new Error(`Provider "${this.config.provider}" is not valid. Provider must be ${providers}`);
+			console.warn(`Provider "${this.config.provider}" is not valid. Provider must be ${providers}`);
+			return null;
 		}
 	}
 
@@ -113,7 +117,8 @@ export class FileStorage {
 			return this.providers[this.config.provider].getProviderInstance();
 		} else {
 			const providers = Object.values(FileStorageProviderEnum).join(', ');
-			throw new Error(`Invalid or missing file storage provider. Valid providers are: ${providers}`);
+			console.warn(`Invalid or missing file storage provider. Valid providers are: ${providers}`);
+			return null;
 		}
 	}
 
