@@ -326,14 +326,14 @@
 </ng-template>
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
-		<ng2-smart-table
+		<angular2-smart-table
 			[settings]="smartTableSettings"
 			[source]="smartTableData"
 			(userRowSelect)="selectRow($event)"
 			style="cursor: pointer"
 			#goalSettingsTable
 		>
-		</ng2-smart-table>
+		</angular2-smart-table>
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > minItemPerPage">

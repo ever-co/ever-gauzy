@@ -50,13 +50,13 @@
 						[ngIfElse]="gridLayout"
 					>
 						<div class="table-scroll-container">
-							<ng2-smart-table
+							<angular2-smart-table
 								[settings]="settingsSmartTable"
 								[source]="smartTableSource"
 								(userRowSelect)="selectTask($event)"
 								style="cursor: pointer"
 								#tasksTable
-							></ng2-smart-table>
+							></angular2-smart-table>
 						</div>
 						<ng-container
 							*ngTemplateOutlet="

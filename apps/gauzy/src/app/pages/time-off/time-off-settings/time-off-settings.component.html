@@ -1,6 +1,6 @@
-<nb-card 
-	[nbSpinner]="loading" 
-	nbSpinnerStatus="primary" 
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
 	nbSpinnerSize="large"
 >
 	<nb-card-header class="d-flex flex-column pb-0">
@@ -27,14 +27,14 @@
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container custom-table">
-				<ng2-smart-table
+				<angular2-smart-table
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectTimeOffPolicy($event)"
 					style="cursor: pointer"
 					#timeOffPolicySettingsTable
 				>
-				</ng2-smart-table>
+				</angular2-smart-table>
 			</div>
 			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 				<div class="pagination-container">
@@ -50,7 +50,7 @@
 			</ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="timeOffPolicies"

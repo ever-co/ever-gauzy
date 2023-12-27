@@ -112,7 +112,7 @@
 	</nb-card-header>
 	<nb-card-body *ngIf="educationList?.length">
 		<div class="table-scroll-container">
-			<ng2-smart-table
+			<angular2-smart-table
 				*ngIf="dataLayoutStyle === 'TABLE'"
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
@@ -120,11 +120,11 @@
 				(userRowSelect)="selectEducation($event)"
 				#educationTable
 			>
-			</ng2-smart-table>
+			</angular2-smart-table>
 		</div>
 	</nb-card-body>
 	<nb-card-body *ngIf="educationList?.length">
-		<ga-card-grid 
+		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"

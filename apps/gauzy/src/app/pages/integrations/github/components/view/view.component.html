@@ -109,11 +109,11 @@
 												{{'INTEGRATIONS.GITHUB_PAGE.AUTO_SYNC_TABLE_LABEL' | translate}}
 											</h6>
 										</div>
-										<ng2-smart-table
+										<angular2-smart-table
 											[settings]="settingsSmartTableProjects"
 											[source]="projects$ | async"
 											style="cursor: pointer;"
-										></ng2-smart-table>
+										></angular2-smart-table>
 									</div>
 								</nb-card-body>
 							</nb-card>
@@ -172,13 +172,13 @@
 								</nb-card-header>
 								<nb-card-body>
 									<div class="table-scroll-container">
-										<ng2-smart-table
+										<angular2-smart-table
 											[settings]="settingsSmartTableIssues"
 											[source]="issues"
 											(userRowSelect)="selectIssues($event)"
 											style="cursor: pointer;"
 											#issuesTable
-										></ng2-smart-table>
+										></angular2-smart-table>
 									</div>
 									<ng-container *ngIf="(page$ | async)">
 										<div class="pagination-container">

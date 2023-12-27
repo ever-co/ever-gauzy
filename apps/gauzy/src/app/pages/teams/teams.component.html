@@ -25,13 +25,13 @@
 			*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 		>
 			<div class="table-scroll-container">
-				<ng2-smart-table
+				<angular2-smart-table
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectTeam($event)"
 					style="cursor: pointer"
 					#teamTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">

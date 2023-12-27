@@ -10,12 +10,12 @@
 			>{{ 'BUTTONS.MANAGE' | translate }}
 		</button>
 	</div>
-	<ng2-smart-table
+	<angular2-smart-table
 		class="contracts-table"
 		[settings]="smartTableSettings"
 		(userRowSelect)="selectContracts($event)"
 		[source]="contracts$ | async"
 		#contractsTable
 	>
-	</ng2-smart-table>
+	</angular2-smart-table>
 </div>

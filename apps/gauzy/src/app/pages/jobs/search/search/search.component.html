@@ -336,13 +336,13 @@
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
 		<ng-template [ngIf]="settingsSmartTable">
-			<ng2-smart-table
+			<angular2-smart-table
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				(userRowSelect)="onSelectJob($event)"
 				[source]="smartTableSource"
 				#table
-			></ng2-smart-table>
+			></angular2-smart-table>
 		</ng-template>
 	</div>
 	<div class="pagination-container">

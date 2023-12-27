@@ -22,14 +22,14 @@
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
-				<ng2-smart-table
+				<angular2-smart-table
 					class="payments-table"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
 					style="cursor: pointer"
 					(userRowSelect)="selectPayment($event)"
 					#paymentsTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -45,7 +45,7 @@
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="payments"
