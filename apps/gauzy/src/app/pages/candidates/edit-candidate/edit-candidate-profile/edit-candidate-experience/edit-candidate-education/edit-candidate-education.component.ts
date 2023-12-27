@@ -7,7 +7,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { DateViewComponent } from './../../../../../../@shared/table-components';
 import { ComponentEnum } from './../../../../../../@core/constants';
 import {
@@ -41,8 +41,8 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	disableButton = true;
 	loading: boolean;
 
-	educationTable: Ng2SmartTableComponent;
-	@ViewChild('educationTable') set content(content: Ng2SmartTableComponent) {
+	educationTable: Angular2SmartTableComponent;
+	@ViewChild('educationTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.educationTable = content;
 			this.onChangedSource();
@@ -298,7 +298,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	 */
 	deselectAll() {
 		if (this.educationTable && this.educationTable.grid) {
-			this.educationTable.grid.dataSet['willSelect'] = 'false';
+			this.educationTable.grid.dataSet['willSelect'] = 'indexed';
 			this.educationTable.grid.dataSet.deselectAll();
 		}
 	}

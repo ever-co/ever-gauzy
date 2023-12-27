@@ -20,7 +20,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -87,8 +87,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	organizationInvitesAllowed: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
 
-	employeesTable: Ng2SmartTableComponent;
-	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
+	employeesTable: Angular2SmartTableComponent;
+	@ViewChild('employeesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.employeesTable = content;
 			this.onChangedSource();
@@ -818,7 +818,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.employeesTable && this.employeesTable.grid) {
-			this.employeesTable.grid.dataSet['willSelect'] = 'false';
+			this.employeesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.employeesTable.grid.dataSet.deselectAll();
 		}
 	}

@@ -1,5 +1,5 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { IProductVariant } from '@gauzy/contracts';
@@ -57,7 +57,7 @@ export class VariantTableComponent
 			.pipe(untilDestroyed(this))
 			.subscribe(async (activeProduct) => {
 
-				if(activeProduct.id) {				
+				if (activeProduct.id) {
 					let res = await this.productVariantService.getVariantsByProductId(activeProduct.id);
 
 					this.variants = res.items;
@@ -126,9 +126,9 @@ export class VariantTableComponent
 	async delete() {
 		const result = await firstValueFrom(
 			this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose
-			.pipe(first())
+				.open(DeleteConfirmationComponent)
+				.onClose
+				.pipe(first())
 		);
 		if (!result) return;
 

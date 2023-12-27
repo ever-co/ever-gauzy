@@ -23,7 +23,7 @@ import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
-import { Options, ChangeContext } from 'ng5-slider';
+import { Options, ChangeContext } from '@angular-slider/ngx-slider';
 import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	ActivityLevel,
@@ -156,7 +156,7 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 		private timesheetFilterService: TimesheetFilterService,
 		private ngxPermissionsService: NgxPermissionsService,
 		private cd: ChangeDetectorRef
-	) {}
+	) { }
 
 	ngOnInit() {
 		// this.selectedDate = this.today;
@@ -298,5 +298,5 @@ export class FiltersComponent implements OnInit, OnDestroy, AfterViewInit {
 		);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

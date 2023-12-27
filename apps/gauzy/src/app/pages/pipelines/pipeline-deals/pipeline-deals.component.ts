@@ -3,11 +3,9 @@ import { IDeal, IPipeline, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
 import {
 	ActivatedRoute,
-	Router,
-	RouterEvent,
-	NavigationEnd
+	Router
 } from '@angular/router';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -73,9 +71,9 @@ export class PipelineDealsComponent
 	};
 	disableButton = true;
 
-	pipelineDealsTable: Ng2SmartTableComponent;
+	pipelineDealsTable: Angular2SmartTableComponent;
 	@ViewChild('pipelineDealsTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.pipelineDealsTable = content;
@@ -122,14 +120,6 @@ export class PipelineDealsComponent
 		this.smartTableSettings.columns.probability.title = this.getTranslation(
 			'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY'
 		);
-
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 	}
 
 	setView() {
@@ -261,7 +251,7 @@ export class PipelineDealsComponent
 	 */
 	deselectAll() {
 		if (this.pipelineDealsTable && this.pipelineDealsTable.grid) {
-			this.pipelineDealsTable.grid.dataSet['willSelect'] = 'false';
+			this.pipelineDealsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.pipelineDealsTable.grid.dataSet.deselectAll();
 		}
 	}

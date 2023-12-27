@@ -7,7 +7,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import * as moment from 'moment';
 import {
 	ErrorHandlingService,
@@ -29,8 +29,8 @@ export class ContractsComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	contractsTable: Ng2SmartTableComponent;
-	@ViewChild('contractsTable') set content(content: Ng2SmartTableComponent) {
+	contractsTable: Angular2SmartTableComponent;
+	@ViewChild('contractsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.contractsTable = content;
 		}
@@ -130,7 +130,7 @@ export class ContractsComponent
 
 	selectContracts({ selected }) {
 		if (this.contractsTable) {
-			this.contractsTable.grid.dataSet['willSelect'] = 'false';
+			this.contractsTable.grid.dataSet['willSelect'] = 'indexed';
 		}
 		this.selectedContracts = selected;
 	}
@@ -175,5 +175,5 @@ export class ContractsComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

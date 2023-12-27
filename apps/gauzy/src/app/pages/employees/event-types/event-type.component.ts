@@ -16,7 +16,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -65,8 +65,8 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 	defaultEventTypes: IEventTypeViewModel[] = DEFAULT_EVENT_TYPE;
 	private _refresh$: Subject<any> = new Subject();
 
-	eventTypesTable: Ng2SmartTableComponent;
-	@ViewChild('eventTypesTable') set content(content: Ng2SmartTableComponent) {
+	eventTypesTable: Angular2SmartTableComponent;
+	@ViewChild('eventTypesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.eventTypesTable = content;
 			this._onChangedSource();
@@ -409,8 +409,8 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId
-					  }
+						employeeId: this.selectedEmployeeId
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -497,10 +497,10 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.eventTypesTable && this.eventTypesTable.grid) {
-			this.eventTypesTable.grid.dataSet['willSelect'] = 'false';
+			this.eventTypesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.eventTypesTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

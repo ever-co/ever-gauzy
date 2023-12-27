@@ -1,5 +1,5 @@
 import { OnInit, OnDestroy, Component, ViewChild } from '@angular/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { Store } from '../../../@core/services/store.service';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
@@ -20,8 +20,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 })
 export class ProfitHistoryComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	smartTableSettings;
 	smartTableSource = new LocalDataSource();
 	recordsData: {
@@ -36,9 +35,9 @@ export class ProfitHistoryComponent
 	currency: string;
 	private _profitHistory$: Subject<any> = this.subject$;
 
-	profileHistoryTable: Ng2SmartTableComponent;
+	profileHistoryTable: Angular2SmartTableComponent;
 	@ViewChild('profileHistoryTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.profileHistoryTable = content;
@@ -170,12 +169,12 @@ export class ProfitHistoryComponent
 	 */
 	deselectAll() {
 		if (this.profileHistoryTable && this.profileHistoryTable.grid) {
-			this.profileHistoryTable.grid.dataSet['willSelect'] = 'false';
+			this.profileHistoryTable.grid.dataSet['willSelect'] = 'indexed';
 			this.profileHistoryTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	public close() {
 		this.dialogRef.close();

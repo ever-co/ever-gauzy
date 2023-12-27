@@ -8,7 +8,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
 import { ComponentEnum } from './../../../../../@core/constants';

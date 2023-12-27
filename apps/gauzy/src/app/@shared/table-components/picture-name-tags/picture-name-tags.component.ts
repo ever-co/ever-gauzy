@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.component';
 
 @Component({
@@ -74,8 +74,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 })
 export class PictureNameTagsComponent
 	extends NotesWithTagsComponent
-	implements ViewCell
-{
+	implements ViewCell {
 	@Input()
 	isTags = true;
 

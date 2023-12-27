@@ -1,11 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-contact-action',
 	templateUrl: './contact-action.component.html',
-	styleUrls:['../../contacts.component.scss']
+	styleUrls: ['../../contacts.component.scss']
 })
 export class ContactActionComponent implements ViewCell {
 	@Input()

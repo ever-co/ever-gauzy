@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 
 @Component({
 	template: `

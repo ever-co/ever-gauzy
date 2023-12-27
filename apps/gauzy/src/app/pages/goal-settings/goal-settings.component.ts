@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { tap } from 'rxjs/operators';
@@ -17,7 +17,7 @@ import {
 	IGoalGeneralSetting,
 	IOrganization
 } from '@gauzy/contracts';
-import { Router, RouterEvent, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
@@ -54,9 +54,9 @@ export class GoalSettingsComponent
 	private _goalSettings$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	goalSettingsTable: Ng2SmartTableComponent;
+	goalSettingsTable: Angular2SmartTableComponent;
 	@ViewChild('goalSettingsTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.goalSettingsTable = content;
@@ -70,7 +70,6 @@ export class GoalSettingsComponent
 		private goalSettingService: GoalSettingsService,
 		private toastrService: ToastrService,
 		private store: Store,
-		private router: Router,
 		private fb: UntypedFormBuilder
 	) {
 		super(translateService);
@@ -99,13 +98,6 @@ export class GoalSettingsComponent
 						this._refresh$.next(true);
 						await this._loadTableData(this.selectedTab);
 					}
-				}
-			});
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
 				}
 			});
 		this.pagination$
@@ -542,7 +534,7 @@ export class GoalSettingsComponent
 	 */
 	deselectAll() {
 		if (this.goalSettingsTable && this.goalSettingsTable.grid) {
-			this.goalSettingsTable.grid.dataSet['willSelect'] = 'false';
+			this.goalSettingsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.goalSettingsTable.grid.dataSet.deselectAll();
 		}
 	}

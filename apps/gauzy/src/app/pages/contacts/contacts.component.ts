@@ -16,7 +16,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
@@ -74,8 +74,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		this._contactType = value;
 	}
 
-	contactsTable: Ng2SmartTableComponent;
-	@ViewChild('contactsTable') set content(content: Ng2SmartTableComponent) {
+	contactsTable: Angular2SmartTableComponent;
+	@ViewChild('contactsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.contactsTable = content;
 			this.onChangedSource();
@@ -602,7 +602,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	 */
 	deselectAll() {
 		if (this.contactsTable && this.contactsTable.grid) {
-			this.contactsTable.grid.dataSet['willSelect'] = 'false';
+			this.contactsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.contactsTable.grid.dataSet.deselectAll();
 		}
 	}

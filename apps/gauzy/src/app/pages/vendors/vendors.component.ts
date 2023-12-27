@@ -13,8 +13,6 @@ import {
 } from '@gauzy/contracts';
 import {
 	Router,
-	RouterEvent,
-	NavigationEnd,
 	ActivatedRoute
 } from '@angular/router';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
@@ -118,13 +116,6 @@ export class VendorsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this.route.queryParamMap
 			.pipe(
 				filter(

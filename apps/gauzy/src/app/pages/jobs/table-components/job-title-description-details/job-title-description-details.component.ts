@@ -1,7 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { IVisibilityJobPostInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 

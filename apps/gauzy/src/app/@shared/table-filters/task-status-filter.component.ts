@@ -1,5 +1,5 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 
 @Component({
     template: `
@@ -16,7 +16,7 @@ export class TaskStatusFilterComponent extends DefaultFilter implements OnChange
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    ngOnChanges(changes: SimpleChanges) { }
 
     onChange(filter: string | null) {
         this.column.filterFunction(filter);

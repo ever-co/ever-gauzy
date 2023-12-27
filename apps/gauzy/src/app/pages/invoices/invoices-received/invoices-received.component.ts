@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
@@ -83,9 +83,9 @@ export class InvoicesReceivedComponent
 		return this._isEstimate;
 	}
 
-	invoiceReceivedTable: Ng2SmartTableComponent;
+	invoiceReceivedTable: Angular2SmartTableComponent;
 	@ViewChild('invoiceReceivedTable', { static: false }) set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.invoiceReceivedTable = content;
@@ -490,7 +490,7 @@ export class InvoicesReceivedComponent
 	 */
 	deselectAll() {
 		if (this.invoiceReceivedTable && this.invoiceReceivedTable.grid) {
-			this.invoiceReceivedTable.grid.dataSet['willSelect'] = 'false';
+			this.invoiceReceivedTable.grid.dataSet['willSelect'] = 'indexed';
 			this.invoiceReceivedTable.grid.dataSet.deselectAll();
 		}
 	}

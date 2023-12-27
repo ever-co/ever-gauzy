@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { Router } from '@angular/router';
 import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
@@ -22,7 +22,7 @@ export class EmployeeWithLinksComponent implements ViewCell, OnInit {
 	constructor(
 		private store: Store,
 		private readonly router: Router
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.initializeGrouping();

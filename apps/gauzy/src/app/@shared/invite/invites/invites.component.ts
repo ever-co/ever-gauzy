@@ -22,7 +22,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -79,8 +79,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	private _refresh$: Subject<any> = new Subject();
 
-	invitesTable: Ng2SmartTableComponent;
-	@ViewChild('invitesTable') set content(content: Ng2SmartTableComponent) {
+	invitesTable: Angular2SmartTableComponent;
+	@ViewChild('invitesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.invitesTable = content;
 			this.onChangedSource();
@@ -168,7 +168,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.MANAGE_INVITES;
@@ -266,7 +266,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	 *
 	 * @param clipboard
 	 */
-	onCopyFailure(clipboard: IClipboardResponse) {}
+	onCopyFailure(clipboard: IClipboardResponse) { }
 
 	/*
 	 * Register Smart Table Source Config
@@ -594,7 +594,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.invitesTable && this.invitesTable.grid) {
-			this.invitesTable.grid.dataSet['willSelect'] = 'false';
+			this.invitesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.invitesTable.grid.dataSet.deselectAll();
 		}
 	}

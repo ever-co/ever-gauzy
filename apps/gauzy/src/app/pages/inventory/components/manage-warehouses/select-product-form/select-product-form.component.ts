@@ -1,20 +1,20 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {IOrganization, IProductTranslated, LanguagesEnum} from '@gauzy/contracts';
-import {UntilDestroy, untilDestroyed} from '@ngneat/until-destroy';
-import {API_PREFIX, ProductService, Store} from 'apps/gauzy/src/app/@core';
-import {TranslateService} from '@ngx-translate/core';
-import {Ng2SmartTableComponent, ServerDataSource} from 'ng2-smart-table';
-import {ImageRowComponent} from '../../inventory-table-components/image-row.component';
-import {NbDialogRef} from '@nebular/theme';
-import {SelectedRowComponent} from '../../inventory-table-components/selected-row.component';
-import {HttpClient} from '@angular/common/http';
-import {tap} from 'rxjs/operators';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { IOrganization, IProductTranslated, LanguagesEnum } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { API_PREFIX, ProductService, Store } from 'apps/gauzy/src/app/@core';
+import { TranslateService } from '@ngx-translate/core';
+import { Angular2SmartTableComponent, ServerDataSource } from 'angular2-smart-table';
+import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
+import { NbDialogRef } from '@nebular/theme';
+import { SelectedRowComponent } from '../../inventory-table-components/selected-row.component';
+import { HttpClient } from '@angular/common/http';
+import { tap } from 'rxjs/operators';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from "../../../../../@shared/pagination/pagination-filter-base.component";
-import {debounceTime} from "rxjs";
-import {distinctUntilChange} from "@gauzy/common-angular";
+import { debounceTime } from "rxjs";
+import { distinctUntilChange } from "@gauzy/common-angular";
 
 export interface SelectedRowEvent {
 	data: IProductTranslated,
@@ -38,14 +38,14 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 	selectedRows: any[] = [];
 	tableData: any[] = [];
 
-	productsTable: Ng2SmartTableComponent;
+	productsTable: Angular2SmartTableComponent;
 	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
 
 	constructor(public dialogRef: NbDialogRef<any>, private store: Store, readonly translateService: TranslateService, private productService: ProductService, private http: HttpClient) {
 		super(translateService);
 	}
 
-	@ViewChild('productsTable') set content(content: Ng2SmartTableComponent) {
+	@ViewChild('productsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.productsTable = content;
 			this.onChangedSource();
@@ -91,7 +91,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 	 */
 	deselectAll() {
 		if (this.productsTable && this.productsTable.grid) {
-			this.productsTable.grid.dataSet['willSelect'] = 'false';
+			this.productsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.productsTable.grid.dataSet.deselectAll();
 		}
 	}
@@ -106,14 +106,14 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 
 	async loadSettings() {
 		this.loading = true;
-		const {tenantId} = this.store.user;
-		const {id: organizationId} = this.organization || {id: ''};
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization || { id: '' };
 
 		const data = "data=" + JSON.stringify({
 			relations: ['productType', 'productCategory', 'featuredImage', 'variants'],
-			findInput: {organizationId, tenantId},
+			findInput: { organizationId, tenantId },
 		});
-		const {activePage, itemsPerPage} = this.getPagination();
+		const { activePage, itemsPerPage } = this.getPagination();
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: this.PRODUCTS_URL + data,
 			dataKey: 'items',
@@ -123,7 +123,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 		});
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		await this.smartTableSource.getElements();
-		this.setPagination({...this.getPagination(), totalItems: this.smartTableSource.count()});
+		this.setPagination({ ...this.getPagination(), totalItems: this.smartTableSource.count() });
 		this.loading = false;
 	}
 

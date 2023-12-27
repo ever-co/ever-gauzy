@@ -27,7 +27,7 @@ import {
 } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -85,8 +85,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	incomes$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	incomeTable: Ng2SmartTableComponent;
-	@ViewChild('incomeTable') set content(content: Ng2SmartTableComponent) {
+	incomeTable: Angular2SmartTableComponent;
+	@ViewChild('incomeTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.incomeTable = content;
 			this.onChangedSource();
@@ -586,7 +586,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.incomeTable && this.incomeTable.grid) {
-			this.incomeTable.grid.dataSet['willSelect'] = 'false';
+			this.incomeTable.grid.dataSet['willSelect'] = 'indexed';
 			this.incomeTable.grid.dataSet.deselectAll();
 		}
 	}

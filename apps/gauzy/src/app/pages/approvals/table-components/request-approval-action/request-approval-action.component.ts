@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import {
 	RequestApprovalStatusTypesEnum,
 	ComponentLayoutStyleEnum,
@@ -17,7 +17,7 @@ export class RequestApprovalActionComponent implements ViewCell, OnInit {
 	isApproval = true;
 	isRefuse = true;
 	isSuperAdmin = false;
-	
+
 	@Output() updateResult = new EventEmitter<any>();
 
 	@Input()
@@ -32,11 +32,11 @@ export class RequestApprovalActionComponent implements ViewCell, OnInit {
 
 	ngOnInit(): void {
 		const { role } = this.store.user;
-		if(role && role.name === RolesEnum.SUPER_ADMIN) {
+		if (role && role.name === RolesEnum.SUPER_ADMIN) {
 			this.isSuperAdmin = true
 		}
 		if (this.rowData && this.rowData.status) {
-			if(this.isSuperAdmin) {
+			if (this.isSuperAdmin) {
 				switch (this.rowData.status.value) {
 					case RequestApprovalStatusTypesEnum.APPROVED:
 						this.isApproval = false;
@@ -63,7 +63,7 @@ export class RequestApprovalActionComponent implements ViewCell, OnInit {
 						this.isRefuse = true;
 						break;
 				}
-			}			
+			}
 		}
 	}
 

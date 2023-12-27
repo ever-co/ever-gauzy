@@ -8,7 +8,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -59,9 +59,9 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 	policies$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	approvalPolicyTable: Ng2SmartTableComponent;
+	approvalPolicyTable: Angular2SmartTableComponent;
 	@ViewChild('approvalPolicyTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.approvalPolicyTable = content;
@@ -351,7 +351,7 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.approvalPolicyTable && this.approvalPolicyTable.grid) {
-			this.approvalPolicyTable.grid.dataSet['willSelect'] = 'false';
+			this.approvalPolicyTable.grid.dataSet['willSelect'] = 'indexed';
 			this.approvalPolicyTable.grid.dataSet.deselectAll();
 		}
 	}
@@ -360,5 +360,5 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -16,7 +16,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
@@ -70,8 +70,8 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		isSelected: false
 	};
 
-	interviewsTable: Ng2SmartTableComponent;
-	@ViewChild('interviewsTable') set content(content: Ng2SmartTableComponent) {
+	interviewsTable: Angular2SmartTableComponent;
+	@ViewChild('interviewsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.interviewsTable = content;
 			this.onChangedSource();
@@ -490,7 +490,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	 */
 	deselectAll() {
 		if (this.interviewsTable && this.interviewsTable.grid) {
-			this.interviewsTable.grid.dataSet['willSelect'] = 'false';
+			this.interviewsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.interviewsTable.grid.dataSet.deselectAll();
 		}
 	}

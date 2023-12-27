@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
@@ -71,8 +71,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 	candidates$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	candidatesTable: Ng2SmartTableComponent;
-	@ViewChild('candidatesTable') set content(content: Ng2SmartTableComponent) {
+	candidatesTable: Angular2SmartTableComponent;
+	@ViewChild('candidatesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.candidatesTable = content;
 			this.onChangedSource();
@@ -596,7 +596,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.candidatesTable && this.candidatesTable.grid) {
-			this.candidatesTable.grid.dataSet['willSelect'] = 'false';
+			this.candidatesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.candidatesTable.grid.dataSet.deselectAll();
 		}
 	}

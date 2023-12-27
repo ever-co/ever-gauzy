@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'ngx-assigned-to',
@@ -14,7 +14,7 @@ export class AssignedToComponent implements ViewCell {
 
 	view;
 
-	constructor() {}
+	constructor() { }
 
 	ngOnInit() {
 		if (this.rowData) {

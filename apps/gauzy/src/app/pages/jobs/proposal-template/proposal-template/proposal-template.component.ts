@@ -10,7 +10,7 @@ import {
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -53,9 +53,9 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	nbTab$: Subject<string> = new BehaviorSubject(ProposalTemplateTabsEnum.ACTIONS);
 
-	proposalTemplateTable: Ng2SmartTableComponent;
+	proposalTemplateTable: Angular2SmartTableComponent;
 	@ViewChild('proposalTemplateTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.proposalTemplateTable = content;
@@ -162,8 +162,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 				tenantId,
 				...(this.selectedEmployee
 					? {
-							employeeId: this.selectedEmployee.id
-					  }
+						employeeId: this.selectedEmployee.id
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -373,7 +373,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.proposalTemplateTable && this.proposalTemplateTable.grid) {
-			this.proposalTemplateTable.grid.dataSet['willSelect'] = 'false';
+			this.proposalTemplateTable.grid.dataSet['willSelect'] = 'indexed';
 			this.proposalTemplateTable.grid.dataSet.deselectAll();
 		}
 	}
@@ -391,5 +391,5 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		this.nbTab$.next(tab.tabId);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -1,5 +1,5 @@
-import {Component, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -27,7 +27,7 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
     teams: IOrganizationTeam[] = [];
     organization: IOrganization;
     selectedEmployeeId: ISelectedEmployee['id'];
-	subject$: Subject<any> = new Subject();
+    subject$: Subject<any> = new Subject();
 
     constructor(
         private readonly store: Store,
@@ -51,7 +51,7 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
                 filter(([organization]) => !!organization),
                 tap(([organization, employee]) => {
                     this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
+                    this.selectedEmployeeId = employee ? employee.id : null;
                 }),
                 tap(() => this.subject$.next(true)),
                 untilDestroyed(this)
@@ -59,7 +59,7 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
             .subscribe();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    ngOnChanges(changes: SimpleChanges) { }
 
     onChange(event: any) {
         this.column.filterFunction(event);
@@ -69,22 +69,22 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
         if (!this.organization) {
             return;
         }
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+        const { tenantId } = this.store.user;
+        const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationTeamsService.getMyTeams(
-			{
+        const { items = [] } = await this.organizationTeamsService.getMyTeams(
+            {
                 organizationId,
-				tenantId,
-				...(this.selectedEmployeeId
-					?   {
-                            members: {
-                                employeeId: this.selectedEmployeeId
-                            }
-					    }
-					: {}),
+                tenantId,
+                ...(this.selectedEmployeeId
+                    ? {
+                        members: {
+                            employeeId: this.selectedEmployeeId
+                        }
+                    }
+                    : {}),
             }
-		);
-		this.teams = items;
-	}
+        );
+        this.teams = items;
+    }
 }

@@ -1,25 +1,25 @@
-import {AfterViewInit, Component, Input, OnInit, ViewChild} from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
 import {
 	IWarehouse,
 	IOrganization
 } from '@gauzy/contracts';
-import {distinctUntilChange} from '@gauzy/common-angular';
-import {TranslateService} from '@ngx-translate/core';
-import {UntilDestroy, untilDestroyed} from '@ngneat/until-destroy';
-import {LocalDataSource, Ng2SmartTableComponent} from 'ng2-smart-table';
-import {NbDialogService} from '@nebular/theme';
-import {filter, firstValueFrom, Subject} from 'rxjs';
-import {debounceTime, tap} from 'rxjs/operators';
-import {InventoryStore, Store, ToastrService, WarehouseService} from './../../../../../@core/services';
-import {SelectProductComponent} from '../select-product-form/select-product-form.component';
-import {ImageRowComponent} from '../../inventory-table-components/image-row.component';
-import {ManageQuantityComponent} from '../manage-quantity/manage-quantity.component';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { NbDialogService } from '@nebular/theme';
+import { filter, firstValueFrom, Subject } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
+import { InventoryStore, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import { SelectProductComponent } from '../select-product-form/select-product-form.component';
+import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
+import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from "../../../../../@shared/pagination/pagination-filter-base.component";
 
-@UntilDestroy({checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-warehouse-products-table',
 	templateUrl: './warehouse-products-table.component.html',
@@ -35,9 +35,9 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 	public organization: IOrganization;
 	products$: Subject<boolean> = new Subject();
 
-	warehouseProductsTable: Ng2SmartTableComponent;
+	warehouseProductsTable: Angular2SmartTableComponent;
 
-	@ViewChild('warehouseProductsTable') set content(content: Ng2SmartTableComponent) {
+	@ViewChild('warehouseProductsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.warehouseProductsTable = content;
 			this.onChangedSource();
@@ -116,7 +116,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 	 */
 	deselectAll() {
 		if (this.warehouseProductsTable && this.warehouseProductsTable.grid) {
-			this.warehouseProductsTable.grid.dataSet['willSelect'] = 'false';
+			this.warehouseProductsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.warehouseProductsTable.grid.dataSet.deselectAll();
 		}
 	}
@@ -178,7 +178,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 					};
 				})
 				: [];
-			const {activePage, itemsPerPage} = this.getPagination();
+			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage);
 			this.smartTableSource.load(mappedItems);
 			this.setPagination({
@@ -196,8 +196,8 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		if (!this.organization) {
 			return;
 		}
-		const {tenantId} = this.store.user;
-		const {id: organizationId} = this.store.selectedOrganization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.store.selectedOrganization;
 
 		const dialog = this.dialogService.open(SelectProductComponent, {});
 		const selectedProducts = await firstValueFrom(dialog.onClose);

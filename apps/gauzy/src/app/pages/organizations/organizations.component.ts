@@ -14,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -61,9 +61,9 @@ export class OrganizationsComponent
 	user: IUser;
 	private _refresh$: Subject<any> = new Subject();
 
-	organizationsTable: Ng2SmartTableComponent;
+	organizationsTable: Angular2SmartTableComponent;
 	@ViewChild('organizationsTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.organizationsTable = content;
@@ -374,7 +374,7 @@ export class OrganizationsComponent
 	 */
 	deselectAll() {
 		if (this.organizationsTable && this.organizationsTable.grid) {
-			this.organizationsTable.grid.dataSet['willSelect'] = 'false';
+			this.organizationsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.organizationsTable.grid.dataSet.deselectAll();
 		}
 	}

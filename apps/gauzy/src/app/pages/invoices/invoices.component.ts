@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	NbDialogService,
@@ -112,8 +112,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		return this._isEstimate;
 	}
 
-	invoicesTable: Ng2SmartTableComponent;
-	@ViewChild('invoicesTable') set content(content: Ng2SmartTableComponent) {
+	invoicesTable: Angular2SmartTableComponent;
+	@ViewChild('invoicesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.invoicesTable = content;
 			this.onChangedSource();
@@ -1276,7 +1276,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	 */
 	deselectAll() {
 		if (this.invoicesTable && this.invoicesTable.grid) {
-			this.invoicesTable.grid.dataSet['willSelect'] = 'false';
+			this.invoicesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.invoicesTable.grid.dataSet.deselectAll();
 		}
 	}

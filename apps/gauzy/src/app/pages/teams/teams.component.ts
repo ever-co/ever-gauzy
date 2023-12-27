@@ -23,7 +23,7 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -89,8 +89,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	};
 	private _refresh$: Subject<any> = new Subject();
 
-	teamTable: Ng2SmartTableComponent;
-	@ViewChild('teamTable') set content(content: Ng2SmartTableComponent) {
+	teamTable: Angular2SmartTableComponent;
+	@ViewChild('teamTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.teamTable = content;
 			this.onChangedSource();
@@ -569,7 +569,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.teamTable && this.teamTable.grid) {
-			this.teamTable.grid.dataSet['willSelect'] = 'false';
+			this.teamTable.grid.dataSet['willSelect'] = 'indexed';
 			this.teamTable.grid.dataSet.deselectAll();
 		}
 	}

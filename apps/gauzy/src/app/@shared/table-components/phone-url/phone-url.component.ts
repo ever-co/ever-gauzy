@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'ga-phone-url',
@@ -11,5 +11,5 @@ export class PhoneUrlComponent implements ViewCell {
 	value: string | number;
 	@Input()
 	rowData: any;
-	constructor() {}
+	constructor() { }
 }

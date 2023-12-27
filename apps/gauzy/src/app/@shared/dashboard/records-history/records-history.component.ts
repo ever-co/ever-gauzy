@@ -5,7 +5,7 @@ import {
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	DateViewComponent,
@@ -26,8 +26,7 @@ import { NbDialogRef } from '@nebular/theme';
 })
 export class RecordsHistoryComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit
-{
+	implements OnInit {
 	type: HistoryType;
 	recordsData: IEmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
@@ -47,9 +46,9 @@ export class RecordsHistoryComponent
 		}
 	};
 
-	recordHistoryTable: Ng2SmartTableComponent;
+	recordHistoryTable: Angular2SmartTableComponent;
 	@ViewChild('recordHistoryTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.recordHistoryTable = content;
@@ -193,10 +192,9 @@ export class RecordsHistoryComponent
 							width: '8%',
 							valuePrepareFunction: (_, e) =>
 								`<div class='text-center'>
-								${
-									_ === 'org'
-										? '<i class="fas fa-building"></i>'
-										: '<i class="fas fa-user-alt"></i>'
+								${_ === 'org'
+									? '<i class="fas fa-building"></i>'
+									: '<i class="fas fa-user-alt"></i>'
 								}
 								</div>
 								`
@@ -238,8 +236,8 @@ export class RecordsHistoryComponent
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
 			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
+				`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
+			)
 			: categoryName;
 	}
 
@@ -275,7 +273,7 @@ export class RecordsHistoryComponent
 	 */
 	deselectAll() {
 		if (this.recordHistoryTable && this.recordHistoryTable.grid) {
-			this.recordHistoryTable.grid.dataSet['willSelect'] = 'false';
+			this.recordHistoryTable.grid.dataSet['willSelect'] = 'indexed';
 			this.recordHistoryTable.grid.dataSet.deselectAll();
 		}
 	}

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { Router } from '@angular/router';
 
 @Component({
@@ -13,7 +13,7 @@ export class CreateByComponent implements ViewCell {
 	@Input()
 	rowData: any;
 
-	constructor(private readonly router: Router) {}
+	constructor(private readonly router: Router) { }
 
 	edit(id: string) {
 		if (id) {

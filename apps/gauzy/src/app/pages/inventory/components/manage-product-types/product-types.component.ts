@@ -11,7 +11,7 @@ import {
 	IProductTypeTranslated,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
@@ -44,8 +44,7 @@ import { InputFilterComponent } from './../../../../@shared/table-filters';
 })
 export class ProductTypesComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -60,9 +59,9 @@ export class ProductTypesComponent
 	types$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	productTypesTable: Ng2SmartTableComponent;
+	productTypesTable: Angular2SmartTableComponent;
 	@ViewChild('productTypesTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.productTypesTable = content;
@@ -258,8 +257,8 @@ export class ProductTypesComponent
 		try {
 			const editProductType = this.selectedProductType
 				? await this.productTypeService.getById(
-						this.selectedProductType.id
-				  )
+					this.selectedProductType.id
+				)
 				: null;
 
 			const dialog = this.dialogService.open(
@@ -409,10 +408,10 @@ export class ProductTypesComponent
 	 */
 	deselectAll() {
 		if (this.productTypesTable && this.productTypesTable.grid) {
-			this.productTypesTable.grid.dataSet['willSelect'] = 'false';
+			this.productTypesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.productTypesTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

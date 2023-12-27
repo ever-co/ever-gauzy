@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'gauzy-external-link',
@@ -12,6 +12,6 @@ export class ExternalLinkComponent implements ViewCell {
 
 	@Input()
 	rowData: any;
-	
-	constructor() {}
+
+	constructor() { }
 }
