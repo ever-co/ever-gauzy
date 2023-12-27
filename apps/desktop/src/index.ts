@@ -5,7 +5,16 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import { app, dialog, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
+import {
+	app,
+	dialog,
+	BrowserWindow,
+	ipcMain,
+	shell,
+	Menu,
+	MenuItemConstructorOptions,
+	MessageBoxOptions
+} from 'electron';
 import { environment } from './environments/environment';
 import * as Sentry from '@sentry/electron';
 import * as path from 'path';
@@ -40,7 +49,7 @@ import {
 	ErrorReportRepository,
 	ErrorEventManager,
 	AppError,
-	UIError,
+	UIError
 } from '@gauzy/desktop-libs';
 import {
 	createGauzyWindow,
@@ -93,20 +102,15 @@ console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
-	screenshotWindow: path.join(__dirname, './ui/index.html'),
+	screenshotWindow: path.join(__dirname, './ui/index.html')
 };
 
 const updater = new DesktopUpdater({
 	repository: process.env.REPO_NAME,
 	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases',
+	typeRelease: 'releases'
 });
-const report = new ErrorReport(
-	new ErrorReportRepository(
-		process.env.REPO_OWNER,
-		process.env.REPO_NAME
-	)
-);
+const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 const eventErrorManager = ErrorEventManager.instance;
 
 let tray = null;
@@ -117,7 +121,7 @@ let serverDesktop = null;
 let dialogErr = false;
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 
 // Instance detection
@@ -134,7 +138,7 @@ if (!gotTheLock) {
 			dialog.showMessageBoxSync(gauzyWindow, {
 				type: 'warning',
 				title: process.env.DESCRIPTION,
-				message: 'You already have a running instance',
+				message: 'You already have a running instance'
 			});
 		}
 	});
@@ -154,7 +158,6 @@ ipcMain.setMaxListeners(0);
 /* Remove handler if exist */
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
-
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
@@ -171,17 +174,10 @@ log.catchErrors({
 		dialog.options.detail = error.stack;
 		dialog.show().then((result) => {
 			if (result.response === 1) {
-				submitIssue(
-					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
-					{
-						title: `Automatic error report for Desktop App ${versions.app}`,
-						body:
-							'Error:\n```' +
-							error.stack +
-							'\n```\n' +
-							`OS: ${versions.os}`,
-					}
-				);
+				submitIssue(`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`, {
+					title: `Automatic error report for Desktop App ${versions.app}`,
+					body: 'Error:\n```' + error.stack + '\n```\n' + `OS: ${versions.os}`
+				});
 				return;
 			}
 
@@ -212,7 +208,6 @@ eventErrorManager.onSendReport(async (message: string) => {
 			app.exit(0);
 			break;
 	}
-
 });
 
 eventErrorManager.onShowError(async (message: string) => {
@@ -240,10 +235,10 @@ async function startServer(value, restart = false) {
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
-	}else if(value.db === 'better-sqlite') {
+	} else if (value.db === 'better-sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'better-sqlite3';
-	}else {
+	} else {
 		process.env.DB_TYPE = 'postgres';
 		process.env.DB_HOST = value['postgres']?.dbHost;
 		process.env.DB_PORT = value['postgres']?.dbPort;
@@ -254,24 +249,19 @@ async function startServer(value, restart = false) {
 	if (value.isLocalServer) {
 		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
 		process.env.API_HOST = '0.0.0.0';
-		process.env.API_BASE_URL = `http://localhost:${
-			value.port || environment.API_DEFAULT_PORT
-		}`;
+		process.env.API_BASE_URL = `http://localhost:${value.port || environment.API_DEFAULT_PORT}`;
 		setEnvAdditional();
 		// require(path.join(__dirname, 'api/main.js'));
 		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
-			silent: true,
+			silent: true
 		});
 		serverGauzy.stdout.on('data', async (data) => {
 			const msgData = data.toString();
 			console.log('log -- ', msgData);
 			setupWindow.webContents.send('setup-progress', {
-				msg: msgData,
+				msg: msgData
 			});
-			if (
-				!value.isSetup &&
-				(!value.serverConfigConnected || value.isLocalServer)
-			) {
+			if (!value.isSetup && (!value.serverConfigConnected || value.isLocalServer)) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					try {
 						setupWindow.hide();
@@ -288,10 +278,7 @@ async function startServer(value, restart = false) {
 					}
 				}
 			}
-			if (
-				msgData.indexOf('Unable to connect to the database') > -1 &&
-				!dialogErr
-			) {
+			if (msgData.indexOf('Unable to connect to the database') > -1 && !dialogErr) {
 				const msg = 'Unable to connect to the database';
 				dialogMessage(msg);
 			}
@@ -306,11 +293,11 @@ async function startServer(value, restart = false) {
 	try {
 		const config: any = {
 			...value,
-			isSetup: true,
+			isSetup: true
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: value.aw,
+			isAw: value.aw
 		};
 		store.set({
 			configs: config,
@@ -319,8 +306,8 @@ async function startServer(value, restart = false) {
 				taskId: null,
 				note: null,
 				aw,
-				organizationContactId: null,
-			},
+				organizationContactId: null
+			}
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -367,15 +354,7 @@ async function startServer(value, restart = false) {
 	splashScreen.close();
 
 	TranslateService.onLanguageChange(() => {
-		new AppMenu(
-			timeTrackerWindow,
-			settingsWindow,
-			updaterWindow,
-			knex,
-			pathWindow,
-			null,
-			true
-		);
+		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
 		if (tray) {
 			tray.destroy();
@@ -399,7 +378,7 @@ async function startServer(value, restart = false) {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
 			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value),
+				host: getApiBaseUrl(value)
 			});
 		}
 	});
@@ -422,9 +401,9 @@ const dialogMessage = (msg) => {
 		type: 'question',
 		buttons: ['Open Setting', 'Exit'],
 		defaultId: 2,
-		title: 'Warning',
-		message: msg,
-	};
+		title: 'warning',
+		message: msg
+	} as MessageBoxOptions;
 
 	dialog.showMessageBox(null, options).then(async (response) => {
 		if (response.response === 1) app.quit();
@@ -432,16 +411,10 @@ const dialogMessage = (msg) => {
 			if (settingsWindow) settingsWindow.show();
 			else {
 				if (!settingsWindow) {
-					settingsWindow = await createSettingsWindow(
-						settingsWindow,
-						pathWindow.timeTrackerUi
-					);
+					settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
 				}
 				settingsWindow.show();
-				settingsWindow.webContents.send(
-					'app_setting',
-					LocalStore.getApplicationConfig()
-				);
+				settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 			}
 		}
 	});

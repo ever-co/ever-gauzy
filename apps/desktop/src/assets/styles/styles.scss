@@ -26,6 +26,7 @@
 
 @import './site-menu.scss';
 
+// install ng-select default theme
 @import './includes/fullcalendar';
 @import './includes/tabset';
 @import './includes/ng-select';
@@ -34,23 +35,23 @@
 @import './includes/scroll';
 
 // install swiper.js
-@import '~swiper/css';
-@import '~swiper/css/pagination';
-@import '~swiper/css/navigation';
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+@import 'swiper/css/navigation';
 
 // install the framework and custom global styles
 @include nb-install() {
-  @include angular-material();
+	@include angular-material();
 
-  // framework global styles
-  @include nb-theme-global();
-  @include nb-auth-global();
+	// framework global styles
+		@include nb-theme-global();
+		@include nb-auth-global();
 
-  @include ngx-layout();
-  // loading progress bar
-  @include ngx-pace-theme();
+	@include ngx-layout();
+		// loading progress bar
+		@include ngx-pace-theme();
 
-  @include nb-overrides();
-  @include material-overrides();
-  @include gauzy-overrides();
+	@include nb-overrides();
+		@include material-overrides();
+		@include gauzy-overrides();
 }
