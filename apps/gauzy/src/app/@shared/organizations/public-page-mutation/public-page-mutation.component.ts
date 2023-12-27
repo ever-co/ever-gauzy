@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Validators, FormBuilder, FormGroup } from '@angular/forms';
+import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
 	IIncome,
@@ -37,7 +37,7 @@ export class PublicPageMutationComponent
 	languageExist: boolean;
 	organizationId: string;
 	tenantId: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedLanguage: ILanguage;
 	awards: IOrganizationAward[];
 	organization_languages: IOrganizationLanguage[];
@@ -77,7 +77,7 @@ export class PublicPageMutationComponent
 	selectedClientFocus: any;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<PublicPageMutationComponent>,
 		private readonly toastrService: ToastrService,
 		private readonly organizationAwardsService: OrganizationAwardsService,

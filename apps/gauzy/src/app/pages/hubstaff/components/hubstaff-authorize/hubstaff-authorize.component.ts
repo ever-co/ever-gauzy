@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Validators, FormGroup, FormBuilder } from '@angular/forms';
+import { Validators, UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { IIntegration, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
@@ -18,16 +18,16 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;
 
 	/** */
-	public clientIdForm: FormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
-	static buildClientIdForm(fb: FormBuilder): FormGroup {
+	public clientIdForm: UntypedFormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
+	static buildClientIdForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			client_id: ['', Validators.required],
 		});
 	}
 
 	/** */
-	public clientSecretForm: FormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
-	static buildClientSecretForm(fb: FormBuilder): FormGroup {
+	public clientSecretForm: UntypedFormGroup = HubstaffAuthorizeComponent.buildClientSecretForm(this._fb);
+	static buildClientSecretForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			client_secret: ['', Validators.required],
 			authorization_code: ['', Validators.required],
@@ -37,7 +37,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _hubstaffService: HubstaffService,
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _router: Router,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService

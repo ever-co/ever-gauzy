@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { takeUntil } from 'rxjs/operators';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
 import {
 	ISkill,
@@ -19,7 +19,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 @Component({
 	selector: 'ga-edit-candidate-skills',
 	templateUrl: './edit-candidate-skills.component.html',
-  styleUrls: ['edit-candidate-skills.component.scss']
+	styleUrls: ['edit-candidate-skills.component.scss']
 })
 export class EditCandidateSkillsComponent
 	extends TranslationBaseComponent
@@ -31,7 +31,7 @@ export class EditCandidateSkillsComponent
 	skillId = null;
 	candidateId: string;
 	skillList: ISkill[] = [];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	settingsSmartTable: object;
@@ -41,7 +41,7 @@ export class EditCandidateSkillsComponent
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
 		private store: Store,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private candidateSkillsService: CandidateSkillsService
 	) {
 		super(translateService);
@@ -63,7 +63,7 @@ export class EditCandidateSkillsComponent
 			});
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			skills: this.fb.array([])
 		});
 		const skillForm = this.skills;

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,7 +11,7 @@ import { Store } from './../../../../@core/services';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './event-type-mutation.component.html',
-  styleUrls:['./event-type-mutation.component.scss']
+	styleUrls: ['./event-type-mutation.component.scss']
 })
 export class EventTypeMutationComponent
 	extends TranslationBaseComponent
@@ -21,11 +21,11 @@ export class EventTypeMutationComponent
 	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 
-	readonly form: FormGroup = EventTypeMutationComponent.buildForm(this.fb, this);
+	readonly form: UntypedFormGroup = EventTypeMutationComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: EventTypeMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			title: [],
 			description: [],
@@ -38,7 +38,7 @@ export class EventTypeMutationComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly dialogRef: NbDialogRef<EventTypeMutationComponent>,
 		public readonly translate: TranslateService,
 		private readonly store: Store

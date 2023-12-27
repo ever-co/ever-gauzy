@@ -1,5 +1,5 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -27,8 +27,8 @@ export class TeamsMutationComponent implements OnInit {
 	/*
 	* Team Mutation Form
 	*/
-	public form: FormGroup = TeamsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = TeamsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			name: [null, Validators.required],
 			memberIds: [null, Validators.required],
@@ -40,7 +40,7 @@ export class TeamsMutationComponent implements OnInit {
 			],
 			imageId: [],
 		});
-		form.get('memberIds').setValue([]);
+		form.get('memberIds').setValue(null);
 		form.get('managerIds').setValue([]);
 		form.get('projects').setValue([]);
 		form.get('tags').setValue([]);
@@ -48,7 +48,7 @@ export class TeamsMutationComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService
 	) { }

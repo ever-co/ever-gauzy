@@ -1,7 +1,7 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 
 import { TenantModule } from './../../tenant/tenant.module';
 import { TaskEstimation } from './task-estimation.entity';
@@ -13,17 +13,15 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/task-estimation', module: TaskEstimationModule },
-		]),
+		RouterModule.register([{ path: '/task-estimation', module: TaskEstimationModule }]),
 		TypeOrmModule.forFeature([TaskEstimation]),
 		TenantModule,
 		CqrsModule,
 		UserModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [TaskEstimationController],
 	providers: [TaskEstimationService, ...CommandHandlers],
-	exports: [TaskEstimationService],
+	exports: [TaskEstimationService]
 })
 export class TaskEstimationModule {}

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactController } from './organization-contact.controller';
 import { OrganizationContactService } from './organization-contact.service';
@@ -13,31 +13,21 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/organization-contact',
-				module: OrganizationContactModule,
+				module: OrganizationContactModule
 			}
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationContact
-		]),
+		TypeOrmModule.forFeature([OrganizationContact]),
 		TenantModule,
 		UserModule,
 		OrganizationModule,
 		OrganizationProjectModule,
 		CqrsModule
 	],
-	controllers: [
-		OrganizationContactController
-	],
-	providers: [
-		OrganizationContactService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationContactService
-	]
+	controllers: [OrganizationContactController],
+	providers: [OrganizationContactService, ...CommandHandlers],
+	exports: [TypeOrmModule, OrganizationContactService]
 })
-export class OrganizationContactModule { }
+export class OrganizationContactModule {}

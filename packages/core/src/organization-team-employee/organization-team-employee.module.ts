@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from './../tenant/tenant.module';
 import { OrganizationTeamEmployeeController } from './organization-team-employee.controller';
@@ -10,19 +10,19 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/organization-team-employee',
-				module: OrganizationTeamEmployeeModule,
-			},
+				module: OrganizationTeamEmployeeModule
+			}
 		]),
 		TypeOrmModule.forFeature([OrganizationTeamEmployee]),
 		TenantModule,
 		UserModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],
 	providers: [OrganizationTeamEmployeeService],
-	exports: [TypeOrmModule, OrganizationTeamEmployeeService],
+	exports: [TypeOrmModule, OrganizationTeamEmployeeService]
 })
 export class OrganizationTeamEmployeeModule {}

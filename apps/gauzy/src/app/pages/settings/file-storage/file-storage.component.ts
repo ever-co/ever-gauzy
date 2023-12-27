@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { FileStorageProviderEnum, HttpStatus, ITenantSetting, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,8 +29,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 	user: IUser;
 	settings: ITenantSetting = new Object();
 
-	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public readonly form: UntypedFormGroup = FileStorageComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			fileStorageProvider: [
 				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
@@ -73,7 +73,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translate: TranslateService,
 		private readonly _store: Store,
 		private readonly _tenantService: TenantService,

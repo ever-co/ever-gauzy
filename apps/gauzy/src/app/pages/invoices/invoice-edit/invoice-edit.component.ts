@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IInvoice,
@@ -53,7 +53,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	invoiceId: string;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	form: FormGroup;
+	form: UntypedFormGroup;
 	invoice: IInvoice;
 	organization: IOrganization;
 	itemsToDelete: string[] = [];
@@ -97,7 +97,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	constructor(
 		private readonly store: Store,
 		private readonly router: Router,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly invoiceItemService: InvoiceItemService,
 		private readonly translate: TranslateService,
 		private readonly invoicesService: InvoicesService,
@@ -598,11 +598,11 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-							name: this.form.value.organizationContact.name
-					  })
+						name: this.form.value.organizationContact.name
+					})
 					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-							name: this.form.value.organizationContact.name
-					  }),
+						name: this.form.value.organizationContact.name
+					}),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
 				user: this.store.user,
@@ -958,5 +958,5 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -1,4 +1,4 @@
-@use "sass:math";
+@use 'sass:math';
 // @nebular out of the box themes
 @import 'themes';
 
@@ -98,27 +98,27 @@ $break-dsk: 1532px;
       @content;
     }
   } @else if $media==sm {
-    @media only screen and (min-width: $break-xs + 1) and (max-width: $break-sm) {
+    @media only screen and (min-width: calc($break-xs + 1)) and (max-width: $break-sm) {
       @content;
     }
   } @else if $media==md {
-    @media only screen and (min-width: $break-sm + 1) and (max-width: $break-md) {
+    @media only screen and (min-width: calc($break-sm + 1)) and (max-width: $break-md) {
       @content;
     }
   } @else if $media==lg {
-    @media only screen and (min-width: $break-md + 1) and (max-width: $break-ipad) {
+    @media only screen and (min-width: calc($break-md + 1)) and (max-width: $break-ipad) {
       @content;
     }
   } @else if $media==ipad {
-    @media only screen and (min-width: $break-ipad + 1) and (max-width: $break-lg) {
+    @media only screen and (min-width: calc($break-ipad + 1)) and (max-width: $break-lg) {
       @content;
     }
   } @else if $media==xl {
-    @media only screen and (min-width: $break-lg + 1) and (max-width: $break-xl) {
+    @media only screen and (min-width: calc($break-lg + 1)) and (max-width: $break-xl) {
       @content;
     }
   } @else if $media==dsk {
-    @media only screen and (min-width: $break-lg + 1) and (max-width: $break-dsk) {
+    @media only screen and (min-width: calc($break-lg + 1)) and (max-width: $break-dsk) {
       @content;
     }
   } @else {

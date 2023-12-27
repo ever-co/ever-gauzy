@@ -34,9 +34,9 @@
       "typescriptMismatch": false,
       "versionMismatch": false
     },
-    "defaultCollection": "@nstudio/xplat",
     "packageManager": "yarn",
-    "analytics": false
+    "analytics": false,
+    "defaultCollection": "@nstudio/xplat"
   },
   "generators": {
     "@nrwl/angular": {
@@ -69,5 +69,6 @@
       "unitTestRunner": "jest"
     }
   },
-  "defaultProject": "gauzy"
+  "defaultProject": "gauzy",
+  "$schema": "./node_modules/nx/schemas/nx-schema.json"
 }

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NbDialogRef, NbThemeService } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,8 +17,8 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	/**
 	 * Tag mutation form
 	 */
-	public form: FormGroup = TagsMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = TagsMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			color: [null, Validators.required],
@@ -49,7 +49,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TagsMutationComponent>,
 		private readonly tagsService: TagsService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		public readonly themeService: NbThemeService,
 		private readonly store: Store

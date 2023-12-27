@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import {
@@ -35,7 +35,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 
 	loading: boolean = false;
 	linear: boolean = true;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employees: IEmployeeCreateInput[] = [];
 	public organization: IOrganization;
 

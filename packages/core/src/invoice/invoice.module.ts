@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import * as moment from 'moment';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
@@ -16,18 +16,14 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/invoices', module: InvoiceModule }
-		]),
-		TypeOrmModule.forFeature([
-			Invoice
-		]),
+		RouterModule.register([{ path: '/invoices', module: InvoiceModule }]),
+		TypeOrmModule.forFeature([Invoice]),
 		EmailSendModule,
 		EstimateEmailModule,
 		TenantModule,
 		UserModule,
 		OrganizationModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [InvoiceController],
 	providers: [
@@ -37,12 +33,8 @@ import { UserModule } from './../user/user.module';
 		{
 			provide: 'MomentWrapper',
 			useValue: moment
-		},
+		}
 	],
-	exports: [
-		TypeOrmModule,
-		InvoiceService,
-		PdfmakerService
-	]
+	exports: [TypeOrmModule, InvoiceService, PdfmakerService]
 })
-export class InvoiceModule { }
+export class InvoiceModule {}

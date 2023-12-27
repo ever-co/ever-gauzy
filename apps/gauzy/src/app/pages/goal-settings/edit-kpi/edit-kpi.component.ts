@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
@@ -26,7 +26,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 export class EditKpiComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-	kpiForm: FormGroup;
+	kpiForm: UntypedFormGroup;
 	employees: IEmployee[];
 	selectedKPI: IKPI;
 	type: string;
@@ -37,7 +37,7 @@ export class EditKpiComponent
 	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translate: TranslateService,
 		private dialogRef: NbDialogRef<EditKpiComponent>,
 		private employeeService: EmployeesService,

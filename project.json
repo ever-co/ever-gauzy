@@ -1,4 +1,6 @@
 {
+	"name": ".",
+	"$schema": "node_modules/nx/schemas/project-schema.json",
 	"projects": {
 		"gauzy-e2e": {
 			"tags": [],

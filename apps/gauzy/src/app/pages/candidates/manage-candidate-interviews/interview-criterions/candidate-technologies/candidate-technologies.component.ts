@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { ICandidateTechnologies, IOrganization } from '@gauzy/contracts';
@@ -21,11 +21,11 @@ export class CandidateTechnologiesComponent
 	technologiesList: ICandidateTechnologies[];
 	existedTechNames: string[];
 	technologyNames: string[] = [];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	editId = null;
 	organization: IOrganization;
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
@@ -50,7 +50,7 @@ export class CandidateTechnologiesComponent
 		(this.form.controls.technologies as FormArray).reset();
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			technologies: this.fb.array([])
 		});
 		const technologyForm = this.form.controls.technologies as FormArray;

@@ -1,6 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { IntegrationTenantController } from './integration-tenant.controller';
 import { IntegrationTenantService } from './integration-tenant.service';
@@ -15,12 +15,8 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/integration-tenant', module: IntegrationTenantModule }
-		]),
-		TypeOrmModule.forFeature([
-			IntegrationTenant
-		]),
+		RouterModule.register([{ path: '/integration-tenant', module: IntegrationTenantModule }]),
+		TypeOrmModule.forFeature([IntegrationTenant]),
 		TenantModule,
 		UserModule,
 		RoleModule,
@@ -29,15 +25,8 @@ import { TenantModule } from '../tenant/tenant.module';
 		forwardRef(() => IntegrationEntitySettingModule),
 		CqrsModule
 	],
-	exports: [
-		IntegrationTenantService
-	],
-	controllers: [
-		IntegrationTenantController
-	],
-	providers: [
-		IntegrationTenantService,
-		...CommandHandlers
-	]
+	exports: [IntegrationTenantService],
+	controllers: [IntegrationTenantController],
+	providers: [IntegrationTenantService, ...CommandHandlers]
 })
-export class IntegrationTenantModule { }
+export class IntegrationTenantModule {}

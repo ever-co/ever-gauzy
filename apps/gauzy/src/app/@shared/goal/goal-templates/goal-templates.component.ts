@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	KeyResultDeadlineEnum,
 	GoalLevelEnum,
@@ -14,15 +14,15 @@ import { NbDialogRef } from '@nebular/theme';
 	styleUrls: ['./goal-templates.component.scss']
 })
 export class GoalTemplatesComponent implements OnInit {
-	goalTemplateForm: FormGroup;
-	keyResultTemplateForm: FormGroup;
+	goalTemplateForm: UntypedFormGroup;
+	keyResultTemplateForm: UntypedFormGroup;
 	goalLevelEnum = GoalLevelEnum;
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
 	keyResultTypeEnum = KeyResultTypeEnum;
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private dialogRef: NbDialogRef<GoalTemplatesComponent>
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.goalTemplateForm = this.fb.group({
@@ -39,7 +39,7 @@ export class GoalTemplatesComponent implements OnInit {
 		});
 	}
 
-	/* 
+	/*
 	createGoalTemplate() {
 		const templateForm = {
 			...this.goalTemplateForm.value,
@@ -48,7 +48,7 @@ export class GoalTemplatesComponent implements OnInit {
 			}
 		};
 	}
-    */
+	*/
 	closeDialog() {
 		this.dialogRef.close();
 	}

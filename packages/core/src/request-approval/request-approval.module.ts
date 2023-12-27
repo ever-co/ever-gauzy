@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { RequestApproval } from './request-approval.entity';
 import { RequestApprovalController } from './request-approval.controller';
 import { RequestApprovalService } from './request-approval.service';
@@ -21,9 +21,7 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/request-approval', module: RequestApprovalModule },
-		]),
+		RouterModule.register([{ path: '/request-approval', module: RequestApprovalModule }]),
 		TypeOrmModule.forFeature([RequestApproval, Employee, OrganizationTeam]),
 		CqrsModule,
 		OrganizationTeamEmployeeModule,
@@ -33,15 +31,10 @@ import { TaskModule } from './../tasks/task.module';
 		OrganizationModule,
 		EquipmentSharingModule,
 		TimeOffRequestModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [RequestApprovalController],
-	providers: [
-		RequestApprovalService,
-		OrganizationTeamService,
-		EmployeeService,
-		...CommandHandlers,
-	],
-	exports: [RequestApprovalService],
+	providers: [RequestApprovalService, OrganizationTeamService, EmployeeService, ...CommandHandlers],
+	exports: [RequestApprovalService]
 })
-export class RequestApprovalModule { }
+export class RequestApprovalModule {}

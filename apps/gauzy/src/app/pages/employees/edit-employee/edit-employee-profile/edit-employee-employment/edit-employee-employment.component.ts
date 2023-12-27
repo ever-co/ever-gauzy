@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
 	IEmployee,
 	IOrganization,
@@ -33,7 +33,7 @@ import { ckEditorConfig } from "../../../../../@shared/ckeditor.config";
 	styleUrls: ['./edit-employee-employment.component.scss']
 })
 export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
-	
+
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 	employmentTypes: IOrganizationEmploymentType[] = [];
@@ -44,8 +44,8 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		...ckEditorConfig,
 		height: "200"
 	};
-	
-	static buildForm(formBuilder: FormBuilder): FormGroup {
+
+	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
 			organizationEmploymentTypes: [],
 			employeeLevel: [],
@@ -60,11 +60,11 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		});
 		return form;
 	}
-	public form: FormGroup = EditEmployeeEmploymentComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditEmployeeEmploymentComponent.buildForm(this.fb);
 
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore,
@@ -72,7 +72,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly organizationEmploymentTypeService: OrganizationEmploymentTypesService
-	) {}
+	) { }
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -103,7 +103,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	private async getDepartments() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.organizationDepartmentsService.getAll([], { 
+		const { items } = await this.organizationDepartmentsService.getAll([], {
 			tenantId,
 			organizationId
 		});
@@ -113,7 +113,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	private async getPositions() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.organizationPositionsService.getAll({ 
+		const { items } = await this.organizationPositionsService.getAll({
 			tenantId,
 			organizationId
 		});
@@ -124,7 +124,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		this.organizationEmploymentTypeService
-			.getAll([], { 
+			.getAll([], {
 				tenantId,
 				organizationId
 			})
@@ -137,7 +137,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	private async getEmployeeLevels() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { items } = await this.employeeLevelService.getAll([], { 
+		const { items } = await this.employeeLevelService.getAll([], {
 			tenantId,
 			organizationId
 		});
@@ -183,5 +183,5 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

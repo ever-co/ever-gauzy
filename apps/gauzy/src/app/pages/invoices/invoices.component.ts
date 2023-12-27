@@ -10,7 +10,7 @@ import {
 	AfterViewInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -126,8 +126,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	/*
 	 * Search Tab Form
 	 */
-	public searchForm: FormGroup = InvoicesComponent.searchBuildForm(this.fb);
-	static searchBuildForm(fb: FormBuilder): FormGroup {
+	public searchForm: UntypedFormGroup = InvoicesComponent.searchBuildForm(this.fb);
+	static searchBuildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			invoiceNumber: [],
 			organizationContact: [],
@@ -143,8 +143,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	/*
 	 * History Tab Form
 	 */
-	public historyForm: FormGroup = InvoicesComponent.historyBuildForm(this.fb);
-	static historyBuildForm(fb: FormBuilder): FormGroup {
+	public historyForm: UntypedFormGroup = InvoicesComponent.historyBuildForm(this.fb);
+	static historyBuildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			comment: ['', Validators.required],
 			title: ['', Validators.required],
@@ -158,7 +158,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	actionButtons: TemplateRef<any>;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,

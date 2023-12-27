@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
 	IKeyResult,
 	IKeyResultUpdate,
@@ -23,7 +23,7 @@ import { Store } from '../../../@core/services/store.service';
 export class KeyResultUpdateComponent
 	extends TranslationBaseComponent
 	implements OnInit {
-	keyResultUpdateForm: FormGroup;
+	keyResultUpdateForm: UntypedFormGroup;
 	keyResult: IKeyResult;
 	KPI: IKPI;
 	keyResultTypeEnum = KeyResultTypeEnum;
@@ -32,7 +32,7 @@ export class KeyResultUpdateComponent
 
 	constructor(
 		private dialogRef: NbDialogRef<KeyResultUpdateComponent>,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		readonly translateService: TranslateService,
 		private keyResultUpdateService: KeyResultUpdateService,
 		private goalSettingsService: GoalSettingsService,

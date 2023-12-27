@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingController } from './equipment-sharing.controller';
@@ -12,9 +12,7 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/equipment-sharing', module: EquipmentSharingModule }
-		]),
+		RouterModule.register([{ path: '/equipment-sharing', module: EquipmentSharingModule }]),
 		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		CqrsModule,
 		TenantModule,

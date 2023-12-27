@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -44,7 +44,7 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	implements OnInit, OnDestroy {
 
 	employee: IEmployee;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employmentTypes$: Observable<IOrganizationEmploymentType[]>;
 	employeeLevels: IEmployeeLevel[] = [];
 	payPeriods = Object.values(PayPeriodEnum);
@@ -58,7 +58,7 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	};
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<PublicPageEmployeeMutationComponent>,
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,

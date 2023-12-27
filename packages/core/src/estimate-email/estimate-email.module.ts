@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { EstimateEmailController } from './estimate-email.controller';
@@ -13,15 +13,13 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/estimate-email', module: EstimateEmailModule },
-		]),
+		RouterModule.register([{ path: '/estimate-email', module: EstimateEmailModule }]),
 		TypeOrmModule.forFeature([User, EstimateEmail, Invoice, Organization]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [EstimateEmailController],
 	providers: [EstimateEmailService, UserService],
-	exports: [EstimateEmailService, UserService],
+	exports: [EstimateEmailService, UserService]
 })
 export class EstimateEmailModule {}

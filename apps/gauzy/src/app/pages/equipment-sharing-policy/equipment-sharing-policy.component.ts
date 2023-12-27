@@ -10,7 +10,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject, debounceTime } from 'rxjs';
@@ -37,13 +37,12 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 })
 export class EquipmentSharingPolicyComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedEquipmentSharingPolicy: IEquipmentSharingPolicy;
 	smartTableSource: ServerDataSource;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	disableButton = true;
 	equipmentSharingPolicyData: IEquipmentSharingPolicy[];
 	viewComponentName: ComponentEnum;
@@ -350,5 +349,5 @@ export class EquipmentSharingPolicyComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

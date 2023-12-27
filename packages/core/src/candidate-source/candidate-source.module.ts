@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CandidateSourceService } from './candidate-source.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CandidateSource } from './candidate-source.entity';
@@ -9,9 +9,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/candidate-source', module: CandidateSourceModule }
-		]),
+		RouterModule.register([{ path: '/candidate-source', module: CandidateSourceModule }]),
 		TypeOrmModule.forFeature([CandidateSource]),
 		UserModule,
 		TenantModule
