@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IOrganization, ICandidate, IImageAsset } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
@@ -36,10 +36,10 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	/*
 	* Candidate Main Mutation Form
 	*/
-	public form: FormGroup = EditCandidateMainComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditCandidateMainComponent.buildForm(this.fb);
 	static buildForm(
-		fb: FormBuilder
-	): FormGroup {
+		fb: UntypedFormBuilder
+	): UntypedFormGroup {
 		return fb.group({
 			username: [],
 			email: [null, Validators.required],
@@ -53,7 +53,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly candidateStore: CandidateStore

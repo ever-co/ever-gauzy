@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom, tap } from 'rxjs';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ICandidate,
@@ -51,7 +51,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	selectedOrganization: IOrganization;
 	interviewers: ICandidateInterviewers[];
 	interviewersNumber: number;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	loading: boolean;
 	onlyPast = false;
 	onlyFuture = false;
@@ -495,7 +495,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	selectInterview(interview: any) {
 		this.disabled = !interview.isSelected;

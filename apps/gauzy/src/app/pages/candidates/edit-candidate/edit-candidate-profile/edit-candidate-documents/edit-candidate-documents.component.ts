@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
-import { FormBuilder, Validators, FormGroup, FormArray } from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup, FormArray } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
 import {
@@ -29,7 +29,7 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 })
 export class EditCandidateDocumentsComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
-		
+
 	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
 
@@ -37,7 +37,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	showAddCard: boolean;
 	documentList: ICandidateDocument[] = [];
 	candidateId: string;
-	formCv: FormGroup;
+	formCv: UntypedFormGroup;
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -49,8 +49,8 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	/*
 	* Candidate Document Mutation Form
 	*/
-	public form: FormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			documents: fb.array([])
 		});
@@ -65,7 +65,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly candidateDocumentsService: CandidateDocumentsService,
 		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService,
@@ -94,7 +94,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	ngAfterViewInit() {
 		this._applyTranslationOnSmartTable();
 	}
-	
+
 	setView() {
 		this.viewComponentName = ComponentEnum.DOCUMENTS;
 		this.store
@@ -141,7 +141,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 			organizationId,
 			tenantId
 		});
-		
+
 		this.documentList = items;
 		this.smartTableSource.load(items);
 		this.setPagination({
@@ -295,7 +295,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 			.subscribe();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	/*
 	 * Getter for candidate documents form controls array

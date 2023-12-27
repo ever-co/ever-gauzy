@@ -1,7 +1,7 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule } from '../../tenant/tenant.module';
 import { TaskRelatedIssueTypes } from './related-issue-type.entity';
 import { TaskRelatedIssueTypesController } from './related-issue-type.controller';
@@ -11,22 +11,18 @@ import { QueryHandlers } from './queries/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/task-related-issue-types',
-				module: TaskRelatedIssueTypesModule,
-			},
+				module: TaskRelatedIssueTypesModule
+			}
 		]),
 		TypeOrmModule.forFeature([TaskRelatedIssueTypes]),
 		TenantModule,
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [TaskRelatedIssueTypesController],
-	providers: [
-		TaskRelatedIssueTypesService,
-		...QueryHandlers,
-		...CommandHandlers,
-	],
-	exports: [TaskRelatedIssueTypesService],
+	providers: [TaskRelatedIssueTypesService, ...QueryHandlers, ...CommandHandlers],
+	exports: [TaskRelatedIssueTypesService]
 })
 export class TaskRelatedIssueTypesModule {}

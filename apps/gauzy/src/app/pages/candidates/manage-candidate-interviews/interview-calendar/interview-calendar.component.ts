@@ -1,6 +1,7 @@
 import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput, disableCursor } from '@fullcalendar/core';
+import { CalendarOptions, EventInput } from '@fullcalendar/core';
+import { disableCursor } from '@fullcalendar/core/internal';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -282,5 +283,5 @@ export class InterviewCalendarComponent
 
 		return isOverflowing;
 	}
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

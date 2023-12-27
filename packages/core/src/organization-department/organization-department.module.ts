@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentController } from './organization-department.controller';
@@ -11,7 +11,7 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/organization-department',
 				module: OrganizationDepartmentModule
@@ -24,9 +24,6 @@ import { UserModule } from './../user/user.module';
 	],
 	controllers: [OrganizationDepartmentController],
 	providers: [OrganizationDepartmentService, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		OrganizationDepartmentService
-	]
+	exports: [TypeOrmModule, OrganizationDepartmentService]
 })
 export class OrganizationDepartmentModule {}

@@ -7,8 +7,8 @@ import {
 	EventEmitter
 } from '@angular/core';
 import {
-	FormBuilder,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import {
@@ -77,8 +77,8 @@ export class EditProfileFormComponent
 	@Output()
 	userSubmitted = new EventEmitter<void>();
 
-	public form: FormGroup = EditProfileFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditProfileFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			firstName: [],
 			lastName: [],
@@ -107,7 +107,7 @@ export class EditProfileFormComponent
 	public excludes: RolesEnum[] = [];
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly authService: AuthService,
 		private readonly userService: UsersService,
 		private readonly store: Store,

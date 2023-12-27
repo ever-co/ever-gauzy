@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ICandidateEducation,
@@ -32,7 +32,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	showAddCard: boolean;
 	candidateId: string;
 	educationList: ICandidateEducation[] = [];
-	form: FormGroup;
+	form: UntypedFormGroup;
 	settingsSmartTable: object;
 	sourceSmartTable = new LocalDataSource();
 	viewComponentName: ComponentEnum;
@@ -53,7 +53,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly candidateStore: CandidateStore,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly candidateEducationsService: CandidateEducationsService
 	) {
@@ -76,7 +76,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 			});
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			educations: this.fb.array([])
 		});
 		const educationForm = this.educations;
@@ -303,5 +303,5 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

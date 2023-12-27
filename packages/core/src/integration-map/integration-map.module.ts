@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule } from 'tenant/tenant.module';
 import { UserModule } from 'user/user.module';
 import { TaskModule } from 'tasks/task.module';
@@ -13,31 +13,21 @@ import { IntegrationMap } from './integration-map.entity';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/integration-map',
 				module: IntegrationMapModule
 			}
 		]),
-		TypeOrmModule.forFeature([
-			IntegrationMap
-		]),
+		TypeOrmModule.forFeature([IntegrationMap]),
 		TenantModule,
 		UserModule,
 		TaskModule,
 		TagModule,
 		CqrsModule
 	],
-	controllers: [
-		IntegrationMapController
-	],
-	providers: [
-		IntegrationMapService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		IntegrationMapService
-	]
+	controllers: [IntegrationMapController],
+	providers: [IntegrationMapService, ...CommandHandlers],
+	exports: [TypeOrmModule, IntegrationMapService]
 })
-export class IntegrationMapModule { }
+export class IntegrationMapModule {}

@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import {
 	ControlContainer,
 	FormArray,
-	FormBuilder,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import { IPipelineStageUpdateInput } from '@gauzy/contracts';
@@ -31,9 +31,9 @@ export class StageFormComponent implements OnInit {
 	constructor(
 		private readonly controlContainer: ControlContainer,
 		private dialogService: NbDialogService,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.control = this.controlContainer.control as FormArray;
@@ -42,7 +42,7 @@ export class StageFormComponent implements OnInit {
 		});
 	}
 
-	reorder(event: CdkDragDrop<FormGroup>) {
+	reorder(event: CdkDragDrop<UntypedFormGroup>) {
 		const index = this.control.controls.indexOf(event.item.data);
 
 		this.control.removeAt(index);

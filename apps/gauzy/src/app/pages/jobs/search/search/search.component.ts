@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -80,8 +80,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	/*
 	 * Search Tab Form
 	 */
-	public form: FormGroup = SearchComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = SearchComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
 				title: [],
@@ -104,7 +104,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly http: HttpClient,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,

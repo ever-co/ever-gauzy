@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { FormBuilder, Validators, FormArray } from '@angular/forms';
+import { UntypedFormBuilder, Validators, FormArray } from '@angular/forms';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
@@ -54,7 +54,7 @@ export class CandidateInterviewFeedbackComponent
 	organization: IOrganization;
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidatesService: CandidatesService,
@@ -95,12 +95,12 @@ export class CandidateInterviewFeedbackComponent
 		const techSum =
 			technologies.length > 0
 				? technologies.reduce((sum, current) => sum + current, 0) /
-				  technologies.length
+				technologies.length
 				: 0;
 		const qualSum =
 			qualities.length > 0
 				? qualities.reduce((sum, current) => sum + current, 0) /
-				  qualities.length
+				qualities.length
 				: 0;
 		const isSomeEmpty =
 			(technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
@@ -177,7 +177,7 @@ export class CandidateInterviewFeedbackComponent
 						description: description,
 						rating:
 							this.technologiesList.length === 0 &&
-							this.personalQualitiesList.length === 0
+								this.personalQualitiesList.length === 0
 								? this.form.get('rating').value
 								: this.averageRating,
 						interviewer: this.feedbackInterviewer,

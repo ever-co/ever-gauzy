@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { KeyResult } from './keyresult.entity';
@@ -9,9 +9,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/key-results', module: KeyResultModule }
-		]),
+		RouterModule.register([{ path: '/key-results', module: KeyResultModule }]),
 		TypeOrmModule.forFeature([KeyResult]),
 		CqrsModule,
 		TenantModule

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
 import { CandidateTechnologiesController } from './candidate-technologies.controller';
@@ -10,13 +10,13 @@ import { CandidateTechnologies } from './../core/entities/internal';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/candidate-technologies',
 				module: CandidateTechnologiesModule
 			}
 		]),
-		TypeOrmModule.forFeature([ CandidateTechnologies ]),
+		TypeOrmModule.forFeature([CandidateTechnologies]),
 		TenantModule,
 		CqrsModule
 	],

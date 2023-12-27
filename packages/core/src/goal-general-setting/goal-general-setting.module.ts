@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GoalGeneralSettingController } from './goal-general-setting.controller';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
@@ -8,9 +8,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/goal-general-setting', module: GoalGeneralSettingModule }
-		]),
+		RouterModule.register([{ path: '/goal-general-setting', module: GoalGeneralSettingModule }]),
 		TypeOrmModule.forFeature([GoalGeneralSetting]),
 		TenantModule
 	],

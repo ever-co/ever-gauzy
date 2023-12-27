@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, Input, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { LatLng } from 'leaflet';
 import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
@@ -27,7 +27,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 
 	@Input() organization: IOrganization;
 
-	readonly form: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly form: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
@@ -37,7 +37,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly route: ActivatedRoute,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly organizationService: OrganizationsService,
 		private readonly toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,
@@ -63,7 +63,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 				),
 				tap(
 					(organization: IOrganization) =>
-					this.organizationEditStore.selectedOrganization = organization
+						this.organizationEditStore.selectedOrganization = organization
 				),
 				tap(() => this._setLocationFormValue()),
 				untilDestroyed(this)
@@ -204,7 +204,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any): void {}
+	onGeometrySend(geometry: any): void { }
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

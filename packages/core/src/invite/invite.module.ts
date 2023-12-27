@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { AuthModule } from '../auth/auth.module';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
@@ -24,12 +24,8 @@ import { EmailSendModule } from './../email-send/email-send.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/invite', module: InviteModule }
-		]),
-		TypeOrmModule.forFeature([
-			Invite
-		]),
+		RouterModule.register([{ path: '/invite', module: InviteModule }]),
+		TypeOrmModule.forFeature([Invite]),
 		CqrsModule,
 		EmailSendModule,
 		TenantModule,
@@ -47,14 +43,7 @@ import { EmailSendModule } from './../email-send/email-send.module';
 		OrganizationTeamEmployeeModule
 	],
 	controllers: [InviteController],
-	providers: [
-		InviteService,
-		...CommandHandlers,
-		...QueryHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		InviteService
-	]
+	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
+	exports: [TypeOrmModule, InviteService]
 })
-export class InviteModule { }
+export class InviteModule {}

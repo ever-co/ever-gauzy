@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import {
-	FormGroup,
-	FormBuilder,
+	UntypedFormGroup,
+	UntypedFormBuilder,
 	Validators,
 	AbstractControl,
 	ValidationErrors
@@ -38,7 +38,7 @@ import {
 export class ProductFormComponent extends TranslationBaseComponent
 	implements OnInit {
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	inventoryItem: IProductTranslatable;
 	hoverState: boolean;
 	selectedLanguage: string;
@@ -55,7 +55,7 @@ export class ProductFormComponent extends TranslationBaseComponent
 
 	constructor(
 		public readonly translationService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly productService: ProductService,
 		private readonly route: ActivatedRoute,

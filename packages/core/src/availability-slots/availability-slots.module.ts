@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { AvailabilitySlot } from './availability-slots.entity';
 import { AvailabilitySlotsService } from './availability-slots.service';
@@ -13,23 +13,16 @@ import { TenantModule } from './../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/availability-slots', module: AvailabilitySlotsModule }
-		]),
+		RouterModule.register([{ path: '/availability-slots', module: AvailabilitySlotsModule }]),
 		UserModule,
-		TypeOrmModule.forFeature([
-			AvailabilitySlot
-		]),
+		TypeOrmModule.forFeature([AvailabilitySlot]),
 		CqrsModule,
 		TenantModule,
 		EmployeeModule,
 		OrganizationModule
 	],
 	controllers: [AvailabilitySlotsController],
-	providers: [
-		AvailabilitySlotsService,
-		...CommandHandlers
-	],
+	providers: [AvailabilitySlotsService, ...CommandHandlers],
 	exports: [AvailabilitySlotsService]
 })
 export class AvailabilitySlotsModule {}

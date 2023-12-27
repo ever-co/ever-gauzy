@@ -6,7 +6,7 @@ import {
 	OnDestroy,
 	OnInit
 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import {
 	ICurrency,
@@ -47,8 +47,8 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	/*
 	* Organization Mutation Form
 	*/
-	public form: FormGroup = EditOrganizationMainComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EditOrganizationMainComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			tags: [null],
 			currency: [null, Validators.required],
@@ -74,7 +74,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly organizationService: OrganizationsService,
 		private readonly toastrService: ToastrService,
 		private readonly organizationEditStore: OrganizationEditStore,

@@ -6,8 +6,8 @@ import {
 	Output,
 	EventEmitter
 } from '@angular/core';
+import { NgModel, UntypedFormGroup } from '@angular/forms';
 import { SkillsService } from '../../../@core/services/skills.service';
-import { NgModel, FormGroup } from '@angular/forms';
 
 @Component({
 	selector: 'ngx-skills-input',
@@ -22,7 +22,7 @@ export class SkillsInputComponent implements OnInit {
 	skills: any;
 
 	@Input('form')
-	form: FormGroup;
+	form: UntypedFormGroup;
 
 	@Input('selectedSkills')
 	selectedSkills: any;
@@ -33,7 +33,7 @@ export class SkillsInputComponent implements OnInit {
 	@Output()
 	selectedSkillsEvent: EventEmitter<any> = new EventEmitter<any>();
 
-	constructor(private readonly skillsService: SkillsService) {}
+	constructor(private readonly skillsService: SkillsService) { }
 
 	async onChange() {
 		const skills = [];

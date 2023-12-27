@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { FormGroup, FormBuilder, FormArray, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
@@ -30,7 +30,7 @@ export class EditCandidateExperienceFormComponent
 	experienceList: ICandidateExperience[] = [];
 	private _ngDestroy$ = new Subject<void>();
 	candidateId: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedExperience: ICandidateExperience;
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
@@ -42,7 +42,7 @@ export class EditCandidateExperienceFormComponent
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateStore: CandidateStore,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store,
 		private candidateExperienceService: CandidateExperienceService
 	) {
@@ -65,7 +65,7 @@ export class EditCandidateExperienceFormComponent
 			});
 	}
 	private async _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			experiences: this.fb.array([])
 		});
 		const experienceForm = this.experiences;

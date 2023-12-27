@@ -7,8 +7,8 @@ import {
 	Output
 } from '@angular/core';
 import {
-	FormBuilder,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import {
@@ -49,14 +49,14 @@ export class AcceptClientInviteFormComponent
 	organizationCreateInput: IOrganizationCreateInput;
 	addedOrganization: boolean;
 
-	public readonly form: FormGroup = AcceptClientInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public readonly form: UntypedFormGroup = AcceptClientInviteFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			fullName: ['', Validators.required],
 			password: ['', Validators.compose([
-					Validators.required,
-					Validators.minLength(4)
-				])
+				Validators.required,
+				Validators.minLength(4)
+			])
 			],
 			repeatPassword: ['', Validators.required],
 			agreeTerms: [false, Validators.requiredTrue]
@@ -71,7 +71,7 @@ export class AcceptClientInviteFormComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly dialogService: NbDialogService,
 		public readonly translateService: TranslateService
 	) {
@@ -83,10 +83,10 @@ export class AcceptClientInviteFormComponent
 	async addClientOrganization() {
 		this.organizationCreateInput = await firstValueFrom(
 			this.dialogService
-			.open(OrganizationsMutationComponent, {
-				closeOnBackdropClick: false
-			})
-			.onClose
+				.open(OrganizationsMutationComponent, {
+					closeOnBackdropClick: false
+				})
+				.onClose
 		);
 		this.addedOrganization = !!this.organizationCreateInput;
 	}
@@ -116,5 +116,5 @@ export class AcceptClientInviteFormComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
@@ -50,24 +50,24 @@ export class MerchantFormComponent extends TranslationBaseComponent
 	/**
 	 * Location Mutation Form
 	 */
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/**
 	 * Merchant Mutation Form
 	 */
-	public form: FormGroup = MerchantFormComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = MerchantFormComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			logo: [],
 			tags: [],
-			name: [null, Validators.required ],
-			code: [null, Validators.required ],
-			currency: [null, Validators.required ],
+			name: [null, Validators.required],
+			code: [null, Validators.required],
+			currency: [null, Validators.required],
 			email: [null, [
 				Validators.required,
 				Validators.email
 			]],
-			phone: [null, Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$') ],
+			phone: [null, Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')],
 			fax: [],
 			fiscalInformation: [],
 			website: [],
@@ -97,7 +97,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly warehouseService: WarehouseService,
 		private readonly dialogService: NbDialogService,
@@ -239,7 +239,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 		const { coordinates } = locationFormValue['loc'];
 		delete locationFormValue['loc'];
 
-		const [ latitude, longitude ] = coordinates;
+		const [latitude, longitude] = coordinates;
 
 		const request = {
 			...this.form.getRawValue(),
@@ -271,14 +271,14 @@ export class MerchantFormComponent extends TranslationBaseComponent
 					this.cancel();
 				});
 		} else {
-			await this.merchantService.update({...request, id: this.merchant.id})
+			await this.merchantService.update({ ...request, id: this.merchant.id })
 				.then(() => {
 					this.toastrService.success('INVENTORY_PAGE.MERCHANT_UPDATED_SUCCESSFULLY', {
 						name: request.name
 					});
 				})
 				.catch(() => {
-					this.toastrService.danger( 'INVENTORY_PAGE.COULD_NOT_UPDATE_MERCHANT', null, {
+					this.toastrService.danger('INVENTORY_PAGE.COULD_NOT_UPDATE_MERCHANT', null, {
 						name: request.name
 					});
 				})
@@ -319,5 +319,5 @@ export class MerchantFormComponent extends TranslationBaseComponent
 		});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

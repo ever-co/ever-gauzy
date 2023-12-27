@@ -5,7 +5,7 @@ import {
 	OnInit,
 	ViewChild
 } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
@@ -34,8 +34,8 @@ export class AccountingTemplatesComponent
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
-	readonly form: FormGroup = AccountingTemplatesComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = AccountingTemplatesComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			templateType: [AccountingTemplateTypeEnum.INVOICE],
 			languageCode: [LanguagesEnum.ENGLISH],
@@ -46,12 +46,12 @@ export class AccountingTemplatesComponent
 	@ViewChild('templateEditor') templateEditor: AceEditorComponent;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly accountingTemplateService: AccountingTemplateService,
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
 		private readonly themeService: NbThemeService
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.subject$
@@ -178,5 +178,5 @@ export class AccountingTemplatesComponent
 		});
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

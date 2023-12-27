@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule } from '../tenant/tenant.module';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
@@ -9,10 +9,8 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/candidate-skills', module: CandidateSkillModule }
-		]),
-		TypeOrmModule.forFeature([ CandidateSkill ]),
+		RouterModule.register([{ path: '/candidate-skills', module: CandidateSkillModule }]),
+		TypeOrmModule.forFeature([CandidateSkill]),
 		TenantModule,
 		UserModule
 	],

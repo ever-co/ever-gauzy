@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GoalKpiTemplateController } from './goal-kpi-template.controller';
 import { GoalKpiTemplateService } from './goal-kpi-template.service';
@@ -8,9 +8,7 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/goal-kpi-template', module: GoalKpiTemplateModule }
-		]),
+		RouterModule.register([{ path: '/goal-kpi-template', module: GoalKpiTemplateModule }]),
 		TypeOrmModule.forFeature([GoalKPITemplate]),
 		TenantModule
 	],

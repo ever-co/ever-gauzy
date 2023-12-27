@@ -39,13 +39,13 @@
 @import 'themes';
 
 // framework component themes (styles tied to theme variables)
-@import '~@nebular/theme/styles/globals';
-@import '~@nebular/auth/styles/globals';
+@import '@nebular/theme/styles/globals';
+@import '@nebular/auth/styles/globals';
 
-@import '~bootstrap/scss/functions';
-@import '~bootstrap/scss/variables';
-@import '~bootstrap/scss/mixins';
-@import '~bootstrap/scss/grid';
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/grid';
 
 @import './material/angular-material';
 
@@ -60,7 +60,6 @@
 @import './site-menu.scss';
 
 // install ng-select default theme
-@import '~@ng-select/ng-select/themes/default.theme.css';
 @import './includes/fullcalendar';
 @import './includes/tabset';
 @import './includes/ng-select';
@@ -69,9 +68,9 @@
 @import './includes/scroll';
 
 // install swiper.js
-@import '~swiper/css';
-@import '~swiper/css/pagination';
-@import '~swiper/css/navigation';
+@import 'swiper/css';
+@import 'swiper/css/pagination';
+@import 'swiper/css/navigation';
 
 // install the framework and custom global styles
 @include nb-install() {

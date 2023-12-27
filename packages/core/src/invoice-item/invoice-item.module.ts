@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemController } from './invoice-item.controller';
 import { InvoiceItemService } from './invoice-item.service';
@@ -13,16 +13,14 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/invoice-item', module: InvoiceItemModule },
-		]),
+		RouterModule.register([{ path: '/invoice-item', module: InvoiceItemModule }]),
 		TypeOrmModule.forFeature([InvoiceItem, User]),
 		CqrsModule,
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [InvoiceItemController],
 	providers: [InvoiceItemService, UserService, ...CommandHandlers],
-	exports: [InvoiceItemService],
+	exports: [InvoiceItemService]
 })
 export class InvoiceItemModule {}

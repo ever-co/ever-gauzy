@@ -1,7 +1,7 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule, UserModule } from '@gauzy/core';
 import { HelpCenterAuthorService } from './help-center-author.service';
 import { HelpCenterAuthorController } from './help-center-author.controller';
@@ -10,9 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/help-center-author', module: HelpCenterAuthorModule }
-		]),
+		RouterModule.register([{ path: '/help-center-author', module: HelpCenterAuthorModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([HelpCenterAuthor])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),

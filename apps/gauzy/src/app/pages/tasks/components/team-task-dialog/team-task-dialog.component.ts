@@ -7,7 +7,7 @@ import {
 	ITask,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -44,8 +44,7 @@ const initialTaskValue = {
 })
 export class TeamTaskDialogComponent
 	extends TranslationBaseComponent
-	implements OnInit
-{
+	implements OnInit {
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
@@ -59,11 +58,11 @@ export class TeamTaskDialogComponent
 	public ckConfig: CKEditor4.Config = richTextCKEditorConfig;
 	@Input() task: Partial<ITask> = {};
 
-	public form: FormGroup = TeamTaskDialogComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = TeamTaskDialogComponent.buildForm(this.fb);
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<TeamTaskDialogComponent>,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly _organizationsStore: Store,
 		private readonly organizationProjectsService: OrganizationProjectsService,
@@ -75,7 +74,7 @@ export class TeamTaskDialogComponent
 		super(translateService);
 	}
 
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			number: [{ value: '', disabled: true }],
 			title: [null, Validators.required],

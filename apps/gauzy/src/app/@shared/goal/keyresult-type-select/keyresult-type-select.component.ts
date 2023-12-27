@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { FormGroup, Validators } from '@angular/forms';
+import { UntypedFormGroup, Validators } from '@angular/forms';
 import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { EditKpiComponent } from '../../../pages/goal-settings/edit-kpi/edit-kpi.component';
@@ -12,7 +12,7 @@ import { GoalSettingsService } from '../../../@core/services/goal-settings.servi
 	styleUrls: ['./keyresult-type-select.component.sass']
 })
 export class KeyresultTypeSelectComponent {
-	@Input() parentFormGroup: FormGroup;
+	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() settings: IGoalGeneralSetting;
 	@Input() orgId: string;
 	@Input() KPIs: Array<IKPI>;
@@ -24,7 +24,7 @@ export class KeyresultTypeSelectComponent {
 	constructor(
 		private dialogService: NbDialogService,
 		private goalSettingsService: GoalSettingsService
-	) {}
+	) { }
 
 	taskTypeValidators() {
 		if (

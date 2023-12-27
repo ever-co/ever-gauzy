@@ -5,7 +5,7 @@ import {
 } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
-import { FormBuilder } from '@angular/forms';
+import { UntypedFormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -28,11 +28,11 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 	checkedQual = [];
 	organization: IOrganization;
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		protected readonly store: Store
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.organization = this.store.selectedOrganization;
@@ -116,8 +116,8 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 					? this.checkedTech.push(1)
 					: this.checkedQual.push(1)
 				: isTech
-				? this.checkedTech.push(0)
-				: this.checkedQual.push(0);
+					? this.checkedTech.push(0)
+					: this.checkedQual.push(0);
 		});
 	}
 	ngOnDestroy() {

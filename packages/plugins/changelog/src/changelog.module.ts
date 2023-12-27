@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule } from '@gauzy/core';
 import { Changelog } from './changelog.entity';
 import { ChangelogController } from './changelog.controller';
@@ -10,18 +10,13 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/changelog', module: ChangelogModule }
-		]),
+		RouterModule.register([{ path: '/changelog', module: ChangelogModule }]),
 		TypeOrmModule.forFeature([Changelog]),
 		forwardRef(() => TenantModule),
 		CqrsModule
 	],
 	controllers: [ChangelogController],
-	providers: [
-		ChangelogService, 
-		...CommandHandlers
-	],
+	providers: [ChangelogService, ...CommandHandlers],
 	exports: [ChangelogService]
 })
 export class ChangelogModule {}

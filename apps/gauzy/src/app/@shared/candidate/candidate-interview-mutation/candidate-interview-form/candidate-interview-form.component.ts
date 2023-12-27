@@ -8,7 +8,7 @@ import {
 	EventEmitter,
 	AfterViewInit
 } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -30,7 +30,7 @@ import { firstValueFrom } from "rxjs";
 	templateUrl: 'candidate-interview-form.component.html',
 	styleUrls: ['candidate-interview-form.component.scss']
 })
-export class CandidateInterviewFormComponent 
+export class CandidateInterviewFormComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
 	@Input() editData: ICandidateInterview;
@@ -60,12 +60,12 @@ export class CandidateInterviewFormComponent
 	organization: IOrganization;
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly dialogService: NbDialogService,
 		private readonly employeeService: EmployeesService,
 		private readonly cdRef: ChangeDetectorRef,
 		private readonly store: Store
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.store.selectedOrganization$
@@ -78,7 +78,7 @@ export class CandidateInterviewFormComponent
 			)
 			.subscribe();
 		this.loadFormData();
-	
+
 		//if editing
 		if (this.editData) {
 			this.employeeIds = this.editData.interviewers

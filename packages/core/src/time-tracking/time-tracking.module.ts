@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { ActivityModule } from './activity/activity.module';
 import { ScreenshotModule } from './screenshot/screenshot.module';
 import { StatisticModule } from './statistic';
@@ -11,9 +11,10 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 @Module({
 	controllers: [],
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
-				path: '/timesheet', module: TimeTrackingModule,
+				path: '/timesheet',
+				module: TimeTrackingModule,
 				children: [
 					{ path: '/timer', module: TimerModule },
 					{ path: '/activity', module: ActivityModule },
@@ -36,4 +37,4 @@ import { TimeSlotModule } from './time-slot/time-slot.module';
 	providers: [],
 	exports: []
 })
-export class TimeTrackingModule { }
+export class TimeTrackingModule {}

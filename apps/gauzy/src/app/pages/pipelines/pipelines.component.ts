@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -70,8 +70,8 @@ export class PipelinesComponent
 	/*
 	 * Search Tab Form
 	 */
-	public searchForm: FormGroup = PipelinesComponent.searchBuildForm(this.fb);
-	static searchBuildForm(fb: FormBuilder): FormGroup {
+	public searchForm: UntypedFormGroup = PipelinesComponent.searchBuildForm(this.fb);
+	static searchBuildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
 				name: [],
@@ -85,7 +85,7 @@ export class PipelinesComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly pipelinesService: PipelinesService,
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,

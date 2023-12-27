@@ -13,8 +13,8 @@ import {
 } from '@angular/core';
 import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import {
-	FormGroup,
-	FormBuilder,
+	UntypedFormGroup,
+	UntypedFormBuilder,
 	Validators,
 	AbstractControl
 } from '@angular/forms';
@@ -47,7 +47,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 export class ManageAppointmentComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy, AfterViewInit {
-	form: FormGroup;
+	form: UntypedFormGroup;
 	employees: IEmployee[];
 	@Input() employee: IEmployee;
 	@Input() employeeAppointment: IEmployeeAppointment;
@@ -80,7 +80,7 @@ export class ManageAppointmentComponent
 	constructor(
 		private route: ActivatedRoute,
 		private router: Router,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private store: Store,
 		private dialogService: NbDialogService,
 		private employeeService: EmployeesService,
@@ -205,9 +205,9 @@ export class ManageAppointmentComponent
 					tenantId,
 					organizationId
 				})
-				.pipe(
-					untilDestroyed(this)
-				)
+					.pipe(
+						untilDestroyed(this)
+					)
 			)
 		).items;
 	}
