@@ -95,29 +95,33 @@ export class CloudinaryProvider extends Provider<CloudinaryProvider> {
 			...this.config
 		};
 
-		// Check if there is a current request
-		const request = RequestContext.currentRequest();
+		try {
+			const request = RequestContext.currentRequest();
 
-		if (request) {
-			// Retrieve tenant settings from the request, defaulting to an empty object
-			const settings = request['tenantSettings'] || {};
+			if (request) {
+				const settings = request['tenantSettings'];
 
-			// Check if there are non-empty tenant settings
-			if (isNotEmpty(settings)) {
-				// Update the configuration with trimmed and valid values from tenant settings
-				this.config = {
-					...this.config,
-					cloud_name: trimAndGetValue(settings.cloudinary_cloud_name),
-					api_key: trimAndGetValue(settings.cloudinary_api_key),
-					api_secret: trimAndGetValue(settings.cloudinary_api_secret),
-					secure: settings.cloudinary_api_secure,
-					...(isNotEmpty(settings.cloudinary_delivery_url)
-						? {
-								baseUrl: new URL(settings.cloudinary_delivery_url).toString()
-						  }
-						: {})
-				};
+				if (settings) {
+					if (trimAndGetValue(settings.cloudinary_cloud_name))
+						this.config.cloud_name = trimAndGetValue(settings.cloudinary_cloud_name);
+
+					if (trimAndGetValue(settings.cloudinary_api_key))
+						this.config.api_key = trimAndGetValue(settings.cloudinary_api_key);
+
+					if (trimAndGetValue(settings.cloudinary_api_secret))
+						this.config.api_secret = trimAndGetValue(settings.cloudinary_api_secret);
+
+					if (isNotEmpty(settings.cloudinary_api_secure)) {
+						if (settings.cloudinary_api_secure == 'true') this.config.secure = true;
+						else if (settings.cloudinary_api_secure == 'false') this.config.secure = false;
+					}
+
+					if (isNotEmpty(settings.cloudinary_delivery_url))
+						this.config.baseUrl = new URL(settings.cloudinary_delivery_url).toString();
+				}
 			}
+		} catch (error) {
+			console.error('Error while setting Wasabi configuration. Default configuration will be used', error);
 		}
 	}
 
