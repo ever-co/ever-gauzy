@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { IOrganization, ITask } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
@@ -26,14 +26,14 @@ import { filter, tap } from 'rxjs/operators';
 export class InvoiceTasksSelectorComponent
 	extends DefaultEditor
 	implements OnInit, OnDestroy {
-		
+
 	tasks: ITask[] = [];
 	task: ITask;
 	tasks$: Observable<ITask[]> = this.tasksStore.tasks$;
 	organization: IOrganization;
 
 	constructor(
-		private readonly tasksStore: TasksStoreService, 
+		private readonly tasksStore: TasksStoreService,
 		private readonly store: Store
 	) {
 		super();
@@ -69,5 +69,5 @@ export class InvoiceTasksSelectorComponent
 		this.cell.newValue = $event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

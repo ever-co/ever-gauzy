@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })

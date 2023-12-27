@@ -18,7 +18,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -72,8 +72,8 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 	expenses$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	expensesTable: Ng2SmartTableComponent;
-	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
+	expensesTable: Angular2SmartTableComponent;
+	@ViewChild('expensesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.expensesTable = content;
 			this.onChangedSource();
@@ -584,7 +584,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.expensesTable && this.expensesTable.grid) {
-			this.expensesTable.grid.dataSet['willSelect'] = 'false';
+			this.expensesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.expensesTable.grid.dataSet.deselectAll();
 		}
 	}

@@ -9,7 +9,7 @@ import {
 	ISelectedPayment,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -48,8 +48,8 @@ export class InvoicePaymentsComponent
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
-	paymentsTable: Ng2SmartTableComponent;
-	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
+	paymentsTable: Angular2SmartTableComponent;
+	@ViewChild('paymentsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.paymentsTable = content;
 			this.onChangedSource();
@@ -185,7 +185,7 @@ export class InvoicePaymentsComponent
 			if (result.invoice) {
 				const { invoice, amount, currency } = result;
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
-	
+
 				await this.createInvoiceHistory(
 					action,
 					invoice
@@ -294,7 +294,7 @@ export class InvoicePaymentsComponent
 			actions: false,
 			columns: {
 				paymentDate: {
-					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'),				
+					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent
 				},
@@ -517,13 +517,13 @@ export class InvoicePaymentsComponent
 	 */
 	deselectAll() {
 		if (this.paymentsTable && this.paymentsTable.grid) {
-			this.paymentsTable.grid.dataSet['willSelect'] = 'false';
+			this.paymentsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.paymentsTable.grid.dataSet.deselectAll();
 		}
 	}
 
 	/*
-	* Create Payment Invoice History Event 
+	* Create Payment Invoice History Event
 	*/
 	async createInvoiceHistory(
 		action: string,

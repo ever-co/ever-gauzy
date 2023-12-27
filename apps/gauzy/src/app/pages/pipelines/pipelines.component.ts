@@ -8,7 +8,7 @@ import {
 	IOrganization,
 	PipelineTabsEnum
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
@@ -59,8 +59,8 @@ export class PipelinesComponent
 	nbTab$: Subject<string> = new BehaviorSubject(PipelineTabsEnum.ACTIONS);
 	private _refresh$: Subject<any> = new Subject();
 
-	pipelineTable: Ng2SmartTableComponent;
-	@ViewChild('pipelineTable') set content(content: Ng2SmartTableComponent) {
+	pipelineTable: Angular2SmartTableComponent;
+	@ViewChild('pipelineTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.pipelineTable = content;
 			this.onChangedSource();
@@ -458,7 +458,7 @@ export class PipelinesComponent
 	 */
 	deselectAll() {
 		if (this.pipelineTable && this.pipelineTable.grid) {
-			this.pipelineTable.grid.dataSet['willSelect'] = 'false';
+			this.pipelineTable.grid.dataSet['willSelect'] = 'indexed';
 			this.pipelineTable.grid.dataSet.deselectAll();
 		}
 	}

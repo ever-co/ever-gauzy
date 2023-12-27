@@ -14,7 +14,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
@@ -49,7 +49,7 @@ const COMPONENTS = [
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,
@@ -71,4 +71,4 @@ const COMPONENTS = [
 	exports: [...COMPONENTS],
 	providers: []
 })
-export class InviteTableModule {}
+export class InviteTableModule { }

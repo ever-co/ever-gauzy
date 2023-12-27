@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -56,8 +56,8 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	merchants$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	merchantsTable: Ng2SmartTableComponent;
-	@ViewChild('merchantsTable') set content(content: Ng2SmartTableComponent) {
+	merchantsTable: Angular2SmartTableComponent;
+	@ViewChild('merchantsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.merchantsTable = content;
 			this.onChangedSource();
@@ -378,7 +378,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.merchantsTable && this.merchantsTable.grid) {
-			this.merchantsTable.grid.dataSet['willSelect'] = 'false';
+			this.merchantsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.merchantsTable.grid.dataSet.deselectAll();
 		}
 	}

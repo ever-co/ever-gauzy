@@ -5,7 +5,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -65,8 +65,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	private _refresh$: Subject<boolean> = new Subject();
 
 	/** */
-	projectsTable: Ng2SmartTableComponent;
-	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
+	projectsTable: Angular2SmartTableComponent;
+	@ViewChild('projectsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.projectsTable = content;
 			this.onChangedSource();
@@ -538,7 +538,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	 */
 	deselectAll(): void {
 		if (this.projectsTable && this.projectsTable.grid) {
-			this.projectsTable.grid.dataSet['willSelect'] = 'false';
+			this.projectsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.projectsTable.grid.dataSet.deselectAll();
 		}
 	}

@@ -367,7 +367,7 @@
 		</form>
 		<div *ngIf="shouldLoadTable">
 			<div class="table-scroll-container custom-table">
-				<ng2-smart-table
+				<angular2-smart-table
 					class="table"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
@@ -377,7 +377,7 @@
 					(deleteConfirm)="onDeleteConfirm($event)"
 					(userRowSelect)="selectItem($event)"
 					#invoiceItemTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div
 				class="pagination-container"

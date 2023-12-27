@@ -16,7 +16,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { SharedModule } from '../../@shared/shared.module';
 import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
@@ -36,7 +36,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		TagsColorInputModule,
 		NbActionsModule,
 		CardGridModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule,
 		TableComponentsModule,
 		TagsColorInputModule,
@@ -52,4 +52,4 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 	declarations: [EmployeeLevelComponent],
 	providers: []
 })
-export class EmployeeLevelModule {}
+export class EmployeeLevelModule { }

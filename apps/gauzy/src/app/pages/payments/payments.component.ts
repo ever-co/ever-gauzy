@@ -1,7 +1,7 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -73,8 +73,8 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 	payments$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	paymentsTable: Ng2SmartTableComponent;
-	@ViewChild('paymentsTable') set content(content: Ng2SmartTableComponent) {
+	paymentsTable: Angular2SmartTableComponent;
+	@ViewChild('paymentsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.paymentsTable = content;
 			this.onChangedSource();
@@ -542,7 +542,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.paymentsTable && this.paymentsTable.grid) {
-			this.paymentsTable.grid.dataSet['willSelect'] = 'false';
+			this.paymentsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.paymentsTable.grid.dataSet.deselectAll();
 		}
 	}

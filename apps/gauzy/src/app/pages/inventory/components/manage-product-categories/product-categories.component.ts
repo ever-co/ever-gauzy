@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -35,8 +35,7 @@ import { ServerDataSource } from './../../../../@core/utils/smart-table/server.d
 })
 export class ProductCategoriesComponent
 	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit
-{
+	implements AfterViewInit, OnInit {
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -52,9 +51,9 @@ export class ProductCategoriesComponent
 	categories$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	productCategoriesTable: Ng2SmartTableComponent;
+	productCategoriesTable: Angular2SmartTableComponent;
 	@ViewChild('productCategoriesTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.productCategoriesTable = content;
@@ -241,8 +240,8 @@ export class ProductCategoriesComponent
 		try {
 			const editProductCategory = this.selectedProductCategory
 				? await this.productCategoryService.getById(
-						this.selectedProductCategory.id
-				  )
+					this.selectedProductCategory.id
+				)
 				: null;
 
 			const dialog = this.dialogService.open(
@@ -390,10 +389,10 @@ export class ProductCategoriesComponent
 	 */
 	deselectAll() {
 		if (this.productCategoriesTable && this.productCategoriesTable.grid) {
-			this.productCategoriesTable.grid.dataSet['willSelect'] = 'false';
+			this.productCategoriesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.productCategoriesTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

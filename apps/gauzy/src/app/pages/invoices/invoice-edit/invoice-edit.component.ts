@@ -13,7 +13,7 @@ import {
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -86,8 +86,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		return this._isEstimate;
 	}
 
-	invoiceItemTable: Ng2SmartTableComponent;
-	@ViewChild('invoiceItemTable') set content(content: Ng2SmartTableComponent) {
+	invoiceItemTable: Angular2SmartTableComponent;
+	@ViewChild('invoiceItemTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.invoiceItemTable = content;
 			this.onChangedSource();
@@ -949,7 +949,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			.pipe(
 				tap(() => {
 					if (this.invoiceItemTable && this.invoiceItemTable.grid) {
-						this.invoiceItemTable.grid.dataSet['willSelect'] = 'false';
+						this.invoiceItemTable.grid.dataSet['willSelect'] = 'indexed';
 						this.invoiceItemTable.grid.dataSet.deselectAll();
 					}
 				}),

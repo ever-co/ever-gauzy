@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -64,8 +64,8 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 	warehouses$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	warehousesTable: Ng2SmartTableComponent;
-	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
+	warehousesTable: Angular2SmartTableComponent;
+	@ViewChild('warehousesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.warehousesTable = content;
 			this.onChangedSource();
@@ -268,7 +268,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		const { id } = this.selectedWarehouse;
-		this.router.navigate([ '/pages/organization/inventory/warehouses/edit', id]);
+		this.router.navigate(['/pages/organization/inventory/warehouses/edit', id]);
 	}
 
 	async onDelete(selectedItem?: IWarehouse) {
@@ -395,10 +395,10 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.warehousesTable && this.warehousesTable.grid) {
-			this.warehousesTable.grid.dataSet['willSelect'] = 'false';
+			this.warehousesTable.grid.dataSet['willSelect'] = 'indexed';
 			this.warehousesTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

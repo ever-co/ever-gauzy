@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { IEmployee } from '@gauzy/contracts';
 
 @Component({
@@ -14,17 +14,17 @@ export class EmployeesMergedTeamsComponent implements OnInit, ViewCell {
 
 	employees: IEmployee[] = [];
 
-	constructor() {}
+	constructor() { }
 
 	ngOnInit(): void {
 		if (this.value) {
 			const buffers = this.value[1];
 			if (buffers) {
-				for(let buffer of buffers){
-          for (let member of buffer.members) {
-            this.employees.push(member.employee);
-          }
-        }
+				for (let buffer of buffers) {
+					for (let member of buffer.members) {
+						this.employees.push(member.employee);
+					}
+				}
 			}
 		}
 	}

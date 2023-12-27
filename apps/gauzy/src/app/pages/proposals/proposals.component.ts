@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -74,8 +74,8 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 	proposals$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	proposalsTable: Ng2SmartTableComponent;
-	@ViewChild('proposalsTable') set content(content: Ng2SmartTableComponent) {
+	proposalsTable: Angular2SmartTableComponent;
+	@ViewChild('proposalsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.proposalsTable = content;
 			this.onChangedSource();
@@ -593,7 +593,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.proposalsTable && this.proposalsTable.grid) {
-			this.proposalsTable.grid.dataSet['willSelect'] = 'false';
+			this.proposalsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.proposalsTable.grid.dataSet.deselectAll();
 		}
 	}

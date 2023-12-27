@@ -10,7 +10,7 @@ import {
 	IOrganization,
 	EquipmentSharingStatusEnum
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -60,9 +60,9 @@ export class EquipmentSharingComponent
 	public selectedEmployeeId: string;
 	private _refresh$: Subject<any> = new Subject();
 
-	equipmentSharingTable: Ng2SmartTableComponent;
+	equipmentSharingTable: Angular2SmartTableComponent;
 	@ViewChild('equipmentSharingTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.equipmentSharingTable = content;
@@ -488,7 +488,7 @@ export class EquipmentSharingComponent
 	 */
 	deselectAll() {
 		if (this.equipmentSharingTable && this.equipmentSharingTable.grid) {
-			this.equipmentSharingTable.grid.dataSet['willSelect'] = 'false';
+			this.equipmentSharingTable.grid.dataSet['willSelect'] = 'indexed';
 			this.equipmentSharingTable.grid.dataSet.deselectAll();
 		}
 	}

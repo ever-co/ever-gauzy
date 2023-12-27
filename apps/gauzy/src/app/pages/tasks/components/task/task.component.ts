@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import {
 	ComponentLayoutStyleEnum,
@@ -82,7 +82,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	selectedEmployee: ISelectedEmployee;
 	selectedEmployeeId: ISelectedEmployee['id'];
 	selectedProject: IOrganizationProject;
-	tasksTable: Ng2SmartTableComponent;
+	tasksTable: Angular2SmartTableComponent;
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -103,7 +103,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		this.setView();
 	}
 
-	@ViewChild('tasksTable') set content(content: Ng2SmartTableComponent) {
+	@ViewChild('tasksTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.tasksTable = content;
 			this.onChangedSource();
@@ -760,7 +760,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	 */
 	deselectAll() {
 		if (this.tasksTable && this.tasksTable.grid) {
-			this.tasksTable.grid.dataSet['willSelect'] = 'false';
+			this.tasksTable.grid.dataSet['willSelect'] = 'indexed';
 			this.tasksTable.grid.dataSet.deselectAll();
 		}
 	}

@@ -1,8 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import {
 	Router,
-	RouterEvent,
-	NavigationEnd,
 	ActivatedRoute
 } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +11,7 @@ import {
 	IApprovalsData
 } from '@gauzy/contracts';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -49,8 +47,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 })
 export class ApprovalsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
@@ -66,9 +63,9 @@ export class ApprovalsComponent
 	organization: IOrganization;
 	_refresh$: Subject<any> = new Subject();
 
-	requestApprovalTable: Ng2SmartTableComponent;
+	requestApprovalTable: Angular2SmartTableComponent;
 	@ViewChild('requestApprovalTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.requestApprovalTable = content;
@@ -124,13 +121,6 @@ export class ApprovalsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this.route.queryParamMap
 			.pipe(
 				filter(
@@ -359,8 +349,8 @@ export class ApprovalsComponent
 		const badgeClass = ['approved'].includes(value.toLowerCase())
 			? 'success'
 			: ['requested'].includes(value.toLowerCase())
-			? 'warning'
-			: 'danger';
+				? 'warning'
+				: 'danger';
 		return {
 			text: value,
 			value: row.status,
@@ -506,10 +496,10 @@ export class ApprovalsComponent
 	 */
 	deselectAll() {
 		if (this.requestApprovalTable && this.requestApprovalTable.grid) {
-			this.requestApprovalTable.grid.dataSet['willSelect'] = 'false';
+			this.requestApprovalTable.grid.dataSet['willSelect'] = 'indexed';
 			this.requestApprovalTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

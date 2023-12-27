@@ -11,7 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
@@ -76,8 +76,8 @@ export class TimeOffComponent
 
 	private _refresh$: Subject<any> = new Subject();
 
-	timeOffTable: Ng2SmartTableComponent;
-	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
+	timeOffTable: Angular2SmartTableComponent;
+	@ViewChild('timeOffTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.timeOffTable = content;
 			this.onChangedSource();
@@ -704,7 +704,7 @@ export class TimeOffComponent
 	 */
 	deselectAll() {
 		if (this.timeOffTable && this.timeOffTable.grid) {
-			this.timeOffTable.grid.dataSet['willSelect'] = 'false';
+			this.timeOffTable.grid.dataSet['willSelect'] = 'indexed';
 			this.timeOffTable.grid.dataSet.deselectAll();
 		}
 	}

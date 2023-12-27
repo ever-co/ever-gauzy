@@ -1,4 +1,4 @@
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { ExpenseTypesEnum, IExpense, IOrganization } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
@@ -69,5 +69,5 @@ export class InvoiceExpensesSelectorComponent
 		this.cell.newValue = $event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

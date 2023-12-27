@@ -7,7 +7,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
@@ -62,8 +62,8 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	products$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	inventoryTable: Ng2SmartTableComponent;
-	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
+	inventoryTable: Angular2SmartTableComponent;
+	@ViewChild('inventoryTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.inventoryTable = content;
 			this.onChangedSource();
@@ -412,10 +412,10 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.inventoryTable && this.inventoryTable.grid) {
-			this.inventoryTable.grid.dataSet['willSelect'] = 'false';
+			this.inventoryTable.grid.dataSet['willSelect'] = 'indexed';
 			this.inventoryTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

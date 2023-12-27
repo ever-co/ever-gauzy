@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { JobPostStatusEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';

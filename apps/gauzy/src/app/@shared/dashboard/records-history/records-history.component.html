@@ -12,12 +12,12 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="table-scroll-container">
-			<ng2-smart-table
+			<angular2-smart-table
 				[settings]="smartTableSettings"
 				[source]="smartTableSource"
 				#recordHistoryTable
 			>
-			</ng2-smart-table>
+			</angular2-smart-table>
 		</div>
 		<div
 			*ngIf="pagination.totalItems > minItemPerPage"

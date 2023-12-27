@@ -12,7 +12,7 @@ import {
 	ITimeOffPolicy
 } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -38,8 +38,7 @@ import { EmployeeWithLinksComponent } from '../../../@shared';
 })
 export class TimeOffSettingsComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
@@ -67,9 +66,9 @@ export class TimeOffSettingsComponent
 	public organization: IOrganization;
 	timeOffPolicies$: Subject<any> = this.subject$;
 
-	timeOffPolicySettingsTable: Ng2SmartTableComponent;
+	timeOffPolicySettingsTable: Angular2SmartTableComponent;
 	@ViewChild('timeOffPolicySettingsTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.timeOffPolicySettingsTable = content;
@@ -99,14 +98,14 @@ export class TimeOffSettingsComponent
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		storeOrganization$.pipe(
-				debounceTime(100),
-				filter((organization) => !!organization),
-				distinctUntilChange(),
-				tap((organization) => (this.organization = organization)),
-				tap(() => this._refresh$.next(true)),
-				tap(() => this.timeOffPolicies$.next(true)),
-				untilDestroyed(this)
-			)
+			debounceTime(100),
+			filter((organization) => !!organization),
+			distinctUntilChange(),
+			tap((organization) => (this.organization = organization)),
+			tap(() => this._refresh$.next(true)),
+			tap(() => this.timeOffPolicies$.next(true)),
+			untilDestroyed(this)
+		)
 			.subscribe();
 		this._refresh$
 			.pipe(
@@ -339,7 +338,7 @@ export class TimeOffSettingsComponent
 					...this.filters.where
 				},
 				finalize: () => {
-					if	(this._isGridLayout) 
+					if (this._isGridLayout)
 						this.timeOffPolicies.push(...this.smartTableSource.getData());
 					this.setPagination({
 						...this.getPagination(),
@@ -374,7 +373,7 @@ export class TimeOffSettingsComponent
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this._isGridLayout) this._loadGridLayoutData();
-			
+
 		} catch (error) {
 			this.toastrService.danger(
 				this.getTranslation('', {
@@ -429,11 +428,10 @@ export class TimeOffSettingsComponent
 			this.timeOffPolicySettingsTable &&
 			this.timeOffPolicySettingsTable.grid
 		) {
-			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] =
-				'false';
+			this.timeOffPolicySettingsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.timeOffPolicySettingsTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

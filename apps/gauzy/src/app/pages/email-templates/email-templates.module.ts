@@ -11,7 +11,7 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
@@ -37,7 +37,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		NbInputModule,
 		NbSelectModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
 		TranslateModule,
@@ -49,4 +49,4 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 	providers: [EmailTemplateService],
 	declarations: [EmailTemplatesComponent]
 })
-export class EmailTemplatesModule {}
+export class EmailTemplatesModule { }

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 
 @Component({
     template: `<div>
@@ -8,11 +8,11 @@ import { ViewCell } from 'ng2-smart-table';
 	</div> `
 })
 export class SelectedRowComponent implements ViewCell {
-	value: any;
+    value: any;
     rowData: any;
 
     onValueChange(e) {
-        this.rowData.selected = e.target.checked;  
-    } 
-     
+        this.rowData.selected = e.target.checked;
+    }
+
 }

@@ -18,7 +18,7 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { SharedModule } from '../../@shared/shared.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
@@ -45,7 +45,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		CardGridModule,
 		NbDialogModule,
 		SharedModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
@@ -57,4 +57,4 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 	declarations: [VendorsComponent],
 	providers: [OrganizationVendorsService]
 })
-export class VendorsModule {}
+export class VendorsModule { }

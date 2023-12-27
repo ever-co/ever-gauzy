@@ -154,7 +154,7 @@
 		"pg-query-stream": "^4.5.3",
 		"prettier": "^2.8.4",
 		"redis": "^4.6.12",
-		"reflect-metadata": "^0.2.1",
+		"reflect-metadata": "^0.1.13",
 		"request": "^2.88.2",
 		"rimraf": "^3.0.2",
 		"rxjs": "^7.4.0",

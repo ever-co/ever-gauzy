@@ -574,13 +574,13 @@
 		</nb-tabset>
 		<ng-template #tableLayout>
 			<div class="table-scroll-container">
-				<ng2-smart-table
+				<angular2-smart-table
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
 					(userRowSelect)="selectInvoice($event)"
 					style="cursor: pointer"
 					#invoicesTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"

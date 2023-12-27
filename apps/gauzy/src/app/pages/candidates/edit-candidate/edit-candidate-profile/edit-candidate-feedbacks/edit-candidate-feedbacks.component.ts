@@ -21,7 +21,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 import { ComponentEnum } from './../../../../../@core/constants';
 import {
@@ -80,8 +80,8 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
 
-	feedbackTable: Ng2SmartTableComponent;
-	@ViewChild('feedbackTable') set content(content: Ng2SmartTableComponent) {
+	feedbackTable: Angular2SmartTableComponent;
+	@ViewChild('feedbackTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.feedbackTable = content;
 			this.onChangedSource();
@@ -595,7 +595,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	 */
 	deselectAll() {
 		if (this.feedbackTable && this.feedbackTable.grid) {
-			this.feedbackTable.grid.dataSet['willSelect'] = 'false';
+			this.feedbackTable.grid.dataSet['willSelect'] = 'indexed';
 			this.feedbackTable.grid.dataSet.deselectAll();
 		}
 	}

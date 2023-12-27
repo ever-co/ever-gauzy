@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { NotesWithTagsComponent } from '../../../@shared';
 
 @Component({
@@ -9,8 +9,7 @@ import { NotesWithTagsComponent } from '../../../@shared';
 })
 export class TagsColorComponent
 	extends NotesWithTagsComponent
-	implements ViewCell
-{
+	implements ViewCell {
 	@Input()
 	value: string | number;
 	rowData: any;

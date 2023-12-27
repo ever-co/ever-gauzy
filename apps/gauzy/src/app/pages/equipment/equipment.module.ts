@@ -11,7 +11,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { EquipmentComponent } from './equipment.component';
 import { EquipmentService } from '../../@core/services/equipment.service';
@@ -33,7 +33,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
 		TableComponentsModule,
@@ -47,4 +47,4 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 	providers: [EquipmentService],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })
-export class EquipmentModule {}
+export class EquipmentModule { }

@@ -244,13 +244,13 @@
 
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
-		<ng2-smart-table
+		<angular2-smart-table
 			style="cursor: pointer"
 			(userRowSelect)="selectPipeline($event)"
 			[settings]="smartTableSettings"
 			[source]="smartTableSource"
 			#pipelineTable
-		></ng2-smart-table>
+		></angular2-smart-table>
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -267,7 +267,7 @@
 </ng-template>
 <ng-template #gridLayout>
 	<div class="grid">
-		<ga-card-grid 
+		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			[settings]="smartTableSettings"
 			[source]="pipelines"

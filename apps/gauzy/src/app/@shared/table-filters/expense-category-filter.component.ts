@@ -1,5 +1,5 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationVendor } from '@gauzy/contracts';
 
 @Component({
@@ -15,12 +15,12 @@ import { IOrganizationVendor } from '@gauzy/contracts';
     `,
 })
 export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnChanges {
-    
+
     constructor() {
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    ngOnChanges(changes: SimpleChanges) { }
 
     onChange(event) {
         this.column.filterFunction(event);
@@ -28,5 +28,5 @@ export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnC
 
     selectedVendorEvent(currentTagSelection: IOrganizationVendor) {
         this.column.filterFunction(currentTagSelection);
-	}
+    }
 }

@@ -22,7 +22,7 @@ import {
 	NbFormFieldModule,
 	NbListModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -99,7 +99,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NbSpinnerModule,
 		NbIconModule,
 		NbButtonModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		CardGridModule,
 		FormsModule,
 		NbBadgeModule,
@@ -132,8 +132,8 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,
-    	NbAccordionModule,
-    	GauzyButtonActionModule
+		NbAccordionModule,
+		GauzyButtonActionModule
 	],
 	providers: [
 		InvoicesService,
@@ -148,8 +148,8 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		TasksStoreService,
 		InvoiceEstimateHistoryService,
 		TranslatableService,
-    	CurrencyPipe,
-    	CurrencyPositionPipe
+		CurrencyPipe,
+		CurrencyPositionPipe
 	],
 	declarations: [
 		InvoicesComponent,
@@ -183,4 +183,4 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 	],
 	exports: [InvoiceViewInnerComponent]
 })
-export class InvoicesModule {}
+export class InvoicesModule { }

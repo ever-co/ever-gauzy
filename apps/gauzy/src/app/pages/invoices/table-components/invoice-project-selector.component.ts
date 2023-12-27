@@ -3,7 +3,7 @@ import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { filter, tap } from 'rxjs/operators';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -64,5 +64,5 @@ export class InvoiceProjectsSelectorComponent
 		this.cell.newValue = $event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

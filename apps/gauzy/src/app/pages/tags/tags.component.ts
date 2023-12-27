@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -54,8 +54,8 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	private _refresh$: Subject<any> = new Subject();
 	private _isFiltered: boolean = false;
 
-	tagsTable: Ng2SmartTableComponent;
-	@ViewChild('tagsTable') set content(content: Ng2SmartTableComponent) {
+	tagsTable: Angular2SmartTableComponent;
+	@ViewChild('tagsTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.tagsTable = content;
 			this.onChangedSource();
@@ -436,7 +436,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	 */
 	private deselectAll() {
 		if (this.tagsTable && this.tagsTable.grid) {
-			this.tagsTable.grid.dataSet['willSelect'] = 'false';
+			this.tagsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.tagsTable.grid.dataSet.deselectAll();
 		}
 	}

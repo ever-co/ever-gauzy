@@ -22,7 +22,7 @@ import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-a
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,
@@ -96,8 +96,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		);
 	}
 
-	table: Ng2SmartTableComponent;
-	@ViewChild('table') set content(content: Ng2SmartTableComponent) {
+	table: Angular2SmartTableComponent;
+	@ViewChild('table') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.table = content;
 		}
@@ -665,7 +665,6 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 						]
 						: [])
 				],
-				false,
 				false
 			);
 			/**
@@ -675,7 +674,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					{
 						field: 'status',
-						direction: 'ASC'
+						direction: 'asc'
 					}
 				],
 				false

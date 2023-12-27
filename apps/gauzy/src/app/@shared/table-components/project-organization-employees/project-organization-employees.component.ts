@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { ViewCell } from 'angular2-smart-table';
 import { IEmployee } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 
@@ -16,7 +16,7 @@ export class ProjectOrganizationEmployeesComponent implements OnInit, ViewCell {
 	employeesFirstHalf: IEmployee[] = [];
 	employeesLastHalf: IEmployee[] = [];
 
-	constructor(private readonly router: Router) {}
+	constructor(private readonly router: Router) { }
 
 	ngOnInit(): void {
 		if (this.rowData.members.length > 0) {

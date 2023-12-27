@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { isNotEmpty } from '@gauzy/common-angular';
@@ -59,7 +59,7 @@ export class InvoiceEmployeesSelectorComponent
 	/**
 	 * Get working employees of the selected month
 	 */
-	 private async _getWorkingEmployees(): Promise<void> {
+	private async _getWorkingEmployees(): Promise<void> {
 		if (!this.organization) {
 			return;
 		}
@@ -91,5 +91,5 @@ export class InvoiceEmployeesSelectorComponent
 		this.cell.newValue = $event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

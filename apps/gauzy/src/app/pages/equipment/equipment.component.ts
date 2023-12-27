@@ -6,7 +6,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -37,8 +37,7 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 })
 export class EquipmentComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean = true;
 	disableButton: boolean = true;
@@ -53,8 +52,8 @@ export class EquipmentComponent
 	equipments$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	equipmentTable: Ng2SmartTableComponent;
-	@ViewChild('equipmentTable') set content(content: Ng2SmartTableComponent) {
+	equipmentTable: Angular2SmartTableComponent;
+	@ViewChild('equipmentTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.equipmentTable = content;
 			this.onChangedSource();
@@ -131,7 +130,7 @@ export class EquipmentComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
@@ -387,7 +386,7 @@ export class EquipmentComponent
 	 */
 	deselectAll() {
 		if (this.equipmentTable && this.equipmentTable.grid) {
-			this.equipmentTable.grid.dataSet['willSelect'] = 'false';
+			this.equipmentTable.grid.dataSet['willSelect'] = 'indexed';
 			this.equipmentTable.grid.dataSet.deselectAll();
 		}
 	}

@@ -20,7 +20,7 @@ import {
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TransactionsComponent } from './components/transactions/transactions.component';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
@@ -40,7 +40,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 	],
 	imports: [
 		CommonModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		UpworkRoutingModule,
 		NbCardModule,
 		NbButtonModule,
@@ -63,4 +63,4 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule
 	]
 })
-export class UpworkModule {}
+export class UpworkModule { }

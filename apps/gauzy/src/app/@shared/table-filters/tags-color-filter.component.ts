@@ -1,5 +1,5 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import { ITag } from '@gauzy/contracts';
 
 @Component({
@@ -14,12 +14,12 @@ import { ITag } from '@gauzy/contracts';
     `,
 })
 export class TagsColorFilterComponent extends DefaultFilter implements OnChanges {
-    
+
     constructor() {
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    ngOnChanges(changes: SimpleChanges) { }
 
     onChange(event) {
         this.column.filterFunction(event);
@@ -27,5 +27,5 @@ export class TagsColorFilterComponent extends DefaultFilter implements OnChanges
 
     selectedTagsEvent(currentTagSelection: ITag[]) {
         this.column.filterFunction(currentTagSelection);
-	}
+    }
 }

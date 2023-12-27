@@ -30,7 +30,7 @@ import {
 	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
@@ -154,7 +154,7 @@ const COMPONENTS = [
 		NbInputModule,
 		NbSelectModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,

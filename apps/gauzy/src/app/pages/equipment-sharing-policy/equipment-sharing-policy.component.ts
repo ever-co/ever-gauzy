@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Router, NavigationEnd, RouterEvent } from '@angular/router';
+import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -9,7 +9,7 @@ import {
 	IEquipmentSharingPolicy,
 	IOrganization
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
@@ -52,9 +52,9 @@ export class EquipmentSharingPolicyComponent
 	equipmentSharingPolicy$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	equipmentSharingPolicyTable: Ng2SmartTableComponent;
+	equipmentSharingPolicyTable: Angular2SmartTableComponent;
 	@ViewChild('equipmentSharingPolicyTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.equipmentSharingPolicyTable = content;
@@ -108,13 +108,6 @@ export class EquipmentSharingPolicyComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this._refresh$
 			.pipe(
 				filter(
@@ -343,8 +336,7 @@ export class EquipmentSharingPolicyComponent
 			this.equipmentSharingPolicyTable &&
 			this.equipmentSharingPolicyTable.grid
 		) {
-			this.equipmentSharingPolicyTable.grid.dataSet['willSelect'] =
-				'false';
+			this.equipmentSharingPolicyTable.grid.dataSet['willSelect'] = 'first';
 			this.equipmentSharingPolicyTable.grid.dataSet.deselectAll();
 		}
 	}

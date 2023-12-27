@@ -58,15 +58,15 @@
 				</nb-select>
 			</div>
 		</div>
-		<ng2-smart-table
+		<angular2-smart-table
 			(userRowSelect)="selectPipelineDeals($event)"
 			[settings]="smartTableSettings"
 			[source]="deals"
 			*ngIf="dataLayoutStyle === 'TABLE'"
 			style="cursor: pointer"
 			#pipelineDealsTable
-		></ng2-smart-table>
-		<ga-card-grid 
+		></angular2-smart-table>
+		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="smartTableSettings"

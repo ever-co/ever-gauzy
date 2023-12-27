@@ -1,5 +1,5 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import {DefaultFilter} from "ng2-smart-table";
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import {
 	faCheck,
 	faBan,

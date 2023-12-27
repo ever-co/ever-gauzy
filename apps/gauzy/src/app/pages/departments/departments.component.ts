@@ -20,7 +20,7 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
@@ -72,9 +72,9 @@ export class DepartmentsComponent
 		department: null,
 		state: false
 	};
-	departmentsTable: Ng2SmartTableComponent;
+	departmentsTable: Angular2SmartTableComponent;
 	@ViewChild('departmentsTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.departmentsTable = content;
@@ -427,7 +427,7 @@ export class DepartmentsComponent
 	 */
 	private _deselectAll() {
 		if (this.departmentsTable && this.departmentsTable.grid) {
-			this.departmentsTable.grid.dataSet['willSelect'] = 'false';
+			this.departmentsTable.grid.dataSet['willSelect'] = 'indexed';
 			this.departmentsTable.grid.dataSet.deselectAll();
 		}
 	}

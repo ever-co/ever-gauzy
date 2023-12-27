@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import {
 	debounceTime,
@@ -78,8 +78,8 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	organization: IOrganization;
 	private _refresh$: Subject<any> = new Subject();
 
-	usersTable: Ng2SmartTableComponent;
-	@ViewChild('usersTable') set content(content: Ng2SmartTableComponent) {
+	usersTable: Angular2SmartTableComponent;
+	@ViewChild('usersTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.usersTable = content;
 			this.onChangedSource();
@@ -522,7 +522,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	 */
 	deselectAll() {
 		if (this.usersTable && this.usersTable.grid) {
-			this.usersTable.grid.dataSet['willSelect'] = 'false';
+			this.usersTable.grid.dataSet['willSelect'] = 'indexed';
 			this.usersTable.grid.dataSet.deselectAll();
 		}
 	}
@@ -535,10 +535,10 @@ export class UsersComponent extends PaginationFilterBaseComponent
 				endWork: endWork ? new Date(endWork) : '',
 				workStatus: endWork
 					? new Date(endWork).getDate() +
-					  ' ' +
-					  monthNames[new Date(endWork).getMonth()] +
-					  ' ' +
-					  new Date(endWork).getFullYear()
+					' ' +
+					monthNames[new Date(endWork).getMonth()] +
+					' ' +
+					new Date(endWork).getFullYear()
 					: '',
 				startedWorkOn,
 				isTrackingEnabled
@@ -548,5 +548,5 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

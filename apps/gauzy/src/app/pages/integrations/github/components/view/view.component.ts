@@ -7,7 +7,7 @@ import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operator
 import { TranslateService } from '@ngx-translate/core';
 import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import {
 	GithubRepositoryStatusEnum,
 	HttpStatus,
@@ -77,12 +77,12 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	public selectedProject$: Subject<IOrganizationProject> = new Subject(); // Subject for selected organization projects
 	public subject$: BehaviorSubject<boolean> = new BehaviorSubject(true);
 	/**
-	 * Sets up a property 'issuesTable' to reference an instance of 'Ng2SmartTableComponent'
+	 * Sets up a property 'issuesTable' to reference an instance of 'Angular2SmartTableComponent'
 	 * when the child component with the template reference variable 'issuesTable' is rendered.
 	 * This allows interaction with the child component from the parent component.
 	 */
-	private _issuesTable: Ng2SmartTableComponent;
-	@ViewChild('issuesTable') set content(content: Ng2SmartTableComponent) {
+	private _issuesTable: Angular2SmartTableComponent;
+	@ViewChild('issuesTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this._issuesTable = content;
 		}

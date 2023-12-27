@@ -3,7 +3,7 @@ import { IOrganization, IProductTranslatable } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
 import { ProductService } from '../../../@core/services/product.service';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatableService } from '../../../@core/services/translatable.service';
@@ -78,5 +78,5 @@ export class InvoiceProductsSelectorComponent
 		this.cell.newValue = $event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

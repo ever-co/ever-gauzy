@@ -28,13 +28,13 @@
 				[ngIfElse]="gridLayout"
 			>
 				<div class="table-scroll-container">
-					<ng2-smart-table
+					<angular2-smart-table
 						[settings]="settingsSmartTable"
 						(userRowSelect)="selectStore($event)"
 						[source]="smartTableSource"
 						style="cursor: pointer"
 						#merchantsTable
-					></ng2-smart-table>
+					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">
 					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
