@@ -150,7 +150,6 @@
 		"normalize.css": "^8.0.1",
 		"pug": "^3.0.2",
 		"randomcolor": "^0.6.2",
-		"reflect-metadata": "^0.1.13",
 		"roboto-fontface": "^0.10.0",
 		"rxjs": "^7.4.0",
 		"screenfull": "^6.0.0",
