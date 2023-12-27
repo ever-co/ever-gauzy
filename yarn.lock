@@ -7349,7 +7349,7 @@
     "@nx/angular" "16.7.0"
     tslib "^2.3.0"
 
-"@nrwl/angular@^15.0.0", "@nrwl/angular@^15.8.0":
+"@nrwl/angular@^15.0.0":
   version "15.9.7"
   resolved "https://registry.yarnpkg.com/@nrwl/angular/-/angular-15.9.7.tgz#baf7a81c5a1642d3f6be047b34ec396931bde6e9"
   integrity sha512-FOvAfvYBzDTZiiylLfllM7Yki2OSx5QH+Ytt4YwUvEIiG6xbkfe/azTDdY77fFiQfakddL0LhtYzCF0dCNCKjQ==
@@ -7376,7 +7376,7 @@
     webpack "^5.75.0"
     webpack-merge "5.7.3"
 
-"@nrwl/cli@15.9.3", "@nrwl/cli@^15.8.0":
+"@nrwl/cli@15.9.3", "@nrwl/cli@^15.9.3":
   version "15.9.3"
   resolved "https://registry.yarnpkg.com/@nrwl/cli/-/cli-15.9.3.tgz#5946ee84953fd9e67708fd39049f0f5f328ede14"
   integrity sha512-qiAKHkov3iBx6hroPTitUrkRSUZFQqVgNJiF9gXRFC6pNJe9RS4rlmcIaoUFOboi9CnH5jwblNJVcz8YSVYOvA==
@@ -7390,7 +7390,7 @@
   dependencies:
     nx "15.9.7"
 
-"@nrwl/cypress@15.9.7", "@nrwl/cypress@^15.8.0":
+"@nrwl/cypress@15.9.7":
   version "15.9.7"
   resolved "https://registry.yarnpkg.com/@nrwl/cypress/-/cypress-15.9.7.tgz#195cd85d17dd28a9bbf0b7d3ff5fc9b2cb16bfd3"
   integrity sha512-FBTCV6BGA5MYJrLJ1bk+2pxu2IKK0kileL6VlFIJSoWCOSqzF9qFmEzZEJxH1ftGDhrL6GpSi9Ve9aBJDn6EuA==
@@ -7436,7 +7436,7 @@
   dependencies:
     "@nx/eslint-plugin" "16.7.0"
 
-"@nrwl/jest@15.9.7", "@nrwl/jest@^15.8.0":
+"@nrwl/jest@15.9.7":
   version "15.9.7"
   resolved "https://registry.yarnpkg.com/@nrwl/jest/-/jest-15.9.7.tgz#d130ad0de5044f897b9709de5acb28cdba2d3d05"
   integrity sha512-Uqv6DKwRoXdc77OYPkQRAj4c5v2o8anXjoJpgcQDaZi0KsDduw2s8qnrp7Mcq7M5xBi+HENRedsYrIRCORoruQ==
@@ -29206,7 +29206,7 @@ nwsapi@^2.2.0, nwsapi@^2.2.2, nwsapi@^2.2.7:
   resolved "https://registry.yarnpkg.com/nwsapi/-/nwsapi-2.2.7.tgz#738e0707d3128cb750dddcfe90e4610482df0f30"
   integrity sha512-ub5E4+FBPKwAZx0UwIQOjYWGHTEq5sPqHQNRN8Z9e4A7u3Tj1weLJsL59yH9vmvqEtBHaOmT6cYQKIZOxp35FQ==
 
-nx-cloud@16.5.2:
+nx-cloud@16.5.2, nx-cloud@^16.5.2:
   version "16.5.2"
   resolved "https://registry.yarnpkg.com/nx-cloud/-/nx-cloud-16.5.2.tgz#edb7bfc65d0e0cae52947607aa0b44ea163bd4f3"
   integrity sha512-1t1Ii9gojl8r/8hFGaZ/ZyYR0Cb0hzvXLCsaFuvg+EJEFdvua3P4cfNya/0bdRrm+7Eb/ITUOskbvYq4TSlyGg==
