@@ -54,6 +54,7 @@
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
+		"angular2-smart-table": "^3.2.0",
 		"ckeditor4-angular": "^5.0.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
@@ -62,7 +63,6 @@
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.40",
-		"ng2-smart-table": "^1.7.2",
 		"ngx-electron": "^2.2.0",
 		"rxjs": "^7.4.0",
 		"underscore": "^1.13.3"
