@@ -52,7 +52,7 @@
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
-		"ckeditor4-angular": "4.0.1",
+		"ckeditor4-angular": "^5.0.0",
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"hash-it": "^6.0.0",
