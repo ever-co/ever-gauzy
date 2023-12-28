@@ -430,7 +430,9 @@
 		"accesibility",
 		"tsconfigs",
 		"rangepicker",
-		"echart"
+		"echart",
+		"childout",
+		"parentin"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
