@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { IOrganization, IProject } from '@gauzy/contracts';
 
 @Component({
@@ -7,7 +6,7 @@ import { IOrganization, IProject } from '@gauzy/contracts';
 	templateUrl: './project.component.html',
 	styleUrls: ['./project.component.scss']
 })
-export class ProjectComponent implements OnInit, ViewCell {
+export class ProjectComponent implements OnInit {
 	@Input()
 	value: any;
 	@Input()

@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { Router } from '@angular/router';
 import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
@@ -10,7 +9,7 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: './employee-with-links.component.html',
 	styleUrls: ['./employee-with-links.component.scss']
 })
-export class EmployeeWithLinksComponent implements ViewCell, OnInit {
+export class EmployeeWithLinksComponent implements OnInit {
 	@Input()
 	rowData: any;
 

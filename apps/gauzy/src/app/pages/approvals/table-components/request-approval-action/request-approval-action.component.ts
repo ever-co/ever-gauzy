@@ -1,5 +1,4 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import {
 	RequestApprovalStatusTypesEnum,
 	ComponentLayoutStyleEnum,
@@ -11,7 +10,7 @@ import { Store } from 'apps/gauzy/src/app/@core/services';
 	selector: 'ngx-request-approval-action',
 	templateUrl: './request-approval-action.component.html'
 })
-export class RequestApprovalActionComponent implements ViewCell, OnInit {
+export class RequestApprovalActionComponent implements OnInit {
 	@Input()
 	rowData: any;
 	isApproval = true;

@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
+
 
 @Component({
 	selector: 'employee-time-tracking-status',
 	templateUrl: './employee-time-tracking-status.component.html',
 	styleUrls: ['./../employee-work-status/employee-work-status.component.scss']
 })
-export class EmployeeTimeTrackingStatusComponent implements ViewCell {
+export class EmployeeTimeTrackingStatusComponent {
 	@Input()
 	rowData: any;
 

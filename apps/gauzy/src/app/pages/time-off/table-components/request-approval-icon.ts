@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	templateUrl: './request-approval-icon.html',
 	styleUrls: ['./request-approval-icon.scss']
 })
-export class RequestApprovalIcon implements ViewCell {
+export class RequestApprovalIcon {
 	@Input()
 	rowData: any;
 

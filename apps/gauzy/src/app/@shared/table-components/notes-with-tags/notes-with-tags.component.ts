@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Color } from '@kurkle/color';
 import { NbThemeService } from '@nebular/theme';
@@ -13,9 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: './notes-with-tags.component.html',
 	styleUrls: ['./notes-with-tags.component.scss']
 })
-export class NotesWithTagsComponent
-	extends TranslationBaseComponent
-	implements ViewCell, OnInit {
+export class NotesWithTagsComponent extends TranslationBaseComponent implements OnInit {
 	@Input()
 	rowData: any;
 

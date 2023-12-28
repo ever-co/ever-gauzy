@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	templateUrl: './candidate-status.component.html',
 	styleUrls: ['./candidate-status.component.scss']
 })
-export class CandidateStatusComponent implements ViewCell {
+export class CandidateStatusComponent {
 	@Input()
 	rowData: any;
 

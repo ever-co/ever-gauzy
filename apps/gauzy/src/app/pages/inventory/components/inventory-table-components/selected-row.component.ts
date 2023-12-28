@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
     template: `<div>
@@ -7,7 +6,7 @@ import { ViewCell } from 'angular2-smart-table';
         <nb-checkbox [checked]="rowData && rowData.selected" (change)="onValueChange($event)" status="basic"></nb-checkbox>
 	</div> `
 })
-export class SelectedRowComponent implements ViewCell {
+export class SelectedRowComponent {
     value: any;
     rowData: any;
 

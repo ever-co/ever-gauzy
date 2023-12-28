@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	template: `
@@ -15,7 +14,7 @@ import { ViewCell } from 'angular2-smart-table';
 	`,
 	styleUrls: ['./time-tracker.component.scss'],
 })
-export class CustomRenderComponent implements ViewCell, OnInit {
+export class CustomRenderComponent implements OnInit {
 	renderValue: string;
 
 	@Input() value: string | number;
@@ -38,7 +37,7 @@ export class CustomRenderComponent implements ViewCell, OnInit {
 	`,
 	styleUrls: ['./time-tracker.component.scss'],
 })
-export class CustomDescriptionComponent implements ViewCell, OnInit {
+export class CustomDescriptionComponent implements OnInit {
 	renderValue: string;
 
 	@Input() value: string | number;

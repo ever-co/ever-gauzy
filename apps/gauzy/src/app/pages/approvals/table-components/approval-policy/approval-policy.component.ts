@@ -1,12 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'ngx-approval-policy',
 	templateUrl: './approval-policy.component.html',
 	styleUrls: ['./approval-policy.component.scss']
 })
-export class ApprovalPolicyComponent implements ViewCell {
+export class ApprovalPolicyComponent {
 	@Input()
 	rowData: any;
 

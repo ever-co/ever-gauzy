@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { IEmployee } from '@gauzy/contracts';
 
 @Component({
@@ -7,7 +6,7 @@ import { IEmployee } from '@gauzy/contracts';
 	templateUrl: './employees-merged-teams.component.html',
 	styleUrls: ['./employees-merged-teams.component.scss']
 })
-export class EmployeesMergedTeamsComponent implements OnInit, ViewCell {
+export class EmployeesMergedTeamsComponent implements OnInit {
 
 	value: any;
 	rowData: any;

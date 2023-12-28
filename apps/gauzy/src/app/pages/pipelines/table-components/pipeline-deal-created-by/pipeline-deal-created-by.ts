@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { IDeal } from '@gauzy/contracts';
 
 @Component({
@@ -7,7 +6,7 @@ import { IDeal } from '@gauzy/contracts';
 	template: `{{ rowData?.createdBy?.firstName }}
 		{{ rowData?.createdBy?.lastName }}`
 })
-export class PipelineDealCreatedByComponent implements ViewCell {
+export class PipelineDealCreatedByComponent {
 	@Input()
 	value: string | number;
 

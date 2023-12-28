@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { ApprovalPolicyTypesEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 
@@ -7,11 +6,9 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	selector: 'ngx-request-approval-status',
 	templateUrl: './approval-policy-status.component.html'
 })
-export class ApprovalPolicyStatusComponent
-	extends TranslationBaseComponent
-	implements ViewCell, OnInit {
-	@Input()
-	rowData: any;
+export class ApprovalPolicyStatusComponent extends TranslationBaseComponent implements OnInit {
+
+	@Input() rowData: any;
 
 	value: string | number;
 

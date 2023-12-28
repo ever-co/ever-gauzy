@@ -2,10 +2,8 @@ import {
 	Component,
 	ViewChild,
 	ElementRef,
-	AfterViewInit,
-	OnInit
+	AfterViewInit
 } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { WarehouseService } from 'apps/gauzy/src/app/@core';
@@ -14,7 +12,7 @@ import { WarehouseService } from 'apps/gauzy/src/app/@core';
 	templateUrl: './manage-quantity.component.html',
 	styles: ['input { width: 80px }']
 })
-export class ManageQuantityComponent implements ViewCell, AfterViewInit {
+export class ManageQuantityComponent implements AfterViewInit {
 	value: any;
 	rowData: any;
 

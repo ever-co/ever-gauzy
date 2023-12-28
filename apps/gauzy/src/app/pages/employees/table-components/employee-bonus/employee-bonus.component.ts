@@ -1,10 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
     templateUrl: './employee-bonus.component.html'
 })
-export class EmployeeBonusComponent implements ViewCell {
+export class EmployeeBonusComponent {
     @Input()
     rowData: any;
 

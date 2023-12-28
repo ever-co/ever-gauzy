@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	template: `
@@ -14,7 +13,7 @@ import { ViewCell } from 'angular2-smart-table';
 	`,
 	styleUrls: ['./department-names.component.scss']
 })
-export class DepartmentNamesComponent implements ViewCell {
+export class DepartmentNamesComponent {
 	@Input()
 	rowData: any;
 

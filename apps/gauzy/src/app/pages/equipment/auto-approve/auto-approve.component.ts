@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'ngx-auto-approve',
 	templateUrl: './auto-approve.component.html'
 })
-export class AutoApproveComponent implements ViewCell {
+export class AutoApproveComponent {
 	@Input()
 	value: string | number;
 	rowData: any;

@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/internal/Observable';
 import { tap } from 'rxjs/operators';
-import { ViewCell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -10,7 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	selector: 'ngx-toggle-switch',
 	templateUrl: './toggle-switch.component.html'
 })
-export class ToggleSwitchComponent implements OnInit, ViewCell {
+export class ToggleSwitchComponent implements OnInit {
 
 	/**
 	 * A class member that represents a boolean switch or toggle using a BehaviorSubject.

@@ -1,12 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'ngx-clickable-link',
 	templateUrl: './clickable-link.component.html',
 	styleUrls: ['./clickable-link.component.scss']
 })
-export class ClickableLinkComponent implements OnInit, ViewCell {
+export class ClickableLinkComponent implements OnInit {
 
 	@Input() value: string;
 	@Input() rowData: any;

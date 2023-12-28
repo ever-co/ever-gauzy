@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { IProductTypeTranslated } from '@gauzy/contracts';
 
 @Component({
@@ -28,7 +27,7 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 		`
 	]
 })
-export class IconRowComponent implements ViewCell {
+export class IconRowComponent {
 	@Input()
 	value: string | number;
 	rowData: IProductTypeTranslated;

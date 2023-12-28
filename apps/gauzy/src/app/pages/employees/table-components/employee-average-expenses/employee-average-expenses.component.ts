@@ -1,10 +1,9 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	templateUrl: './employee-average-expenses.component.html'
 })
-export class EmployeeAverageExpensesComponent implements ViewCell {
+export class EmployeeAverageExpensesComponent {
 	@Input()
 	rowData: any;
 

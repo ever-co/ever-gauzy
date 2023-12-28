@@ -1,11 +1,9 @@
 import { Component } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
-
 
 @Component({
 	template: `<div>{{address}}</div> `
 })
-export class ContactRowComponent implements ViewCell {
+export class ContactRowComponent {
 	value: any;
 	rowData: any;
 

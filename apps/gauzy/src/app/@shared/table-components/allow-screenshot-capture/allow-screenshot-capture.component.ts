@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 import { IEmployee } from '@gauzy/contracts';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,13 +10,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./allow-screenshot-capture.component.scss']
 })
 
-export class AllowScreenshotCaptureComponent implements OnInit, ViewCell {
-	@Input()
-	value: string | number;
-	@Output()
-	allowScreenshotCaptureChange: EventEmitter<boolean>;
+export class AllowScreenshotCaptureComponent implements OnInit {
+	@Input() value: string | number;
+	@Output() allowScreenshotCaptureChange: EventEmitter<boolean>;
+
 	private _rowData: IEmployee;
 	private _allowed$: BehaviorSubject<boolean>;
+
 	constructor() {
 		this.allowScreenshotCaptureChange = new EventEmitter();
 		this._allowed$ = new BehaviorSubject(false);

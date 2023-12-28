@@ -1,6 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbComponentStatus } from '@nebular/theme';
-import { ViewCell } from 'angular2-smart-table';
 import { TaskStatusEnum } from '@gauzy/contracts';
 
 @Component({
@@ -26,7 +25,7 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 		`,
 	],
 })
-export class StatusViewComponent implements OnInit, ViewCell {
+export class StatusViewComponent implements OnInit {
 	@Input() value: string;
 	@Input() rowData: any;
 	status: NbComponentStatus;

@@ -1,12 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	selector: 'gauzy-project-organization-grid-details',
 	templateUrl: './project-organization-grid-details.component.html',
 	styleUrls: ['./project-organization-grid-details.component.scss']
 })
-export class ProjectOrganizationGridDetailsComponent implements ViewCell {
+export class ProjectOrganizationGridDetailsComponent {
 	@Input()
 	value: string | number;
 	@Input()

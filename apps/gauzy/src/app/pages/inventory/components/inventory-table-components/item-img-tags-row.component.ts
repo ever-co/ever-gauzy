@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { getContrastColor } from '@gauzy/common-angular';
-import { ViewCell } from 'angular2-smart-table';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
@@ -103,7 +102,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 		`
 	]
 })
-export class ItemImgTagsComponent implements ViewCell {
+export class ItemImgTagsComponent {
 	@Input()
 	rowData: any;
 

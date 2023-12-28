@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'angular2-smart-table';
 
 @Component({
 	templateUrl: './paid-icon.html',
 	styleUrls: ['./paid-icon.scss']
 })
-export class PaidIcon implements ViewCell {
+export class PaidIcon {
 	@Input()
 	rowData: any;
 
