@@ -12,7 +12,6 @@ import {
 	NbMenuModule,
 	NbSidebarModule,
 } from '@nebular/theme';
-import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -30,7 +29,7 @@ import { RouterModule } from '@angular/router';
 import * as Sentry from '@sentry/angular';
 import { Router } from '@angular/router';
 import { environment as gauzyEnvironment } from '@env/environment';
-import  { environment } from '../environments/environment';
+import { environment } from '../environments/environment';
 
 @NgModule({
 	declarations: [AppComponent],
@@ -48,7 +47,6 @@ import  { environment } from '../environments/environment';
 		NbMenuModule.forRoot(),
 		NbSidebarModule.forRoot(),
 		SetupModule,
-		NgxElectronModule,
 		HttpClientModule,
 		SettingsModule,
 		UpdaterModule,
@@ -73,7 +71,7 @@ import  { environment } from '../environments/environment';
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => {},
+			useFactory: () => () => { },
 			deps: [Sentry.TraceService],
 			multi: true,
 		},
@@ -88,5 +86,5 @@ import  { environment } from '../environments/environment';
 	bootstrap: [AppComponent],
 })
 export class AppModule {
-	constructor() {}
+	constructor() { }
 }

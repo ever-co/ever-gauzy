@@ -137,7 +137,6 @@
 		"ngx-daterangepicker-material": "^6.0.4",
 		"ngx-draggable-dom": "^3.1.0",
 		"ngx-echarts": "^8.0.1",
-		"ngx-electron": "^2.2.0",
 		"ngx-feature-toggle": "^12.0.0",
 		"ngx-filepond": "^6.0.1",
 		"ngx-infinite-scroll": "^16.0.0",

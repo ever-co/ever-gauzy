@@ -76,7 +76,6 @@
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.40",
-		"ngx-electron": "^2.2.0",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
 		"pg": "^8.11.3",

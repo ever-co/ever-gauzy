@@ -42,7 +42,6 @@ import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-// import { NgxElectronModule } from 'ngx-electron';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
@@ -137,7 +136,6 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		TimeTrackerModule.forRoot(),
 		environment.production ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
-		// NgxElectronModule,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
 		NgxDaterangepickerMd.forRoot({

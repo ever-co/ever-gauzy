@@ -74,7 +74,6 @@
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.40",
-		"ngx-electron": "^2.2.0",
 		"node-static": "^0.7.11",
 		"pg": "^8.11.3",
 		"pg-query-stream": "^4.5.3",
