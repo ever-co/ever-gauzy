@@ -432,7 +432,8 @@
 		"rangepicker",
 		"echart",
 		"childout",
-		"parentin"
+		"parentin",
+		"formpicker"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

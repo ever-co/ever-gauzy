@@ -128,13 +128,13 @@
 						*ngIf="
 							activityLevel?.start > 0 ||
 								activityLevel?.end < 100;
-							else selectLable
+							else selectLabel
 						"
 					>
 						{{ 'TIMESHEET.ACTIVITY_LEVEL' | translate }} :
 						{{ activityLevel?.start }}% - {{ activityLevel?.end }}%
 					</span>
-					<ng-template #selectLable>
+					<ng-template #selectLabel>
 						{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
 					</ng-template>
 					<nb-icon icon="chevron-down-outline"></nb-icon>
