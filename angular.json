@@ -56,7 +56,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/gauzy/src/app/@theme/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
@@ -369,7 +369,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/gauzy/src/app/@theme/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
@@ -504,7 +504,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss",
 							"apps/gauzy/src/app/@theme/styles/styles.scss",
@@ -701,7 +701,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop-timer/src/assets/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
@@ -820,7 +820,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/server/src/assets/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
@@ -939,7 +939,7 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/gauzy/src/app/@theme/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
