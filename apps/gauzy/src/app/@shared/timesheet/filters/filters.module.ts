@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FiltersComponent } from './filters.component';
 import { FormsModule } from '@angular/forms';
-import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import {
 	NbButtonModule,
 	NbPopoverModule,
@@ -13,7 +11,9 @@ import {
 	NbInputModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgxSliderModule } from '@angular-slider/ngx-slider';
+import { NgxSliderModule } from 'ngx-slider-v2';
+import { FiltersComponent } from './filters.component';
+import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../shared.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 
