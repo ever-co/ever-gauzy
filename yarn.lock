@@ -22,13 +22,6 @@
   resolved "https://registry.yarnpkg.com/@aduh95/viz.js/-/viz.js-3.4.0.tgz#635a020d95386c8acafbe025b2158238de889668"
   integrity sha512-KI2nVf9JdwWCXqK6RVf+9/096G7VWN4Z84mnynlyZKao2xQENW8WNEjLmvdlxS5X8PNWXFC1zqwm7tveOXw/4A==
 
-"@agm/core@^3.0.0-beta.0":
-  version "3.0.0-beta.0"
-  resolved "https://registry.yarnpkg.com/@agm/core/-/core-3.0.0-beta.0.tgz#a9cfbe10a435142076a74687856b1adcccdcbac1"
-  integrity sha512-KNmKbe89Nen7s7+mX63RgX88jBfajUZCFqkHIQ8Fd+Lf/ko/IY6yw4kPh0iYGxgPVPjpsHJ06GZ5m3ZxpEVX9A==
-  dependencies:
-    tslib "^2.0.0"
-
 "@akveo/ng2-completer@^9.0.1":
   version "9.0.1"
   resolved "https://registry.yarnpkg.com/@akveo/ng2-completer/-/ng2-completer-9.0.1.tgz#49d2914fb62b78cc6ae5aed861ea7fa4ed5863d1"
@@ -433,14 +426,6 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/google-maps@^13.1.0":
-  version "13.3.9"
-  resolved "https://registry.yarnpkg.com/@angular/google-maps/-/google-maps-13.3.9.tgz#245acce3c63885b0a5f729060f892477fdab70cb"
-  integrity sha512-hrnEPy8j3awVOLwx+jiYkXQDTrTYJ+CADGEwZw+plvQ3uBHz87jSws5O2ZqnFRd0WiPAmTMAfqRtmbEA4FIEDg==
-  dependencies:
-    "@types/google.maps" "^3.45.6"
-    tslib "^2.3.0"
-
 "@angular/language-service@^16.2.12":
   version "16.2.12"
   resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-16.2.12.tgz#e81d9667ec96eac214b0dd54275bdfb835db3f3f"
@@ -807,10 +792,10 @@
   resolved "https://registry.yarnpkg.com/@assemblyscript/loader/-/loader-0.10.1.tgz#70e45678f06c72fa2e350e8553ec4a4d72b92e06"
   integrity sha512-H71nDOOL8Y7kWRLqf6Sums+01Q5msqBW2KhDUTemh1tvY04eSkSXrK0uj/4mmY0Xr16/3zyZmsrxN7CKuRbNRg==
 
-"@asymmetrik/ngx-leaflet@^15.0.1":
-  version "15.0.1"
-  resolved "https://registry.yarnpkg.com/@asymmetrik/ngx-leaflet/-/ngx-leaflet-15.0.1.tgz#7041b4841ac854089f21d644cece16389588c1b8"
-  integrity sha512-vlwk6lxt+KtBBeGOX6XX1pRBfkH3c41kp29UsY/tj/pVGrMZ3tGH9heeal0vUMIr3ERAZzExJEqwjzoqoU2IMw==
+"@asymmetrik/ngx-leaflet@^16.0.1":
+  version "16.0.1"
+  resolved "https://registry.yarnpkg.com/@asymmetrik/ngx-leaflet/-/ngx-leaflet-16.0.1.tgz#316a1452d0e3cf9834e2eb44bb57a6e3ec14d978"
+  integrity sha512-sYtEWEgSTV5freW5YXvvKSvyxCZxPLqp/AqJ9ueL+yLQzVVB6YFrCejquRgnqbQHEhGM+AvAZUx5xBd4NFBgKw==
   dependencies:
     tslib "^2.3.0"
 
@@ -7076,6 +7061,20 @@
   resolved "https://registry.yarnpkg.com/@nestjsx/util/-/util-5.0.0-alpha.3.tgz#d1182280e9254f0d335efa369da17fa25d260135"
   integrity sha512-UTYIxtyx80M42gOZ0VIInSiOLn78P6k1BCziiN8gE3FglzivQ1RGvPpmsRwioYEWG27gOgnMwOQnXv8Zbq8dzQ==
 
+"@ng-maps/core@^5.0.3":
+  version "5.0.3"
+  resolved "https://registry.yarnpkg.com/@ng-maps/core/-/core-5.0.3.tgz#cfa5618af1cdf7712868d47414e9ba0c1d2f472d"
+  integrity sha512-eS8M/AyDgCIK4QXjyoHWT7wTPsIURDwgmelHxk4WZA5h579504AGUu5NB97ft5gxdTn4BkJaDuUbfqnf8CPrmQ==
+  dependencies:
+    tslib "^2.0.0"
+
+"@ng-maps/google@^5.0.4":
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/@ng-maps/google/-/google-5.0.4.tgz#5d88297e26d9e28537d44901c3c79a39151c7d0e"
+  integrity sha512-pOnja9E8MfWZZcxhMIVtC6UmN2ZTAGF7JYJAACdZE4jQBmcNFAynj4tApFqi+z4wgNsUvsbTJbYIIL3YMZvVwg==
+  dependencies:
+    tslib "^2.0.0"
+
 "@ng-select/ng-select@^11.2.0":
   version "11.2.0"
   resolved "https://registry.yarnpkg.com/@ng-select/ng-select/-/ng-select-11.2.0.tgz#33048ddeb6a524078f3134167d75137239bf1c6e"
@@ -10917,15 +10916,10 @@
   resolved "https://registry.yarnpkg.com/@types/google.analytics/-/google.analytics-0.0.41.tgz#7905553890bb8651c93927c1ce4c1c4a26e41505"
   integrity sha512-LE6AfJFJtxUl1d56oQ1PvQDEOtU+0fgqTVgmOw+T0eaz7FB4DTqKxbI6x8sq+7FDvAeIXOugZyGHJLR4CAxO4A==
 
-"@types/google.maps@^3.45.6":
+"@types/google.maps@^3.54.10":
   version "3.54.10"
   resolved "https://registry.yarnpkg.com/@types/google.maps/-/google.maps-3.54.10.tgz#f3101dda3e873f3602ae664cf518592686ca215b"
   integrity sha512-N6gwM01mKhooXaw+IKbUH7wJcIJCn8U60VoaVvom5EiQjmfgevhQ+0+/r17beXW5j8ad2x+WPr0iyOUodCw4/w==
-
-"@types/googlemaps@^3.43.2":
-  version "3.43.3"
-  resolved "https://registry.yarnpkg.com/@types/googlemaps/-/googlemaps-3.43.3.tgz#70cf962154a160fe78bcd69d6ccc296dd9175b1f"
-  integrity sha512-ZWNoz/O8MPEpiajvj7QiqCY8tTLFNqNZ/a+s+zTV58wFVNAvvqV4bdGfnsjTb5Cs4V6wEsLrX8XRhmnyYJ2Tdg==
 
 "@types/graceful-fs@^4.1.3":
   version "4.1.9"
@@ -15318,7 +15312,7 @@ cloneable-readable@^1.0.0:
     process-nextick-args "^2.0.0"
     readable-stream "^2.3.5"
 
-cloudinary-core@^2.11.3, cloudinary-core@^2.13.0:
+cloudinary-core@^2.13.0:
   version "2.13.0"
   resolved "https://registry.yarnpkg.com/cloudinary-core/-/cloudinary-core-2.13.0.tgz#b59f90871b6c708c3d0735b9be47ac08181c57fb"
   integrity sha512-Nt0Q5I2FtenmJghtC4YZ3MZZbGg1wLm84SsxcuVwZ83OyJqG9CNIGp86CiI6iDv3QobaqBUpOT7vg+HqY5HxEA==
