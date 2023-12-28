@@ -20,7 +20,7 @@
     "keywords": [],
     "scripts": {
         "prepare:husky": "npx husky install .husky",
-        "ng": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn nx",
+        "ng": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=8192 yarn nx",
         "ng:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn nx",
         "ng:docker": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=30000 yarn nx",
         "ng:ci": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn nx",
