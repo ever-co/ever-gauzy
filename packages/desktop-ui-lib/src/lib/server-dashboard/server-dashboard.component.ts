@@ -106,7 +106,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			'dashboard_ready',
 			(event, arg) => {
 				this._ngZone.run(() => {
-					if (!!arg.setting?.autoStart) {
+					if (!!arg.setting?.autoStart ?? true) {
 						this.runServer();
 					}
 				});
