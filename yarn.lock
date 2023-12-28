@@ -325,15 +325,6 @@
     "@angular-eslint/bundled-angular-compiler" "16.3.1"
     "@typescript-eslint/utils" "5.62.0"
 
-"@angular-slider/ngx-slider@^2.0.4":
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-2.0.4.tgz#1827648eac8ec5e43e97c702eae08ef124907457"
-  integrity sha512-EccMcGlb2bJJWikXZBjRwdWgRiYYmWd3UCgf8l3KAlyqPAxPVgxI73wqipp4/nZwidq53a9s3OB+KC79enfM2A==
-  dependencies:
-    detect-passive-events "^2.0.3"
-    rxjs "^6.5.2"
-    tslib "^1.9.0"
-
 "@angular/animations@^16.2.12":
   version "16.2.12"
   resolved "https://registry.yarnpkg.com/@angular/animations/-/animations-16.2.12.tgz#27744d8176e09e70e0f6d837c3abcfcee843a936"
@@ -28213,6 +28204,15 @@ ngx-permissions@^13.0.1:
   integrity sha512-KanBkK9v8aoQ9siSEmB69G+OPtF1i71Ie5ORuobOlKcpUMvmpcuCXG9eiu1j3k+8/Q+sv1jCbL9VviLiQF5PFA==
   dependencies:
     tslib "^2.1.0"
+
+ngx-slider-v2@16.0.2:
+  version "16.0.2"
+  resolved "https://registry.yarnpkg.com/ngx-slider-v2/-/ngx-slider-v2-16.0.2.tgz#68ece02e21547f07220acf3d4abdb7c3f74d3aa4"
+  integrity sha512-Lpl7SlErL+tJJvTRZYdyZoXTThKN8Ro1z3vscJQ1O5azHXwvbv3pnTcsOwY4ltfaP+dpzY27KL1QXyDr6QMaxQ==
+  dependencies:
+    detect-passive-events "^2.0.3"
+    rxjs "^7.4.0"
+    tslib "^2.3.0"
 
 ngx-window-token@>=6.0.0:
   version "7.0.0"

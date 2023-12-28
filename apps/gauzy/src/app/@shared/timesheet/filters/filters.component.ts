@@ -23,7 +23,7 @@ import * as moment from 'moment';
 import { Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../../@core/services/store.service';
-import { Options, ChangeContext } from '@angular-slider/ngx-slider';
+import { Options, ChangeContext } from 'ngx-slider-v2';
 import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	ActivityLevel,

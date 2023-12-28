@@ -9,7 +9,7 @@ import {
 	Output
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Options, ChangeContext } from '@angular-slider/ngx-slider';
+import { Options, ChangeContext } from 'ngx-slider-v2';
 import {
 	ITimeLogFilters,
 	PermissionsEnum,
