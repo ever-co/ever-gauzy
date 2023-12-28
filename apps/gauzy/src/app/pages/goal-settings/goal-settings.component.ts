@@ -48,7 +48,7 @@ export class GoalSettingsComponent
 	goalTimeFrames: any[];
 	goalGeneralSettings: IGoalGeneralSetting;
 	goalOwnershipEnum = GoalOwnershipEnum;
-	predefinedTimeFrames = [];
+	preDefinedTimeFrames = [];
 	loading: boolean;
 	private _goalSettings$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
@@ -332,7 +332,7 @@ export class GoalSettingsComponent
 	}
 
 	async editTimeFrame(source, selectedItem?: any) {
-		const prdefTimeFrames = this.predefinedTimeFrames.filter(
+		const preDefinedTimeFrames = this.preDefinedTimeFrames.filter(
 			(timeFrame) => {
 				return (
 					this.goalTimeFrames.findIndex(
@@ -355,7 +355,7 @@ export class GoalSettingsComponent
 			context: {
 				timeFrame: this.selectedTimeFrame,
 				type: source,
-				predefinedTimeFrames: prdefTimeFrames
+				preDefinedTimeFrames: preDefinedTimeFrames
 			},
 			closeOnBackdropClick: false
 		});
