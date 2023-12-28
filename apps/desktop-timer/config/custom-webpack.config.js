@@ -1,4 +1,4 @@
-const webpack = require('webpack');
+require('webpack');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const TerserPlugin = require('terser-webpack-plugin');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
