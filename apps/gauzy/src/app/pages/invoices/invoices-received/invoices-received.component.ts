@@ -1,10 +1,9 @@
-import { OnInit, Component, OnDestroy, ViewChild, Input } from '@angular/core';
+import { OnInit, Component, OnDestroy, Input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
@@ -15,8 +14,9 @@ import {
 	IDateRangePicker
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
+import { Cell } from 'angular2-smart-table';
+import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table';
 import {
@@ -54,9 +54,8 @@ import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/head
 	templateUrl: './invoices-received.component.html',
 	styleUrls: ['./invoices-received.component.scss']
 })
-export class InvoicesReceivedComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	loading: boolean = false;
 	disableButton: boolean = true;
 	settingsSmartTable: object;
@@ -322,13 +321,9 @@ export class InvoicesReceivedComponent
 			),
 			columns: {
 				invoiceNumber: {
-					title: this.isEstimate
-						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
-						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: this.isEstimate ? 'string' : 'custom',
-					renderComponent: this.isEstimate
-						? null
-						: NotesWithTagsComponent,
+					renderComponent: this.isEstimate ? null : NotesWithTagsComponent,
 					sortDirection: 'asc',
 					width: '20%',
 					filter: {
@@ -336,27 +331,34 @@ export class InvoicesReceivedComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (invoiceNumber) => {
-						this.setFilter({
-							field: 'invoiceNumber',
-							search: invoiceNumber
-						});
-					}
+						this.setFilter({ field: 'invoiceNumber', search: invoiceNumber });
+					},
+					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				invoiceDate: {
-					title: this.isEstimate
-						? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
-						: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+					title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE') : this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 					type: 'custom',
 					filter: false,
 					width: '10%',
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				dueDate: {
 					title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 					type: 'custom',
 					filter: false,
 					width: '10%',
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -368,11 +370,12 @@ export class InvoicesReceivedComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (totalValue) => {
-						this.setFilter({
-							field: 'totalValue',
-							search: totalValue
-						});
-					}
+						this.setFilter({ field: 'totalValue', search: totalValue });
+					},
+					componentInitFunction: (instance: InvoiceEstimateTotalValueComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				}
 			}
 		};
@@ -382,7 +385,11 @@ export class InvoicesReceivedComponent
 				type: 'custom',
 				filter: false,
 				sort: false,
-				renderComponent: ContactLinksComponent
+				renderComponent: ContactLinksComponent,
+				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				},
 			};
 		}
 		if (!this.isEstimate) {
@@ -390,8 +397,11 @@ export class InvoicesReceivedComponent
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
 				width: '15%',
+				filter: false,
 				renderComponent: InvoicePaidComponent,
-				filter: false
+				componentInitFunction: (instance: InvoicePaidComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+				},
 			};
 		}
 		if (this.isEstimate) {
@@ -412,7 +422,11 @@ export class InvoicesReceivedComponent
 					}
 					this.setFilter({ field: 'tags', search: tagIds });
 				},
-				sort: false
+				sort: false,
+				componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
@@ -424,7 +438,10 @@ export class InvoicesReceivedComponent
 				filter: {
 					type: 'custom',
 					component: InputFilterComponent
-				}
+				},
+				componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+					instance.value = cell.getValue();
+				},
 			};
 		}
 	}

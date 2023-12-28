@@ -10,6 +10,5 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 export class TagsOnlyComponent extends NotesWithTagsComponent {
 	ComponentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
-	@Input()
-	value: any;
+	@Input() value: any;
 }

@@ -13,8 +13,9 @@ import { TranslateService } from '@ngx-translate/core';
 	styleUrls: ['./notes-with-tags.component.scss']
 })
 export class NotesWithTagsComponent extends TranslationBaseComponent implements OnInit {
+
 	@Input() rowData: any;
-	@Input() value: string | number;
+	@Input() value: any;
 	@Input() layout?: ComponentLayoutStyleEnum | undefined;
 
 	private textColor!: string;

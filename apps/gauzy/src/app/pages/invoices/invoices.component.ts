@@ -989,7 +989,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 					renderComponent: NotesWithTagsComponent,
 					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getValue();
+						instance.value = cell.getRawValue();
 					},
 				},
 			},
@@ -1039,14 +1039,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'text',
 				width: '5%',
 				filter: false,
-				valuePrepareFunction: (cell: Cell) => {
-					// Check if the cell is not falsy
-					if (cell) {
-						// Return the value of the cell
-						return cell['value'];
-					}
-					// For example, you could return a default value or an empty string
-					return '';
+				valuePrepareFunction: (row: { value?: any }) => {
+					return row?.value ?? '';
 				},
 			};
 		}
@@ -1056,14 +1050,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'text',
 				width: '6%',
 				filter: false,
-				valuePrepareFunction: (cell: Cell) => {
-					// Check if the cell is not falsy
-					if (cell) {
-						// Return the value of the cell
-						return cell['value'];
-					}
-					// For example, you could return a default value or an empty string
-					return '';
+				valuePrepareFunction: (row: { value?: any }) => {
+					return row?.value ?? '';
 				},
 			};
 		}
@@ -1075,14 +1063,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'text',
 				width: '5%',
 				filter: false,
-				valuePrepareFunction: (cell: Cell) => {
-					// Check if the cell is not falsy
-					if (cell) {
-						// Return the value of the cell
-						return cell['value'];
-					}
-					// For example, you could return a default value or an empty string
-					return '';
+				valuePrepareFunction: (row: { value?: any }) => {
+					return row?.value ?? '';
 				},
 			};
 		}
@@ -1096,7 +1078,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				renderComponent: ContactLinksComponent,
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
-					instance.value = cell.getValue();
+					instance.value = cell.getRawValue();
 				},
 			};
 		}
@@ -1122,7 +1104,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				filter: false,
 				renderComponent: StatusBadgeComponent,
 				componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
-					instance.value = cell.getValue();
+					instance.value = cell.getRawValue();
 				},
 			};
 		}

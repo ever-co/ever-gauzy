@@ -1,9 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { IPayment } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { IPayment } from 'packages/contracts/dist';
 
 @Component({
+	selector: 'ga-invoice-paid',
 	template: `
 		<div class="progress-bar-container">
 			<div class="progress-bar">
