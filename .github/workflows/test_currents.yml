@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: buildjet-2vcpu-ubuntu-2204
+    runs-on: buildjet-4vcpu-ubuntu-2204
     outputs:
       uuid: ${{ steps.uuid.outputs.value }}
     steps:
