@@ -29,13 +29,11 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '../../..
 	`,
 	styles: []
 })
-export class InvoiceEmployeesSelectorComponent
-	extends DefaultEditor
-	implements OnInit, OnDestroy {
+export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 
-	employee: IEmployee;
-	employees: IEmployee[] = [];
-	organization: IOrganization;
+	public employee: IEmployee;
+	public employees: IEmployee[] = [];
+	public organization: IOrganization;
 
 	constructor(
 		private readonly employeeService: EmployeesService,
@@ -78,17 +76,22 @@ export class InvoiceEmployeesSelectorComponent
 		this.preSelectedEmployee();
 	}
 
+	/**
+	 *
+	 */
 	preSelectedEmployee() {
-		const { newValue } = this.cell;
+		const newValue = this.cell.getNewRawValue();
 		if (isNotEmpty(this.employees)) {
-			this.employee = this.employees.find(
-				(employee: IEmployee) => employee.id === newValue.id
-			);
+			this.employee = this.employees.find((employee: IEmployee) => employee.id === newValue.id);
 		}
 	}
 
+	/**
+	 *
+	 * @param $event
+	 */
 	selectEmployee($event) {
-		this.cell.newValue = $event;
+		this.cell.setValue($event);
 	}
 
 	ngOnDestroy() { }

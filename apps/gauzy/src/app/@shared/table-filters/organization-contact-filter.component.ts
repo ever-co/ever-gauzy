@@ -16,9 +16,17 @@ export class OrganizationContactFilterComponent extends DefaultFilter implements
         super();
     }
 
+    /**
+     *
+     *
+     */
     ngOnChanges(changes: SimpleChanges) { }
 
+    /**
+     *
+     * @param event
+     */
     onChange(event) {
-        this.column.filterFunction(event);
+        // this.column.filterFunction(event);
     }
 }

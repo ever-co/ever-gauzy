@@ -18,15 +18,23 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
 })
 export class PaymentMethodFilterComponent extends DefaultFilter implements OnChanges {
 
-    paymentMethods = Object.values(PaymentMethodEnum);
+    public paymentMethods = Object.values(PaymentMethodEnum);
 
     constructor() {
         super();
     }
 
+    /**
+     *
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges) { }
 
+    /**
+     *
+     * @param event
+     */
     onChange(event) {
-        this.column.filterFunction(event);
+        // this.column.filterFunction(event);
     }
 }

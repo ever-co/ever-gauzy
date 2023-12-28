@@ -10,8 +10,7 @@ import { IOrganizationVendor } from '@gauzy/contracts';
             [addTag]="false"
             [placeholder]="'SM_TABLE.CATEGORY' | translate"
             (onChanged)="selectedVendorEvent($event)"
-        >
-        </ga-expense-category-select>
+        ></ga-expense-category-select>
     `,
 })
 export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnChanges {
@@ -20,13 +19,25 @@ export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnC
         super();
     }
 
+    /**
+     *
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges) { }
 
+    /**
+     *
+     * @param event
+     */
     onChange(event) {
-        this.column.filterFunction(event);
+        // this.column.filterFunction(event);
     }
 
+    /**
+     *
+     * @param currentTagSelection
+     */
     selectedVendorEvent(currentTagSelection: IOrganizationVendor) {
-        this.column.filterFunction(currentTagSelection);
+        // this.column.filterFunction(currentTagSelection);
     }
 }

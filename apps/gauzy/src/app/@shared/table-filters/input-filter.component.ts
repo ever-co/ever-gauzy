@@ -1,21 +1,17 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { DefaultFilter } from 'angular2-smart-table';
 import { FormControl } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/internal/Subscription';
+import { DefaultFilter } from 'angular2-smart-table';
 
 @Component({
     template: `
-        <input
-            [formControl]="inputControl"
-            class="form-control"
-            [placeholder]="column.title"
-        >
+        <input [formControl]="inputControl" class="form-control" [placeholder]="column.title">
     `,
 })
 export class InputFilterComponent extends DefaultFilter implements OnInit, OnDestroy, OnChanges {
     public inputControl = new FormControl();
-    protected subscription: Subscription;
+    private subscription: Subscription;
 
     constructor() {
         super();
@@ -26,13 +22,20 @@ export class InputFilterComponent extends DefaultFilter implements OnInit, OnDes
             .pipe(
                 debounceTime(this.delay),
                 distinctUntilChanged(),
-                tap((value) => this.column.filterFunction(value))
+                // tap((value) => this.column.filterFunction(value))
             )
             .subscribe();
     }
 
+    /**
+     *
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges) { }
 
+    /**
+     *
+     */
     ngOnDestroy() {
         this.subscription.unsubscribe();
     }

@@ -61,8 +61,12 @@ export class OrganizationTeamFilterComponent extends DefaultFilter implements On
 
     ngOnChanges(changes: SimpleChanges) { }
 
+    /**
+     *
+     * @param event
+     */
     onChange(event: any) {
-        this.column.filterFunction(event);
+        // this.column.filterFunction(event);
     }
 
     async getTeams() {

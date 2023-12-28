@@ -9,8 +9,7 @@ import { ITag } from '@gauzy/contracts';
             [multiple]="true"
             [isOrgLevel]="true"
             [label]="false"
-        >
-        </ga-tags-color-input>
+        ></ga-tags-color-input>
     `,
 })
 export class TagsColorFilterComponent extends DefaultFilter implements OnChanges {
@@ -21,11 +20,19 @@ export class TagsColorFilterComponent extends DefaultFilter implements OnChanges
 
     ngOnChanges(changes: SimpleChanges) { }
 
+    /**
+     *
+     * @param event
+     */
     onChange(event) {
-        this.column.filterFunction(event);
+        // this.column.filterFunction(event);
     }
 
+    /**
+     *
+     * @param currentTagSelection
+     */
     selectedTagsEvent(currentTagSelection: ITag[]) {
-        this.column.filterFunction(currentTagSelection);
+        // this.column.filterFunction(currentTagSelection);
     }
 }
