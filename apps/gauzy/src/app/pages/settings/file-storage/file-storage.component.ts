@@ -28,6 +28,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	FileStorageProviderEnum = FileStorageProviderEnum;
 	user: IUser;
 	settings: ITenantSetting = new Object();
+	loading: boolean = false;
 
 	public readonly form: UntypedFormGroup = FileStorageComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
@@ -104,6 +105,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	 * GET current tenant file storage setting
 	 */
 	async getSetting() {
+		this.loading = true
 		const settings = this.settings = await this._tenantService.getSettings();
 		if (isNotEmpty(settings)) {
 			const { fileStorageProvider } = settings;
@@ -111,6 +113,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 		} else {
 			this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
 		}
+		this.loading = false;
 	}
 
 	/**
