@@ -7,14 +7,13 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 	styleUrls: ['./status-badge.component.scss']
 })
 export class StatusBadgeComponent implements OnInit {
-	@Input() value: any;
 	text: string;
 	badgeClass: string;
 
-	@Input()
-	layout?: ComponentLayoutStyleEnum | undefined;
+	@Input() value: any;
+	@Input() layout?: ComponentLayoutStyleEnum | undefined;
 
-	constructor() {}
+	constructor() { }
 
 	ngOnInit() {
 		if (this.value) {

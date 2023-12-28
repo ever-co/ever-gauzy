@@ -1,14 +1,13 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{
-						(!isEstimate
-							? 'INVOICES_PAGE.HEADER'
-							: 'INVOICES_PAGE.ESTIMATES.HEADER'
-						) | translate
-					}}
+					{{ (isEstimate ? 'INVOICES_PAGE.ESTIMATES.HEADER' : 'INVOICES_PAGE.HEADER') | translate }}
 				</ngx-header-title>
 			</h4>
 		</div>
@@ -32,20 +31,8 @@
 			<div class="actions-container">
 				<ng-template ngxPermissionsOnly="INVOICES_EDIT">
 					<div class="transition-container">
-						<div
-							[ngClass]="
-								!disableButton
-									? 'transition show'
-									: 'transition hide'
-							"
-						>
-							<span
-								[ngClass]="
-									!disableButton
-										? 'transition show'
-										: 'transition show-button'
-								"
-							>
+						<div class="transition" [ngClass]="{ 'show': !disableButton, 'hide': disableButton }">
+							<span class="transition" [ngClass]="{ 'show': !disableButton, 'show-button': disableButton }">
 								<button
 									nbButton
 									status="success"
@@ -69,50 +56,31 @@
 		</ng-template>
 		<nb-tabset (changeTab)="onChangeTab($event)">
 			<nb-tab
+				class="remove-scroll"
 				[tabTitle]="'INVOICES_PAGE.BROWSE' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.ACTIONS"
-				class="remove-scroll"
 			>
-				<ng-container
-					*ngIf="(nbTab$ | async) === invoiceTabsEnum.ACTIONS"
-				>
+				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.ACTIONS">
 					<div class="custom-content-body">
 						<ng-template
-							[ngTemplateOutlet]="
-								dataLayoutStyle ===
-								componentLayoutStyleEnum.TABLE
-									? tableLayout
-									: gridLayout
-							"
-						>
-						</ng-template>
+							[ngTemplateOutlet]="(dataLayoutStyle === componentLayoutStyleEnum.TABLE) ? tableLayout : gridLayout"
+						></ng-template>
 					</div>
 				</ng-container>
 			</nb-tab>
 			<nb-tab
+				class="remove-scroll search-tab"
 				[tabTitle]="'INVOICES_PAGE.SEARCH' | translate | titlecase"
 				[tabId]="invoiceTabsEnum.SEARCH"
-				class="remove-scroll search-tab"
 			>
-				<ng-container
-					*ngIf="(nbTab$ | async) === invoiceTabsEnum.SEARCH"
-				>
+				<ng-container *ngIf="(nbTab$ | async) === invoiceTabsEnum.SEARCH">
 					<div class="custom-content-body">
 						<nb-accordion class="mb-3">
 							<nb-accordion-item collapsed="false">
-								<nb-accordion-item-header
-									>{{
-										(!isEstimate
-											? 'INVOICES_PAGE.HEADER'
-											: 'INVOICES_PAGE.ESTIMATES.HEADER'
-										) | translate
-									}}
-									{{
-										'INVOICES_PAGE.SEARCH'
-											| translate
-											| lowercase
-									}}</nb-accordion-item-header
-								>
+								<nb-accordion-item-header>
+									{{ (isEstimate ? 'INVOICES_PAGE.ESTIMATES.HEADER' : 'INVOICES_PAGE.HEADER') | translate }}
+									{{ 'INVOICES_PAGE.SEARCH' | translate | lowercase }}
+								</nb-accordion-item-header >
 								<nb-accordion-item-body>
 									<form
 										[formGroup]="searchForm"
@@ -121,17 +89,9 @@
 										<div class="row w-100">
 											<div class="col-sm-4">
 												<div class="form-group">
-													<label
-														for="inputInvoiceNumber"
-														class="label"
-													>
+													<label for="inputInvoiceNumber" class="label">
 														<span>
-															{{
-																(!isEstimate
-																	? 'INVOICES_PAGE.INVOICE_NUMBER'
-																	: 'INVOICES_PAGE.ESTIMATE_NUMBER'
-																) | translate
-															}}
+															{{ (isEstimate ? 'INVOICES_PAGE.ESTIMATE_NUMBER' : 'INVOICES_PAGE.INVOICE_NUMBER' ) | translate }}
 														</span>
 													</label>
 													<input

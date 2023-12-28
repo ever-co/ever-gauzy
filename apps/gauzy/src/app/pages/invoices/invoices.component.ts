@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	NbDialogService,
@@ -112,11 +112,13 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		return this._isEstimate;
 	}
 
+	/**
+	 *
+	 */
 	invoicesTable: Angular2SmartTableComponent;
-	@ViewChild('invoicesTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.invoicesTable = content;
-			this.onChangedSource();
+	@ViewChild('invoicesTable', { static: false }) set content(table: Angular2SmartTableComponent) {
+		if (table) {
+			this.invoicesTable = table;
 		}
 	}
 
@@ -243,18 +245,6 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				tap(() => this.refreshPagination()),
 				tap(() => (this.invoices = [])),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invoicesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -985,41 +975,36 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				perPage: pagination ? pagination.itemsPerPage : 10,
 			},
 			hideSubHeader: true,
-			actions: false,
 			mode: 'external',
+			selectedRowIndex: -1,
+			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation(
-				this.isEstimate
-					? 'SM_TABLE.NO_DATA.ESTIMATE'
-					: 'SM_TABLE.NO_DATA.INVOICE'
-			),
+			noDataMessage: this.getTranslation(this.isEstimate ? 'SM_TABLE.NO_DATA.ESTIMATE' : 'SM_TABLE.NO_DATA.INVOICE'),
 			columns: {
 				invoiceNumber: {
-					title: this.isEstimate
-						? this.getTranslation(
-							'INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER'
-						)
-						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATES.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: 'custom',
 					sortDirection: 'asc',
 					width: '17%',
 					renderComponent: NotesWithTagsComponent,
+					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 			},
 		};
-
-		if (
-			this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE) ||
-			this.columns.includes(EstimateColumnsEnum.ESTIMATE_DATE)
-		) {
+		if (this.columns.includes(InvoiceColumnsEnum.INVOICE_DATE) || this.columns.includes(EstimateColumnsEnum.ESTIMATE_DATE)) {
 			this.settingsSmartTable['columns']['invoiceDate'] = {
-				title: this.isEstimate
-					? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
-					: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+				title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE') : this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 				type: 'custom',
 				width: '10%',
 				filter: false,
 				renderComponent: DateViewComponent,
+				componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.DUE_DATE)) {
@@ -1029,15 +1014,23 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				width: '10%',
 				filter: false,
 				renderComponent: DateViewComponent,
+				componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TOTAL_VALUE)) {
 			this.settingsSmartTable['columns']['totalValue'] = {
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 				type: 'custom',
-				renderComponent: InvoiceEstimateTotalValueComponent,
-				filter: false,
 				width: '10%',
+				filter: false,
+				renderComponent: InvoiceEstimateTotalValueComponent,
+				componentInitFunction: (instance: InvoiceEstimateTotalValueComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				},
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.TAX)) {
@@ -1046,10 +1039,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'text',
 				width: '5%',
 				filter: false,
-				valuePrepareFunction: (cell, row) => {
+				valuePrepareFunction: (cell: Cell) => {
+					// Check if the cell is not falsy
 					if (cell) {
+						// Return the value of the cell
 						return cell['value'];
 					}
+					// For example, you could return a default value or an empty string
+					return '';
 				},
 			};
 		}
@@ -1059,10 +1056,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'text',
 				width: '6%',
 				filter: false,
-				valuePrepareFunction: (cell, row) => {
+				valuePrepareFunction: (cell: Cell) => {
+					// Check if the cell is not falsy
 					if (cell) {
+						// Return the value of the cell
 						return cell['value'];
 					}
+					// For example, you could return a default value or an empty string
+					return '';
 				},
 			};
 		}
@@ -1074,10 +1075,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'text',
 				width: '5%',
 				filter: false,
-				valuePrepareFunction: (cell, row) => {
+				valuePrepareFunction: (cell: Cell) => {
+					// Check if the cell is not falsy
 					if (cell) {
+						// Return the value of the cell
 						return cell['value'];
 					}
+					// For example, you could return a default value or an empty string
+					return '';
 				},
 			};
 		}
@@ -1089,6 +1094,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				filter: false,
 				sort: false,
 				renderComponent: ContactLinksComponent,
+				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				},
 			};
 		}
 		if (!this.isEstimate) {
@@ -1097,8 +1106,11 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
 					width: '12%',
-					renderComponent: InvoicePaidComponent,
 					filter: false,
+					renderComponent: InvoicePaidComponent,
+					componentInitFunction: (instance: InvoicePaidComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				};
 			}
 		}
@@ -1107,8 +1119,11 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
-				renderComponent: StatusBadgeComponent,
 				filter: false,
+				renderComponent: StatusBadgeComponent,
+				componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+					instance.value = cell.getValue();
+				},
 			};
 		}
 	}
@@ -1139,10 +1154,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		} = this.searchForm.value;
 
 		if (invoiceNumber) {
-			this.setFilter(
-				{ field: 'invoiceNumber', search: invoiceNumber },
-				false
-			);
+			this.setFilter({ field: 'invoiceNumber', search: invoiceNumber }, false);
 		}
 		if (invoiceDate) {
 			this.setFilter(
@@ -1268,17 +1280,6 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			isSelected: false,
 			data: null,
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.invoicesTable && this.invoicesTable.grid) {
-			this.invoicesTable.grid.dataSet['willSelect'] = 'indexed';
-			this.invoicesTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	getColumns(): string[] {

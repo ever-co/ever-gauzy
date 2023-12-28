@@ -3,6 +3,7 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationVendor } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-expense-category-select-filter',
     template: `
         <ga-expense-category-select
             [clearable]="true"

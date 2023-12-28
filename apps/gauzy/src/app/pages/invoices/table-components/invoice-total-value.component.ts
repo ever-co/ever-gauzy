@@ -1,39 +1,38 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '../../../@core/services/store.service';
+import { Component, Input, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
-import { IOrganization } from '@gauzy/contracts';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
+import { IOrganization } from '@gauzy/contracts';
+import { Store } from '../../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-invoice-amount',
-	template: `<span>{{
-		value
-			| currency: rowData?.currency
-			| position: organization.currencyPosition
-	}}</span>`
+	template: `
+		<span>
+			{{ value | currency: rowData?.currency | position: organization?.currencyPosition }}
+		</span>
+	`
 })
-export class InvoiceEstimateTotalValueComponent implements OnInit, OnDestroy {
-	@Input() value: Date;
+export class InvoiceEstimateTotalValueComponent implements OnInit {
 
-	@Input()
-	rowData: any;
+	@Input() value: string;
+	@Input() rowData: any;
 
-	organization: IOrganization;
+	public organization: IOrganization;
 
-	constructor(private store: Store) {}
+	constructor(
+		private readonly store: Store
+	) { }
 
 	ngOnInit(): void {
-		const organization$ = this.store.selectedOrganization$;
-		organization$
+		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				tap((organization) => {
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
 					this.organization = organization;
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
-
-	ngOnDestroy(): void {}
 }
