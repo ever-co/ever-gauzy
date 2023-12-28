@@ -34,6 +34,14 @@
   resolved "https://registry.yarnpkg.com/@akveo/ng2-completer/-/ng2-completer-9.0.1.tgz#49d2914fb62b78cc6ae5aed861ea7fa4ed5863d1"
   integrity sha512-iACL0heOUmGV1GBKD3srwBJMFLZykld1MiTDvmbgEEXMhavp0UA45GdNsv7BBKI9XauuFKpOqHLlC+fT6DLGAQ==
 
+"@ali-hm/angular-tree-component@^12.0.5":
+  version "12.0.5"
+  resolved "https://registry.yarnpkg.com/@ali-hm/angular-tree-component/-/angular-tree-component-12.0.5.tgz#7418c7881eeea03e354d69329cdb55291ce8d899"
+  integrity sha512-RDSHESxwsCd29gnxSf4MV6V+Olub7YmaWgs/n6vlLSSlnbODzSqww4EUki1AMgyhpfIYXrJLg5bStd9qY1yWYw==
+  dependencies:
+    mobx "~4.14.1"
+    tslib "^2.0.0"
+
 "@ampproject/remapping@2.2.1", "@ampproject/remapping@^2.2.0":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@ampproject/remapping/-/remapping-2.2.1.tgz#99e8e11851128b8702cd57c33684f1d0f260b630"
@@ -3027,14 +3035,6 @@
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
-
-"@circlon/angular-tree-component@^11.0.4":
-  version "11.0.4"
-  resolved "https://registry.yarnpkg.com/@circlon/angular-tree-component/-/angular-tree-component-11.0.4.tgz#7fb5ca294331d45d4d2a01cb7afc7197a45aa905"
-  integrity sha512-Ck86mG6Z9eWG03RiOACDzrCjuzEDXU8rcEDi0aw0+Ku62x6ZY2mx8G0VX3CLEkS1BAXM2ef6luOIcoSKAKtDaA==
-  dependencies:
-    mobx "~4.14.1"
-    tslib "^2.0.0"
 
 "@cloudinary/angular-5.x@^1.5.3":
   version "1.5.3"
