@@ -14,13 +14,10 @@
 		<div class="totals">
 			<nb-card>
 				<div class="mx-auto p-2">
-					{{
-						'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_EXPENSES'
-							| translate
-					}}
+					{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_EXPENSES' | translate }}
 				</div>
 				<div class="mx-auto pb-2">
-					<b>{{ recordsData.expenseTotal }} {{ currency }}</b>
+					<b>{{ recordsData.expenseTotal }} {{ organization?.currency }}</b>
 				</div>
 			</nb-card>
 			<nb-card>
@@ -30,17 +27,15 @@
 					}}
 				</div>
 				<div class="mx-auto pb-2">
-					<b>{{ recordsData.incomeTotal }} {{ currency }}</b>
+					<b>{{ recordsData.incomeTotal }} {{ organization?.currency }}</b>
 				</div>
 			</nb-card>
 			<nb-card>
 				<div class="mx-auto p-2">
-					{{
-						'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_PROFIT' | translate
-					}}
+					{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_PROFIT' | translate }}
 				</div>
 				<div class="mx-auto pb-2">
-					<b>{{ recordsData.profit }} {{ currency }}</b>
+					<b>{{ recordsData.profit }} {{ organization?.currency }}</b>
 				</div>
 			</nb-card>
 		</div>
@@ -51,13 +46,9 @@
 				class="table"
 				[settings]="smartTableSettings"
 				[source]="smartTableSource"
-				#profileHistoryTable
 			></angular2-smart-table>
 		</div>
-		<div
-			*ngIf="pagination.totalItems > minItemPerPage"
-			class="pagination-container"
-		>
+		<div *ngIf="pagination.totalItems > minItemPerPage" class="pagination-container">
 			<ga-pagination
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"

@@ -13,16 +13,12 @@
 	<nb-card-body>
 		<div class="table-scroll-container">
 			<angular2-smart-table
+				style="cursor: pointer"
 				[settings]="smartTableSettings"
 				[source]="smartTableSource"
-				#recordHistoryTable
-			>
-			</angular2-smart-table>
+			></angular2-smart-table>
 		</div>
-		<div
-			*ngIf="pagination.totalItems > minItemPerPage"
-			class="pagination-container"
-		>
+		<div *ngIf="pagination.totalItems > minItemPerPage" class="pagination-container">
 			<ga-pagination
 				(selectedOption)="onUpdateOption($event)"
 				(selectedPage)="onPageChange($event)"

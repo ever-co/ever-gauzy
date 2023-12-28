@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 	selector: 'ngx-contact-links',
 	template: `
 		<div class="contact-links-container">
-			{{value|json}}
 			<ng-container *ngIf="value && value?.name">
 				<div
 					[nbTooltip]="value.name"

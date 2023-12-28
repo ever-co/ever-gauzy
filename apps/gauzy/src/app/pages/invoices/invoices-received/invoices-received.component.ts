@@ -83,16 +83,6 @@ export class InvoicesReceivedComponent
 		return this._isEstimate;
 	}
 
-	invoiceReceivedTable: Angular2SmartTableComponent;
-	@ViewChild('invoiceReceivedTable', { static: false }) set content(
-		content: Angular2SmartTableComponent
-	) {
-		if (content) {
-			this.invoiceReceivedTable = content;
-			this.onChangedSource();
-		}
-	}
-
 	constructor(
 		private readonly store: Store,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
@@ -136,9 +126,7 @@ export class InvoicesReceivedComponent
 		combineLatest([storeOrganization$, storeDateRange$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, dateRange]) => !!organization && !!dateRange
-				),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				distinctUntilChange(),
 				tap(([organization, dateRange]) => {
 					this.organization = organization as IOrganization;
@@ -151,26 +139,10 @@ export class InvoicesReceivedComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.invoices = [])),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invoiceReceivedTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -181,15 +153,9 @@ export class InvoicesReceivedComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout: ComponentLayoutStyleEnum) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.invoices = [])),
 				tap(() => this.invoices$.next(true)),
 				untilDestroyed(this)
@@ -478,21 +444,7 @@ export class InvoicesReceivedComponent
 	}
 
 	private _clearItem() {
-		this.selectInvoice({
-			isSelected: false,
-			data: null
-		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.invoiceReceivedTable && this.invoiceReceivedTable.grid) {
-			this.invoiceReceivedTable.grid.dataSet['willSelect'] = 'indexed';
-			this.invoiceReceivedTable.grid.dataSet.deselectAll();
-		}
+		this.selectInvoice({ isSelected: false, data: null });
 	}
 
 	getColumns(): string[] {

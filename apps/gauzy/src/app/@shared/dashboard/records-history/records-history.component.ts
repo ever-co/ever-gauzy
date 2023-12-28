@@ -1,22 +1,22 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { debounceTime, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { NbDialogRef } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	RecurringExpenseDefaultCategoriesEnum,
 	EmployeeStatisticsHistoryEnum as HistoryType,
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	DateViewComponent,
-	IncomeExpenseAmountComponent
-} from '../../table-components';
-import { debounceTime, tap } from 'rxjs/operators';
-import { ContactLinksComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
-import { Subject } from 'rxjs/internal/Subject';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { NbDialogRef } from '@nebular/theme';
+import {
+	ContactLinksComponent,
+	IncomeExpenseAmountComponent,
+	DateViewComponent
+} from '../../table-components';
+import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,9 +24,8 @@ import { NbDialogRef } from '@nebular/theme';
 	templateUrl: './records-history.component.html',
 	styleUrls: ['./records-history.component.scss']
 })
-export class RecordsHistoryComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit {
+export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
+
 	type: HistoryType;
 	recordsData: IEmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
@@ -36,25 +35,14 @@ export class RecordsHistoryComponent
 
 	smartTableSettings: Object = {
 		actions: false,
+		selectedRowIndex: -1,
 		editable: true,
 		noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.HISTORY_RECORD'),
 		pager: {
 			display: false,
-			perPage: this.pagination
-				? this.pagination.itemsPerPage
-				: this.minItemPerPage
+			perPage: this.pagination ? this.pagination.itemsPerPage : this.minItemPerPage
 		}
 	};
-
-	recordHistoryTable: Angular2SmartTableComponent;
-	@ViewChild('recordHistoryTable') set content(
-		content: Angular2SmartTableComponent
-	) {
-		if (content) {
-			this.recordHistoryTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -92,10 +80,8 @@ export class RecordsHistoryComponent
 			case HistoryType.BONUS_INCOME:
 			case HistoryType.NON_BONUS_INCOME:
 				viewModel = this.recordsData;
-				this.translatedType =
-					this.getTranslation('INCOME_PAGE.INCOME').toUpperCase();
+				this.translatedType = this.getTranslation('INCOME_PAGE.INCOME').toUpperCase();
 				break;
-
 			case HistoryType.EXPENSES:
 			case HistoryType.EXPENSES_WITHOUT_SALARY:
 				viewModel = this.recordsData.map(
@@ -118,18 +104,12 @@ export class RecordsHistoryComponent
 							recurring: isRecurring,
 							source,
 							splitExpense: splitExpense,
-							originalValue: splitExpense
-								? splitExpense.originalValue
-								: '',
-							employeeCount: splitExpense
-								? splitExpense.employeeCount
-								: ''
+							originalValue: splitExpense ? splitExpense.originalValue : '',
+							employeeCount: splitExpense ? splitExpense.employeeCount : ''
 						};
 					}
 				);
-				this.translatedType = this.getTranslation(
-					'EXPENSES_PAGE.EXPENSES'
-				).toUpperCase();
+				this.translatedType = this.getTranslation('EXPENSES_PAGE.EXPENSES').toUpperCase();
 				break;
 		}
 		const { activePage, itemsPerPage } = this.getPagination();
@@ -154,23 +134,40 @@ export class RecordsHistoryComponent
 							title: this.getTranslation('SM_TABLE.DATE'),
 							type: 'custom',
 							width: '30%',
+							filter: false,
 							renderComponent: DateViewComponent,
-							filter: false
+							componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+								instance.rowData = cell.getRow().getData();
+								instance.value = cell.getValue();
+							},
 						},
 						client: {
 							title: this.getTranslation('SM_TABLE.CONTACT'),
 							type: 'custom',
 							renderComponent: ContactLinksComponent,
-							valuePrepareFunction: (cell, row) => {
-								return row.client ? row.client : null;
-							}
+							valuePrepareFunction: (cell: Cell) => {
+								// Check if the cell is not falsy
+								if (cell) {
+									// Return the value of the cell
+									return cell['value'];
+								}
+								return null;
+							},
+							componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
+								instance.rowData = cell.getRow().getData();
+								instance.value = cell.getValue();
+							},
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
 							type: 'custom',
 							width: '15%',
 							filter: false,
-							renderComponent: IncomeExpenseAmountComponent
+							renderComponent: IncomeExpenseAmountComponent,
+							componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
+								instance.rowData = cell.getRow().getData();
+								instance.value = cell.getValue();
+							},
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -190,7 +187,7 @@ export class RecordsHistoryComponent
 							class: 'text-center',
 							filter: false,
 							width: '8%',
-							valuePrepareFunction: (_, e) =>
+							valuePrepareFunction: (_) =>
 								`<div class='text-center'>
 								${_ === 'org'
 									? '<i class="fas fa-building"></i>'
@@ -203,8 +200,12 @@ export class RecordsHistoryComponent
 							title: this.getTranslation('SM_TABLE.DATE'),
 							type: 'custom',
 							width: '20%',
+							filter: false,
 							renderComponent: DateViewComponent,
-							filter: false
+							componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+								instance.rowData = cell.getRow().getData();
+								instance.value = cell.getValue();
+							},
 						},
 						vendorName: {
 							title: this.getTranslation('SM_TABLE.VENDOR'),
@@ -213,15 +214,18 @@ export class RecordsHistoryComponent
 						categoryName: {
 							title: this.getTranslation('SM_TABLE.CATEGORY'),
 							type: 'html',
-							valuePrepareFunction: (_, e) =>
-								`${this.getCategoryName(_)}`,
-							filter: false
+							filter: false,
+							valuePrepareFunction: (_) => this.getCategoryName(_),
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
 							type: 'custom',
 							width: '15%',
-							renderComponent: IncomeExpenseAmountComponent
+							renderComponent: IncomeExpenseAmountComponent,
+							componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
+								instance.rowData = cell.getRow().getData();
+								instance.value = cell.getValue();
+							},
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -233,12 +237,16 @@ export class RecordsHistoryComponent
 		}
 	}
 
-	getCategoryName(categoryName: string) {
-		return categoryName in RecurringExpenseDefaultCategoriesEnum
-			? this.getTranslation(
-				`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			)
-			: categoryName;
+	/**
+	 * Gets the translated category name if it is one of the default categories;
+	 * otherwise, returns the original category name.
+	 *
+	 * @param category - The category name to be translated.
+	 * @returns The translated category name or the original category name if not a default category.
+	 */
+	getCategoryName(category: string): string {
+		const isDefaultCategory = category in RecurringExpenseDefaultCategoriesEnum;
+		return isDefaultCategory ? this.getTranslation(`EXPENSES_PAGE.DEFAULT_CATEGORY.${category}`) : category;
 	}
 
 	_applyTranslationOnSmartTable() {
@@ -248,34 +256,6 @@ export class RecordsHistoryComponent
 				this.loadSettingsSmartTable();
 				this._populateSmartTable();
 			});
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.recordHistoryTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Clear selected item
-	 */
-	clearItem() {
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.recordHistoryTable && this.recordHistoryTable.grid) {
-			this.recordHistoryTable.grid.dataSet['willSelect'] = 'indexed';
-			this.recordHistoryTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	close() {

@@ -1,53 +1,42 @@
-import { OnInit, OnDestroy, Component, ViewChild } from '@angular/core';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
-import { DateViewComponent } from '../../table-components/date-view/date-view.component';
-import { Store } from '../../../@core/services/store.service';
-import { ExpenseTableComponent } from './table-components/expense-table.component';
-import { IncomeTableComponent } from './table-components/income-table.component';
-import { IEmployeeStatisticsHistory } from '@gauzy/contracts';
+import { OnInit, Component } from '@angular/core';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
-import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
-import { Subject } from 'rxjs/internal/Subject';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
+import { IEmployeeStatisticsHistory, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { Store } from '../../../@core/services/store.service';
+import { DateViewComponent } from '../../table-components/date-view/date-view.component';
+import { ExpenseTableComponent } from './table-components/expense-table.component';
+import { IncomeTableComponent } from './table-components/income-table.component';
+import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
+	selector: 'ga-profit-history-selector',
 	templateUrl: './profit-history.component.html',
 	styleUrls: ['./profit-history.component.scss']
 })
-export class ProfitHistoryComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-	smartTableSettings;
-	smartTableSource = new LocalDataSource();
-	recordsData: {
+export class ProfitHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
+
+	public organization: IOrganization;
+	public smartTableSettings: object;
+	public smartTableSource = new LocalDataSource();
+	public recordsData: {
 		incomes: IEmployeeStatisticsHistory[];
 		expenses: IEmployeeStatisticsHistory[];
 		incomeTotal: number;
 		expenseTotal: number;
 		profit: number;
 	};
-	loading: boolean;
-
-	currency: string;
+	public loading: boolean = false;
 	private _profitHistory$: Subject<any> = this.subject$;
 
-	profileHistoryTable: Angular2SmartTableComponent;
-	@ViewChild('profileHistoryTable') set content(
-		content: Angular2SmartTableComponent
-	) {
-		if (content) {
-			this.profileHistoryTable = content;
-			this.onChangedSource();
-		}
-	}
-
 	constructor(
-		private store: Store,
-		readonly translateService: TranslateService,
+		private readonly store: Store,
+		public readonly translateService: TranslateService,
 		private readonly dialogRef: NbDialogRef<ProfitHistoryComponent>
 	) {
 		super(translateService);
@@ -74,6 +63,18 @@ export class ProfitHistoryComponent
 		this._populateSmartTable();
 	}
 
+	ngAfterViewInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
 	private _populateSmartTable() {
 		this.loading = true;
 		const incomeList = this.recordsData.incomes.map((inc) => {
@@ -93,7 +94,6 @@ export class ProfitHistoryComponent
 			};
 		});
 		const combinedTableData = [...incomeList, ...expenseList];
-		this.currency = this.store.selectedOrganization.currency;
 		const { activePage, itemsPerPage } = this.getPagination();
 		this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		this.smartTableSource.load(combinedTableData);
@@ -106,75 +106,53 @@ export class ProfitHistoryComponent
 
 	loadSettingsSmartTable() {
 		this.smartTableSettings = {
+			pager: {
+				display: false,
+				perPage: this.pagination ? this.pagination.itemsPerPage : this.minItemPerPage
+			},
 			actions: false,
 			mode: 'external',
+			selectedRowIndex: -1,
 			editable: true,
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.PROFIT_HISTORY'
-			),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROFIT_HISTORY'),
 			columns: {
 				valueDate: {
-					title: this.getTranslation(
-						'DASHBOARD_PAGE.PROFIT_HISTORY.DATE'
-					),
+					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.DATE'),
 					type: 'custom',
 					width: '25%',
 					sortDirection: 'desc',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				expense: {
-					title: this.getTranslation(
-						'DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'
-					),
+					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'),
 					type: 'custom',
-					renderComponent: ExpenseTableComponent
+					renderComponent: ExpenseTableComponent,
+					componentInitFunction: (instance: ExpenseTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				income: {
-					title: this.getTranslation(
-						'DASHBOARD_PAGE.PROFIT_HISTORY.INCOME'
-					),
+					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.INCOME'),
 					type: 'custom',
-					renderComponent: IncomeTableComponent
+					renderComponent: IncomeTableComponent,
+					componentInitFunction: (instance: IncomeTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				notes: {
-					title: this.getTranslation(
-						'DASHBOARD_PAGE.PROFIT_HISTORY.DESCRIPTION'
-					),
+					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.DESCRIPTION'),
 					type: 'string'
 				}
-			},
-			pager: {
-				display: false,
-				perPage: this.pagination
-					? this.pagination.itemsPerPage
-					: this.minItemPerPage
 			}
 		};
 	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.profileHistoryTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.profileHistoryTable && this.profileHistoryTable.grid) {
-			this.profileHistoryTable.grid.dataSet['willSelect'] = 'indexed';
-			this.profileHistoryTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy() { }
 
 	public close() {
 		this.dialogRef.close();
