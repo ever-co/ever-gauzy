@@ -24,13 +24,11 @@
 		<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE; else gridLayout">
 			<div class="table-scroll-container">
 				<angular2-smart-table
+					style="cursor: pointer"
 					(userRowSelect)="selectProject($event)"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
-					style="cursor: pointer"
-					#projectsTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container

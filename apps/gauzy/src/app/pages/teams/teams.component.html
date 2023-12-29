@@ -26,11 +26,10 @@
 		>
 			<div class="table-scroll-container">
 				<angular2-smart-table
+					style="cursor: pointer"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectTeam($event)"
-					style="cursor: pointer"
-					#teamTable
 				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">

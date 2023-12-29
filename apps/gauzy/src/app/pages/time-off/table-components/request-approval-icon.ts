@@ -5,8 +5,6 @@ import { Component, Input } from '@angular/core';
 	styleUrls: ['./request-approval-icon.scss']
 })
 export class RequestApprovalIcon {
-	@Input()
-	rowData: any;
-
-	value: string | number;
+	@Input() rowData: any;
+	@Input() value: string | number;
 }

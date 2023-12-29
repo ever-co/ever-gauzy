@@ -28,13 +28,11 @@
 		>
 			<div class="table-scroll-container custom-table">
 				<angular2-smart-table
+					style="cursor: pointer"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectTimeOffPolicy($event)"
-					style="cursor: pointer"
-					#timeOffPolicySettingsTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 				<div class="pagination-container">

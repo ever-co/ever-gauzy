@@ -23,7 +23,7 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -88,14 +88,6 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		state: false
 	};
 	private _refresh$: Subject<any> = new Subject();
-
-	teamTable: Angular2SmartTableComponent;
-	@ViewChild('teamTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.teamTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -475,6 +467,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TEAM'),
 			pager: {
 				display: false,
@@ -497,22 +490,34 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'
 					),
 					type: 'custom',
+					filter: false,
 					renderComponent: EmployeeWithLinksComponent,
-					filter: false
+					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					}
 				},
 				members: {
 					title: this.getTranslation(
 						'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'
 					),
 					type: 'custom',
+					filter: false,
 					renderComponent: EmployeeWithLinksComponent,
-					filter: false
+					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					}
 				},
 				notes: {
 					title: this.getTranslation('MENU.TAGS'),
 					type: 'custom',
 					class: 'align-row',
 					renderComponent: TagsOnlyComponent,
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
@@ -539,18 +544,6 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.teamTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	clearItem() {
@@ -560,18 +553,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent
 		};
 		this.selectedTeam = null;
 		this.disableButton = true;
-		this.deselectAll();
 		this.addEditDialogRef?.close();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.teamTable && this.teamTable.grid) {
-			this.teamTable.grid.dataSet['willSelect'] = 'indexed';
-			this.teamTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	openDialog(template: TemplateRef<any>, isEditTemplate: boolean) {
