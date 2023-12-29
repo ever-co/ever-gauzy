@@ -37748,7 +37748,7 @@ webpack@5.88.2:
     watchpack "^2.4.0"
     webpack-sources "^3.2.3"
 
-webpack@5.89.0, webpack@^5, webpack@^5.58.1, webpack@^5.65.0, webpack@^5.75.0:
+webpack@5.89.0, webpack@^5, webpack@^5.58.1, webpack@^5.65.0, webpack@^5.80.0:
   version "5.89.0"
   resolved "https://registry.yarnpkg.com/webpack/-/webpack-5.89.0.tgz#56b8bf9a34356e93a6625770006490bf3a7f32dc"
   integrity sha512-qyfIC10pOr70V+jkmud8tMfajraGCZMBWJtrmuBymQKCrLTRejBI8STDp1MCyZu/QTdZSeacCQYpYNQVOzX5kw==
