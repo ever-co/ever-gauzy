@@ -4,8 +4,7 @@ import { Component, Input } from '@angular/core';
 	templateUrl: './employee-average-income.component.html'
 })
 export class EmployeeAverageIncomeComponent {
-	@Input()
-	rowData: any;
 
-	value: string | number;
+	@Input() rowData: any;
+	@Input() value: string | number;
 }

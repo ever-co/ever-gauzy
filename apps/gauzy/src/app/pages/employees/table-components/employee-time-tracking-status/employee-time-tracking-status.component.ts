@@ -7,8 +7,7 @@ import { Component, Input } from '@angular/core';
 	styleUrls: ['./../employee-work-status/employee-work-status.component.scss']
 })
 export class EmployeeTimeTrackingStatusComponent {
-	@Input()
-	rowData: any;
+	@Input() rowData: any;
 
 	value: string | number;
 }

@@ -29,14 +29,11 @@
 			>
 				<div class="table-scroll-container custom-table">
 					<angular2-smart-table
-						class="tags-table"
+						style="cursor: pointer"
 						(userRowSelect)="selectApprovalPolicy($event)"
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
-						style="cursor: pointer"
-						#approvalPolicyTable
-					>
-					</angular2-smart-table>
+					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">
 					<ng-container *ngIf="pagination.totalItems > minItemPerPage">

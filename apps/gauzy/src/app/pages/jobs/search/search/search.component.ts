@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
@@ -16,13 +16,14 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum,
 	JobSearchTabsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,
@@ -94,13 +95,6 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				validators: [AtLeastOneFieldValidator]
 			}
 		);
-	}
-
-	table: Angular2SmartTableComponent;
-	@ViewChild('table') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.table = content;
-		}
 	}
 
 	constructor(
@@ -508,13 +502,15 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							type: 'custom',
 							sort: false,
 							renderComponent: EmployeeLinksComponent,
-							valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-								return {
-									name: row.employee && row.employee.user ? row.employee.user.name : null,
-									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
-									id: row.employee ? row.employee.id : null
-								};
-							}
+							valuePrepareFunction: (value: IEmployee) => ({
+								name: value && value?.user ? value?.user?.name : null,
+								imageUrl: value && value?.user ? value?.user?.imageUrl : null,
+								id: value ? value?.id : null
+							}),
+							componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+								instance.rowData = cell.getRow().getData();
+								instance.value = cell.getRawValue();
+							},
 						}
 					}
 					: {}),
@@ -522,10 +518,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					width: '85%',
 					type: 'custom',
-					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
 					sort: false,
-					onComponentInitFunction(instance: any) {
+					renderComponent: JobTitleDescriptionDetailsComponent,
+					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {
+						instance.rowData = cell.getRow().getData();
+						//
 						instance.hideJobEvent.subscribe((event: IVisibilityJobPostInput) => {
 							self.onCustomEvents({ action: 'hide', data: event });
 						});

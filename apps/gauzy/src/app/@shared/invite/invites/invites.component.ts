@@ -22,7 +22,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
@@ -52,12 +52,12 @@ import { ServerDataSource } from '../../../@core/utils/smart-table';
 export class InvitesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	InviteStatusEnum: typeof InviteStatusEnum = InviteStatusEnum;
+	public InviteStatusEnum: typeof InviteStatusEnum = InviteStatusEnum;
 
 	/*
 	* Getter & Setter for InvitationTypeEnum
 	*/
-	_invitationType: InvitationTypeEnum;
+	private _invitationType: InvitationTypeEnum;
 	get invitationType(): InvitationTypeEnum {
 		return this._invitationType;
 	}
@@ -65,27 +65,18 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 		this._invitationType = value;
 	}
 
-	loading: boolean = false;
-	disableButton: boolean = true;
-	settingsSmartTable: object;
-	smartTableSource: ServerDataSource;
-	selectedInvite: IInviteViewModel;
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	invites: IInviteViewModel[] = [];
-
-	invites$: Subject<any> = new Subject();
+	public loading: boolean = false;
+	public disableButton: boolean = true;
+	public settingsSmartTable: object;
+	public smartTableSource: ServerDataSource;
+	public selectedInvite: IInviteViewModel;
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public invites: IInviteViewModel[] = [];
+	public invites$: Subject<any> = new Subject();
 	public organization: IOrganization;
 	private _refresh$: Subject<any> = new Subject();
-
-	invitesTable: Angular2SmartTableComponent;
-	@ViewChild('invitesTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.invitesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -184,18 +175,6 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				tap(() => (this.invites = [])),
 				tap(() => this.invites$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invitesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
 			)
 			.subscribe();
 	}
@@ -395,20 +374,29 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				projects: {
 					title: this.getTranslation('SM_TABLE.PROJECTS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ProjectNamesComponent,
-					filter: false
+					componentInitFunction: (instance: ProjectNamesComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				contact: {
 					title: this.getTranslation('SM_TABLE.CONTACTS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ClientNamesComponent,
-					filter: false
+					componentInitFunction: (instance: ClientNamesComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				departments: {
 					title: this.getTranslation('SM_TABLE.DEPARTMENTS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: DepartmentNamesComponent,
-					filter: false
+					componentInitFunction: (instance: DepartmentNamesComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				fullName: {
 					title: this.getTranslation('SM_TABLE.INVITED_BY'),
@@ -417,8 +405,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 				createdDate: {
 					title: this.getTranslation('SM_TABLE.CREATED'),
 					type: 'custom',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				expireDate: {
 					title: this.getTranslation('SM_TABLE.EXPIRE_DATE'),
@@ -586,16 +578,5 @@ export class InvitesComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.invitesTable && this.invitesTable.grid) {
-			this.invitesTable.grid.dataSet['willSelect'] = 'indexed';
-			this.invitesTable.grid.dataSet.deselectAll();
-		}
 	}
 }
