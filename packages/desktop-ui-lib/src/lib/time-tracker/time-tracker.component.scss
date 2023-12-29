@@ -386,7 +386,7 @@ nb-card-body {
 
 ::ng-deep
 	.nb-theme-default
-	ng2-smart-table
+	angular2-smart-table
 	nav.ng2-smart-pagination-nav
 	.pagination
 	li
@@ -473,12 +473,12 @@ $height: 42px;
 		}
 	}
 
-	::ng-deep ng2-smart-table tbody tr.selected,
-	ng2-smart-table tbody tr:hover {
+	::ng-deep angular2-smart-table tbody tr.selected,
+	angular2-smart-table tbody tr:hover {
 		background: var(--smart-table-bg-active) !important;
 	}
 
-	::ng-deep ng2-smart-table tbody tr.selected {
+	::ng-deep angular2-smart-table tbody tr.selected {
 		box-shadow: 12.5px 0 0 -5px rgba(126, 126, 143, 0.05) inset !important;
 	}
 
@@ -632,7 +632,7 @@ img {
 }
 
 ::ng-deep {
-	ng2-smart-table-pager {
+	angular2-smart-table-pager {
 		display: none !important;
 	}
 }

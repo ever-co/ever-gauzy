@@ -1,22 +1,22 @@
 @import 'gauzy/_gauzy-table';
 @import 'gauzy/_gauzy-dialogs';
 
-:host ::ng-deep ng2-smart-table .ng2-smart-actions-title a {
+:host ::ng-deep angular2-smart-table .ng2-smart-actions-title a {
   background-color: #00d68f !important;
   transform: scale(0.9);
 }
 
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a {
+:host ::ng-deep angular2-smart-table .ng2-smart-actions a {
   transform: scale(0.6);
   border-radius: 0.5rem;
 }
 
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(1) {
+:host ::ng-deep angular2-smart-table .ng2-smart-actions a:nth-child(1) {
   background-color: #00d68f !important;
   color: white;
 }
 
-:host ::ng-deep ng2-smart-table .ng2-smart-actions a:nth-child(2) {
+:host ::ng-deep angular2-smart-table .ng2-smart-actions a:nth-child(2) {
   background-color: white !important;
   color: #ff3d71;
   box-shadow: var(--gauzy-shadow);
@@ -34,7 +34,7 @@
   }
 }
 
-:host ::ng-deep ng2-smart-table .ng2-smart-actions {
+:host ::ng-deep angular2-smart-table .ng2-smart-actions {
   width: 5%;
 }
 

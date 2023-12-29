@@ -146,7 +146,7 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 	 */
 	protected scrollTop() {
 		try {
-			const table = document.querySelector('ng2-smart-table > table');
+			const table = document.querySelector('angular2-smart-table > table');
 			if (!!table) {
 				table.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}

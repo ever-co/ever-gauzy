@@ -1,4 +1,4 @@
-/* It's a pagination component that works with the ng2-smart-table component */
+/* It's a pagination component that works with the angular2-smart-table component */
 import {
 	Component,
 	EventEmitter,

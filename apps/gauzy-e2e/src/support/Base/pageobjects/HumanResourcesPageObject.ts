@@ -6,6 +6,6 @@ export const HumanResourcesPage = {
 	dropdownOptionCss: '.option-list nb-option',
 	popupHeaderCss: 'div.records > h5',
 	popupProfitHeaderCss: 'div.profit-history > h5',
-	popupTableHederCss: 'div.ng2-smart-title > ng2-smart-table-title',
+	popupTableHederCss: 'div.ng2-smart-title > angular2-smart-table-title',
 	cardBodyCss: 'nb-layout-column.ng-star-inserted'
 };
