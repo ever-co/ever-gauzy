@@ -44,12 +44,21 @@ export class EmployeeLinksComponent {
 
 	@Input() isNavigation: boolean = true;
 
-	constructor(private readonly _router: Router) {}
+	constructor(
+		private readonly _router: Router
+	) { }
 
-	navigateToEmployee() {
+	/**
+	 * Navigates to the employee edit page if the necessary conditions are met.
+	 */
+	navigateToEmployee(): void {
+		// Check if either 'value' or 'isNavigation' is falsy
 		if (!this.value || !this.isNavigation) {
+			// If any condition is not met, return without navigating
 			return;
 		}
+
+		// Navigate to the employee edit page with the ID from 'this.value.id'
 		this._router.navigate([`/pages/employees/edit`, this.value.id]);
 	}
 }

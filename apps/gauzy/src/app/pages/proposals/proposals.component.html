@@ -56,12 +56,10 @@
 		>
 			<div class="table-scroll-container custom-table ">
 				<angular2-smart-table
-					class="tags-table"
+					style="cursor: pointer"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectProposal($event)"
-					style="cursor: pointer"
-					#proposalsTable
 				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
@@ -73,8 +71,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
