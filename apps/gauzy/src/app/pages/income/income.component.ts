@@ -495,8 +495,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			}
 		});
 
-		confirmationDialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (result) => {
-			if (result) {
+		confirmationDialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (dialogResult) => {
+			if (dialogResult) {
 				try {
 					const { id: organizationId, tenantId } = this.organization;
 					const { id, employee, employeeId } = this.selectedIncome;

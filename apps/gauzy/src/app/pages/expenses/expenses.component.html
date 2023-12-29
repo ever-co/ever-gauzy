@@ -30,17 +30,13 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 			<div class="table-scroll-container">
 				<angular2-smart-table
-					class="expense-table"
+					style="cursor: pointer"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectExpense($event)"
-					style="cursor: pointer"
-					#expensesTable
 				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
