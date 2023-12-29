@@ -23,12 +23,10 @@
 		>
 			<div class="table-scroll-container">
 				<angular2-smart-table
-					class="payments-table"
+					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
-					style="cursor: pointer"
 					(userRowSelect)="selectPayment($event)"
-					#paymentsTable
 				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">

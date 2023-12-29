@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
@@ -18,7 +18,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -92,7 +92,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
 
-		// Combine three observables into one observable using combineLatest
+		// Combine all observables into one observable using combineLatest
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
@@ -124,7 +124,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		// Subscribe to the combined latest values from the four observables
+		// Subscribe to the combined latest values from the all observables
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, selectedProject$])
 			.pipe(
 				// Introduce a debounce time of 300 milliseconds
@@ -242,6 +242,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			selectedRowIndex: -1,
 			editable: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EXPENSE'),
 			pager: {

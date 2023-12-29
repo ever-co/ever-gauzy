@@ -3,6 +3,7 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { PaymentMethodEnum } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-payment-method-filter',
     template: `
         <ng-select
             [clearable]="true"
@@ -34,7 +35,8 @@ export class PaymentMethodFilterComponent extends DefaultFilter implements OnCha
      *
      * @param event
      */
-    onChange(event) {
+    onChange(filter: PaymentMethodEnum) {
+        console.log({ filter });
         // this.column.filterFunction(event);
     }
 }
