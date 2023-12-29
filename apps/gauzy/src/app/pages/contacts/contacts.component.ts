@@ -16,7 +16,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
@@ -44,6 +44,7 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	styleUrls: ['./contacts.component.scss']
 })
 export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -58,9 +59,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	loading = false;
 	smartTableSource: ServerDataSource;
 
-	contacts$: Subject<any> = this.subject$;
+	public contacts$: Subject<any> = this.subject$;
 	public organization: IOrganization;
-	selectedEmployeeId: string;
+	public selectedEmployeeId: string;
 	private _refresh$: Subject<any> = new Subject();
 
 	/*
@@ -72,14 +73,6 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	}
 	@Input() set contactType(value: string) {
 		this._contactType = value;
-	}
-
-	contactsTable: Angular2SmartTableComponent;
-	@ViewChild('contactsTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.contactsTable = content;
-			this.onChangedSource();
-		}
 	}
 
 	/*
@@ -211,6 +204,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -219,10 +213,14 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
+					width: '15%',
 					type: 'custom',
 					class: 'align-row',
 					renderComponent: ContactWithTagsComponent,
-					width: '15%',
+					componentInitFunction: (instance: ContactWithTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -234,8 +232,12 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: EmployeeWithLinksComponent,
-					filter: false
+					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 				},
 				primaryPhone: {
 					title: this.getTranslation('CONTACTS_PAGE.PHONE'),
@@ -245,10 +247,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 						component: InputFilterComponent
 					},
 					filterFunction: (primaryPhone: string) => {
-						this.setFilter({
-							field: 'primaryPhone',
-							search: primaryPhone
-						});
+						this.setFilter({ field: 'primaryPhone', search: primaryPhone });
 					}
 				},
 				primaryEmail: {
@@ -268,16 +267,18 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ProjectComponent,
-					filter: false
+					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
-					valuePrepareFunction: (value, item) => {
-						return this.getCountry(item);
-					},
-					filter: false
+					filter: false,
+					valuePrepareFunction: (value: ICountry['isoCode']) => this.getCountry(value),
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
@@ -576,18 +577,6 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.contactsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	clearItem() {
@@ -595,21 +584,16 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.contactsTable && this.contactsTable.grid) {
-			this.contactsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.contactsTable.grid.dataSet.deselectAll();
-		}
 	}
 
-	getCountry(row) {
-		const find: ICountry = this.countries.find((item) => item.isoCode === row.country);
-		return find ? find.country : row.country;
+	/**
+	 * Returns the country name based on the ISO code.
+	 * @param isoCode - ISO code of the country.
+	 * @returns The country name or null if not found.
+	 */
+	getCountry(isoCode: ICountry['isoCode']): string | null {
+		const foundCountry = this.countries.find((item) => item.isoCode === isoCode);
+		return foundCountry?.country || null;
 	}
 
 	ngOnDestroy(): void { }

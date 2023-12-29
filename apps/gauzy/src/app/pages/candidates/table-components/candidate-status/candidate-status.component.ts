@@ -5,8 +5,6 @@ import { Component, Input } from '@angular/core';
 	styleUrls: ['./candidate-status.component.scss']
 })
 export class CandidateStatusComponent {
-	@Input()
-	rowData: any;
-
-	value: string | number;
+	@Input() rowData: any;
+	@Input() value: string | number;
 }

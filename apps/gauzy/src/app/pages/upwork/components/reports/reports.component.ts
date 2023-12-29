@@ -9,34 +9,34 @@ import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/internal/operators/tap';
 import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import { IncomeExpenseAmountComponent } from 'apps/gauzy/src/app/@shared/table-components/income-amount/income-amount.component';
-import { DateViewComponent } from 'apps/gauzy/src/app/@shared/table-components/date-view/date-view.component';
-import { UpworkStoreService } from '../../../../@core/services/upwork-store.service';
+import { Cell } from 'angular2-smart-table';
 import {
 	IncomeTypeEnum,
 	IOrganization,
 	IUpworkDateRange
 } from '@gauzy/contracts';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { IncomeExpenseAmountComponent } from './../../../../@shared/table-components/income-amount/income-amount.component';
+import { DateViewComponent } from './../../../../@shared/table-components/date-view/date-view.component';
+import { Store, UpworkStoreService } from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-reports',
 	templateUrl: './reports.component.html',
 	styleUrls: ['./reports.component.scss']
 })
-export class ReportsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-	reports$: Observable<any> = this._upworkStoreService.reports$;
-	settingsSmartTable: object;
-	today: Date = new Date();
-	defaultDateRange$ = this._upworkStoreService.dateRangeActivity$;
-	displayDate: any;
-	updateReports$: Subject<any> = new Subject();
-	private _ngDestroy$: Subject<void> = new Subject();
-	organization: IOrganization;
+export class ReportsComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+
+	public reports$: Observable<any> = this._upworkStoreService.reports$;
+	public settingsSmartTable: object;
+	public today: Date = new Date();
+	public defaultDateRange$ = this._upworkStoreService.dateRangeActivity$;
+	public displayDate: any;
+	public updateReports$: Subject<any> = new Subject();
+	public organization: IOrganization;
 
 	private _selectedDateRange: IUpworkDateRange;
 	public get selectedDateRange(): IUpworkDateRange {
@@ -48,7 +48,7 @@ export class ReportsComponent
 
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
-		public translateService: TranslateService,
+		public readonly translateService: TranslateService,
 		private readonly _upworkStoreService: UpworkStoreService,
 		private readonly _storeService: Store
 	) {
@@ -60,24 +60,22 @@ export class ReportsComponent
 		this._applyTranslationOnSmartTable();
 		this._storeService.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
-				takeUntil(this._ngDestroy$)
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => this.organization = organization),
+				tap(() => this._setDefaultRange()),
+				untilDestroyed(this)
 			)
-			.subscribe((organization: IOrganization) => {
-				this.organization = organization;
-				this._setDefaultRange();
-			});
+			.subscribe();
 		this.updateReports$
 			.pipe(
 				tap(() => this._getReport()),
-				takeUntil(this._ngDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
+
 	}
 
 	ngAfterViewInit(): void {
@@ -87,7 +85,7 @@ export class ReportsComponent
 	private _getReport(): void {
 		this._upworkStoreService
 			.loadReports(this.organization)
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe();
 	}
 
@@ -101,8 +99,11 @@ export class ReportsComponent
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '10%',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				type: {
 					title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
@@ -112,9 +113,7 @@ export class ReportsComponent
 						if (item.hasOwnProperty('category')) {
 							return item.category ? item.category.name : null;
 						}
-						return this.getTranslation(
-							`INTEGRATIONS.UPWORK_PAGE.${IncomeTypeEnum.HOURLY.toUpperCase()}`
-						);
+						return this.getTranslation(`INTEGRATIONS.UPWORK_PAGE.${IncomeTypeEnum.HOURLY.toUpperCase()}`);
 					}
 				},
 				clientName: {
@@ -132,7 +131,11 @@ export class ReportsComponent
 					type: 'custom',
 					width: '15%',
 					filter: false,
-					renderComponent: IncomeExpenseAmountComponent
+					renderComponent: IncomeExpenseAmountComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -170,10 +173,11 @@ export class ReportsComponent
 
 	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this._loadSettingsSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSettingsSmartTable()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/*
@@ -182,18 +186,8 @@ export class ReportsComponent
 	private _setDefaultRange(): void {
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
 			debounceTime(100),
-			tap(
-				(dateRange) => (
-					(this.selectedDateRange = dateRange),
-					this.updateReports$.next(true)
-				)
-			),
-			tap(
-				(dateRange) =>
-					(this.displayDate = `${moment(dateRange.start).format(
-						'MMM D, YYYY'
-					)} - ${moment(dateRange.end).format('MMM D, YYYY')}`)
-			)
+			tap((dateRange) => ((this.selectedDateRange = dateRange), this.updateReports$.next(true))),
+			tap((dateRange) => (this.displayDate = `${moment(dateRange.start).format('MMM D, YYYY')} - ${moment(dateRange.end).format('MMM D, YYYY')}`))
 		);
 	}
 

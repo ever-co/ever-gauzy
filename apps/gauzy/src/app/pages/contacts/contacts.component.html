@@ -22,13 +22,9 @@
 				class="w-100"
 				[contactType]="contactType"
 				[organizationContact]="selectedOrganizationContact"
-				[projectsWithoutOrganizationContacts]="
-					projectsWithoutOrganizationContacts
-				"
+				[projectsWithoutOrganizationContacts]=" projectsWithoutOrganizationContacts "
 				(canceled)="cancel()"
-				(addOrEditOrganizationContact)="
-					addOrEditOrganizationContact($event)
-				"
+				(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 			></ga-contact-mutation>
 		</ng-container>
 		<ng-template #layout>
@@ -38,12 +34,10 @@
 			>
 				<div class="table-scroll-container">
 					<angular2-smart-table
-						class="w-100"
+						style="cursor: pointer"
 						(userRowSelect)="selectContact($event)"
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
-						style="cursor: pointer"
-						#contactsTable
 					></angular2-smart-table>
 				</div>
 				<div class="pagination-container align-self-end">

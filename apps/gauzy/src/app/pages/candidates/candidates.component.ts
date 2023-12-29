@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
@@ -68,16 +68,8 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 	candidates: ICandidateViewModel[] = [];
 
 	public organization: IOrganization;
-	candidates$: Subject<any> = this.subject$;
+	public candidates$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	candidatesTable: Angular2SmartTableComponent;
-	@ViewChild('candidatesTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.candidatesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly candidatesService: CandidatesService,
@@ -172,18 +164,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 				tap(() => (this.candidates = [])),
 				tap(() => this.candidates$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.candidatesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this._clearItem())
 			)
 			.subscribe();
 	}
@@ -410,6 +390,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -419,8 +400,12 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
 					class: 'align-row',
+					renderComponent: PictureNameTagsComponent,
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -446,41 +431,61 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
+					filter: false,
 					renderComponent: CandidateSourceComponent,
-					filter: false
+					componentInitFunction: (instance: CandidateSourceComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				appliedDate: {
 					title: this.getTranslation('SM_TABLE.APPLIED_DATE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					}
 				},
 				hiredDate: {
 					title: this.getTranslation('SM_TABLE.HIRED_DATE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					}
 				},
 				rejectDate: {
 					title: this.getTranslation('SM_TABLE.REJECTED_DATE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					width: '5%',
+					filter: false,
 					renderComponent: TagsOnlyComponent,
-					filter: false
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					class: 'text-center',
 					width: '5%',
+					filter: false,
 					renderComponent: CandidateStatusComponent,
-					filter: false
+					componentInitFunction: (instance: CandidateStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				}
 			}
 		};
@@ -588,17 +593,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.candidatesTable && this.candidatesTable.grid) {
-			this.candidatesTable.grid.dataSet['willSelect'] = 'indexed';
-			this.candidatesTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy() { }
