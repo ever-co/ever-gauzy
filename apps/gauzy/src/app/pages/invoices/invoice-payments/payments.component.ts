@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,10 +6,10 @@ import {
 	IInvoice,
 	IPayment,
 	InvoiceStatusTypesEnum,
-	ISelectedPayment,
-	IOrganization
+	IOrganization,
+	IUser
 } from '@gauzy/contracts';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -29,32 +29,22 @@ import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@share
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class InvoicePaymentsComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class InvoicePaymentsComponent extends TranslationBaseComponent implements OnInit {
 
-	invoiceId: string;
-	invoice: IInvoice;
-	payments: IPayment[];
-	totalPaid = 0;
-	leftToPay = 0;
-	barWidth = 0;
-	settingsSmartTable: object;
-	smartTableSource = new LocalDataSource();
-	selectedPayment: IPayment;
-	disableButton = true;
-	loading: boolean;
-	isDisabled: boolean;
-	organization: IOrganization;
-	subject$: Subject<any> = new Subject();
-
-	paymentsTable: Angular2SmartTableComponent;
-	@ViewChild('paymentsTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.paymentsTable = content;
-			this.onChangedSource();
-		}
-	}
+	public invoiceId: string;
+	public invoice: IInvoice;
+	public payments: IPayment[] = [];
+	public totalPaid = 0;
+	public leftToPay = 0;
+	public barWidth = 0;
+	public settingsSmartTable: object;
+	public smartTableSource = new LocalDataSource();
+	public selectedPayment: IPayment;
+	public disableButton = true;
+	public loading: boolean;
+	public isDisabled: boolean;
+	public organization: IOrganization = this.store.selectedOrganization;
+	public subject$: Subject<any> = new Subject();
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -74,29 +64,52 @@ export class InvoicePaymentsComponent
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 
+		// Subscribe to changes in the subject$ observable stream
 		this.subject$
 			.pipe(
+				// Debounce the observable to wait for 200 milliseconds of inactivity
 				debounceTime(200),
+				// Perform the 'getInvoice' action when the observable emits a value
 				tap(() => this.getInvoice()),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
+		// Subscribe to changes in the route's paramMap
 		this.route.paramMap
 			.pipe(
+				// Filter out cases where 'id' parameter is present in the paramMap
 				filter((params) => !!params && !!params.get('id')),
+				// Tap into the paramMap to assign the 'id' to the 'invoiceId' property
 				tap((params) => this.invoiceId = params.get('id')),
+				// Trigger the subject$ observable when the paramMap changes
 				tap(() => this.subject$.next(true)),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
-	async getInvoice() {
-		this.loading = true;
+	/**
+	 * Fetches invoice details, including invoice items, tags, organizations, contacts,
+	 * payments, and their associated details. Loads payments into the smart table source
+	 * and calculates the total paid amount.
+	 */
+	async getInvoice(): Promise<void> {
+		// Check if the organization is available
+		if (!this.organization) {
+			return;
+		}
 
-		const { tenantId } = this.store.user;
-		const invoice = await this.invoicesService.getById(
-			this.invoiceId,
-			[
+		try {
+			// Set loading indicator to true
+			this.loading = true;
+
+			// Destructure organization properties
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Specify the related entities to include in the invoice details
+			const relatedEntities = [
 				'invoiceItems',
 				'tags',
 				'fromOrganization',
@@ -104,17 +117,27 @@ export class InvoicePaymentsComponent
 				'payments',
 				'payments.invoice',
 				'payments.recordedBy'
-			],
-			{ tenantId }
-		);
+			];
 
-		this.invoice = invoice;
-		this.payments = invoice.payments;
+			// Fetch invoice details
+			const invoice = await this.invoicesService.getById(this.invoiceId, relatedEntities, { organizationId, tenantId });
 
-		this.smartTableSource.load(this.payments);
-		await this.calculateTotalPaid();
+			// Update the component's invoice and payments properties
+			this.invoice = invoice;
+			this.payments = invoice.payments;
 
-		this.loading = false;
+			// Load payments into the smart table source
+			this.smartTableSource.load(this.payments);
+
+			// Calculate total paid amount
+			await this.calculateTotalPaid();
+		} catch (error) {
+			// Handle errors, e.g., log the error or show a user-friendly message
+			this.toastrService.danger(error);
+		} finally {
+			// Set loading to false regardless of success or failure
+			this.loading = false;
+		}
 	}
 
 	async calculateTotalPaid() {
@@ -280,40 +303,48 @@ export class InvoicePaymentsComponent
 		saveAs(data, filename);
 	}
 
-	selectPayment($event: ISelectedPayment) {
-		if ($event.isSelected) {
-			this.selectedPayment = $event.data;
-			this.disableButton = false;
-		} else {
-			this.disableButton = true;
-		}
+	/**
+	 * Handles the selection/deselection of a payment.
+	 * @param isSelected A boolean indicating whether the payment is selected.
+	 * @param data The payment data associated with the selection.
+	 */
+	selectPayment({ isSelected, data }: { isSelected: boolean, data: IPayment }): void {
+		// Update the disableButton property based on the isSelected value
+		this.disableButton = !isSelected;
+
+		// Update the selectedPayment property based on the isSelected value
+		this.selectedPayment = isSelected ? data : null;
 	}
 
+	/**
+	 * Loads and configures the settings for the Smart Table used in the context of invoices payments.
+	 */
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				paymentDate: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DATE'),
 					type: 'custom',
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				},
 				amount: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.AMOUNT'),
 					type: 'custom',
-					renderComponent: IncomeExpenseAmountComponent
+					renderComponent: IncomeExpenseAmountComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				},
 				recordedBy: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.PAYMENTS.RECORDED_BY'
-					),
+					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.RECORDED_BY'),
 					type: 'text',
-					valuePrepareFunction: (cell, row) => {
-						if (cell && cell.name) {
-							return `${cell.name}`;
-						} else {
-							return ``;
-						}
+					valuePrepareFunction: (value: IUser) => {
+						return value && value.name ? `${value.name}` : '';
 					}
 				},
 				note: {
@@ -321,43 +352,27 @@ export class InvoicePaymentsComponent
 					type: 'text'
 				},
 				paymentMethod: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'
-					),
+					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'),
 					type: 'text',
-					valuePrepareFunction: (cell, row) => {
-						if (cell) {
-							return this.getTranslation(
-								`INVOICES_PAGE.PAYMENTS.${cell}`
-							);
-						} else {
-							return '';
-						}
-					}
+					valuePrepareFunction: (value: IPayment['paymentMethod']) => this.getTranslation(`INVOICES_PAGE.PAYMENTS.${value}`) ?? ''
 				},
 				overdue: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
 					type: 'custom',
 					width: '5%',
 					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (cell, row) => {
-						let badgeClass;
-						if (cell && row.overdue) {
-							badgeClass = 'danger';
-							cell = this.getTranslation(
-								'INVOICES_PAGE.PAYMENTS.OVERDUE'
-							);
-						} else if (!cell) {
-							badgeClass = 'success';
-							cell = this.getTranslation(
-								'INVOICES_PAGE.PAYMENTS.ON_TIME'
-							);
-						}
+					valuePrepareFunction: (value: IPayment['overdue']) => {
+						const badgeClass = value ? 'danger' : 'success';
+						const translatedCell = value ? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE') : this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME');
+
 						return {
-							text: cell,
+							text: translatedCell,
 							class: badgeClass
 						};
-					}
+					},
+					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				}
 			}
 		};
@@ -422,18 +437,27 @@ export class InvoicePaymentsComponent
 		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD', { amount, currency });
 	}
 
-	async invoiceRemainingAmount() {
+	/**
+	 * Calculate and update the remaining amount for the invoice.
+	 * Navigates to the invoice editing page with the remaining amount query parameter.
+	 */
+	async invoiceRemainingAmount(): Promise<void> {
+		// Check if an invoice is available
 		if (!this.invoice) {
 			return;
 		}
 
-		this.invoicesService.updateAction(this.invoice.id, {
-			alreadyPaid: +this.totalPaid
+		// Update the already paid amount for the invoice
+		await this.invoicesService.updateAction(this.invoice.id, {
+			alreadyPaid: +this.totalPaid,
 		});
-		this.router.navigate(
-			[`/pages/accounting/invoices/edit/${this.invoice.id}`],
-			{ queryParams: { remainingAmount: true } }
-		);
+
+		// Navigate to the invoice editing page with the remaining amount query parameter
+		this.router.navigate([`/pages/accounting/invoices/edit/${this.invoice.id}`], {
+			queryParams: {
+				remainingAmount: true
+			}
+		});
 	}
 
 	exportToCsv() {
@@ -470,34 +494,31 @@ export class InvoicePaymentsComponent
 		generateCsv(data, headers, fileName);
 	}
 
-	async sendReceipt() {
-		await firstValueFrom(this.dialogService
-			.open(InvoicePaymentReceiptMutationComponent, {
+	/**
+	 * Send a receipt for the selected payment.
+	 */
+	async sendReceipt(): Promise<void> {
+		// Open a dialog for creating or mutating an invoice payment receipt
+		await firstValueFrom(
+			this.dialogService.open(InvoicePaymentReceiptMutationComponent, {
 				context: {
 					invoice: this.invoice,
-					payment: this.selectedPayment
-				}
-			})
-			.onClose);
+					payment: this.selectedPayment,
+				},
+			}).onClose
+		);
 	}
-
-	private _applyTranslationOnSmartTable() {
+	/**
+	 * Apply translations to the Smart Table settings when the language changes.
+	 */
+	private _applyTranslationOnSmartTable(): void {
+		// Subscribe to the language change observable
 		this.translateService.onLangChange
 			.pipe(
+				// Trigger the loading of Smart Table settings when the language changes
 				tap(() => this._loadSmartTableSettings()),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
-			)
-			.subscribe()
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.paymentsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
 			)
 			.subscribe();
 	}
@@ -506,33 +527,25 @@ export class InvoicePaymentsComponent
 	 * Clear selected item
 	 */
 	clearItem() {
-		this.selectPayment({
-			isSelected: false,
-			data: null
-		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.paymentsTable && this.paymentsTable.grid) {
-			this.paymentsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.paymentsTable.grid.dataSet.deselectAll();
-		}
+		this.selectPayment({ isSelected: false, data: null });
 	}
 
-	/*
-	* Create Payment Invoice History Event
-	*/
-	async createInvoiceHistory(
-		action: string,
-		invoice: IInvoice
-	) {
+	/**
+	 * Create a history event for a payment invoice.
+	 * @param action The action or event type to be recorded in the history.
+	 * @param invoice The payment invoice for which the history event is created.
+	 */
+	async createInvoiceHistory(action: string, invoice: IInvoice): Promise<void> {
+		// Extract user information from the store
 		const { tenantId, id: userId } = this.store.user;
+
+		// Extract organization information from the store
 		const { id: organizationId } = this.store.selectedOrganization;
+
+		// Extract invoice information
 		const { id: invoiceId } = invoice;
 
+		// Create a history entry using the invoiceEstimateHistoryService
 		await this.invoiceEstimateHistoryService.add({
 			action,
 			invoice,

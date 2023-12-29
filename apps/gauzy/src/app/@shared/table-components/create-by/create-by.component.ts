@@ -10,11 +10,24 @@ export class CreateByComponent {
 	@Input() value: any;
 	@Input() rowData: any;
 
-	constructor(private readonly router: Router) { }
+	constructor(
+		private readonly router: Router
+	) { }
 
-	edit(id: string) {
-		if (id) {
-			this.router.navigate(['/pages/employees/edit/' + id]);
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
+	edit(id: string): void {
+		if (!id) {
+			// Handle the case where id is not provided
+			console.error('Invalid employee id. Cannot proceed with editing.');
+			// You might want to show a user-friendly message or redirect to an error page
+			return;
 		}
+
+		// Navigate to the employee edit page with the provided id
+		this.router.navigate(['/pages/employees/edit/' + id]);
 	}
 }

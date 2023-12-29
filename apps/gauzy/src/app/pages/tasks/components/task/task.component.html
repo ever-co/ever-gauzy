@@ -51,10 +51,10 @@
 					>
 						<div class="table-scroll-container">
 							<angular2-smart-table
+								style="cursor: pointer"
 								[settings]="settingsSmartTable"
 								[source]="smartTableSource"
 								(userRowSelect)="selectTask($event)"
-								style="cursor: pointer"
 								#tasksTable
 							></angular2-smart-table>
 						</div>

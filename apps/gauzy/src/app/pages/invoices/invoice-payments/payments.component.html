@@ -123,19 +123,15 @@
 					[buttonTemplate]="actionButtons"
 					[buttonTemplateVisible]="visibleButton"
 					[hasLayoutSelector]="false"
-				>
-				</ngx-gauzy-button-action>
+				></ngx-gauzy-button-action>
 			</div>
 			<div class="table-scroll-container">
 				<angular2-smart-table
-					class="tags-table"
+					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
 					(userRowSelect)="selectPayment($event)"
-					style="cursor: pointer"
-					#paymentsTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 		</div>
 	</nb-card-body>

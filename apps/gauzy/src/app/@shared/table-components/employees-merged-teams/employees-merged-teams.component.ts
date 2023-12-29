@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { IEmployee } from '@gauzy/contracts';
 
 @Component({
@@ -8,12 +8,10 @@ import { IEmployee } from '@gauzy/contracts';
 })
 export class EmployeesMergedTeamsComponent implements OnInit {
 
-	value: any;
-	rowData: any;
+	@Input() value: any;
+	@Input() rowData: any;
 
-	employees: IEmployee[] = [];
-
-	constructor() { }
+	public employees: IEmployee[] = [];
 
 	ngOnInit(): void {
 		if (this.value) {

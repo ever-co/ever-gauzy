@@ -7,10 +7,8 @@ import { IOrganization, IProject } from '@gauzy/contracts';
 	styleUrls: ['./project.component.scss']
 })
 export class ProjectComponent implements OnInit {
-	@Input()
-	value: any;
-	@Input()
-	rowData: any;
+	@Input() value: any;
+	@Input() rowData: any;
 	organization: Promise<IOrganization> | null = null;
 	count: number;
 	project: IProject = {

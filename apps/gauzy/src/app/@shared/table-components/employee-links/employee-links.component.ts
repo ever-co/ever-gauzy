@@ -36,12 +36,9 @@ import { Router } from '@angular/router';
 	styleUrls: ['./employee-links.component.scss']
 })
 export class EmployeeLinksComponent {
-	@Input()
-	rowData: any;
 
-	@Input()
-	value: any;
-
+	@Input() rowData: any;
+	@Input() value: any;
 	@Input() isNavigation: boolean = true;
 
 	constructor(

@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, firstValueFrom, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import {
 	ComponentLayoutStyleEnum,
@@ -82,7 +82,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	selectedEmployee: ISelectedEmployee;
 	selectedEmployeeId: ISelectedEmployee['id'];
 	selectedProject: IOrganizationProject;
-	tasksTable: Angular2SmartTableComponent;
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -101,13 +100,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		super(translateService);
 		this.initTasks();
 		this.setView();
-	}
-
-	@ViewChild('tasksTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.tasksTable = content;
-			this.onChangedSource();
-		}
 	}
 
 	/**
@@ -165,6 +157,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10,
@@ -191,6 +184,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					type: 'custom',
 					class: 'align-row',
 					renderComponent: NotesWithTagsComponent,
+					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent,
@@ -202,19 +199,30 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
-					renderComponent: ProjectComponent,
 					filter: false,
+					renderComponent: ProjectComponent,
+					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
 					filter: false,
 					renderComponent: CreatedAtComponent,
+					componentInitFunction: (instance: CreatedAtComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				},
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
 					type: 'custom',
 					renderComponent: CreateByComponent,
+					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent,
@@ -238,21 +246,26 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						this.setFilter({ field: 'dueDate', search: value });
 					},
 					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
 					type: 'custom',
 					width: '10%',
 					renderComponent: StatusViewComponent,
+					componentInitFunction: (instance: StatusViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 					filter: {
 						type: 'custom',
 						component: TaskStatusFilterComponent,
 					},
 					filterFunction: (value) => {
-						this.setFilter({
-							field: 'status',
-							search: value?.name,
-						});
+						this.setFilter({ field: 'status', search: value?.name, });
 					},
 				},
 			},
@@ -263,13 +276,14 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (this.isTasksPage()) {
 			return {
 				employeesMergedTeams: {
-					title:
-						this.getTranslation('TASKS_PAGE.TASK_MEMBERS') +
-						'/' +
-						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
+					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS') + '/' + this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
 					filter: false,
 					renderComponent: EmployeesMergedTeamsComponent,
+					componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 			};
 		} else if (this.isMyTasksPage()) {
@@ -279,6 +293,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					type: 'custom',
 					filter: false,
 					renderComponent: AssignedToComponent,
+					componentInitFunction: (instance: AssignedToComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 			};
 		} else if (this.isTeamTaskPage()) {
@@ -288,6 +306,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					type: 'custom',
 					width: '12%',
 					renderComponent: AssignedToComponent,
+					componentInitFunction: (instance: AssignedToComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+						instance.rowData = cell.getRow().getData();
+					},
 					filter: {
 						type: 'custom',
 						component: OrganizationTeamFilterComponent,
@@ -386,18 +408,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				tap(() => (this._tasks = [])),
 				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.tasksTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
 			)
 			.subscribe();
 	}
@@ -752,17 +762,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			isSelected: false,
 			data: null,
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.tasksTable && this.tasksTable.grid) {
-			this.tasksTable.grid.dataSet['willSelect'] = 'indexed';
-			this.tasksTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy(): void { }
