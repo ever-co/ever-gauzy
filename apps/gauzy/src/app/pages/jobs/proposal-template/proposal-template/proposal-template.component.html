@@ -27,9 +27,7 @@
 				[tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate"
 				[tabId]="proposalTemplateTabsEnum.ACTIONS"
 			>
-				<ng-container
-					*ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS"
-				>
+				<ng-container *ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS">
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
@@ -37,16 +35,13 @@
 				[tabTitle]="'PROPOSAL_TEMPLATE.SEARCH' | translate"
 				[tabId]="proposalTemplateTabsEnum.SEARCH"
 			>
-				<ng-container
-					*ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.SEARCH"
-				>
+				<ng-container *ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.SEARCH">
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
-
 <ng-template
 	#actionButtons
 	let-buttonSize="buttonSize"
@@ -133,7 +128,6 @@
 				[settings]="smartTableSettings"
 				[source]="smartTableSource"
 				(userRowSelect)="selectItem($event)"
-				#proposalTemplateTable
 			></angular2-smart-table>
 		</div>
 		<div class="pagination-container">
