@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     name: MegaLinter
-    runs-on: buildjet-2vcpu-ubuntu-2204
+    runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       # Git Checkout
       - name: Checkout Code
