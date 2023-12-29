@@ -145,13 +145,8 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.CONTACT'),
 							type: 'custom',
 							renderComponent: ContactLinksComponent,
-							valuePrepareFunction: (cell: Cell) => {
-								// Check if the cell is not falsy
-								if (cell) {
-									// Return the value of the cell
-									return cell['value'];
-								}
-								return null;
+							valuePrepareFunction: (row: { value?: any }) => {
+								return row?.value ?? null;
 							},
 							componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();

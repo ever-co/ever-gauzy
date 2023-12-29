@@ -4,6 +4,9 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbDialogService } from '@nebular/theme';
+import { Cell } from 'angular2-smart-table';
 import {
 	IInvoice,
 	ComponentLayoutStyleEnum,
@@ -13,9 +16,6 @@ import {
 	ITag,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbDialogService } from '@nebular/theme';
-import { Cell } from 'angular2-smart-table';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { ServerDataSource } from '../../../@core/utils/smart-table';
@@ -56,30 +56,38 @@ import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/head
 })
 export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 
-	loading: boolean = false;
-	disableButton: boolean = true;
-	settingsSmartTable: object;
-	smartTableSource: ServerDataSource;
-	selectedInvoice: IInvoice;
-	invoices: IInvoice[] = [];
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	organization: IOrganization;
-	selectedDateRange: IDateRangePicker;
-	invoices$: Subject<any> = this.subject$;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	columns: string[] = [];
+	public loading: boolean = false;
+	public disableButton: boolean = true;
+	public settingsSmartTable: object;
+	public smartTableSource: ServerDataSource;
+	public selectedInvoice: IInvoice;
+	public invoices: IInvoice[] = [];
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public organization: IOrganization;
+	public selectedDateRange: IDateRangePicker;
+	public invoices$: Subject<any> = this.subject$;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public columns: string[] = [];
 	private _refresh$: Subject<any> = new Subject();
 
-	/*
-	 * getter setter for check estimate or invoice
+	/**
+	 * Represents a component property for handling the estimate status.
 	 */
 	private _isEstimate: boolean = false;
+	/**
+	 * Gets the current estimate status.
+	 * @returns The current estimate status.
+	 */
+	get isEstimate(): boolean {
+		return this._isEstimate;
+	}
+	/**
+	 * Sets the estimate status.
+	 * @param val - The new estimate status value.
+	 */
 	@Input() set isEstimate(val: boolean) {
 		this._isEstimate = val;
-	}
-	get isEstimate() {
-		return this._isEstimate;
 	}
 
 	constructor(
@@ -146,7 +154,10 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			.subscribe();
 	}
 
-	setView() {
+	/**
+	 * Sets up the view component for the current state of the invoices.
+	 */
+	setView(): void {
 		this.viewComponentName = ComponentEnum.INVOICE_RECEIVED;
 		this.store
 			.componentLayout$(this.viewComponentName)
@@ -162,21 +173,14 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			.subscribe();
 	}
 
-	/*
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
-	 * Register Smart Table Source Config
+	/**
+	 * Sets up the smart table source for fetching invoices based on the component's configuration.
 	 */
 	setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
+
 		this.loading = true;
 
 		const { tenantId } = this.store.user;
@@ -204,11 +208,10 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				},
 				...(this.filters.where ? this.filters.where : {})
 			},
-			resultMap: (invoice: IInvoice) => {
-				return Object.assign({}, invoice, {
-					status: this.statusMapper(invoice.status)
-				});
-			},
+			resultMap: (invoice: IInvoice) => ({
+				...invoice,
+				status: this.statusMapper(invoice.status)
+			}),
 			finalize: () => {
 				if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 					this.invoices.push(...this.smartTableSource.getData());
@@ -222,15 +225,20 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 		});
 	}
 
-	async getInvoices() {
+	/**
+	 * Asynchronously fetches invoices based on the component's configuration.
+	 */
+	async getInvoices(): Promise<void> {
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			this.setSmartTableSource();
 
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// Initiate GRID view pagination
 				await this.smartTableSource.getElements();
@@ -240,25 +248,31 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 		}
 	}
 
-	view(selectedItem?: IInvoice) {
+	/**
+	 * Navigate to the details view of the selected invoice or estimate.
+	 *
+	 * @param selectedItem - The selected invoice or estimate to view.
+	 */
+	view(selectedItem?: IInvoice): void {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
 				data: selectedItem
 			});
-		}
-		const { id } = this.selectedInvoice;
-		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/view`,
-				id
-			]);
-		} else {
-			this.router.navigate([`/pages/accounting/invoices/view`, id]);
+
+			const { id } = this.selectedInvoice;
+			const routePath = this.isEstimate ? '/pages/accounting/invoices/estimates/view' : '/pages/accounting/invoices/view';
+
+			this.router.navigate([routePath, id]);
 		}
 	}
 
-	async accept(selectedItem?: IInvoice) {
+	/**
+	 * Accepts the selected invoice or estimate.
+	 *
+	 * @param selectedItem - The selected invoice or estimate to accept.
+	 */
+	async accept(selectedItem?: IInvoice): Promise<void> {
 		try {
 			if (selectedItem) {
 				this.selectInvoice({
@@ -266,23 +280,26 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					data: selectedItem
 				});
 			}
-			await this.invoicesService
-				.updateEstimate(this.selectedInvoice.id, {
-					isAccepted: true
-				})
-				.then(() => {
-					this._refresh$.next(true);
-					this.invoices$.next(true);
-					this.toastrService.success(
-						'INVOICES_PAGE.INVOICE_ACCEPTED'
-					);
-				});
+
+			const { id: invoiceId } = this.selectedInvoice;
+			await this.invoicesService.updateEstimate(invoiceId, { isAccepted: true });
+
+			// Refresh and notify observers
+			this._refresh$.next(true);
+			this.invoices$.next(true);
+
+			this.toastrService.success('INVOICES_PAGE.INVOICE_ACCEPTED');
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
 	}
 
-	async reject(selectedItem?: IInvoice) {
+	/**
+	 * Rejects the selected invoice or estimate.
+	 *
+	 * @param selectedItem - The selected invoice or estimate to reject.
+	 */
+	async reject(selectedItem?: IInvoice): Promise<void> {
 		try {
 			if (selectedItem) {
 				this.selectInvoice({
@@ -290,35 +307,37 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					data: selectedItem
 				});
 			}
-			await this.invoicesService
-				.updateEstimate(this.selectedInvoice.id, {
-					isAccepted: false
-				})
-				.then(() => {
-					this._refresh$.next(true);
-					this.invoices$.next(true);
-					this.toastrService.success(
-						'INVOICES_PAGE.INVOICE_REJECTED'
-					);
-				});
+
+			const { id: invoiceId } = this.selectedInvoice;
+			await this.invoicesService.updateEstimate(invoiceId, { isAccepted: false });
+
+			// Refresh and notify observers
+			this._refresh$.next(true);
+			this.invoices$.next(true);
+
+			this.toastrService.success('INVOICES_PAGE.INVOICE_REJECTED');
 		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
 	}
 
-	private _loadSettingsSmartTable() {
+	/**
+	 * Loads and configures settings for the smart table based on the component's state.
+	 */
+	private _loadSettingsSmartTable(): void {
+		//
 		const pagination: IPaginationBase = this.getPagination();
+		//
 		this.settingsSmartTable = {
 			actions: false,
+			editable: true,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			mode: 'external',
-			editable: true,
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'
-			),
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'),
 			columns: {
 				invoiceNumber: {
 					title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
@@ -330,7 +349,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (invoiceNumber) => {
+					filterFunction: (invoiceNumber: string) => {
 						this.setFilter({ field: 'invoiceNumber', search: invoiceNumber });
 					},
 					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
@@ -388,7 +407,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				renderComponent: ContactLinksComponent,
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
-					instance.value = cell.getValue();
+					instance.value = cell.getRawValue();
 				},
 			};
 		}
@@ -440,18 +459,30 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					component: InputFilterComponent
 				},
 				componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
-					instance.value = cell.getValue();
+					instance.value = cell.getRawValue();
 				},
 			};
 		}
 	}
 
-	private selectInvoice({ isSelected, data }) {
-		this.disableButton = !isSelected;
-		this.selectedInvoice = isSelected ? data : null;
+	/**
+	 * Handles the selection of an invoice.
+	 *
+	 * @param options - An object containing information about the selection.
+	 * @param options.isSelected - A boolean indicating whether the invoice is selected.
+	 * @param options.data - The data associated with the selected invoice.
+	 */
+	private selectInvoice(options: { isSelected: boolean; data: any }): void {
+		this.disableButton = !options.isSelected;
+		this.selectedInvoice = options.isSelected ? options.data : null;
 	}
 
-	private _applyTranslationOnSmartTable() {
+	/**
+	 * Applies translation on the smart table when the language changes.
+	 * Loads smart table settings after the language change.
+	 * Automatically unsubscribes when the component is destroyed.
+	 */
+	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._loadSettingsSmartTable()),
@@ -460,79 +491,113 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			.subscribe();
 	}
 
-	private _clearItem() {
+	/**
+	 * Clears the selected invoice item.
+	 */
+	private _clearItem(): void {
 		this.selectInvoice({ isSelected: false, data: null });
 	}
 
+
+	/**
+	 * Gets the column values based on the type (estimate or invoice).
+	 *
+	 * @returns An array of column values.
+	 */
 	getColumns(): string[] {
-		if (this.isEstimate) {
-			return Object.values(EstimateColumnsEnum);
-		}
-		return Object.values(InvoiceColumnsEnum);
+		return this.isEstimate ? Object.values(EstimateColumnsEnum) : Object.values(InvoiceColumnsEnum);
 	}
 
+
+	/**
+	 * Maps invoice statuses to badge classes, texts, and original values.
+	 *
+	 * @param value - The invoice status value.
+	 * @returns An object containing originalValue, text, and class properties.
+	 */
 	private statusMapper = (value: string) => {
-		let badgeClass;
+		let badgeClass: 'success' | 'warning' | 'danger' | undefined;
+
 		if (value) {
-			badgeClass = [
-				'sent',
-				'viewed',
-				'accepted',
-				'active',
-				'fully paid'
-			].includes(value.toLowerCase())
-				? 'success'
-				: ['void', 'draft', 'partially paid'].includes(
-					value.toLowerCase()
-				)
-					? 'warning'
-					: 'danger';
+			const lowercaseValue = value.toLowerCase();
+
+			if (['sent', 'viewed', 'accepted', 'active', 'fully paid'].includes(lowercaseValue)) {
+				badgeClass = 'success';
+			} else if (['void', 'draft', 'partially paid'].includes(lowercaseValue)) {
+				badgeClass = 'warning';
+			} else {
+				badgeClass = 'danger';
+			}
 		}
+
 		return {
 			originalValue: value,
-			text: this.getTranslation(
-				`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`
-			),
+			text: this.getTranslation(`INVOICES_PAGE.STATUSES.${value.toUpperCase()}`),
 			class: badgeClass
 		};
 	};
 
-	payments() {
-		const { id } = this.selectedInvoice;
-		this.router.navigate([`/pages/accounting/invoices/payments`, id]);
-	}
 
-	edit(selectedItem?: IInvoice) {
-		this.invoicesService.changeValue(false);
-		if (selectedItem) {
-			this.selectInvoice({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-
+	/**
+	 * Navigates to the payments page for the selected invoice.
+	 */
+	payments(): void {
 		const { id } = this.selectedInvoice;
-		if (this.isEstimate) {
-			this.router.navigate([
-				`/pages/accounting/invoices/estimates/edit`,
-				id
-			]);
+
+		// Check if the selected invoice has an ID before navigating
+		if (id) {
+			const routePath = `/pages/accounting/invoices/payments/${id}`;
+			this.router.navigate([routePath]);
 		} else {
-			this.router.navigate([`/pages/accounting/invoices/edit`, id]);
+			// Handle the case where the selected invoice doesn't have an ID
+			console.error('Selected invoice does not have a valid ID for payments.');
+			// You might want to provide user feedback or handle this case accordingly
 		}
 	}
 
-	download(selectedItem?: IInvoice) {
+	/**
+	 * Initiates the editing process for the selected invoice or estimate.
+	 *
+	 * @param selectedItem - The selected invoice or estimate to edit.
+	 */
+	edit(selectedItem?: IInvoice): void {
+		// Change value using invoicesService
+		this.invoicesService.changeValue(false);
+
+		if (selectedItem) {
+			// Select the invoice
+			this.selectInvoice({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		const { id } = this.selectedInvoice;
+		const routePath = this.isEstimate ? `/pages/accounting/invoices/estimates/edit` : `/pages/accounting/invoices/edit`;
+
+		// Navigate to the edit page
+		this.router.navigate([routePath, id]);
+	}
+
+	/**
+	 * Initiates the download process for the selected invoice or estimate.
+	 *
+	 * @param selectedItem - The selected invoice or estimate to download.
+	 */
+	download(selectedItem?: IInvoice): void {
 		if (selectedItem) {
 			this.selectInvoice({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
+
+		const { selectedInvoice, isEstimate } = this;
+
 		this.dialogService.open(InvoiceDownloadMutationComponent, {
 			context: {
-				invoice: this.selectedInvoice,
-				isEstimate: this.isEstimate
+				invoice: selectedInvoice,
+				isEstimate: isEstimate
 			}
 		});
 	}

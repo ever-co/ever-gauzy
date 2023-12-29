@@ -9,13 +9,13 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		<div class="progress-bar-container">
 			<div class="progress-bar">
 				<div class="paid-percent">
-					{{ barWidth }}%
+					{{ paidAmountPercentage }}%
 					{{ 'INVOICES_PAGE.PAYMENTS.PAID' | translate }}
 				</div>
 				<span
 					id="progress-bar-inner"
 					class="progress-bar-inner"
-					[style.width]="barWidthString"
+					[style.width]="paidAmountPercentage + '%'"
 				></span>
 			</div>
 		</div>
@@ -28,8 +28,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 })
 export class InvoicePaidComponent extends TranslationBaseComponent implements OnInit {
 
-	public barWidth: number;
-	public barWidthString: string;
+	public paidAmountPercentage: number;
 	public totalPaid = 0;
 
 	@Input() rowData: any;
@@ -54,9 +53,7 @@ export class InvoicePaidComponent extends TranslationBaseComponent implements On
 		// Ensure that total value is non-zero to avoid division by zero
 		const totalValue = +this.rowData.totalValue || 1;
 
-		this.barWidth = Math.min(this.calculatePercentage(this.totalPaid, totalValue), 100);
-
-		this.barWidthString = `${this.barWidth.toFixed(2)}%`;
+		this.paidAmountPercentage = +(this.calculatePercentage(this.totalPaid, totalValue)).toFixed(2);
 	}
 
 	/**
