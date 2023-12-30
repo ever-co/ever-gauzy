@@ -597,8 +597,9 @@ ng2-smart-table {
 // TODO overrides perfectly chevron-down unicode
 .ng-select {
   .ng-select-container {
-    border-radius: nb-theme(border-radius);
-    box-shadow: var(--gauzy-shadow) inset;
+	  border-radius: var(--border-radius) !important;
+	  box-shadow: var(--gauzy-shadow) inset;
+	  border: none !important;
   }
   .ng-arrow {
     font-family: 'Font Awesome\ 5 Free' !important;
