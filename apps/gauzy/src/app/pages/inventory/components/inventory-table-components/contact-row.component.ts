@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
 	template: `<div>{{address}}</div> `
 })
 export class ContactRowComponent {
-	value: any;
-	rowData: any;
+	@Input() value: any;
+	@Input() rowData: any;
 
 	get address() {
 

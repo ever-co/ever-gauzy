@@ -29,11 +29,10 @@
 			>
 				<div class="table-scroll-container">
 					<angular2-smart-table
+						style="cursor: pointer"
 						[settings]="settingsSmartTable"
 						(userRowSelect)="selectStore($event)"
 						[source]="smartTableSource"
-						style="cursor: pointer"
-						#merchantsTable
 					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">

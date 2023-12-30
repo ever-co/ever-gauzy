@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -55,14 +55,6 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	merchants$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	merchantsTable: Angular2SmartTableComponent;
-	@ViewChild('merchantsTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.merchantsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	/*
 	 * Actions Buttons directive
@@ -161,6 +153,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -171,6 +164,10 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
 					renderComponent: ItemImgTagsComponent,
+					componentInitFunction: (instance: ItemImgTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -193,25 +190,29 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ContactRowComponent,
-					filter: false
+					componentInitFunction: (instance: ContactRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
 					filter: false,
-					valuePrepareFunction: (description: string) => {
-						return description
-							? description.slice(0, 15) + '...'
-							: '';
-					}
+					valuePrepareFunction: (value: string) => value ? value.slice(0, 15) + '...' : ''
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
 					width: '5%',
+					filter: false,
 					renderComponent: EnabledStatusComponent,
-					filter: false
+					componentInitFunction: (instance: EnabledStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				}
 			}
 		};
@@ -244,18 +245,6 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			`/pages/organization/inventory/merchants/edit`,
 			this.selectedMerchant.id
 		]);
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.merchantsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
 	}
 
 	async onDelete(selectedItem?: IMerchant) {
@@ -370,16 +359,5 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.merchantsTable && this.merchantsTable.grid) {
-			this.merchantsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.merchantsTable.grid.dataSet.deselectAll();
-		}
 	}
 }

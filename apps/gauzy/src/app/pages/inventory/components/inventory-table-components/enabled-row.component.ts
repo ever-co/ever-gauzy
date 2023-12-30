@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
 	template: `<div>
@@ -33,6 +33,6 @@ import { Component } from '@angular/core';
 	]
 })
 export class EnabledStatusComponent {
-	value: any;
-	rowData: any;
+	@Input() value: any;
+	@Input() rowData: any;
 }

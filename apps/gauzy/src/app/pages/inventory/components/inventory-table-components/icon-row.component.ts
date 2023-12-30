@@ -28,7 +28,6 @@ import { IProductTypeTranslated } from '@gauzy/contracts';
 	]
 })
 export class IconRowComponent {
-	@Input()
-	value: string | number;
+	@Input() value: string | number;
 	rowData: IProductTypeTranslated;
 }
