@@ -41,5 +41,5 @@
 }
 
 .ng-select .ng-select-container:hover {
-  box-shadow: 0 1px 1px 0 rgb(135 75 215 / 50%) inset !important;
+  box-shadow: 0 1px 1px 0 var(--color-primary-transparent-default) inset !important;
 }
