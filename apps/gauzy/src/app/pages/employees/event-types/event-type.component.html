@@ -33,9 +33,7 @@
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectEventType($event)"
-					#eventTypesTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -46,8 +44,7 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>

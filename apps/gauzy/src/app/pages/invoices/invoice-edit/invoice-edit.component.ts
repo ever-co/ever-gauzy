@@ -49,6 +49,7 @@ import {
 	styleUrls: ['./invoice-edit.component.scss']
 })
 export class InvoiceEditComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;

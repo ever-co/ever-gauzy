@@ -3,6 +3,7 @@ import { DefaultFilter } from 'angular2-smart-table';
 import { ITag } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-tag-color-filter',
     template: `
         <ga-tags-color-input
             (selectedTagsEvent)="selectedTagsEvent($event)"
@@ -22,17 +23,9 @@ export class TagsColorFilterComponent extends DefaultFilter implements OnChanges
 
     /**
      *
-     * @param event
+     * @param tags
      */
-    onChange(event) {
-        // this.column.filterFunction(event);
-    }
-
-    /**
-     *
-     * @param currentTagSelection
-     */
-    selectedTagsEvent(currentTagSelection: ITag[]) {
-        // this.column.filterFunction(currentTagSelection);
+    selectedTagsEvent(value: ITag[]) {
+        this.column.filterFunction(value, this.column.id);
     }
 }

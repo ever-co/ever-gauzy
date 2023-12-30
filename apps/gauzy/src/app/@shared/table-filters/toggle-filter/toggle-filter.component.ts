@@ -43,10 +43,8 @@ export class ToggleFilterComponent extends DefaultFilter implements OnChanges {
 			default:
 				this.isChecked = null;
 		}
-		// this.column.filterFunction(this.isChecked);
+		this.column.filterFunction(this.isChecked, this.column.id);
 	}
 
-	ngOnChanges(changes: SimpleChanges): void {
-	}
-
+	ngOnChanges(changes: SimpleChanges): void { }
 }

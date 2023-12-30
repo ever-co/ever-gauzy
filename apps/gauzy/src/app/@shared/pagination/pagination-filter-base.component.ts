@@ -79,14 +79,26 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		});
 	}
 
+	/**
+	 * Set filter for data based on the provided filter object.
+	 * @param filter - The filter object containing information about the field and search criteria.
+	 * @param doEmit - A boolean flag indicating whether to emit a notification after setting the filter. Default is true.
+	 */
 	protected setFilter(filter: any, doEmit: boolean = true) {
+		// Split the field path into an array of field names
 		const fields = filter.field.split('.');
+
+		// Check if the search criteria is not empty or a boolean
 		if (isNotEmpty(filter.search) || 'boolean' === typeof (filter.search)) {
 			const search = filter.search;
+
+			// Create an object with nested keys representing the field path and set the search value
 			const keys = fields.reduceRight(
 				(value: string, key: string) => ({ [key]: value }),
 				search
 			);
+
+			// Update the 'where' property in the 'filters' object with the new keys
 			this.filters = {
 				where: {
 					...this.filters.where,
@@ -95,13 +107,17 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 				}
 			};
 		} else {
+			// If the search criteria is empty or not a boolean, remove the field from the 'where' property
 			const [field] = fields.reverse();
 			cleanKeys(this.filters.where, field);
 		}
+
+		// Emit a notification if doEmit is true
 		if (doEmit) {
 			this.subject$.next(true);
 		}
 	}
+
 
 	public onPageChange(selectedPage: number) {
 		this.setPagination({

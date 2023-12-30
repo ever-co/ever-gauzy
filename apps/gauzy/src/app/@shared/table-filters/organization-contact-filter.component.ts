@@ -1,7 +1,9 @@
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
+import { IOrganizationContact } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-contact-select-filter',
     template: `
         <ga-contact-select
             [clearable]="true"
@@ -24,9 +26,9 @@ export class OrganizationContactFilterComponent extends DefaultFilter implements
 
     /**
      *
-     * @param event
+     * @param value
      */
-    onChange(event) {
-        // this.column.filterFunction(event);
+    onChange(value: IOrganizationContact) {
+        this.column.filterFunction(value, this.column.id);
     }
 }

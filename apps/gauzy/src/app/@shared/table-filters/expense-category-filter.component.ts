@@ -1,6 +1,6 @@
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
-import { IOrganizationVendor } from '@gauzy/contracts';
+import { IExpenseCategory } from '@gauzy/contracts';
 
 @Component({
     selector: 'ga-expense-category-select-filter',
@@ -10,7 +10,7 @@ import { IOrganizationVendor } from '@gauzy/contracts';
             [searchable]="false"
             [addTag]="false"
             [placeholder]="'SM_TABLE.CATEGORY' | translate"
-            (onChanged)="selectedVendorEvent($event)"
+            (onChanged)="selectedExpenseCategoryEvent($event)"
         ></ga-expense-category-select>
     `,
 })
@@ -28,17 +28,9 @@ export class ExpenseCategoryFilterComponent extends DefaultFilter implements OnC
 
     /**
      *
-     * @param event
+     * @param value
      */
-    onChange(event) {
-        // this.column.filterFunction(event);
-    }
-
-    /**
-     *
-     * @param currentTagSelection
-     */
-    selectedVendorEvent(currentTagSelection: IOrganizationVendor) {
-        // this.column.filterFunction(currentTagSelection);
+    selectedExpenseCategoryEvent(value: IExpenseCategory) {
+        this.column.filterFunction(value, this.column.id);
     }
 }

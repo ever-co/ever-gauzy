@@ -28,17 +28,9 @@ export class VendorFilterComponent extends DefaultFilter implements OnChanges {
 
     /**
      *
-     * @param event
+     * @param value
      */
-    onChange(event) {
-        // this.column.filterFunction(event);
-    }
-
-    /**
-     *
-     * @param currentTagSelection
-     */
-    selectedVendorEvent(currentTagSelection: IOrganizationVendor) {
-        // this.column.filterFunction(currentTagSelection);
+    selectedVendorEvent(value: IOrganizationVendor) {
+        this.column.filterFunction(value, this.column.id);
     }
 }

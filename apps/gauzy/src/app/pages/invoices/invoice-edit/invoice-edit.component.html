@@ -16,26 +16,23 @@
 				<div class="card-header-title">
 					<ngx-back-navigation></ngx-back-navigation>
 					<h4>
-						{{
-							(isEstimate
-								? 'INVOICES_PAGE.EDIT_ESTIMATE'
-								: 'INVOICES_PAGE.EDIT_INVOICE'
-							) | translate
-						}}
+						{{ (isEstimate ? 'INVOICES_PAGE.EDIT_ESTIMATE' : 'INVOICES_PAGE.EDIT_INVOICE' ) | translate }}
 					</h4>
 				</div>
-				<div *ngIf="!isEstimate">
-					<button
-						status="basic"
-						class="action secondary mr-2"
-						size="small"
-						(click)="payments()"
-						nbButton
-					>
-						<nb-icon icon="clipboard-outline"></nb-icon>
-						{{ 'BUTTONS.PAYMENTS' | translate }}
-					</button>
-				</div>
+				<ng-container *ngIf="!isEstimate">
+					<div>
+						<button
+							status="basic"
+							class="action secondary mr-2"
+							size="small"
+							(click)="payments()"
+							nbButton
+						>
+							<nb-icon icon="clipboard-outline"></nb-icon>
+							{{ 'BUTTONS.PAYMENTS' | translate }}
+						</button>
+					</div>
+				</ng-container>
 			</div>
 		</ng-template>
 	</nb-card-header>
@@ -49,12 +46,7 @@
 							<div class="form-group">
 								<label for="inputInvoiceNumber" class="label">
 									<span>
-										{{
-											(isEstimate
-												? 'INVOICES_PAGE.ESTIMATE_NUMBER'
-												: 'INVOICES_PAGE.INVOICE_NUMBER'
-											) | translate
-										}}
+										{{ (isEstimate ? 'INVOICES_PAGE.ESTIMATE_NUMBER' : 'INVOICES_PAGE.INVOICE_NUMBER' ) | translate }}
 									</span>
 								</label>
 								<input
@@ -369,9 +361,9 @@
 			<div class="table-scroll-container custom-table">
 				<angular2-smart-table
 					class="table"
+					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
-					style="cursor: pointer"
 					(createConfirm)="onCreateConfirm($event)"
 					(editConfirm)="onEditConfirm($event)"
 					(deleteConfirm)="onDeleteConfirm($event)"
@@ -379,9 +371,7 @@
 					#invoiceItemTable
 				></angular2-smart-table>
 			</div>
-			<div
-				class="pagination-container"
-			>
+			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 					<ga-pagination
 						(selectedOption)="onUpdateOption($event)"

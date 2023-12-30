@@ -3,6 +3,10 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
 import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
@@ -20,10 +24,6 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
-import { NbDialogService, NbTabComponent } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Cell } from 'angular2-smart-table';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,

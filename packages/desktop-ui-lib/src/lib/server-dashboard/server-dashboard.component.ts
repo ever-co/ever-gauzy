@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { from, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from 'packages/contracts/dist';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

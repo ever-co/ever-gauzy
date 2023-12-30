@@ -33,10 +33,10 @@ export class PaymentMethodFilterComponent extends DefaultFilter implements OnCha
 
     /**
      *
-     * @param event
+     * @param value
      */
-    onChange(filter: PaymentMethodEnum) {
-        console.log({ filter });
-        // this.column.filterFunction(event);
+    onChange(value: PaymentMethodEnum) {
+        console.log({ value });
+        this.column.filterFunction(value, this.column.id);
     }
 }

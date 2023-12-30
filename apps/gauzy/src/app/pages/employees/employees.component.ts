@@ -7,6 +7,12 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -18,12 +24,6 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	EmployeeEndWorkComponent,
@@ -619,8 +619,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (name: string) => {
-						this.setFilter({ field: 'user.name', search: name });
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'user.name', search: value });
 					}
 				},
 				email: {
@@ -632,8 +632,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (email: string) => {
-						this.setFilter({ field: 'user.email', search: email });
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'user.email', search: value });
 					}
 				},
 				averageIncome: {

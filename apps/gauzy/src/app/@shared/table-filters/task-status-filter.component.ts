@@ -1,7 +1,9 @@
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
+import { ITaskStatus } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-task-status-select-filter',
     template: `
         <ga-task-status-select
             [addTag]="false"
@@ -24,9 +26,9 @@ export class TaskStatusFilterComponent extends DefaultFilter implements OnChange
 
     /**
      *
-     * @param filter
+     * @param value
      */
-    onChange(filter: string | null) {
-        // this.column.filterFunction(filter);
+    onChange(value: ITaskStatus | null) {
+        this.column.filterFunction(value, this.column.id);
     }
 }
