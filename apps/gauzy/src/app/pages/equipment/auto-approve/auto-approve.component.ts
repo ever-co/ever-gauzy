@@ -5,7 +5,6 @@ import { Component, Input } from '@angular/core';
 	templateUrl: './auto-approve.component.html'
 })
 export class AutoApproveComponent {
-	@Input()
-	value: string | number;
-	rowData: any;
+	@Input() value: string | number;
+	@Input() rowData: any;
 }

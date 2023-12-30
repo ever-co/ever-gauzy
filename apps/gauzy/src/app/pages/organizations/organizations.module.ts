@@ -25,7 +25,7 @@ import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
 	OrganizationsCurrencyComponent,
-	OrganizationsEmployeesComponent,
+	OrganizationTotalEmployeesCountComponent,
 	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
@@ -78,7 +78,7 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		OrganizationsComponent,
 		OrganizationsFullnameComponent,
 		OrganizationsStatusComponent,
-		OrganizationsEmployeesComponent,
+		OrganizationTotalEmployeesCountComponent,
 		OrganizationsCurrencyComponent
 	],
 	providers: [OrganizationEmploymentTypesService]

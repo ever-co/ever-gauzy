@@ -24,11 +24,10 @@
 		>
 			<div class="table-scroll-container">
 				<angular2-smart-table
+					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
 					(userRowSelect)="selectEquipmentSharingPolicy($event)"
-					style="cursor: pointer"
-					#equipmentSharingPolicyTable
 				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">

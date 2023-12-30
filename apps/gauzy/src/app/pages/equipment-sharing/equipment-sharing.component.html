@@ -43,11 +43,10 @@
 			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<div class="table-scroll-container">
 					<angular2-smart-table
+						style="cursor: pointer"
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
 						(userRowSelect)="selectEquipmentSharing($event)"
-						style="cursor: pointer"
-						#equipmentSharingTable
 					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">

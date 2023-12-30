@@ -35,9 +35,8 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './equipment-sharing-policy.component.html',
 	styleUrls: ['./equipment-sharing-policy.component.scss']
 })
-export class EquipmentSharingPolicyComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class EquipmentSharingPolicyComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedEquipmentSharingPolicy: IEquipmentSharingPolicy;
@@ -51,16 +50,6 @@ export class EquipmentSharingPolicyComponent
 	selectedOrganization: IOrganization;
 	equipmentSharingPolicy$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	equipmentSharingPolicyTable: Angular2SmartTableComponent;
-	@ViewChild('equipmentSharingPolicyTable') set content(
-		content: Angular2SmartTableComponent
-	) {
-		if (content) {
-			this.equipmentSharingPolicyTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -144,37 +133,20 @@ export class EquipmentSharingPolicyComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.equipmentSharingPolicyTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.EQUIPMENT_SHARING_POLICY'
-			),
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EQUIPMENT_SHARING_POLICY'),
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			columns: {
 				name: {
-					title: this.getTranslation(
-						'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'
-					),
+					title: this.getTranslation('EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'),
 					type: 'string',
 					filter: {
 						type: 'custom',
@@ -185,9 +157,7 @@ export class EquipmentSharingPolicyComponent
 					}
 				},
 				description: {
-					title: this.getTranslation(
-						'EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION'
-					),
+					title: this.getTranslation('EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION'),
 					type: 'string',
 					filter: false
 				}
@@ -326,19 +296,6 @@ export class EquipmentSharingPolicyComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (
-			this.equipmentSharingPolicyTable &&
-			this.equipmentSharingPolicyTable.grid
-		) {
-			this.equipmentSharingPolicyTable.grid.dataSet['willSelect'] = 'first';
-			this.equipmentSharingPolicyTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy() { }

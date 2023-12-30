@@ -5,7 +5,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
