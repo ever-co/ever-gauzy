@@ -45,8 +45,7 @@
 						[organization]="organization"
 						(addOrEditUser)="addOrEditUser($event)"
 						(canceled)="cancel()"
-					>
-					</ga-edit-user-mutation>
+					></ga-edit-user-mutation>
 				</ng-template>
 			</div>
 		</ng-template>
@@ -60,9 +59,7 @@
 					[settings]="settingsSmartTable"
 					[source]="sourceSmartTable"
 					(userRowSelect)="selectUser($event)"
-					#usersTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container align-self-end">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">

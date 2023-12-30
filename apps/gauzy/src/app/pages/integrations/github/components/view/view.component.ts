@@ -7,7 +7,7 @@ import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operator
 import { TranslateService } from '@ngx-translate/core';
 import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import {
 	GithubRepositoryStatusEnum,
 	HttpStatus,
@@ -316,30 +316,38 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			columns: {
 				number: {
 					title: this.getTranslation('SM_TABLE.NUMBER'), // Set column title based on translation
-					width: '5%',
+					width: '10%',
 					type: 'custom', // Set column type to 'custom'
 					renderComponent: ClickableLinkComponent,
+					componentInitFunction: (instance: ClickableLinkComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+						instance.href = 'html_url';
+					},
 					valuePrepareFunction: (number: IGithubIssue['number']) => {
 						return this._hashNumberPipe.transform(number);
 					},
-					onComponentInitFunction: (instance: any) => {
-						instance['href'] = 'html_url';
-					}
 				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
-					width: '90%',
+					width: '80%',
 					type: 'custom', // Set column type to 'custom'
-					renderComponent: GithubIssueTitleDescriptionComponent
+					renderComponent: GithubIssueTitleDescriptionComponent,
+					componentInitFunction: (instance: ClickableLinkComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				state: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
-					width: '5%',
+					width: '10%',
 					type: 'custom', // Set column type to 'custom'
 					renderComponent: StatusBadgeComponent,
-					valuePrepareFunction: (state: TaskStatusEnum) => {
-						return this.getIssueStatus(state);
-					}
+					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
+					valuePrepareFunction: (value: TaskStatusEnum) => {
+						return this.getIssueStatus(value);
+					},
 				},
 			}
 		};
@@ -359,41 +367,62 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				repository: {
 					title: this.getTranslation('SM_TABLE.GITHUB_REPOSITORY'), // Set column title based on translation
 					type: 'custom',
+					filter: false,
 					renderComponent: GithubRepositoryComponent,
-					filter: false
+					componentInitFunction: (instance: GithubRepositoryComponent, cell: Cell) => {
+						// Set properties on the GithubRepositoryComponent instance
+						instance.value = cell.getRawValue();
+					}
 				},
 				project: {
 					title: this.getTranslation('SM_TABLE.PROJECT'), // Set column title based on translation
 					type: 'custom',
-					renderComponent: ProjectComponent,
 					filter: false,
-					valuePrepareFunction: (i: any, row: IOrganizationProject) => ({
-						project: row
-					})
+					renderComponent: ProjectComponent,
+					valuePrepareFunction: (_: any, cell: Cell) => ({
+						project: cell.getRow().getData()
+					}),
+					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
+						// Set properties on the ProjectComponent instance
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				issuesCount: {
 					title: this.getTranslation('SM_TABLE.ISSUES_SYNC'), // Set column title based on translation
 					type: 'number',
 					filter: false,
-					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
+					valuePrepareFunction: (_: any, cell: Cell) => {
+						// Get the data of the entire row
+						const row = cell.getRow().getData();
+
+						// Prepare the value for the cell by using translation and the 'issuesCount' property from the row
 						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', {
 							count: row?.repository?.issuesCount
-						})
+						});
 					}
 				},
 				hasSyncEnabled: {
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
-					renderComponent: ToggleSwitchComponent,
 					filter: false,
-					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
-						return row?.repository?.hasSyncEnabled || false;
-					},
-					onComponentInitFunction: (instance: any) => {
+					renderComponent: ToggleSwitchComponent,
+					componentInitFunction: (instance: ToggleSwitchComponent, cell: Cell) => {
+						// Get the data of the entire row
+						const rowData = cell.getRow().getData();
+
+						// Set properties on the ToggleSwitchComponent instance
+						instance.rowData = rowData;
+						instance.value = rowData?.repository?.hasSyncEnabled || false;
+
+						// Subscribe to the 'switched' event of the ToggleSwitchComponent
 						instance.switched.subscribe({
+							// When the switch state changes, execute the following callback
 							next: (hasSyncEnabled: boolean) => {
-								this.updateGithubRepository(instance.rowData, hasSyncEnabled);
+								// Call the 'updateGithubRepository' method with the row data and the new switch state
+								this.updateGithubRepository(rowData, hasSyncEnabled);
 							},
+							// If there is an error, log a warning
 							error: (err: any) => {
 								console.warn(err);
 							}
@@ -403,15 +432,25 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				resync: {
 					title: this.getTranslation('SM_TABLE.RESYNC_ISSUES'),
 					type: 'custom',
-					renderComponent: ResyncButtonComponent,
 					filter: false,
-					onComponentInitFunction: (instance: ResyncButtonComponent) => {
+					renderComponent: ResyncButtonComponent,
+					componentInitFunction: (instance: ResyncButtonComponent, cell: Cell) => {
+						// Get the data of the entire row
+						const rowData = cell.getRow().getData();
+
+						// Set properties on the ResyncButtonComponent instance
+						instance.rowData = rowData;
+
+						// Subscribe to the 'clicked' event of the ResyncButtonComponent
 						instance.clicked.subscribe({
+							// When the button is clicked, execute the following callback
 							next: () => {
+								// Call the 'resyncIssues' method with the rowData as an argument
 								this.resyncIssues(instance.rowData);
 							},
+							// Handle errors if they occur during the subscription
 							error: (error: any) => {
-								// Handle and log errors
+								// Handle and log errors using an error handling service
 								this._errorHandlingService.handleError(error);
 							}
 						});
@@ -420,11 +459,14 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
 					type: 'custom',
-					renderComponent: StatusBadgeComponent,
 					filter: false,
-					valuePrepareFunction: (i: any, row: IOrganizationProject) => {
-						// Transform the column data using '_titlecasePipe.transform' (modify this function)
-						return this.statusMapper(row.repository);
+					renderComponent: StatusBadgeComponent,
+					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+						// Get the data of the entire row
+						const row = cell.getRow().getData();
+
+						// Transform the column data using 'this.statusMapper'
+						instance.value = this.statusMapper(row.repository);
 					}
 				}
 			}
