@@ -163,13 +163,12 @@ log.catchErrors({
 	showDialog: false,
 	onError(error, versions, submitIssue) {
 		// Set user information, as well as tags and further extras
-		Sentry.configureScope((scope) => {
-			scope.setExtra('Version', versions.app);
-			scope.setTag('OS', versions.os);
-		});
+		const scope = new Sentry.Scope();
+		scope.setExtra('Version', versions.app);
+		scope.setTag('OS', versions.os);
 		// Capture exceptions, messages
 		Sentry.captureMessage(error.message);
-		Sentry.captureException(new Error(error.stack));
+		Sentry.captureException(new Error(error.stack), scope);
 		const dialog = new DialogErrorHandler(error.message);
 		dialog.options.detail = error.stack;
 		dialog.show().then((result) => {
