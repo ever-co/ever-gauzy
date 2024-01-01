@@ -3,12 +3,19 @@ import {
 	Component,
 	Input,
 	OnDestroy,
-	OnInit,
-	ViewChild
+	OnInit
 } from '@angular/core';
 import { Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { NbDialogService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
+import { Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import * as moment from 'moment';
+import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -19,14 +26,6 @@ import {
 	IInvite,
 	InviteStatusEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import * as moment from 'moment';
-import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';

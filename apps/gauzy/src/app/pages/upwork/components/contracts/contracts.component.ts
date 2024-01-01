@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TitleCasePipe } from '@angular/common';
-import { IEngagement } from '@gauzy/contracts';
 import { Observable, of, EMPTY, firstValueFrom, filter } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import * as moment from 'moment';
+import { IEngagement } from '@gauzy/contracts';
 import {
 	ErrorHandlingService,
 	ToastrService,

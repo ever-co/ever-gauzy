@@ -8,7 +8,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/internal/operators/tap';
-import { debounceTime, filter, takeUntil } from 'rxjs/operators';
+import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';

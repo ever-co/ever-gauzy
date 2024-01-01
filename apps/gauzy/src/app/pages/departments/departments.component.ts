@@ -8,6 +8,12 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { filter, tap } from 'rxjs/operators';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { Cell } from 'angular2-smart-table';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IEmployee,
 	IOrganizationDepartment,
@@ -16,12 +22,6 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import {

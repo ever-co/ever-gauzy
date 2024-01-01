@@ -1,7 +1,13 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
+import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { Cell } from 'angular2-smart-table';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as moment from 'moment';
 import {
 	StatusTypesEnum,
 	ITimeOff,
@@ -9,13 +15,7 @@ import {
 	IOrganization,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
-import { combineLatest, Subject } from 'rxjs';
-import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import * as moment from 'moment';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	DateRangePickerBuilderService,

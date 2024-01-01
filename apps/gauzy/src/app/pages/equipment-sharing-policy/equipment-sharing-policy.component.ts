@@ -1,7 +1,12 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { UntypedFormGroup } from '@angular/forms';
+import { NbDialogService } from '@nebular/theme';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom, Subject, debounceTime } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	IEquipmentSharing,
@@ -9,12 +14,6 @@ import {
 	IEquipmentSharingPolicy,
 	IOrganization
 } from '@gauzy/contracts';
-import { Angular2SmartTableComponent } from 'angular2-smart-table';
-import { UntypedFormGroup } from '@angular/forms';
-import { NbDialogService } from '@nebular/theme';
-import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom, Subject, debounceTime } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	EquipmentSharingPolicyService,
