@@ -21,7 +21,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { IChartData } from '../../../@shared/report/charts/line-chart/line-chart.component';
+import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 
@@ -223,15 +223,15 @@ export class AccountingComponent extends TranslationBaseComponent
 		);
 		this.store.selectedEmployee = employee.id
 			? ({
-					id: people.id,
-					firstName: people.user.firstName,
-					lastName: people.user.lastName,
-					imageUrl: people.user.imageUrl,
-					employeeLevel: people.employeeLevel,
-					shortDescription: people.short_description
-			  } as ISelectedEmployee)
+				id: people.id,
+				firstName: people.user.firstName,
+				lastName: people.user.lastName,
+				imageUrl: people.user.imageUrl,
+				employeeLevel: people.employeeLevel,
+				shortDescription: people.short_description
+			} as ISelectedEmployee)
 			: ALL_EMPLOYEES_SELECTED;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

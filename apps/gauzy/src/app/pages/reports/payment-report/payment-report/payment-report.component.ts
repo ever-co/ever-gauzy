@@ -23,7 +23,7 @@ import { pluck } from 'underscore';
 import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
+import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { DateRangePickerBuilderService, PaymentService, Store } from './../../../../@core/services';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
