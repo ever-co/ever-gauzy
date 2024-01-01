@@ -1,6 +1,12 @@
-import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
+import { Router, ActivatedRoute } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IInvoice,
 	IOrganizationContact,
@@ -11,12 +17,6 @@ import {
 	ITag,
 	IInvoiceItemCreateInput
 } from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
-import { Router, ActivatedRoute } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
@@ -85,14 +85,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	}
 	get isEstimate() {
 		return this._isEstimate;
-	}
-
-	invoiceItemTable: Angular2SmartTableComponent;
-	@ViewChild('invoiceItemTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.invoiceItemTable = content;
-			this.onChangedSource();
-		}
 	}
 
 	constructor(
@@ -266,6 +258,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		let price = {};
 		let quantity = {};
 
+		console.log(this.invoice.invoiceType);
+
 		switch (this.invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.settingsSmartTable['columns']['selectedItem'] = {
@@ -361,8 +355,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				type: 'text',
 				filter: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+				valuePrepareFunction: (value: any) => {
+					return `${this.currency.value} ${value}`;
 				}
 			};
 			quantity = {
@@ -858,7 +852,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	async onCreateConfirm(event) {
-		console.log(event);
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(event.newData.price) &&
@@ -879,6 +872,10 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		}
 	}
 
+	/**
+	 *
+	 * @param event
+	 */
 	async onEditConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
@@ -940,23 +937,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 
 	selectItem(item: any) {
 		this.selectedItem = item;
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invoiceItemTable.source.onChangedSource
-			.pipe(
-				tap(() => {
-					if (this.invoiceItemTable && this.invoiceItemTable.grid) {
-						this.invoiceItemTable.grid.dataSet['willSelect'] = 'indexed';
-						this.invoiceItemTable.grid.dataSet.deselectAll();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	ngOnDestroy() { }
