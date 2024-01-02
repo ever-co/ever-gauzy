@@ -38,14 +38,15 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 export class PaymentReportComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	public loading: boolean;
-	public chartData: IChartData;
-	private groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	public filters: IGetPaymentInput;
+	public loading: boolean;
+	public charts: IChartData;
+	private groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+
+	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
-	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly paymentService: PaymentService,
@@ -61,16 +62,23 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
+				// Filters out emissions when 'this.organization' is falsy
 				filter(() => !!this.organization),
+				// Performs a side effect: invokes 'this.prepareRequest()'
 				tap(() => this.prepareRequest()),
+				// Ensures that the subscription is automatically unsubscribed when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
 			.pipe(
+				// Ensures that consecutive emissions are distinct
 				distinctUntilChange(),
+				// Filters out falsy payloads
 				filter((payloads: ITimeLogFilters) => !!payloads),
+				// Performs a side effect: invokes 'this.updateChart()'
 				tap(() => this.updateChart()),
+				// Ensures that the subscription is automatically unsubscribed when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -146,15 +154,20 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 
 			// Extract payment values and create a dataset
 			const datasets = [{
-				label: this.getTranslation('REPORT_PAGE.PAYMENT'),
-				data: logs.map((log) => log.value['payment']),
-				borderColor: ChartUtil.CHART_COLORS.red,
-				backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5),
-				borderWidth: 1
+				label: this.getTranslation('REPORT_PAGE.PAYMENT'), // Label for the dataset, translated using a translation function
+				data: logs.map((log) => log.value['payment']),      // Array of data points for the dataset, extracted from 'logs'
+				borderColor: ChartUtil.CHART_COLORS.red,            // Color of the dataset border
+				backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5), // Background color with transparency
+				borderWidth: 2,               // Width of the dataset border
+				pointRadius: 2,               // Radius of the data points
+				pointHoverRadius: 4,          // Radius of the data points on hover
+				pointHoverBorderWidth: 4,     // Width of the border of data points on hover
+				tension: 0.4,                 // Tension of the spline curve connecting data points
+				fill: false                   // Whether to fill the area under the line or not
 			}];
 
 			// Update the chart data with the retrieved data
-			this.chartData = {
+			this.charts = {
 				labels: pluck(logs, 'date'),
 				datasets
 			};
