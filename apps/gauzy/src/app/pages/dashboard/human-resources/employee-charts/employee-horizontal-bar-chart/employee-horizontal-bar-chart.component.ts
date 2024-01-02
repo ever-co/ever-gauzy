@@ -157,7 +157,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 			},
 			plugins: {
 				legend: {
-					position: 'right',
+					position: 'top',
 					labels: {
 						color: chartJs.textColor,
 						usePointStyle: false

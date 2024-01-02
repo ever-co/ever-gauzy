@@ -152,7 +152,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 			},
 			plugins: {
 				legend: {
-					position: 'right',
+					position: 'top',
 					labels: {
 						color: chartJs.textColor,
 						usePointStyle: false
