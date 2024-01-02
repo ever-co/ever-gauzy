@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -84,9 +84,7 @@ export class LineChartComponent implements OnChanges, OnDestroy, OnInit {
 			plugins: {
 				// Step 3: Configure legend plugin
 				legend: {
-					display: true,
 					position: 'bottom',
-					align: 'center',
 					labels: {
 						color: chartJs.textColor,
 						usePointStyle: false
