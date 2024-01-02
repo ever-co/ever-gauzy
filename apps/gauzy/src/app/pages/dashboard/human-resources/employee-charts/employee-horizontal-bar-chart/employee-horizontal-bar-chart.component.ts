@@ -1,12 +1,15 @@
 import { Component, Input, OnDestroy, OnInit, OnChanges, ViewChild } from '@angular/core';
-import { IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
+import { CurrencyPipe } from '@angular/common';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
+import { environment } from '@env/environment';
+import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
+import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
 import { Store } from './../../../../../@core/services';
 import { months } from './../../../../../@core/moment-extend';
@@ -16,14 +19,14 @@ import { months } from './../../../../../@core/moment-extend';
 	selector: 'ga-employee-horizontal-bar-chart',
 	template: `
 		<ng-template [ngIf]="employeeStatistics.length" [ngIfElse]="chartNotFoundTemplate">
-			<canvas
-				style="height: 500px; width: 500px;"
-				baseChart
-				[data]="data"
-				[options]="baseChartOptions"
-				[legend]="baseChartLegend"
-				[type]="baseChartType"
-			></canvas>
+			<div class="chart">
+				<canvas
+					baseChart
+					[data]="data"
+					[options]="chartOptions"
+					[type]="chartType"
+				></canvas>
+			</div>
 		</ng-template>
 		<ng-template #chartNotFoundTemplate>
 			<div class="title">
@@ -37,6 +40,11 @@ import { months } from './../../../../../@core/moment-extend';
 	styles: [
 		`
 			:host {
+				.chart {
+					width: 500px;
+					height: 500px;
+					display: block;
+				}
 				.title {
 					display: flex;
 					flex-direction: column;
@@ -44,13 +52,13 @@ import { months } from './../../../../../@core/moment-extend';
 				}
 			}
 		`
-	]
+	],
+	providers: [CurrencyPipe, CurrencyPositionPipe]
 })
 export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
 
-	public baseChartType: ChartType = 'bar';
-	public baseChartLegend: boolean = true;
-	public baseChartOptions: ChartConfiguration['options'];
+	public chartType: ChartType = 'bar';
+	public chartOptions: ChartConfiguration['options'];
 	public data: ChartConfiguration['data'];
 
 	public organization: IOrganization;
@@ -90,8 +98,10 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 	@ViewChild(BaseChartDirective, { static: false }) baseChartDirective: BaseChartDirective;
 
 	constructor(
-		private readonly themeService: NbThemeService,
+		private readonly _themeService: NbThemeService,
 		public readonly translateService: TranslateService,
+		private readonly _currencyPipe: CurrencyPipe,
+		private readonly _currencyPositionPipe: CurrencyPositionPipe,
 		private readonly _store: Store,
 	) {
 		super(translateService);
@@ -110,7 +120,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 	}
 
 	ngOnChanges() {
-		const jsTheme$ = this.themeService.getJsTheme();
+		const jsTheme$ = this._themeService.getJsTheme();
 		jsTheme$
 			.pipe(
 				debounceTime(200),
@@ -134,7 +144,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 		const chartJs: any = config.variables.chartjs;
 
 		// Step 2: Set the overall chart options
-		this.baseChartOptions = {
+		this.chartOptions = {
 			responsive: true, // Makes the chart responsive
 			maintainAspectRatio: false, // Allows adjusting the aspect ratio
 			indexAxis: 'y',
@@ -147,18 +157,22 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 			},
 			plugins: {
 				legend: {
-					position: 'right',
+					position: 'top',
 					labels: {
 						color: chartJs.textColor,
 						usePointStyle: false
 					},
 				},
 				tooltip: {
-					enabled: true
+					enabled: true,
+					// Define callback for tooltip labels
+					callbacks: {
+						title: () => ''
+					}
 				}
 			},
 			scales: {
-				// Step 7: Configure x-axis scale
+				// Configure x-axis scale
 				x: {
 					grid: {
 						display: true,
@@ -168,7 +182,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 						color: chartJs.textColo
 					}
 				},
-				// Step 8: Configure y-axis scale
+				// Configure y-axis scale
 				y: {
 					grid: {
 						display: true,
@@ -181,7 +195,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 			}
 		};
 
-		// Step 13: Update the chart if it exists
+		// Update the chart if it exists
 		if (this.baseChartDirective && this.baseChartDirective.chart) {
 			this.baseChartDirective.chart.update();
 		}
@@ -208,6 +222,17 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 	}
 
 	/**
+	 * Formats the given value as currency.
+	 * @param value - The numeric value to be formatted.
+	 * @returns The formatted currency string.
+	 */
+	formatCurrency = (value: number): string => {
+		const currencyPosition = this.organization?.currencyPosition || CurrencyPosition.LEFT;
+		const currency = this._currencyPipe.transform(value, this.organization?.currency || environment.DEFAULT_CURRENCY);
+		return this._currencyPositionPipe.transform(currency, currencyPosition);
+	}
+
+	/**
 	 * Initializes the chart dataset with appropriate colors and labels.
 	 */
 	private _initializeChartDataset(): void {
@@ -215,27 +240,32 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 		const bonusColors = this.getBonusColors();
 		const profitColors = this.getProfitColors();
 
+		const income = this.formatCurrency(this.statistics.income[0]);
+		const expense = this.formatCurrency(this.statistics.expense[0]);
+		const bonus = this.formatCurrency(this.statistics.bonus[0]);
+		const profit = this.formatCurrency(this.statistics.profit[0]);
+
 		// Set up the 'data' object for the chart with labels and datasets
 		this.data = {
 			labels: this.labels,
 			datasets: [
 				{
-					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE'),
+					label: `${this.getTranslation('DASHBOARD_PAGE.CHARTS.REVENUE')}: ${income}`,
 					backgroundColor: '#089c17', // Background color for the revenue dataset
 					data: this.statistics.income // Data values for the revenue dataset
 				},
 				{
-					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
+					label: `${this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES')}: ${expense}`,
 					backgroundColor: '#dbc300', // Background color for the expenses dataset
 					data: this.statistics.expense // Data values for the expenses dataset
 				},
 				{
-					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
+					label: `${this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')}: ${profit}`,
 					backgroundColor: profitColors, // Background colors for the profit dataset
 					data: this.statistics.profit // Data values for the profit dataset
 				},
 				{
-					label: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
+					label: `${this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS')}: ${bonus}`,
 					backgroundColor: bonusColors, // Background colors for the bonus dataset
 					data: this.statistics.bonus // Data values for the bonus dataset
 				}
@@ -245,7 +275,6 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 			}))
 		};
 	}
-
 
 	/**
 	 * Populates the local statistics variables with input employeeStatistics data.
