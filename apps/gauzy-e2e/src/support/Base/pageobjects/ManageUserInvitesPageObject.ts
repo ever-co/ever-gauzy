@@ -1,8 +1,7 @@
 export const ManageUserInvitesPage = {
-	manageInvitesButtonCss:
-		'div.card-header-title > div.mr-2 > button[status="primary"]',
+	manageInvitesButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
 	gridButtonCss: 'div.layout-switch > button',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	copyLinkButtonCss: 'div.mb-3 > button[status="success"]',
 	resendInviteButtonCss: 'div.mb-3 > button[status="warning"]',
 	deleteInviteButtonCss: 'div.mb-3 > button[status="danger"]',
@@ -20,6 +19,5 @@ export const ManageUserInvitesPage = {
 	rolesDropdownCss: 'nb-option',
 	searchEmailInputCss: 'input-filter > input[placeholder="Email"]',
 	clientsTableData: 'td.ng-star-inserted',
-	clientsTableRow: 'tr[class="ng2-smart-row ng-star-inserted"]'
-
+	clientsTableRow: 'tr[class="angular2-smart-row ng-star-inserted"]'
 };

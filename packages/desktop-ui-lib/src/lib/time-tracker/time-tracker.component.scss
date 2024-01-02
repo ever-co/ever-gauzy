@@ -379,15 +379,15 @@ nb-card-body {
 	bottom: 0;
 }
 
-::ng-deep .ng2-smart-pagination .page-link-next,
-::ng-deep .ng2-smart-pagination .page-link-prev {
+::ng-deep .angular2-smart-pagination .page-link-next,
+::ng-deep .angular2-smart-pagination .page-link-prev {
 	border-radius: 0px !important;
 }
 
 ::ng-deep
 	.nb-theme-default
 	angular2-smart-table
-	nav.ng2-smart-pagination-nav
+		nav.angular2-smart-pagination-nav
 	.pagination
 	li
 	a {

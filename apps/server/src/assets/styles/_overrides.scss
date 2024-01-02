@@ -195,13 +195,13 @@ body {
   angular2-smart-table table {
     border-collapse: separate !important;
 
-    .ng2-smart-filter input {
+    .angular2-smart-filter input {
       height: 32px;
       background-color: var(--gauzy-sidebar-background-3) !important;
       border: none !important;
     }
 
-    .ng2-smart-filter .ng-select .ng-select-container {
+        .angular2-smart-filter .ng-select .ng-select-container {
       background-color: var(--gauzy-sidebar-background-3) !important;
       height: 32px;
       min-height: auto;
@@ -211,7 +211,7 @@ body {
       }
     }
 
-    .ng2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
+        .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
       font-size: 13px;
       font-weight: 400;
       line-height: 16px;
@@ -505,7 +505,7 @@ nb-tabset .tab.active .tab-link {
 }
 angular2-smart-table {
   angular2-smart-table-pager {
-    nav.ng2-smart-pagination-nav .pagination {
+    nav.angular2-smart-pagination-nav .pagination {
       border: none;
 
       li:not(:last-child) {
@@ -660,7 +660,7 @@ angular2-smart-table {
   }
 }
 
-angular2-smart-table table tr.ng2-smart-titles .ng2-smart-sort {
+angular2-smart-table table tr.angular2-smart-titles .angular2-smart-sort {
   font-size: 12px !important;
   font-weight: 600 !important;
   line-height: 15px;
@@ -668,7 +668,7 @@ angular2-smart-table table tr.ng2-smart-titles .ng2-smart-sort {
   color: var(--gauzy-text-color-2) !important;
 }
 
-angular2-smart-table table tr.ng2-smart-titles th a.sort {
+angular2-smart-table table tr.angular2-smart-titles th a.sort {
   font-size: 12px !important;
   font-weight: 600 !important;
   line-height: 15px;

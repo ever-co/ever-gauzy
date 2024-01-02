@@ -6,13 +6,15 @@ export const OrganizationDepartmentsPage = {
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	addTagsDropdownCss: 'form [aria-autocomplete]',
 	tagsDropdownOption: '.ng-dropdown-panel > div > div > div > div > span',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveDepartmentButtonCss: '[type="submit"]',
 	editDepartmentButtonCss: '.primary',
 	deleteDepartmentButtonCss: '.icon-end.ng-star-inserted',
-	confirmDeleteButtonCss: '[class="mr-3 ml-3 appearance-filled size-medium shape-rectangle status-danger nb-transition"]',
+	confirmDeleteButtonCss:
+		'[class="mr-3 ml-3 appearance-filled size-medium shape-rectangle status-danger nb-transition"]',
 	footerCss: '.editable',
-	verifyDepartmentCss: 'tbody > tr > td > angular2-smart-table-cell > table-cell-view-mode > div > div.ng-star-inserted',
+	verifyDepartmentCss:
+		'tbody > tr > td > angular2-smart-table-cell > table-cell-view-mode > div > div.ng-star-inserted',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	departmentListCss: 'tbody > tr > td > angular2-smart-table-cell > table-cell-view-mode > div > div.ng-star-inserted'
 };

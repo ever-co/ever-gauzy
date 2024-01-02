@@ -390,7 +390,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 
 			// removed selected row from table after applied
-			const row = document.querySelector('angular2-smart-table > table > tbody > .ng2-smart-row.selected');
+			const row = document.querySelector('angular2-smart-table > table > tbody > .angular2-smart-row.selected');
 			if (!!row) {
 				row.remove();
 				this.onSelectJob({ isSelected: false, data: null });

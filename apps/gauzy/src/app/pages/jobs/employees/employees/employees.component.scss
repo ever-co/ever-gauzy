@@ -3,7 +3,7 @@
 :host nb-card-body {
     height: calc(100vh - 13.5rem) !important;
 	::ng-deep angular2-smart-table {
-		.ng2-smart-actions {
+		.angular2-smart-actions {
 			width: 5%;
 			a {
 				transform: scale(0.6);
@@ -19,7 +19,7 @@
 				box-shadow: var(--gauzy-shadow);
 			}
 		}
-		.ng2-smart-actions-title {
+				.angular2-smart-actions-title {
 			a {
 				background-color: #00d68f !important;
 				transform: scale(0.9);

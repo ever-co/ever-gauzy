@@ -24,7 +24,7 @@ export const ContactsLeadsPage = {
 	saveButtonCss: 'div.form-group > button[status="success"]',
 	nextButtonCss: 'div.fields > div > button[status="success"]',
 	finishButtonCss: 'div.fields > div > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	contactNameCss: '[formcontrolname="name"]',
 	contactPhoneCss: '[formcontrolname="primaryPhone"]',
@@ -34,6 +34,5 @@ export const ContactsLeadsPage = {
 	verifyLeadCss: 'div.d-block',
 	searchNameInputCss: 'input-filter > input[placeholder="Name"]',
 	clientsTableData: 'td.ng-star-inserted',
-	clientsTableRow: 'tr[class="ng2-smart-row ng-star-inserted"]',
-
+	clientsTableRow: 'tr[class="angular2-smart-row ng-star-inserted"]'
 };
