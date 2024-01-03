@@ -164,7 +164,7 @@
 		"uuid": "^8.3.2",
 		"web-animations-js": "^2.3.2",
 		"yargs": "^17.5.0",
-		"zone.js": "~0.13.0"
+		"zone.js": "^0.14.2"
 	},
 	"devDependencies": {
 		"@angular-builders/custom-webpack": "^13.0.0",
