@@ -8,7 +8,7 @@
 
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a {
   transform: scale(0.6);
-  border-radius: 0.5rem;
+  border-radius: var(--border-radius);
 }
 
 :host ::ng-deep angular2-smart-table .angular2-smart-actions a:nth-child(1) {

@@ -6,6 +6,7 @@
   scrollbar-color: var(--gauzy-scrollbar) transparent;
   scrollbar-width: thin;
 }
+
 /*  Apply style on scrollbar for Chrome */
 *::-webkit-scrollbar {
   width: nb-theme(scrollbar-width);
@@ -95,17 +96,16 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(
-      nb-theme(card-scrollbar-color),
+    @include nb-scrollbars(nb-theme(card-scrollbar-color),
       nb-theme(card-scrollbar-background-color),
-      nb-theme(card-scrollbar-width)
-    );
+      nb-theme(card-scrollbar-width));
   }
 
   nb-flip-card {
     .front-container {
       -webkit-backface-visibility: visible;
     }
+
     .back-container {
       -webkit-backface-visibility: hidden;
     }
@@ -114,6 +114,7 @@ body {
       .front-container {
         -webkit-backface-visibility: hidden;
       }
+
       .back-container {
         -webkit-backface-visibility: visible;
       }
@@ -127,6 +128,7 @@ body {
   }
 
   nb-layout .layout .layout-container nb-sidebar {
+
     &,
     .main-container-fixed {
       top: nb-theme(header-height);
@@ -137,6 +139,7 @@ body {
   nb-layout .layout .layout-container .content nb-layout-footer nav {
     padding: 0.45rem !important;
   }
+
   //Override header padding from 1.25rem to 0.5rem
   nb-layout .layout nb-layout-header nav {
     padding: 0rem !important;
@@ -152,12 +155,15 @@ body {
     nb-menu {
       .menu-items {
         scrollbar-width: thin;
+
         &::-webkit-scrollbar {
           width: nb-theme(scrollbar-width);
         }
+
         &::-webkit-scrollbar-track {
           background: transparent;
         }
+
         &::-webkit-scrollbar-thumb {
           background: var(--gauzy-scrollbar);
           border-radius: 1rem;
@@ -168,14 +174,18 @@ body {
 
   .ng-dropdown-panel {
     background-color: var(--gauzy-card-5) !important;
+
     .scroll-host {
       scrollbar-width: thin;
+
       &::-webkit-scrollbar {
         width: nb-theme(scrollbar-width);
       }
+
       &::-webkit-scrollbar-track {
         background: transparent;
       }
+
       &::-webkit-scrollbar-thumb {
         background: var(--gauzy-scrollbar);
         border-radius: 1rem;
@@ -185,26 +195,24 @@ body {
 
   angular2-smart-table table {
     border-collapse: separate !important;
+
     .angular2-smart-filter input {
       height: 32px;
       background-color: var(--gauzy-sidebar-background-3) !important;
       border: none !important;
     }
 
-        .angular2-smart-filter .ng-select .ng-select-container {
+    .angular2-smart-filter .ng-select .ng-select-container {
       background-color: var(--gauzy-sidebar-background-3) !important;
       height: 32px;
       min-height: auto;
+
       input {
         background-color: transparent !important;
       }
     }
 
-        .angular2-smart-filter
-      .ng-select
-      .ng-select-container
-      .ng-value-container
-      .ng-placeholder {
+    .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
       font-size: 13px;
       font-weight: 400;
       line-height: 16px;
@@ -216,21 +224,26 @@ body {
   .card-scroll {
     height: calc(100vh - 157px);
     min-height: auto !important;
+
     nb-card {
       height: auto !important;
       min-height: auto !important;
+
       nb-card-body {
         overflow: hidden;
         height: 100%;
       }
     }
   }
+
   .dashboard-card-scroll {
     height: calc(100vh - 270px);
     min-height: auto !important;
+
     nb-card {
       height: auto !important;
       min-height: auto !important;
+
       nb-card-body {
         overflow: hidden;
         height: 100%;
@@ -283,11 +296,14 @@ body {
     transform: translateY(10px);
     box-shadow: var(--gauzy-shadow);
     border-width: 0 !important;
+
     &.ng-select-bottom {
       border-radius: nb-theme(border-radius);
     }
+
     .ng-dropdown-panel-items {
       border-radius: nb-theme(border-radius);
+
       img {
         border-radius: 4px;
         width: 24px;
@@ -297,11 +313,7 @@ body {
     }
   }
 
-  .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-input
-    > input {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input>input {
     color: var(--gauzy-text-color-1);
   }
 
@@ -313,33 +325,42 @@ body {
     background-color: nb-theme(background-basic-color-2) !important;
     color: nb-theme(text-basic-color) !important;
   }
+
   .info-block-wrapper {
     background-color: nb-theme(background-basic-color-2) !important;
     color: nb-theme(text-basic-color) !important;
   }
+
   .info-block-wrapper .info-block--highlight {
     background: nb-theme(background-basic-color-3) !important;
   }
+
   .info-text {
     color: nb-theme(text-basic-color) !important;
   }
-  a > nb-icon {
+
+  a>nb-icon {
     color: nb-theme(text-basic-color) !important;
   }
+
   .records {
     box-shadow: var(--gauzy-shadow) !important;
     background: nb-theme(background-basic-color-1) !important;
   }
+
   .profit-history {
     box-shadow: var(--gauzy-shadow) !important;
     background: nb-theme(background-basic-color-1) !important;
   }
+
   tr {
     background-color: nb-theme(background-basic-color-1) !important;
   }
+
   .table {
     color: nb-theme(text-basic-color) !important;
   }
+
   nb-accordion-item-body .item-body {
     overflow-x: hidden;
   }
@@ -351,24 +372,26 @@ body {
   }
 
   nb-sidebar .main-container-fixed {
-    height: calc(
-      100vh - #{nb-theme(header-height)} - #{$padding-top}
-    ) !important;
+    height: calc(100vh - #{nb-theme(header-height)} - #{$padding-top}) !important;
     top: calc(#{nb-theme(header-height)} + #{$padding-top}) !important;
   }
 }
 
 angular2-smart-table tbody tr {
   background: rgba(126, 126, 143, 0.05);
+
   &:hover {
-    background: var(--gauzy-card-2)
+    background: var(--gauzy-card-2);
   }
+
   &.selected {
     box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
+
     &:first-child {
       border-top-left-radius: var(--border-radius);
       border-top-right-radius: var(--border-radius);
     }
+
     &:last-child {
       border-bottom-left-radius: var(--border-radius);
       border-bottom-right-radius: var(--border-radius);
@@ -377,6 +400,7 @@ angular2-smart-table tbody tr {
 }
 
 nb-card-header {
+
   &.card-header-title,
   .card-header-title {
     display: flex;
@@ -392,6 +416,7 @@ nb-card-body {
     justify-content: space-between;
     align-self: flex-end;
     width: 100%;
+
     ga-pagination {
       width: 100%;
     }
@@ -406,15 +431,18 @@ nb-card-body {
   max-height: calc(100vh - 28rem);
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
+
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
   }
+
   table thead tr:nth-of-type(1) {
     position: -webkit-sticky !important;
     position: sticky !important;
     top: 0 !important;
     z-index: 2 !important;
   }
+
   table thead {
     position: sticky;
     z-index: 100;
@@ -430,10 +458,12 @@ nb-card-body {
   table thead th {
     border-left: none;
     border-right: none;
+
     &:first-child {
       border-left: 1px solid var(--gauzy-border-table);
       border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
+
     &:last-child {
       border-right: 1px solidvar(--gauzy-border-table);
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
@@ -442,7 +472,7 @@ nb-card-body {
 
   table tbody tr {
     &:last-child td {
-      border-bottom: none
+      border-bottom: none;
     }
 
     td {
@@ -456,12 +486,15 @@ nb-card-body {
   tr:first-child td:first-child {
     border-top-left-radius: var(--border-radius);
   }
+
   tr:first-child td:last-child {
     border-top-right-radius: var(--border-radius);
   }
+
   tr:last-child td:first-child {
     border-bottom-left-radius: var(--border-radius);
   }
+
   tr:last-child td:last-child {
     border-bottom-right-radius: var(--border-radius);
   }
@@ -482,20 +515,25 @@ nb-tabset .tab.active .tab-link {
   background-color: var(--gauzy-card-2);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
+
 angular2-smart-table {
   angular2-smart-table-pager {
     nav.angular2-smart-pagination-nav .pagination {
       border: none;
+
       li:not(:last-child) {
         border-right: 0px solid black;
       }
+
       li {
         cursor: pointer;
+
         &.active span {
           color: nb-theme(text-primary-color);
           background-color: nb-theme(background-basic-color-3);
           border-radius: nb-theme(button-rectangle-border-radius);
         }
+
         span {
           font-size: 0.875rem;
           background-color: transparent;
@@ -526,6 +564,7 @@ angular2-smart-table {
       select {
         margin: 1rem 0 1rem 1rem;
       }
+
       label {
         margin: 1rem 0 1rem 1rem;
         line-height: 2.5rem;
@@ -564,6 +603,7 @@ angular2-smart-table {
   animation: tooltip-slide 0.1s ease-out 0.18s;
   animation-fill-mode: forwards;
   pointer-events: none;
+
   i {
     color: nb-theme(gauzy-text-color-1);
   }
@@ -574,6 +614,7 @@ angular2-smart-table {
     opacity: 0;
     transform: translate(-16.75px, -118.5%);
   }
+
   100% {
     opacity: 1;
     transform: translate(-16.75px, -118.5%);
@@ -581,7 +622,7 @@ angular2-smart-table {
 }
 
 .nb-theme-material-light {
-  a > nb-icon {
+  a>nb-icon {
     color: #ffffff !important;
   }
 }
@@ -597,10 +638,11 @@ angular2-smart-table {
 // TODO overrides perfectly chevron-down unicode
 .ng-select {
   .ng-select-container {
-	  border-radius: var(--border-radius) !important;
-	  box-shadow: var(--gauzy-shadow) inset;
-	  border: none !important;
+    border-radius: var(--border-radius) !important;
+    box-shadow: var(--gauzy-shadow) inset;
+    border: none !important;
   }
+
   .ng-arrow {
     font-family: 'Font Awesome\ 5 Free' !important;
     border-color: inherit !important;
@@ -618,6 +660,7 @@ angular2-smart-table {
     @include nb-ltr(transform-origin, 5.5px 8.6px);
     @include nb-rtl(transform-origin, -5.5px 8.6px);
     transition: transform 0.2s ease;
+
     &:before {
       content: '\f078';
       font-weight: 900;
@@ -650,6 +693,7 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
+
   &.asc {
     &:before {
       color: rgba(126, 126, 143, 0.25);
@@ -661,10 +705,12 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
       top: 55% !important;
       right: 0.625rem !important;
     }
+
     &:after {
       display: none;
     }
   }
+
   &.desc {
     &:before {
       color: rgba(126, 126, 143, 0.25);
@@ -675,6 +721,7 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
       top: 55% !important;
       right: 0.625rem !important;
     }
+
     &:after {
       display: none;
     }
@@ -684,28 +731,59 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
 .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
   top: unset;
 }
-.ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input{
+
+.ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
   top: unset;
 }
+
 nb-option-list.fit-content {
-	width: fit-content !important;
-	min-width: var(--select-min-width);
+  width: fit-content !important;
+  min-width: var(--select-min-width);
 }
 
 /* Apply style on spinner */
 .sync-container {
-	.sync {
-		cursor: pointer;
-		&.spin {
-			animation: rotate 1s linear infinite;
-		}
-	}
-	@keyframes rotate {
-		from {
-			transform: rotate(0deg);
-		}
-		to {
-			transform: rotate(360deg);
-		}
-	}
+  .sync {
+    cursor: pointer;
+
+    &.spin {
+      animation: rotate 1s linear infinite;
+    }
+  }
+
+  @keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+angular2-smart-table {
+
+  th.angular2-smart-actions-title-add a,
+  a.angular2-smart-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem !important;
+    padding: var(--smart-table-filter-padding);
+    border-color: var(--smart-table-add-button-border-color);
+    background-color: var(--smart-table-add-button-background-color);
+    border-radius: 0.375rem;
+    color: var(--text-control-color);
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  angular2-st-actions,
+  angular2-st-tbody-edit-delete,
+  angular2-st-tbody-create-cancel {
+    display: flex;
+  }
 }
