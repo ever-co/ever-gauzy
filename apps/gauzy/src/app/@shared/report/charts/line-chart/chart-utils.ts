@@ -1,5 +1,4 @@
 import colorLib from '@kurkle/color';
-import { Color } from 'chart.js';
 
 export class ChartUtil {
     public static COLORS: string[] = [
