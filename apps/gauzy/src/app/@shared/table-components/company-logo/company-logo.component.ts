@@ -6,6 +6,6 @@ import { Component, Input } from '@angular/core';
 	styleUrls: ['./company-logo.component.scss']
 })
 export class CompanyLogoComponent {
-	value: string | number;
+	@Input() value: string | number;
 	@Input() rowData: any;
 }
