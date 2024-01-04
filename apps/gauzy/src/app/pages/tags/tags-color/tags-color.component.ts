@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { NotesWithTagsComponent } from '../../../@shared';
+import { NotesWithTagsComponent } from '../../../@shared/table-components';
 
 @Component({
 	selector: 'ngx-tags-color',
@@ -9,5 +9,5 @@ import { NotesWithTagsComponent } from '../../../@shared';
 export class TagsColorComponent extends NotesWithTagsComponent {
 
 	@Input() value: string | number;
-	rowData: any;
+	@Input() rowData: any;
 }
