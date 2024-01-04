@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -16,7 +16,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,

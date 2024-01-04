@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	UntypedFormBuilder,
 	Validators,
@@ -21,7 +21,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 import { ComponentEnum } from './../../../../../@core/constants';
 import {
