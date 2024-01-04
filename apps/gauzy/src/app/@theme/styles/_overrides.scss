@@ -381,11 +381,12 @@ angular2-smart-table tbody tr {
   background: rgba(126, 126, 143, 0.05);
 
   &:hover {
-    background: var(--gauzy-card-2);
+    background: var(--smart-table-bg-active) !important;
   }
 
   &.selected {
     box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
+    background: var(--smart-table-bg-active) !important;
 
     &:first-child {
       border-top-left-radius: var(--border-radius);
@@ -453,6 +454,8 @@ nb-card-body {
   angular2-smart-table table tr th {
     border-top: 1px solid var(--gauzy-border-table);
     border-bottom: 1px solid var(--gauzy-border-table);
+    padding-top: 1em;
+    padding-bottom: 1em;
   }
 
   table thead th {
