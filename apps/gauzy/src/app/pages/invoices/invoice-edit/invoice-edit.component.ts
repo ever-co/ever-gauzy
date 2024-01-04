@@ -3,7 +3,7 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { LocalDataSource } from 'angular2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,7 +15,12 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	ITag,
-	IInvoiceItemCreateInput
+	IInvoiceItemCreateInput,
+	IEmployee,
+	IOrganizationProject,
+	ITask,
+	IProduct,
+	IExpense
 } from '@gauzy/contracts';
 import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
@@ -233,6 +238,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			selectedRowIndex: -1,
+			mode: 'external',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -258,8 +265,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		let price = {};
 		let quantity = {};
 
-		console.log(this.invoice.invoiceType);
-
 		switch (this.invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				this.settingsSmartTable['columns']['selectedItem'] = {
@@ -269,11 +274,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceEmployeesSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const employee = cell;
-						if (employee) {
-							return `${cell.user.name}`;
-						}
+					valuePrepareFunction: (employee: IEmployee) => {
+						return employee?.user?.name || '';
 					}
 				};
 				break;
@@ -285,11 +287,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceProjectsSelectorComponent
 					},
-					valuePrepareFunction: (cell, row) => {
-						const project = cell;
-						if (project) {
-							return `${project.name}`;
-						}
+					valuePrepareFunction: (project: IOrganizationProject) => {
+						return project?.name || '';
 					}
 				};
 				break;
@@ -301,11 +300,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceTasksSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const task = cell;
-						if (task) {
-							return `${task.title}`;
-						}
+					valuePrepareFunction: (task: ITask) => {
+						return task?.title || '';
 					}
 				};
 				break;
@@ -317,11 +313,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceProductsSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const product = cell;
-						if (product) {
-							return `${this.translatableService.getTranslatedProperty(product, 'name')}`;
-						}
+					valuePrepareFunction: (product: IProduct) => {
+						return product?.name ? `${this.translatableService.getTranslatedProperty(product, 'name')}` : '';
 					}
 				};
 				break;
@@ -333,11 +326,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceExpensesSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const expense = cell;
-						if (expense) {
-							return `${expense.purpose}`;
-						}
+					valuePrepareFunction: (expense: IExpense) => {
+						return expense?.purpose || '';
 					}
 				};
 				break;
@@ -355,7 +345,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				type: 'text',
 				filter: false,
 				width: '13%',
-				valuePrepareFunction: (value: any) => {
+				valuePrepareFunction: (value: IInvoiceItem['price']) => {
 					return `${this.currency.value} ${value}`;
 				}
 			};
@@ -398,7 +388,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			type: 'text',
 			addable: false,
 			editable: false,
-			valuePrepareFunction: (cell, row) => {
+			valuePrepareFunction: (value: IInvoiceItem['totalValue'], cell: Cell) => {
+				const row = cell.getRow().getData();
 				return `${this.currency.value} ${row.quantity * row.price}`;
 			},
 			filter: false,
@@ -413,12 +404,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				},
 				filter: false,
 				width: '10%',
-				valuePrepareFunction: (cell) => {
-					if (cell) {
-						return this.getTranslation('INVOICES_PAGE.APPLIED');
-					} else {
-						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
-					}
+				valuePrepareFunction: (isApplied: any) => {
+					return isApplied ? this.getTranslation('INVOICES_PAGE.APPLIED') : this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 				}
 			};
 			this.settingsSmartTable['columns']['applyDiscount'] = {
@@ -429,15 +416,19 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				},
 				filter: false,
 				width: '10%',
-				valuePrepareFunction: (cell) => {
-					if (cell) {
-						return this.getTranslation('INVOICES_PAGE.APPLIED');
-					} else {
-						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
-					}
+				valuePrepareFunction: (isApplied: any) => {
+					return isApplied ? this.getTranslation('INVOICES_PAGE.APPLIED') : this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 				}
 			};
 		}
+	}
+
+	/**
+	 *
+	 * @param event
+	 */
+	onEditRowSelect({ row }) {
+		row.isInEditing = true;
 	}
 
 	private async _loadOrganizationData() {
