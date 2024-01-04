@@ -1,17 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
-    template: `<div>
-    {{value | json}}
-        <nb-checkbox [checked]="rowData && rowData.selected" (change)="onValueChange($event)" status="basic"></nb-checkbox>
-	</div> `
+    selector: 'ga-selected-row-table-selector',
+    template: `
+        <div>
+            <nb-checkbox
+                [checked]="rowData && rowData.selected"
+                (change)="onValueChange($event)"
+                status="basic"
+            ></nb-checkbox>
+        </div>
+    `
 })
 export class SelectedRowComponent {
-    value: any;
-    rowData: any;
 
-    onValueChange(e) {
-        this.rowData.selected = e.target.checked;
+    @Input() value: any;
+    @Input() rowData: any;
+
+    onValueChange(event: any) {
+        this.rowData.selected = event.target.checked;
     }
-
 }

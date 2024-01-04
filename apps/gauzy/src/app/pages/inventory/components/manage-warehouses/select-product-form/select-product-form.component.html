@@ -8,10 +8,9 @@
 	<nb-card-body class="content">
 		<div class="table-scroll-container">
 			<angular2-smart-table
+				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
-				style="cursor: pointer"
-				#productsTable
 				(userRowSelect)="onUserRowSelect($event)"
 			></angular2-smart-table>
 		</div>

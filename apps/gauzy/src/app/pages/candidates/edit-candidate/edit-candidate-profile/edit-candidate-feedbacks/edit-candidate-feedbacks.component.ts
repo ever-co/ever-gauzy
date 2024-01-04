@@ -21,7 +21,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 import { ComponentEnum } from './../../../../../@core/constants';
 import {
@@ -79,14 +79,6 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	viewComponentName: ComponentEnum;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
-
-	feedbackTable: Angular2SmartTableComponent;
-	@ViewChild('feedbackTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.feedbackTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,
@@ -166,46 +158,46 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	async loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				description: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'),
 					type: 'string',
 					filter: false
 				},
 				rating: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
 					width: '136px',
+					filter: false,
 					renderComponent: InterviewStarRatingComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				interviewTitle: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'),
 					type: 'string',
 					width: '200px'
 				},
 				employees: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'),
 					type: 'custom',
 					width: '130px',
+					filter: false,
 					renderComponent: InterviewersTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				status: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'),
 					type: 'custom',
 					width: '5%',
-					renderComponent: FeedbackStatusTableComponent
+					renderComponent: FeedbackStatusTableComponent,
+					componentInitFunction: (instance: FeedbackStatusTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				}
 			},
 			pager: {
@@ -576,28 +568,6 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	 */
 	get feedbacks(): FormArray {
 		return this.form.get('feedbacks') as FormArray;
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.feedbackTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.feedbackTable && this.feedbackTable.grid) {
-			this.feedbackTable.grid.dataSet['willSelect'] = 'indexed';
-			this.feedbackTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy(): void { }

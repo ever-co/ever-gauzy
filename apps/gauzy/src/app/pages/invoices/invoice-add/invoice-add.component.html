@@ -573,14 +573,12 @@
 		<div *ngIf="shouldLoadTable">
 			<div class="table-scroll-container custom-table">
 				<angular2-smart-table
-					class="table"
+					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="smartTableSource"
-					style="cursor: pointer"
 					(createConfirm)="onCreateConfirm($event)"
 					(editConfirm)="onEditConfirm($event)"
 					(deleteConfirm)="onDeleteConfirm($event)"
-					#invoiceItemTable
 				></angular2-smart-table>
 			</div>
 			<div

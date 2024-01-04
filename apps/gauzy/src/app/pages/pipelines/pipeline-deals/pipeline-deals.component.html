@@ -59,12 +59,11 @@
 			</div>
 		</div>
 		<angular2-smart-table
+			style="cursor: pointer"
 			(userRowSelect)="selectPipelineDeals($event)"
 			[settings]="smartTableSettings"
 			[source]="deals"
 			*ngIf="dataLayoutStyle === 'TABLE'"
-			style="cursor: pointer"
-			#pipelineDealsTable
 		></angular2-smart-table>
 		<ga-card-grid
 			[totalItems]="pagination?.totalItems"

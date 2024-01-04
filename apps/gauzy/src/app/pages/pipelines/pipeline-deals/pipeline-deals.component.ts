@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IDeal, IPipeline, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { PipelinesService } from '../../../@core/services/pipelines.service';
 import {
 	ActivatedRoute,
 	Router
 } from '@angular/router';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -13,7 +13,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-
 import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '../../../@core/constants/layout.constants';
 import { Store } from '../../../@core/services/store.service';
-import { filter, tap } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
@@ -26,9 +26,8 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './pipeline-deals.component.html',
 	styleUrls: ['./pipeline-deals.component.scss']
 })
-export class PipelineDealsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class PipelineDealsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+
 	deals = new LocalDataSource([] as IDeal[]);
 	dealsData: IDeal[];
 	filteredDeals: IDeal[];
@@ -40,9 +39,11 @@ export class PipelineDealsComponent
 	loading: boolean;
 
 	private _selectedOrganizationId: string;
-	readonly smartTableSettings = {
+	public disableButton = true;
+	public readonly smartTableSettings = {
 		actions: false,
 		noDataMessage: '-',
+		selectedRowIndex: -1,
 		columns: {
 			title: {
 				type: 'string',
@@ -53,33 +54,35 @@ export class PipelineDealsComponent
 				editor: false,
 				title: 'Stage',
 				type: 'custom',
-				renderComponent: PipelineDealExcerptComponent
+				renderComponent: PipelineDealExcerptComponent,
+				componentInitFunction: (instance: PipelineDealExcerptComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				}
+
 			},
 			createdBy: {
 				title: 'Created by',
 				type: 'custom',
-				renderComponent: PipelineDealCreatedByComponent
+				renderComponent: PipelineDealCreatedByComponent,
+				componentInitFunction: (instance: PipelineDealCreatedByComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				}
 			},
 			probability: {
 				title: 'Probability',
 				type: 'custom',
 				width: '15%',
 				class: 'text-center',
-				renderComponent: PipelineDealProbabilityComponent
+				renderComponent: PipelineDealProbabilityComponent,
+				componentInitFunction: (instance: PipelineDealProbabilityComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+				}
 			}
 		}
 	};
-	disableButton = true;
-
-	pipelineDealsTable: Angular2SmartTableComponent;
-	@ViewChild('pipelineDealsTable') set content(
-		content: Angular2SmartTableComponent
-	) {
-		if (content) {
-			this.pipelineDealsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		public translateService: TranslateService,
@@ -104,22 +107,11 @@ export class PipelineDealsComponent
 			.subscribe((user) => {
 				this.updateViewData();
 			});
-
-		this.smartTableSettings.noDataMessage = this.getTranslation(
-			'SM_TABLE.NO_RESULT'
-		);
-		this.smartTableSettings.columns.title.title = this.getTranslation(
-			'SM_TABLE.TITLE'
-		);
-		this.smartTableSettings.columns.stage.title = this.getTranslation(
-			'SM_TABLE.STAGE'
-		);
-		this.smartTableSettings.columns.createdBy.title = this.getTranslation(
-			'SM_TABLE.CREATED_BY'
-		);
-		this.smartTableSettings.columns.probability.title = this.getTranslation(
-			'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY'
-		);
+		this.smartTableSettings.noDataMessage = this.getTranslation('SM_TABLE.NO_RESULT');
+		this.smartTableSettings.columns.title.title = this.getTranslation('SM_TABLE.TITLE');
+		this.smartTableSettings.columns.stage.title = this.getTranslation('SM_TABLE.STAGE');
+		this.smartTableSettings.columns.createdBy.title = this.getTranslation('SM_TABLE.CREATED_BY');
+		this.smartTableSettings.columns.probability.title = this.getTranslation('PIPELINE_DEAL_CREATE_PAGE.PROBABILITY');
 	}
 
 	setView() {
@@ -130,18 +122,6 @@ export class PipelineDealsComponent
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
 			});
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.pipelineDealsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
 	}
 
 	filterDealsByStage(): void {
@@ -243,17 +223,6 @@ export class PipelineDealsComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.pipelineDealsTable && this.pipelineDealsTable.grid) {
-			this.pipelineDealsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.pipelineDealsTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy() { }

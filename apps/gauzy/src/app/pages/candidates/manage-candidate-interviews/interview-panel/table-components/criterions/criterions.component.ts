@@ -4,11 +4,11 @@ import { Component, Input } from '@angular/core';
 	selector: 'ga-interview-criterions',
 	template: `
 		<ul style="padding-left: 10px; margin:0;">
-			<li *ngFor="let tech of this.rowData.technologies">
+			<li *ngFor="let tech of rowData.technologies">
 				<span> {{ tech.name }} </span>
 			</li>
 
-			<li *ngFor="let qual of this.rowData.personalQualities">
+			<li *ngFor="let qual of rowData.personalQualities">
 				<span> {{ qual.name }} </span>
 			</li>
 		</ul>

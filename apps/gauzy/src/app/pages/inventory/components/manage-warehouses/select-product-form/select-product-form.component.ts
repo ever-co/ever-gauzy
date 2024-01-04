@@ -1,9 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IOrganization, IProductTranslated, LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ProductService, Store } from 'apps/gauzy/src/app/@core';
+import { API_PREFIX, Store } from 'apps/gauzy/src/app/@core';
 import { TranslateService } from '@ngx-translate/core';
-import { Angular2SmartTableComponent, ServerDataSource } from 'angular2-smart-table';
+import { Angular2SmartTableComponent, Cell, ServerDataSource } from 'angular2-smart-table';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { NbDialogRef } from '@nebular/theme';
 import { SelectedRowComponent } from '../../inventory-table-components/selected-row.component';
@@ -41,15 +41,13 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 	productsTable: Angular2SmartTableComponent;
 	PRODUCTS_URL = `${API_PREFIX}/products/local/${this.selectedLanguage}?`;
 
-	constructor(public dialogRef: NbDialogRef<any>, private store: Store, readonly translateService: TranslateService, private productService: ProductService, private http: HttpClient) {
+	constructor(
+		public dialogRef: NbDialogRef<any>,
+		private store: Store,
+		readonly translateService: TranslateService,
+		private http: HttpClient
+	) {
 		super(translateService);
-	}
-
-	@ViewChild('productsTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.productsTable = content;
-			this.onChangedSource();
-		}
 	}
 
 	ngOnInit() {
@@ -75,25 +73,6 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 			tap(() => this.loadSettings()),
 			untilDestroyed(this)
 		).subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.productsTable.source.onChangedSource
-			.pipe(untilDestroyed(this), tap(() => this.deselectAll()))
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.productsTable && this.productsTable.grid) {
-			this.productsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.productsTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	translateProp(elem, prop) {
@@ -130,31 +109,48 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
-			actions: false,
 			columns: {
 				selected: {
 					title: this.getTranslation('INVENTORY_PAGE.SELECTED'),
 					type: 'custom',
-					valuePrepareFunction: (cell, row) => {
-						row.selected = !!this.selectedRows.find(p => p.id == row.id);
-					},
 					filter: false,
-					renderComponent: SelectedRowComponent
-				}, image: {
+					valuePrepareFunction: (_: any, cell: Cell) => {
+						// ToDo - We need to uncomment below and fix issue.
+						// row.selected = !!this.selectedRows.find(p => p.id == row.id);
+					},
+					renderComponent: SelectedRowComponent,
+					componentInitFunction: (instance: SelectedRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
+				},
+				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: ImageRowComponent
-				}, name: {
-					title: this.getTranslation('INVENTORY_PAGE.NAME'), type: 'string'
-				}, type: {
-					title: this.getTranslation('INVENTORY_PAGE.TYPE'), type: 'string'
-				}, category: {
-					title: this.getTranslation('INVENTORY_PAGE.CATEGORY'), type: 'string'
+					renderComponent: ImageRowComponent,
+					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
+				},
+				name: {
+					title: this.getTranslation('INVENTORY_PAGE.NAME'),
+					type: 'string'
+				},
+				type: {
+					title: this.getTranslation('INVENTORY_PAGE.TYPE'),
+					type: 'string'
+				},
+				category: {
+					title: this.getTranslation('INVENTORY_PAGE.CATEGORY'),
+					type: 'string'
 				}
 			}
 		};

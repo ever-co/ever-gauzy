@@ -1,7 +1,7 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { tap } from 'rxjs/operators';
@@ -32,9 +32,8 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 	templateUrl: './goal-settings.component.html',
 	styleUrls: ['./goal-settings.component.scss']
 })
-export class GoalSettingsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class GoalSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	smartTableData = new LocalDataSource();
 	generalSettingsForm: UntypedFormGroup;
 	smartTableSettings: object;
@@ -49,20 +48,11 @@ export class GoalSettingsComponent
 	goalGeneralSettings: IGoalGeneralSetting;
 	goalOwnershipEnum = GoalOwnershipEnum;
 	preDefinedTimeFrames = [];
-	loading: boolean;
+	public organization: IOrganization;
+	public loading: boolean;
 	private _goalSettings$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 
-	goalSettingsTable: Angular2SmartTableComponent;
-	@ViewChild('goalSettingsTable') set content(
-		content: Angular2SmartTableComponent
-	) {
-		if (content) {
-			this.goalSettingsTable = content;
-			this.onChangedSource();
-		}
-	}
-	organization: IOrganization;
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,
@@ -176,10 +166,8 @@ export class GoalSettingsComponent
 		this._loadTableData(e.tabId);
 		this._refresh$.next(true);
 		this.smartTableData.empty();
-		if (this.goalSettingsTable) {
-			this.selectedKPI = null;
-			this.selectedTimeFrame = null;
-		}
+		this.selectedKPI = null;
+		this.selectedTimeFrame = null;
 	}
 
 	selectRow({ isSelected, data }) {
@@ -261,6 +249,7 @@ export class GoalSettingsComponent
 	private _loadTableSettings(tab: string | null) {
 		this.smartTableSettings = {
 			actions: false,
+			selectedRowIndex: -1,
 			hideSubHeader: true,
 			pager: {
 				display: false
@@ -279,19 +268,31 @@ export class GoalSettingsComponent
 						title: this.getTranslation('SM_TABLE.CURRENT_VALUE'),
 						type: 'custom',
 						filter: false,
-						renderComponent: ValueWithUnitComponent
+						renderComponent: ValueWithUnitComponent,
+						componentInitFunction: (instance: ValueWithUnitComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					targetValue: {
 						title: this.getTranslation('SM_TABLE.TARGET_VALUE'),
 						type: 'custom',
 						filter: false,
-						renderComponent: ValueWithUnitComponent
+						renderComponent: ValueWithUnitComponent,
+						componentInitFunction: (instance: ValueWithUnitComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					updatedAt: {
 						title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 						type: 'custom',
 						filter: false,
-						renderComponent: DateViewComponent
+						renderComponent: DateViewComponent,
+						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					}
 				}
 			};
@@ -311,20 +312,31 @@ export class GoalSettingsComponent
 						title: this.getTranslation('SM_TABLE.START_DATE'),
 						type: 'custom',
 						filter: false,
-						renderComponent: DateViewComponent
+						renderComponent: DateViewComponent,
+						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					endDate: {
 						title: this.getTranslation('SM_TABLE.END_DATE'),
 						type: 'custom',
 						filter: false,
-						renderComponent: DateViewComponent
+						renderComponent: DateViewComponent,
+						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					status: {
 						title: this.getTranslation('SM_TABLE.STATUS'),
 						type: 'custom',
 						width: '5%',
 						filter: false,
-						renderComponent: StatusBadgeComponent
+						renderComponent: StatusBadgeComponent,
+						componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+							instance.value = cell.getRawValue();
+						}
 					}
 				}
 			};
@@ -507,18 +519,6 @@ export class GoalSettingsComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.goalSettingsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	clearItem() {
@@ -526,27 +526,20 @@ export class GoalSettingsComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.goalSettingsTable && this.goalSettingsTable.grid) {
-			this.goalSettingsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.goalSettingsTable.grid.dataSet.deselectAll();
-		}
 	}
 
-	private statusMapper = (value: string | boolean) => {
+	/**
+	 *
+	 * @param value
+	 * @returns
+	 */
+	private statusMapper = (value: string): { text: string; class: string } => {
 		const badgeClass = value === 'Active' ? 'success' : 'danger';
-		value =
-			value === 'Active'
-				? this.getTranslation('PIPELINES_PAGE.ACTIVE')
-				: this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		const translatedText = value === 'Active' ? this.getTranslation('PIPELINES_PAGE.ACTIVE') : this.getTranslation('PIPELINES_PAGE.INACTIVE');
+
 		return {
-			text: value,
-			class: badgeClass
+			text: translatedText,
+			class: badgeClass,
 		};
 	};
 }

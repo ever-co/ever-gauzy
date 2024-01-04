@@ -40,14 +40,11 @@
 				class="table-scroll-container"
 			>
 				<angular2-smart-table
-					class="interviews-table"
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="sourceSmartTable"
 					(userRowSelect)="selectInterview($event)"
-					#interviewsTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<ga-card-grid
 				[totalItems]="pagination?.totalItems"

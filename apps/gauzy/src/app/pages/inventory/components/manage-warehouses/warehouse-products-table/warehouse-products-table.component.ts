@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import {
 	IWarehouse,
 	IOrganization
@@ -6,7 +6,7 @@ import {
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { filter, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
@@ -34,15 +34,6 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 
 	public organization: IOrganization;
 	products$: Subject<boolean> = new Subject();
-
-	warehouseProductsTable: Angular2SmartTableComponent;
-
-	@ViewChild('warehouseProductsTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.warehouseProductsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	@Input() warehouse: IWarehouse;
 	selectedWarehouse: any = {
@@ -99,33 +90,12 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		).subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.warehouseProductsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.warehouseProductsTable && this.warehouseProductsTable.grid) {
-			this.warehouseProductsTable.grid.dataSet['willSelect'] = 'indexed';
-			this.warehouseProductsTable.grid.dataSet.deselectAll();
-		}
-	}
-
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			mode: 'external',
+			selectedRowIndex: -1,
 			editable: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.WAREHOUSE_PRODUCT'),
 			columns: {
@@ -133,7 +103,11 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: ImageRowComponent
+					renderComponent: ImageRowComponent,
+					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -142,7 +116,11 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 				quantity: {
 					title: this.getTranslation('INVENTORY_PAGE.QUANTITY'),
 					type: 'custom',
-					renderComponent: ManageQuantityComponent
+					renderComponent: ManageQuantityComponent,
+					componentInitFunction: (instance: ManageQuantityComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				}
 			},
 			pager: {

@@ -7,7 +7,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { DateViewComponent } from './../../../../../../@shared/table-components';
 import { ComponentEnum } from './../../../../../../@core/constants';
 import {
@@ -28,26 +28,18 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 export class EditCandidateEducationComponent extends PaginationFilterBaseComponent
 	implements OnInit, OnDestroy {
 
-	selectedOrganization: IOrganization;
-	showAddCard: boolean;
-	candidateId: string;
-	educationList: ICandidateEducation[] = [];
-	form: UntypedFormGroup;
-	settingsSmartTable: object;
-	sourceSmartTable = new LocalDataSource();
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	selectedEducation: ICandidateEducation;
-	disableButton = true;
-	loading: boolean;
-
-	educationTable: Angular2SmartTableComponent;
-	@ViewChild('educationTable') set content(content: Angular2SmartTableComponent) {
-		if (content) {
-			this.educationTable = content;
-			this.onChangedSource();
-		}
-	}
+	public selectedOrganization: IOrganization;
+	public showAddCard: boolean;
+	public candidateId: string;
+	public educationList: ICandidateEducation[] = [];
+	public form: UntypedFormGroup;
+	public settingsSmartTable: object;
+	public sourceSmartTable = new LocalDataSource();
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public selectedEducation: ICandidateEducation;
+	public disableButton = true;
+	public loading: boolean;
 
 	constructor(
 		private readonly toastrService: ToastrService,
@@ -136,40 +128,35 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				schoolName: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.SCHOOL_NAME'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.SCHOOL_NAME'),
 					type: 'string'
 				},
 				degree: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.DEGREE'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DEGREE'),
 					type: 'string',
 					filter: false
 				},
 				field: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.FIELD'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.FIELD'),
 					type: 'string'
 				},
 				notes: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.ADDITIONAL_NOTES'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.ADDITIONAL_NOTES'),
 					type: 'string',
 					filter: false
 				},
 				completionDate: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.COMPLETION_DATE'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.COMPLETION_DATE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				}
 			}
 		};
@@ -279,28 +266,6 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 	 */
 	get educations(): FormArray {
 		return this.form.get('educations') as FormArray;
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.educationTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.educationTable && this.educationTable.grid) {
-			this.educationTable.grid.dataSet['willSelect'] = 'indexed';
-			this.educationTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy(): void { }

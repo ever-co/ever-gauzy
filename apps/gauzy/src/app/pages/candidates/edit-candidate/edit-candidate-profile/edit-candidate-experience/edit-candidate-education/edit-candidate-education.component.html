@@ -7,8 +7,7 @@
 				[hasLayoutSelector]="!showAddCard"
 				[isDisable]="disableButton"
 				[componentName]="viewComponentName"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 		<div *ngIf="showAddCard" class="row m-0">
 			<form class="col-11" [formGroup]="form" *ngIf="form">
@@ -118,9 +117,7 @@
 				[settings]="settingsSmartTable"
 				[source]="sourceSmartTable"
 				(userRowSelect)="selectEducation($event)"
-				#educationTable
-			>
-			</angular2-smart-table>
+			></angular2-smart-table>
 		</div>
 	</nb-card-body>
 	<nb-card-body *ngIf="educationList?.length">
