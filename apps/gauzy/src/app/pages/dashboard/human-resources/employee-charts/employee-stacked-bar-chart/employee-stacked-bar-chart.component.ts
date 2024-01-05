@@ -23,7 +23,7 @@ import { takeUntil } from 'rxjs/operators';
 			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
 			baseChart
-			[type]="'horizontalBar'"
+			[type]="'bar'"
 			[data]="data"
 			[options]="options"
 		></canvas>
@@ -130,6 +130,7 @@ export class EmployeeStackedBarChartComponent
 					]
 				};
 				this.options = {
+					indexAxis: 'y',
 					responsive: true,
 					maintainAspectRatio: false,
 					elements: {
@@ -138,30 +139,12 @@ export class EmployeeStackedBarChartComponent
 						}
 					},
 					scales: {
-						xAxes: [
-							{
-								gridLines: {
-									display: true,
-									color: chartjs.axisLineColor
-								},
-								ticks: {
-									fontColor: chartjs.textColor
-								},
-								stacked: true
-							}
-						],
-						yAxes: [
-							{
-								gridLines: {
-									display: false,
-									color: chartjs.axisLineColor
-								},
-								ticks: {
-									fontColor: chartjs.textColor
-								},
-								stacked: true
-							}
-						]
+						x: {
+							stacked: true,
+						},
+						y: {
+							stacked: true
+						}
 					},
 					legend: {
 						onClick: (e) => e.stopPropagation(),
