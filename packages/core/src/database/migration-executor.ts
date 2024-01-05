@@ -277,6 +277,8 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -290,6 +292,8 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     public async down(queryRunner: QueryRunner): Promise<any> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -337,6 +341,32 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
         ${(['sqlite', 'better-sqlite3'].includes(connection.options.type)) ? downSqls.join(`
         `) : [].join(`
         `)}
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        ${
+            (['mysql'].includes(connection.options.type)) ?
+            upSqls.join(``) :
+            [].join(``)
+        }
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        ${
+            (['mysql'].includes(connection.options.type)) ?
+            downSqls.join(``) :
+            [].join(``)
+        }
     }
 }
 `;

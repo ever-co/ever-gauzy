@@ -10,6 +10,8 @@ export class AlterExpenseTable1653482244724 implements MigrationInterface {
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterExpenseTable1653482244724 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -72,4 +76,20 @@ export class AlterExpenseTable1653482244724 implements MigrationInterface {
      * @param queryRunner
      */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
 }

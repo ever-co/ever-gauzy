@@ -10,6 +10,8 @@ export class AlterTaskTableColumns1652703299052 implements MigrationInterface {
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterTaskTableColumns1652703299052 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -89,5 +93,21 @@ export class AlterTaskTableColumns1652703299052 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_3797a20ef5553ae87af126bc2f" ON "task" ("projectId") `);
         await queryRunner.query(`CREATE INDEX "IDX_5b0272d923a31c972bed1a1ac4" ON "task" ("organizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_e91cbff3d206f150ccc14d0c3a" ON "task" ("tenantId") `);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

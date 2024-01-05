@@ -10,6 +10,8 @@ export class AlterContactTable1659684413063 implements MigrationInterface {
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterContactTable1659684413063 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -77,5 +81,21 @@ export class AlterContactTable1659684413063 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "temporary_contact"`);
         await queryRunner.query(`CREATE INDEX "IDX_60468af1ce34043a900809c84f" ON "contact" ("tenantId") `);
         await queryRunner.query(`CREATE INDEX "IDX_7719d73cd16a9f57ecc6ac24b3" ON "contact" ("organizationId") `);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

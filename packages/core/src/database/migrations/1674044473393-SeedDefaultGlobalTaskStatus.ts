@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { v4 as uuidV4 } from 'uuid';
-import { isSqliteDB } from './../../core/utils';
-import { DEFAULT_GLOBAL_STATUSES } from './../../tasks/statuses/default-global-statuses';
+import { isSqliteDB } from '../../core/utils';
+import { DEFAULT_GLOBAL_STATUSES } from '../../tasks/statuses/default-global-statuses';
 
 export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterface {
 	name = 'SeedDefaultGlobalTaskStatus1674044473393';

@@ -10,6 +10,8 @@ export class CreatePasswordResetTable1639729354753 implements MigrationInterface
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class CreatePasswordResetTable1639729354753 implements MigrationInterface
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -85,5 +89,21 @@ export class CreatePasswordResetTable1639729354753 implements MigrationInterface
         await queryRunner.query(`DROP INDEX "IDX_36e929b98372d961bb63bd4b4e"`);
         await queryRunner.query(`DROP INDEX "IDX_1c88db6e50f0704688d1f1978c"`);
         await queryRunner.query(`DROP TABLE "password_reset"`);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
-import { seedProjectMembersCount } from "./../../organization-project/organization-project.seed";
+import { seedProjectMembersCount } from "../../organization-project/organization-project.seed";
 
 export class AlterOrganizationProject1650532321598 implements MigrationInterface {
 
@@ -11,16 +11,18 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
-
-        // await this._calculateProjectMembersCount(queryRunner);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -109,5 +111,21 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
 
         console.log('_calculateProjectMembersCount called');
 
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

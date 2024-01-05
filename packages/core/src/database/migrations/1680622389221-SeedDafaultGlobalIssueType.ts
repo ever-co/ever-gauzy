@@ -6,8 +6,8 @@ import * as fs from 'fs';
 import { imageSize } from 'image-size';
 import { getConfig } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { copyAssets } from './../../core/seeds/utils';
-import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
+import { copyAssets } from '../../core/seeds/utils';
+import { DEFAULT_GLOBAL_ISSUE_TYPES } from '../../tasks/issue-type/default-global-issue-types';
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
 	private config = getConfig();

@@ -50,7 +50,9 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
                         INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl", "id") VALUES(?, ?, ?, ?, ?, ?, ?, ?)`,
 						payload
 					);
-				} else {
+				} else if (['mysql'].includes(queryRunner.connection.options.type)) {
+					await this.mysqlUpQueryRunner(queryRunner);
+			    } else {
 					await queryRunner.connection.manager.query(
 						`
                         INSERT INTO "changelog" ("icon", "title", "date", "isFeature", "content", "learnMoreUrl", "imageUrl") VALUES($1, $2, $3, $4, $5, $6, $7)`,
@@ -65,4 +67,20 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
 	}
 
 	public async down(queryRunner: QueryRunner): Promise<any> {}
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
 }

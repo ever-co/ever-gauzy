@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from 'chalk';
 import { IntegrationTypeEnum } from "@gauzy/contracts";
-import { DEFAULT_INTEGRATIONS, PROJECT_MANAGE_DEFAULT_INTEGRATIONS } from "./../../integration/default-integration";
-import { IntegrationsUtils } from "./../../integration/utils";
+import { DEFAULT_INTEGRATIONS, PROJECT_MANAGE_DEFAULT_INTEGRATIONS } from "../../integration/default-integration";
+import { IntegrationsUtils } from "../../integration/utils";
 
 export class SeedIntegrationsAndIntegrationTypes1695112275840 implements MigrationInterface {
 

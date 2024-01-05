@@ -10,6 +10,8 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -81,4 +85,21 @@ export class AlterInvoiceTable1645179275947 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_b5c33892e630b66c65d623baf8" ON "invoice" ("fromOrganizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_d9e965da0f63c94983d3a1006a" ON "invoice" ("toContactId") `);
     }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
 }

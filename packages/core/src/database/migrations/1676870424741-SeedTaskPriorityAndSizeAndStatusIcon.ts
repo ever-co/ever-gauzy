@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { getConfig } from "@gauzy/config";
-import { copyAssets } from "./../../core/seeds/utils";
-import { DEFAULT_GLOBAL_PRIORITIES } from "./../../tasks/priorities/default-global-priorities";
-import { DEFAULT_GLOBAL_SIZES } from "./../../tasks/sizes/default-global-sizes";
-import { DEFAULT_GLOBAL_STATUSES } from "./../../tasks/statuses/default-global-statuses";
+import { copyAssets } from "../../core/seeds/utils";
+import { DEFAULT_GLOBAL_PRIORITIES } from "../../tasks/priorities/default-global-priorities";
+import { DEFAULT_GLOBAL_SIZES } from "../../tasks/sizes/default-global-sizes";
+import { DEFAULT_GLOBAL_STATUSES } from "../../tasks/statuses/default-global-statuses";
 
 export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements MigrationInterface {
 

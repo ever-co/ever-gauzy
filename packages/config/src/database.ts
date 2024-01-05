@@ -22,6 +22,7 @@ let connectionConfig: TypeOrmModuleOptions;
 let dbPoolSize: number;
 let dbConnectionTimeout: number;
 let idleTimeoutMillis: number;
+let dbSlowQueryLoggingTimeout: number;
 
 const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
 	if (!parseToBoolean(dbSslMode)) return undefined;
@@ -45,6 +46,14 @@ switch (dbType) {
 			? parseInt(process.env.DB_CONNECTION_TIMEOUT)
 			: 5000; // 5 seconds default
 		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+			: 10000; // 10 seconds default
+
+		console.log('DB Pool Size: ' + dbPoolSize);
+		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
+		console.log('DB Idle Timeout: ' + idleTimeoutMillis);
+		console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
 
 		const mysqlConnectionOptions: MysqlConnectionOptions = {
 			type: dbType,
@@ -66,21 +75,14 @@ switch (dbType) {
 					: ['error'], // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 10 sec as warnings
-			// maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
+			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
 			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
 			poolSize: dbPoolSize,
 			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			extra: {
-				max: dbPoolSize,
-				minConnection: 10,
-				maxConnection: dbPoolSize,
-				poolSize: dbPoolSize,
-				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-				connectionTimeoutMillis: dbConnectionTimeout,
-				// number of milliseconds a client must sit idle in the pool and not be checked out
-				// before it is disconnected from the backend and discarded
-				idleTimeoutMillis: idleTimeoutMillis
+				connectionLimit: 10,
+				maxIdle: 10
 			}
 		}
 
@@ -98,7 +100,7 @@ switch (dbType) {
 
 		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
-		const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
 			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
 			: 10000; // 10 seconds default
 

@@ -1,8 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { v4 as uuidV4 } from 'uuid';
-import { DEFAULT_GLOBAL_PRIORITIES } from './../../tasks/priorities/default-global-priorities';
-import { DEFAULT_GLOBAL_SIZES } from './../../tasks/sizes/default-global-sizes';
+import { DEFAULT_GLOBAL_PRIORITIES } from '../../tasks/priorities/default-global-priorities';
+import { DEFAULT_GLOBAL_SIZES } from '../../tasks/sizes/default-global-sizes';
 
 export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements MigrationInterface {
 	name = 'SeedDefaultGlobalTaskPriorityAndSize1674638501088';

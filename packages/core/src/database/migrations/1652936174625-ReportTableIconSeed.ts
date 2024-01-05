@@ -21,6 +21,8 @@ export class ReportTableIconSeed1652936174625 implements MigrationInterface {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['far fa-clock', 'daily-limits']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['far fa-credit-card', 'project-budgets']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['far fa-credit-card', 'client-budgets']);
+		} else if (['mysql'].includes(queryRunner.connection.options.type)) {
+			await this.mysqlUpQueryRunner(queryRunner);
 		} else {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['far fa-clock', 'time-activity']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['fas fa-calendar-alt', 'weekly']);
@@ -50,7 +52,9 @@ export class ReportTableIconSeed1652936174625 implements MigrationInterface {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['clock-outline', 'daily-limits']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['credit-card-outline', 'project-budgets']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = ? WHERE "slug" = ?`, ['credit-card-outline', 'client-budgets']);
-		} else {
+		} else if (['mysql'].includes(queryRunner.connection.options.type)) {
+			this.mysqlDownQueryRunner(queryRunner);
+		}else {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['clock-outline', 'time-activity']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['calendar-outline', 'weekly']);
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['browser-outline', 'apps-urls']);
@@ -64,4 +68,20 @@ export class ReportTableIconSeed1652936174625 implements MigrationInterface {
 			await queryRunner.connection.query(`UPDATE "report" SET "iconClass" = $1 WHERE "slug" = $2`, ['credit-card-outline', 'client-budgets']);
 		}
 	}
+
+	/**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
 }

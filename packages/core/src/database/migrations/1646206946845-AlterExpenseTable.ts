@@ -10,6 +10,8 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -278,5 +282,21 @@ export class AlterExpenseTable1646206946845 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_42eea5debc63f4d1bf89881c10" ON "expense" ("categoryId") `);
         await queryRunner.query(`CREATE INDEX "IDX_9971c4171ae051e74b833984a3" ON "expense" ("projectId") `);
         await queryRunner.query(`CREATE INDEX "IDX_047b8b5c0782d5a6d4c8bfc1a4" ON "expense" ("organizationContactId") `);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

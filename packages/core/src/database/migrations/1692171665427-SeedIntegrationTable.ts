@@ -2,9 +2,9 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { getConfig } from '@gauzy/config';
 import * as chalk from 'chalk';
-import { copyAssets } from './../../core/seeds/utils';
-import { DEFAULT_AI_INTEGRATIONS } from './../../integration/default-integration';
-import { IntegrationsUtils } from './../../integration/utils';
+import { copyAssets } from '../../core/seeds/utils';
+import { DEFAULT_AI_INTEGRATIONS } from '../../integration/default-integration';
+import { IntegrationsUtils } from '../../integration/utils';
 
 export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 	name = 'SeedIntegrationTable1692171665427';

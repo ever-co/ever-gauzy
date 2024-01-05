@@ -116,8 +116,9 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	budget?: number;
 
 	@Column({
-		type: 'text',
+		type: 'enum',
 		nullable: true,
+		enum: OrganizationProjectBudgetTypeEnum,
 		default: OrganizationProjectBudgetTypeEnum.COST,
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;

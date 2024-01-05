@@ -9,6 +9,8 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -17,6 +19,8 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -208,5 +212,21 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "IDX_2ba72a9dec732a10e8c05bcdec"`);
         await queryRunner.query(`DROP INDEX "IDX_bcb30c9893f4c8d0c4e556b4ed"`);
         await queryRunner.query(`DROP TABLE "knowledge_base"`);
+    }
+
+        /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

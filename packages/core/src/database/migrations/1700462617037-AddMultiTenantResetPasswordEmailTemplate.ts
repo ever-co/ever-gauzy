@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { EmailTemplateEnum } from "@gauzy/contracts";
-import { EmailTemplateUtils } from "./../../email-template/utils";
+import { EmailTemplateUtils } from "../../email-template/utils";
 
 export class AddMultiTenantResetPasswordEmailTemplate1700462617037 implements MigrationInterface {
 

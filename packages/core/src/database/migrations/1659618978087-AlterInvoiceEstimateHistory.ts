@@ -10,6 +10,8 @@ export class AlterInvoiceEstimateHistory1659618978087 implements MigrationInterf
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterInvoiceEstimateHistory1659618978087 implements MigrationInterf
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -156,5 +160,21 @@ export class AlterInvoiceEstimateHistory1659618978087 implements MigrationInterf
         await queryRunner.query(`CREATE INDEX "IDX_856f24297f120604f8ae294276" ON "invoice_estimate_history" ("organizationId") `);
         await queryRunner.query(`CREATE INDEX "IDX_da2893697d57368470952a76f6" ON "invoice_estimate_history" ("userId") `);
         await queryRunner.query(`CREATE INDEX "IDX_31ec3d5a6b0985cec544c64217" ON "invoice_estimate_history" ("invoiceId") `);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

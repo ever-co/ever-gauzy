@@ -35,7 +35,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
+	@Column({ type: 'enum', enum: JobPostSourceEnum, default: JobPostSourceEnum.UPWORK })
 	jobSource?: JobPostSourceEnum;
 
 	/*

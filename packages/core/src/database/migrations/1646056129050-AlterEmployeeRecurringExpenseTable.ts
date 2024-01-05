@@ -10,6 +10,8 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
 
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteUpQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlUpQueryRunner(queryRunner);
         } else {
             await this.postgresUpQueryRunner(queryRunner);
         }
@@ -18,6 +20,8 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
     public async down(queryRunner: QueryRunner): Promise<void> {
         if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
             await this.sqliteDownQueryRunner(queryRunner);
+        } else if (['mysql'].includes(queryRunner.connection.options.type)) {
+            await this.mysqlDownQueryRunner(queryRunner);
         } else {
             await this.postgresDownQueryRunner(queryRunner);
         }
@@ -188,5 +192,21 @@ export class AlterEmployeeRecurringExpenseTable1646056129050 implements Migratio
         await queryRunner.query(`CREATE INDEX "IDX_739f8cdce21cc72d400559ce00" ON "employee_recurring_expense" ("currency") `);
         await queryRunner.query(`CREATE INDEX "IDX_6e570174fda71e97616e9d2eea" ON "employee_recurring_expense" ("parentRecurringExpenseId") `);
         await queryRunner.query(`CREATE INDEX "IDX_0ac8526c48a3daa267c86225fb" ON "employee_recurring_expense" ("employeeId") `);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }
