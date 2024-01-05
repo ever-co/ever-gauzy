@@ -19,7 +19,7 @@ import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
 	asapScheduler,
@@ -694,11 +694,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					type: 'custom',
 					renderComponent: TaskRenderCellComponent,
 					width: '40%',
+					componentInitFunction: (instance: TaskRenderCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				duration: {
 					title: this._translateService.instant('TIMESHEET.DURATION'),
 					type: 'custom',
 					renderComponent: TaskDurationComponent,
+					componentInitFunction: (instance: TaskDurationComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				taskProgress: {
 					title: this._translateService.instant(
@@ -740,6 +746,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							},
 						});
 					},
+					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				taskStatus: {
 					title: this._translateService.instant('SM_TABLE.STATUS'),
@@ -778,6 +787,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								console.warn(err);
 							},
 						});
+					},
+					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 					},
 				},
 			},

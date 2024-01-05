@@ -1,709 +1,693 @@
 @import 'themes';
 
 .border-vertical {
-	border-right: solid 0.1px rgba($color: #000000, $alpha: 0.1);
-	height: 90%;
-	min-height: 90%;
-	margin-top: 0;
+  border-right: solid 0.1px rgba($color: #000000, $alpha: 0.1);
+  height: 90%;
+  min-height: 90%;
+  margin-top: 0;
 }
 
 .timer-container {
-	@include nb-rtl(margin-right, -4px);
-	@include nb-ltr(margin-left, -4px);
-	color: var(--gauzy-text-color-1);
-	font-size: 55px;
-	font-weight: 600;
-	border-radius: var(--button-rectangle-border-radius);
+  @include nb-rtl(margin-right, -4px);
+  @include nb-ltr(margin-left, -4px);
+  color: var(--gauzy-text-color-1);
+  font-size: 55px;
+  font-weight: 600;
+  border-radius: var(--button-rectangle-border-radius);
 }
 
 .timer-window-container {
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	justify-content: flex-start;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
 
-	.task-table {
-		flex-grow: 10;
+  .task-table {
+    flex-grow: 10;
 
-		nb-card-body {
-			overflow: unset;
-			padding: 1rem 2rem 1rem 1rem;
-		}
-	}
+    nb-card-body {
+      overflow: unset;
+      padding: 1rem 2rem 1rem 1rem;
+    }
+  }
 }
 
 .timer {
-	min-width: 360px !important;
-	width: auto;
-	height: calc(100vh - 2.5rem);
-	overflow: hidden;
+  min-width: 360px !important;
+  width: auto;
+  height: calc(100vh - 2.5rem);
+  overflow: hidden;
 
-	&.expanded {
-		max-width: 360px !important;
-	}
+  &.expanded {
+    max-width: 360px !important;
+  }
 
-	&.collapsed {
-		width: 100%;
-	}
+  &.collapsed {
+    width: 100%;
+  }
 }
 
 .search {
-	padding: 0 8px 8px 8px;
+  padding: 0 8px 8px 8px;
 }
 
 .timer-box {
-	margin-top: auto;
-	margin-bottom: auto;
-	@include nb-rtl(padding-left, 0);
-	@include nb-ltr(padding-right, 0);
+  margin-top: auto;
+  margin-bottom: auto;
+  @include nb-rtl(padding-left, 0);
+  @include nb-ltr(padding-right, 0);
 }
 
 .status {
-	position: absolute;
-	right: -20px;
-	top: 0;
-	z-index: 2;
+  position: absolute;
+  right: -20px;
+  top: 0;
+  z-index: 2;
 }
 
 .start-button {
-	font-size: 48px !important;
-	cursor: pointer;
+  font-size: 48px !important;
+  cursor: pointer;
 }
 
 [nbButton].size-medium nb-icon {
-	font-size: var(--icon-font-size) !important;
+  font-size: var(--icon-font-size) !important;
 }
 
 .button-ghost {
-	border: none;
-	//background-color: transparent;
+  border: none;
+  //background-color: transparent;
 }
 
 .center-text {
-	text-align: center;
+  text-align: center;
 }
 
 .full-height {
-	height: 100%;
+  height: 100%;
 }
 
 .max-width {
-	width: 100%;
-	padding: 0;
+  width: 100%;
+  padding: 0;
 }
 
 .no-padding {
-	padding-left: 0;
-	padding-right: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .tp-padding {
-	padding-top: 0;
+  padding-top: 0;
 }
 
 ::ng-deep body {
-	overflow: hidden !important;
-	-webkit-app-region: drag;
+  overflow: hidden !important;
+  -webkit-app-region: drag;
 }
 
 .top-space {
-	padding: 0 !important;
-	background-color: var(--gauzy-card-2);
+  padding: 0 !important;
+  background-color: var(--gauzy-card-2);
 }
 
 .screen-capture-label-left {
-	text-align: left;
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--gauzy-text-color-1);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gauzy-text-color-1);
 }
 
 .screen-capture-label-right {
-	text-align: right;
-	font-size: 12px;
-	font-weight: 600;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .screen-capture-img {
-	width: 100%;
-	height: 100%;
-	border-radius: var(--border-radius);
-	object-fit: cover;
-	image-rendering: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius);
+  object-fit: cover;
+  image-rendering: auto;
 }
 
 .img-placeholder {
-	font-size: 200px;
+  font-size: 200px;
 }
 
 :host {
-	min-width: 200px;
-	display: block;
+  min-width: 200px;
+  display: block;
 
-	nb-select {
-		max-width: none;
-	}
+  nb-select {
+    max-width: none;
+  }
 
-	.multiple-select {
-		width: 100%;
-	}
+  .multiple-select {
+    width: 100%;
+  }
 }
 
 .icon-img-size {
-	font-size: 6rem;
+  font-size: 6rem;
 }
 
 .last-capture-container {
-	display: flex;
-	justify-content: center;
-	align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .org-name {
-	font-size: 14px;
-	font-weight: 600;
-	background-color: var(--gauzy-background-transparent-1);
-	padding: 2px 4px;
-	border-radius: 4px;
-	color: var(--text-primary-color);
+  font-size: 14px;
+  font-weight: 600;
+  background-color: var(--gauzy-background-transparent-1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--text-primary-color);
 }
 
 .work-today,
 .work-weekly {
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--gauzy-text-color-2);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gauzy-text-color-2);
 }
 
 :host {
-	.work-today-duration,
-	.work-weekly-duration {
-		font-size: 14px;
-		font-weight: 500;
-		color: var(--gauzy-text-color-1);
+  .work-today-duration,
+  .work-weekly-duration {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gauzy-text-color-1);
 
-		small {
-			position: absolute;
-			top: 1px;
-			@include nb-rtl(translate, -145%);
-			@include nb-ltr(translate, 105%);
-			@include nb-rtl(left, 0);
-			@include nb-ltr(right, 0);
-		}
-	}
+    small {
+      position: absolute;
+      top: 1px;
+      @include nb-rtl(translate, -145%);
+      @include nb-ltr(translate, 105%);
+      @include nb-rtl(left, 0);
+      @include nb-ltr(right, 0);
+    }
+  }
 }
 
 .over > {
-	.work-weekly-duration,
-	.work-weekly {
-		color: var(--color-danger-default) !important;
-	}
+  .work-weekly-duration,
+  .work-weekly {
+    color: var(--color-danger-default) !important;
+  }
 }
 
 .error-border {
-	border: solid 1px red;
-	border-radius: var(--border-radius);
+  border: solid 1px red;
+  border-radius: var(--border-radius);
 }
 
 .overlay-img {
-	position: absolute;
-	background-color: rgba(0, 0, 0, 0.4);
-	top: 0;
-	height: 100%;
-	width: 100%;
-	border-radius: var(--border-radius);
-	display: none;
-	padding: 0 15px;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.4);
+  top: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: var(--border-radius);
+  display: none;
+  padding: 0 15px;
 
-	> div.row {
-		height: 100%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
+  > div.row {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .max-card {
-	height: 160px;
+  height: 160px;
 }
 
 .screen-capture-img:hover + .overlay-img,
 .overlay-img:hover {
-	display: block;
-	margin: auto;
+  display: block;
+  margin: auto;
 }
 
 nb-card,
 nb-card-body {
-	background-color: unset;
+  background-color: unset;
 }
 
 .footer-button {
-	position: relative;
-	color: var(--gauzy-text-color-2) !important;
-	top: 0px;
-	display: flex;
-	align-items: center;
-	gap: 4px;
+  position: relative;
+  color: var(--gauzy-text-color-2) !important;
+  top: 0px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .last-screenshot-time {
-	span {
-		font-size: 12px;
-		font-weight: 600;
-	}
+  span {
+    font-size: 12px;
+    font-weight: 600;
+  }
 }
 
 .pointed {
-	cursor: pointer;
+  cursor: pointer;
 
-	&.icon {
-		color: var(--gauzy-text-color-2);
-		font-size: 14px;
-	}
+  &.icon {
+    color: var(--gauzy-text-color-2);
+    font-size: 14px;
+  }
 }
 
 .work-duration-container {
-	display: flex;
-	flex-direction: row-reverse;
-	gap: 4px;
-	position: relative;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 4px;
+  position: relative;
 }
 
 .user-label {
-	font-size: 12px;
-	text-transform: uppercase;
+  font-size: 12px;
+  text-transform: uppercase;
 }
 
 .timer-max {
-	max-width: 385px;
+  max-width: 385px;
 }
 
 .max-width-search {
-	width: 100%;
+  width: 100%;
 }
 
 :host .expand-icon {
-	position: absolute !important;
-	z-index: 999;
-	top: 50%;
-	background-color: var(--gauzy-sidebar-background-3) !important;
-	border-radius: var(--border-radius);
-	cursor: pointer;
-	@include nb-rtl(left, -14px);
-	@include nb-ltr(right, -14px);
-	@include nb-rtl(padding-right, 0px !important);
-	@include nb-ltr(padding-left, 0px !important);
+  position: absolute !important;
+  z-index: 999;
+  top: 50%;
+  background-color: var(--gauzy-sidebar-background-3) !important;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  @include nb-rtl(left, -14px);
+  @include nb-ltr(right, -14px);
+  @include nb-rtl(padding-right, 0px !important);
+  @include nb-ltr(padding-left, 0px !important);
 
-	nb-icon {
-		@include nb-rtl(rotate, 180deg);
-	}
+  nb-icon {
+    @include nb-rtl(rotate, 180deg);
+  }
 }
 
 .top-space-1 {
-	margin-top: 10px;
+  margin-top: 10px;
 }
 
 ::ng-deep .nb-theme-default tr {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .icon-process {
-	color: #3366ff;
+  color: #3366ff;
 }
 
 .hidden-long-text {
-	display: -webkit-box;
-	overflow: hidden;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 ::ng-deep .form-group {
-	margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 ::ng-deep .nb-theme-default nb-card {
-	margin-bottom: 0px;
+  margin-bottom: 0px;
 }
 
 ::ng-deep .nb-theme-default nb-card {
-	border: none;
+  border: none;
 }
 
 ::ng-deep nb-card {
-	border: none;
+  border: none;
 }
 
 .table-max-height {
-	max-height: 500px;
-	overflow-y: auto;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .no-padding-footer {
-	padding: 0px !important;
-	display: flex;
-	align-items: center;
-	gap: 4px;
+  padding: 0px !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 :host {
-	::ng-deep {
-		nav.fixed {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			gap: 4px;
-		}
+  ::ng-deep {
+    nav.fixed {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
 
-		nb-toggle {
-			div.checked + span.text {
-				color: var(--text-primary-color) !important;
-			}
+    nb-toggle {
+      div.checked + span.text {
+        color: var(--text-primary-color) !important;
+      }
 
-			.toggle-label {
-				margin-bottom: 0;
-			}
-		}
-	}
+      .toggle-label {
+        margin-bottom: 0;
+      }
+    }
+  }
 }
 
 ::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
-	padding: 0px;
+  padding: 0px;
 }
 
 .footer-fixed {
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 ::ng-deep .angular2-smart-pagination .page-link-next,
 ::ng-deep .angular2-smart-pagination .page-link-prev {
-	border-radius: 0px !important;
+  border-radius: 0 !important;
 }
 
-::ng-deep
-	.nb-theme-default
-	angular2-smart-table
-	nav.angular2-smart-pagination-nav
-	.pagination
-	li
-	a {
-	padding: 0 1.25rem !important;
+::ng-deep .nb-theme-default angular2-smart-table nav.angular2-smart-pagination-nav .pagination li a {
+  padding: 0 1.25rem !important;
 }
 
 ::ng-deep .page-item {
-	margin: auto !important;
+  margin: auto !important;
 }
 
 ::ng-deep .page-link {
-	margin: auto !important;
+  margin: auto !important;
 }
 
 ::ng-deep .ng-select.ng-select-single .ng-select-container {
-	height: 30px;
+  height: 30px;
 }
 
 ::ng-deep textarea {
-	height: 72px;
+  height: 72px;
 }
 
 ::ng-deep nb-dialog-container {
-	display: flex;
-	justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 nb-card.dialog {
-	background-color: var(--gauzy-card-1);
-	width: 90%;
+  background-color: var(--gauzy-card-1);
+  width: 90%;
 
-	nb-card-header {
-		background-color: var(--color-danger-default);
-		border-radius: var(--border-radius) var(--border-radius) 0 0;
-		color: var(--text-control-color);
-	}
+  nb-card-header {
+    background-color: var(--color-danger-default);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    color: var(--text-control-color);
+  }
 }
 
 $input-background-color: var(--gauzy-card-1);
 $height: 42px;
 
 :host {
-	::ng-deep input,
-	::ng-deep nb-select.appearance-outline.status-basic .select-button,
-	::ng-deep .ng-select .ng-select-container {
-		background-color: $input-background-color !important;
-		border: none;
-		height: $height !important;
-		min-height: unset;
-	}
+  ::ng-deep input,
+  ::ng-deep nb-select.appearance-outline.status-basic .select-button,
+  ::ng-deep .ng-select .ng-select-container {
+    background-color: $input-background-color !important;
+    border: none;
+    height: $height !important;
+    min-height: unset;
+  }
 
-	::ng-deep
-		.ng-select.ng-select-multiple
-		.ng-select-container
-		.ng-value-container
-		.ng-placeholder,
-	::ng-deep
-		.ng-select.ng-select-single
-		.ng-select-container
-		.ng-value-container
-		.ng-input {
-		top: unset !important;
-	}
+  ::ng-deep .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder,
+  ::ng-deep .ng-select.ng-select-single .ng-select-container .ng-value-container .ng-input {
+    top: unset !important;
+  }
 
-	::ng-deep label,
-	::ng-deep .label {
-		font-size: 11px;
-		font-weight: 600;
-		line-height: 13px;
-		letter-spacing: -0.01em;
-		color: var(--gauzy-text-color-2);
-	}
+  ::ng-deep label,
+  ::ng-deep .label {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: -0.01em;
+    color: var(--gauzy-text-color-2);
+  }
 
-	::ng-deep textarea {
-		background-color: $input-background-color !important;
-		border: none;
-	}
+  ::ng-deep textarea {
+    background-color: $input-background-color !important;
+    border: none;
+  }
 
-	::ng-deep .ng-select .ng-select-container,
-	::ng-deep nb-tag-list {
-		input {
-			background-color: unset !important;
-		}
-	}
+  ::ng-deep .ng-select .ng-select-container,
+  ::ng-deep nb-tag-list {
+    input {
+      background-color: unset !important;
+    }
+  }
 
-	::ng-deep angular2-smart-table tbody tr.selected,
-	angular2-smart-table tbody tr:hover {
-		background: var(--smart-table-bg-active) !important;
-	}
+  ::ng-deep angular2-smart-table tbody tr.selected,
+  angular2-smart-table tbody tr:hover {
+    background: var(--smart-table-bg-active) !important;
+  }
 
-	::ng-deep angular2-smart-table tbody tr.selected {
-		box-shadow: 12.5px 0 0 -5px rgba(126, 126, 143, 0.05) inset !important;
-	}
+  ::ng-deep angular2-smart-table tbody tr.selected {
+    box-shadow: 12.5px 0 0 -5px rgba(126, 126, 143, 0.05) inset !important;
+  }
 
-	.ng-select.ng-select-multiple
-		.ng-select-container
-		.ng-value-container
-		.ng-value {
-		background-color: transparent !important;
-		margin-right: 0;
-	}
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+    background-color: transparent !important;
+    margin-right: 0;
+  }
 
-	.ng-select .ng-select-focused .ng-select-container {
-		&:hover,
-		&:focus,
-		&:active,
-		&:visited {
-			box-shadow: var(--gauzy-shadow) inset !important;
-		}
-	}
+  .ng-select .ng-select-focused .ng-select-container {
+    &:hover,
+    &:focus,
+    &:active,
+    &:visited {
+      box-shadow: var(--gauzy-shadow) inset !important;
+    }
+  }
 
-	.ng-select .ng-select-container {
-		box-shadow: var(--gauzy-shadow) inset !important;
-	}
+  .ng-select .ng-select-container {
+    box-shadow: var(--gauzy-shadow) inset !important;
+  }
 }
 
 // Project selector
 
 :host {
-	.multiple-select {
-		width: 100%;
-	}
+  .multiple-select {
+    width: 100%;
+  }
 
-	ng-select {
-		.selector-template {
-			display: flex;
-			align-items: center;
-			height: 100%;
-		}
+  ng-select {
+    .selector-template {
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
 
-		img {
-			margin-right: 5px;
-			border-radius: calc(var(--border-radius) * 1 / 2);
-			box-shadow: var(--gauzy-shadow);
-		}
-	}
+    img {
+      margin-right: 5px;
+      border-radius: calc(var(--border-radius) * 1 / 2);
+      box-shadow: var(--gauzy-shadow);
+    }
+  }
 
-	::ng-deep {
-		.ng-select .ng-select-container .ng-value-container {
-			align-items: center;
-			padding-left: 10px;
+  ::ng-deep {
+    .ng-select .ng-select-container .ng-value-container {
+      align-items: center;
+      padding-left: 10px;
 
-			span.text-container {
-				white-space: nowrap;
-				overflow: hidden;
-				text-overflow: ellipsis;
-			}
-		}
-	}
+      span.text-container {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
 }
 
 img {
-	object-fit: cover;
+  object-fit: cover;
 }
 
 .state-container {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	font-size: 12px;
-	font-weight: 600;
-	background: var(--color-success-transparent-100);
-	padding: 0 4px;
-	border-radius: var(--border-radius);
-	color: var(--gauzy-text-color-1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-success-transparent-100);
+  padding: 0 4px;
+  border-radius: var(--border-radius);
+  color: var(--gauzy-text-color-1);
 
-	&.offline {
-		background: var(--color-danger-transparent-100);
-	}
+  &.offline {
+    background: var(--color-danger-transparent-100);
+  }
 
-	.state {
-		width: 12px;
-		height: 12px;
-		border-radius: 50%;
-		background-color: var(--color-success-default);
+  .state {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--color-success-default);
 
-		&.offline {
-			background-color: var(--color-danger-default);
-		}
-	}
+    &.offline {
+      background-color: var(--color-danger-default);
+    }
+  }
 }
 
 .refresh-button {
-	width: 36px;
-	height: 36px;
+  width: 36px;
+  height: 36px;
 }
 
 :host {
-	::ng-deep {
-		nb-toggle .text {
-			font-size: 12px;
-			color: var(--gauzy-text-color-1);
-		}
-	}
+  ::ng-deep {
+    nb-toggle .text {
+      font-size: 12px;
+      color: var(--gauzy-text-color-1);
+    }
+  }
 }
 
 .sync-container {
-	display: flex;
-	align-items: center;
-	position: relative;
+  display: flex;
+  align-items: center;
+  position: relative;
 
-	.sync-badge {
-		right: -16px;
-		font-size: 9px;
-		font-weight: 400;
-		padding: 1px 2px;
-	}
+  .sync-badge {
+    right: -16px;
+    font-size: 9px;
+    font-weight: 400;
+    padding: 1px 2px;
+  }
 }
 
 .sync-check {
-	font-size: 14px;
+  font-size: 14px;
 }
 
 .sync {
-	color: var(--gauzy-text-color-2);
-	font-size: 14px;
+  color: var(--gauzy-text-color-2);
+  font-size: 14px;
 
-	&.spin {
-		animation: rotate 1s linear 0s infinite;
-	}
+  &.spin {
+    animation: rotate 1s linear 0s infinite;
+  }
 }
 
 @keyframes rotate {
-	from {
-		transform: rotate(0deg);
-	}
+  from {
+    transform: rotate(0deg);
+  }
 
-	to {
-		transform: rotate(360deg);
-	}
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .pagination-container {
-	display: flex;
-	justify-content: space-between;
-	align-self: flex-end;
-	width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-self: flex-end;
+  width: 100%;
 
-	ga-pagination {
-		width: 100%;
-	}
+  ga-pagination {
+    width: 100%;
+  }
 }
 
 ::ng-deep {
-	angular2-smart-table-pager {
-		display: none !important;
-	}
+  angular2-smart-table-pager {
+    display: none !important;
+  }
 }
 
 .custom-table {
-	background-color: var(--gauzy-card-2);
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-	padding: 8px 4px 0px;
-	border-radius: var(--border-radius);
-	height: calc(100vh - 11.4rem);
-	width: auto;
+  background-color: var(--gauzy-card-2);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 4px 0px;
+  border-radius: var(--border-radius);
+  height: calc(100vh - 11.4rem);
+  width: auto;
 
-	.table-scroll-container {
-		flex-grow: 10;
-		max-height: unset;
-		padding: 0px 4px 0px;
-		margin-bottom: 8px;
-	}
+  .table-scroll-container {
+    flex-grow: 10;
+    max-height: unset;
+    padding: 0 4px 0;
+    margin-bottom: 8px;
+    overflow-x: hidden;
+  }
 }
 
 .timer-body {
-	padding: 1rem;
-	display: flex;
-	flex-direction: column;
-	overflow: unset;
-	height: 100%;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  overflow: unset;
+  height: 100%;
 
-	.last {
-		flex-grow: 4;
-		min-height: 100px;
-		align-items: flex-end;
+  .last {
+    flex-grow: 4;
+    min-height: 100px;
+    align-items: flex-end;
 
-		> div {
-			height: 100%;
+    > div {
+      height: 100%;
 
-			nb-card {
-				height: 100%;
-			}
-		}
-	}
+      nb-card {
+        height: 100%;
+      }
+    }
+  }
 }
 
 .no-data {
-	height: 550px;
-	width: 100%;
-	padding: 0 10px;
+  height: 550px;
+  width: 100%;
+  padding: 0 10px;
 }
 
 .disabled-table {
-	pointer-events: none;
-	opacity: 0.5;
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .icon-task {
-	width: auto !important;
-	height: auto !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 :host ::ng-deep .running-task svg {
-	width: 20px;
-	height: 20px;
+  width: 20px;
+  height: 20px;
 }
 
 .gray-bold-text {
-	color: var(--gauzy-text-color-2);
-	font-weight: 600;
+  color: var(--gauzy-text-color-2);
+  font-weight: 600;
 }
 
 .black-bold-text {
-	color: var(--gauzy-text-color-1);
-	font-weight: 600;
+  color: var(--gauzy-text-color-1);
+  font-weight: 600;
 }
