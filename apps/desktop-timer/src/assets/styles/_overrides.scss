@@ -371,11 +371,12 @@ angular2-smart-table tbody tr {
   background: rgba(126, 126, 143, 0.05);
 
   &:hover {
-    background: rgba(126, 126, 143, 0.05);
+    background: var(--smart-table-bg-active) !important;
   }
 
   &.selected {
-    box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
+    box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
+    background: var(--smart-table-bg-active) !important;
 
     &:first-child {
       border-top-left-radius: var(--border-radius);
@@ -441,6 +442,8 @@ nb-card-body {
   angular2-smart-table table tr th {
     border-top: 1px solid var(--gauzy-border-table);
     border-bottom: 1px solid var(--gauzy-border-table);
+    padding-top: 1em;
+    padding-bottom: 1em;
   }
 
   table thead th {
@@ -503,6 +506,7 @@ nb-tabset .tab.active .tab-link {
   background-color: var(--gauzy-card-2);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
+
 angular2-smart-table {
   angular2-smart-table-pager {
     nav.angular2-smart-pagination-nav .pagination {
@@ -720,5 +724,13 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
 }
 
 input {
-	height: 2.625rem !important;
+  height: 2.625rem !important;
+}
+
+angular2-smart-table > div {
+  overflow-x: unset !important;
+}
+
+angular2-smart-table a:hover {
+  text-decoration: auto !important;
 }

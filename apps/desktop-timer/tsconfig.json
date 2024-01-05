@@ -10,7 +10,7 @@
 		"esModuleInterop": true,
 		"module": "commonjs",
 		"target": "ES2022",
-		"typeRoots": ["../../node_modules/@types"]
+		"types": ["pino-pretty"]
 	},
 	"files": ["global.d.ts"],
 	"include": ["src/index.ts", "src/preload"],
