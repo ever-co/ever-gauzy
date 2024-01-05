@@ -7,6 +7,14 @@ import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConne
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 import { parseToBoolean } from '@gauzy/common';
 
+export enum databaseTypes {
+	mongodb = 'mongodb',
+	sqlite = 'sqlite',
+	betterSqlite3 = 'better-sqlite3',
+	postgres = 'postgres',
+	mysql = 'mysql'
+}
+
 let dbType: string;
 
 if (process.env.DB_TYPE) dbType = process.env.DB_TYPE;
@@ -37,10 +45,10 @@ const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
 }
 
 switch (dbType) {
-	case 'mongodb':
+	case databaseTypes.mongodb:
 		throw 'MongoDB not supported yet';
 
-	case 'mysql':
+	case databaseTypes.mysql:
 		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
 		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
 			? parseInt(process.env.DB_CONNECTION_TIMEOUT)
@@ -89,7 +97,7 @@ switch (dbType) {
 		connectionConfig = mysqlConnectionOptions;
 		break;
 
-	case 'postgres':
+	case databaseTypes.postgres:
 
 		// We set default pool size as 80. Usually PG has 100 connections max by default.
 		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
@@ -152,7 +160,7 @@ switch (dbType) {
 
 		break;
 
-	case 'sqlite':
+	case databaseTypes.sqlite:
 		const dbPath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 
 		console.log('Sqlite DB Path: ' + dbPath);
@@ -169,7 +177,7 @@ switch (dbType) {
 
 		break;
 
-	case 'better-sqlite3':
+	case databaseTypes.betterSqlite3:
 		const betterSqlitePath =
 			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 
