@@ -2,14 +2,14 @@
 @import 'var';
 
 @mixin f-window-mode($padding-top) {
-	nb-layout.window-mode nb-layout-header.fixed {
-		top: $padding-top;
-	}
+  nb-layout.window-mode nb-layout-header.fixed {
+    top: $padding-top;
+  }
 
-	nb-sidebar .main-container-fixed {
-		height: calc(100vh - #{var(--header-height)} - #{$padding-top}) !important;
-		top: calc(#{var(--header-height)} + #{$padding-top}) !important;
-	}
+  nb-sidebar .main-container-fixed {
+    height: calc(100vh - #{var(--header-height)} - #{$padding-top}) !important;
+    top: calc(#{var(--header-height)} + #{$padding-top}) !important;
+  }
 }
 
 /* Apply style on scrollbar for Firefox */
@@ -102,11 +102,9 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(
-      var(--card-scrollbar-color),
+    @include nb-scrollbars(var(--card-scrollbar-color),
       var(--card-scrollbar-background-color),
-      var(--card-scrollbar-width)
-    );
+      var(--card-scrollbar-width));
   }
 
   nb-flip-card {
@@ -136,6 +134,7 @@ body {
   }
 
   nb-layout .layout .layout-container nb-sidebar {
+
     &,
     .main-container-fixed {
       top: var(--header-height);
@@ -146,6 +145,7 @@ body {
   nb-layout .layout .layout-container .content nb-layout-footer nav {
     padding: 0.45rem !important;
   }
+
   //Override header padding from 1.25rem to 0.5rem
   nb-layout .layout nb-layout-header nav {
     padding: 0rem !important;
@@ -334,7 +334,7 @@ angular2-smart-table table {
     }
   }
 
-  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input>input {
     color: var(--gauzy-text-color-1);
   }
 
@@ -360,7 +360,7 @@ angular2-smart-table table {
     color: var(--text-basic-color) !important;
   }
 
-  a > nb-icon {
+  a>nb-icon {
     color: var(--text-basic-color) !important;
   }
 
@@ -391,11 +391,12 @@ angular2-smart-table tbody tr {
   background: rgba(126, 126, 143, 0.05);
 
   &:hover {
-    background: rgba(126, 126, 143, 0.05);
+    background: var(--smart-table-bg-active) !important;
   }
 
   &.selected {
-    box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
+    box-shadow: 12.5px 0px 0px -5px var(--gauzy-card-2) inset !important;
+    background: var(--smart-table-bg-active) !important;
 
     &:first-child {
       border-top-left-radius: var(--border-radius);
@@ -410,6 +411,7 @@ angular2-smart-table tbody tr {
 }
 
 nb-card-header {
+
   &.card-header-title,
   .card-header-title {
     display: flex;
@@ -440,6 +442,7 @@ nb-card-body {
   max-height: calc(100vh - 28rem);
   @include nb-ltr(padding-right, 8px);
   @include nb-rtl(padding-left, 8px);
+
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
   }
@@ -461,6 +464,8 @@ nb-card-body {
   angular2-smart-table table tr th {
     border-top: 1px solid var(--gauzy-border-table);
     border-bottom: 1px solid var(--gauzy-border-table);
+    padding-top: 1em;
+    padding-bottom: 1em;
   }
 
   table thead th {
@@ -622,6 +627,7 @@ angular2-smart-table {
     opacity: 0;
     transform: translate(-16.75px, -118.5%);
   }
+
   100% {
     opacity: 1;
     transform: translate(-16.75px, -118.5%);
@@ -629,7 +635,7 @@ angular2-smart-table {
 }
 
 .nb-theme-material-light {
-  a > nb-icon {
+  a>nb-icon {
     color: #ffffff !important;
   }
 }
@@ -742,4 +748,12 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
 
 input {
   height: 2.625rem !important;
+}
+
+angular2-smart-table>div {
+  overflow-x: unset !important;
+}
+
+angular2-smart-table a:hover {
+  text-decoration: auto !important;
 }
