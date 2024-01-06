@@ -1,16 +1,45 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from "chalk";
 import { RolePermissionUtils } from '../../role-permission/utils';
+import { databaseTypes } from "@gauzy/config";
 
 export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	name = 'MigrateRolePermisisons1679765443208';
 
 	/**
-	 * Up Migration
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+            case databaseTypes.postgres:
+                await this.sqlitePostgresMigrateRolePermissions(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlMigrateRolePermissions(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
+    /**
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> { }
+
+	/**
+	 * Sqlite | better-sqlite3 | postgres Up Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async up(queryRunner: QueryRunner): Promise<any> {
+	public async sqlitePostgresMigrateRolePermissions(queryRunner: QueryRunner): Promise<any> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
 		try {
@@ -21,9 +50,10 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
 	}
 
 	/**
-	 * Down Migration
+	 * MySQL Up Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async down(queryRunner: QueryRunner): Promise<any> { }
+	public async mysqlMigrateRolePermissions(queryRunner: QueryRunner): Promise<any> { }
+
 }

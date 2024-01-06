@@ -2,17 +2,46 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { EmailTemplateEnum } from '@gauzy/contracts';
 import { EmailTemplateUtils } from '../../email-template/utils';
+import { databaseTypes } from "@gauzy/config";
 
 export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
 
     name = 'UpdateEmailTemplates1680539459969';
 
     /**
-    * Up Migration
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+            case databaseTypes.postgres:
+                await this.sqlitePostgresUpdateEmailTemplates(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlUpdateEmailTemplates(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
+    /**
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> { }
+
+    /**
+    * Sqlite | better-sqlite3 | postgres Up Migration
     *
     * @param queryRunner
     */
-    public async up(queryRunner: QueryRunner): Promise<any> {
+    public async sqlitePostgresUpdateEmailTemplates(queryRunner: QueryRunner): Promise<any> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         const templates = Object.values(EmailTemplateEnum);
@@ -26,11 +55,9 @@ export class UpdateEmailTemplates1680539459969 implements MigrationInterface {
     }
 
     /**
-    * Down Migration
+    * MySQL Up Migration
     *
     * @param queryRunner
     */
-    public async down(queryRunner: QueryRunner): Promise<any> {
-
-    }
+    public async mysqlUpdateEmailTemplates(queryRunner: QueryRunner): Promise<any> { }
 }

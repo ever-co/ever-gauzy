@@ -63,7 +63,9 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => 'time' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn({ type: 'time' })
+	@CreateDateColumn(
+		process.env.DB_TYPE === 'mysql' ? { type: 'varchar', length: 8, default: '00:00:00', nullable: true } : { type: 'time' }
+	)
 	time: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
