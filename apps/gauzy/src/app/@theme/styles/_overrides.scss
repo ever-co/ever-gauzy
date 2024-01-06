@@ -96,9 +96,11 @@ body {
   }
 
   nb-card nb-list {
-    @include nb-scrollbars(nb-theme(card-scrollbar-color),
+    @include nb-scrollbars(
+      nb-theme(card-scrollbar-color),
       nb-theme(card-scrollbar-background-color),
-      nb-theme(card-scrollbar-width));
+      nb-theme(card-scrollbar-width)
+    );
   }
 
   nb-flip-card {
@@ -128,7 +130,6 @@ body {
   }
 
   nb-layout .layout .layout-container nb-sidebar {
-
     &,
     .main-container-fixed {
       top: nb-theme(header-height);
@@ -313,7 +314,7 @@ body {
     }
   }
 
-  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input>input {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
 
@@ -339,7 +340,7 @@ body {
     color: nb-theme(text-basic-color) !important;
   }
 
-  a>nb-icon {
+  a > nb-icon {
     color: nb-theme(text-basic-color) !important;
   }
 
@@ -401,7 +402,6 @@ angular2-smart-table tbody tr {
 }
 
 nb-card-header {
-
   &.card-header-title,
   .card-header-title {
     display: flex;
@@ -625,7 +625,7 @@ angular2-smart-table {
 }
 
 .nb-theme-material-light {
-  a>nb-icon {
+  a > nb-icon {
     color: #ffffff !important;
   }
 }
@@ -696,6 +696,7 @@ angular2-smart-table table tr.angular2-smart-titles th a.sort {
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
+  text-decoration: none;
 
   &.asc {
     &:before {
@@ -766,7 +767,6 @@ nb-option-list.fit-content {
 }
 
 angular2-smart-table {
-
   th.angular2-smart-actions-title-add a,
   a.angular2-smart-action {
     display: flex;
@@ -792,6 +792,6 @@ angular2-smart-table {
 }
 
 .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-	background-color: var(--gauzy-card-1) !important;
-	color: var(--gauzy-text-color-1) !important;
+  background-color: var(--gauzy-card-1) !important;
+  color: var(--gauzy-text-color-1) !important;
 }
