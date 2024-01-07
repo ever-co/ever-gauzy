@@ -20,6 +20,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
+import { databaseTypes } from "@gauzy/config";
 
 let options: TypeOrmModuleOptions;
 try {
@@ -57,15 +58,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => 'date' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn({ type: 'date' })
+	@CreateDateColumn(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'datetime' } : { type: 'date' })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn(
-		process.env.DB_TYPE === 'mysql' ? { type: 'varchar', length: 8, default: '00:00:00', nullable: true } : { type: 'time' }
-	)
+	@CreateDateColumn({ type: 'time', default: '0' })
 	time: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
