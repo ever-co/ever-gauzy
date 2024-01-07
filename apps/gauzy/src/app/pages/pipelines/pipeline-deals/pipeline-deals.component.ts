@@ -228,8 +228,9 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 				// Update the dataLayoutStyle based on the component layout
 				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				// Trigger pagination refresh
-				filter(() => this._isGridLayout),
 				tap(() => this.refreshPagination()),
+				// filter grid layout
+				filter(() => this._isGridLayout),
 				tap(() => (this.gridDeals = [])),
 				// emit value immediately
 				tap(() => this.subject$.next(true)),
