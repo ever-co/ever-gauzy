@@ -4,7 +4,7 @@ export const PipelinesPage = {
 	pipelineNameInputCss: '[formcontrolname="name"]',
 	descriptioninputCss: '[formcontrolname="description"]',
 	createPipelineButtonCss: 'nb-card-footer > button[status="primary"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editPipelineButtonCss: 'div.mb-3 > button[status="info"]',
 	updateButtonCss: 'nb-card-footer > button[status="info"]',
 	deletePipelineButtonCss: 'div.mb-3 > button[status="danger"]',
@@ -20,5 +20,4 @@ export const PipelinesPage = {
 	probabilityInputCss: 'nb-select[formcontrolname="probability"]',
 	dropdownOptionCss: 'ul.option-list > nb-option',
 	backButtonCss: 'ngx-back-navigation > div.main > button'
-
 };

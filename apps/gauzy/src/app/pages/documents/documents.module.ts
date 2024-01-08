@@ -19,7 +19,7 @@ import { DocumentsRoutingModule } from './documents-routing.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
@@ -45,7 +45,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbActionsModule,
 		CardGridModule,
 		TableComponentsModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		FileUploaderModule,
@@ -55,9 +55,9 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		HeaderTitleModule,
 		PaginationModule,
 		GauzyButtonActionModule,
-		NoDataMessageModule 
+		NoDataMessageModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []
 })
-export class DocumentsModule {}
+export class DocumentsModule { }

@@ -6,7 +6,7 @@ export const ManageOrganizationPage = {
 	dropdownOptionCss: '.option-list nb-option',
 	nameInputCss: '#nameInput',
 	codeInputCss: '#codeInput',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveButtonCss: 'div.actions > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	organisationNameFieldCss: '#nameInput',
@@ -28,6 +28,6 @@ export const ManageOrganizationPage = {
 	dateFormatDropdownCss: '[formcontrolname="dateFormat"]',
 	timeZoneDropdownCss: '[formcontrolname="timeZone"]',
 	timeZoneDropdownOptionCss: 'div.ng-option',
-	tableRowCss: 'table > tbody > tr.ng2-smart-row',
+	tableRowCss: 'table > tbody > tr.angular2-smart-row',
 	cardBodyCss: 'nb-layout-column.ng-star-inserted'
 };

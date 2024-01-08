@@ -1,9 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
-import { ServerSourceConf } from './server-source.conf';
-import { LocalDataSource } from 'ng2-smart-table';
 import { catchError, map, tap } from 'rxjs/operators';
+import { IFilterConfig, LocalDataSource } from 'angular2-smart-table';
 import { isNotEmpty, toParams } from '@gauzy/common-angular';
+import { ServerSourceConf } from './server-source.conf';
 
 export class ServerDataSource extends LocalDataSource {
 
@@ -119,24 +119,32 @@ export class ServerDataSource extends LocalDataSource {
     }
 
     /**
-     * Add additional smart datatables filters
+     * Add additional smart datatables filters to the request parameters.
      *
-     * @returns
+     * @returns {Object} The constructed filter object for request parameters.
      */
-    protected addFilterRequestParams() {
-        if (this.filterConf.filters) {
-            const filters: any = {}
-            this.filterConf.filters.forEach((fieldConf) => {
-                if (fieldConf['search']) {
-                    filters[fieldConf['field']] = fieldConf.search;
-                }
-            });
-            return {
-                [this.conf.filterFieldKey]: filters
-            }
-        } else {
-            return {}
+    protected addFilterRequestParams(): any {
+        // Check if filter configuration is defined
+        if (!this.filterConf) {
+            // If not defined, return an empty object
+            return {};
         }
+
+        // Initialize an object to store filter values
+        const filters: any = {};
+
+        // Iterate over each filter configuration
+        this.filterConf.forEach(({ field, search }: IFilterConfig) => {
+            // Check if search value is truthy, and add it to filters
+            if (search) {
+                filters[field] = search;
+            }
+        });
+
+        // Construct and return the final filter object with the specified key
+        return {
+            [this.conf.filterFieldKey]: filters
+        };
     }
 
     protected addPagerRequestParams() {

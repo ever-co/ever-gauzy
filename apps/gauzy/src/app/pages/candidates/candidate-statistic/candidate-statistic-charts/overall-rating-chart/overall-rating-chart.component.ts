@@ -7,13 +7,14 @@ import { ICandidate, IEmployee } from '@gauzy/contracts';
 @Component({
 	selector: 'ga-overall-rating-chart',
 	template: `
-		<chart
+		<canvas
 			style="height: 400px; width: 100%;"
-			type="bar"
+			[type]="'bar'"
+			baseChart
 			[data]="data"
 			[options]="options"
 			*ngIf="rating?.length > 0 && candidates.length > 0"
-		></chart>
+		></canvas>
 		<div
 			*ngIf="candidates.length === 0 || rating?.length === 0"
 			style="display: flex;
@@ -40,7 +41,7 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	backgroundColor: string[] = [];
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(private themeService: NbThemeService) {}
+	constructor(private themeService: NbThemeService) { }
 
 	ngOnInit() {
 		this.loadData();

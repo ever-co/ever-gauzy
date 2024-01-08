@@ -102,18 +102,34 @@ export class FileStorageComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * GET current tenant file storage setting
+	 * Retrieves the current tenant's file storage settings.
+	 * If settings are available, updates the file storage provider accordingly.
+	 * If no settings are available, uses the default file storage provider from the environment.
 	 */
-	async getSetting() {
-		this.loading = true
-		const settings = this.settings = await this._tenantService.getSettings();
-		if (isNotEmpty(settings)) {
-			const { fileStorageProvider } = settings;
-			this.setFileStorageProvider(fileStorageProvider);
-		} else {
-			this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
+	async getSetting(): Promise<void> {
+		// Set loading state to true while fetching settings
+		this.loading = true;
+
+		try {
+			// Fetch tenant settings
+			const settings = this.settings = await this._tenantService.getSettings();
+
+			// Check if settings are available
+			if (isNotEmpty(settings)) {
+				// Update file storage provider based on fetched settings
+				const { fileStorageProvider } = settings;
+				this.setFileStorageProvider(fileStorageProvider);
+			} else {
+				// Use the default file storage provider from the environment if no settings are available
+				this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
+			}
+		} catch (error) {
+			// Handle any errors that may occur during the fetch operation
+			console.error('Error fetching tenant settings:', error);
+		} finally {
+			// Set loading state to false once fetching is complete
+			this.loading = false;
 		}
-		this.loading = false;
 	}
 
 	/**

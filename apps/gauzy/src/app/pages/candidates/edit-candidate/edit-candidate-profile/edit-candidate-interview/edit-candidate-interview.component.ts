@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -16,7 +16,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
@@ -69,14 +69,6 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		data: null,
 		isSelected: false
 	};
-
-	interviewsTable: Ng2SmartTableComponent;
-	@ViewChild('interviewsTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.interviewsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -137,70 +129,68 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	private _loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				title: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.TITLE'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.TITLE'),
 					type: 'string'
 				},
 				date: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'),
 					type: 'custom',
 					width: '120px',
+					filter: false,
 					renderComponent: InterviewDateTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewDateTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				rating: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
 					width: '136px',
+					filter: false,
 					renderComponent: InterviewStarRatingComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				employees: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'),
 					type: 'custom',
 					width: '155px',
+					filter: false,
 					renderComponent: InterviewersTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				criterions: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: InterviewCriterionsTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewCriterionsTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				location: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'),
 					type: 'string'
 				},
 				note: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'),
 					type: 'string',
 					filter: false
 				},
 				actions: {
-					title: this.getTranslation(
-						'SM_TABLE.LAST_UPDATED'
-					),
+					title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 					width: '150px',
 					type: 'custom',
-					renderComponent: InterviewActionsTableComponent,
 					filter: false,
-					onComponentInitFunction: (instance) => {
+					renderComponent: InterviewActionsTableComponent,
+					componentInitFunction: (instance: InterviewActionsTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updateResult.subscribe((params) => {
 							switch (params.type) {
 								case 'feedback':
@@ -471,28 +461,6 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.interviewsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.interviewsTable && this.interviewsTable.grid) {
-			this.interviewsTable.grid.dataSet['willSelect'] = 'false';
-			this.interviewsTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy() { }

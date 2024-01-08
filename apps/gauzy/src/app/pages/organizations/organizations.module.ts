@@ -13,7 +13,7 @@ import {
 	NbTooltipModule,
 	NbActionsModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
@@ -25,7 +25,7 @@ import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
 	OrganizationsCurrencyComponent,
-	OrganizationsEmployeesComponent,
+	OrganizationTotalEmployeesCountComponent,
 	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
@@ -50,7 +50,7 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbIconModule,
 		NbDialogModule.forChild(),
 		OrganizationsMutationModule,
@@ -78,9 +78,9 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		OrganizationsComponent,
 		OrganizationsFullnameComponent,
 		OrganizationsStatusComponent,
-		OrganizationsEmployeesComponent,
+		OrganizationTotalEmployeesCountComponent,
 		OrganizationsCurrencyComponent
 	],
 	providers: [OrganizationEmploymentTypesService]
 })
-export class OrganizationsModule {}
+export class OrganizationsModule { }

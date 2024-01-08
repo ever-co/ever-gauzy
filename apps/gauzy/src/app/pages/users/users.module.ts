@@ -19,7 +19,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { UserMutationModule } from '../../@shared/user/user-mutation/user-mutation.module';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { EditUserMutationComponent } from './edit-user-mutation/edit-user-mutation.component';
@@ -77,7 +77,7 @@ const COMPONENTS = [
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		UserMutationModule,
 		NbTooltipModule,
@@ -107,4 +107,4 @@ const COMPONENTS = [
 		UserIdService
 	]
 })
-export class UsersModule {}
+export class UsersModule { }

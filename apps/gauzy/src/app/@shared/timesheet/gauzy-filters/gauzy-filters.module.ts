@@ -13,8 +13,8 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgxSliderModule } from 'ngx-slider-v2';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
-import { Ng5SliderModule } from 'ng5-slider';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 
 @NgModule({
@@ -26,19 +26,19 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 	],
 	imports: [
 		CommonModule,
-		SharedModule,
 		FormsModule,
-		NgxDaterangepickerMd,
-		NbInputModule,
 		NbButtonModule,
-		TranslateModule,
 		NbIconModule,
-		EmployeeMultiSelectModule,
+		NbInputModule,
+		NbOptionModule,
 		NbPopoverModule,
 		NbSelectModule,
-		Ng5SliderModule,
+		NgxDaterangepickerMd,
+		NgxSliderModule,
+		SharedModule,
+		TranslateModule,
+		EmployeeMultiSelectModule,
 		ProjectSelectModule,
-		NbOptionModule
 	]
 })
 export class GauzyFiltersModule { }

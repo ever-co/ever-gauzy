@@ -7,7 +7,7 @@ import {
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
 import { tap } from 'rxjs/operators';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
 import { Store, TranslatableService, UsersOrganizationsService } from './../../../../@core/services';
@@ -33,21 +33,21 @@ export class InvoiceViewInnerComponent
 	isTax2FlatValue: boolean;
 	isDiscountFlatValue: boolean;
 	discountTaxTypes = DiscountTaxTypeEnum;
-	
-	invoiceViewInnerTable: Ng2SmartTableComponent;
+
+	invoiceViewInnerTable: Angular2SmartTableComponent;
 	@ViewChild('invoiceViewInnerTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
-			this.invoiceViewInnerTable = content;			
+			this.invoiceViewInnerTable = content;
 			this._onChangedSource();
 		}
 	}
-	
+
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
-  	@Input() buttonsOutlet: TemplateRef<any>;
-	
+	@Input() buttonsOutlet: TemplateRef<any>;
+
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -124,7 +124,7 @@ export class InvoiceViewInnerComponent
 							row.currency,
 							this.invoice.fromOrganization.currencyPosition
 						);
-            			return `${priceTransformed}`;
+						return `${priceTransformed}`;
 					}
 				}
 			}
@@ -201,7 +201,7 @@ export class InvoiceViewInnerComponent
 	}
 
 	async checkUser() {
-		if(this.store.user && this.store.user.id) {
+		if (this.store.user && this.store.user.id) {
 			const userOrg = await this.userOrganizationService.getAll([], {
 				userId: this.store.user.id,
 				organizationId: this.invoice.organizationId
@@ -246,10 +246,10 @@ export class InvoiceViewInnerComponent
 
 	private _deselectAll() {
 		if (this.invoiceViewInnerTable && this.invoiceViewInnerTable.grid) {
-			this.invoiceViewInnerTable.grid.dataSet['willSelect'] = 'false';
+			this.invoiceViewInnerTable.grid.dataSet['willSelect'] = 'indexed';
 			this.invoiceViewInnerTable.grid.dataSet.deselectAll();
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

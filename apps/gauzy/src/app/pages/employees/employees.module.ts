@@ -17,7 +17,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
 import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
 import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
@@ -111,7 +111,7 @@ const COMPONENTS = [
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EmployeeMutationModule,
 		EmployeeEndWorkModule,
@@ -150,4 +150,4 @@ const COMPONENTS = [
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]
 })
-export class EmployeesModule {}
+export class EmployeesModule { }

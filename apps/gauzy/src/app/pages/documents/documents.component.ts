@@ -15,7 +15,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';

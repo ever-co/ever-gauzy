@@ -25,13 +25,13 @@
 				[ngIfElse]="gridLayout"
 			>
 				<div class="table-scroll-container">
-					<ng2-smart-table
+					<angular2-smart-table
 						[settings]="settingsSmartTable"
 						(userRowSelect)="selectProductType($event)"
 						[source]="smartTableSource"
 						style="cursor: pointer"
 						#productTypesTable
-					></ng2-smart-table>
+					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">
 					<ng-container
@@ -49,7 +49,7 @@
 				</div>
 			</ng-template>
 			<ng-template #gridLayout>
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="productTypes"

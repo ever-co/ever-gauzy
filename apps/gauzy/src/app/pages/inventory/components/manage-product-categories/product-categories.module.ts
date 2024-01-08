@@ -2,12 +2,12 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TranslateModule } from '../../../../@shared/translate/translate.module';
 import { ProductCategoryService } from '../../../../@core/services/product-category.service';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 import {
-	NbCardModule,
-	NbButtonModule,
-	NbIconModule,
+    NbCardModule,
+    NbButtonModule,
+    NbIconModule,
     NbSpinnerModule,
     NbInputModule,
     NbTooltipModule
@@ -24,9 +24,9 @@ import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-acti
 
 
 const NB_MODULES = [
-	NbCardModule,
-	NbButtonModule,
-	NbIconModule,
+    NbCardModule,
+    NbButtonModule,
+    NbIconModule,
     NbSpinnerModule,
     NbInputModule,
     NbTooltipModule
@@ -40,7 +40,7 @@ const NB_MODULES = [
         ReactiveFormsModule,
         FormsModule,
         TranslateModule,
-        Ng2SmartTableModule,
+        Angular2SmartTableModule,
         CommonModule,
         TranslateModule,
         ...NB_MODULES,

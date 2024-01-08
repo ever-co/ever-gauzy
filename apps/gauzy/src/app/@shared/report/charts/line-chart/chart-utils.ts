@@ -23,13 +23,13 @@ export class ChartUtil {
         grey: 'rgb(201, 203, 207)'
     };
 
-    constructor() {}
+    constructor() { }
 
     public static color(index: number) {
         return ChartUtil.COLORS[index % ChartUtil.COLORS.length];
     }
 
-    public static transparentize(value: string, opacity: number) {
+    public static transparentize(value: any, opacity: number) {
         var alpha = opacity === undefined ? 0.5 : 1 - opacity;
         return colorLib(value).alpha(alpha).rgbString();
     }

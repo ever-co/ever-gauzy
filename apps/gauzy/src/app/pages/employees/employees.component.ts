@@ -7,6 +7,12 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -18,12 +24,6 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	EmployeeEndWorkComponent,
@@ -86,14 +86,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	loading: boolean = false;
 	organizationInvitesAllowed: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
-
-	employeesTable: Ng2SmartTableComponent;
-	@ViewChild('employeesTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.employeesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
@@ -211,18 +203,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				tap(() => (this.employees = [])),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.employeesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
 			)
 			.subscribe();
 	}
@@ -618,6 +598,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
@@ -630,12 +611,16 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					class: 'align-row',
 					width: '20%',
 					renderComponent: PictureNameTagsComponent,
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (name: string) => {
-						this.setFilter({ field: 'user.name', search: name });
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'user.name', search: value });
 					}
 				},
 				email: {
@@ -647,8 +632,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (email: string) => {
-						this.setFilter({ field: 'user.email', search: email });
+					filterFunction: (value: string) => {
+						this.setFilter({ field: 'user.email', search: value });
 					}
 				},
 				averageIncome: {
@@ -657,7 +642,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					filter: false,
 					class: 'text-center',
 					width: '5%',
-					renderComponent: EmployeeAverageIncomeComponent
+					renderComponent: EmployeeAverageIncomeComponent,
+					componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				averageExpenses: {
 					title: this.getTranslation('SM_TABLE.EXPENSES'),
@@ -665,7 +653,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					filter: false,
 					class: 'text-center',
 					width: '5%',
-					renderComponent: EmployeeAverageExpensesComponent
+					renderComponent: EmployeeAverageExpensesComponent,
+					componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				averageBonus: {
 					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
@@ -673,7 +664,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					filter: false,
 					class: 'text-center',
 					width: '5%',
-					renderComponent: EmployeeAverageBonusComponent
+					renderComponent: EmployeeAverageBonusComponent,
+					componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				isTrackingEnabled: {
 					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
@@ -681,6 +675,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeTimeTrackingStatusComponent,
+					componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 					filter: {
 						type: 'custom',
 						component: ToggleFilterComponent
@@ -694,6 +691,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					width: '20%',
 					renderComponent: TagsOnlyComponent,
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
@@ -713,6 +714,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeWorkStatusComponent,
+					componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 					filter: {
 						type: 'custom',
 						component: ToggleFilterComponent
@@ -725,12 +729,22 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		};
 	}
 
-	private _additionalColumns() {
+	/**
+	 * Adds an additional column to the Smart Table settings based on the organization's configuration.
+	 * This method checks if screenshot capture is allowed and configures the Smart Table accordingly.
+	 */
+	private _additionalColumns(): void {
+		// Check if organization context is available
 		if (!this.organization) {
 			return;
 		}
+
+		// Destructure properties for clarity
 		const { allowScreenshotCapture } = this.organization;
+
+		// Check if screenshot capture is allowed
 		if (allowScreenshotCapture) {
+			// Configure the additional column for screenshot capture
 			this.settingsSmartTable['columns']['allowScreenshotCapture'] = {
 				title: this.getTranslation('SM_TABLE.SCREEN_CAPTURE'),
 				type: 'custom',
@@ -738,31 +752,39 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				editable: false,
 				addable: false,
 				notShownField: true,
+				// Configure custom filter for the column
 				filter: {
 					type: 'custom',
 					component: ToggleFilterComponent
 				},
+				// Define filter function to update the filter settings
 				filterFunction: (isEnable: boolean) => {
 					this.setFilter({ field: 'allowScreenshotCapture', search: isEnable });
 				},
+				// Configure custom component for rendering the column
 				renderComponent: AllowScreenshotCaptureComponent,
-				onComponentInitFunction: (instance: any) => {
+				// Initialize component function to set initial values
+				componentInitFunction: (instance: AllowScreenshotCaptureComponent, cell: Cell) => {
+					instance.rowData = cell.getRow().getData();
+					instance.value = cell.getValue();
+
+					// Subscribe to the allowScreenshotCaptureChange event
 					instance.allowScreenshotCaptureChange.subscribe({
 						next: (isAllow: boolean) => {
+							// Clear selected items and update allowScreenshotCapture
 							this.clearItem();
-							this._updateAllowScreenshotCapture(
-								instance.rowData,
-								isAllow
-							);
+							this._updateAllowScreenshotCapture(instance.rowData, isAllow);
 						},
 						error: (err: any) => {
 							console.warn(err);
 						}
 					});
 				}
-			}
+			};
 		}
-		this.settingsSmartTable = Object.assign({}, this.settingsSmartTable);
+
+		// Copy the settingsSmartTable to trigger change detection
+		this.settingsSmartTable = { ...this.settingsSmartTable };
 	}
 
 	private _updateAllowScreenshotCapture(employee: IEmployee, isAllowed: boolean) {
@@ -810,17 +832,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.employeesTable && this.employeesTable.grid) {
-			this.employeesTable.grid.dataSet['willSelect'] = 'false';
-			this.employeesTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	async startEmployeeWork() {

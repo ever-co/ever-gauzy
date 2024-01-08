@@ -53,16 +53,16 @@
 		"postinstall.web": "yarn node ./decorate-angular-cli.js && yarn npx ngcc --properties es2016 browser module main --first-only --create-ivy-entry-points && yarn node tools/web/postinstall"
 	},
 	"resolutions": {
-		"@angular-devkit/build-angular": "^15.0.0"
+		"@angular-devkit/build-angular": "^16.2.11"
 	},
 	"devDependencies": {
 		"@4tw/cypress-drag-drop": "^2.1.0",
-		"@angular-devkit/build-angular": "^15.0.0",
-		"@angular/cli": "15.2.10",
+		"@angular-devkit/build-angular": "^16.2.11",
+		"@angular/cli": "^16.2.11",
 		"@cypress/browserify-preprocessor": "^3.0.2",
-		"@nrwl/angular": "^15.8.0",
-		"@nrwl/cypress": "^15.8.0",
-		"@nrwl/jest": "^15.8.0",
+		"@nrwl/angular": "15.9.4",
+		"@nrwl/cypress": "15.9.4",
+		"@nrwl/jest": "15.9.4",
 		"@types/jest": "^29.4.4",
 		"cypress": "^9.4.1",
 		"cypress-cucumber-preprocessor": "^4.3.1",

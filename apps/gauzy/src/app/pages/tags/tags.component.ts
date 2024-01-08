@@ -2,12 +2,11 @@ import {
 	Component,
 	OnInit,
 	OnDestroy,
-	ViewChild,
 	AfterViewInit
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -53,14 +52,6 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	tags$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
 	private _isFiltered: boolean = false;
-
-	tagsTable: Ng2SmartTableComponent;
-	@ViewChild('tagsTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.tagsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -255,20 +246,23 @@ export class TagsComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TAGS'),
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TAGS'),
 			columns: {
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
 					width: '16%',
 					class: 'text-center',
-					renderComponent: TagsColorComponent
+					renderComponent: TagsColorComponent,
+					componentInitFunction: (instance: TagsColorComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
@@ -279,7 +273,8 @@ export class TagsComponent extends PaginationFilterBaseComponent
 					type: 'string',
 					width: '25%',
 					filter: false,
-					valuePrepareFunction: (value, item) => {
+					valuePrepareFunction: (_: any, cell: Cell) => {
+						const item = cell.getRow().getData();
 						return this.getCounter(item);
 					}
 				}
@@ -290,14 +285,23 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	/**
 	 * GET tag usages counter
 	 */
-	getCounter = (item): number => {
+	getCounter = (item: any): number => {
+		// Define the substring to identify counter properties
 		const substring = '_counter';
+
+		// Initialize the counter to 0
 		let counter = 0;
+
+		// Iterate through properties of the 'item' object
 		for (const property in item) {
+			// Check if the property includes the specified substring
 			if (property.includes(substring)) {
+				// Parse and add the counter value to the total counter
 				counter = counter + parseInt(item[property]);
 			}
 		}
+
+		// Return the total counter value
 		return counter;
 	};
 
@@ -409,18 +413,6 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	private onChangedSource() {
-		this.tagsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	private clearItem() {
@@ -428,17 +420,6 @@ export class TagsComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	private deselectAll() {
-		if (this.tagsTable && this.tagsTable.grid) {
-			this.tagsTable.grid.dataSet['willSelect'] = 'false';
-			this.tagsTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy() { }

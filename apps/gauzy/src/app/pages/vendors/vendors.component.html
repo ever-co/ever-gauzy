@@ -38,7 +38,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body
-		[nbSpinner]="isLoading"
+		[nbSpinner]="loading"
 		nbSpinnerStatus="primary"
 		nbSpinnerSize="large"
 	>
@@ -54,17 +54,12 @@
 				<nb-card class="p-0" *ngFor="let vendor of vendors">
 					<nb-card-body
 						class="custom-table"
-						[ngClass]="{
-							selected:
-								selected?.state && vendor === selected?.vendor
-						}"
+						[ngClass]="{ selected: selected?.state && vendor === selected?.vendor }"
 						(click)="selectVendor(vendor)"
 					>
 						<div class="row align-items-center">
 							<div class="col-md-2 p-0 float-left text-truncate">
-								<ga-company-logo
-									[rowData]="vendor"
-								></ga-company-logo>
+								<ga-company-logo [rowData]="vendor"></ga-company-logo>
 								{{ vendor.name }}
 							</div>
 							<div class="col-md-2 p-0 float-left text-truncate">
@@ -79,34 +74,30 @@
 								></gauzy-external-link>
 							</div>
 							<div class="col-md-3 float-left p-0 text-truncate">
-								<ga-only-tags [rowData]="vendor">
-								</ga-only-tags>
+								<ga-only-tags [rowData]="vendor"></ga-only-tags>
 							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>
 			</div>
 		</ng-template>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
-				vendors?.length > 0
-			"
-		>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="settingsSmartTable"
-				[source]="vendors"
-				(onSelectedItem)="selectVendor($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
-		</ng-template>
-		<ng-template [ngIf]="!vendors?.length">
-			<div class="no-data">
-				<ngx-no-data-message
-					[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
-				></ngx-no-data-message>
-			</div>
+		<ng-template [ngIf]=" dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
+			<ng-template [ngIf]="vendors?.length > 0" [ngIfElse]="noVendorTemplate">
+				<ga-card-grid
+					[totalItems]="pagination?.totalItems"
+					[settings]="settingsSmartTable"
+					[source]="vendors"
+					(onSelectedItem)="selectVendor($event)"
+					(scroll)="onScroll()"
+				></ga-card-grid>
+			</ng-template>
+			<ng-template #noVendorTemplate>
+				<div class="no-data">
+					<ngx-no-data-message
+						[message]="'ORGANIZATIONS_PAGE.VENDORS_NO_DATA_MESSAGE' | translate"
+					></ngx-no-data-message>
+				</div>
+			</ng-template>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

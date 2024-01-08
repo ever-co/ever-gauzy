@@ -55,14 +55,12 @@
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container custom-table ">
-				<ng2-smart-table
-					class="tags-table"
+				<angular2-smart-table
+					style="cursor: pointer"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectProposal($event)"
-					style="cursor: pointer"
-					#proposalsTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -73,19 +71,18 @@
 						[totalItems]="pagination?.totalItems"
 						[itemsPerPage]="pagination?.itemsPerPage"
 						[activePage]="pagination?.activePage"
-					>
-					</ga-pagination>
+					></ga-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="proposals"
 				(onSelectedItem)="selectProposal($event)"
 				(scroll)="onScroll()"
-			></ga-card-grid>			
+			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
@@ -139,8 +136,8 @@
 	</div>
 </ng-template>
 
-<ng-template 
-	#statusButtonTemplate 
+<ng-template
+	#statusButtonTemplate
 	let-item="item"
 	let-buttonSize="buttonSize"
 >

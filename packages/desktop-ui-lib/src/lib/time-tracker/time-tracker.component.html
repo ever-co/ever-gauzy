@@ -421,14 +421,14 @@
 						<div [ngClass]="{ 'disabled-table': (start$ | async) }" class="row">
 							<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
 								<div class="table-scroll-container">
-									<ng2-smart-table
+									<angular2-smart-table
 										#taskTable
 										(userRowSelect)="handleRowSelection($event)"
 										[settings]="smartTableSettings"
 										[source]="sourceData$ | async"
 										style="cursor: pointer"
 									>
-									</ng2-smart-table>
+									</angular2-smart-table>
 								</div>
 								<div class="pagination-container">
 									<ga-pagination [source]="sourceData$ | async"></ga-pagination>

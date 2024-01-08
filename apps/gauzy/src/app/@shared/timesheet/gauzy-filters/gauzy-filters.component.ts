@@ -9,7 +9,7 @@ import {
 	Output
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ChangeContext, Options } from 'ng5-slider';
+import { Options, ChangeContext } from 'ngx-slider-v2';
 import {
 	ITimeLogFilters,
 	PermissionsEnum,
@@ -36,13 +36,13 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	public TimeLogType = TimeLogType;
 	public TimeLogSourceEnum = TimeLogSourceEnum;
 
-  	@Input() saveFilters = true;
+	@Input() saveFilters = true;
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
 
 	public hasFilterApplies: boolean;
-  	public activityLevel = ActivityLevel;
+	public activityLevel = ActivityLevel;
 	public sliderOptions: Partial<Options> = {
 		floor: 0,
 		ceil: 100,
@@ -75,9 +75,9 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
- 	/**
-   	* define constructor
-   	*/
+	/**
+		* define constructor
+		*/
 	constructor(
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly cd: ChangeDetectorRef,
@@ -86,7 +86,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		super(translateService);
 	}
 
-  	ngOnInit() {
+	ngOnInit() {
 		if (this.saveFilters) {
 			this.timesheetFilterService.filter$
 				.pipe(
@@ -116,9 +116,9 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	ngAfterViewInit() {
 		this.triggerFilterChange();
 		this.cd.detectChanges();
-  	}
+	}
 
-  	setActivityLevel($event: ChangeContext): void {
+	setActivityLevel($event: ChangeContext): void {
 		this.filters.activityLevel = {
 			start: $event.value,
 			end: $event.highValue
@@ -155,7 +155,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	/**
 	 * Generate Dynamic Timelog Source Selector
 	 */
-	getTimeLogSourceSelectors(): Array<{ label: string, value: TimeLogSourceEnum}> {
+	getTimeLogSourceSelectors(): Array<{ label: string, value: TimeLogSourceEnum }> {
 		return [
 			{
 				label: this.getTranslation('TIMESHEET.SOURCES.WEB_TIMER'),
@@ -188,5 +188,5 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		];
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

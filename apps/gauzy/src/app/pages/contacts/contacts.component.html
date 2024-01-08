@@ -22,13 +22,9 @@
 				class="w-100"
 				[contactType]="contactType"
 				[organizationContact]="selectedOrganizationContact"
-				[projectsWithoutOrganizationContacts]="
-					projectsWithoutOrganizationContacts
-				"
+				[projectsWithoutOrganizationContacts]=" projectsWithoutOrganizationContacts "
 				(canceled)="cancel()"
-				(addOrEditOrganizationContact)="
-					addOrEditOrganizationContact($event)
-				"
+				(addOrEditOrganizationContact)="addOrEditOrganizationContact($event)"
 			></ga-contact-mutation>
 		</ng-container>
 		<ng-template #layout>
@@ -37,14 +33,12 @@
 				[ngIfElse]="gridLayout"
 			>
 				<div class="table-scroll-container">
-					<ng2-smart-table
-						class="w-100"
+					<angular2-smart-table
+						style="cursor: pointer"
 						(userRowSelect)="selectContact($event)"
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
-						style="cursor: pointer"
-						#contactsTable
-					></ng2-smart-table>
+					></angular2-smart-table>
 				</div>
 				<div class="pagination-container align-self-end">
 					<ng-container
@@ -62,7 +56,7 @@
 				</div>
 			</ng-template>
 			<ng-template #gridLayout>
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectContact($event)"
 					[settings]="settingsSmartTable"

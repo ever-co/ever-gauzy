@@ -1,8 +1,9 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationVendor } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-vendor-select-filter',
     template: `
         <ga-vendor-select
             [clearable]="true"
@@ -10,23 +11,26 @@ import { IOrganizationVendor } from '@gauzy/contracts';
             [addTag]="false"
             [placeholder]="'SM_TABLE.VENDOR' | translate"
             (onChanged)="selectedVendorEvent($event)"
-        >
-        </ga-vendor-select>
+        ></ga-vendor-select>
     `,
 })
 export class VendorFilterComponent extends DefaultFilter implements OnChanges {
-    
+
     constructor() {
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    /**
+     *
+     * @param changes
+     */
+    ngOnChanges(changes: SimpleChanges) { }
 
-    onChange(event) {
-        this.column.filterFunction(event);
+    /**
+     *
+     * @param value
+     */
+    selectedVendorEvent(value: IOrganizationVendor) {
+        this.column.filterFunction(value, this.column.id);
     }
-
-    selectedVendorEvent(currentTagSelection: IOrganizationVendor) {
-        this.column.filterFunction(currentTagSelection);
-	}
 }

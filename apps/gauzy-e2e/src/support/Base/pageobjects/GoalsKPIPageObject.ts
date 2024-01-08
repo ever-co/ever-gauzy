@@ -7,7 +7,7 @@ export const GoalsKPIPage = {
 	employeeDropdownCss: '.option-list nb-option',
 	currentValueInputCss: '#current-value',
 	addKPIButtonCss: 'nb-tab[tabid="kpi"] > div.mb-3 > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveKPIButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	editButtonCss: 'nb-tab[tabid="kpi"] > div.mb-3 > button[status="info"]',
 	deleteButtonCss: 'nb-tab[tabid="kpi"] > div.mb-3 > button[status="danger"]',
@@ -15,6 +15,5 @@ export const GoalsKPIPage = {
 	verifyKPICss: 'div.ng-star-inserted',
 	verifyEmpytTableCss: 'tr.ng-star-inserted > td',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	searchNameInputCss: 'input-filter > input[placeholder="Name"]',
-
+	searchNameInputCss: 'input-filter > input[placeholder="Name"]'
 };

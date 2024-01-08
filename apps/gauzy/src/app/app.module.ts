@@ -2,7 +2,6 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
-
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
@@ -31,12 +30,8 @@ import {
 } from './@core/interceptors';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { Cloudinary as CloudinaryCore } from 'cloudinary-core';
-import { CloudinaryModule } from '@cloudinary/angular-5.x';
-import {
-	cloudinaryConfiguration,
-	environment,
-} from '../environments/environment';
+import { CloudinaryModule } from '@cloudinary/ng';
+import { environment } from '@env/environment';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ServerConnectionService } from './@core/services/server-connection.service';
 import { Store } from './@core/services/store.service';
@@ -47,7 +42,6 @@ import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { NgxElectronModule } from 'ngx-electron';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
@@ -63,18 +57,12 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
-import { GAUZY_ENV } from "./@core";
-// TODO: we should use some internal function which returns version of Gauzy;
-const version = '0.1.0';
+import { GAUZY_ENV } from "./@core/constants";
+import { version } from './../../version';
 
-export const cloudinary = {
-	Cloudinary: CloudinaryCore,
-};
 
 if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
-	console.warn(
-		'You are running inside Docker but does not have SENTRY_DSN env set'
-	);
+	console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
 } else if (
 	environment.SENTRY_DSN &&
 	environment.SENTRY_DSN !== 'DOCKER_SENTRY_DSN'
@@ -103,9 +91,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		// TODO: we should use some internal function which returns version of Gauzy
 		release: 'gauzy@' + version,
 		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
-		tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
-			? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
-			: 0.01,
+		tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01,
 	});
 }
 
@@ -140,12 +126,11 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 				deps: [HttpClient],
 			},
 		}),
-		CloudinaryModule.forRoot(cloudinary, cloudinaryConfiguration),
+		CloudinaryModule,
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),
 		environment.production ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
-		NgxElectronModule,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
 		NgxDaterangepickerMd.forRoot({

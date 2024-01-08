@@ -1,1 +1,11 @@
-<chart #chart type="line" [data]="data" [options]="options"> </chart>
+<div class="chart">
+    <canvas
+        baseChart
+        [data]="data"
+        [options]="lineChartOptions"
+        [type]="lineChartType"
+        [legend]="lineChartLegend"
+        (chartHover)="chartHovered($event)"
+        (chartClick)="chartClicked($event)"
+    ></canvas>
+</div>

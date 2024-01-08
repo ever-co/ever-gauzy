@@ -19,7 +19,7 @@ import {
 } from '@nebular/theme';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
@@ -43,7 +43,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		NbInputModule,
 		NbIconModule,
 		NbSpinnerModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NgSelectModule,
 		NbSelectModule,
 		NbCheckboxModule,
@@ -57,4 +57,4 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule
 	]
 })
-export class HubstaffModule {}
+export class HubstaffModule { }

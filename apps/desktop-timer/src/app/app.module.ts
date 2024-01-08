@@ -11,7 +11,6 @@ import {
 	NbLayoutModule,
 	NbDatepickerModule
 } from '@nebular/theme';
-import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import {
 	HttpClientModule,
@@ -81,7 +80,6 @@ import { environment } from '../environments/environment';
 		NgxLoginModule,
 		SetupModule,
 		TimeTrackerModule,
-		NgxElectronModule,
 		HttpClientModule,
 		ScreenCaptureModule,
 		SettingsModule,
@@ -182,7 +180,7 @@ import { environment } from '../environments/environment';
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => {},
+			useFactory: () => () => { },
 			deps: [Sentry.TraceService],
 			multi: true
 		},

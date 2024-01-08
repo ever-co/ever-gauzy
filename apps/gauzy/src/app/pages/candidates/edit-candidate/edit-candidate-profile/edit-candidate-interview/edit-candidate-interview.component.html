@@ -39,17 +39,14 @@
 				*ngIf="dataLayoutStyle === 'TABLE'"
 				class="table-scroll-container"
 			>
-				<ng2-smart-table
-					class="interviews-table"
+				<angular2-smart-table
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="sourceSmartTable"
 					(userRowSelect)="selectInterview($event)"
-					#interviewsTable
-				>
-				</ng2-smart-table>
+				></angular2-smart-table>
 			</div>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 				[settings]="settingsSmartTable"

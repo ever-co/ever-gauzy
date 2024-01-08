@@ -16,13 +16,13 @@ export class SmartTableToggleComponent implements OnInit {
 		}
 	}
 
-	onChange = (_isChecked: boolean) => {};
+	onChange = (_isChecked: boolean) => { };
 
-	constructor() {}
+	constructor() { }
 
-	ngOnInit() {}
+	ngOnInit() { }
 
-	onCheckedChange(isChecked) {
+	onCheckedChange(isChecked: boolean) {
 		this.onChange(isChecked);
 	}
 }

@@ -1,11 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 
 @Component({
-	selector: 'ngx-equipment-sharing-policy',
+	selector: 'ngx-equipment-sharing-policy-table-selector',
 	templateUrl: './equipment-sharing-policy.component.html'
 })
-export class EquipmentSharingPolicyComponent implements ViewCell {
+export class EquipmentSharingPolicyTableComponent {
 	@Input()
 	rowData: any;
 

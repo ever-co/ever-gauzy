@@ -1,3 +1,17 @@
-nb-select {
-  min-width: 9rem;
+@import '../../payments/payments.component.scss';
+
+:host {
+  .card-header-title {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  nb-select {
+    min-width: 9rem;
+  }
+
+  .grid {
+    height: 100%;
+    overflow: auto;
+  }
 }

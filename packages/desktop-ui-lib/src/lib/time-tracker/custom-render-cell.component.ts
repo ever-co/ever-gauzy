@@ -1,29 +1,28 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 
 @Component({
+	selector: 'ga-custom-render-selector',
 	template: `
 		<div class="d-flex align-items-center">
-			<nb-icon
-				class="running-task"
-				status="primary"
-				icon="arrow-right-outline"
-				*ngIf="isSelected"
-			></nb-icon>
-			{{ renderValue }}
+			<ng-container *ngIf="isSelected">
+				<nb-icon
+					class="running-task"
+					status="primary"
+					icon="arrow-right-outline"
+				></nb-icon>
+			</ng-container>
+			{{ rowData.taskNumber + ' ' + rowData.title }}
 		</div>
 	`,
 	styleUrls: ['./time-tracker.component.scss'],
 })
-export class CustomRenderComponent implements ViewCell, OnInit {
-	renderValue: string;
+export class CustomRenderComponent implements OnInit {
+	isSelected: boolean = false;
 
 	@Input() value: string | number;
 	@Input() rowData: any;
-	isSelected: boolean = false;
 
 	ngOnInit() {
-		this.renderValue = this.rowData.taskNumber + ' ' + this.rowData.title;
 		if (this.rowData.isSelected) {
 			this.isSelected = true;
 		}
@@ -31,20 +30,16 @@ export class CustomRenderComponent implements ViewCell, OnInit {
 }
 
 @Component({
+	selector: 'ga-custom-description-selector',
 	template: `
 		<span class="hidden-long-text">
-			{{ renderValue }}
+			{{ value.toString() }}
 		</span>
 	`,
 	styleUrls: ['./time-tracker.component.scss'],
 })
-export class CustomDescriptionComponent implements ViewCell, OnInit {
-	renderValue: string;
+export class CustomDescriptionComponent {
 
 	@Input() value: string | number;
 	@Input() rowData: any;
-
-	ngOnInit() {
-		this.renderValue = this.value.toString();
-	}
 }

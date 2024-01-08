@@ -14,7 +14,7 @@ import {
     NbTabsetModule,
     NbTooltipModule
 } from "@nebular/theme";
-import { Ng2SmartTableModule } from "ng2-smart-table";
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CardGridModule } from "./../../../../@shared/card-grid/card-grid.module";
 import { HeaderTitleModule } from "./../../../../@shared/components/header-title/header-title.module";
 import { LocationFormModule, LeafletMapModule } from "./../../../../@shared/forms";
@@ -64,7 +64,7 @@ const NB_MODULES = [
         WarehousesRoutingModule,
         FormsModule,
         ReactiveFormsModule,
-        Ng2SmartTableModule,
+        Angular2SmartTableModule,
         CommonModule,
         TranslateModule,
         ...NB_MODULES,
@@ -82,4 +82,4 @@ const NB_MODULES = [
     ],
     providers: []
 })
-export class WarehousesModule {}
+export class WarehousesModule { }

@@ -33,9 +33,6 @@ export type Env = Readonly<{
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
 
-	CLOUDINARY_CLOUD_NAME: string;
-	CLOUDINARY_API_KEY: string;
-
 	GOOGLE_MAPS_API_KEY: string;
 	GOOGLE_PLACE_AUTOCOMPLETE: boolean;
 
@@ -154,9 +151,6 @@ export const env: Env = cleanEnv(
 
 		SENTRY_DSN: str({ default: '' }),
 		SENTRY_TRACES_SAMPLE_RATE: str({ default: '' }),
-
-		CLOUDINARY_CLOUD_NAME: str({ default: '' }),
-		CLOUDINARY_API_KEY: str({ default: '' }),
 
 		GOOGLE_MAPS_API_KEY: str({ default: '' }),
 		GOOGLE_PLACE_AUTOCOMPLETE: bool({ default: false }),
@@ -292,10 +286,10 @@ export const env: Env = cleanEnv(
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 		I18N_FILES_URL: str({ default: '' }),
-		AWHost: str({default: 'http://localhost:5600'}),
-		API_DEFAULT_PORT: num({default: 3000}),
-		GAUZY_UI_DEFAULT_PORT: num({default: 5621}),
-		SCREENSHOTS_ENGINE_METHOD: str({default: 'ScreenshotDesktopLib'}),
+		AWHost: str({ default: 'http://localhost:5600' }),
+		API_DEFAULT_PORT: num({ default: 3000 }),
+		GAUZY_UI_DEFAULT_PORT: num({ default: 5621 }),
+		SCREENSHOTS_ENGINE_METHOD: str({ default: 'ScreenshotDesktopLib' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );
