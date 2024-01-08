@@ -7,6 +7,9 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 	templateUrl: './status-view.component.html',
 	styles: [
 		`
+			:host {
+				display: flex;
+			}
 			.badge {
 				display: flex;
 				flex-direction: row;

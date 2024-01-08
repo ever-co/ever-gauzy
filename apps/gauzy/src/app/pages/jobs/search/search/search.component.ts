@@ -502,14 +502,14 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							type: 'custom',
 							sort: false,
 							renderComponent: EmployeeLinksComponent,
-							valuePrepareFunction: (value: IEmployee) => ({
-								name: value && value?.user ? value?.user?.name : null,
-								imageUrl: value && value?.user ? value?.user?.imageUrl : null,
-								id: value ? value?.id : null
-							}),
 							componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+								const employee: IEmployee = cell.getRawValue() as IEmployee;
 								instance.rowData = cell.getRow().getData();
-								instance.value = cell.getRawValue();
+								instance.value = {
+									name: employee?.user?.name ?? null,
+									imageUrl: employee?.user?.imageUrl ?? null,
+									id: employee?.id ?? null
+								};
 							},
 						}
 					}
