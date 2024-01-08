@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
+import { MikroOrmModule, MikroOrmModuleAsyncOptions } from '@mikro-orm/nestjs';
 import { ConfigModule, ConfigService } from '@gauzy/config';
 
 /**
@@ -22,9 +23,22 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 
 				return dbConnectionOptions;
 			}
-		} as TypeOrmModuleAsyncOptions)
+		} as TypeOrmModuleAsyncOptions),
+		MikroOrmModule.forRootAsync({
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			// Use useFactory, useClass, or useExisting
+			// to configure the DataSourceOptions.
+			useFactory: async (configService: ConfigService) => {
+				const { dbConnectionOptions } = configService.config;
+
+				console.log('DB Connection Options: ', dbConnectionOptions);
+
+				return dbConnectionOptions;
+			}
+		} as MikroOrmModuleAsyncOptions)
 	],
 	providers: [],
 	exports: [TypeOrmModule]
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
