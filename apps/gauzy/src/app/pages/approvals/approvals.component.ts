@@ -1,8 +1,6 @@
-import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
 	Router,
-	RouterEvent,
-	NavigationEnd,
 	ActivatedRoute
 } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +11,7 @@ import {
 	IApprovalsData
 } from '@gauzy/contracts';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
@@ -47,10 +45,8 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
@@ -59,22 +55,12 @@ export class ApprovalsComponent
 	public smartTableSource = new LocalDataSource();
 	public hasEditPermission = false;
 	public selectedEmployeeId: string;
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	requestApprovalData: IRequestApproval[] = [];
-	organization: IOrganization;
-	_refresh$: Subject<any> = new Subject();
-
-	requestApprovalTable: Ng2SmartTableComponent;
-	@ViewChild('requestApprovalTable') set content(
-		content: Ng2SmartTableComponent
-	) {
-		if (content) {
-			this.requestApprovalTable = content;
-			this.onChangedSource();
-		}
-	}
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public requestApprovalData: IRequestApproval[] = [];
+	public organization: IOrganization;
+	public _refresh$: Subject<any> = new Subject();
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -124,13 +110,6 @@ export class ApprovalsComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
 		this.route.queryParamMap
 			.pipe(
 				filter(
@@ -173,18 +152,6 @@ export class ApprovalsComponent
 				tap(() => (this.requestApprovalData = [])),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.requestApprovalTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
 			)
 			.subscribe();
 	}
@@ -279,72 +246,90 @@ export class ApprovalsComponent
 			),
 			columns: {
 				name: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent
+					renderComponent: PictureNameTagsComponent,
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				min_count: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'),
 					type: 'number',
 					filter: false
 				},
 				approvalPolicy: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ApprovalPolicyComponent,
-					filter: false
+					componentInitFunction: (instance: ApprovalPolicyComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+					},
 				},
 				createdByName: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.CREATED_BY'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
 					type: 'custom',
+					filter: false,
 					renderComponent: CreateByComponent,
-					filter: false
+					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				createdAt: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.CREATED_AT'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_AT'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				employees: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.EMPLOYEES'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.EMPLOYEES'),
 					type: 'custom',
 					filter: false,
-					renderComponent: EmployeeWithLinksComponent
+					renderComponent: EmployeeWithLinksComponent,
+					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 				},
 				teams: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.TEAMS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TaskTeamsComponent
+					renderComponent: TaskTeamsComponent,
+					componentInitFunction: (instance: TaskTeamsComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+					},
 				},
 				status: {
-					title: this.getTranslation(
-						'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'
-					),
+					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'),
 					type: 'custom',
 					width: '5%',
+					filter: false,
 					renderComponent: StatusBadgeComponent,
-					filter: false
+					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				}
 			}
 		};
 	}
 
-	statusMapper(row: any) {
+	/**
+	 * Maps a status value to its corresponding text, value, and CSS class.
+	 *
+	 * @param row - The row containing the status property.
+	 * @returns An object with text, value, and class properties.
+	 */
+	statusMapper(row: any): { text: string; value: any; class: string } {
 		let value;
+
+		// Map status values to their corresponding text
 		switch (row.status) {
 			case RequestApprovalStatusTypesEnum.APPROVED:
 				value = this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVED');
@@ -356,11 +341,13 @@ export class ApprovalsComponent
 				value = this.getTranslation('APPROVAL_REQUEST_PAGE.REQUESTED');
 				break;
 		}
-		const badgeClass = ['approved'].includes(value.toLowerCase())
-			? 'success'
-			: ['requested'].includes(value.toLowerCase())
-			? 'warning'
-			: 'danger';
+
+		// Determine the CSS class based on the mapped status text
+		const badgeClass =
+			['approved'].includes(value.toLowerCase()) ? 'success' :
+				['requested'].includes(value.toLowerCase()) ? 'warning' : 'danger';
+
+		// Return an object with text, value, and class properties
 		return {
 			text: value,
 			value: row.status,
@@ -498,18 +485,7 @@ export class ApprovalsComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.requestApprovalTable && this.requestApprovalTable.grid) {
-			this.requestApprovalTable.grid.dataSet['willSelect'] = 'false';
-			this.requestApprovalTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

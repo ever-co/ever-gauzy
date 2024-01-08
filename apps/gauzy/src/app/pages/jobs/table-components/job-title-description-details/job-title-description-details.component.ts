@@ -1,7 +1,6 @@
 import { CurrencyPipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ViewCell } from 'ng2-smart-table';
 import { IVisibilityJobPostInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 
@@ -11,7 +10,7 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 	styleUrls: ['./job-title-description-details.component.scss'],
 	providers: [CurrencyPipe]
 })
-export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent implements ViewCell {
+export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent {
 
 	constructor(
 		public readonly translateService: TranslateService

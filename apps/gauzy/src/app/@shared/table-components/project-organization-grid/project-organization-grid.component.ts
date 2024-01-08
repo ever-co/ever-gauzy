@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 import { BehaviorSubject } from 'rxjs';
 
 @Component({
@@ -7,9 +6,8 @@ import { BehaviorSubject } from 'rxjs';
 	templateUrl: './project-organization-grid.component.html',
 	styleUrls: ['./project-organization-grid.component.scss']
 })
-export class ProjectOrganizationGridComponent implements ViewCell {
-	@Input()
-	value: string | number;
+export class ProjectOrganizationGridComponent {
+	@Input() value: string | number;
 	private _rowData: any;
 	private _visibility$: BehaviorSubject<boolean>;
 

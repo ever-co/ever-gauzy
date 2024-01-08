@@ -1,32 +1,32 @@
 <div>
-	<div *ngIf="rowData.notes">{{ rowData.notes }}</div>
-	<div *ngIf="rowData.description" [hidden]="rowData.title || rowData.name">
+	<div *ngIf="rowData?.notes">{{ rowData.notes }}</div>
+	<div *ngIf="rowData?.description" [hidden]="rowData?.title || rowData?.name">
 		{{ rowData.description }}
 	</div>
-	<div *ngIf="rowData.purpose">{{ rowData.purpose }}</div>
-	<div *ngIf="rowData.invoiceNumber">{{ rowData.invoiceNumber }}</div>
-	<div *ngIf="rowData.title">{{ rowData.title }}</div>
-	<div *ngIf="rowData.jobTitle">{{ rowData.jobTitle }}</div>
-	<div class="{{ layout === 'CARDS_GRID' ? 'contacts-img' : '' }}">
-		<div *ngIf="rowData.imageUrl">
+	<div *ngIf="rowData?.purpose">{{ rowData?.purpose }}</div>
+	<div *ngIf="rowData?.invoiceNumber">{{ rowData?.invoiceNumber }}</div>
+	<div *ngIf="rowData?.title">{{ rowData?.title }}</div>
+	<div *ngIf="rowData?.jobTitle">{{ rowData?.jobTitle }}</div>
+	<div [ngClass]="{ 'contacts-img': (layout === 'CARDS_GRID') }">
+		<div *ngIf="rowData?.imageUrl">
 			<img
 				height="30"
 				width="50"
-				[src]="rowData.imageUrl"
+				[src]="rowData?.imageUrl"
 				alt="Avatar"
 				class="avatar"
 			/>
 		</div>
-		<div *ngIf="rowData.name">{{ rowData.name }}</div>
+		<div *ngIf="rowData?.name">{{ rowData?.name }}</div>
 	</div>
-	<div *ngIf="rowData.level">{{ rowData.level }}</div>
+	<div *ngIf="rowData?.level">{{ rowData?.level }}</div>
 	<div class="tags {{ layout === 'CARDS_GRID' ? 'tags-right' : '' }} mt-2">
 		<nb-badge
 			*ngFor="let tag of (data | async)?.tags"
 			class="color"
 			position="centered"
+			[text]="tag.name"
 			[style.background]="background(tag.color)"
-			text="{{ tag.name }}"
 			[style.color]="backgroundContrast(tag.color)"
 		></nb-badge>
 	</div>

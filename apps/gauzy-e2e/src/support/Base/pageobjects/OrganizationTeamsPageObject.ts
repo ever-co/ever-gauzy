@@ -4,12 +4,10 @@ export const OrganizationTeamsPage = {
 	teamNameInputCss: '[placeholder="Team Name"]',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: 'div.ng-option',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	cardBodyCss: 'nb-card-body',
-	employeeMultiSelectCss:
-		'[ng-reflect-placeholder="Add or Remove Team Members"]',
-	managerMultiSelectCss:
-		'[ng-reflect-placeholder="Add or Remove Team Managers"]',
+	employeeMultiSelectCss: '[ng-reflect-placeholder="Add or Remove Team Members"]',
+	managerMultiSelectCss: '[ng-reflect-placeholder="Add or Remove Team Managers"]',
 	selectDropdownOptionCss: '.option-list nb-option',
 	saveButtonCss: 'nb-card-footer > button[status="success"]',
 	editButtonCss: 'nb-card-body > div > button[status="info"]',

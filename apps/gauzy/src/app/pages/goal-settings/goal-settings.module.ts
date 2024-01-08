@@ -18,7 +18,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '../../@shared/shared.module';
@@ -44,7 +44,7 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NbCardModule,
 		NbIconModule,
 		ReactiveFormsModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbButtonModule,
 		NbSelectModule,
 		NbDatepickerModule,
@@ -67,8 +67,8 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NbDialogModule.forChild(),
 		TranslateModule,
 		HeaderTitleModule,
-    	GauzyButtonActionModule,
+		GauzyButtonActionModule,
 		PaginationModule
 	]
 })
-export class GoalSettingsModule {}
+export class GoalSettingsModule { }

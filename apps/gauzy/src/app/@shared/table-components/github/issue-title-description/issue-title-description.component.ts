@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ViewCell } from 'ng2-smart-table';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 
 @Component({
@@ -8,7 +7,7 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 	templateUrl: './issue-title-description.component.html',
 	styleUrls: ['./issue-title-description.component.scss']
 })
-export class GithubIssueTitleDescriptionComponent extends TranslationBaseComponent implements ViewCell {
+export class GithubIssueTitleDescriptionComponent extends TranslationBaseComponent {
 
 	@Input() rowData: any;
 	@Input() value: string | number;

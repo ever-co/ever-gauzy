@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { Component, Input } from '@angular/core';
 
 @Component({
 	template: `<div>
@@ -33,7 +32,7 @@ import { ViewCell } from 'ng2-smart-table';
 		`
 	]
 })
-export class EnabledStatusComponent implements ViewCell {
-	value: any;
-	rowData: any;
+export class EnabledStatusComponent {
+	@Input() value: any;
+	@Input() rowData: any;
 }

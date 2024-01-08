@@ -1,17 +1,13 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
-import { NotesWithTagsComponent } from '../../../@shared';
+import { NotesWithTagsComponent } from '../../../@shared/table-components';
 
 @Component({
 	selector: 'ngx-tags-color',
 	templateUrl: './tags-color.component.html',
 	styleUrls: ['./tags-color.component.scss']
 })
-export class TagsColorComponent
-	extends NotesWithTagsComponent
-	implements ViewCell
-{
-	@Input()
-	value: string | number;
-	rowData: any;
+export class TagsColorComponent extends NotesWithTagsComponent {
+
+	@Input() value: string | number;
+	@Input() rowData: any;
 }

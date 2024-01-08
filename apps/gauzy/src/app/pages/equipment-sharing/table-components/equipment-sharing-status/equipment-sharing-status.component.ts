@@ -1,15 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-equipment-sharing-status',
 	templateUrl: './equipment-sharing-status.component.html'
 })
-export class EquipmentSharingStatusComponent implements ViewCell, OnInit {
-	@Input()
-	rowData: any;
+export class EquipmentSharingStatusComponent implements OnInit {
 
+	@Input() rowData: any;
 	value: string | number;
 
 	ngOnInit(): void {

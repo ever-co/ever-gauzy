@@ -58,7 +58,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
-	) {}
+	) { }
 
 	async ngOnInit() {
 		this.statistics$
@@ -232,5 +232,5 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		return [shortDescription, employeeLevel].filter(Boolean).join(' | ');
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

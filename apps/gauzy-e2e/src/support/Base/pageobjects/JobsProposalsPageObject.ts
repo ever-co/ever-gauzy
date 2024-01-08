@@ -5,7 +5,7 @@ export const JobsProposalsPage = {
 	nameInputCss: '[formcontrolname="name"]',
 	contentInputCss: '[formcontrolname="content"]',
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editButtonCss: 'div.mb-3 > button[status="info"]',
 	makeDefaultButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteButtonCss: 'div.mb-3 > button[status="danger"]',

@@ -15,7 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -47,7 +47,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		NbTooltipModule,
 		NbButtonModule,
 		EmployeeMultiSelectModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		StatusBadgeModule,
 		NbToggleModule,
 		DialogsModule,
@@ -58,4 +58,4 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		PaginationModule
 	]
 })
-export class ProposalTemplateModule {}
+export class ProposalTemplateModule { }

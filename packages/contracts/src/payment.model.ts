@@ -49,10 +49,6 @@ export enum PaymentMethodEnum {
 	ONLINE = 'ONLINE'
 }
 
-export interface ISelectedPayment {
-	data: IPayment;
-	isSelected: false;
-}
 export interface IPaymentReportChartData {
 	date: string;
 	value: number;

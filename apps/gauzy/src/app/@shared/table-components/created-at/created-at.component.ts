@@ -6,8 +6,7 @@ import { Component, Input } from '@angular/core';
 	styleUrls: ['./created-at.component.scss']
 })
 export class CreatedAtComponent {
-	@Input() value: Date;
 
-	@Input()
-	rowData: any;
+	@Input() value: string | Date;
+	@Input() rowData: any;
 }

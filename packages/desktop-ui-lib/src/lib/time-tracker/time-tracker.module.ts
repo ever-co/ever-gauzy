@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CommonModule } from '@angular/common';
 import { TimeTrackerComponent } from './time-tracker.component';
 import { TimeTrackerService } from './time-tracker.service';
@@ -69,7 +69,7 @@ import { ActivityWatchModule } from '../integrations';
 		NgSelectModule,
 		NbDialogModule,
 		NbFormFieldModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbTooltipModule,
 		TasksModule,
 		NbToggleModule,
@@ -100,4 +100,4 @@ import { ActivityWatchModule } from '../integrations';
 	],
 	exports: [TimeTrackerComponent],
 })
-export class TimeTrackerModule {}
+export class TimeTrackerModule { }

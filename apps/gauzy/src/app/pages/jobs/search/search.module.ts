@@ -19,7 +19,7 @@ import { MomentModule } from 'ngx-moment';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { DialogsModule } from '../../../@shared/dialogs';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -45,7 +45,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		NbSelectModule,
 		NbButtonModule,
 		EmployeeMultiSelectModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		StatusBadgeModule,
 		NbToggleModule,
 		HeaderTitleModule,
@@ -54,4 +54,4 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		PaginationModule
 	]
 })
-export class SearchModule {}
+export class SearchModule { }

@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { TranslationBaseComponent } from "../../../../@shared/language-base";
+import { tap } from "rxjs";
 import { TranslateService } from "@ngx-translate/core";
 import { NbThemeService } from "@nebular/theme";
-import { tap } from "rxjs";
 import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
+import { TranslationBaseComponent } from "../../../../@shared/language-base";
 
-@UntilDestroy({checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'gauzy-chart',
     templateUrl: './chart.component.html',
@@ -14,16 +14,14 @@ import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
 export class ChartComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {
     public data: any;
     public options: any;
-    @Input()
-    public statistics: any;
-    @Input()
-    public hideLegend: boolean = false;
-    @Input()
-    public type: string = 'doughnut';
+    @Input() public statistics: any;
+    @Input() public hideLegend: boolean = false;
+    @Input() public chartType: string = 'doughnut';
 
     constructor(
         public readonly translateService: TranslateService,
-        private readonly themeService: NbThemeService) {
+        private readonly themeService: NbThemeService
+    ) {
         super(translateService);
     }
 
@@ -67,10 +65,10 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                     ...this._labels,
                     datasets: [
                         {
-							barPercentage: 0.5,
-							barThickness: 10,
-							maxBarThickness: 12,
-							minBarLength: 2,
+                            barPercentage: 0.5,
+                            barThickness: 10,
+                            maxBarThickness: 12,
+                            minBarLength: 2,
                             data: [
                                 this.statistics.countOnline,
                                 this.statistics.countWorking - this.statistics.countOnline,
@@ -83,8 +81,8 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
                             ],
                             hoverBorderColor: 'rgba(0, 0, 0, 0)',
                             borderWidth: 0,
-							fill: false,
-							indexAxis: 'y'
+                            fill: false,
+                            indexAxis: 'y'
                         }
                     ]
                 };

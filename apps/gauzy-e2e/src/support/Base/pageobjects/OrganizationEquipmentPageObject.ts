@@ -11,7 +11,7 @@ export const OrganizationEquipmentPage = {
 	selectEmployeeDropdownOptionCss: '.option-list nb-option',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	editEquipmentButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteEquipmentButtonCss: 'div.mb-3 > button[status="danger"]',
@@ -25,12 +25,11 @@ export const OrganizationEquipmentPage = {
 	dateInputCss: '[formcontrolname="shareRequestDay"]',
 	startDateInputCss: '[formcontrolname="shareStartDay"]',
 	endDateInputCss: '[formcontrolname="shareEndDay"]',
-	equipmentSharingPolicyButtonCss:
-		'nb-card-header.main-header > div.main-header > button[status="primary"]',
+	equipmentSharingPolicyButtonCss: 'nb-card-header.main-header > div.main-header > button[status="primary"]',
 	policyDescriptionInputCss: '[formcontrolname="description"]',
 	backButtonCss: 'g[data-name="arrow-back"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	verifyPolicyCss: 'tr.ng2-smart-row',
+	verifyPolicyCss: 'tr.angular2-smart-row',
 	verifySharingCss: 'div.ng-star-inserted',
 	verifyEquipmentCss: 'ga-picture-name-tags > div > div.d-block',
 	spinnerCss: 'nb-spinner'

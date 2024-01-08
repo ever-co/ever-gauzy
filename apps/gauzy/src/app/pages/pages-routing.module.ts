@@ -454,8 +454,8 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								team: false,
-								employee: false,
-								date: false
+								employee: true,
+								date: true
 							}
 						}
 					},

@@ -5,7 +5,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IOrganization,
@@ -63,15 +63,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public projects: IOrganizationProject[] = [];
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
-
-	/** */
-	projectsTable: Ng2SmartTableComponent;
-	@ViewChild('projectsTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.projectsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	/** */
 	private _grid: CardGridComponent;
@@ -341,8 +332,9 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	private _loadSmartTableSettings(): void {
 		const pagination = this.getPagination();
 		this.settingsSmartTable = {
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
 			actions: false,
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROJECT'),
 			pager: {
 				display: false,
 				perPage: pagination ? this.pagination.itemsPerPage : this.minItemPerPage
@@ -364,14 +356,21 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					project: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 						type: 'custom',
-						renderComponent: ProjectOrganizationComponent
+						renderComponent: ProjectOrganizationComponent,
+						componentInitFunction: (instance: ProjectOrganizationComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					public: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.VISIBILITY'),
 						type: 'custom',
 						filter: false,
 						renderComponent: VisibilityComponent,
-						onComponentInitFunction: (instance: any) => {
+						componentInitFunction: (instance: VisibilityComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+
 							instance.visibilityChange.subscribe({
 								next: (visibility: boolean) => {
 									this.updateProjectVisibility(instance.rowData.id, visibility);
@@ -386,32 +385,50 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.CONTACT'),
 						type: 'custom',
 						class: 'text-center',
-						renderComponent: ContactLinksComponent
+						renderComponent: ContactLinksComponent,
+						componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getRawValue();
+						}
 					},
 					startDate: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
 						type: 'custom',
+						class: 'text-center',
 						filter: false,
 						renderComponent: DateViewComponent,
-						class: 'text-center'
+						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+							instance.value = cell.getValue();
+						}
 					},
 					endDate: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.END_DATE'),
 						type: 'custom',
+						class: 'text-center',
 						filter: false,
 						renderComponent: DateViewComponent,
-						class: 'text-center'
+						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+							instance.value = cell.getValue();
+						}
 					},
 					employeesMergedTeams: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.MEMBERS'),
 						type: 'custom',
-						renderComponent: EmployeesMergedTeamsComponent
+						renderComponent: EmployeesMergedTeamsComponent,
+						componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getRawValue();
+						}
 					},
 					tags: {
 						title: this.getTranslation('SM_TABLE.TAGS'),
 						type: 'custom',
-						renderComponent: TagsOnlyComponent,
 						width: '10%',
+						renderComponent: TagsOnlyComponent,
+						componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						},
 						filter: {
 							type: 'custom',
 							component: TagsColorFilterComponent
@@ -432,18 +449,30 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					project: {
 						title: 'Image',
 						type: 'custom',
-						renderComponent: ProjectOrganizationGridComponent
+						renderComponent: ProjectOrganizationGridComponent,
+						componentInitFunction: (instance: ProjectOrganizationGridComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					organizationContact: {
 						title: 'Image',
 						type: 'custom',
 						class: 'text-center',
-						renderComponent: ProjectOrganizationGridDetailsComponent
+						renderComponent: ProjectOrganizationGridDetailsComponent,
+						componentInitFunction: (instance: ProjectOrganizationGridDetailsComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					},
 					employeesMergedTeams: {
 						title: 'Image',
 						type: 'custom',
-						renderComponent: ProjectOrganizationEmployeesComponent
+						renderComponent: ProjectOrganizationEmployeesComponent,
+						componentInitFunction: (instance: ProjectOrganizationEmployeesComponent, cell: Cell) => {
+							instance.rowData = cell.getRow().getData();
+							instance.value = cell.getValue();
+						}
 					}
 				};
 				break;
@@ -511,18 +540,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
-	 * Subscribe to the onChangedSource event of the projects table source.
-	 */
-	onChangedSource(): void {
-		this.projectsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/**
 	 * Clear the selected item and deselect all table rows.
 	 */
 	clearItem(): void {
@@ -530,17 +547,6 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/**
-	 * Deselect all table rows.
-	 */
-	deselectAll(): void {
-		if (this.projectsTable && this.projectsTable.grid) {
-			this.projectsTable.grid.dataSet['willSelect'] = 'false';
-			this.projectsTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	/**

@@ -2,7 +2,7 @@ import { Component, ViewChild, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { IWarehouseProductVariant } from '@gauzy/contracts';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
@@ -19,10 +19,10 @@ export class ManageVariantsQuantityFormComponent
 
 	settingsSmartTable: object;
 	smartTableSource = new LocalDataSource();
-	warehouseVariantsTable: Ng2SmartTableComponent;
+	warehouseVariantsTable: Angular2SmartTableComponent;
 
 	@ViewChild('warehouseVariantsTable') set content(
-		content: Ng2SmartTableComponent
+		content: Angular2SmartTableComponent
 	) {
 		if (content) {
 			this.warehouseVariantsTable = content;

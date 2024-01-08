@@ -10,7 +10,7 @@ export const IncomePage = {
 	tagsDropdownOption: 'div.ng-option',
 	notesInputCss: '[formcontrolname="notes"]',
 	saveIncomeButtonCss: 'nb-card-footer > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editIncomeButtonCss: 'div.mb-3 > button[status="info"]',
 	deleteIncomeButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',

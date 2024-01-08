@@ -21,7 +21,7 @@ import { moment } from './../../../../@core/moment-extend';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { IChartData } from './../../../../@shared/report/charts/line-chart/line-chart.component';
+import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
@@ -35,15 +35,16 @@ import { TimesheetFilterService } from './../../../../@shared/timesheet';
 export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	implements OnInit, AfterViewInit {
 
-	filters: ITimeLogFilters;
-	weekLogs: ReportDayData[] = [];
-	weekDays: string[] = [];
-	loading: boolean = false;
-	chartData: IChartData;
+	public filters: ITimeLogFilters;
+	public weekLogs: ReportDayData[] = [];
+	public weekDays: string[] = [];
+	public loading: boolean = false;
+	public charts: IChartData;
+
+	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
+	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
-	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
-	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -59,20 +60,28 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	ngOnInit() {
 		this.subject$
 			.pipe(
+				// Filter to ensure that the organization property is truthy
 				filter(() => !!this.organization),
+				// Perform some action when the observable emits a value
 				tap(() => this.prepareRequest()),
+				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 		this.payloads$
 			.pipe(
+				// Ensures that consecutive emissions are distinct
 				distinctUntilChange(),
+				// Filters out falsy payloads
 				filter((payloads: ITimeLogFilters) => !!payloads),
+				// Performs a side effect: invokes getWeeklyLogs()
 				tap(() => this.getWeeklyLogs()),
+				// Performs another side effect: invokes updateWeekDays()
 				tap(() => this.updateWeekDays()),
+				// Ensures that the subscription is automatically unsubscribed when the component is destroyed
 				untilDestroyed(this)
 			)
-			.subscribe();
+			.subscribe();  // Subscribes to the observable
 	}
 
 	ngAfterViewInit() {
@@ -183,7 +192,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 	 */
 	private _mapLogs(logs: ReportDayData[]): void {
 		// Initialize arrays for employees and datasets
-		let employees = [];
+		let labels = [];
 		const datasets = [];
 
 		// Iterate through each log in the provided array
@@ -196,25 +205,27 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 			});
 
 			// Extract employee names from log dates
-			employees = Object.keys(log.dates);
+			labels = Object.keys(log.dates);
 
 			// Build a dataset for the employee
 			datasets.push({
-				label: log.employee.fullName,
-				data: pluck(log.dates, 'sum').map((val) => val ? parseFloat((val / 3600).toFixed(1)) : 0),
-				borderColor: color,
-				backgroundColor: ChartUtil.transparentize(color, 1),
-				borderWidth: 1,
-				pointRadius: 2,
-				pointHoverRadius: 7,
-				pointHoverBorderWidth: 6
+				label: log.employee.fullName,  // Label for the dataset, presumably representing an employee's full name
+				data: pluck(log.dates, 'sum').map((val) => val ? parseFloat((val / 3600).toFixed(1)) : 0), // An array of data points derived from the 'dates' property of 'log', converted from seconds to hours
+				borderColor: color,            // Color of the dataset border
+				backgroundColor: ChartUtil.transparentize(color, 1), // Background color with transparency
+				borderWidth: 2,                // Width of the dataset border
+				pointRadius: 2,               // Radius of the data points
+				pointHoverRadius: 4,          // Radius of the data points on hover
+				pointHoverBorderWidth: 4,     // Width of the border of data points on hover
+				tension: 0.4,                 // Tension of the spline curve connecting data points
+				fill: false                   // Whether to fill the area under the line or not
 			});
 		});
 
 		// Set the chartData property with formatted labels and datasets
-		this.chartData = {
-			labels: employees,
-			datasets: datasets
+		this.charts = {
+			labels,
+			datasets
 		};
 	}
 

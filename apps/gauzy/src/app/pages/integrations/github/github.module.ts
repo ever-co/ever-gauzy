@@ -10,7 +10,7 @@ import {
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from './../../../@shared/translate/translate.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
@@ -43,7 +43,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NgSelectModule,
 		GithubRoutingModule,
 		TranslateModule,
