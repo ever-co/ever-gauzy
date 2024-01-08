@@ -1,18 +1,18 @@
 export const AddTaskPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'button[status="success"]',
-	selectProjectDropdownCss: 'ga-project-selector.ng-untouched > .ng-select-taggable > .ng-select-container > .ng-value-container > .ng-input > input',
+	selectProjectDropdownCss:
+		'ga-project-selector.ng-untouched > .ng-select-taggable > .ng-select-container > .ng-value-container > .ng-input > input',
 	selectProjectDrodownOptionCss: 'div.ng-dropdown-panel-items.scroll-host',
 	editTaskButtonCss: '.ng-star-inserted .appearance-filled.ng-star-inserted.nb-transition:nth-of-type(2)',
 	duplicateTaskButtonCss: '.ng-star-inserted .nb-transition:nth-of-type(3)',
 	deleteTaskButtonCss: '.appearance-filled.icon-end.ng-star-inserted',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	selectTableFirstRowCss: 'tr.ng2-smart-row.ng-star-inserted.selected',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	selectTableFirstRowCss: 'tr.angular2-smart-row.ng-star-inserted.selected',
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '[type="checkbox"]',
 	closeTagsMultiSelectDropdownCss: '.ng-select-container > .ng-arrow-wrapper',
-	confirmDuplicateOrEditTaskButtonCss:
-		'nb-card-footer > button[status="success"]',
+	confirmDuplicateOrEditTaskButtonCss: 'nb-card-footer > button[status="success"]',
 	confirmEditTaskButtonCss: '',
 	confirmDeleteTaskButtonCss: 'button.mr-3.ml-3',
 	addTitleInputCss: '[formControlName="title"]',
@@ -24,8 +24,8 @@ export const AddTaskPage = {
 	estimateMinsInputCss: '[formControlName="estimateMinutes"]',
 	descriptionTextareaCss: '[formControlName="description"]',
 	saveNewTaskButtonCss: 'nb-card-footer > button[status="success"]',
-	verifyTextCss: '[ng-reflect-settings] [ng-reflect-ng-class="\[object Object\]"]:nth-of-type(1) .ng-star-inserted:nth-of-type(2) div:nth-of-type(1) > .ng-star-inserted:nth-of-type(2)',
+	verifyTextCss:
+		'[ng-reflect-settings] [ng-reflect-ng-class="[object Object]"]:nth-of-type(1) .ng-star-inserted:nth-of-type(2) div:nth-of-type(1) > .ng-star-inserted:nth-of-type(2)',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	searchTitleInputCss: 'ng-component > input[placeholder="Title"]',
-
+	searchTitleInputCss: 'ng-component > input[placeholder="Title"]'
 };

@@ -10,8 +10,8 @@ export const EventTypesPage = {
 	durationInputCss: '#durationInput',
 	activeCheckboxCss: '[formcontrolname="isActive"]',
 	saveButtonCss: 'nb-card-footer > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	confirmDeleteEventTypeButtonCss: 'nb-card-footer > button[status="danger"]',
 	verifyEventTypeCss: 'ga-notes-with-tags > div > div.ng-star-inserted',
-	toastrMessageCss: 'nb-toast.ng-trigger',
+	toastrMessageCss: 'nb-toast.ng-trigger'
 };

@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FiltersComponent } from './filters.component';
 import { FormsModule } from '@angular/forms';
-import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import {
 	NbButtonModule,
 	NbPopoverModule,
@@ -12,8 +10,10 @@ import {
 	NbCalendarRangeModule,
 	NbInputModule
 } from '@nebular/theme';
-import { Ng5SliderModule } from 'ng5-slider';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgxSliderModule } from 'ngx-slider-v2';
+import { FiltersComponent } from './filters.component';
+import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../shared.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 
@@ -22,19 +22,19 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 	exports: [FiltersComponent],
 	imports: [
 		CommonModule,
-		SharedModule,
 		FormsModule,
-		EmployeeMultiSelectModule,
 		NbButtonModule,
-		NbPopoverModule,
-		NbSelectModule,
+		NbCalendarRangeModule,
 		NbDatepickerModule,
 		NbIconModule,
 		NbInputModule,
-		Ng5SliderModule,
+		NbPopoverModule,
+		NbSelectModule,
+		NgxSliderModule,
+		SharedModule,
 		TranslateModule,
-		ProjectSelectModule,
-		NbCalendarRangeModule
+		EmployeeMultiSelectModule,
+		ProjectSelectModule
 	]
 })
-export class FiltersModule {}
+export class FiltersModule { }

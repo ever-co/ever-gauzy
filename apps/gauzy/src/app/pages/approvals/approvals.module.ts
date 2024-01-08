@@ -13,7 +13,7 @@ import {
 	NbTooltipModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalsComponent } from './approvals.component';
 import { SharedModule } from '../../@shared/shared.module';
@@ -44,7 +44,7 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		CardGridModule,
 		NbTooltipModule,
 		NbRadioModule,
@@ -59,4 +59,4 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	providers: [RequestApprovalService]
 })
-export class ApprovalsModule {}
+export class ApprovalsModule { }

@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 import { DEFAULT_SVG } from '../../../../@core/constants';
 
 @Component({
@@ -33,7 +32,7 @@ import { DEFAULT_SVG } from '../../../../@core/constants';
 		`
 	]
 })
-export class ImageRowComponent implements ViewCell {
+export class ImageRowComponent {
 	@Input()
 	value: any;
 	rowData: any;

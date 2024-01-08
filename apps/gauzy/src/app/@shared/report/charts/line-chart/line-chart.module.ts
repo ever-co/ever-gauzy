@@ -1,13 +1,18 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LineChartComponent } from './line-chart.component';
 import { NbIconModule } from '@nebular/theme';
-import { ChartModule } from 'angular2-chartjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { NgChartsModule } from 'ng2-charts';
+import { TranslateModule } from '../../../translate/translate.module';
+import { LineChartComponent } from './line-chart.component';
 
 @NgModule({
 	declarations: [LineChartComponent],
 	exports: [LineChartComponent],
-	imports: [CommonModule, NbIconModule, ChartModule, TranslateModule]
+	imports: [
+		CommonModule,
+		NbIconModule,
+		NgChartsModule,
+		TranslateModule
+	]
 })
-export class LineChartModule {}
+export class LineChartModule { }

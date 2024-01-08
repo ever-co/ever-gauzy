@@ -5,24 +5,21 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Cell } from 'angular2-smart-table';
 import {
 	IOrganizationVendor,
 	ITag,
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import {
-	Router,
-	RouterEvent,
-	NavigationEnd,
-	ActivatedRoute
-} from '@angular/router';
-import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
-import { debounceTime, firstValueFrom, Subject } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { API_PREFIX, ComponentEnum } from './../../@core/constants';
 import {
 	EmailComponent,
@@ -42,7 +39,6 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
-import { HttpClient } from '@angular/common/http';
 import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
@@ -51,29 +47,42 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	templateUrl: './vendors.component.html',
 	styleUrls: ['vendors.component.scss']
 })
-export class VendorsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
-	addEditDialogRef: NbDialogRef<any>;
-	organization: IOrganization;
-	vendors: IOrganizationVendor[] = [];
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	selectedVendor: IOrganizationVendor;
-	tags: ITag[] = [];
-	settingsSmartTable: object;
-	smartTableSource: ServerDataSource;
-	form: UntypedFormGroup;
-	selected = {
+export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
+	public addEditDialogRef: NbDialogRef<any>;
+	public organization: IOrganization;
+	public vendors: IOrganizationVendor[] = [];
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public selectedVendor: IOrganizationVendor;
+	public tags: ITag[] = [];
+	public settingsSmartTable: object;
+	public smartTableSource: ServerDataSource;
+	public selected = {
 		vendor: null,
 		state: false
 	};
-	disabled: boolean = true;
-	saveDisabled: boolean = false;
-	isLoading: boolean = false;
+	public disabled: boolean = true;
+	public saveDisabled: boolean = false;
+	public loading: boolean = false;
 	private _refresh$: Subject<any> = new Subject();
+
+	/*
+	* Vendor Mutation Form
+	*/
+	public form: UntypedFormGroup = VendorsComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		return fb.group({
+			name: [null, Validators.required],
+			phone: [null],
+			email: [null, [Validators.required, Validators.email]],
+			website: [null],
+			tags: [null]
+		});
+	}
+
+	@ViewChild('addEditTemplate') public addEditTemplateRef: TemplateRef<any>;
 
 	constructor(
 		private readonly organizationVendorsService: OrganizationVendorsService,
@@ -83,7 +92,6 @@ export class VendorsComponent
 		private readonly dialogService: NbDialogService,
 		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly store: Store,
-		private readonly router: Router,
 		private readonly route: ActivatedRoute,
 		private readonly httpClient: HttpClient
 	) {
@@ -92,100 +100,110 @@ export class VendorsComponent
 	}
 
 	ngOnInit(): void {
-		this._initializeForm();
-		this.loadSmartTable();
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+		// Subscribe to the subject$ observable
 		this.subject$
 			.pipe(
-				tap(() => this.loadVendors()),
+				// Execute the getVendors method when there's a new emission
+				tap(() => this.getVendors()),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._applyTranslationOnSmartTable();
-		this.loadSmartTable();
+		// Subscribe to the pagination$ observable
 		this.pagination$
 			.pipe(
+				// Ensure distinct consecutive values to avoid redundant processing
 				distinctUntilChange(),
+				// Trigger the subject$ observable with a new value when pagination changes
 				tap(() => this.subject$.next(true)),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
+		// Subscribe to the selectedOrganization$ observable
 		this.store.selectedOrganization$
 			.pipe(
+				// Filter out falsy values, ensuring only truthy organizations are processed
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => (this.organization = organization)),
+				// Extract the organization and assign it to the component property
+				tap((organization: IOrganization) => (this.organization = organization)),
+				// Trigger the _refresh$ observable with a new value
 				tap(() => this._refresh$.next(true)),
+				// Trigger the subject$ observable with a new value
 				tap(() => this.subject$.next(true)),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.router.events
-			.pipe(untilDestroyed(this))
-			.subscribe((event: RouterEvent) => {
-				if (event instanceof NavigationEnd) {
-					this.setView();
-				}
-			});
+		// Subscribe to changes in the query parameters
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplateRef, false)),
+				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
+		// Subscribe to changes in the _refresh$ observable
 		this._refresh$
 			.pipe(
+				// Execute the refreshPagination method
 				tap(() => this.refreshPagination()),
+				// Set the vendors array to an empty array
 				tap(() => (this.vendors = [])),
+				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
-
-	private _initializeForm() {
-		this.form = this.fb.group({
-			name: ['', Validators.required],
-			phone: [''],
-			email: ['', [Validators.required, Validators.email]],
-			website: [''],
-			tags: ['']
-		});
-	}
-
+	/**
+	 * Set up the view for the VENDORS component.
+	 */
 	setView() {
+		// Set the current view component name to VENDORS
 		this.viewComponentName = ComponentEnum.VENDORS;
-		this.store
-			.componentLayout$(this.viewComponentName)
+
+		// Subscribe to changes in the component layout
+		this.store.componentLayout$(this.viewComponentName)
 			.pipe(
+				// Ensure distinct consecutive values to avoid redundant processing
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				// Set the dataLayoutStyle property based on the componentLayout
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
+				// Trigger the _refresh$ observable with a new value
 				tap(() => this._refresh$.next(true)),
+				// Trigger the subject$ observable with a new value
 				tap(() => this.subject$.next(true)),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	async loadSmartTable() {
+	/**
+	 *
+	 */
+	async _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				perPage: pagination ? pagination : this.minItemPerPage
 			},
-			actions: false,
 			columns: {
 				logo: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.IMAGE'),
 					type: 'custom',
-					renderComponent: CompanyLogoComponent
+					renderComponent: CompanyLogoComponent,
+					componentInitFunction: (instance: CompanyLogoComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
@@ -198,19 +216,31 @@ export class VendorsComponent
 				email: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EMAIL'),
 					type: 'custom',
-					renderComponent: EmailComponent
+					renderComponent: EmailComponent,
+					componentInitFunction: (instance: EmailComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				website: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.WEBSITE'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: ExternalLinkComponent
+					renderComponent: ExternalLinkComponent,
+					componentInitFunction: (instance: ExternalLinkComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: TagsOnlyComponent
+					renderComponent: TagsOnlyComponent,
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				}
 			}
 		};
@@ -244,14 +274,21 @@ export class VendorsComponent
 		}
 	}
 
-	async createVendor() {
-		if (!this.form.invalid) {
-			const { name, phone, email, website } = this.form.value;
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
+	/**
+	 * Creates a new vendor using the provided form data.
+	 * Creates the vendor using the organizationVendorsService and triggers a refresh.
+	 */
+	async createVendor(): Promise<void> {
+		try {
+			// Check if the form is not invalid
+			if (!this.form.invalid) {
+				// Extract necessary information from the current state
+				const { name, phone, email, website } = this.form.value;
+				const { tenantId } = this.store.user;
+				const { id: organizationId } = this.organization;
 
-			this.organizationVendorsService
-				.create({
+				// Create the vendor using the organizationVendorsService
+				await this.organizationVendorsService.create({
 					name,
 					phone,
 					email,
@@ -259,30 +296,37 @@ export class VendorsComponent
 					organizationId,
 					tenantId,
 					tags: this.tags
-				})
-				.then(() => {
-					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR',
-						{ name }
-					);
-				})
-				.finally(() => {
-					this._refresh$.next(true);
-					this.subject$.next(true);
-					this.cancel();
 				});
-		} else {
-			// TODO translate
-			this.toastrService.danger(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME',
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME'
-				)
-			);
+
+				// Display a success toast message
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.ADD_VENDOR', { name });
+			} else {
+				const toastrTitle = this.getTranslation('TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME');
+
+				// Display an error toast message for an invalid form
+				this.toastrService.danger('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME', toastrTitle);
+			}
+		} catch (error) {
+			// Handle errors using the errorHandlingService
+			this.errorHandlingService.handleError(error);
+		} finally {
+			// Trigger refresh of data, notify observers, and perform cleanup
+			this._refresh$.next(true);
+			this.subject$.next(true);
+			this.cancel();
 		}
 	}
 
-	async removeVendor(id: string, name: string) {
+	/**
+	 * Removes a vendor based on the provided id and name.
+	 * Opens a confirmation dialog before performing the removal.
+	 * If the user confirms, deletes the vendor and triggers a refresh.
+	 *
+	 * @param id - The identifier of the vendor to be removed.
+	 * @param name - The name of the vendor to be displayed in the confirmation dialog.
+	 */
+	async removeVendor(id: string, name: string): Promise<void> {
+		// Open a confirmation dialog using the DeleteConfirmationComponent
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
@@ -291,28 +335,39 @@ export class VendorsComponent
 			}).onClose
 		);
 
+		// If the user confirms the deletion
 		if (result) {
 			try {
+				// Delete the vendor using the organizationVendorsService
 				await this.organizationVendorsService.delete(id);
-				this.toastrService.success(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR',
-					{ name }
-				);
+
+				// Display a success toast message
+				this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.REMOVE_VENDOR', { name });
+			} catch (error) {
+				// Handle errors using the errorHandlingService
+				this.errorHandlingService.handleError(error);
+			} finally {
+				// Trigger refresh of data
 				this._refresh$.next(true);
 				this.subject$.next(true);
-			} catch (error) {
-				this.errorHandlingService.handleError(error);
 			}
 		}
 	}
 
-	async updateVendor(vendor: IOrganizationVendor) {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { name, phone, email, website } = this.form.value;
+	/**
+	 * Updates a vendor with the provided data.
+	 * Updates the vendor using the organizationVendorsService and triggers a refresh.
+	 *
+	 * @param vendor - The vendor object to be updated.
+	 */
+	async updateVendor(vendor: IOrganizationVendor): Promise<void> {
+		try {
+			// Extract necessary information from the current state
+			const { id: organizationId, tenantId } = this.organization;
+			const { name, phone, email, website } = this.form.value;
 
-		this.organizationVendorsService
-			.update(vendor.id, {
+			// Update the vendor using the organizationVendorsService
+			await this.organizationVendorsService.update(vendor.id, {
 				name,
 				phone,
 				email,
@@ -320,39 +375,63 @@ export class VendorsComponent
 				tags: this.tags,
 				organizationId,
 				tenantId
-			})
-			.then(() => {
-				this.toastrService.success(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR',
-					{ name }
-				);
-			})
-			.finally(() => {
-				this._refresh$.next(true);
-				this.subject$.next(true);
-				this.cancel();
 			});
+
+			// Display a success toast message
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.UPDATE_VENDOR', {
+				name
+			});
+		} catch (error) {
+			// Handle errors using the errorHandlingService
+			this.errorHandlingService.handleError(error);
+		} finally {
+			// Trigger refresh of data, notify observers, and perform cleanup
+			this._refresh$.next(true);
+			this.subject$.next(true);
+			this.cancel();
+		}
 	}
 
-	private async loadVendors() {
+	/**
+	 * Get vendors based on pagination settings and organization availability.
+	 * Uses smartTableSource for data retrieval and updates pagination information.
+	 */
+	private async getVendors(): Promise<void> {
+		// Check if the organization is not available
 		if (!this.organization) {
 			return;
 		}
+
 		try {
+			// Retrieve activePage and itemsPerPage from pagination settings
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.isLoading = true;
+
+			// Set loading indicator to true
+			this.loading = true;
+
+			// Set up smartTableSource
 			this.setSmartTableSource();
+
+			// Set paging in smartTableSource
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			// Asynchronously retrieve elements using smartTableSource
 			await this.smartTableSource.getElements();
+
+			// Update pagination information with totalItems from smartTableSource
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: this.smartTableSource.count()
 			});
-			this.isLoading = false;
+
+			// Set loading indicator back to false
+			this.loading = false;
 		} catch (error) {
-			console.log(error, 'error');
+			// Handle errors using the errorHandlingService
+			this.errorHandlingService.handleError(error);
 		}
 	}
+
 
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
@@ -379,12 +458,17 @@ export class VendorsComponent
 		this.tags = ev;
 	}
 
-	_applyTranslationOnSmartTable() {
+	/**
+	 * Listens for language changes and triggers the loading of Smart Table settings.
+	 * Unsubscribes when the component is destroyed.
+	 */
+	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+			.pipe(
+				tap(() => this._loadSmartTableSettings()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	isInvalidControl(control: string) {
@@ -414,4 +498,6 @@ export class VendorsComponent
 		this.selected.vendor = vendor;
 		this.selectedVendor = this.selected.vendor;
 	}
+
+	ngOnDestroy(): void { }
 }

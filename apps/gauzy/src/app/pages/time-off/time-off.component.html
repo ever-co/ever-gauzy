@@ -71,14 +71,14 @@
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container custom-table">
-				<ng2-smart-table
+				<angular2-smart-table
 					class="time-off-table"
 					style="cursor: pointer"
 					[settings]="settingsSmartTable"
 					[source]="sourceSmartTable"
 					(userRowSelect)="selectRecord($event)"
 					#timeOffTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
 				<div class="pagination-container">
@@ -95,7 +95,7 @@
 		</ng-template>
 		<ng-template #gridLayout>
 			<div class="custom-grid">
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					(onSelectedItem)="selectRecord($event)"
 					(scroll)="onScroll()"

@@ -11,7 +11,6 @@ import {
 	NbLayoutModule,
 	NbDatepickerModule,
 } from '@nebular/theme';
-import { NgxElectronModule } from 'ngx-electron';
 import { AppService } from './app.service';
 import { HttpClientModule } from '@angular/common/http';
 import {
@@ -65,7 +64,6 @@ import { environment } from '../environments/environment';
 		NbThemeModule.forRoot({ name: 'gauzy-light' }),
 		SetupModule,
 		TimeTrackerModule,
-		NgxElectronModule,
 		HttpClientModule,
 		ScreenCaptureModule,
 		SettingsModule,

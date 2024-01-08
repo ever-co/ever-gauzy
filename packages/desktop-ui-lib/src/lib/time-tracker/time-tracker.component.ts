@@ -19,7 +19,7 @@ import { TimeTrackerService } from './time-tracker.service';
 import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as _ from 'underscore';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
 	asapScheduler,
@@ -286,9 +286,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return selected;
 	}
 
-	private _taskTable: Ng2SmartTableComponent;
+	private _taskTable: Angular2SmartTableComponent;
 
-	@ViewChild('taskTable') set taskTable(content: Ng2SmartTableComponent) {
+	@ViewChild('taskTable') set taskTable(content: Angular2SmartTableComponent) {
 		if (content) {
 			this._taskTable = content;
 			this._onChangedSource();
@@ -438,8 +438,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					current,
 					updatedAtMoment.isAfter(current?.updatedAt)
 						? {
-								updatedAt: updatedAtMoment.toISOString(),
-						  }
+							updatedAt: updatedAtMoment.toISOString(),
+						}
 						: {}
 				);
 			} else {
@@ -563,7 +563,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	private _clearItem(): void {
 		if (this._taskTable && this._taskTable.grid) {
-			this._taskTable.grid.dataSet['willSelect'] = 'false';
+			this._taskTable.grid.dataSet['willSelect'] = 'indexed';
 			this._taskTable.grid.dataSet.deselectAll();
 		}
 	}
@@ -628,9 +628,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
-									...lastTimer,
-									...params,
-							  });
+								...lastTimer,
+								...params,
+							});
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						this._loggerService.log.error(error);
@@ -642,13 +642,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					try {
 						timelog =
 							isRemote ||
-							this._remoteSleepLock ||
-							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
+								this._remoteSleepLock ||
+								(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
-										...lastTimer,
-										...params
-								  });
+									...lastTimer,
+									...params
+								});
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
 						this._loggerService.log.error(error);
@@ -694,11 +694,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					type: 'custom',
 					renderComponent: TaskRenderCellComponent,
 					width: '40%',
+					componentInitFunction: (instance: TaskRenderCellComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				duration: {
 					title: this._translateService.instant('TIMESHEET.DURATION'),
 					type: 'custom',
 					renderComponent: TaskDurationComponent,
+					componentInitFunction: (instance: TaskDurationComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				taskProgress: {
 					title: this._translateService.instant(
@@ -740,6 +746,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							},
 						});
 					},
+					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				taskStatus: {
 					title: this._translateService.instant('SM_TABLE.STATUS'),
@@ -779,6 +788,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							},
 						});
 					},
+					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 			},
 			hideSubHeader: true,
@@ -804,8 +816,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelect
 				? {
-						projectId: this.projectSelect,
-				  }
+					projectId: this.projectSelect,
+				}
 				: {}),
 		});
 	}
@@ -965,7 +977,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			'timer_tracker_show',
 			(event, arg) =>
 				this._ngZone.run(async () => {
-					if(!this._store.user?.employeeId) return;
+					if (!this._store.user?.employeeId) return;
 					this._isOffline$.next(
 						arg.isOffline ? arg.isOffline : this._isOffline
 					);
@@ -1190,8 +1202,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('timer_status', (event, arg) =>
-			this._ngZone.run(async() => {
-					await this.getTimerStatus(arg);
+			this._ngZone.run(async () => {
+				await this.getTimerStatus(arg);
 			})
 		);
 
@@ -1270,8 +1282,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this._isOffline$.next(isOffline);
 					this._loggerService.log.info(
 						'You switched to ' +
-							(isOffline ? 'offline' : 'online') +
-							' mode now'
+						(isOffline ? 'offline' : 'online') +
+						' mode now'
 					);
 					if (!isOffline) {
 						this.refreshTimer();
@@ -1983,8 +1995,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const convScreenshot =
 				img && img.thumbUrl
 					? await this._imageViewerService.getBase64ImageFromUrl(
-							img.thumbUrl
-					  )
+						img.thumbUrl
+					)
 					: img;
 			localStorage.setItem(
 				'lastScreenCapture',
@@ -2421,9 +2433,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	fileNameFormat(imgs) {
-		const fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${
-			imgs.name
-		}.png`;
+		const fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${imgs.name
+			}.png`;
 		return this.convertToSlug(fileName);
 	}
 

@@ -1,6 +1,7 @@
 :host {
-  chart {
-    width: 100%;
-    height: 399px;
-  }
+    .chart {
+		width: 100%;
+		height: 400px;
+		display: block;
+    }
 }

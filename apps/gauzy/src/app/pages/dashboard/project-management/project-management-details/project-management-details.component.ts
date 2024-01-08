@@ -106,24 +106,24 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
 			...(this.selectedEmployeeId
 				? {
-						endPoint: `${API_PREFIX}/tasks/employee`
-				  }
+					endPoint: `${API_PREFIX}/tasks/employee`
+				}
 				: {
-						endPoint: `${API_PREFIX}/tasks/pagination`
-				  }),
+					endPoint: `${API_PREFIX}/tasks/pagination`
+				}),
 			relations: ['project', 'tags'],
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId
-					  }
+						employeeId: this.selectedEmployeeId
+					}
 					: {}),
 				...(this.selectedProjectId
 					? {
-							projectId: this.selectedProjectId
-					  }
+						projectId: this.selectedProjectId
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			}
@@ -137,9 +137,10 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		try {
 			this._setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
-			this._smartTableSource
-				.setPaging(activePage, itemsPerPage, false)
-				.setSort([{ field: 'dueDate', direction: 'asc' }]);
+
+			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
+			this._smartTableSource.setSort([{ field: 'dueDate', direction: 'asc' }]);
+
 			await this._smartTableSource.getElements();
 			this._tasks.push(...this._smartTableSource.getData());
 			this._sortProjectByPopularity();
@@ -204,9 +205,9 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 				context: {
 					selectedTask: this.selectedEmployeeId
 						? ({
-								members: [{ ...this._selectedEmployee }] as any,
-								status: this.status.OPEN
-						  } as ITask)
+							members: [{ ...this._selectedEmployee }] as any,
+							status: this.status.OPEN
+						} as ITask)
 						: ({} as ITask)
 				}
 			});
@@ -250,5 +251,5 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		this._router.navigate(['/pages/tasks/me']);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

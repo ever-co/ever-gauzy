@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -61,22 +61,13 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	warehouses$: Subject<any> = this.subject$;
+	public warehouses$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	warehousesTable: Ng2SmartTableComponent;
-	@ViewChild('warehousesTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.warehousesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	/*
 	 * Actions Buttons directive
 	 */
-	@ViewChild('actionButtons', { static: true })
-	actionButtons: TemplateRef<any>;
+	@ViewChild('actionButtons', { static: true }) actionButtons: TemplateRef<any>;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -164,23 +155,12 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.warehousesTable.source.onChangedSource
-			.pipe(
-				tap(() => this.clearItem()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -191,6 +171,10 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('INVENTORY_PAGE.LOGO'),
 					type: 'custom',
 					renderComponent: ItemImgTagsComponent,
+					componentInitFunction: (instance: ItemImgTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -218,20 +202,29 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
+					filter: false,
 					renderComponent: ContactRowComponent,
-					filter: false
+					componentInitFunction: (instance: ContactRowComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+					}
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DescriptionComponent
+					renderComponent: DescriptionComponent,
+					componentInitFunction: (instance: DescriptionComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
+					filter: false,
 					renderComponent: EnabledStatusComponent,
-					filter: false
+					componentInitFunction: (instance: EnabledStatusComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					}
 				}
 			}
 		};
@@ -268,7 +261,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 			return;
 		}
 		const { id } = this.selectedWarehouse;
-		this.router.navigate([ '/pages/organization/inventory/warehouses/edit', id]);
+		this.router.navigate(['/pages/organization/inventory/warehouses/edit', id]);
 	}
 
 	async onDelete(selectedItem?: IWarehouse) {
@@ -387,18 +380,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.warehousesTable && this.warehousesTable.grid) {
-			this.warehousesTable.grid.dataSet['willSelect'] = 'false';
-			this.warehousesTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -28,6 +28,6 @@ export const RegisterPage = {
 	dateFormatDropdownCss: '[formcontrolname="dateFormat"]',
 	timeZoneDropdownCss: '[formcontrolname="timeZone"]',
 	timeZoneDropdownOptionCss: 'div.ng-option',
-	tableRowCss: 'table > tbody > tr.ng2-smart-row',
+	tableRowCss: 'table > tbody > tr.angular2-smart-row',
 	verifyLogoCss: 'div.logo-container'
 };

@@ -14,7 +14,7 @@ import {
 	NbContextMenuModule
 } from '@nebular/theme';
 import { SidebarComponent } from './sidebar.component';
-import { TreeModule } from '@circlon/angular-tree-component';
+import { TreeModule } from '@ali-hm/angular-tree-component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { KnowledgeBaseModule } from './knowledeg-base/knowledeg-base.module';
@@ -48,4 +48,4 @@ import { TranslateModule } from '../translate/translate.module';
 	declarations: [SidebarComponent],
 	exports: [SidebarComponent]
 })
-export class SidebarModule {}
+export class SidebarModule { }

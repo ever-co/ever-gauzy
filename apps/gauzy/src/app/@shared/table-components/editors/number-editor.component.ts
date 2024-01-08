@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { Cell, DefaultEditor } from 'ng2-smart-table';
+import { Cell, DefaultEditor } from 'angular2-smart-table';
 
 @Component({
     template: `<input
         class="form-control"
         [min]="0"
         [type]="'number'"
-        [(ngModel)]="cell.newValue"
+        (change)="cell.setValue($event)"
         [name]="cell.getId()"
     >`,
 })
@@ -20,8 +20,11 @@ export class NumberEditorComponent extends DefaultEditor implements OnInit {
     }
 
     ngOnInit() {
-        if (this.cell.newValue) {
-            this.cell.newValue = +this.cell.newValue; // Convert the input to a number
+        if (this.cell.getValue()) {
+            this.cell.setValue(this.cell.getNewRawValue());
         }
+        // if (this.cell.value) {
+        //     this.cell.value = +this.cell.value; // Convert the input to a number
+        // }
     }
 }

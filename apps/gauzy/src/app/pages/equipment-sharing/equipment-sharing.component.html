@@ -42,13 +42,12 @@
 		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW">
 			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 				<div class="table-scroll-container">
-					<ng2-smart-table
+					<angular2-smart-table
+						style="cursor: pointer"
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
 						(userRowSelect)="selectEquipmentSharing($event)"
-						style="cursor: pointer"
-						#equipmentSharingTable
-					></ng2-smart-table>
+					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">
 					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -64,7 +63,7 @@
 				</div>
 			</ng-container>
 			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
-				<ga-card-grid 
+				<ga-card-grid
 					[totalItems]="pagination?.totalItems"
 					[settings]="settingsSmartTable"
 					[source]="equipments"

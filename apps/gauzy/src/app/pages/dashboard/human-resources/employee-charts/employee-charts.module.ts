@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule, NbSelectModule } from '@nebular/theme';
-import { ChartModule } from 'angular2-chartjs';
+import { NgChartsModule } from 'ng2-charts';
 import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
 import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
 import { EmployeeChartsComponent } from './employee-charts.component';
@@ -11,7 +11,7 @@ import { EmployeeStackedBarChartComponent } from './employee-stacked-bar-chart/e
 @NgModule({
 	imports: [
 		ThemeModule,
-		ChartModule,
+		NgChartsModule,
 		NbIconModule,
 		NbSelectModule,
 		TranslateModule
@@ -24,4 +24,4 @@ import { EmployeeStackedBarChartComponent } from './employee-stacked-bar-chart/e
 		EmployeeDoughnutChartComponent
 	]
 })
-export class EmployeeChartsModule {}
+export class EmployeeChartsModule { }

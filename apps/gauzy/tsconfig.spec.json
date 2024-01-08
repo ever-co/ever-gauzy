@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
 		"module": "commonjs",
-		"types": ["jest", "node", "googlemaps"]
+		"types": ["jest", "node", "google.maps"]
 	},
 	"files": ["src/test-setup.ts"],
 	"include": ["**/*.spec.ts", "**/*.test.ts", "**/*.d.ts"]

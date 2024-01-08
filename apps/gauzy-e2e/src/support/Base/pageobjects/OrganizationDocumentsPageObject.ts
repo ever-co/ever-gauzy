@@ -3,7 +3,7 @@ export const OrganizationDocumentsPage = {
 	addButtonCss: 'div.pb-4 > button[status="success"]',
 	nameInputCss: '#documentName',
 	urlInputCss: '#inputDocUrl',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveButtonCss: 'span.col-1 > button[status="success"]',
 	editButtonCss: 'nb-actions g[data-name="edit"]',
 	deleteButtonCss: 'nb-actions g[data-name="close"]',

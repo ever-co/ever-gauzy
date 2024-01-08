@@ -1,18 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IOrganization, IProductTranslatable } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
 import { filter } from 'rxjs/operators';
-import { ProductService } from '../../../@core/services/product.service';
-import { DefaultEditor } from 'ng2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslatableService } from '../../../@core/services/translatable.service';
+import { DefaultEditor } from 'angular2-smart-table';
+import { IOrganization, IProduct, IProductTranslatable } from '@gauzy/contracts';
+import { ProductService, Store, TranslatableService } from '../../../@core/services';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: `
 		<nb-select
 			fullWidth
-			placeholder="{{ 'INVOICES_PAGE.SELECT_PRODUCT' | translate }}"
+			[placeholder]="'INVOICES_PAGE.SELECT_PRODUCT' | translate"
 			[(ngModel)]="product"
 			(selectedChange)="selectProduct($event)"
 		>
@@ -23,19 +22,18 @@ import { TranslatableService } from '../../../@core/services/translatable.servic
 	`,
 	styles: []
 })
-export class InvoiceProductsSelectorComponent
-	extends DefaultEditor
-	implements OnInit, OnDestroy {
-	product: IProductTranslatable;
-	products: IProductTranslatable[];
-	selectedLanguage: string;
-	organization: IOrganization;
+export class InvoiceProductsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
+
+	public product: IProductTranslatable;
+	public products: IProductTranslatable[];
+	public selectedLanguage: string;
+	public organization: IOrganization;
 
 	constructor(
-		private store: Store,
-		private productService: ProductService,
-		private translateService: TranslateService,
-		private translatableService: TranslatableService
+		private readonly store: Store,
+		private readonly productService: ProductService,
+		private readonly translateService: TranslateService,
+		private readonly translatableService: TranslatableService
 	) {
 		super();
 	}
@@ -44,10 +42,10 @@ export class InvoiceProductsSelectorComponent
 		this.selectedLanguage = this.translateService.currentLang;
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				filter((organization: IOrganization) => !!organization),
 				untilDestroyed(this)
 			)
-			.subscribe((organization) => {
+			.subscribe((organization: IOrganization) => {
 				this.organization = organization;
 				this._loadProducts();
 			});
@@ -68,15 +66,18 @@ export class InvoiceProductsSelectorComponent
 			)
 			.then(({ items }) => {
 				this.products = items;
-				this.product = this.products.find(
-					(p) => p.id === this.cell.newValue.id
-				);
+				const product: IProduct = this.cell.getNewRawValue();
+				this.product = this.products.find((p) => p.id === product.id);
 			});
 	}
 
+	/**
+	 *
+	 * @param $event
+	 */
 	selectProduct($event) {
-		this.cell.newValue = $event;
+		this.cell.setValue($event);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

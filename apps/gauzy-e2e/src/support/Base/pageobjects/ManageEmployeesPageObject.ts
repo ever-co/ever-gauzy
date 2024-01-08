@@ -8,13 +8,12 @@ export const ManageEmployeesPage = {
 	sendInviteButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	addEmployeeButtonCss: 'button[status="success"]',
 	editEmployeeButtonCss: 'div.mb-3 > button[status="info"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	deleteEmployeeButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	endWorkButtonCss: 'div.mb-3 > button[status="warning"]',
 	endWorkDateInputCss: '[placeholder="Pick a Date"]',
-	confirmEndWorkButtonCss:
-		'nb-card-footer.text-right > button[status="success"]',
+	confirmEndWorkButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	firstNameInputCss: '#firstName',
 	lastNameInputCss: '#lastName',
 	usernameInputCss: '#username',
@@ -36,13 +35,10 @@ export const ManageEmployeesPage = {
 	emailEditSecondInputCss: '#emailInput',
 	firstNameSecondEditInputCss: '#firstNameInput',
 	lastNameSecondEditInputCss: '#lastNameInput',
-	preferredLanguageDropdownCss:
-		'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
-	preferredLanguageOptionCss:
-		'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
+	preferredLanguageDropdownCss: 'div.col-sm-6 > div.form-group > ngx-language-selector > ng-select',
+	preferredLanguageOptionCss: 'ng-dropdown-panel.ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	cardBodyCss: 'ga-employee-mutation nb-card-body',
-	manageInvitesButtonCss:
-		'div.card-header-title > div.mr-2 > button[status="primary"]',
+	manageInvitesButtonCss: 'div.card-header-title > div.mr-2 > button[status="primary"]',
 	copyLinkButtonCss: 'button[status="success"]',
 	resendInviteButtonCss: 'button[status="warning"]',
 	deleteInviteButtonCss: 'button[status="danger"]',

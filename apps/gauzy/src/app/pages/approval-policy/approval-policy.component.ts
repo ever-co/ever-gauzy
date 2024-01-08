@@ -1,14 +1,12 @@
 import {
 	Component,
 	OnInit,
-	ViewChild,
 	OnDestroy,
 	AfterViewInit
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -49,25 +47,15 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 
 	public selectedApprovalPolicy: IApprovalPolicy;
 	public smartTableSource: ServerDataSource;
-	approvalPolicies: IApprovalPolicy[] = [];
+	public approvalPolicies: IApprovalPolicy[] = [];
 
-	viewComponentName: ComponentEnum = ComponentEnum.APPROVAL_POLICY;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public viewComponentName: ComponentEnum = ComponentEnum.APPROVAL_POLICY;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 
 	public organization: IOrganization;
-	policies$: Subject<any> = this.subject$;
+	public policies$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	approvalPolicyTable: Ng2SmartTableComponent;
-	@ViewChild('approvalPolicyTable') set content(
-		content: Ng2SmartTableComponent
-	) {
-		if (content) {
-			this.approvalPolicyTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly httpClient: HttpClient,
@@ -146,18 +134,6 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.approvalPolicyTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	async getApprovalPolicies() {
 		if (!this.organization) {
 			return;
@@ -211,11 +187,12 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.APPROVAL_POLICY'),
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.APPROVAL_POLICY'),
 			columns: {
 				name: {
 					title: this.getTranslation('APPROVAL_POLICY_PAGE.APPROVAL_POLICY_NAME'),
@@ -343,22 +320,11 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.approvalPolicyTable && this.approvalPolicyTable.grid) {
-			this.approvalPolicyTable.grid.dataSet['willSelect'] = 'false';
-			this.approvalPolicyTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	private get _isGridLayout(): boolean {
 		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

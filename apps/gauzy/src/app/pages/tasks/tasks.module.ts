@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import {
 	NbSpinnerModule,
 	NbCardModule,
@@ -88,7 +88,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		NbDialogModule.forChild(),
 		NbListModule,
 		NbContextMenuModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
@@ -115,4 +115,4 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		NbPopoverModule,
 	],
 })
-export class TasksModule {}
+export class TasksModule { }

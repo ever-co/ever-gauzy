@@ -7,13 +7,12 @@
 	</nb-card-header>
 	<nb-card-body class="content">
 		<div class="table-scroll-container">
-			<ng2-smart-table
+			<angular2-smart-table
+				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
-				style="cursor: pointer"
-				#productsTable
 				(userRowSelect)="onUserRowSelect($event)"
-			></ng2-smart-table>
+			></angular2-smart-table>
 		</div>
 		<ng-container
 			*ngIf="pagination.totalItems > minItemPerPage"

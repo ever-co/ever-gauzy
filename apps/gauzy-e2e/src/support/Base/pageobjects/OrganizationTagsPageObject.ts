@@ -8,7 +8,7 @@ export const OrganizationTagsPage = {
 	cancelButtonCss: '[class="mr-3 appearance-outline size-medium shape-rectangle status-basic nb-transition"]',
 	saveButtonCss: '.text-left [status="success"]',
 	gridButtonCss: 'div.layout-switch > button',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editTagButtonCss: 'button[status="info"]',
 	deleteTagButtonCss: 'button[status="danger"]',
 	confirmDeleteTagButtonCss: 'nb-card-footer > button[status="danger"]',
@@ -16,6 +16,5 @@ export const OrganizationTagsPage = {
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyTagCss: 'ngx-tags-color > div > nb-badge',
 	filterNameInputCss: '[placeholder="Name"]',
-	firstTableCellTagCss:
-		'tbody > tr.ng2-smart-row:first-of-type > td:first-of-type'
+	firstTableCellTagCss: 'tbody > tr.angular2-smart-row:first-of-type > td:first-of-type'
 };

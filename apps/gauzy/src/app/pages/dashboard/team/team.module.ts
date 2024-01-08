@@ -1,7 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { TeamComponent } from './team.component';
 import {
     NbBadgeModule,
     NbButtonModule,
@@ -10,16 +8,17 @@ import {
     NbProgressBarModule,
     NbSpinnerModule
 } from "@nebular/theme";
+import { NgChartsModule } from 'ng2-charts';
+import { TranslateModule } from "@ngx-translate/core";
 import { HeaderTitleModule } from "../../../@shared/components/header-title/header-title.module";
-import { TeamCardComponent } from './team-card/team-card.component';
+import { SharedModule } from "../../../@shared/shared.module";
 import { CounterPointModule } from "../../../@shared/counter-point/counter-point.module";
 import { NoDataMessageModule } from "../../../@shared/no-data-message/no-data-message.module";
+import { TeamComponent } from './team.component';
+import { TeamCardComponent } from './team-card/team-card.component';
 import { TeamMemberComponent } from './team-member/team-member.component';
 import { ChartComponent } from './chart/chart.component';
-import { ChartModule } from "angular2-chartjs";
-import { SharedModule } from "../../../@shared/shared.module";
 import { AllTeamComponent } from './all-team/all-team.component';
-import { TranslateModule } from "@ngx-translate/core";
 
 
 @NgModule({
@@ -32,19 +31,18 @@ import { TranslateModule } from "@ngx-translate/core";
     ],
     imports: [
         CommonModule,
+        NbBadgeModule,
+        NbButtonModule,
         NbCardModule,
+        NbIconModule,
+        NbProgressBarModule,
+        NbSpinnerModule,
+        NgChartsModule,
+        SharedModule,
+        TranslateModule,
         HeaderTitleModule,
         CounterPointModule,
-        NoDataMessageModule,
-        NbProgressBarModule,
-        ChartModule,
-        SharedModule,
-        NbIconModule,
-        NbButtonModule,
-        TranslateModule,
-        NbBadgeModule,
-        NbSpinnerModule
+        NoDataMessageModule
     ]
 })
-export class TeamModule {
-}
+export class TeamModule { }

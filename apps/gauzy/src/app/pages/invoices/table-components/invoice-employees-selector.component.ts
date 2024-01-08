@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, EmployeesService, Store } from '../../../@core/services';
 
@@ -29,13 +29,11 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '../../..
 	`,
 	styles: []
 })
-export class InvoiceEmployeesSelectorComponent
-	extends DefaultEditor
-	implements OnInit, OnDestroy {
+export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
 
-	employee: IEmployee;
-	employees: IEmployee[] = [];
-	organization: IOrganization;
+	public employee: IEmployee;
+	public employees: IEmployee[] = [];
+	public organization: IOrganization;
 
 	constructor(
 		private readonly employeeService: EmployeesService,
@@ -59,7 +57,7 @@ export class InvoiceEmployeesSelectorComponent
 	/**
 	 * Get working employees of the selected month
 	 */
-	 private async _getWorkingEmployees(): Promise<void> {
+	private async _getWorkingEmployees(): Promise<void> {
 		if (!this.organization) {
 			return;
 		}
@@ -78,18 +76,32 @@ export class InvoiceEmployeesSelectorComponent
 		this.preSelectedEmployee();
 	}
 
+	/**
+	 * This function is used to pre-select an employee from a list of employees.
+	 * It retrieves the raw value of the cell (presumably containing employee data),
+	 * and then attempts to find a matching employee from the list of employees.
+	 */
 	preSelectedEmployee() {
-		const { newValue } = this.cell;
+		// Get the raw value of the cell, which is assumed to be an employee object
+		const employee: any = this.cell.getRawValue();
+
+		// Check if the list of employees is not empty
 		if (isNotEmpty(this.employees)) {
+			// Find the employee in the list whose ID matches the ID of the employee from the cell
 			this.employee = this.employees.find(
-				(employee: IEmployee) => employee.id === newValue.id
+				(item: IEmployee) => item.id === employee.id
 			);
 		}
 	}
 
-	selectEmployee($event) {
-		this.cell.newValue = $event;
+	/**
+	 * This function is used to select an employee and set the value of the associated cell.
+	 * @param employee The employee to be selected and set as the cell value.
+	 */
+	selectEmployee(employee: any) {
+		// Set the value of the cell to the specified employee
+		this.cell.setValue(employee);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

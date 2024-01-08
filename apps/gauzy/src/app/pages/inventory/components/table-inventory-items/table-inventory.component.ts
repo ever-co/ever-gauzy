@@ -7,7 +7,7 @@ import {
 	ViewChild
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
@@ -61,14 +61,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	public organization: IOrganization;
 	products$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	inventoryTable: Ng2SmartTableComponent;
-	@ViewChild('inventoryTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.inventoryTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	/*
 	 * Actions Buttons directive
@@ -163,28 +155,15 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.inventoryTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INVENTORY'),
 			columns: {
@@ -193,12 +172,19 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					width: '79px',
 					filter: false,
 					type: 'custom',
-					renderComponent: ImageRowComponent
+					renderComponent: ImageRowComponent,
+					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'custom',
-					renderComponent: NameWithDescriptionComponent
+					renderComponent: NameWithDescriptionComponent,
+					componentInitFunction: (instance: NameWithDescriptionComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -207,24 +193,24 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 				productType: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_TYPE'),
 					type: 'string',
-					valuePrepareFunction: (type: string) => {
-						return type ? type : '-';
-					}
+					valuePrepareFunction: (value: string) => value || '-'
 				},
 				productCategory: {
 					title: this.getTranslation(
 						'INVENTORY_PAGE.PRODUCT_CATEGORY'
 					),
 					type: 'string',
-					valuePrepareFunction: (category: string) => {
-						return category ? category : '-';
-					}
+					valuePrepareFunction: (category: string) => category || '-'
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.TAGS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TagsOnlyComponent
+					renderComponent: TagsOnlyComponent,
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				}
 			}
 		};
@@ -252,78 +238,110 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		this.router.navigate([`/pages/organization/inventory/create`]);
 	}
 
-	onEditInventoryItem(selectedItem?: IProduct) {
+	/**
+	 * Navigate to the edit page of a selected inventory item.
+	 *
+	 * @param {IProduct} selectedItem - The selected inventory item to edit.
+	 */
+	onEditInventoryItem(selectedItem?: IProduct): void {
+		// If a selected item is provided, update the selected product
 		if (selectedItem) {
 			this.selectProduct({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			`/pages/organization/inventory/edit`,
-			this.selectedProduct.id
-		]);
+
+		// Navigate to the edit page with the selected product's ID
+		this.router.navigate([`/pages/organization/inventory/edit`, this.selectedProduct.id]);
 	}
 
-	onViewInventoryItem(selectedItem?: IProduct) {
+
+	/**
+	 * Navigate to the detailed view of a selected inventory item.
+	 *
+	 * @param {IProduct} selectedItem - The selected inventory item to view.
+	 */
+	onViewInventoryItem(selectedItem?: IProduct): void {
+		// If a selected item is provided, update the selected product
 		if (selectedItem) {
 			this.selectProduct({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			`/pages/organization/inventory/view`,
-			this.selectedProduct.id
-		]);
+
+		// Navigate to the detailed view page with the selected product's ID
+		this.router.navigate([`/pages/organization/inventory/view`, this.selectedProduct.id]);
 	}
 
-	async delete(selectedItem?: IProduct) {
+
+	/**
+	 * Asynchronously deletes a product.
+	 *
+	 * @param {IProduct} selectedItem - The selected product to be deleted.
+	 */
+	async delete(selectedItem?: IProduct): Promise<void> {
+		// If a selected product is provided, update the selected product
 		if (selectedItem) {
 			this.selectProduct({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
+
+		// Open a confirmation dialog and wait for the result
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent).onClose
 		);
 
+		// If the user cancels the deletion, return early
 		if (!result) return;
 
 		try {
-			const res = await this.productService.delete(
-				this.selectedProduct.id
-			);
+			// Attempt to delete the selected product using the ProductService
+			const res = await this.productService.delete(this.selectedProduct.id);
+
+			// Check if the deletion was successful based on the response
 			if (res.affected > 0) {
-				this.toastrService.success(
-					'INVENTORY_PAGE.INVENTORY_ITEM_DELETED',
-					{
-						name: this.selectedProduct.name
-					}
-				);
+				// Display a success toast notification
+				this.toastrService.success('INVENTORY_PAGE.INVENTORY_ITEM_DELETED', {
+					name: this.selectedProduct.name
+				});
 			}
 		} catch {
+			// Handle errors by displaying a danger toast notification
 			this.toastrService.danger('TOASTR.MESSAGE.SOMETHING_BAD_HAPPENED');
 		} finally {
+			// Trigger a refresh and notify subscribers
 			this._refresh$.next(true);
 			this.products$.next(true);
 		}
 	}
 
-	/*
-	 * Register Smart Table Source Config
+	/**
+	 * Registers and configures the Smart Table source for displaying product data.
+	 * If the organization context is unavailable, the function returns early.
+	 * The function sets up a server data source for pagination, relations, and filters.
+	 * It maps the result for each product and finalizes the setup by updating pagination and handling loading states.
+	 *
+	 * @throws {Error} If an error occurs during the setup, a danger toast notification is displayed.
 	 */
-	setSmartTableSource() {
+	setSmartTableSource(): void {
+		// Check if the organization context is available
 		if (!this.organization) {
 			return;
 		}
+
 		try {
+			// Set loading state to true while fetching data
 			this.loading = true;
 
+			// Destructure properties for clarity
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
+			// Create a new ServerDataSource for Smart Table
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/products/pagination`,
 				relations: [
@@ -332,55 +350,69 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					'tags',
 					'featuredImage'
 				],
+				// Define query parameters for the API request
 				where: {
-					...{
-						organizationId,
-						tenantId,
-						...this.filters.where
-					}
+					organizationId,
+					tenantId,
+					...this.filters.where
 				},
+				// Define how to map the result for each product
 				resultMap: (product: IProductTranslated) => {
 					return Object.assign({}, product);
 				},
+				// Finalize callback to handle post-processing
 				finalize: () => {
-					if (
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-					) {
+					// Update products based on the data layout style
+					if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 						this.products.push(...this.smartTableSource.getData());
 					}
+
+					// Update pagination based on the count of items in the source
 					this.setPagination({
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
 					});
+					// Set loading state to false once data fetching is complete
 					this.loading = false;
 				}
 			});
 		} catch (error) {
+			// Handle errors by displaying a danger toast notification
 			this.toastrService.danger(error);
-		} finally {
-			this.loading = false;
 		}
 	}
 
 	/**
-	 * GET product inventory smart table source
+	 * Asynchronously sets up and retrieves translated product inventory data for a smart table.
+	 * If the organization context is unavailable, the function returns early.
+	 * The function sets up a smart table source, configures pagination, and fetches elements based on the data layout style.
+	 *
+	 * @throws {Error} If an error occurs during the setup or data retrieval, a danger toast notification is displayed.
 	 */
-	private async getTranslatedProducts() {
+	private async getTranslatedProducts(): Promise<void> {
+		// Check if the organization context is available
 		if (!this.organization) {
 			return;
 		}
+
 		try {
+			// Set up the smart table source
 			this.setSmartTableSource();
+
+			// Configure pagination based on the active page and items per page
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			// Fetch elements for the smart table based on the data layout style
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 			}
 		} catch (error) {
+			// Handle errors by displaying a danger toast notification
 			this.toastrService.danger(error);
 		}
 	}
+
 
 	selectProduct({ isSelected, data }) {
 		this.disableButton = !isSelected;
@@ -404,18 +436,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.inventoryTable && this.inventoryTable.grid) {
-			this.inventoryTable.grid.dataSet['willSelect'] = 'false';
-			this.inventoryTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { ViewCell } from 'ng2-smart-table';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
@@ -9,12 +8,9 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 	templateUrl: './visibility.component.html',
 	styleUrls: ['./visibility.component.scss']
 })
-export class VisibilityComponent implements OnInit, ViewCell {
-	@Input()
-	value: string | number;
-
-	@Output()
-	visibilityChange: EventEmitter<boolean>;
+export class VisibilityComponent implements OnInit {
+	@Input() value: string | number;
+	@Output() visibilityChange: EventEmitter<boolean>;
 
 	private _rowData: any;
 	private _visibility$: BehaviorSubject<boolean>;

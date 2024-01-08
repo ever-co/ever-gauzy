@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
 	InvitationTypeEnum,
@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import {
 	debounceTime,
@@ -78,14 +78,6 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	organization: IOrganization;
 	private _refresh$: Subject<any> = new Subject();
 
-	usersTable: Ng2SmartTableComponent;
-	@ViewChild('usersTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.usersTable = content;
-			this.onChangedSource();
-		}
-	}
-
 	constructor(
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
@@ -99,7 +91,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		this.setView();
 	}
 
-	async ngOnInit() {
+	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
 		this.subject$
@@ -433,33 +425,48 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			actions: false,
 			columns: {
 				fullName: {
 					title: this.getTranslation('SM_TABLE.FULL_NAME'),
 					type: 'custom',
+					class: 'align-row',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				email: {
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'custom',
-					renderComponent: EmailComponent
+					renderComponent: EmailComponent,
+					componentInitFunction: (instance: EmailComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				role: {
 					title: this.getTranslation('SM_TABLE.ROLE'),
 					type: 'custom',
+					width: '5%',
 					renderComponent: RoleComponent,
-					width: '5%'
+					componentInitFunction: (instance: RoleComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					renderComponent: TagsOnlyComponent,
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: TagsColorFilterComponent
@@ -478,8 +485,11 @@ export class UsersComponent extends PaginationFilterBaseComponent
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
+					width: '5%',
 					renderComponent: EmployeeWorkStatusComponent,
-					width: '5%'
+					componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				}
 			}
 		};
@@ -495,18 +505,6 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.usersTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	clearItem() {
@@ -514,18 +512,8 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.usersTable && this.usersTable.grid) {
-			this.usersTable.grid.dataSet['willSelect'] = 'false';
-			this.usersTable.grid.dataSet.deselectAll();
-		}
-	}
 
 	private employeeMapper(employee: IEmployee) {
 		if (employee) {
@@ -535,10 +523,10 @@ export class UsersComponent extends PaginationFilterBaseComponent
 				endWork: endWork ? new Date(endWork) : '',
 				workStatus: endWork
 					? new Date(endWork).getDate() +
-					  ' ' +
-					  monthNames[new Date(endWork).getMonth()] +
-					  ' ' +
-					  new Date(endWork).getFullYear()
+					' ' +
+					monthNames[new Date(endWork).getMonth()] +
+					' ' +
+					new Date(endWork).getFullYear()
 					: '',
 				startedWorkOn,
 				isTrackingEnabled
@@ -548,5 +536,5 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

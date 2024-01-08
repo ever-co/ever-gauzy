@@ -15,7 +15,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TimeOffComponent } from './time-off.component';
@@ -47,7 +47,7 @@ import { NbToggleModule } from '@nebular/theme';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,
@@ -64,7 +64,7 @@ import { NbToggleModule } from '@nebular/theme';
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationModule,
-    NbToggleModule
+		NbToggleModule
 	],
 	declarations: [
 		TimeOffComponent,
@@ -74,4 +74,4 @@ import { NbToggleModule } from '@nebular/theme';
 	],
 	providers: [OrganizationsService, TimeOffService]
 })
-export class TimeOffModule {}
+export class TimeOffModule { }
