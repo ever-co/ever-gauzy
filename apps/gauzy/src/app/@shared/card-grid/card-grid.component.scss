@@ -105,11 +105,12 @@
 
           ngx-tags-color {
             div {
-              margin: 0;
+				margin: 0;
+				position: inherit;
 
-              .color {
-                width: 100%;
-              }
+				.color {
+					width: 100%;
+				}
             }
           }
 
