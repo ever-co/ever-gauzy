@@ -5,9 +5,8 @@ import { IChangelog } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
 
 @Entity('changelog')
-export class Changelog
-	extends TenantOrganizationBaseEntity
-	implements IChangelog {
+export class Changelog extends TenantOrganizationBaseEntity implements IChangelog {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()

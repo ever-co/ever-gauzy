@@ -224,8 +224,8 @@ export class ExportService implements OnModuleInit {
 		@InjectRepository(Currency)
 		private readonly currencyRepository: Repository<Currency>,
 
-		@InjectRepository(CustomSmtp)
-		private readonly customSmtpRepository: Repository<CustomSmtp>,
+		// @InjectRepository(CustomSmtp)
+		// private readonly customSmtpRepository: Repository<CustomSmtp>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
@@ -970,9 +970,9 @@ export class ExportService implements OnModuleInit {
 			{
 				repository: this.candidateTechnologiesRepository
 			},
-			{
-				repository: this.customSmtpRepository
-			},
+			// {
+			// 	repository: this.customSmtpRepository
+			// },
 			{
 				repository: this.contactRepository
 			},

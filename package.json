@@ -147,6 +147,8 @@
         "build:package:plugin:product-reviews:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/product-reviews build",
         "build:package:plugin:knowledge-base": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/knowledge-base build",
         "build:package:plugin:knowledge-base:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/knowledge-base build",
+        "build:package:plugin:custom-smtp": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/custom-smtp-plugin build",
+        "build:package:plugin:custom-smtp:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/custom-smtp-plugin build",
         "build:package:plugin:changelog": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/changelog build",
         "build:package:plugin:changelog:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/changelog build",
         "build:package:plugin:integration-wakatime": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn --cwd ./packages/plugins/integration-wakatime build",

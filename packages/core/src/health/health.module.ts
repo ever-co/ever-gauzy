@@ -1,9 +1,9 @@
 import { ConsoleLogger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { DatabaseModule } from './../database/database.module';
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { HealthController } from './health.controller';
-import { DatabaseModule } from 'database/database.module';
 
 @Module({
 	controllers: [HealthController],
@@ -17,4 +17,4 @@ import { DatabaseModule } from 'database/database.module';
 	],
 	providers: [CacheHealthIndicator, RedisHealthIndicator]
 })
-export class HealthModule {}
+export class HealthModule { }

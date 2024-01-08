@@ -18,19 +18,16 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
-import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { CrudController, PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpCreateCommand, CustomSmtpUpdateCommand } from './commands';
-import { CrudController } from './../core/crud';
 import { CreateCustomSmtpDTO, CustomSmtpQueryDTO, UpdateCustomSmtpDTO, ValidateCustomSmtpDTO } from './dto';
 
 @ApiTags('CustomSmtp')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
-@Controller()
+@Controller('/smtp')
 export class CustomSmtpController extends CrudController<CustomSmtp>{
 	constructor(
 		private readonly _customSmtpService: CustomSmtpService,
@@ -55,7 +52,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get('setting')
+	@Get('/setting')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async getSmtpSetting(
 		@Query() query: CustomSmtpQueryDTO
@@ -74,7 +71,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('validate')
+	@Post('/validate')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async validateSmtpSetting(
 		@Body() entity: ValidateCustomSmtpDTO
@@ -97,7 +94,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post()
+	@Post('/')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async create(
 		@Body() entity: CreateCustomSmtpDTO
@@ -128,7 +125,7 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		description:
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Put(':id')
+	@Put('/:id')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async update(
 		@Param('id', UUIDValidationPipe) id: ICustomSmtp['id'],

@@ -1,5 +1,5 @@
 import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
-import { WrapSecrets } from "./../core/decorators";
+import { WrapSecrets } from "@gauzy/core";
 import { CustomSmtp } from "./custom-smtp.entity";
 
 @EventSubscriber()

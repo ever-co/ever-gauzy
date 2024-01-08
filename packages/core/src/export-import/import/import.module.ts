@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { getConfig } from '@gauzy/config';
-import { getEntitiesFromPlugins } from '@gauzy/plugin';
+// import { getConfig } from '@gauzy/config';
+// import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { ImportController } from './import.controller';
 import { ImportService } from './import.service';
 import { coreEntities } from '../../core/entities';
@@ -22,7 +22,11 @@ import { UserModule } from '../../user/user.module';
 				children: [{ path: '/history', module: ImportHistoryModule }]
 			}
 		]),
-		TypeOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
+		TypeOrmModule.forFeature([
+			...coreEntities,
+			// ToDo: We need to load plugins entities here dynamically
+			// ...getEntitiesFromPlugins(getConfig().plugins)
+		]),
 		TenantModule,
 		UserModule,
 		ImportRecordModule,
@@ -33,4 +37,4 @@ import { UserModule } from '../../user/user.module';
 	providers: [ImportService, ...CommandHandlers],
 	exports: []
 })
-export class ImportModule {}
+export class ImportModule { }

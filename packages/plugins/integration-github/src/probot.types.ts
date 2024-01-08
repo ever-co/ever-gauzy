@@ -21,7 +21,6 @@ export interface OctokitConfig {
 }
 
 // Define options for the Probot module
-
 export interface ProbotModuleOptions {
 	// Specifies if the Probot module should be global
 	isGlobal?: boolean;

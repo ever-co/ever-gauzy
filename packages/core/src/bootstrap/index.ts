@@ -17,7 +17,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
-import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import { getEntitiesFromPlugins, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from './../core/entities/subscribers';
 import { AppService } from '../app.service';
@@ -28,13 +28,14 @@ import { SharedModule } from './../shared/shared.module';
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
-		await tracer.start();
+		tracer.start();
 		console.log('OTEL/Signoz Tracing started');
 	} else {
 		console.log('OTEL/Signoz Tracing not enabled');
 	}
 
 	const config = await registerPluginConfig(pluginConfig);
+	console.log(getEntitiesFromPlugins(pluginConfig.plugins));
 
 	const { BootstrapModule } = await import('./bootstrap.module');
 
@@ -161,7 +162,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 				}
 			};
 
-			const redisClient = await createClient(redisConnectionOptions)
+			const redisClient = createClient(redisConnectionOptions)
 				.on('error', (err) => {
 					console.log('Redis Client Error: ', err);
 				})
@@ -291,10 +292,12 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 	 * Registered core & plugins entities
 	 */
 	const entities = await registerAllEntities(pluginConfig);
+	const subscribers = await registerAllSubscribers(pluginConfig);
+
 	setConfig({
 		dbConnectionOptions: {
-			entities,
-			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>
+			entities: entities as Array<Type<any>>,
+			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
 		}
 	});
 
@@ -303,40 +306,79 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 }
 
 /**
- * Returns an array of core entities and any additional entities defined in plugins.
+ * Register entities from core and plugin configurations.
+ * @param pluginConfig The plugin configuration.
+ * @returns An array of registered entity types.
  */
-export async function registerAllEntities(pluginConfig: Partial<IPluginConfig>) {
-	const allEntities = coreEntities as Array<Type<any>>;
-	const pluginEntities = getEntitiesFromPlugins(pluginConfig.plugins);
+export async function registerAllEntities(
+	pluginConfig: Partial<IPluginConfig>
+): Promise<Array<Type<any>>> {
+	try {
+		const coreEntitiesList = coreEntities as Array<Type<any>>;
+		const pluginEntitiesList = getEntitiesFromPlugins(pluginConfig.plugins);
 
-	for (const pluginEntity of pluginEntities) {
-		if (allEntities.find((e) => e.name === pluginEntity.name)) {
-			throw new ConflictException({
-				message: `error.${pluginEntity.name} conflict by default entities`
-			});
-		} else {
-			allEntities.push(pluginEntity);
+		for (const pluginEntity of pluginEntitiesList) {
+			const entityName = pluginEntity.name;
+
+			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
+				throw new ConflictException({ message: `Error: ${entityName} conflicts with default entities.` });
+			} else {
+				coreEntitiesList.push(pluginEntity);
+			}
 		}
+
+		return coreEntitiesList;
+	} catch (error) {
+		console.error('Error registering entities:', error);
+		throw error;
 	}
-	return allEntities;
 }
 
 /**
- * GET migrations directory & CLI paths
+ * Register subscribers from core and plugin configurations.
+ * @param pluginConfig The plugin configuration.
+ * @returns A promise that resolves to an array of registered subscriber types.
+ */
+export async function registerAllSubscribers(
+	pluginConfig: Partial<IPluginConfig>
+): Promise<Array<Type<EntitySubscriberInterface>>> {
+	try {
+		const coreSubscribersList = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
+		const pluginSubscribersList = getSubscribersFromPlugins(pluginConfig.plugins);
+
+		for (const pluginSubscriber of pluginSubscribersList) {
+			const subscriberName = pluginSubscriber.name;
+
+			if (coreSubscribersList.some((subscriber) => subscriber.name === subscriberName)) {
+				throw new ConflictException({ message: `Error: ${subscriberName} conflicts with default subscribers.` });
+			} else {
+				coreSubscribersList.push(pluginSubscriber);
+			}
+		}
+
+		return coreSubscribersList;
+	} catch (error) {
+		console.error('Error registering subscribers:', error.message);
+	}
+}
+
+/**
+ * GET migrations directory & CLI paths.
  *
- * @returns
+ * @returns Object containing migrations and CLI paths.
  */
 export function getMigrationsSetting() {
+	// Consider removing this debug statement in the final implementation
 	console.log(`Reporting __dirname: ${__dirname}`);
 
-	//TODO: We need to define some dynamic path here
+	// Define dynamic paths for migrations and CLI
+	const migrationsPath = join(__dirname, '../database/migrations/*{.ts,.js}');
+	const cliMigrationsDir = join(__dirname, '../../src/database/migrations');
+
 	return {
-		migrations: [
-			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
-			join(__dirname, '../database/migrations/*{.ts,.js}')
-		],
+		migrations: [migrationsPath],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations')
+			migrationsDir: cliMigrationsDir
 		}
 	};
 }

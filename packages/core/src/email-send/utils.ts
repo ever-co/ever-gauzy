@@ -32,6 +32,7 @@ export class SMTPUtils {
         // Construct and return the SMTP configuration object
         return smtp as ISMTPConfig;
     }
+
     /**
      * Verifies the configuration of an SMTP transporter.
      * @param config The configuration object for the SMTP transporter.

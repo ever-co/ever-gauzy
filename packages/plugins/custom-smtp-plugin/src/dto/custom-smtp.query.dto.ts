@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsUUID } from "class-validator";
 import { ICustomSmtpFindInput, IOrganization } from "@gauzy/contracts";
-import { IsOrganizationBelongsToUser } from "./../../shared/validators";
+import { IsOrganizationBelongsToUser } from "@gauzy/core";
 
 /**
  * Custom Smtp Query Request DTO validation

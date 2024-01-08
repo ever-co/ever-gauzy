@@ -1,3 +1,4 @@
+import * as path from 'path';
 import {
 	IPluginConfig,
 	DEFAULT_API_PORT,
@@ -6,9 +7,9 @@ import {
 	DEFAULT_API_BASE_URL
 } from '@gauzy/common';
 import { dbConnectionConfig } from '@gauzy/config';
-import * as path from 'path';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
+import { CustomSmtpPlugin } from '@gauzy/custom-smtp-plugin';
 
 let assetPath: any;
 let assetPublicPath: any;
@@ -24,7 +25,6 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
 	assetPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets']));
-
 	assetPublicPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']));
 }
 
@@ -57,5 +57,9 @@ export const pluginConfig: IPluginConfig = {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
-	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
+	plugins: [
+		CustomSmtpPlugin,
+		KnowledgeBasePlugin,
+		ChangelogPlugin
+	]
 };

@@ -229,8 +229,8 @@ export class ImportService implements OnModuleInit {
 		@InjectRepository(Contact)
 		private readonly contactRepository: Repository<Contact>,
 
-		@InjectRepository(CustomSmtp)
-		private readonly customSmtpRepository: Repository<CustomSmtp>,
+		// @InjectRepository(CustomSmtp)
+		// private readonly customSmtpRepository: Repository<CustomSmtp>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
@@ -1021,9 +1021,9 @@ export class ImportService implements OnModuleInit {
 			{
 				repository: this.contactRepository
 			},
-			{
-				repository: this.customSmtpRepository
-			},
+			// {
+			// 	repository: this.customSmtpRepository
+			// },
 			{
 				repository: this.reportOrganizationRepository,
 				isCheckRelation: true,

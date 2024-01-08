@@ -1,8 +1,8 @@
-import { ExtensionPlugin } from '@gauzy/plugin';
+import { CorePlugin } from '@gauzy/plugin';
 import { ProductReview } from './entities/product-review.entity';
 import { schemaExtensions } from './graphql/schema-extensions';
 
-@ExtensionPlugin({
+@CorePlugin({
 	imports: [],
 	entities: [ProductReview],
 	extensions: {
@@ -10,6 +10,4 @@ import { schemaExtensions } from './graphql/schema-extensions';
 		resolvers: []
 	}
 })
-export class ReviewsPlugin {
-	onPluginBootstrap() {}
-}
+export class ReviewsPlugin { }

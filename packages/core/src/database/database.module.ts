@@ -27,4 +27,4 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 	providers: [],
 	exports: [TypeOrmModule]
 })
-export class DatabaseModule {}
+export class DatabaseModule { }
