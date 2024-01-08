@@ -1,5 +1,6 @@
 import { DynamicModule, Type } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { PluginDefinition } from 'apollo-server-core';
 import { ILogger } from './ILogger';
 
@@ -38,10 +39,12 @@ export interface IAuthOptions {
 	jwtSecret: string;
 }
 
+export type IDbConnectionOptions = TypeOrmModuleOptions | MikroOrmModuleOptions
+
 export interface IPluginConfig {
 	apiConfigOptions: IApiServerOptions;
 
-	dbConnectionOptions: TypeOrmModuleOptions;
+	dbConnectionOptions: IDbConnectionOptions;
 
 	plugins?: Array<DynamicModule | Type<any>>;
 

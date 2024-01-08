@@ -18,8 +18,16 @@ import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
-import { ICrudService } from './icrud.service';
+import { ICountOptions, ICrudService, IFindManyOptions, IFindOneOptions, IFindWhereOptions, IMikroOptions, IPartialEntity, IUpdateCriteria } from './icrud.service';
 import { ITryRequest } from './try-request';
+import {
+	EntityRepository,
+	FindOptions as MikroFindOptions,
+	FilterQuery as MikroFilterQuery,
+	ObjectQuery,
+	RequiredEntityData,
+	DeleteOptions
+} from '@mikro-orm/core';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -32,7 +40,8 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	protected constructor(
-		protected readonly repository: Repository<T>
+		protected readonly repository: Repository<T>,
+		protected readonly mikroRepository: EntityRepository<T>,
 	) { }
 
 	/**
@@ -42,8 +51,16 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async count(options?: FindManyOptions<T>): Promise<number> {
-		return await this.repository.count(options);
+	public async count(options?: ICountOptions<T>): Promise<number> {
+		const dbType = process.env.DB_ORM
+		switch (dbType) {
+			case 'mikro-orm':
+				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
+
+			default:
+				return await this.repository.count(options as FindManyOptions<T>);
+		}
+
 	}
 
 	/**
@@ -53,8 +70,17 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async countBy(options?: FindOptionsWhere<T>): Promise<number> {
-		return await this.repository.countBy(options);
+	public async countBy(options?: ICountOptions<T>): Promise<number> {
+
+		const dbType = process.env.DB_ORM
+		switch (dbType) {
+			case 'mikro-orm':
+				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
+
+			default:
+				return await this.repository.countBy(options as FindOptionsWhere<T>);
+		}
+
 	}
 
 	/**
@@ -65,10 +91,21 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findAll(options?: FindManyOptions<T>): Promise<IPagination<T>> {
-		const total = await this.repository.count(options);
-		const items = await this.repository.find(options);
-		return { items, total };
+	public async findAll(options?: ICountOptions<T>): Promise<IPagination<T>> {
+		const dbType = process.env.DB_ORM
+		let total: number;
+		let items: T[];
+		switch (dbType) {
+			case 'mikro-orm':
+				total = await this.mikroRepository.count(options as MikroFilterQuery<T>);
+				items = await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+				return { items, total };
+
+			default:
+				total = await this.repository.count(options as FindManyOptions<T>);
+				items = await this.repository.find(options as FindManyOptions<T>);
+				return { items, total };
+		}
 	}
 
 	/**
@@ -77,8 +114,15 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async find(options?: FindManyOptions<T>): Promise<T[]> {
-		return await this.repository.find(options);
+	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
+		const dbType = process.env.DB_ORM
+		switch (dbType) {
+			case 'mikro-orm':
+				return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+
+			default:
+				return await this.repository.find(options as FindManyOptions<T>);
+		}
 	}
 
 	/**
@@ -91,40 +135,56 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
 		try {
-			const [items, total] = await this.repository.findAndCount({
-				skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-				take: options && options.take ? (options.take) : 10,
-				/**
-				 * Specifies what relations should be loaded.
-				 *
-				 * @deprecated
-				 */
-				...(
-					(options && options.join) ? {
-						join: options.join
-					} : {}
-				),
-				...(
-					(options && options.select) ? {
-						select: options.select
-					} : {}
-				),
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : {}
-				),
-				...(
-					(options && options.where) ? {
-						where: options.where
-					} : {}
-				),
-				...(
-					(options && options.order) ? {
-						order: options.order
-					} : {}
-				),
-			});
+			const dbType = process.env.DB_ORM
+			let total: number;
+			let items: T[];
+
+			switch (dbType) {
+				case 'mikro-orm':
+					[items, total] = await this.mikroRepository.findAndCount(options.where as MikroFilterQuery<T>, {
+						skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
+						take: options && options.take ? (options.take) : 10,
+						...options,
+					} as MikroFindOptions<T>);
+
+				default:
+					[items, total] = await this.repository.findAndCount({
+						skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
+						take: options && options.take ? (options.take) : 10,
+						/**
+						 * Specifies what relations should be loaded.
+						 *
+						 * @deprecated
+						 */
+						...(
+							(options && options.join) ? {
+								join: options.join
+							} : {}
+						),
+						...(
+							(options && options.select) ? {
+								select: options.select
+							} : {}
+						),
+						...(
+							(options && options.relations) ? {
+								relations: options.relations
+							} : {}
+						),
+						...(
+							(options && options.where) ? {
+								where: options.where
+							} : {}
+						),
+						...(
+							(options && options.order) ? {
+								order: options.order
+							} : {}
+						),
+					});
+			}
+
+
 			return { items, total };
 		} catch (error) {
 			console.log(error);
@@ -148,32 +208,57 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async findOneOrFailByIdString(
 		id: string,
-		options?: FindOneOptions<T>
+		options?: IFindOneOptions<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneOrFail({
-				...(
-					(options && options.select) ? {
-						select: options.select
-					} : {}
-				),
-				where: {
-					id,
-					...(
-						(options && options.where) ? options.where : {}
-					)
-				},
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : []
-				),
-				...(
-					(options && options.order) ? {
-						order: options.order
-					} : {}
-				),
-			} as FindOneOptions<T>);
+
+			const dbType = process.env.DB_ORM
+			let record: T;
+			switch (dbType) {
+				case 'mikro-orm':
+					// return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+					options = options as IMikroOptions<T>;
+
+					let where: MikroFilterQuery<T>;
+					if (options?.where instanceof Array) {
+						where = options.where.concat({ id } as any)
+					} else {
+						where = {
+							id,
+							...(options?.where ? options.where : {} as any)
+						}
+					}
+
+					record = await this.mikroRepository.findOneOrFail(where, options as MikroFindOptions<T>);
+					break;
+
+				default:
+					options = options as FindOneOptions<T>
+					record = await this.repository.findOneOrFail({
+						...(
+							(options && options.select) ? {
+								select: options.select
+							} : {}
+						),
+						where: {
+							id,
+							...(
+								(options && options.where) ? options.where : {}
+							)
+						},
+						...(
+							(options && options.relations) ? {
+								relations: options.relations
+							} : []
+						),
+						...(
+							(options && options.order) ? {
+								order: options.order
+							} : {}
+						),
+					} as FindOneOptions<T>);
+			}
+
 			return {
 				success: true,
 				record
@@ -194,12 +279,19 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async findOneOrFailByOptions(
-		options: FindOneOptions<T>
+		options: IFindOneOptions<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneOrFail(
-				options
-			);
+			const dbType = process.env.DB_ORM
+			let record: T;
+			switch (dbType) {
+				case 'mikro-orm':
+					record = await this.mikroRepository.findOneOrFail(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+
+				default:
+					record = await this.repository.findOneOrFail(options as FindOneOptions<T>);
+			}
+
 			return {
 				success: true,
 				record
@@ -220,12 +312,19 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async findOneOrFailByWhereOptions(
-		options: FindOptionsWhere<T>
+		options: IFindWhereOptions<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const record = await this.repository.findOneByOrFail(
-				options
-			);
+			const dbType = process.env.DB_ORM
+			let record: T;
+			switch (dbType) {
+				case 'mikro-orm':
+					record = await this.mikroRepository.findOneOrFail(options as MikroFilterQuery<T>);
+
+				default:
+					record = await this.repository.findOneByOrFail(options as FindOptionsWhere<T>);
+			}
+
 			return {
 				success: true,
 				record
@@ -253,31 +352,58 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async findOneByIdString(
 		id: T['id'],
-		options?: FindOneOptions<T>
+		options?: IFindOneOptions<T>
 	): Promise<T> {
-		const record = await this.repository.findOne({
-			...(
-				(options && options.select) ? {
-					select: options.select
-				} : {}
-			),
-			where: {
-				id,
-				...(
-					(options && options.where) ? options.where : {}
-				)
-			},
-			...(
-				(options && options.relations) ? {
-					relations: options.relations
-				} : []
-			),
-			...(
-				(options && options.order) ? {
-					order: options.order
-				} : {}
-			),
-		} as FindOneOptions<T>);
+
+		const dbType = process.env.DB_ORM
+		let record: T;
+		switch (dbType) {
+			case 'mikro-orm':
+				// return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+				options = options as IMikroOptions<T>;
+
+				let where: MikroFilterQuery<T>;
+				if (options?.where instanceof Array) {
+					where = options.where.concat({ id } as any)
+				} else {
+					where = {
+						id,
+						...(options?.where ? options.where : {} as any)
+					}
+				}
+
+				record = await this.mikroRepository.findOne(where, options as MikroFindOptions<T>);
+
+
+			default:
+				options = options as FindOneOptions<T>
+				record = await this.repository.findOne({
+					...(
+						(options && options.select) ? {
+							select: options.select
+						} : {}
+					),
+					where: {
+						id,
+						...(
+							(options && options.where) ? options.where : {}
+						)
+					},
+					...(
+						(options && options.relations) ? {
+							relations: options.relations
+						} : []
+					),
+					...(
+						(options && options.order) ? {
+							order: options.order
+						} : {}
+					),
+				} as FindOneOptions<T>);
+		}
+
+
+
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -292,11 +418,19 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async findOneByOptions(
-		options: FindOneOptions<T>
+		options: IFindOneOptions<T>
 	): Promise<T | null> {
-		const record = await this.repository.findOne(
-			options
-		);
+
+		const dbType = process.env.DB_ORM
+		let record: T;
+		switch (dbType) {
+			case 'mikro-orm':
+				record = await this.mikroRepository.findOne(options.where as MikroFilterQuery<T>, options as FindOneOptions<T>);
+
+			default:
+				record = await this.repository.findOne(options as FindOneOptions<T>);
+		}
+
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -311,24 +445,43 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async findOneByWhereOptions(
-		options: FindOptionsWhere<T>
+		options: IFindWhereOptions<T>
 	): Promise<T | null> {
-		const record = await this.repository.findOneBy(
-			options
-		);
+		const dbType = process.env.DB_ORM
+		let record: T;
+		switch (dbType) {
+			case 'mikro-orm':
+				record = await this.mikroRepository.findOne(options as MikroFilterQuery<T>);
+
+			default:
+				record = await this.repository.findOneBy(options as FindOptionsWhere<T>);
+		}
+
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
 		return record;
 	}
 
-	public async create(entity: DeepPartial<T>): Promise<T> {
-		const obj = this.repository.create(entity);
-		try {
-			// https://github.com/Microsoft/TypeScript/issues/21592
-			return await this.repository.save(obj as any);
-		} catch (err /*: WriteError*/) {
-			throw new BadRequestException(err);
+	public async create(entity: IPartialEntity<T>): Promise<T> {
+		const dbType = process.env.DB_ORM
+		switch (dbType) {
+			case 'mikro-orm':
+				try {
+					const row = this.mikroRepository.create(entity as RequiredEntityData<T>);
+					return await this.mikroRepository.upsert(row);
+				} catch (err /*: WriteError*/) {
+					throw new BadRequestException(err);
+				}
+
+			default:
+				const obj = this.repository.create(entity as DeepPartial<T>);
+				try {
+					// https://github.com/Microsoft/TypeScript/issues/21592
+					return await this.repository.save(obj as any);
+				} catch (err /*: WriteError*/) {
+					throw new BadRequestException(err);
+				}
 		}
 	}
 
@@ -339,9 +492,15 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param entity
 	 * @returns
 	 */
-	public async save(entity: DeepPartial<T>): Promise<T> {
+	public async save(entity: IPartialEntity<T>): Promise<T> {
+		const dbType = process.env.DB_ORM
 		try {
-			return await this.repository.save(entity);
+			switch (dbType) {
+				case 'mikro-orm':
+					return await this.mikroRepository.upsert(entity as RequiredEntityData<T>);
+				default:
+					return await this.repository.save(entity as DeepPartial<T>);
+			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -358,12 +517,30 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async update(
-		id: string | FindOptionsWhere<T>,
+		id: IUpdateCriteria<T>,
 		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<UpdateResult | T> {
+		const dbType = process.env.DB_ORM
 		try {
-			// try if can import somehow the service and use its method
-			return await this.repository.update(id, partialEntity);
+			switch (dbType) {
+				case 'mikro-orm':
+					let where: MikroFilterQuery<T>;
+					if (typeof id === 'string') {
+						where = { id } as any;
+					} else {
+						where = id as MikroFilterQuery<T>;
+					}
+					const row = partialEntity as RequiredEntityData<T>;
+					const updatedRow = await this.mikroRepository.nativeUpdate(where, row);
+
+					return {
+						affected: updatedRow
+					} as UpdateResult
+
+				default:
+					return await this.repository.update(id as string | number | FindOptionsWhere<T>, partialEntity as QueryDeepPartialEntity<T>);
+			}
+
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}
@@ -383,12 +560,33 @@ export abstract class CrudService<T extends BaseEntity>
 		criteria: string | number | FindOptionsWhere<T>,
 		...options: any[]
 	): Promise<DeleteResult> {
+
+		const dbType = process.env.DB_ORM
 		try {
-			return await this.repository.delete(criteria);
+			switch (dbType) {
+				case 'mikro-orm':
+					let where: MikroFilterQuery<T>;
+					if (typeof criteria === 'string' || typeof criteria === 'number') {
+						where = { id: criteria } as any;
+					}
+					const result = await this.mikroRepository.nativeDelete(where, criteria as DeleteOptions<T>);
+
+					return {
+						affected: result
+					} as DeleteResult;
+				default:
+					return await this.repository.delete(criteria);
+			}
 		} catch (error) {
-			console.log(error)
 			throw new NotFoundException(`The record was not found`, error);
 		}
+
+		// try {
+		// 	return await this.repository.delete(criteria);
+		// } catch (error) {
+		// 	console.log(error)
+		// 	throw new NotFoundException(`The record was not found`, error);
+		// }
 	}
 
 	/**
