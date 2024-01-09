@@ -1,13 +1,12 @@
-import {Component, Input} from '@angular/core';
-import {ViewCell} from 'ng2-smart-table';
-import {TranslationBaseComponent} from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
-import {TranslateService} from '@ngx-translate/core';
-import {NbDialogService} from '@nebular/theme';
+import { Component, Input } from '@angular/core';
+import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslateService } from '@ngx-translate/core';
+import { NbDialogService } from '@nebular/theme';
 import {
 	ManageVariantsQuantityFormComponent
 } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
-import {InventoryStore} from 'apps/gauzy/src/app/@core';
-import {firstValueFrom} from 'rxjs';
+import { InventoryStore } from 'apps/gauzy/src/app/@core';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
 	selector: 'ga-manage-variants-quantity',
@@ -15,8 +14,7 @@ import {firstValueFrom} from 'rxjs';
 	styleUrls: ['./manage-variants-quantity.component.scss']
 })
 export class ManageVariantsQuantityComponent
-	extends TranslationBaseComponent
-	implements ViewCell {
+	extends TranslationBaseComponent {
 	@Input() value: any;
 	@Input() rowData: any;
 

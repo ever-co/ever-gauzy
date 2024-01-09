@@ -291,16 +291,14 @@
 		nbSpinnerStatus="primary"
 	>
 		<div *ngIf="dataLayoutStyle === 'TABLE'" class="table-scroll-container">
-			<ng2-smart-table
+			<angular2-smart-table
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="sourceSmartTable"
 				(userRowSelect)="selectFeedback($event)"
-				#feedbackTable
-			>
-			</ng2-smart-table>
+			></angular2-smart-table>
 		</div>
-		<ga-card-grid 
+		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			*ngIf="feedbackList?.length && dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"

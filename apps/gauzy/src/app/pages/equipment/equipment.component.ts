@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -6,7 +6,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -35,10 +35,8 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './equipment.component.html',
 	styleUrls: ['./equipment.component.scss']
 })
-export class EquipmentComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class EquipmentComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean = true;
 	disableButton: boolean = true;
@@ -52,14 +50,6 @@ export class EquipmentComponent
 	public organization: IOrganization;
 	equipments$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	equipmentTable: Ng2SmartTableComponent;
-	@ViewChild('equipmentTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.equipmentTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -131,7 +121,7 @@ export class EquipmentComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
@@ -155,22 +145,11 @@ export class EquipmentComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.equipmentTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -182,12 +161,20 @@ export class EquipmentComponent
 					width: '79px',
 					filter: false,
 					type: 'custom',
-					renderComponent: ImageRowComponent
+					renderComponent: ImageRowComponent,
+					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					}
 				},
 				name: {
 					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_NAME'),
 					type: 'custom',
 					renderComponent: PictureNameTagsComponent,
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -215,53 +202,47 @@ export class EquipmentComponent
 						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({
-							field: 'serialNumber',
-							search: value
-						});
+						this.setFilter({ field: 'serialNumber', search: value });
 					}
 				},
 				manufacturedYear: {
-					title: this.getTranslation(
-						'EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'
-					),
+					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_MANUFACTURED_YEAR'),
 					type: 'number',
 					filter: false
 				},
 				initialCost: {
-					title: this.getTranslation(
-						'EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST'
-					),
+					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_INITIAL_COST'),
 					type: 'number',
 					filter: false
 				},
 				currency: {
-					title: this.getTranslation(
-						'EQUIPMENT_PAGE.EQUIPMENT_CURRENCY'
-					),
+					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_CURRENCY'),
 					type: 'string',
 					filter: false
 				},
 				maxSharePeriod: {
-					title: this.getTranslation(
-						'EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'
-					),
+					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_MAX_SHARE_PERIOD'),
 					type: 'number',
 					filter: false
 				},
 				autoApproveShare: {
-					title: this.getTranslation(
-						'EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE'
-					),
+					title: this.getTranslation('EQUIPMENT_PAGE.EQUIPMENT_AUTO_APPROVE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: AutoApproveComponent
+					renderComponent: AutoApproveComponent,
+					componentInitFunction: (instance: AutoApproveComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				tags: {
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					filter: false,
-					renderComponent: TagsOnlyComponent
+					renderComponent: TagsOnlyComponent,
+					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					}
 				}
 			}
 		};
@@ -331,8 +312,9 @@ export class EquipmentComponent
 			endPoint: `${API_PREFIX}/equipment/pagination`,
 			relations: ['equipmentSharings', 'tags', 'image'],
 			where: {
-				...{ organizationId, tenantId },
-				...this.filters.where
+				organizationId,
+				tenantId,
+				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
 				if (
@@ -380,16 +362,6 @@ export class EquipmentComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.equipmentTable && this.equipmentTable.grid) {
-			this.equipmentTable.grid.dataSet['willSelect'] = 'false';
-			this.equipmentTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	_applyTranslationOnSmartTable() {

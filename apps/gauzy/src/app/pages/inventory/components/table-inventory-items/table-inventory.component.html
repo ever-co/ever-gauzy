@@ -26,8 +26,7 @@
 				[componentName]="viewComponentName"
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disableButton"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 
@@ -37,13 +36,12 @@
 			[ngIfElse]="gridLayout"
 		>
 			<div class="table-scroll-container">
-				<ng2-smart-table
+				<angular2-smart-table
 					[settings]="settingsSmartTable"
 					(userRowSelect)="selectProduct($event)"
 					[source]="smartTableSource"
 					style="cursor: pointer"
-					#inventoryTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">

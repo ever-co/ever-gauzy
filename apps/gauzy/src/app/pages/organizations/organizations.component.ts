@@ -2,8 +2,7 @@ import {
 	AfterViewInit,
 	Component,
 	OnDestroy,
-	OnInit,
-	ViewChild
+	OnInit
 } from '@angular/core';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import {
@@ -14,7 +13,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -31,7 +30,7 @@ import { OrganizationsMutationComponent } from '../../@shared/organizations/orga
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	OrganizationsCurrencyComponent,
-	OrganizationsEmployeesComponent,
+	OrganizationTotalEmployeesCountComponent,
 	OrganizationsStatusComponent
 } from './table-components';
 import { ComponentEnum } from '../../@core/constants';
@@ -46,9 +45,8 @@ import {
 	templateUrl: './organizations.component.html',
 	styleUrls: ['./organizations.component.scss']
 })
-export class OrganizationsComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
+export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
@@ -60,16 +58,6 @@ export class OrganizationsComponent
 	loading: boolean = true;
 	user: IUser;
 	private _refresh$: Subject<any> = new Subject();
-
-	organizationsTable: Ng2SmartTableComponent;
-	@ViewChild('organizationsTable') set content(
-		content: Ng2SmartTableComponent
-	) {
-		if (content) {
-			this.organizationsTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly organizationsService: OrganizationsService,
@@ -164,38 +152,50 @@ export class OrganizationsComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
+			},
 			columns: {
 				name: {
 					title: this.getTranslation('SM_TABLE.CLIENT_NAME'),
 					type: 'custom',
-					renderComponent: OrganizationWithTagsComponent
+					renderComponent: OrganizationWithTagsComponent,
+					componentInitFunction: (instance: OrganizationWithTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					}
 				},
 				totalEmployees: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
 					type: 'custom',
 					width: '200px',
 					filter: false,
-					renderComponent: OrganizationsEmployeesComponent
+					renderComponent: OrganizationTotalEmployeesCountComponent,
+					componentInitFunction: (instance: OrganizationTotalEmployeesCountComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					}
 				},
 				currency: {
 					title: this.getTranslation('SM_TABLE.CURRENCY'),
 					type: 'custom',
 					width: '200px',
-					renderComponent: OrganizationsCurrencyComponent
+					renderComponent: OrganizationsCurrencyComponent,
+					componentInitFunction: (instance: OrganizationsCurrencyComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					}
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
 					filter: false,
-					renderComponent: OrganizationsStatusComponent
+					renderComponent: OrganizationsStatusComponent,
+					componentInitFunction: (instance: OrganizationsStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				}
-			},
-			pager: {
-				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
 			}
 		};
 	}
@@ -348,18 +348,6 @@ export class OrganizationsComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.organizationsTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	clearItem() {
@@ -367,16 +355,6 @@ export class OrganizationsComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.organizationsTable && this.organizationsTable.grid) {
-			this.organizationsTable.grid.dataSet['willSelect'] = 'false';
-			this.organizationsTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	ngOnDestroy() { }

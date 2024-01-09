@@ -8,7 +8,7 @@ import { InvoiceEstimateTotalValueComponent } from '../../../pages/invoices/tabl
 			>{{
 				value
 					| currency: rowData?.currency
-					| position: organization.currencyPosition
+					| position: organization?.currencyPosition
 			}}
 			<nb-icon
 				*ngIf="rowData?.isBonus"
@@ -48,4 +48,4 @@ import { InvoiceEstimateTotalValueComponent } from '../../../pages/invoices/tabl
 	`,
 	styles: []
 })
-export class IncomeExpenseAmountComponent extends InvoiceEstimateTotalValueComponent {}
+export class IncomeExpenseAmountComponent extends InvoiceEstimateTotalValueComponent { }

@@ -2,8 +2,7 @@ import {
 	AfterViewInit,
 	Component,
 	OnDestroy,
-	OnInit,
-	ViewChild
+	OnInit
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -16,7 +15,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -64,14 +63,6 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 
 	defaultEventTypes: IEventTypeViewModel[] = DEFAULT_EVENT_TYPE;
 	private _refresh$: Subject<any> = new Subject();
-
-	eventTypesTable: Ng2SmartTableComponent;
-	@ViewChild('eventTypesTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.eventTypesTable = content;
-			this._onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -327,41 +318,30 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	private _onChangedSource() {
-		this.eventTypesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this._clearItem())
-			)
-			.subscribe();
-	}
-
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EVENT_TYPE'),
 			columns: {
 				title: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.EVENT_NAME'),
 					type: 'custom',
 					class: 'align-row',
-					renderComponent: NotesWithTagsComponent
+					renderComponent: NotesWithTagsComponent,
+					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 				},
 				durationFormat: {
-					title: this.getTranslation(
-						'EVENT_TYPE_PAGE.EVENT_DURATION'
-					),
+					title: this.getTranslation('EVENT_TYPE_PAGE.EVENT_DURATION'),
 					type: 'text',
 					class: 'align-row'
 				},
 				description: {
-					title: this.getTranslation(
-						'EVENT_TYPE_PAGE.EVENT_DESCRIPTION'
-					),
+					title: this.getTranslation('EVENT_TYPE_PAGE.EVENT_DESCRIPTION'),
 					type: 'text',
 					class: 'align-row'
 				},
@@ -409,8 +389,8 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-							employeeId: this.selectedEmployeeId
-					  }
+						employeeId: this.selectedEmployeeId
+					}
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -462,6 +442,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			this.toastrService.danger(error);
 		}
 	}
+
 	private get _isGridLayout(): boolean {
 		return (
 			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
@@ -489,18 +470,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/**
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.eventTypesTable && this.eventTypesTable.grid) {
-			this.eventTypesTable.grid.dataSet['willSelect'] = 'false';
-			this.eventTypesTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

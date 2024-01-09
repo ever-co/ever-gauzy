@@ -4,17 +4,16 @@
 			<div class="row">
 				<div class="col-11">
 					<div class="form-group">
-						<label class="label" for="findInput">{{
-							'FORM.LABELS.FIND_ADDRESS' | translate
-						}}</label>
+						<label class="label" for="findInput">
+							{{ 'FORM.LABELS.FIND_ADDRESS' | translate }}
+						</label>
 						<nb-form-field>
 							<nb-icon
 								icon-basic-color
 								nbPrefix
 								icon="search-outline"
 								pack="eva"
-							>å
-							</nb-icon>
+							>å</nb-icon>
 							<input
 								#autocomplete
 								id="findInput"
@@ -22,9 +21,7 @@
 								nbInput
 								type="text"
 								class="form-control"
-								[placeholder]="
-									'FORM.LABELS.FIND_ADDRESS' | translate
-								"
+								[placeholder]="'FORM.LABELS.FIND_ADDRESS' | translate"
 							/>
 						</nb-form-field>
 					</div>
@@ -44,9 +41,9 @@
 			<div class="row">
 				<div class="col-8">
 					<div class="form-group">
-						<label class="label" for="cityInput">{{
-							'FORM.LABELS.CITY' | translate
-						}}</label>
+						<label class="label" for="cityInput">
+							{{ 'FORM.LABELS.CITY' | translate }}
+						</label>
 						<input
 							(blur)="onAddressChanges()"
 							fullWidth
@@ -54,12 +51,7 @@
 							type="text"
 							nbInput
 							formControlName="city"
-							[status]="
-								FormHelpers.isInvalidControl(
-									form,
-									'city'
-								) ? 'danger' :'basic'
-							"
+							[status]="FormHelpers.isInvalidControl(form, 'city') ? 'danger' :'basic'"
 							[placeholder]="'FORM.PLACEHOLDERS.CITY' | translate"
 						/>
 					</div>
@@ -68,25 +60,18 @@
 			<div class="row">
 				<div class="col-6">
 					<div class="form-group">
-						<label class="label" for="postcodeInput">{{
-							'FORM.LABELS.POSTCODE' | translate
-						}}</label>
+						<label class="label" for="postcodeInput">
+							{{ 'FORM.LABELS.POSTCODE' | translate }}
+						</label>
 						<input
 							(blur)="onAddressChanges()"
 							fullWidth
 							id="postcodeInput"
 							type="text"
 							nbInput
-							[status]="
-								FormHelpers.isInvalidControl(
-									form,
-									'postcode'
-								) ? 'danger' :'basic'
-							"
+							[status]="FormHelpers.isInvalidControl(form, 'postcode') ? 'danger' :'basic'"
 							formControlName="postcode"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.POSTCODE' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.POSTCODE' | translate"
 						/>
 					</div>
 				</div>
@@ -94,9 +79,9 @@
 			<div class="row">
 				<div class="col-11">
 					<div class="form-group">
-						<label class="label" for="addressInput">{{
-							'FORM.LABELS.ADDRESS' | translate
-						}}</label>
+						<label class="label" for="addressInput">
+							{{ 'FORM.LABELS.ADDRESS' | translate }}
+						</label>
 						<input
 							(blur)="onAddressChanges()"
 							#address
@@ -104,16 +89,9 @@
 							type="text"
 							nbInput
 							fullWidth
-							[status]="
-								FormHelpers.isInvalidControl(
-									form,
-									'address'
-								) ? 'danger' :'basic'
-							"
+							[status]="FormHelpers.isInvalidControl(form, 'address') ? 'danger' :'basic'"
 							formControlName="address"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.ADDRESS' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.ADDRESS' | translate"
 						/>
 					</div>
 				</div>
@@ -121,9 +99,9 @@
 			<div class="row">
 				<div class="col-11">
 					<div class="form-group">
-						<label class="label" for="address2Input">{{
-							'FORM.LABELS.ADDRESS_2' | translate
-						}}</label>
+						<label class="label" for="address2Input">
+							{{ 'FORM.LABELS.ADDRESS_2' | translate }}
+						</label>
 						<input
 							(blur)="onAddressChanges()"
 							#address
@@ -131,16 +109,9 @@
 							type="text"
 							nbInput
 							fullWidth
-							[status]="
-								FormHelpers.isInvalidControl(
-									form,
-									'address2'
-								) ? 'danger' :'basic'
-							"
+							[status]="FormHelpers.isInvalidControl( form, 'address2' ) ? 'danger' :'basic'"
 							formControlName="address2"
-							[placeholder]="
-								'FORM.PLACEHOLDERS.ADDRESS_2' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.ADDRESS_2' | translate"
 						/>
 					</div>
 				</div>
@@ -148,12 +119,9 @@
 			<ng-container *ngIf="showCoordinateInput">
 				<div class="row mb-2">
 					<div class="col-sm-11">
-						<nb-checkbox
-							(checkedChange)="toggleShowCoordinates()"
-							>{{
-								'FORM.LABELS.COORDINATE.TITLE' | translate
-							}}</nb-checkbox
-						>
+						<nb-checkbox (checkedChange)="toggleShowCoordinates()">
+							{{ 'FORM.LABELS.COORDINATE.TITLE' | translate }}
+						</nb-checkbox >
 					</div>
 				</div>
 			</ng-container>
@@ -163,18 +131,15 @@
 				<ng-container formArrayName="coordinates">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label class="label" for="postcodeInput">{{
-								'FORM.LABELS.COORDINATE.LATITUDE' | translate
-							}}</label>
+							<label class="label" for="postcodeInput">
+								{{ 'FORM.LABELS.COORDINATE.LATITUDE' | translate }}
+							</label>
 							<input
 								(blur)="onCoordinatesChanged()"
 								fullWidth
 								type="number"
 								nbInput
-								[placeholder]="
-									'FORM.PLACEHOLDERS.COORDINATE.LATITUDE'
-										| translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.COORDINATE.LATITUDE' | translate"
 								formControlName="0"
 								step="0.1"
 							/>
@@ -182,18 +147,15 @@
 					</div>
 					<div class="col-sm-5">
 						<div class="form-group">
-							<label class="label" for="postcodeInput">{{
-								'FORM.LABELS.COORDINATE.LONGITUDE' | translate
-							}}</label>
+							<label class="label" for="postcodeInput">
+								{{ 'FORM.LABELS.COORDINATE.LONGITUDE' | translate }}
+							</label>
 							<input
 								(blur)="onCoordinatesChanged()"
 								fullWidth
 								type="number"
 								nbInput
-								[placeholder]="
-									'FORM.PLACEHOLDERS.COORDINATE.LONGITUDE'
-										| translate
-								"
+								[placeholder]="'FORM.PLACEHOLDERS.COORDINATE.LONGITUDE' | translate"
 								formControlName="1"
 								step="0.1"
 							/>

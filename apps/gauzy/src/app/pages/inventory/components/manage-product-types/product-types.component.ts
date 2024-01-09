@@ -11,7 +11,7 @@ import {
 	IProductTypeTranslated,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
@@ -42,10 +42,8 @@ import { InputFilterComponent } from './../../../../@shared/table-filters';
 	templateUrl: './product-types.component.html',
 	styleUrls: ['./product-types.component.scss']
 })
-export class ProductTypesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ProductTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -59,16 +57,6 @@ export class ProductTypesComponent
 	public organization: IOrganization;
 	types$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	productTypesTable: Ng2SmartTableComponent;
-	@ViewChild('productTypesTable') set content(
-		content: Ng2SmartTableComponent
-	) {
-		if (content) {
-			this.productTypesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	/*
 	 * Actions Buttons directive
@@ -159,23 +147,12 @@ export class ProductTypesComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.productTypesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	async _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			selectedRowIndex: -1,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PRODUCT_TYPE_NO_DATA'),
 			pager: {
 				display: false,
@@ -187,7 +164,10 @@ export class ProductTypesComponent
 					width: '5%',
 					filter: false,
 					type: 'custom',
-					renderComponent: IconRowComponent
+					renderComponent: IconRowComponent,
+					componentInitFunction: (instance: IconRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					},
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -258,8 +238,8 @@ export class ProductTypesComponent
 		try {
 			const editProductType = this.selectedProductType
 				? await this.productTypeService.getById(
-						this.selectedProductType.id
-				  )
+					this.selectedProductType.id
+				)
 				: null;
 
 			const dialog = this.dialogService.open(
@@ -402,17 +382,7 @@ export class ProductTypesComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.productTypesTable && this.productTypesTable.grid) {
-			this.productTypesTable.grid.dataSet['willSelect'] = 'false';
-			this.productTypesTable.grid.dataSet.deselectAll();
-		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import {

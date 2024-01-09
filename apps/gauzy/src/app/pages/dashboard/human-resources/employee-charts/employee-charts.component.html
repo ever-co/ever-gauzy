@@ -1,7 +1,7 @@
 <div class="charts">
-	<label class="chart-select-label">{{
-		'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate
-	}}</label>
+	<label class="chart-select-label">
+		{{ 'DASHBOARD_PAGE.CHARTS.CHART_TYPE' | translate }}
+	</label>
 	<nb-select
 		placeholder="Select chart"
 		class="select-charts"
@@ -10,17 +10,17 @@
 		[(selected)]="selectedChart"
 		size="tiny"
 	>
-		<nb-option value="1"
-			><img
+		<nb-option [value]="EmployeeChartEnum.BAR">
+			<img
 				width="auto"
 				height="24"
 				style="margin-right:10px"
 				src="assets/images/others/bar-chart.svg"
 			/>
-			{{ 'DASHBOARD_PAGE.CHARTS.BAR' | translate }}</nb-option
-		>
-		<nb-option value="2"
-			><img
+			{{ 'DASHBOARD_PAGE.CHARTS.BAR' | translate }}
+		</nb-option>
+		<nb-option [value]="EmployeeChartEnum.DOUGHNUT">
+			<img
 				width="auto"
 				height="24"
 				style="margin-right:10px"
@@ -28,28 +28,34 @@
 			/>
 			{{ 'DASHBOARD_PAGE.CHARTS.DOUGHNUT' | translate }}
 		</nb-option>
-		<nb-option value="3"
-			><img
+		<nb-option [value]="EmployeeChartEnum.STACKED_BAR">
+			<img
 				width="auto"
 				height="24"
 				style="margin-right:10px"
 				src="assets/images/others/stacked-bar-chart.svg"
 			/>
-			{{ 'DASHBOARD_PAGE.CHARTS.STACKED_BAR' | translate }}</nb-option
-		>
+			{{ 'DASHBOARD_PAGE.CHARTS.STACKED_BAR' | translate }}
+		</nb-option>
 	</nb-select>
 </div>
-<div class="chart-wrap" [ngSwitch]="selectedChart">
-	<ga-employee-doughnut-chart
-		[employeeStatistics]="employeeStatistics"
-		*ngSwitchCase="2"
-	></ga-employee-doughnut-chart>
-	<ga-employee-stacked-bar-chart
-		[employeeStatistics]="employeeStatistics"
-		*ngSwitchCase="3"
-	></ga-employee-stacked-bar-chart>
-	<ga-employee-horizontal-bar-chart
-		[employeeStatistics]="employeeStatistics"
-		*ngSwitchDefault
-	></ga-employee-horizontal-bar-chart>
-</div>
+
+<ng-container [ngSwitch]="selectedChart">
+	<div class="chart-wrap">
+		<ng-template [ngSwitchCase]="EmployeeChartEnum.DOUGHNUT">
+			<ga-employee-doughnut-chart
+				[employeeStatistics]="employeeStatistics"
+			></ga-employee-doughnut-chart>
+		</ng-template>
+		<ng-template [ngSwitchCase]="EmployeeChartEnum.STACKED_BAR">
+			<ga-employee-stacked-bar-chart
+				[employeeStatistics]="employeeStatistics"
+			></ga-employee-stacked-bar-chart>
+		</ng-template>
+		<ng-template [ngSwitchDefault]>
+			<ga-employee-horizontal-bar-chart
+				[employeeStatistics]="employeeStatistics"
+			></ga-employee-horizontal-bar-chart>
+		</ng-template>
+	</div>
+</ng-container>

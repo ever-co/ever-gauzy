@@ -7,8 +7,11 @@ export class ElectronService {
 	desktopCapturer: any;
 	shell: any;
 
+	/**
+	 * Checks if the application is running in the Electron environment.
+	 */
 	get isElectron(): boolean {
-		return !!(window && window.process && window.process.type);
+		return !!(window && (window as any).process && (window as any).process.type);
 	}
 
 	constructor() {

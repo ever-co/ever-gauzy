@@ -17,7 +17,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -37,18 +37,18 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbActionsModule,
 		TableComponentsModule,
 		CardGridModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
 		NbActionsModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		HeaderTitleModule,		
-    	GauzyButtonActionModule,
+		HeaderTitleModule,
+		GauzyButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]
 })
-export class PositionsModule {}
+export class PositionsModule { }

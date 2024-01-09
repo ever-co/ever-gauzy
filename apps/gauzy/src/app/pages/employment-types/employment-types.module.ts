@@ -18,7 +18,7 @@ import { OrganizationEmploymentTypesService } from '../../@core/services/organiz
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';
 import { EmploymentTypesComponent } from './employment-types.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -42,7 +42,7 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 		TableComponentsModule,
 		CardGridModule,
 		NbDialogModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
@@ -57,4 +57,4 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 	declarations: [EmploymentTypesComponent],
 	providers: [OrganizationEmploymentTypesService]
 })
-export class EmploymentTypesModule {}
+export class EmploymentTypesModule { }

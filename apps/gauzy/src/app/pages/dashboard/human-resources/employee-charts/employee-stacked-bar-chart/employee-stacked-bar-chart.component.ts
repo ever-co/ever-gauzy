@@ -19,13 +19,14 @@ import { takeUntil } from 'rxjs/operators';
 				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
 			</div>
 		</div>
-		<chart
+		<canvas
 			*ngIf="!noData"
 			style="height: 500px; width: 500px;"
-			type="horizontalBar"
+			baseChart
+			[type]="'bar'"
 			[data]="data"
 			[options]="options"
-		></chart>
+		></canvas>
 	`
 })
 export class EmployeeStackedBarChartComponent
@@ -81,57 +82,55 @@ export class EmployeeStackedBarChartComponent
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.EXPENSES'
-								  )}: ${
-										Math.round(
-											+this.expenseStatistics *
-												this.proportion *
-												100
-										) / 100
-								  }`
+									'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								)}: ${Math.round(
+									+this.expenseStatistics *
+									this.proportion *
+									100
+								) / 100
+								}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.EXPENSES'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.EXPENSES'
+								),
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.BONUS'
-								  )}: ${
-										Math.round(
-											+this.bonusStatistics *
-												this.proportion *
-												100
-										) / 100
-								  }`
+									'DASHBOARD_PAGE.CHARTS.BONUS'
+								)}: ${Math.round(
+									+this.bonusStatistics *
+									this.proportion *
+									100
+								) / 100
+								}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.BONUS'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.BONUS'
+								),
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
 							label: this.selectedDate
 								? `${this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.PROFIT'
-								  )}: ${
-										Math.round(
-											+this.profitStatistics *
-												this.proportion *
-												100
-										) / 100
-								  }`
+									'DASHBOARD_PAGE.CHARTS.PROFIT'
+								)}: ${Math.round(
+									+this.profitStatistics *
+									this.proportion *
+									100
+								) / 100
+								}`
 								: this.getTranslation(
-										'DASHBOARD_PAGE.CHARTS.PROFIT'
-								  ),
+									'DASHBOARD_PAGE.CHARTS.PROFIT'
+								),
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						}
 					]
 				};
 				this.options = {
+					indexAxis: 'y',
 					responsive: true,
 					maintainAspectRatio: false,
 					elements: {
@@ -140,30 +139,12 @@ export class EmployeeStackedBarChartComponent
 						}
 					},
 					scales: {
-						xAxes: [
-							{
-								gridLines: {
-									display: true,
-									color: chartjs.axisLineColor
-								},
-								ticks: {
-									fontColor: chartjs.textColor
-								},
-								stacked: true
-							}
-						],
-						yAxes: [
-							{
-								gridLines: {
-									display: false,
-									color: chartjs.axisLineColor
-								},
-								ticks: {
-									fontColor: chartjs.textColor
-								},
-								stacked: true
-							}
-						]
+						x: {
+							stacked: true,
+						},
+						y: {
+							stacked: true
+						}
 					},
 					legend: {
 						onClick: (e) => e.stopPropagation(),
@@ -174,21 +155,21 @@ export class EmployeeStackedBarChartComponent
 					},
 					tooltips: this.selectedDate
 						? {
-								enabled: true,
-								mode: 'dataset',
-								callbacks: {
-									label: function (tooltipItem, data) {
-										const label =
-											data.datasets[
-												tooltipItem.datasetIndex
-											].label || '';
-										return label;
-									}
+							enabled: true,
+							mode: 'dataset',
+							callbacks: {
+								label: function (tooltipItem, data) {
+									const label =
+										data.datasets[
+											tooltipItem.datasetIndex
+										].label || '';
+									return label;
 								}
-						  }
+							}
+						}
 						: {
-								enabled: true
-						  }
+							enabled: true
+						}
 				};
 			});
 	}

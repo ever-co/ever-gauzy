@@ -23,9 +23,6 @@ export interface Environment {
 	COMPANY_TWITTER_LINK: string;
 	COMPANY_LINKEDIN_LINK: string;
 
-	CLOUDINARY_CLOUD_NAME?: string;
-	CLOUDINARY_API_KEY?: string;
-
 	GOOGLE_AUTH_LINK: string;
 	FACEBOOK_AUTH_LINK: string;
 	LINKEDIN_AUTH_LINK: string;

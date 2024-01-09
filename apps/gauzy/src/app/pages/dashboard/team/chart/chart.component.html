@@ -1,10 +1,11 @@
 <nb-card>
     <nb-card-body>
-        <chart
-                [data]="data"
-                [options]="options"
-                [type]=type
-                class="chart-container"
-        ></chart>
+        <canvas
+            baseChart
+            [type]="chartType"
+            [data]="data"
+            [options]="options"
+            class="chart-container"
+        ></canvas>
     </nb-card-body>
 </nb-card>

@@ -1,5 +1,5 @@
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { TimeLogSourceEnum } from 'packages/contracts/dist';
+import { TimeLogSourceEnum } from '@gauzy/contracts';
 import { ITimerIcon } from './itimer-icon';
 
 export abstract class TimerIcon implements ITimerIcon {

@@ -12,7 +12,7 @@ export const PaymentsPage = {
 	amountInputCss: '#inputAmount',
 	noteInputCss: '#inputNote',
 	saveExpenseButtonCss: 'nb-card-footer > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editPaymentButtonCss: 'div.mb-3 > button[status="info"]',
 	deletePaymentButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
@@ -22,8 +22,7 @@ export const PaymentsPage = {
 	sidebarBtnCss: 'span.menu-title',
 	accountingPaymentsSidebarBtnCss: 'a[href="#/pages/accounting/payments"] > span.menu-title',
 	reportsPaymentsSidebarBtnCss: 'a[href="#/pages/reports/payments"] > span.menu-title',
-	paymentTableCellCss:
-		'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
+	paymentTableCellCss: 'div[class="col-sm-2 project-name"] > span.ng-star-inserted',
 	amountTableCellCss: 'div[class="col text-center day-col"]',
 	groupByCss: 'div.ml-3 > nb-select > button.select-button',
 	dropdownOptionCss: '.option-list nb-option'

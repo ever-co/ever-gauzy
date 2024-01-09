@@ -54,8 +54,7 @@
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disableButton"
 				[hasLayoutSelector]="false"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 			<nb-toggle
 				(checkedChange)="changeIncludeArchived($event)"
 				status="primary"
@@ -75,13 +74,12 @@
 		>
 			<div class="table-scroll-container custom-table">
 				<div>
-					<ng2-smart-table
+					<angular2-smart-table
 						style="cursor: pointer"
 						[settings]="settingsSmartTable"
 						[source]="sourceSmartTable"
 						(userRowSelect)="selectCandidate($event)"
-						#candidatesTable
-					></ng2-smart-table>
+					></angular2-smart-table>
 				</div>
 			</div>
 			<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -99,7 +97,7 @@
 			</ng-container>
 		</ng-template>
 		<ng-template #gridLayout>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
 				[source]="candidates"

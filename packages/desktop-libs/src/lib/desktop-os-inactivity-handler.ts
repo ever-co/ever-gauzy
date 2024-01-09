@@ -6,7 +6,7 @@ import NotificationDesktop from './desktop-notifier';
 import { DesktopDialog } from './desktop-dialog';
 import { BrowserWindow } from 'electron';
 import { LocalStore } from './desktop-store';
-import { IntervalService, TimerService } from './offline';
+import { DesktopOfflineModeHandler, IntervalService, TimerService } from './offline';
 import moment from 'moment';
 import {
 	AlwaysSleepTracking,
@@ -165,13 +165,20 @@ export class DesktopOsInactivityHandler {
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
 		const now = moment().clone();
-		const idleDuration = now.diff(this._startedAt, 'minutes');
+		const proofResultDuration = now.diff(this._startedAt, 'minutes');
+		const idleDuration = proofResultDuration + inactivityTimeLimit;
 		this._stoppedAt = new Date();
-		this._startedAt = now.subtract(inactivityTimeLimit + idleDuration, 'minutes').toDate();
+		this._startedAt = now.subtract(idleDuration, 'minutes').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
 		const timer = await this._timerService.findLastOne();
 		const lastInterval = await this._intervalService.findLastInterval();
 		timer.timeslotId = lastInterval?.remoteId;
+		await this.updateViewOffline({
+			startedAt: this._startedAt,
+			stoppedAt: this._startedAt,
+			idleDuration: idleDuration * 60,
+			timer
+		});
 		this._powerManager.window.webContents.send('remove_idle_time', {
 			timeslotIds,
 			isWorking,
@@ -182,5 +189,13 @@ export class DesktopOsInactivityHandler {
 	public get isTrackingOnSleep(): boolean {
 		const setting = LocalStore.getStore('appSetting');
 		return setting ? setting.trackOnPcSleep : false;
+	}
+
+	public async updateViewOffline(params: any): Promise<void> {
+		const offlineMode = DesktopOfflineModeHandler.instance;
+		await offlineMode.connectivity();
+		if (offlineMode.enabled) {
+			this._powerManager.window.webContents.send('update_view', params);
+		}
 	}
 }
