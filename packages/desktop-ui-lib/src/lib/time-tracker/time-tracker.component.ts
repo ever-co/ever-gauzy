@@ -1474,6 +1474,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 		);
 
+		this.electronService.ipcRenderer.on('update_view', (event, arg) => {
+			this._ngZone.run(async () => {
+				const idle = arg?.idleDuration ?? 0;
+				this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday - idle);
+				this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek - idle);
+				await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+					...arg.timer,
+					startedAt: arg.stoppedAt
+				});
+                if (this.start) {
+					event.sender.send('update_session', arg);
+				}
+			});
+		});
+
 		this.electronService.ipcRenderer.on(
 			'auth_success_tray_init',
 			(event, arg) => {
