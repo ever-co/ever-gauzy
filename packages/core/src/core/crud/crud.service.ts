@@ -18,15 +18,16 @@ import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
-import { ICountOptions, ICrudService, IFindManyOptions, IFindOneOptions, IFindWhereOptions, IMikroOptions, IPartialEntity, IUpdateCriteria } from './icrud.service';
+import { ICountByOptions, ICountOptions, ICrudService, IFindManyOptions, IFindOneOptions, IFindWhereOptions, IMikroOptions, IPartialEntity, IUpdateCriteria } from './icrud.service';
 import { ITryRequest } from './try-request';
 import {
 	EntityRepository,
+	FindOneOptions as MikroFindOneOptions,
 	FindOptions as MikroFindOptions,
 	FilterQuery as MikroFilterQuery,
-	ObjectQuery,
 	RequiredEntityData,
-	DeleteOptions
+	DeleteOptions,
+	FindOneOrFailOptions
 } from '@mikro-orm/core';
 
 export abstract class CrudService<T extends BaseEntity>
@@ -41,7 +42,7 @@ export abstract class CrudService<T extends BaseEntity>
 
 	protected constructor(
 		protected readonly repository: Repository<T>,
-		protected readonly mikroRepository: EntityRepository<T>,
+		protected readonly mikroRepository?: EntityRepository<T>,
 	) { }
 
 	/**
@@ -70,7 +71,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async countBy(options?: ICountOptions<T>): Promise<number> {
+	public async countBy(options?: ICountByOptions<T>): Promise<number> {
 
 		const dbType = process.env.DB_ORM
 		switch (dbType) {
@@ -229,7 +230,7 @@ export abstract class CrudService<T extends BaseEntity>
 						}
 					}
 
-					record = await this.mikroRepository.findOneOrFail(where, options as MikroFindOptions<T>);
+					record = await this.mikroRepository.findOneOrFail(where, options as FindOneOrFailOptions<T>);
 					break;
 
 				default:
@@ -286,7 +287,7 @@ export abstract class CrudService<T extends BaseEntity>
 			let record: T;
 			switch (dbType) {
 				case 'mikro-orm':
-					record = await this.mikroRepository.findOneOrFail(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+					record = await this.mikroRepository.findOneOrFail(options.where as MikroFilterQuery<T>, options as FindOneOrFailOptions<T>);
 
 				default:
 					record = await this.repository.findOneOrFail(options as FindOneOptions<T>);
@@ -372,7 +373,7 @@ export abstract class CrudService<T extends BaseEntity>
 					}
 				}
 
-				record = await this.mikroRepository.findOne(where, options as MikroFindOptions<T>);
+				record = await this.mikroRepository.findOne(where, options as MikroFindOneOptions<T>);
 
 
 			default:
@@ -425,7 +426,7 @@ export abstract class CrudService<T extends BaseEntity>
 		let record: T;
 		switch (dbType) {
 			case 'mikro-orm':
-				record = await this.mikroRepository.findOne(options.where as MikroFilterQuery<T>, options as FindOneOptions<T>);
+				record = await this.mikroRepository.findOne(options.where as MikroFilterQuery<T>, options as MikroFindOneOptions<T>);
 
 			default:
 				record = await this.repository.findOne(options as FindOneOptions<T>);
@@ -497,7 +498,7 @@ export abstract class CrudService<T extends BaseEntity>
 		try {
 			switch (dbType) {
 				case 'mikro-orm':
-					return await this.mikroRepository.upsert(entity as RequiredEntityData<T>);
+					return await this.mikroRepository.upsert(entity as T);
 				default:
 					return await this.repository.save(entity as DeepPartial<T>);
 			}
@@ -531,7 +532,7 @@ export abstract class CrudService<T extends BaseEntity>
 						where = id as MikroFilterQuery<T>;
 					}
 					const row = partialEntity as RequiredEntityData<T>;
-					const updatedRow = await this.mikroRepository.nativeUpdate(where, row);
+					const updatedRow = await this.mikroRepository.nativeUpdate(where, row as T);
 
 					return {
 						affected: updatedRow
