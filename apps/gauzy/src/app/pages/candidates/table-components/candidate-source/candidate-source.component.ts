@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 
 @Component({
 	template: `
@@ -10,8 +9,7 @@ import { ViewCell } from 'ng2-smart-table';
 		</div>
 	`
 })
-export class CandidateSourceComponent implements ViewCell {
-	@Input()
-	rowData: any;
-	value: string | number;
+export class CandidateSourceComponent {
+	@Input() rowData: any;
+	@Input() value: string | number;
 }

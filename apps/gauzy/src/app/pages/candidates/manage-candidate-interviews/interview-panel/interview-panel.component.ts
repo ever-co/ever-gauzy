@@ -13,7 +13,7 @@ import {
 import { tap, debounceTime } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -52,8 +52,7 @@ import {
 })
 export class InterviewPanelComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	interviewList: ICandidateInterview[];
 	tableInterviewList = [];
 	candidates: ICandidate[];
@@ -645,7 +644,7 @@ export class InterviewPanelComponent
 		this.router.navigate([`/pages/employees/edit/${id}`]);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange

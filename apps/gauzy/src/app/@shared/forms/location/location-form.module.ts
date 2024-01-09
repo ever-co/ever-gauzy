@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { LocationFormComponent } from './location-form.component';
-import { AgmCoreModule } from '@agm/core';
+import { NgMapsGoogleModule } from '@ng-maps/google';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -25,11 +25,11 @@ import { TranslateModule } from '../../translate/translate.module';
 		NbFormFieldModule,
 		NbIconModule,
 		TranslateModule,
-		AgmCoreModule,
+		NgMapsGoogleModule,
 		CountryModule,
 		LeafletMapModule
 	],
 	exports: [LocationFormComponent],
 	declarations: [LocationFormComponent]
 })
-export class LocationFormModule {}
+export class LocationFormModule { }

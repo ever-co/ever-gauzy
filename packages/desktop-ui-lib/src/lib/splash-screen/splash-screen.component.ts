@@ -1,12 +1,12 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { DomSanitizer } from "@angular/platform-browser";
+import { from, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from 'packages/contracts/dist';
-import { from, tap } from 'rxjs';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { GAUZY_ENV } from "../constants";
-import {DomSanitizer} from "@angular/platform-browser";
 
 @UntilDestroy({ checkProperties: true })
 @Component({

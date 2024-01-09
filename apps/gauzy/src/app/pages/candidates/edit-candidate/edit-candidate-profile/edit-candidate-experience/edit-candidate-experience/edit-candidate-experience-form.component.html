@@ -100,7 +100,7 @@
 
 	<nb-card-body *ngIf="experienceList?.length">
 		<div class="table-scroll-container">
-			<ng2-smart-table
+			<angular2-smart-table
 				*ngIf="dataLayoutStyle === 'TABLE'"
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
@@ -108,9 +108,9 @@
 				(userRowSelect)="selectExperience($event)"
 				#experienceTable
 			>
-			</ng2-smart-table>
+			</angular2-smart-table>
 		</div>
-		<ga-card-grid 
+		<ga-card-grid
 			[totalItems]="pagination?.totalItems"
 			*ngIf="dataLayoutStyle === 'CARDS_GRID'"
 			[settings]="settingsSmartTable"

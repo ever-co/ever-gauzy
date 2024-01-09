@@ -277,6 +277,15 @@ export function ipcMainHandler(
 						})
 					})
 				);
+			} else {
+				await timerService.update(
+					new Timer({
+						id: arg.id,
+						...(arg.startedAt && {
+							startedAt: new Date(arg.startedAt)
+						}),
+					})
+				);
 			}
 			await countIntervalQueue(timeTrackerWindow, true);
 			if (!isQueueThreadTimerLocked) {

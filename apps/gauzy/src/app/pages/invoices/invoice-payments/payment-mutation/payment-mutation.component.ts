@@ -155,7 +155,6 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
-		console.log(paymentDate);
 
 		const payment = {
 			amount,

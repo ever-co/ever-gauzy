@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
+import { Component, Input, OnInit } from '@angular/core';
 import { IEmployee } from '@gauzy/contracts';
 
 @Component({
@@ -7,24 +6,22 @@ import { IEmployee } from '@gauzy/contracts';
 	templateUrl: './employees-merged-teams.component.html',
 	styleUrls: ['./employees-merged-teams.component.scss']
 })
-export class EmployeesMergedTeamsComponent implements OnInit, ViewCell {
+export class EmployeesMergedTeamsComponent implements OnInit {
 
-	value: any;
-	rowData: any;
+	@Input() value: any;
+	@Input() rowData: any;
 
-	employees: IEmployee[] = [];
-
-	constructor() {}
+	public employees: IEmployee[] = [];
 
 	ngOnInit(): void {
 		if (this.value) {
 			const buffers = this.value[1];
 			if (buffers) {
-				for(let buffer of buffers){
-          for (let member of buffer.members) {
-            this.employees.push(member.employee);
-          }
-        }
+				for (let buffer of buffers) {
+					for (let member of buffer.members) {
+						this.employees.push(member.employee);
+					}
+				}
 			}
 		}
 	}

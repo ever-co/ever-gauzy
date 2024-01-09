@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbButtonModule, NbCardModule, NbInputModule, NbSelectModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbInputModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileProviderModule } from '../../../@shared/selectors/file-provider/file-provider.module';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -22,7 +22,8 @@ import { FileStorageComponent } from './file-storage.component';
 		NbCardModule,
 		NbInputModule,
 		NbSelectModule,
-		FileProviderModule
+		FileProviderModule,
+		NbSpinnerModule
 	],
 	declarations: [
 		FileStorageComponent

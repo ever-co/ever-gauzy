@@ -10,7 +10,7 @@ export const ProposalsPage = {
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	saveProposalButtonCss: 'nb-card-footer > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	detailsButtonCss: 'div.mb-3 > button[status="info"]',
 	editProposalButtonCss: 'button[status="info"]',
 	markAsStatusButtonCss: 'div.mb-3 > button[status="warning"]',

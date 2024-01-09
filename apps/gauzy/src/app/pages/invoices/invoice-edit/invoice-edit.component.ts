@@ -1,6 +1,12 @@
-import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { filter, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
+import { Router, ActivatedRoute } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IInvoice,
 	IOrganizationContact,
@@ -9,14 +15,13 @@ import {
 	InvoiceTypeEnum,
 	DiscountTaxTypeEnum,
 	ITag,
-	IInvoiceItemCreateInput
+	IInvoiceItemCreateInput,
+	IEmployee,
+	IOrganizationProject,
+	ITask,
+	IProduct,
+	IExpense
 } from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
-import { Router, ActivatedRoute } from '@angular/router';
-import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
@@ -49,6 +54,7 @@ import {
 	styleUrls: ['./invoice-edit.component.scss']
 })
 export class InvoiceEditComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;
@@ -84,14 +90,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	}
 	get isEstimate() {
 		return this._isEstimate;
-	}
-
-	invoiceItemTable: Ng2SmartTableComponent;
-	@ViewChild('invoiceItemTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.invoiceItemTable = content;
-			this.onChangedSource();
-		}
 	}
 
 	constructor(
@@ -240,6 +238,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	async loadSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
+			selectedRowIndex: -1,
+			mode: 'external',
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -274,11 +274,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceEmployeesSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const employee = cell;
-						if (employee) {
-							return `${cell.user.name}`;
-						}
+					valuePrepareFunction: (employee: IEmployee) => {
+						return employee?.user?.name || '';
 					}
 				};
 				break;
@@ -290,11 +287,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceProjectsSelectorComponent
 					},
-					valuePrepareFunction: (cell, row) => {
-						const project = cell;
-						if (project) {
-							return `${project.name}`;
-						}
+					valuePrepareFunction: (project: IOrganizationProject) => {
+						return project?.name || '';
 					}
 				};
 				break;
@@ -306,11 +300,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceTasksSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const task = cell;
-						if (task) {
-							return `${task.title}`;
-						}
+					valuePrepareFunction: (task: ITask) => {
+						return task?.title || '';
 					}
 				};
 				break;
@@ -322,11 +313,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceProductsSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const product = cell;
-						if (product) {
-							return `${this.translatableService.getTranslatedProperty(product, 'name')}`;
-						}
+					valuePrepareFunction: (product: IProduct) => {
+						return product?.name ? `${this.translatableService.getTranslatedProperty(product, 'name')}` : '';
 					}
 				};
 				break;
@@ -338,11 +326,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						type: 'custom',
 						component: InvoiceExpensesSelectorComponent
 					},
-					valuePrepareFunction: (cell) => {
-						const expense = cell;
-						if (expense) {
-							return `${expense.purpose}`;
-						}
+					valuePrepareFunction: (expense: IExpense) => {
+						return expense?.purpose || '';
 					}
 				};
 				break;
@@ -360,8 +345,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				type: 'text',
 				filter: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
-					return `${this.currency.value} ${cell}`;
+				valuePrepareFunction: (value: IInvoiceItem['price']) => {
+					return `${this.currency.value} ${value}`;
 				}
 			};
 			quantity = {
@@ -403,7 +388,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			type: 'text',
 			addable: false,
 			editable: false,
-			valuePrepareFunction: (cell, row) => {
+			valuePrepareFunction: (value: IInvoiceItem['totalValue'], cell: Cell) => {
+				const row = cell.getRow().getData();
 				return `${this.currency.value} ${row.quantity * row.price}`;
 			},
 			filter: false,
@@ -418,12 +404,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				},
 				filter: false,
 				width: '10%',
-				valuePrepareFunction: (cell) => {
-					if (cell) {
-						return this.getTranslation('INVOICES_PAGE.APPLIED');
-					} else {
-						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
-					}
+				valuePrepareFunction: (isApplied: any) => {
+					return isApplied ? this.getTranslation('INVOICES_PAGE.APPLIED') : this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 				}
 			};
 			this.settingsSmartTable['columns']['applyDiscount'] = {
@@ -434,15 +416,20 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				},
 				filter: false,
 				width: '10%',
-				valuePrepareFunction: (cell) => {
-					if (cell) {
-						return this.getTranslation('INVOICES_PAGE.APPLIED');
-					} else {
-						return this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
-					}
+				valuePrepareFunction: (isApplied: any) => {
+					return isApplied ? this.getTranslation('INVOICES_PAGE.APPLIED') : this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 				}
 			};
 		}
+	}
+
+	/**
+	 *
+	 * @param event
+	 */
+	onEditRowSelect({ row }) {
+		row.isInEditing = true;
+		console.log(row);
 	}
 
 	private async _loadOrganizationData() {
@@ -857,7 +844,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	async onCreateConfirm(event) {
-		console.log(event);
 		if (
 			!isNaN(event.newData.quantity) &&
 			!isNaN(event.newData.price) &&
@@ -878,6 +864,10 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		}
 	}
 
+	/**
+	 *
+	 * @param event
+	 */
 	async onEditConfirm(event) {
 		if (
 			!isNaN(event.newData.quantity) &&
@@ -939,23 +929,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 
 	selectItem(item: any) {
 		this.selectedItem = item;
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invoiceItemTable.source.onChangedSource
-			.pipe(
-				tap(() => {
-					if (this.invoiceItemTable && this.invoiceItemTable.grid) {
-						this.invoiceItemTable.grid.dataSet['willSelect'] = 'false';
-						this.invoiceItemTable.grid.dataSet.deselectAll();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	ngOnDestroy() { }

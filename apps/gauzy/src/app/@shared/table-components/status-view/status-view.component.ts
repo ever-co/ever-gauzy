@@ -1,6 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbComponentStatus } from '@nebular/theme';
-import { ViewCell } from 'ng2-smart-table';
 import { TaskStatusEnum } from '@gauzy/contracts';
 
 @Component({
@@ -8,6 +7,9 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 	templateUrl: './status-view.component.html',
 	styles: [
 		`
+			:host {
+				display: flex;
+			}
 			.badge {
 				display: flex;
 				flex-direction: row;
@@ -26,7 +28,7 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 		`,
 	],
 })
-export class StatusViewComponent implements OnInit, ViewCell {
+export class StatusViewComponent implements OnInit {
 	@Input() value: string;
 	@Input() rowData: any;
 	status: NbComponentStatus;

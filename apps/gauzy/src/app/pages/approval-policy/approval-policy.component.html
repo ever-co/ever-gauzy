@@ -28,15 +28,12 @@
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
 			>
 				<div class="table-scroll-container custom-table">
-					<ng2-smart-table
-						class="tags-table"
+					<angular2-smart-table
+						style="cursor: pointer"
 						(userRowSelect)="selectApprovalPolicy($event)"
 						[settings]="settingsSmartTable"
 						[source]="smartTableSource"
-						style="cursor: pointer"
-						#approvalPolicyTable
-					>
-					</ng2-smart-table>
+					></angular2-smart-table>
 				</div>
 				<div class="pagination-container">
 					<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -51,7 +48,7 @@
 					</ng-container>
 				</div>
 			</ng-container>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				*ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID"
 				[settings]="settingsSmartTable"
@@ -107,6 +104,3 @@
 		</ng-template>
 	</ng-template>
 </ng-template>
-
-
-

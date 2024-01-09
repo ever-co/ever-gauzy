@@ -15,7 +15,7 @@ import {
 	NbTooltipModule,
 	NbStepperModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -97,7 +97,7 @@ const NB_MODULES = [
 		MerchantModule,
 		...NB_MODULES,
 		NgSelectModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		PaginationModule,
 		ProductTypesModule,
 		ProductCategoriesModule,
@@ -126,4 +126,4 @@ const NB_MODULES = [
 		TranslatableService
 	]
 })
-export class InventoryModule {}
+export class InventoryModule { }

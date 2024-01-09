@@ -8,7 +8,7 @@ import {
 	EventEmitter,
 	AfterViewInit
 } from '@angular/core';
-import { TreeComponent, ITreeOptions } from '@circlon/angular-tree-component';
+import { TreeComponent, ITreeOptions } from '@ali-hm/angular-tree-component';
 import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -30,11 +30,36 @@ import { firstValueFrom } from 'rxjs';
 	templateUrl: './sidebar.component.html',
 	styleUrls: ['./sidebar.component.scss']
 })
-export class SidebarComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
+export class SidebarComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+
+	public organization: IOrganization;
+	public actionEnum = HelpCenterActionEnum;
+	public tempNodes: IHelpCenter[] = [];
+	public nodeId = '';
+	public isChosenNode = false;
+	public nodes: IHelpCenter[] = [];
+	public settingsContextMenu: NbMenuItem[];
+
+	/**
+	 *
+	 */
+	public options: ITreeOptions = {
+		getChildren: (node: IHelpCenter) => this.helpService.findByBaseId(node.id),
+		allowDrag: true,
+		allowDrop: (el, { parent }) => parent.data.flag !== HelpCenterFlagEnum.CATEGORY,
+		childrenField: 'children'
+	};
+
+	/**
+	 *
+	 */
 	@Output() clickedNode = new EventEmitter<IHelpCenter>();
 	@Output() deletedNode = new EventEmitter<any>();
+
+	/**
+	 *
+	 */
+	@ViewChild(TreeComponent) private tree: TreeComponent;
 
 	constructor(
 		private dialogService: NbDialogService,
@@ -47,30 +72,6 @@ export class SidebarComponent
 	) {
 		super(translateService);
 	}
-
-	public tempNodes: IHelpCenter[] = [];
-	public nodeId = '';
-	public isChosenNode = false;
-	public nodes: IHelpCenter[] = [];
-	settingsContextMenu: NbMenuItem[];
-	options: ITreeOptions = {
-		getChildren: async (node: IHelpCenter) => {
-			const res = await this.helpService.findByBaseId(node.id);
-			return res;
-		},
-		allowDrag: true,
-		allowDrop: (el, { parent }) => {
-			if (parent.data.flag === HelpCenterFlagEnum.CATEGORY) {
-				return false;
-			} else {
-				return true;
-			}
-		},
-		childrenField: 'children'
-	};
-	@ViewChild(TreeComponent) private tree: TreeComponent;
-	organization: IOrganization;
-	actionEnum = HelpCenterActionEnum;
 
 	ngOnInit() {
 		this.settingsContextMenu = [
@@ -99,7 +100,7 @@ export class SidebarComponent
 			if (elem.item.title === this.getTranslation('HELP_PAGE.EDIT_BASE')) {
 				this.addEditBase(HelpCenterActionEnum.EDIT);
 			}
-			if (elem.item.title === this.getTranslation('HELP_PAGE.ADD_CATEGORY')) { 
+			if (elem.item.title === this.getTranslation('HELP_PAGE.ADD_CATEGORY')) {
 				this.addEditCategory(HelpCenterActionEnum.ADD);
 			}
 			if (elem.item.title === this.getTranslation('HELP_PAGE.DELETE_BASE')) {
@@ -315,5 +316,5 @@ export class SidebarComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

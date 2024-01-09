@@ -1,4 +1,4 @@
-Gauzy Server with nstudio electron
+# Ever Gauzy Server
 
 how to:
 

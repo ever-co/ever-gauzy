@@ -426,7 +426,14 @@
 		"Yoster",
 		"Yostorono",
 		"zfgk",
-		"Zrdm"
+		"Zrdm",
+		"accesibility",
+		"tsconfigs",
+		"rangepicker",
+		"echart",
+		"childout",
+		"parentin",
+		"formpicker"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -15,7 +15,7 @@ import {
 	NbTooltipModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
@@ -45,7 +45,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
 		CardGridModule,
@@ -61,4 +61,4 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 	declarations: [EquipmentSharingPolicyComponent],
 	providers: [EquipmentSharingPolicyService]
 })
-export class EquipmentSharingPolicyModule {}
+export class EquipmentSharingPolicyModule { }

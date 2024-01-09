@@ -1,31 +1,31 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import { ITag } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-tag-color-filter',
     template: `
         <ga-tags-color-input
             (selectedTagsEvent)="selectedTagsEvent($event)"
             [multiple]="true"
             [isOrgLevel]="true"
             [label]="false"
-        >
-        </ga-tags-color-input>
+        ></ga-tags-color-input>
     `,
 })
 export class TagsColorFilterComponent extends DefaultFilter implements OnChanges {
-    
+
     constructor() {
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    ngOnChanges(changes: SimpleChanges) { }
 
-    onChange(event) {
-        this.column.filterFunction(event);
+    /**
+     *
+     * @param tags
+     */
+    selectedTagsEvent(value: ITag[]) {
+        this.column.filterFunction(value, this.column.id);
     }
-
-    selectedTagsEvent(currentTagSelection: ITag[]) {
-        this.column.filterFunction(currentTagSelection);
-	}
 }

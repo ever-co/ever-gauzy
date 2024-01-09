@@ -5,7 +5,10 @@ import { TenantSettingService } from '../../tenant/tenant-setting/tenant-setting
 
 @Injectable()
 export class FileStorageMiddleware implements NestMiddleware {
-	constructor(private readonly tenantSettingService: TenantSettingService) {}
+
+	constructor(
+		private readonly tenantSettingService: TenantSettingService
+	) { }
 
 	/**
 	 *

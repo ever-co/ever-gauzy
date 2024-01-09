@@ -32,7 +32,7 @@ import { OrganizationsMutationModule } from '../../../../@shared/organizations/o
 import { RemoveLodashModule } from '../../../../@shared/remove-lodash/remove-lodash.module';
 import { UserFormsModule } from '../../../../@shared/user/forms/user-forms.module';
 import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { ThemeModule } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
@@ -72,7 +72,7 @@ import { TimeZoneSelectorModule } from 'apps/gauzy/src/app/@shared/selectors';
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		TranslateModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,
 		ImageUploaderModule,
@@ -115,4 +115,4 @@ import { TimeZoneSelectorModule } from 'apps/gauzy/src/app/@shared/selectors';
 	],
 	exports: [EditOrganizationSettingsComponent]
 })
-export class EditOrganizationSettingsModule {}
+export class EditOrganizationSettingsModule { }

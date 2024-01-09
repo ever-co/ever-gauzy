@@ -47,13 +47,13 @@
 <ng-template #tableLayout>
 	<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
 		<div class="table-scroll-container">
-			<ng2-smart-table
+			<angular2-smart-table
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
 				[source]="smartTableSource"
 				(editConfirm)="onEditConfirm($event)"
 				(userRowSelect)="onSelectEmployee($event)"
-			></ng2-smart-table>
+			></angular2-smart-table>
 		</div>
 		<div class="pagination-container">
 			<ng-container *ngIf="pagination.totalItems > minItemPerPage">

@@ -5,17 +5,15 @@
 			[hasLayoutSelector]="false"
 			[buttonTemplate]="action"
 			[isDisable]="!selectedWarehouse?.isSelected"
-		>
-		</ngx-gauzy-button-action>
+		></ngx-gauzy-button-action>
 	</div>
 	<div class="table-scroll-container">
-		<ng2-smart-table
+		<angular2-smart-table
+			style="cursor: pointer"
 			[settings]="settingsSmartTable"
 			[source]="smartTableSource"
 			(userRowSelect)="selectWarehouse($event)"
-			style="cursor: pointer"
-			#warehouseProductsTable
-		></ng2-smart-table>
+		></angular2-smart-table>
 	</div>
 	<ng-container
 		*ngIf="pagination.totalItems > minItemPerPage"
@@ -29,7 +27,6 @@
 			[activePage]="pagination?.activePage"
 		></ga-pagination>
 	</ng-container>
-
 </nb-card-body>
 
 <ng-template #visible>
@@ -49,7 +46,9 @@
 <ng-template #action>
 	<ng-container *ngxPermissionsOnly="'ALL_ORG_EDIT'">
 		<div class="actions">
-			<ga-manage-variants-quantity [value]="variants"></ga-manage-variants-quantity>
+			<ga-manage-variants-quantity
+				[value]="variants"
+			></ga-manage-variants-quantity>
 		</div>
 	</ng-container>
 </ng-template>

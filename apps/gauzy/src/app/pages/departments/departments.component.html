@@ -23,13 +23,12 @@
 			"
 		>
 			<div class="table-scroll-container">
-				<ng2-smart-table
+				<angular2-smart-table
+					style="cursor: pointer"
 					[settings]="smartTableSettings"
 					[source]="smartTableSource"
 					(userRowSelect)="selectDepartment($event)"
-					style="cursor: pointer"
-					#departmentsTable
-				></ng2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="pagination.totalItems > minItemPerPage">
@@ -50,7 +49,7 @@
 				!loading
 			"
 		>
-			<ga-card-grid 
+			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="smartTableSettings"
 				[source]="departments"

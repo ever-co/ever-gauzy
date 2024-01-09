@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
@@ -20,7 +20,7 @@ import {
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -59,6 +59,7 @@ import {
 	styleUrls: ['./invoice-add.component.scss']
 })
 export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
 	form: UntypedFormGroup;
@@ -108,14 +109,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 	}
 	get isEstimate() {
 		return this._isEstimate;
-	}
-
-	invoiceItemTable: Ng2SmartTableComponent;
-	@ViewChild('invoiceItemTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.invoiceItemTable = content;
-			this.onChangedSource();
-		}
 	}
 
 	constructor(
@@ -1130,23 +1123,6 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			date.setMonth(date.getMonth() + 1);
 		}
 		return date;
-	}
-
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invoiceItemTable.source.onChangedSource
-			.pipe(
-				tap(() => {
-					if (this.invoiceItemTable && this.invoiceItemTable.grid) {
-						this.invoiceItemTable.grid.dataSet['willSelect'] = 'false';
-						this.invoiceItemTable.grid.dataSet.deselectAll();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
 	}
 
 	ngOnDestroy(): void { }

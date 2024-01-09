@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -49,7 +49,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		SharedModule,
 		CardGridModule,
 		NbTooltipModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
 		TranslateModule,

@@ -95,8 +95,7 @@ export class IncomeController extends CrudController<Income> {
 	async pagination(
 		@Query() params: PaginationParams<Income>
 	): Promise<IPagination<IIncome>> {
-		console.log(params);
-		return this.incomeService.pagination(params);
+		return await this.incomeService.pagination(params);
 	}
 
 	@ApiOperation({ summary: 'Find all income.' })

@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -33,8 +33,7 @@ import {
 })
 export class EmployeeLevelComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	organization: IOrganization;
 	showAddCard: boolean;
 	showEditDiv: boolean;
@@ -108,7 +107,7 @@ export class EmployeeLevelComponent
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	private async loadEmployeeLevels() {
 		if (!this.organization) {
@@ -333,7 +332,7 @@ export class EmployeeLevelComponent
 		if (employeeLevel.data) employeeLevel = employeeLevel.data;
 		const res =
 			this.selected.employeeLevel &&
-			employeeLevel.id === this.selected.employeeLevel.id
+				employeeLevel.id === this.selected.employeeLevel.id
 				? { state: !this.selected.state }
 				: { state: true };
 		this.selected.state = res.state;

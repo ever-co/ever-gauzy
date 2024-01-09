@@ -17,12 +17,12 @@ import { API_PREFIX } from '../constants/app.constants';
 	providedIn: 'root'
 })
 export class ExpensesService {
-	constructor(private http: HttpClient) {}
+	constructor(private http: HttpClient) { }
 
 	create(createInput: IExpenseCreateInput): Promise<IExpense> {
 		return firstValueFrom(
 			this.http
-			.post<IExpense>(`${API_PREFIX}/expense`, createInput)
+				.post<IExpense>(`${API_PREFIX}/expense`, createInput)
 		);
 	}
 
@@ -33,19 +33,19 @@ export class ExpensesService {
 		const data = JSON.stringify({ relations, filterDate });
 		return firstValueFrom(
 			this.http
-			.get<IPagination<ISplitExpenseOutput>>(
-				`${API_PREFIX}/expense/me`,
-				{
-					params: { data }
-				}
-			)
+				.get<IPagination<ISplitExpenseOutput>>(
+					`${API_PREFIX}/expense/me`,
+					{
+						params: { data }
+					}
+				)
 		);
 	}
 
 	getById(id: string): Promise<IExpense> {
 		return firstValueFrom(
 			this.http
-			.get<IExpense>(`${API_PREFIX}/expense/${id}`)
+				.get<IExpense>(`${API_PREFIX}/expense/${id}`)
 		);
 	}
 
@@ -57,12 +57,12 @@ export class ExpensesService {
 		const data = JSON.stringify({ relations, filterDate });
 		return firstValueFrom(
 			this.http
-			.get<IPagination<ISplitExpenseOutput>>(
-				`${API_PREFIX}/expense/include-split/${employeeId}`,
-				{
-					params: { data }
-				}
-			)
+				.get<IPagination<ISplitExpenseOutput>>(
+					`${API_PREFIX}/expense/include-split/${employeeId}`,
+					{
+						params: { data }
+					}
+				)
 		);
 	}
 
@@ -75,19 +75,19 @@ export class ExpensesService {
 
 		return firstValueFrom(
 			this.http
-			.get<IPagination<IExpense>>(
-				`${API_PREFIX}/expense`,
-				{
-					params: { data }
-				}
-			)
+				.get<IPagination<IExpense>>(
+					`${API_PREFIX}/expense`,
+					{
+						params: { data }
+					}
+				)
 		);
 	}
 
 	update(id: string, updateInput: IExpenseUpdateInput): Promise<IExpense> {
 		return firstValueFrom(
 			this.http
-			.put<IExpense>(`${API_PREFIX}/expense/${id}`, updateInput)
+				.put<IExpense>(`${API_PREFIX}/expense/${id}`, updateInput)
 		);
 	}
 
@@ -102,21 +102,27 @@ export class ExpensesService {
 	getDailyExpensesReport(request: any = {}) {
 		return firstValueFrom(
 			this.http
-			.get<IExpenseReportData[]>(`${API_PREFIX}/expense/report`, {
-				params: toParams(request)
-			})
+				.get<IExpenseReportData[]>(`${API_PREFIX}/expense/report`, {
+					params: toParams(request)
+				})
 		);
 	}
 
-	getReportChartData(request: any = {}) {
+	/**
+	 * Retrieves expense report chart data based on the provided request parameters.
+	 * @param request - The request parameters for fetching expense report data.
+	 * @returns A Promise that resolves to an array of IExpenseReportData objects.
+	 */
+	getExpenseReportCharts(request: any = {}): Promise<IExpenseReportData[]> {
+		// Construct the URL for the API endpoint
+		const url = `${API_PREFIX}/expense/report/daily-chart`;
+
+		// Convert the request parameters to an HTTP params object
+		const params = toParams(request);
+
+		// Make an HTTP GET request using Angular's HttpClient, and convert the observable to a Promise
 		return firstValueFrom(
-			this.http
-			.get<IExpenseReportData[]>(
-				`${API_PREFIX}/expense/report/daily-chart`,
-				{
-					params: toParams(request)
-				}
-			)
+			this.http.get<IExpenseReportData[]>(url, { params })
 		);
 	}
 }
