@@ -3,8 +3,9 @@ import * as chalk from 'chalk';
 import { TlsOptions } from 'tls';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
-import { Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
-import { Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
+import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
+import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
+import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
@@ -122,8 +123,8 @@ switch (dbType) {
 					};
 				}
 
-				const mikroOrmPostgresOptions: MikroOrmModuleOptions = {
-					type: 'postgresql',
+				const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
+					driver: PostgreSqlDriver,
 					host: process.env.DB_HOST || 'localhost',
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
 					dbName: process.env.DB_NAME || 'postgres',
@@ -213,7 +214,7 @@ switch (dbType) {
 		switch (dbORM) {
 			case 'mikro-orm':
 				const mikroORMSqliteConfig: MikroOrmSqliteOptions = {
-					type: 'sqlite',
+					driver: SqliteDriver,
 					dbName: dbPath,
 				};
 				connectionConfig = mikroORMSqliteConfig;
@@ -245,7 +246,7 @@ switch (dbType) {
 		switch (dbORM) {
 			case 'mikro-orm':
 				const mikroORMBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
-					type: 'better-sqlite',
+					driver: BetterSqliteDriver,
 					dbName: betterSqlitePath,
 				};
 				connectionConfig = mikroORMBetterSqliteConfig;

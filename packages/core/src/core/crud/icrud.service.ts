@@ -23,7 +23,7 @@ import {
 
 export interface ICrudService<T> {
 	count(filter?: IFindManyOptions<T>): Promise<number>;
-	countBy(filter?: IFindOptionsWhere<T>): Promise<number>;
+	countBy(filter?: ICountByOptions<T>): Promise<number>;
 	findAll(filter?: IFindManyOptions<T>): Promise<IPagination<T>>;
 	paginate(filter?: IFindManyOptions<T>): Promise<IPagination<T>>;
 	findOneByIdString(id: string, options?: IFindOneOptions<T>): Promise<T>;

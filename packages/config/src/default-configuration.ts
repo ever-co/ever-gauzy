@@ -10,6 +10,7 @@ import {
 } from '@gauzy/common';
 import * as path from 'path';
 import { dbConnectionConfig } from './database';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 process.cwd();
 
@@ -34,6 +35,16 @@ if (__dirname.startsWith('/srv/gauzy')) {
 console.log('Default Config -> assetPath: ' + assetPath);
 console.log('Default Config -> assetPublicPath: ' + assetPublicPath);
 
+const dbORM: 'typeorm' | 'mikro-orm' = process.env.DB_ORM as any || 'typeorm';
+
+const typeORMDefaultConfig = {
+	retryAttempts: 100,
+	retryDelay: 3000,
+	migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
+	migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
+} as TypeOrmModuleOptions;
+
+
 /**
  * The default configurations.
  */
@@ -51,10 +62,7 @@ export const defaultConfiguration: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		retryAttempts: 100,
-		retryDelay: 3000,
-		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
-		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
+		// ...(dbORM === 'typeorm' ? typeORMDefaultConfig : {}),
 		...dbConnectionConfig
 	},
 	plugins: [],
