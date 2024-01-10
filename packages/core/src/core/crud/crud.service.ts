@@ -29,6 +29,7 @@ import {
 	DeleteOptions,
 	FindOneOrFailOptions
 } from '@mikro-orm/core';
+import { getORMType } from 'core/utils';
 
 export abstract class CrudService<T extends BaseEntity>
 	implements ICrudService<T> {
@@ -53,8 +54,8 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async count(options?: ICountOptions<T>): Promise<number> {
-		const dbType = process.env.DB_ORM
-		switch (dbType) {
+		const ormType = getORMType();
+		switch (ormType) {
 			case 'mikro-orm':
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
 
@@ -73,8 +74,8 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async countBy(options?: ICountByOptions<T>): Promise<number> {
 
-		const dbType = process.env.DB_ORM
-		switch (dbType) {
+		const ormType = getORMType();
+		switch (ormType) {
 			case 'mikro-orm':
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
 
@@ -93,10 +94,10 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async findAll(options?: ICountOptions<T>): Promise<IPagination<T>> {
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		let total: number;
 		let items: T[];
-		switch (dbType) {
+		switch (ormType) {
 			case 'mikro-orm':
 				total = await this.mikroRepository.count(options as MikroFilterQuery<T>);
 				items = await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
@@ -116,8 +117,8 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
-		const dbType = process.env.DB_ORM
-		switch (dbType) {
+		const ormType = getORMType();
+		switch (ormType) {
 			case 'mikro-orm':
 				return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
 
@@ -136,11 +137,11 @@ export abstract class CrudService<T extends BaseEntity>
 	 */
 	public async paginate(options?: FindManyOptions<T>): Promise<IPagination<T>> {
 		try {
-			const dbType = process.env.DB_ORM
+			const ormType = getORMType();
 			let total: number;
 			let items: T[];
 
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					[items, total] = await this.mikroRepository.findAndCount(options.where as MikroFilterQuery<T>, {
 						skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
@@ -213,9 +214,9 @@ export abstract class CrudService<T extends BaseEntity>
 	): Promise<ITryRequest<T>> {
 		try {
 
-			const dbType = process.env.DB_ORM
+			const ormType = getORMType();
 			let record: T;
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					// return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
 					options = options as IMikroOptions<T>;
@@ -283,9 +284,9 @@ export abstract class CrudService<T extends BaseEntity>
 		options: IFindOneOptions<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const dbType = process.env.DB_ORM
+			const ormType = getORMType();
 			let record: T;
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					record = await this.mikroRepository.findOneOrFail(options.where as MikroFilterQuery<T>, options as FindOneOrFailOptions<T>);
 
@@ -316,9 +317,9 @@ export abstract class CrudService<T extends BaseEntity>
 		options: IFindWhereOptions<T>
 	): Promise<ITryRequest<T>> {
 		try {
-			const dbType = process.env.DB_ORM
+			const ormType = getORMType();
 			let record: T;
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					record = await this.mikroRepository.findOneOrFail(options as MikroFilterQuery<T>);
 
@@ -356,9 +357,9 @@ export abstract class CrudService<T extends BaseEntity>
 		options?: IFindOneOptions<T>
 	): Promise<T> {
 
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		let record: T;
-		switch (dbType) {
+		switch (ormType) {
 			case 'mikro-orm':
 				// return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
 				options = options as IMikroOptions<T>;
@@ -422,9 +423,9 @@ export abstract class CrudService<T extends BaseEntity>
 		options: IFindOneOptions<T>
 	): Promise<T | null> {
 
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		let record: T;
-		switch (dbType) {
+		switch (ormType) {
 			case 'mikro-orm':
 				record = await this.mikroRepository.findOne(options.where as MikroFilterQuery<T>, options as MikroFindOneOptions<T>);
 
@@ -448,9 +449,9 @@ export abstract class CrudService<T extends BaseEntity>
 	public async findOneByWhereOptions(
 		options: IFindWhereOptions<T>
 	): Promise<T | null> {
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		let record: T;
-		switch (dbType) {
+		switch (ormType) {
 			case 'mikro-orm':
 				record = await this.mikroRepository.findOne(options as MikroFilterQuery<T>);
 
@@ -465,8 +466,8 @@ export abstract class CrudService<T extends BaseEntity>
 	}
 
 	public async create(entity: IPartialEntity<T>): Promise<T> {
-		const dbType = process.env.DB_ORM
-		switch (dbType) {
+		const ormType = getORMType();
+		switch (ormType) {
 			case 'mikro-orm':
 				try {
 					const row = this.mikroRepository.create(entity as RequiredEntityData<T>);
@@ -494,9 +495,9 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @returns
 	 */
 	public async save(entity: IPartialEntity<T>): Promise<T> {
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		try {
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					return await this.mikroRepository.upsert(entity as T);
 				default:
@@ -521,9 +522,9 @@ export abstract class CrudService<T extends BaseEntity>
 		id: IUpdateCriteria<T>,
 		partialEntity: QueryDeepPartialEntity<T>
 	): Promise<UpdateResult | T> {
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		try {
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					let where: MikroFilterQuery<T>;
 					if (typeof id === 'string') {
@@ -562,9 +563,9 @@ export abstract class CrudService<T extends BaseEntity>
 		...options: any[]
 	): Promise<DeleteResult> {
 
-		const dbType = process.env.DB_ORM
+		const ormType = getORMType();
 		try {
-			switch (dbType) {
+			switch (ormType) {
 				case 'mikro-orm':
 					let where: MikroFilterQuery<T>;
 					if (typeof criteria === 'string' || typeof criteria === 'number') {

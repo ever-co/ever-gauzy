@@ -13,6 +13,7 @@ import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/c
 import { ReportOrganization } from './report-organization.entity';
 import { Organization } from './../core/entities/internal';
 import { databaseTypes } from "@gauzy/config";
+import { getDBType } from 'core';
 
 export const createDefaultReport = async (
 	dataSource: DataSource,
@@ -160,7 +161,9 @@ async function cleanReport(
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
-	switch (config.dbConnectionOptions.type) {
+	const dbType = getDBType(config.dbConnectionOptions) as any;
+
+	switch (dbType) {
 		case databaseTypes.sqlite:
 		case databaseTypes.betterSqlite3:
 			await dataSource.query(`DELETE FROM ${reportCategory}`);
@@ -177,7 +180,7 @@ async function cleanReport(
 			await dataSource.query('SET foreign_key_checks = 1;');
 			break;
 		default:
-			throw Error(`cannot clean report, report_category tables due to unsupported database type: ${config.dbConnectionOptions.type}`);
+			throw Error(`cannot clean report, report_category tables due to unsupported database type: ${dbType}`);
 
 	}
 
@@ -212,24 +215,24 @@ function copyImage(
 
 		const dir = env.isElectron
 			? path.resolve(
-					env.gauzyUserPath,
-					...['src', 'assets', 'seed', destDir]
-			  )
+				env.gauzyUserPath,
+				...['src', 'assets', 'seed', destDir]
+			)
 			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
-			  path.resolve(
-					__dirname,
-					'../../../',
-					...['apps', 'api', 'src', 'assets', 'seed', destDir]
-			  );
+			path.resolve(
+				__dirname,
+				'../../../',
+				...['apps', 'api', 'src', 'assets', 'seed', destDir]
+			);
 
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
 			: config.assetOptions.assetPublicPath ||
-			  path.resolve(
-					__dirname,
-					'../../../',
-					...['apps', 'api', 'public']
-			  );
+			path.resolve(
+				__dirname,
+				'../../../',
+				...['apps', 'api', 'public']
+			);
 
 		mkdirSync(path.join(baseDir, destDir), { recursive: true });
 

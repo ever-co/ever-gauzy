@@ -6,10 +6,11 @@ import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
 import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
+import { MySqlDriver, Options as MikroOrmMySqlOptions } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { parseToBoolean } from '@gauzy/common';
+import { parseToBoolean, IDBConnectionOptions } from '@gauzy/common';
 
 export enum databaseTypes {
 	mongodb = 'mongodb',
@@ -32,7 +33,7 @@ console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 // `process` is a built-in global in Node.js, no need to `require()`
 console.log(chalk.magenta(`Currently running Node.js version %s`), process.version);
 
-let connectionConfig: TypeOrmModuleOptions | MikroOrmModuleOptions;
+let connectionConfig: IDBConnectionOptions;
 let dbPoolSize: number;
 let dbConnectionTimeout: number;
 let idleTimeoutMillis: number;
@@ -55,74 +56,81 @@ switch (dbType) {
 		throw 'MongoDB not supported yet';
 
 	case databaseTypes.mysql:
-		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
-		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
-			? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-			: 5000; // 5 seconds default
-		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-			: 10000; // 10 seconds default
+		switch (dbORM) {
+			case 'mikro-orm':
+				const mikroOrmMySqlOptions: MikroOrmMySqlOptions = {
+					driver: MySqlDriver,
+					host: process.env.DB_HOST || 'localhost',
+					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+					dbName: process.env.DB_NAME || 'mysql',
+					user: process.env.DB_USER || 'root',
+					password: process.env.DB_PASS || 'root',
+					migrations: {
+						path: 'src/modules/not-exists/*.migration{.ts,.js}',
+					},
+					entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
+					driverOptions: {
+						connection: { ssl: getTlsOptions(process.env.DB_SSL_MODE) },
+					},
+				};
+				connectionConfig = mikroOrmMySqlOptions;
+				break;
 
-		console.log('DB Pool Size: ' + dbPoolSize);
-		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
-		console.log('DB Idle Timeout: ' + idleTimeoutMillis);
-		console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
+			default:
+				dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
+				dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
+					? parseInt(process.env.DB_CONNECTION_TIMEOUT)
+					: 5000; // 5 seconds default
+				idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+				dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+					? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+					: 10000; // 10 seconds default
 
-		const mysqlConnectionOptions: MysqlConnectionOptions = {
-			type: dbType,
-			ssl: getTlsOptions(process.env.DB_SSL_MODE),
-			host: process.env.DB_HOST || 'localhost',
-			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
-			database: process.env.DB_NAME || 'mysql',
-			username: process.env.DB_USER || 'root',
-			password: process.env.DB_PASS || 'root',
-			// forcing typeorm to use (mysql2) if both (mysql/mysql2) packages found, it prioritize to load (mysql)
-			connectorPackage: 'mysql2',
-			logging:
-				process.env.DB_LOGGING == 'false'
-					? false
-					: process.env.DB_LOGGING == 'all'
-						? 'all'
-						: process.env.DB_LOGGING == 'query'
-							? ['query', 'error']
-							: ['error'], // by default set to error only
-			logger: 'advanced-console',
-			// log queries that take more than 10 sec as warnings
-			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
-			synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
-			poolSize: dbPoolSize,
-			migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
-			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
-			extra: {
-				connectionLimit: 10,
-				maxIdle: 10
-			}
+				console.log('DB Pool Size: ' + dbPoolSize);
+				console.log('DB Connection Timeout: ' + dbConnectionTimeout);
+				console.log('DB Idle Timeout: ' + idleTimeoutMillis);
+				console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
+
+				const mysqlConnectionOptions: MysqlConnectionOptions = {
+					type: dbType,
+					ssl: getTlsOptions(process.env.DB_SSL_MODE),
+					host: process.env.DB_HOST || 'localhost',
+					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
+					database: process.env.DB_NAME || 'mysql',
+					username: process.env.DB_USER || 'root',
+					password: process.env.DB_PASS || 'root',
+					// forcing typeorm to use (mysql2) if both (mysql/mysql2) packages found, it prioritize to load (mysql)
+					connectorPackage: 'mysql2',
+					logging:
+						process.env.DB_LOGGING == 'false'
+							? false
+							: process.env.DB_LOGGING == 'all'
+								? 'all'
+								: process.env.DB_LOGGING == 'query'
+									? ['query', 'error']
+									: ['error'], // by default set to error only
+					logger: 'advanced-console',
+					// log queries that take more than 10 sec as warnings
+					maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
+					synchronize: process.env.DB_SYNCHRONIZE === 'true', // We are using migrations, synchronize should be set to false.
+					poolSize: dbPoolSize,
+					migrations: ['src/modules/not-exists/*.migration{.ts,.js}'],
+					entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
+					extra: {
+						connectionLimit: 10,
+						maxIdle: 10
+					}
+				}
+
+				connectionConfig = mysqlConnectionOptions;
+				break;
 		}
-
-		connectionConfig = mysqlConnectionOptions;
 		break;
 
 	case databaseTypes.postgres:
 
 		switch (dbORM) {
 			case 'mikro-orm':
-
-				const isSSL = process.env.DB_SSL_MODE === 'true' ? true : undefined;
-
-				let mikroSSLParams: TlsOptions;
-
-				if (isSSL) {
-					const base64data = process.env.DB_CA_CERT;
-					const buff = Buffer.from(base64data, 'base64');
-					const sslCert = buff.toString('ascii');
-
-					mikroSSLParams = {
-						rejectUnauthorized: true,
-						ca: sslCert
-					};
-				}
-
 				const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 					driver: PostgreSqlDriver,
 					host: process.env.DB_HOST || 'localhost',
@@ -135,7 +143,7 @@ switch (dbType) {
 					},
 					entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 					driverOptions: {
-						connection: { ssl: mikroSSLParams },
+						connection: { ssl: getTlsOptions(process.env.DB_SSL_MODE) },
 					},
 				};
 				connectionConfig = mikroOrmPostgresOptions;

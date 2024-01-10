@@ -7,6 +7,7 @@ import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { RequestContext } from './../../../core/context';
+import { isSqliteDB } from 'core';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
 export class GetConflictAvailabilitySlotsHandler
@@ -16,7 +17,7 @@ export class GetConflictAvailabilitySlotsHandler
 		private readonly availabilitySlotRepository: Repository<AvailabilitySlot>,
 
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	public async execute(
 		command: GetConflictAvailabilitySlotsCommand
@@ -38,7 +39,7 @@ export class GetConflictAvailabilitySlotsHandler
 		});
 
 		query.andWhere(
-			['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+			isSqliteDB(this.configService.dbConnectionOptions)
 				? `'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
 				: `("${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 		);

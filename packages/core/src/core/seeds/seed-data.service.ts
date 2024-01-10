@@ -311,6 +311,7 @@ import { createDefaultStatuses } from './../../tasks/statuses/status.seed';
 import { createDefaultPriorities } from './../../tasks/priorities/priority.seed';
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 import { createDefaultIssueTypes } from './../../tasks/issue-type/issue-type.seed';
+import { getDBType } from 'core/utils';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -2252,9 +2253,9 @@ export class SeedDataService {
 	private async cleanAll(entities: Array<any>) {
 		try {
 			const manager = this.dataSource.manager;
-			const database = this.configService.dbConnectionOptions;
+			const databaseType = getDBType(this.configService.dbConnectionOptions);
 
-			switch (database.type) {
+			switch (databaseType) {
 				case databaseTypes.postgres:
 					const tables = entities.map(
 						(entity) => '"' + entity.tableName + '"'
@@ -2284,7 +2285,7 @@ export class SeedDataService {
 					};
 					break;
 				default:
-					throw Error(`Unsupported database type: ${database.type}`);
+					throw Error(`Unsupported database type: ${databaseType}`);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

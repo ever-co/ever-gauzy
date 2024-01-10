@@ -1,5 +1,5 @@
 import { DynamicModule, Injectable, Type, Logger } from '@nestjs/common';
-import { IPluginConfig, IApiServerOptions, IAssetOptions, IDbConnectionOptions } from '@gauzy/common';
+import { IPluginConfig, IApiServerOptions, IAssetOptions, IDBConnectionOptions } from '@gauzy/common';
 import { getConfig } from './config-manager';
 import { environment } from './environments/environment';
 import { IEnvironment } from './environments/ienvironment';
@@ -28,7 +28,7 @@ export class ConfigService {
 		return this.config.apiConfigOptions.graphqlConfigOptions;
 	}
 
-	get dbConnectionOptions(): IDbConnectionOptions {
+	get dbConnectionOptions(): IDBConnectionOptions {
 		return this.config.dbConnectionOptions;
 	}
 

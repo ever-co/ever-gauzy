@@ -27,6 +27,7 @@ import {
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
+import { isSqliteDB } from 'core';
 
 const config = getConfig();
 
@@ -52,7 +53,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const query = this.requestApprovalRepository.createQueryBuilder('request_approval');
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
-		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
+		if (isSqliteDB(config.dbConnectionOptions)) {
 			query.leftJoinAndSelect(
 				'time_off_request',
 				'time_off_request',

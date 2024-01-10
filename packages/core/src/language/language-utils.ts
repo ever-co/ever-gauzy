@@ -4,6 +4,7 @@ import allLanguages from './all-languages';
 import { Language } from './language.entity';
 import { faker } from '@faker-js/faker';
 import { v4 as uuidV4 } from 'uuid';
+import { isSqliteDB } from 'core';
 
 export class LanguageUtils {
 	private static async addLanguages(queryRunner: QueryRunner, languages: ILanguage[]): Promise<void> {
@@ -11,7 +12,7 @@ export class LanguageUtils {
 			const { name, code, is_system, description, color } = language;
 
 			let insertOrUpdateQuery = '';
-			if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
+			if (isSqliteDB(queryRunner.connection.options)) {
 				const payload = [name, code, is_system ? 1 : 0, description, color];
 
 				payload.push(uuidV4());
