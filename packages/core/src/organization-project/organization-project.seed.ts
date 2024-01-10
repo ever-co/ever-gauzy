@@ -15,7 +15,6 @@ import {
 } from '@gauzy/contracts';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 import { Employee, OrganizationContact, Tag } from './../core/entities/internal';
-import { databaseTypes } from "@gauzy/config";
 
 export const createDefaultOrganizationProjects = async (
 	dataSource: DataSource,
