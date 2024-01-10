@@ -3,11 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { getConfig } from '@gauzy/config';
 import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { RequestContext } from './../../../../core/context';
+import { isSqliteDB } from 'core';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler
@@ -16,7 +16,7 @@ export class ScheduleTimeLogEntriesHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>
-	) {}
+	) { }
 
 	public async execute(command: ScheduleTimeLogEntriesCommand) {
 		const { timeLog } = command;
@@ -103,7 +103,7 @@ export class ScheduleTimeLogEntriesHandler
 				/**
 				 * Adjust stopped date as per database selection
 				 */
-				if (['sqlite', 'better-sqlite3'].includes(getConfig().dbConnectionOptions.type)) {
+				if (isSqliteDB()) {
 					stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
 					slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
 				} else {

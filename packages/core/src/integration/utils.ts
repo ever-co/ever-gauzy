@@ -4,6 +4,7 @@ import { getConfig } from '@gauzy/config';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';
+import { isSqliteDB } from 'core';
 
 export class IntegrationsUtils {
 	/**
@@ -29,7 +30,7 @@ export class IntegrationsUtils {
 
 				let upsertQuery = ``;
 
-				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
+				if (isSqliteDB(queryRunner.connection.options)) {
 					const payload = [name, filepath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
 
 					// For SQLite, manually generate a UUID using uuidv4()
@@ -132,7 +133,7 @@ export class IntegrationsUtils {
 			const payload = [name, description, icon, groupName, order];
 
 			let upsertQuery = ``;
-			if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
+			if (isSqliteDB(queryRunner.connection.options)) {
 				// For SQLite, manually generate a UUID using uuidv4()
 				const generatedId = uuidv4();
 				payload.push(generatedId);

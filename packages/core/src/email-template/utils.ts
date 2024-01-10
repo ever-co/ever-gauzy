@@ -7,6 +7,7 @@ import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { EmailTemplateEnum } from '@gauzy/contracts';
 import { isNotEmpty } from "@gauzy/common";
+import { isSqliteDB } from "core";
 
 /**
  * Email templates utils functions.
@@ -161,18 +162,18 @@ export class EmailTemplateUtils {
                 hbs,
                 mjml
             ];
-			const isSqlite = ['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type);
-			let query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = $1 AND "languageCode" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
-			if (isSqlite) {
-				query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
-			}
-			const [template] = await queryRunner.connection.manager.query(query, [name, languageCode]);
+            const isSqlite = isSqliteDB(queryRunner.connection.options);
+            let query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = $1 AND "languageCode" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+            if (isSqlite) {
+                query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+            }
+            const [template] = await queryRunner.connection.manager.query(query, [name, languageCode]);
 
             if (parseInt(template.count, 10) > 0) {
-				let update = `UPDATE "email_template" SET "hbs" = $1, "mjml" = $2 WHERE ("name" = $3 AND "languageCode" = $4) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
-				if (isSqlite) {
-					update = `UPDATE "email_template" SET "hbs" = ?, "mjml" = ? WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
-				}
+                let update = `UPDATE "email_template" SET "hbs" = $1, "mjml" = $2 WHERE ("name" = $3 AND "languageCode" = $4) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+                if (isSqlite) {
+                    update = `UPDATE "email_template" SET "hbs" = ?, "mjml" = ? WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
+                }
                 await queryRunner.connection.manager.query(update, [hbs, mjml, name, languageCode]);
             } else {
                 if (isSqlite) {

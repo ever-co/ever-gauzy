@@ -39,12 +39,12 @@ export interface IAuthOptions {
 	jwtSecret: string;
 }
 
-export type IDbConnectionOptions = TypeOrmModuleOptions | MikroOrmModuleOptions
+export type IDBConnectionOptions = TypeOrmModuleOptions | MikroOrmModuleOptions
 
 export interface IPluginConfig {
 	apiConfigOptions: IApiServerOptions;
 
-	dbConnectionOptions: IDbConnectionOptions;
+	dbConnectionOptions: IDBConnectionOptions;
 
 	plugins?: Array<DynamicModule | Type<any>>;
 

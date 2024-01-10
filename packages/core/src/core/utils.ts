@@ -4,9 +4,15 @@ import { IDateRange, IUser } from '@gauzy/contracts';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { getConfig } from '@gauzy/config';
+import { getConfig, databaseTypes } from '@gauzy/config';
+import { IDBConnectionOptions } from '@gauzy/common';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
+import { SqliteDriver } from '@mikro-orm/sqlite';
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { MySqlDriver } from '@mikro-orm/mysql';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -77,9 +83,7 @@ export function unixTimestampToDate(
  */
 export function convertToDatetime(datetime) {
 	if (moment(new Date(datetime)).isValid()) {
-		const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-		const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-		if (allowedDbTypes.includes(dbType)) {
+		if (isSqliteDB()) {
 			return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
 		} else {
 			return moment(new Date(datetime)).toDate();
@@ -132,8 +136,7 @@ export function getDateRange(
 		throw 'End date must be greater than start date.';
 	}
 
-	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-	if (['sqlite', 'better-sqlite3'].includes(dbType)) {
+	if (isSqliteDB()) {
 		start = start.format('YYYY-MM-DD HH:mm:ss');
 		end = end.format('YYYY-MM-DD HH:mm:ss');
 	} else {
@@ -224,9 +227,7 @@ export function getDateRangeFormat(
 		throw 'End date must be greater than start date.';
 	}
 
-	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-	if (allowedDbTypes.includes(dbType)) {
+	if (isSqliteDB()) {
 		return {
 			start: start.format('YYYY-MM-DD HH:mm:ss'),
 			end: end.format('YYYY-MM-DD HH:mm:ss'),
@@ -347,6 +348,57 @@ export function findIntersection(arr1: any[], arr2: any[]) {
  * @param {string} connectionType - The database connection type.
  * @returns {boolean} - Returns true if the database connection type is SQLite.
  */
-export function isSqliteDB(connectionType: string): boolean {
-	return ['sqlite', 'better-sqlite3'].includes(connectionType);
+export function isSqliteDB(dbConnection?: IDBConnectionOptions): boolean {
+	return isDatabaseType([databaseTypes.sqlite, databaseTypes.betterSqlite3], dbConnection)
+}
+
+export function getORMType(defaultValue = 'typeorm'): 'typeorm' | 'mikro-orm' {
+	return process.env.DB_ORM as any || defaultValue;
+}
+
+
+export function getDBType(dbConnection?: IDBConnectionOptions) {
+	const dbORM = getORMType();
+	if (!dbConnection) {
+		dbConnection = getConfig().dbConnectionOptions
+	}
+	let dbType;
+	switch (dbORM) {
+		case 'mikro-orm':
+			if (dbConnection.driver instanceof SqliteDriver) {
+				dbType = databaseTypes.sqlite
+			}
+			else if (dbConnection.driver instanceof BetterSqliteDriver) {
+				dbType = databaseTypes.betterSqlite3
+			}
+			else if (dbConnection.driver instanceof PostgreSqlDriver) {
+				dbType = databaseTypes.postgres
+			}
+			else if (dbConnection.driver instanceof MySqlDriver) {
+				dbType = databaseTypes.mysql
+			} else {
+				dbType = databaseTypes.postgres
+			}
+			break;
+
+		default:
+			dbType = (dbConnection as TypeOrmModuleOptions).type
+			break;
+	}
+
+	return dbType
+}
+
+
+export function isDatabaseType(types: databaseTypes | databaseTypes[], dbConnection?: IDBConnectionOptions) {
+	if (!dbConnection) {
+		dbConnection = getConfig().dbConnectionOptions
+	}
+	let dbType = getDBType(dbConnection)
+
+	if (types instanceof Array) {
+		return types.includes(dbType);
+	} else {
+		return types == dbType;
+	}
 }

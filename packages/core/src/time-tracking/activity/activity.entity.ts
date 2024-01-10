@@ -8,11 +8,11 @@ import {
 	IEmployee,
 	ITask,
 	ITimeSlot,
-	IOrganizationProject
+	IOrganizationProject,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
-import { getConfig } from '@gauzy/config';
+import { IDBConnectionOptions } from '@gauzy/common';
 import {
 	Employee,
 	OrganizationProject,
@@ -20,9 +20,10 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { databaseTypes } from "@gauzy/config";
+import { databaseTypes, getConfig } from "@gauzy/config";
+import { isSqliteDB } from 'core';
 
-let options: TypeOrmModuleOptions;
+let options: IDBConnectionOptions;
 try {
 	options = getConfig().dbConnectionOptions;
 } catch (error) {
@@ -45,13 +46,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	description?: string;
 
 	@ApiPropertyOptional({
-		type: () => (['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json')
+		type: () => (isSqliteDB(options) ? 'text' : 'json')
 	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'
+		type: isSqliteDB(options) ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 

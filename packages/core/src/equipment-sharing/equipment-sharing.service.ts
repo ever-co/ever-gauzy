@@ -12,6 +12,7 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { isSqliteDB } from 'core';
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
@@ -36,9 +37,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
 				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
-				.leftJoinAndSelect( `${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
+				.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
+			if (isSqliteDB(this.configService.dbConnectionOptions)) {
 				query.leftJoinAndSelect(
 					'request_approval',
 					'requestApproval',
@@ -83,7 +84,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
-		const [ items, total ] = await this.equipmentSharingRepository.findAndCount({
+		const [items, total] = await this.equipmentSharingRepository.findAndCount({
 			relations: [
 				'equipment',
 				'employees',
@@ -178,7 +179,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
-			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
+			if (isSqliteDB(this.configService.dbConnectionOptions)) {
 				query.leftJoinAndSelect(
 					'request_approval',
 					'requestApproval',

@@ -3,19 +3,19 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_PORT,
 	DEFAULT_GRAPHQL_API_PATH,
-	IPluginConfig
+	IPluginConfig,
+	IDBConnectionOptions
 } from '@gauzy/common';
 import { dbConnectionConfig } from '@gauzy/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { getORMType } from 'core';
 
-const dbORM: 'typeorm' | 'mikro-orm' = process.env.DB_ORM as any || 'typeorm';
-
-const typeORMDefaultConfig = {
+const typeORMDefaultConfig: any = {
 	retryAttempts: 100,
 	retryDelay: 3000,
 	migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 	migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
-} as TypeOrmModuleOptions;
+};
 
 // Define the dev configuration
 export const devConfig: IPluginConfig = {
@@ -32,7 +32,7 @@ export const devConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		...(dbORM === 'typeorm' ? typeORMDefaultConfig : {}),
+		...(getORMType() === 'typeorm' ? typeORMDefaultConfig : {}),
 		...dbConnectionConfig
 	},
 	plugins: []

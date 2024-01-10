@@ -6,6 +6,7 @@ import { ConfigService } from '@gauzy/config';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context';
+import { isSqliteDB } from 'core';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler
@@ -35,7 +36,7 @@ export class GetConflictTimeLogHandler
 			.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, { tenantId })
 			.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId })
 			.andWhere(
-				['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
+				isSqliteDB()
 					? `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`
 					: `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
 			);
