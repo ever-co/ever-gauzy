@@ -12,6 +12,7 @@ import { getDefaultOrganizations } from './../organization/organization.seed';
 import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import { ReportOrganization } from './report-organization.entity';
 import { Organization } from './../core/entities/internal';
+import { databaseTypes } from "@gauzy/config";
 
 export const createDefaultReport = async (
 	dataSource: DataSource,
@@ -159,11 +160,25 @@ async function cleanReport(
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
-	if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-		await dataSource.query(`DELETE FROM ${reportCategory}`);
-		await dataSource.query(`DELETE FROM ${report}`);
-	} else {
-		await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+	switch (config.dbConnectionOptions.type) {
+		case databaseTypes.sqlite:
+		case databaseTypes.betterSqlite3:
+			await dataSource.query(`DELETE FROM ${reportCategory}`);
+			await dataSource.query(`DELETE FROM ${report}`);
+			break;
+		case databaseTypes.postgres:
+			await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+			break;
+		case databaseTypes.mysql:
+			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
+			await dataSource.query('SET foreign_key_checks = 0;');
+			await dataSource.query(`DELETE FROM ${reportCategory}`);
+			await dataSource.query(`DELETE FROM ${report}`);
+			await dataSource.query('SET foreign_key_checks = 1;');
+			break;
+		default:
+			throw Error(`cannot clean report, report_category tables due to unsupported database type: ${config.dbConnectionOptions.type}`);
+
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
@@ -285,5 +300,3 @@ export async function createRandomTenantOrganizationsReport(
 		console.log(chalk.red(`SEEDING Random Reports`, error));
 	}
 }
-
-

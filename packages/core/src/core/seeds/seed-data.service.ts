@@ -2274,13 +2274,17 @@ export class SeedDataService {
 					}
 					await manager.query(`SET foreign_key_checks = 1;`);
 					break;
-				default:
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
 					await manager.query(`PRAGMA foreign_keys = OFF;`);
 					for (const entity of entities) {
 						await manager.query(
 							`DELETE FROM "${entity.tableName}";`
 						);
-					}
+					};
+					break;
+				default:
+					throw Error(`Unsupported database type: ${database.type}`);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

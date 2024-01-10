@@ -15,6 +15,7 @@ import {
 } from '@gauzy/contracts';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 import { Employee, OrganizationContact, Tag } from './../core/entities/internal';
+import { databaseTypes } from "@gauzy/config";
 
 export const createDefaultOrganizationProjects = async (
 	dataSource: DataSource,
@@ -186,7 +187,7 @@ export async function seedProjectMembersCount(
 	dataSource: DataSource,
 	tenants: ITenant[]
 ) {
-	const isSqlite = ['sqlite', 'better-sqlite3'].includes(dataSource.options.type);
+	const isSqliteOrMysql = ['sqlite', 'better-sqlite3', 'mysql'].includes(dataSource.options.type);
 	/**
 	 * GET all tenants in the system
 	 */
@@ -197,7 +198,8 @@ export async function seedProjectMembersCount(
 		 * GET all tenant projects for specific tenant
 		 */
 		const projects = await dataSource.manager.query(
-			`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = ${isSqlite ? '?' : '$1'
+			`SELECT * FROM \`organization_project\` WHERE \`organization_project\`.\`tenantId\` = ${
+				isSqliteOrMysql ? '?' : '$1'
 			}`,
 			[tenantId]
 		);
@@ -211,21 +213,21 @@ export async function seedProjectMembersCount(
 			 */
 			const [members] = await dataSource.manager.query(`
 				SELECT
-					COUNT("organization_project_employee"."employeeId") AS count
-				FROM "organization_project_employee"
+					COUNT(\`organization_project_employee\`.\`employeeId\`) AS count
+				FROM \`organization_project_employee\`
 				INNER JOIN
-					"employee" ON "employee"."id"="organization_project_employee"."employeeId"
+					\`employee\` ON \`employee\`.\`id\`=\`organization_project_employee\`.\`employeeId\`
 				INNER JOIN
-					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
+					\`organization_project\` ON \`organization_project\`.\`id\`=\`organization_project_employee\`.\`organizationProjectId\`
 				WHERE
-					"organization_project_employee"."organizationProjectId" = ${isSqlite ? '?' : '$1'}
+					\`organization_project_employee\`.\`organizationProjectId\` = ${isSqliteOrMysql ? '?' : '$1'}
 			`, [projectId]);
 
 			const count = members['count'];
 
 			await dataSource.manager.query(
-				`UPDATE "organization_project" SET "membersCount" = ${isSqlite ? '?' : '$1'
-				} WHERE "id" = ${isSqlite ? '?' : '$2'}`,
+				`UPDATE \`organization_project\` SET \`membersCount\` = ${isSqliteOrMysql ? '?' : '$1'
+				} WHERE \`id\` = ${isSqliteOrMysql ? '?' : '$2'}`,
 				[count, projectId]
 			);
 		}

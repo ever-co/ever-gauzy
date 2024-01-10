@@ -56,6 +56,7 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
+import { databaseTypes }  from "@gauzy/config";
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
@@ -75,7 +76,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text', nullable: true } : { nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })

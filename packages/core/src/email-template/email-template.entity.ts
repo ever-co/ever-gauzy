@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
 import { IEmailTemplate } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { databaseTypes } from "@gauzy/config";
 
 @Entity('email_template')
 export class EmailTemplate extends TenantOrganizationBaseEntity
@@ -22,7 +23,7 @@ export class EmailTemplate extends TenantOrganizationBaseEntity
 	mjml: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column(process.env.DB_TYPE === databaseTypes.mysql ? { type: "longtext" } : {})
 	hbs: string;
 
 	title?: string;

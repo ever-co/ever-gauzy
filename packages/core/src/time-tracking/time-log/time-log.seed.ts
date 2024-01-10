@@ -28,8 +28,8 @@ export const createRandomTimeLogs = async (
 	const projects: IOrganizationProject[] = await query
 		.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks')
 		.leftJoinAndSelect(`${query.alias}.organizationContact`, 'organizationContact')
-		.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId: tenant.id })
-		.andWhere(`"tasks"."tenantId" =:tenantId`, { tenantId: tenant.id })
+		.andWhere(`\`${query.alias}\`.\`tenantId\` =:tenantId`, { tenantId: tenant.id })
+		.andWhere(`\`tasks\`.\`tenantId\` =:tenantId`, { tenantId: tenant.id })
 		.getMany();
 	if (isEmpty(projects)) {
 		console.warn(

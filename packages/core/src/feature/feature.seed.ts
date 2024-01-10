@@ -3,7 +3,7 @@ import * as path from 'path';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as chalk from 'chalk';
 import * as rimraf from 'rimraf';
-import { ConfigService, environment as env } from '@gauzy/config';
+import { ConfigService, environment as env, databaseTypes } from '@gauzy/config';
 import {
 	IFeature,
 	IFeatureOrganization,
@@ -104,17 +104,28 @@ async function createFeature(
 }
 
 async function cleanFeature(dataSource, config) {
-	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-	if (allowedDbTypes.includes(config.dbConnectionOptions.type)) {
-		await dataSource.query('DELETE FROM feature');
-		await dataSource.query('DELETE FROM feature_organization');
-	} else {
-		await dataSource.query(
-			'TRUNCATE TABLE feature RESTART IDENTITY CASCADE'
-		);
-		await dataSource.query(
-			'TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE'
-		);
+	switch (config.dbConnectionOptions.type) {
+		case databaseTypes.sqlite:
+		case databaseTypes.betterSqlite3:
+			await dataSource.query('DELETE FROM feature');
+			await dataSource.query('DELETE FROM feature_organization');
+			break;
+		case databaseTypes.postgres:
+			await dataSource.query('TRUNCATE TABLE feature RESTART IDENTITY CASCADE');
+			await dataSource.query('TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE');
+			break;
+		case databaseTypes.mysql:
+			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
+			await dataSource.query('SET foreign_key_checks = 0;');
+			await dataSource.query('DELETE FROM feature;');
+			await dataSource.query('DELETE FROM feature_organization;');
+			await dataSource.query('SET foreign_key_checks = 1;');
+			break;
+		default:
+			throw Error(`
+				cannot clean feature, feature_organization tables due to unsupported database type:
+				${config.dbConnectionOptions.type}
+			`);
 	}
 
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
