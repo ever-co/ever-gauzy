@@ -7,9 +7,9 @@ import {
 } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	Validators,
-	FormGroup,
+	UntypedFormGroup,
 	FormControl
 } from '@angular/forms';
 import {
@@ -75,11 +75,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	/*
 	* Expense Mutation Form
 	*/
-	public form: FormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: ExpensesMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			amount: ['', Validators.required],
 			vendor: [],
@@ -107,7 +107,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	constructor(
 		public readonly dialogRef: NbDialogRef<ExpensesMutationComponent>,
 		private readonly dialogService: NbDialogService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		public readonly translateService: TranslateService
 	) {
@@ -129,7 +129,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() {}
+	ngAfterViewInit() { }
 
 	/**
 	 * Added statuses dropdown selector
@@ -246,32 +246,32 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.form.valueChanges
 			.pipe(untilDestroyed(this))
 			.subscribe((val) => {
-			const amount = val.amount;
-			const rate = val.rateValue;
-			const oldNotes = val.notes;
+				const amount = val.amount;
+				const rate = val.rateValue;
+				const oldNotes = val.notes;
 
-			if (val.taxType === TaxTypesEnum.PERCENTAGE) {
-				const result = (amount / (rate + 100)) * 100 * (rate / 100);
-				this.calculatedValue =
-					`${this.getTranslation(
-						'EXPENSES_PAGE.MUTATION.TAX_AMOUNT'
-					)}: ` +
-					result.toFixed(2) +
-					' ' +
-					val.currency;
-			} else {
-				const result = (rate / (amount - rate)) * 100;
-				this.calculatedValue =
-					`${this.getTranslation(
-						'EXPENSES_PAGE.MUTATION.TAX_RATE'
-					)}: ` +
-					result.toFixed(2) +
-					' %';
-			}
-			if (rate !== 0) {
-				val.notes = this.calculatedValue + '. ' + oldNotes;
-			}
-		});
+				if (val.taxType === TaxTypesEnum.PERCENTAGE) {
+					const result = (amount / (rate + 100)) * 100 * (rate / 100);
+					this.calculatedValue =
+						`${this.getTranslation(
+							'EXPENSES_PAGE.MUTATION.TAX_AMOUNT'
+						)}: ` +
+						result.toFixed(2) +
+						' ' +
+						val.currency;
+				} else {
+					const result = (rate / (amount - rate)) * 100;
+					this.calculatedValue =
+						`${this.getTranslation(
+							'EXPENSES_PAGE.MUTATION.TAX_RATE'
+						)}: ` +
+						result.toFixed(2) +
+						' %';
+				}
+				if (rate !== 0) {
+					val.notes = this.calculatedValue + '. ' + oldNotes;
+				}
+			});
 	}
 
 	closeWarning() {
@@ -316,5 +316,5 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.form.get('currency').updateValueAndValidity();
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

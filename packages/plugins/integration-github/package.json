@@ -28,12 +28,12 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"@nestjs/common": "^9.2.1",
-		"@nestjs/core": "^9.2.1",
-		"@octokit/rest": "^18.0.0",
+		"@nestjs/common": "^10.3.0",
+		"@nestjs/core": "^10.3.0",
+		"@octokit/rest": "^20.0.2",
 		"chalk": "4.1.2",
 		"express": "^4.17.2",
-		"octokit": "2.1.0",
+		"octokit": "^3.1.2",
 		"pino-std-serializers": "^6.2.2",
 		"probot": "^12.3.3",
 		"smee-client": "^1.2.3",
@@ -42,6 +42,6 @@
 	"devDependencies": {
 		"@types/node": "^17.0.33",
 		"rimraf": "^3.0.2",
-		"typescript": "4.5.5"
+		"typescript": "5.1.6"
 	}
 }

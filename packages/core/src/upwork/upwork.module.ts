@@ -1,12 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
-import {
-	UpworkJobService,
-	UpworkOffersService,
-	UpworkReportService
-} from '@gauzy/integration-upwork';
+import { UpworkJobService, UpworkOffersService, UpworkReportService } from '@gauzy/integration-upwork';
 import { TenantModule } from './../tenant/tenant.module';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
@@ -20,27 +16,15 @@ import { IntegrationMapModule } from './../integration-map/integration-map.modul
 import { TimeSlotService } from '../time-tracking/time-slot/time-slot.service';
 import { ExpenseModule } from './../expense/expense.module';
 import { IncomeModule } from './../income/income.module';
-import {
-	Activity,
-	TimeLog,
-	TimeSlot,
-	TimeSlotMinute
-} from './../core/entities/internal';
+import { Activity, TimeLog, TimeSlot, TimeSlotMinute } from './../core/entities/internal';
 import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
 import { UpworkAuthorizationController } from './upwork-authorization.controller';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/integrations/upwork', module: UpworkModule }
-		]),
-		TypeOrmModule.forFeature([
-			TimeSlot,
-			Activity,
-			TimeLog,
-			TimeSlotMinute
-		]),
+		RouterModule.register([{ path: '/integrations/upwork', module: UpworkModule }]),
+		TypeOrmModule.forFeature([TimeSlot, Activity, TimeLog, TimeSlotMinute]),
 		TenantModule,
 		UserModule,
 		EmployeeModule,
@@ -54,10 +38,7 @@ import { UpworkAuthorizationController } from './upwork-authorization.controller
 		ExpenseCategoriesModule,
 		CqrsModule
 	],
-	controllers: [
-		UpworkAuthorizationController,
-		UpworkController
-	],
+	controllers: [UpworkAuthorizationController, UpworkController],
 	providers: [
 		UpworkJobService,
 		UpworkOffersService,
@@ -67,4 +48,4 @@ import { UpworkAuthorizationController } from './upwork-authorization.controller
 		TimeSlotService
 	]
 })
-export class UpworkModule { }
+export class UpworkModule {}

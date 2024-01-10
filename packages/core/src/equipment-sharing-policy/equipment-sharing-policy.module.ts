@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { EquipmentSharingPolicyController } from './equipment-sharing-policy.controller';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
@@ -11,18 +11,18 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/equipment-sharing-policy',
-				module: EquipmentSharingPolicyModule,
-			},
+				module: EquipmentSharingPolicyModule
+			}
 		]),
 		TypeOrmModule.forFeature([User, EquipmentSharingPolicy]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [EquipmentSharingPolicyController],
 	providers: [EquipmentSharingPolicyService, UserService],
-	exports: [TypeOrmModule, EquipmentSharingPolicyService],
+	exports: [TypeOrmModule, EquipmentSharingPolicyService]
 })
 export class EquipmentSharingPolicyModule {}

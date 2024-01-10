@@ -3,7 +3,7 @@ export const ManageCandidatesInvitesPage = {
 	emailInputCss: '#emails',
 	dateInputCss: 'input[formcontrolname="appliedDate"]',
 	saveButtonCss: 'nb-card-footer.text-right > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	resendInviteButtonCss: 'div.mb-3 > button[status="warning"]',
 	deleteInviteButtonCss: 'div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',

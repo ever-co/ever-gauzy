@@ -1,16 +1,12 @@
 // @nebular theming framework
-@import '~@nebular/theme/styles/theming';
+@import '@nebular/theme/styles/theming';
 // @nebular out of the box themes
-@import '~@nebular/theme/styles/themes';
+@import '@nebular/theme/styles/themes';
 // material themes
 @import './material/material-dark';
 @import './material/material-light';
-// Google Inter font
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-$nb-themes: nb-register-theme(
-		(
-			font-family-secondary: font-family-primary,
+$nb-themes: nb-register-theme((font-family-secondary: font-family-primary,
 			layout-padding-top: 24px,
 			layout-window-mode-padding-top: 0,
 			menu-item-icon-margin: 0 0.5rem 0 0,
@@ -61,12 +57,9 @@ $nb-themes: nb-register-theme(
 			button-outline-small-padding: 0.375rem 0.875rem,
 		),
 		default,
-		default
-);
+		default);
 
-$nb-themes: nb-register-theme(
-		(
-			font-family-secondary: font-family-primary,
+$nb-themes: nb-register-theme((font-family-secondary: font-family-primary,
 			layout-window-mode-padding-top: 0,
 			layout-padding-top: 24px,
 			menu-item-icon-margin: 0 0.5rem 0 0,
@@ -111,12 +104,9 @@ $nb-themes: nb-register-theme(
 			gauzy-text-color-2: rgba(255, 255, 255, 0.5),
 		),
 		cosmic,
-		cosmic
-);
+		cosmic);
 
-$nb-themes: nb-register-theme(
-		(
-			font-family-secondary: font-family-primary,
+$nb-themes: nb-register-theme((font-family-secondary: font-family-primary,
 			layout-padding-top: 24px,
 			layout-window-mode-padding-top: 0,
 			menu-item-icon-margin: 0 0.5rem 0 0,
@@ -157,15 +147,11 @@ $nb-themes: nb-register-theme(
 			gauzy-primary-background: rgb(246, 247, 254),
 			gauzy-card-6: rgba(249, 249, 249, 1),
 			layout-padding: 24px 24px 0 12px,
-			header-height: 4.5rem
-		),
+			header-height: 4.5rem),
 		corporate,
-		corporate
-);
+		corporate);
 
-$nb-themes: nb-register-theme(
-		(
-			font-family-secondary: font-family-primary,
+$nb-themes: nb-register-theme((font-family-secondary: font-family-primary,
 			layout-padding-top: 24px,
 			layout-window-mode-padding-top: 0,
 			menu-item-icon-margin: 0 0.5rem 0 0,
@@ -209,15 +195,11 @@ $nb-themes: nb-register-theme(
 			gauzy-primary-background: rgb(58, 62, 75),
 			gauzy-card-6: rgba(52, 52, 62, 1),
 			layout-padding: 24px 24px 0 12px,
-			header-height: 4.5rem
-		),
+			header-height: 4.5rem),
 		dark,
-		dark
-);
+		dark);
 
-$nb-themes: nb-register-theme(
-		(
-			layout-padding-top: 24px,
+$nb-themes: nb-register-theme((layout-padding-top: 24px,
 			menu-item-icon-margin: 0 0.5rem 0 0,
 			card-height-tiny: 13.5rem,
 			card-height-small: 21.1875rem,
@@ -235,15 +217,11 @@ $nb-themes: nb-register-theme(
 			accordion-padding: 0.625rem,
 			button-filled-medium-padding: 0.4375rem 0.875rem,
 			button-outline-medium-padding: 0.4375rem 0.875rem,
-			gauzy-primary-background: rgb(240, 235, 246)
-		),
+			gauzy-primary-background: rgb(240, 235, 246)),
 		material-light,
-		material-light
-);
+		material-light);
 
-$nb-themes: nb-register-theme(
-		(
-			layout-padding-top: 24px,
+$nb-themes: nb-register-theme((layout-padding-top: 24px,
 			menu-item-icon-margin: 0 0.5rem 0 0,
 			card-height-tiny: 13.5rem,
 			card-height-small: 21.1875rem,
@@ -264,15 +242,11 @@ $nb-themes: nb-register-theme(
 			gauzy-primary-background: rgba(40, 10, 10, 1),
 			gauzy-sidebar-background-1: #2a2323,
 			gauzy-sidebar-background-2: rgb(51 51 51),
-			gauzy-border-table: rgb(37 37 59 / 16%)
-		),
+			gauzy-border-table: rgb(37 37 59 / 16%)),
 		material-dark,
-		material-dark
-);
+		material-dark);
 
-$nb-themes: nb-register-theme(
-		(
-			// Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
+$nb-themes: nb-register-theme(( // Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
 			color-primary-100: #f2f6ff,
 			color-primary-200: #dbd3f7,
 			color-primary-300: #ab92fd,
@@ -356,12 +330,9 @@ $nb-themes: nb-register-theme(
 			gauzy-card-1: rgba(255, 255, 255, 1),
 		),
 		gauzy-light,
-		default
-);
+		default);
 
-$nb-themes: nb-register-theme(
-		(
-			// Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
+$nb-themes: nb-register-theme(( // Status colors: primary, success, info, warning, danger - for colored elements (buttons, etc)
 			color-primary-100: #f2f6ff,
 			color-primary-200: #dbd3f7,
 			color-primary-300: #ab92fd,
@@ -439,5 +410,4 @@ $nb-themes: nb-register-theme(
 			gauzy-sidebar-background-2: rgba(38, 38, 46, 1),
 		),
 		gauzy-dark,
-		dark
-);
+		dark);

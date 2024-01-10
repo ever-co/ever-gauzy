@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, Subscription, finalize, firstValueFrom, interval } from "rxjs";
 import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
@@ -28,14 +28,14 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	/**
 	 * FormGroup instance representing the magic login form.
 	 */
-	public form: FormGroup = NgxLoginMagicComponent.buildForm(this._fb);
+	public form: UntypedFormGroup = NgxLoginMagicComponent.buildForm(this._fb);
 	/**
 	 * Static method to build the magic login form using Angular's FormBuilder.
 	 *
 	 * @param fb - Angular FormBuilder instance.
 	 * @returns {FormGroup} - The built magic login form.
 	 */
-	static buildForm(fb: FormBuilder): FormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			email: [
 				null, Validators.compose([
@@ -70,7 +70,7 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly _fb: FormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly nbAuthService: NbAuthService,
 		public readonly cdr: ChangeDetectorRef,

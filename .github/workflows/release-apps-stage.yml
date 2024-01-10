@@ -10,7 +10,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [buildjet-2vcpu-ubuntu-2204]
+        os: [buildjet-4vcpu-ubuntu-2204]
 
     steps:
       - name: Check out Git repository

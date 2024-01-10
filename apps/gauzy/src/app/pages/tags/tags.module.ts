@@ -18,7 +18,7 @@ import { TagsComponent } from './tags.component';
 import { ThemeModule } from '../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TagsRoutingModule } from './tags-routing.module';
@@ -43,7 +43,7 @@ import { PaginationModule } from '../../@shared/pagination/pagination.module';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
 import { OrganizationTeamsService, Store } from '../../../@core';
 
@@ -10,7 +10,7 @@ import { OrganizationTeamsService, Store } from '../../../@core';
 })
 export class GoalLevelSelectComponent {
 
-	@Input() parentFormGroup: FormGroup;
+	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() orgId: string;
 	@Input() teams: IOrganizationTeam[] = [];
 	@Input() hideOrg = false;
@@ -27,7 +27,7 @@ export class GoalLevelSelectComponent {
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
 		private readonly store: Store
-	) {}
+	) { }
 
 	async getTeams() {
 		const { tenantId } = this.store.user;

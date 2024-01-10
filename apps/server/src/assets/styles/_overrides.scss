@@ -1,4 +1,4 @@
-@import './themes';
+@import 'themes';
 @import 'var';
 
 /* Apply style on scrollbar for Firefox */
@@ -6,10 +6,11 @@
   scrollbar-color: var(--gauzy-scrollbar) transparent;
   scrollbar-width: thin;
 }
+
 /*  Apply style on scrollbar for Chrome */
 *::-webkit-scrollbar {
-  width: nb-theme(scrollbar-width);
-  height: nb-theme(scrollbar-width);
+  width: 6px;
+  height: var(--scrollbar-width);
 }
 
 *::-webkit-scrollbar-track {
@@ -34,7 +35,7 @@ body {
 }
 
 .dashboard-card-scroll nb-card {
-  background: nb-theme(background-basic-color-1);
+  background: var(--background-basic-color-1);
   box-shadow: var(--gauzy-shadow);
 }
 
@@ -91,9 +92,9 @@ body {
 
   nb-card nb-list {
     @include nb-scrollbars(
-      nb-theme(card-scrollbar-color),
-      nb-theme(card-scrollbar-background-color),
-      nb-theme(card-scrollbar-width)
+      var(--card-scrollbar-color),
+      var(--card-scrollbar-background-color),
+      var(--card-scrollbar-width)
     );
   }
 
@@ -101,6 +102,7 @@ body {
     .front-container {
       -webkit-backface-visibility: visible;
     }
+
     .back-container {
       -webkit-backface-visibility: hidden;
     }
@@ -109,6 +111,7 @@ body {
       .front-container {
         -webkit-backface-visibility: hidden;
       }
+
       .back-container {
         -webkit-backface-visibility: visible;
       }
@@ -124,7 +127,7 @@ body {
   nb-layout .layout .layout-container nb-sidebar {
     &,
     .main-container-fixed {
-      top: nb-theme(header-height);
+      top: var(--header-height);
     }
   }
 
@@ -143,16 +146,23 @@ body {
     min-width: unset !important;
   }
 
+  nb-select button {
+    height: 2.625rem !important;
+  }
+
   nb-sidebar {
     nb-menu {
       .menu-items {
         scrollbar-width: thin;
+
         &::-webkit-scrollbar {
-          width: nb-theme(scrollbar-width);
+          width: var(--scrollbar-width);
         }
+
         &::-webkit-scrollbar-track {
           background: transparent;
         }
+
         &::-webkit-scrollbar-thumb {
           background: var(--gauzy-scrollbar);
           border-radius: 1rem;
@@ -163,14 +173,18 @@ body {
 
   .ng-dropdown-panel {
     background-color: var(--gauzy-card-5) !important;
+
     .scroll-host {
       scrollbar-width: thin;
+
       &::-webkit-scrollbar {
-        width: nb-theme(scrollbar-width);
+        width: var(--scrollbar-width);
       }
+
       &::-webkit-scrollbar-track {
         background: transparent;
       }
+
       &::-webkit-scrollbar-thumb {
         background: var(--gauzy-scrollbar);
         border-radius: 1rem;
@@ -178,28 +192,26 @@ body {
     }
   }
 
-  ng2-smart-table table {
+  angular2-smart-table table {
     border-collapse: separate !important;
-    .ng2-smart-filter input {
+
+    .angular2-smart-filter input {
       height: 32px;
       background-color: var(--gauzy-sidebar-background-3) !important;
       border: none !important;
     }
 
-    .ng2-smart-filter .ng-select .ng-select-container {
+    .angular2-smart-filter .ng-select .ng-select-container {
       background-color: var(--gauzy-sidebar-background-3) !important;
       height: 32px;
       min-height: auto;
+
       input {
         background-color: transparent !important;
       }
     }
 
-    .ng2-smart-filter
-      .ng-select
-      .ng-select-container
-      .ng-value-container
-      .ng-placeholder {
+        .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
       font-size: 13px;
       font-weight: 400;
       line-height: 16px;
@@ -211,9 +223,11 @@ body {
   .card-scroll {
     height: calc(100vh - 157px);
     min-height: auto !important;
+
     nb-card {
       height: auto !important;
       min-height: auto !important;
+
       nb-card-body {
         overflow: hidden;
         height: 100%;
@@ -223,9 +237,11 @@ body {
   .dashboard-card-scroll {
     height: calc(100vh - 270px);
     min-height: auto !important;
+
     nb-card {
       height: auto !important;
       min-height: auto !important;
+
       nb-card-body {
         overflow: hidden;
         height: 100%;
@@ -233,20 +249,20 @@ body {
     }
   }
 
-  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 20px)) {
-    @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 4);
+  @media screen and (min-width: calc(var(--layout-window-mode-max-width) + 20px)) {
+    @include f-window-mode(var(--layout-window-mode-padding-top) / 4);
   }
 
-  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 150px)) {
-    @include f-window-mode(nb-theme(layout-window-mode-padding-top) / 2);
+  @media screen and (min-width: calc(var(--layout-window-mode-max-width) + 150px)) {
+    @include f-window-mode(var(--layout-window-mode-padding-top) / 2);
   }
 
-  @media screen and (min-width: calc(nb-theme(layout-window-mode-max-width) + 300px)) {
-    @include f-window-mode(nb-theme(layout-window-mode-padding-top));
+  @media screen and (min-width: calc(var(--layout-window-mode-max-width) + 300px)) {
+    @include f-window-mode(var(--layout-window-mode-padding-top));
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
-    background: nb-theme(background-basic-color-1);
+    background: var(--background-basic-color-1);
     color: var(--gauzy-text-color-1);
     transition-duration: 0.15s;
     transition-property: border, background-color, color, box-shadow;
@@ -257,11 +273,12 @@ body {
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
-    background-color: var(--color-primary-transparent-default);
+    background-color: var(--color-primary-transparent-default) !important;
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
-    background-color: unset !important;
+    color: var(--gauzy-text-color-1);
+    background-color: var(--background-basic-color-1) !important;
   }
 
   .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
@@ -271,18 +288,21 @@ body {
 
   .ng-value-container .ng-input input {
     background-color: transparent;
-    color: nb-theme(text-basic-color);
+    color: var(--text-basic-color);
   }
 
   .ng-dropdown-panel {
     transform: translateY(10px);
     box-shadow: var(--gauzy-shadow);
     border-width: 0 !important;
+
     &.ng-select-bottom {
-      border-radius: nb-theme(border-radius);
+      border-radius: var(--border-radius);
     }
+
     .ng-dropdown-panel-items {
-      border-radius: nb-theme(border-radius);
+      border-radius: var(--border-radius);
+
       img {
         border-radius: 4px;
         width: 24px;
@@ -292,48 +312,44 @@ body {
     }
   }
 
-  .ng-select.ng-select-multiple
-    .ng-select-container
-    .ng-value-container
-    .ng-input
-    > input {
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
     color: var(--gauzy-text-color-1);
   }
 
   .ng-select .ng-select-container {
-    color: nb-theme(text-basic-color) !important;
+    color: var(--text-basic-color) !important;
   }
 
   .setting-block {
-    background-color: nb-theme(background-basic-color-2) !important;
-    color: nb-theme(text-basic-color) !important;
+    background-color: var(--background-basic-color-2) !important;
+    color: var(--text-basic-color) !important;
   }
   .info-block-wrapper {
-    background-color: nb-theme(background-basic-color-2) !important;
-    color: nb-theme(text-basic-color) !important;
+    background-color: var(--background-basic-color-2) !important;
+    color: var(--text-basic-color) !important;
   }
   .info-block-wrapper .info-block--highlight {
-    background: nb-theme(background-basic-color-3) !important;
+    background: var(--background-basic-color-3) !important;
   }
   .info-text {
-    color: nb-theme(text-basic-color) !important;
+    color: var(--text-basic-color) !important;
   }
   a > nb-icon {
-    color: nb-theme(text-basic-color) !important;
+    color: var(--text-basic-color) !important;
   }
   .records {
     box-shadow: var(--gauzy-shadow) !important;
-    background: nb-theme(background-basic-color-1) !important;
+    background: var(--background-basic-color-1) !important;
   }
   .profit-history {
     box-shadow: var(--gauzy-shadow) !important;
-    background: nb-theme(background-basic-color-1) !important;
+    background: var(--background-basic-color-1) !important;
   }
   tr {
-    background-color: nb-theme(background-basic-color-1) !important;
+    background-color: var(--background-basic-color-1) !important;
   }
   .table {
-    color: nb-theme(text-basic-color) !important;
+    color: var(--text-basic-color) !important;
   }
   nb-accordion-item-body .item-body {
     overflow-x: hidden;
@@ -346,24 +362,26 @@ body {
   }
 
   nb-sidebar .main-container-fixed {
-    height: calc(
-      100vh - #{nb-theme(header-height)} - #{$padding-top}
-    ) !important;
-    top: calc(#{nb-theme(header-height)} + #{$padding-top}) !important;
+    height: calc(100vh - #{var(--header-height)} - #{$padding-top}) !important;
+    top: calc(#{var(--header-height)} + #{$padding-top}) !important;
   }
 }
 
-ng2-smart-table tbody tr {
+angular2-smart-table tbody tr {
   background: rgba(126, 126, 143, 0.05);
+
   &:hover {
     background: rgba(126, 126, 143, 0.05);
   }
+
   &.selected {
     box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
+
     &:first-child {
       border-top-left-radius: var(--border-radius);
       border-top-right-radius: var(--border-radius);
     }
+
     &:last-child {
       border-bottom-left-radius: var(--border-radius);
       border-bottom-right-radius: var(--border-radius);
@@ -387,6 +405,7 @@ nb-card-body {
     justify-content: space-between;
     align-self: flex-end;
     width: 100%;
+
     ga-pagination {
       width: 100%;
     }
@@ -404,12 +423,14 @@ nb-card-body {
   @include respond(dsk) {
     max-height: calc(70vh - 132px);
   }
+
   table thead tr:nth-of-type(1) {
     position: -webkit-sticky !important;
     position: sticky !important;
     top: 0 !important;
     z-index: 2 !important;
   }
+
   table thead {
     position: sticky;
     z-index: 100;
@@ -417,7 +438,7 @@ nb-card-body {
     top: -1px;
   }
 
-  ng2-smart-table table tr th {
+  angular2-smart-table table tr th {
     border-top: 1px solid var(--gauzy-border-table);
     border-bottom: 1px solid var(--gauzy-border-table);
   }
@@ -425,10 +446,12 @@ nb-card-body {
   table thead th {
     border-left: none;
     border-right: none;
+
     &:first-child {
       border-left: 1px solid var(--gauzy-border-table);
       border-radius: var(--border-radius) 0 0 var(--border-radius);
     }
+
     &:last-child {
       border-right: 1px solidvar(--gauzy-border-table);
       border-radius: 0 var(--border-radius) var(--border-radius) 0;
@@ -437,7 +460,7 @@ nb-card-body {
 
   table tbody tr {
     &:last-child td {
-      border-bottom: none
+      border-bottom: none;
     }
 
     td {
@@ -451,12 +474,15 @@ nb-card-body {
   tr:first-child td:first-child {
     border-top-left-radius: var(--border-radius);
   }
+
   tr:first-child td:last-child {
     border-top-right-radius: var(--border-radius);
   }
+
   tr:last-child td:first-child {
     border-bottom-left-radius: var(--border-radius);
   }
+
   tr:last-child td:last-child {
     border-bottom-right-radius: var(--border-radius);
   }
@@ -477,25 +503,29 @@ nb-tabset .tab.active .tab-link {
   background-color: var(--gauzy-card-2);
   border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
-ng2-smart-table {
-  ng2-smart-table-pager {
-    nav.ng2-smart-pagination-nav .pagination {
+angular2-smart-table {
+  angular2-smart-table-pager {
+    nav.angular2-smart-pagination-nav .pagination {
       border: none;
+
       li:not(:last-child) {
         border-right: 0px solid black;
       }
+
       li {
         cursor: pointer;
+
         &.active span {
-          color: nb-theme(text-primary-color);
-          background-color: nb-theme(background-basic-color-3);
-          border-radius: nb-theme(button-rectangle-border-radius);
+          color: var(--text-primary-color);
+          background-color: var(--background-basic-color-3);
+          border-radius: var(--button-rectangle-border-radius);
         }
+
         span {
           font-size: 0.875rem;
           background-color: transparent;
           padding: 0.75rem 1rem;
-          color: nb-theme(text-basic-color);
+          color: var(--text-basic-color);
         }
       }
 
@@ -505,7 +535,7 @@ ng2-smart-table {
 
       .page-link-next,
       .page-link-prev {
-        box-shadow: 1px 2px 2px nb-theme(background-basic-color-4);
+        box-shadow: 1px 2px 2px var(--background-basic-color-4);
         border-radius: 20px;
         padding: 0rem;
         display: flex;
@@ -521,6 +551,7 @@ ng2-smart-table {
       select {
         margin: 1rem 0 1rem 1rem;
       }
+
       label {
         margin: 1rem 0 1rem 1rem;
         line-height: 2.5rem;
@@ -538,7 +569,7 @@ ng2-smart-table {
   line-height: 16px;
   letter-spacing: 0em;
 
-  color: nb-theme(gauzy-text-color-2);
+  color: var(--gauzy-text-color-2);
   width: auto;
   box-sizing: border-box;
   opacity: 0;
@@ -554,13 +585,14 @@ ng2-smart-table {
 
   background: var(--gauzy-siderbar-background-5);
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
-  border-radius: nb-theme(border-radius);
+  border-radius: var(--border-radius);
   transform: translate(-16.75px, -118.5%);
   animation: tooltip-slide 0.1s ease-out 0.18s;
   animation-fill-mode: forwards;
   pointer-events: none;
+
   i {
-    color: nb-theme(gauzy-text-color-1);
+    color: var(--gauzy-text-color-1);
   }
 }
 
@@ -592,11 +624,13 @@ ng2-smart-table {
 // TODO overrides perfectly chevron-down unicode
 .ng-select {
   .ng-select-container {
-    border-radius: nb-theme(border-radius);
+    border-radius: var(--border-radius);
     box-shadow: var(--gauzy-shadow) inset;
+    height: 42px !important;
   }
+
   .ng-arrow {
-    font-family: 'Font Awesome\ 5 Free' !important;
+    font-family: 'Font Awesome\ 6 Free' !important;
     border-color: inherit !important;
     border-width: 0 !important;
     font-size: 10px;
@@ -612,6 +646,7 @@ ng2-smart-table {
     @include nb-ltr(transform-origin, 5.5px 8.6px);
     @include nb-rtl(transform-origin, -5.5px 8.6px);
     transition: transform 0.2s ease;
+
     &:before {
       content: '\f078';
       font-weight: 900;
@@ -625,7 +660,7 @@ ng2-smart-table {
   }
 }
 
-ng2-smart-table table tr.ng2-smart-titles .ng2-smart-sort {
+angular2-smart-table table tr.angular2-smart-titles .angular2-smart-sort {
   font-size: 12px !important;
   font-weight: 600 !important;
   line-height: 15px;
@@ -633,7 +668,7 @@ ng2-smart-table table tr.ng2-smart-titles .ng2-smart-sort {
   color: var(--gauzy-text-color-2) !important;
 }
 
-ng2-smart-table table tr.ng2-smart-titles th a.sort {
+angular2-smart-table table tr.angular2-smart-titles th a.sort {
   font-size: 12px !important;
   font-weight: 600 !important;
   line-height: 15px;
@@ -644,6 +679,7 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
   align-items: center;
   justify-content: flex-end;
   gap: 0.25rem;
+
   &.asc {
     &:before {
       color: rgba(126, 126, 143, 0.25);
@@ -655,23 +691,34 @@ ng2-smart-table table tr.ng2-smart-titles th a.sort {
       top: 55% !important;
       right: 0.625rem !important;
     }
+
     &:after {
       display: none;
     }
   }
+
   &.desc {
     &:before {
       color: rgba(126, 126, 143, 0.25);
       font-size: 10px;
-      font-family: 'Font Awesome\ 5 Free' !important;
+      font-family: 'Font Awesome\ 6 Free' !important;
       content: '\f063' !important;
       font-weight: 900;
       top: 55% !important;
       right: 0.625rem !important;
     }
+
     &:after {
       display: none;
     }
   }
 }
 
+.backdrop-blur {
+  backdrop-filter: blur(4px);
+  background-color: #0000004a;
+}
+
+input {
+  height: 2.625rem !important;
+}

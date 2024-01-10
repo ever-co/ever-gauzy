@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
@@ -22,8 +22,8 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	/*
 	 * Employee Rates Form
 	 */
-	public form: FormGroup = EmployeeRatesComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = EmployeeRatesComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			payPeriod: [],
 			billRateValue: ['', Validators.min(0)],
@@ -34,11 +34,11 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore,
 		private readonly candidateStore: CandidateStore
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
@@ -91,7 +91,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 
 	public get reWeeklyLimit() {
 		return this.form.get('reWeeklyLimit');
@@ -109,5 +109,5 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		return this.form.get('minimumBillingRate');
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

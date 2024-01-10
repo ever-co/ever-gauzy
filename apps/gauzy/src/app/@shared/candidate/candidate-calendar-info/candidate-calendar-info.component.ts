@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput, disableCursor, DateSelectArg, EventHoveringArg } from '@fullcalendar/core';
+import { CalendarOptions, EventInput, DateSelectArg, EventHoveringArg } from '@fullcalendar/core';
+import { disableCursor } from '@fullcalendar/core/internal';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -144,7 +145,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		}
 	}
 
-	handleEventMouseEnter({ el } : EventHoveringArg) {
+	handleEventMouseEnter({ el }: EventHoveringArg) {
 		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
 			el.style.position = 'unset';
 		}

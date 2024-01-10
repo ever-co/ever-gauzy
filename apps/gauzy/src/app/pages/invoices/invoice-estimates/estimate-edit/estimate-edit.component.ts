@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-	selector: 'ga-estimate-add',
+	selector: 'ga-estimate-edit',
 	templateUrl: './estimate-edit.component.html'
 })
-export class EstimateEditComponent {}
+export class EstimateEditComponent { }

@@ -1,5 +1,5 @@
 import { OnInit, Component } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipment, ITag, IOrganization, IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,10 +16,10 @@ import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-
 	templateUrl: './equipment-mutation.component.html',
 	styleUrls: ['./equipment-mutation.component.scss']
 })
-export class EquipmentMutationComponent extends TranslationBaseComponent 
+export class EquipmentMutationComponent extends TranslationBaseComponent
 	implements OnInit {
 
-	form: FormGroup;
+	form: UntypedFormGroup;
 	equipment: IEquipment;
 	image: IImageAsset;
 	selectedCurrency: string;
@@ -33,7 +33,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		public readonly dialogRef: NbDialogRef<EquipmentMutationComponent>,
 		private readonly dialogService: NbDialogService,
 		private readonly equipmentService: EquipmentService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		readonly translationService: TranslateService,
 		readonly store: Store,
 		private readonly imageAssetService: ImageAssetService,

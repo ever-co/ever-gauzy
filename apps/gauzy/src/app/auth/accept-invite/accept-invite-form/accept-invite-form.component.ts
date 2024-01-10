@@ -7,8 +7,8 @@ import {
 	Output
 } from '@angular/core';
 import {
-	FormBuilder,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import {
@@ -41,14 +41,14 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 	tenant: ITenant;
 	tags: ITag[];
 
-	public readonly form: FormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
-	static buildForm(fb: FormBuilder, self: AcceptInviteFormComponent): FormGroup {
+	public readonly form: UntypedFormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
+	static buildForm(fb: UntypedFormBuilder, self: AcceptInviteFormComponent): UntypedFormGroup {
 		return fb.group({
 			fullName: [self?.invitation?.fullName, Validators.required],
 			password: ['', Validators.compose([
-					Validators.required,
-					Validators.minLength(4)
-				])
+				Validators.required,
+				Validators.minLength(4)
+			])
 			],
 			repeatPassword: ['', Validators.required],
 			agreeTerms: [false, Validators.requiredTrue]
@@ -63,7 +63,7 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -97,5 +97,5 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -1,5 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TenantModule } from './../../tenant/tenant.module';
@@ -10,24 +10,13 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/task-sizes', module: TaskSizeModule }
-		]),
-		TypeOrmModule.forFeature([
-			TaskSize
-		]),
+		RouterModule.register([{ path: '/task-sizes', module: TaskSizeModule }]),
+		TypeOrmModule.forFeature([TaskSize]),
 		CqrsModule,
 		TenantModule
 	],
-	controllers: [
-		TaskSizeController
-	],
-	providers: [
-		TaskSizeService,
-		...CommandHandlers
-	],
-	exports: [
-		TaskSizeService
-	],
+	controllers: [TaskSizeController],
+	providers: [TaskSizeService, ...CommandHandlers],
+	exports: [TaskSizeService]
 })
-export class TaskSizeModule { }
+export class TaskSizeModule {}

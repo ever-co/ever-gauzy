@@ -29,5 +29,5 @@ export const AddOrganizationPage = {
 	dateFormatDropdownCss: '[formcontrolname="dateFormat"]',
 	timeZoneDropdownCss: 'div[role="combobox"] > input[type="text"]',
 	timeZoneDropdownOptionCss: 'ng-dropdown-panel[role="listbox"]',
-	tableRowCss: 'table > tbody > tr.ng2-smart-row'
+	tableRowCss: 'table > tbody > tr.angular2-smart-row'
 };

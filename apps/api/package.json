@@ -31,12 +31,12 @@
 		"start:debug": "nodemon --config nodemon-debug.json",
 		"build": "yarn ng build api",
 		"build:prod": "yarn ng build api --prod",
-		"seed": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
+		"seed": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
 		"seed:build": "yarn ng run api:seed",
-		"seed:all": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-all.ts",
-		"seed:module": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=7000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-module.ts --name",
+		"seed:all": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-all.ts",
+		"seed:module": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed-module.ts --name",
 		"seed:all:build": "yarn ng run api:seed-all",
-		"seed:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=7000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
+		"seed:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register --project apps/api/tsconfig.app.json src/seed.ts",
 		"seed:prod:build": "yarn ng run api:seed -c=production"
 	},
 	"dependencies": {
@@ -47,11 +47,11 @@
 		"yargs": "^17.5.0"
 	},
 	"devDependencies": {
-		"@nestjs/schematics": "^9.0.3",
-		"@nestjs/testing": "^9.2.1",
+		"@nestjs/schematics": "^10.0.3",
+		"@nestjs/testing": "^10.3.0",
 		"nodemon": "^2.0.7",
 		"pm2": "^4.5.1",
-		"ts-node": "^9.1.1",
-		"typescript": "4.5.5"
+		"ts-node": "^10.9.1",
+		"typescript": "5.1.6"
 	}
 }

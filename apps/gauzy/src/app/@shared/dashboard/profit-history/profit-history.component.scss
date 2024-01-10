@@ -1,18 +1,16 @@
 @import '../records-history/records-history.component.scss';
 
 .totals {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
 }
-
 nb-card-header {
-  nb-card {
-    background-color: var(--gauzy-card-2);
-    width: 100%;
-  }
+	nb-card {
+		background-color: var(--gauzy-card-2);
+		width: 100%;
+  	}
 }
-
 nb-card.profit-history {
-  width: 645px;
+  	width: 645px;
 }

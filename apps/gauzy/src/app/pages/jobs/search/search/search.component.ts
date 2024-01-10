@@ -1,8 +1,12 @@
-import { Component, OnDestroy, OnInit, AfterViewInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
 import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
@@ -16,13 +20,10 @@ import {
 	JobPostStatusEnum,
 	JobPostTypeEnum,
 	JobSearchTabsEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	IEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
-import { NbDialogService, NbTabComponent } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,
@@ -80,8 +81,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	/*
 	 * Search Tab Form
 	 */
-	public form: FormGroup = SearchComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = SearchComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
 				title: [],
@@ -96,15 +97,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		);
 	}
 
-	table: Ng2SmartTableComponent;
-	@ViewChild('table') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.table = content;
-		}
-	}
-
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly http: HttpClient,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
@@ -396,7 +390,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 
 			// removed selected row from table after applied
-			const row = document.querySelector('ng2-smart-table > table > tbody > .ng2-smart-row.selected');
+			const row = document.querySelector('angular2-smart-table > table > tbody > .angular2-smart-row.selected');
 			if (!!row) {
 				row.remove();
 				this.onSelectJob({ isSelected: false, data: null });
@@ -508,13 +502,15 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							type: 'custom',
 							sort: false,
 							renderComponent: EmployeeLinksComponent,
-							valuePrepareFunction: (cell, row: IEmployeeJobPost) => {
-								return {
-									name: row.employee && row.employee.user ? row.employee.user.name : null,
-									imageUrl: row.employee && row.employee.user ? row.employee.user.imageUrl : null,
-									id: row.employee ? row.employee.id : null
+							componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+								const employee: IEmployee = cell.getRawValue() as IEmployee;
+								instance.rowData = cell.getRow().getData();
+								instance.value = {
+									name: employee?.user?.name ?? null,
+									imageUrl: employee?.user?.imageUrl ?? null,
+									id: employee?.id ?? null
 								};
-							}
+							},
 						}
 					}
 					: {}),
@@ -522,10 +518,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					width: '85%',
 					type: 'custom',
-					renderComponent: JobTitleDescriptionDetailsComponent,
 					filter: false,
 					sort: false,
-					onComponentInitFunction(instance: any) {
+					renderComponent: JobTitleDescriptionDetailsComponent,
+					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {
+						instance.rowData = cell.getRow().getData();
+						//
 						instance.hideJobEvent.subscribe((event: IVisibilityJobPostInput) => {
 							self.onCustomEvents({ action: 'hide', data: event });
 						});
@@ -665,7 +663,6 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 						]
 						: [])
 				],
-				false,
 				false
 			);
 			/**
@@ -675,7 +672,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					{
 						field: 'status',
-						direction: 'ASC'
+						direction: 'asc'
 					}
 				],
 				false

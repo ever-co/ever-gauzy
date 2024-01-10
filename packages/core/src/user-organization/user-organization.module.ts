@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganizationController } from './user-organization.controller';
 import { UserOrganization } from './user-organization.entity';
@@ -13,26 +13,16 @@ import { RoleModule } from './../role/role.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/user-organization', module: UserOrganizationModule }
-		]),
-		forwardRef(() =>
-			TypeOrmModule.forFeature([ UserOrganization ])
-		),
+		RouterModule.register([{ path: '/user-organization', module: UserOrganizationModule }]),
+		forwardRef(() => TypeOrmModule.forFeature([UserOrganization])),
 		CqrsModule,
 		TenantModule,
 		forwardRef(() => OrganizationModule),
 		forwardRef(() => UserModule),
-		forwardRef(() => RoleModule),
+		forwardRef(() => RoleModule)
 	],
 	controllers: [UserOrganizationController],
-	providers: [
-		UserOrganizationService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		UserOrganizationService
-	]
+	providers: [UserOrganizationService, ...CommandHandlers],
+	exports: [TypeOrmModule, UserOrganizationService]
 })
 export class UserOrganizationModule {}

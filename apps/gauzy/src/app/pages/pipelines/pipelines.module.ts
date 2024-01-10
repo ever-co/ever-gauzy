@@ -16,7 +16,7 @@ import { PipelinesRouting } from './pipelines.routing';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -58,7 +58,7 @@ import { NbTabsetModule } from '@nebular/theme';
 	imports: [
 		NbDialogModule.forChild(),
 		ReactiveFormsModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbAccordionModule,
 		NbFormFieldModule,
 		NbSpinnerModule,
@@ -83,4 +83,4 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbTabsetModule
 	]
 })
-export class PipelinesModule {}
+export class PipelinesModule { }

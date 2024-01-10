@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { FileStorageProviderEnum, HttpStatus, ITenantSetting, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,9 +28,10 @@ export class FileStorageComponent extends TranslationBaseComponent
 	FileStorageProviderEnum = FileStorageProviderEnum;
 	user: IUser;
 	settings: ITenantSetting = new Object();
+	loading: boolean = false;
 
-	public readonly form: FormGroup = FileStorageComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public readonly form: UntypedFormGroup = FileStorageComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			fileStorageProvider: [
 				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
@@ -73,7 +74,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translate: TranslateService,
 		private readonly _store: Store,
 		private readonly _tenantService: TenantService,
@@ -101,15 +102,33 @@ export class FileStorageComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * GET current tenant file storage setting
+	 * Retrieves the current tenant's file storage settings.
+	 * If settings are available, updates the file storage provider accordingly.
+	 * If no settings are available, uses the default file storage provider from the environment.
 	 */
-	async getSetting() {
-		const settings = this.settings = await this._tenantService.getSettings();
-		if (isNotEmpty(settings)) {
-			const { fileStorageProvider } = settings;
-			this.setFileStorageProvider(fileStorageProvider);
-		} else {
-			this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
+	async getSetting(): Promise<void> {
+		// Set loading state to true while fetching settings
+		this.loading = true;
+
+		try {
+			// Fetch tenant settings
+			const settings = this.settings = await this._tenantService.getSettings();
+
+			// Check if settings are available
+			if (isNotEmpty(settings)) {
+				// Update file storage provider based on fetched settings
+				const { fileStorageProvider } = settings;
+				this.setFileStorageProvider(fileStorageProvider);
+			} else {
+				// Use the default file storage provider from the environment if no settings are available
+				this.setFileStorageProvider((environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL);
+			}
+		} catch (error) {
+			// Handle any errors that may occur during the fetch operation
+			console.error('Error fetching tenant settings:', error);
+		} finally {
+			// Set loading state to false once fetching is complete
+			this.loading = false;
 		}
 	}
 

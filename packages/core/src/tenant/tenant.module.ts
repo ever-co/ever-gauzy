@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { AuthModule } from '../auth/auth.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
@@ -14,16 +14,14 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/tenant', module: TenantModule }
-		]),
-		TypeOrmModule.forFeature([ Tenant ]),
+		RouterModule.register([{ path: '/tenant', module: TenantModule }]),
+		TypeOrmModule.forFeature([Tenant]),
 		AuthModule,
 		CqrsModule,
 		forwardRef(() => UserModule),
 		forwardRef(() => RoleModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => FeatureModule),
+		forwardRef(() => FeatureModule)
 	],
 	controllers: [TenantController],
 	providers: [TenantService, ...CommandHandlers],

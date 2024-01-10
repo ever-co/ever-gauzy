@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { InvoiceEstimateHistoryController } from './invoice-estimate-history.controller';
 import { InvoiceEstimateHistoryService } from './invoice-estimate-history.service';
 import { InvoiceEstimateHistory } from './invoice-estimate-history.entity';
@@ -11,18 +11,18 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/invoice-estimate-history',
-				module: InvoiceEstimateHistoryModule,
-			},
+				module: InvoiceEstimateHistoryModule
+			}
 		]),
 		TypeOrmModule.forFeature([User, InvoiceEstimateHistory]),
 		TenantModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [InvoiceEstimateHistoryController],
 	providers: [InvoiceEstimateHistoryService, UserService],
-	exports: [InvoiceEstimateHistoryService, UserService],
+	exports: [InvoiceEstimateHistoryService, UserService]
 })
 export class InvoiceEstimateHistoryModule {}

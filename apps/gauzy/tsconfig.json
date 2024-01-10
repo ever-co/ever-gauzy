@@ -1,15 +1,17 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"types": ["node", "jest", "googlemaps"],
-		"target": "es2020",
+		"types": ["node", "jest", "google.maps"],
+		"target": "ES2022",
 		"module": "es2020",
-		"downlevelIteration": true
+		"downlevelIteration": true,
+		"useDefineForClassFields": false
 	},
 	"angularCompilerOptions": {
 		"fullTemplateTypeCheck": false,
 		"strictTemplates": false,
 		"strictInjectionParameters": false
 	},
-	"include": ["**/*.ts", "**/workers/*.js"]
+	"include": ["**/*.ts", "**/workers/*.js"],
+	"exclude": ["jest.config.ts"]
 }

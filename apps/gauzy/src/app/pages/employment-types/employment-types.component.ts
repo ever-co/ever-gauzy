@@ -5,7 +5,7 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IEmployee,
@@ -20,7 +20,7 @@ import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
@@ -41,10 +41,9 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 })
 export class EmploymentTypesComponent
 	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 	organizationEmploymentTypes: IOrganizationEmploymentType[] = [];
@@ -66,7 +65,7 @@ export class EmploymentTypesComponent
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private dialogService: NbDialogService,
 		private store: Store,
@@ -364,7 +363,7 @@ export class EmploymentTypesComponent
 		if (orgEmpType.data) orgEmpType = orgEmpType.data;
 		const res =
 			this.selected.employmentType &&
-			orgEmpType.id === this.selected.employmentType.id
+				orgEmpType.id === this.selected.employmentType.id
 				? { state: !this.selected.state }
 				: { state: true };
 		this.disabled = !res.state;

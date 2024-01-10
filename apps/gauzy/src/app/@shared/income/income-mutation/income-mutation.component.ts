@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import {
 	Validators,
-	FormBuilder,
-	FormGroup
+	UntypedFormBuilder,
+	UntypedFormGroup
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import {
@@ -46,13 +46,13 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	/*
 	* Income Mutation Form
 	*/
-	public form: FormGroup = IncomeMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = IncomeMutationComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: IncomeMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
-			valueDate: [ self.store.getDateFromOrganizationSettings(), Validators.required ],
+			valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			amount: ['', Validators.required],
 			organizationContact: [null, Validators.required],
 			notes: [],
@@ -64,7 +64,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private readonly store: Store,
 		readonly translateService: TranslateService,
@@ -85,7 +85,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void {}
+	ngAfterViewInit(): void { }
 
 	async addOrEditIncome() {
 		if (this.form.invalid) {
@@ -141,5 +141,5 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

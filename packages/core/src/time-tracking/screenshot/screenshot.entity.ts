@@ -1,38 +1,22 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import {
-	Entity,
-	Column,
-	RelationId,
-	ManyToOne,
-	Index,
-	JoinColumn
-} from 'typeorm';
+import { Entity, Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { getConfig } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
-import {
-	TenantOrganizationBaseEntity,
-	TimeSlot,
-	User
-} from './../../core/entities/internal';
+import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 
-/**
- *
- */
 let options: TypeOrmModuleOptions;
 try {
-	options = getConfig().dbConnectionOptions
-} catch (error) { }
+	options = getConfig().dbConnectionOptions;
+} catch (error) {
+	console.error('Cannot load DB connection options', error);
+}
 
-/**
- *
- */
 @Entity('screenshot')
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
-
-	@ApiProperty({ type: () => String, })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
 	@Column()
@@ -99,7 +83,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	 * Applications associated with the image or screenshot.
 	 */
 	@ApiPropertyOptional({
-		type: () => ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json',
+		type: () => (['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'),
 		description: 'Applications associated with the image or screenshot.'
 	})
 	@IsOptional()

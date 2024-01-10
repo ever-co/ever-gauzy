@@ -13,7 +13,7 @@ import {
 	ITag,
 	ICurrency
 } from '@gauzy/contracts';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
@@ -43,11 +43,11 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	/*
 	* Payment Mutation Form
 	*/
-	public form: FormGroup = PaymentMutationComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = PaymentMutationComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: PaymentMutationComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			amount: [null, Validators.compose([
 				Validators.required,
@@ -68,7 +68,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<PaymentMutationComponent>,
 		private readonly store: Store,
 		private readonly invoicesService: InvoicesService
@@ -155,7 +155,6 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
-		console.log(paymentDate);
 
 		const payment = {
 			amount,
@@ -215,5 +214,5 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

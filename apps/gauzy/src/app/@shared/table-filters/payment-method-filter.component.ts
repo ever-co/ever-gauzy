@@ -1,13 +1,14 @@
-import {Component, OnChanges, SimpleChanges} from '@angular/core';
-import { DefaultFilter } from 'ng2-smart-table';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { DefaultFilter } from 'angular2-smart-table';
 import { PaymentMethodEnum } from '@gauzy/contracts';
 
 @Component({
+    selector: 'ga-payment-method-filter',
     template: `
         <ng-select
             [clearable]="true"
             [closeOnSelect]="true"
-            [placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate" 
+            [placeholder]="'INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD' | translate"
             (change)="onChange($event)"
         >
             <ng-option *ngFor="let paymentMethod of paymentMethods" [value]="paymentMethod">
@@ -17,16 +18,25 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
     `,
 })
 export class PaymentMethodFilterComponent extends DefaultFilter implements OnChanges {
-    
-    paymentMethods = Object.values(PaymentMethodEnum);
+
+    public paymentMethods = Object.values(PaymentMethodEnum);
 
     constructor() {
         super();
     }
 
-    ngOnChanges(changes: SimpleChanges) {}
+    /**
+     *
+     * @param changes
+     */
+    ngOnChanges(changes: SimpleChanges) { }
 
-    onChange(event) {
-        this.column.filterFunction(event);
+    /**
+     *
+     * @param value
+     */
+    onChange(value: PaymentMethodEnum) {
+        console.log({ value });
+        this.column.filterFunction(value, this.column.id);
     }
 }

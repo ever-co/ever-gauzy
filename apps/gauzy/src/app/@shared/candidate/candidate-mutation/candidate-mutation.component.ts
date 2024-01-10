@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import {
 	NbDialogRef,
 	NbStepperComponent,
-  NbTagComponent
+	NbTagComponent
 } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -44,8 +44,8 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	@ViewChild('stepper')
 	stepper: NbStepperComponent;
 
-	form: FormGroup;
-	formCV: FormGroup;
+	form: UntypedFormGroup;
+	formCV: UntypedFormGroup;
 	role: IRole;
 	candidates: ICandidateCreateInput[] = [];
 	organization: IOrganization;
@@ -56,7 +56,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		private readonly store: Store,
 		private readonly candidatesService: CandidatesService,
 		private readonly errorHandler: ErrorHandlingService
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -143,7 +143,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 			organizationId
 		};
 
-		if(this.form.valid) this.candidates.push(candidate);
+		if (this.form.valid) this.candidates.push(candidate);
 		this.candidateCv.loadFormData();
 		this.formCV = this.candidateCv.form;
 
@@ -166,17 +166,17 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	/**
 	 *  Go to another the step without to saving data form
 	 */
-   	gotoStep(step: number){
-		for(let i = 1; i < step; i++){
+	gotoStep(step: number) {
+		for (let i = 1; i < step; i++) {
 			this.stepper.next(); // change step
 		}
-   	}
+	}
 
-  	/**
-	 * Removed one candidate in the array of candidates.
-	 * @param tag
-	 */
-   	onCandidateRemove(tag: NbTagComponent): void {
+	/**
+ * Removed one candidate in the array of candidates.
+ * @param tag
+ */
+	onCandidateRemove(tag: NbTagComponent): void {
 		this.candidates = this.candidates.filter(
 			(t: ICandidateCreateInput) => t.user.email !== tag.text
 		);

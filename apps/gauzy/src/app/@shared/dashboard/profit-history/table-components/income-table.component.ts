@@ -1,18 +1,38 @@
-import { Component, Input } from '@angular/core';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Component, Input, OnInit } from '@angular/core';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IOrganization } from '@gauzy/contracts';
+import { Store } from './../../../../@core/services';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
+	selector: 'ga-income-table-selector',
 	template: `
-		<span>{{
-			rowData.income ? '+ ' + rowData.income + ' ' + currency : ''
-		}}</span>
+		<span>
+			{{ rowData.income ? '+ ' + rowData.income + ' ' + organization?.currency : '' }}
+		</span>
 	`
 })
-export class IncomeTableComponent {
-	constructor(private store: Store) {}
-	currency = this.store.selectedOrganization.currency;
+export class IncomeTableComponent implements OnInit {
 
-	@Input()
-	rowData: any;
-	value: string | number;
+	public organization: IOrganization;
+
+	@Input() rowData: any;
+	@Input() value: string | number;
+
+	constructor(
+		private readonly store: Store
+	) { }
+
+	ngOnInit(): void {
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.organization = organization;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 }

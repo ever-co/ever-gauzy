@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
-	FormBuilder,
-	FormGroup,
+	UntypedFormBuilder,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -44,8 +44,8 @@ export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 	/*
 	* Expense Category Mutation Form
 	*/
-	public form: FormGroup = ExpenseCategoryMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = ExpenseCategoryMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			tags: []
@@ -53,7 +53,7 @@ export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<ExpenseCategoryMutationComponent>,
 		readonly translateService: TranslateService,
 		private readonly store: Store

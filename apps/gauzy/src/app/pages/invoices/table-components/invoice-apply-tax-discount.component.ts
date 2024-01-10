@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { DefaultEditor } from 'ng2-smart-table';
+import { DefaultEditor } from 'angular2-smart-table';
 
 @Component({
 	template: `
@@ -7,19 +7,21 @@ import { DefaultEditor } from 'ng2-smart-table';
 			class="d-block apply-tax"
 			status="primary"
 			(checkedChange)="toggleSeparateTaxDiscount($event)"
-			[ngModel]="cell.newValue"
-		>
-		</nb-toggle>
+		></nb-toggle>
 	`,
 	styles: ['.apply-tax {text-align: center}']
 })
-export class InvoiceApplyTaxDiscountComponent extends DefaultEditor
-	implements OnInit {
+export class InvoiceApplyTaxDiscountComponent extends DefaultEditor implements OnInit {
+
 	ngOnInit() {
-		this.cell.newValue = this.cell.newValue ? this.cell.newValue : false;
+		this.cell.setValue(this.cell.getValue());
 	}
 
+	/**
+	 *
+	 * @param $event
+	 */
 	toggleSeparateTaxDiscount($event) {
-		this.cell.newValue = $event;
+		this.cell.setValue($event);
 	}
 }

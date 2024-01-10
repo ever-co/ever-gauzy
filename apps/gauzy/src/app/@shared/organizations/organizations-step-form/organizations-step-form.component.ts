@@ -12,9 +12,9 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { formatDate, Location } from '@angular/common';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormControl,
-	FormGroup,
+	UntypedFormGroup,
 	Validators
 } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -104,8 +104,8 @@ export class OrganizationsStepFormComponent
 	/*
 	* Organization Main Mutation Form
 	*/
-	public readonly orgMainForm: FormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
-	static buildOrgMainForm(fb: FormBuilder): FormGroup {
+	public readonly orgMainForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
+	static buildOrgMainForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			imageUrl: [
 				{ value: null, disabled: true }
@@ -122,13 +122,13 @@ export class OrganizationsStepFormComponent
 	/**
 	* Location Mutation Form
 	*/
-	readonly locationForm: FormGroup = LocationFormComponent.buildForm(this.fb);
+	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
 	* Organization Bonus Form
 	*/
-	public readonly orgBonusForm: FormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
-	static buildOrgBonusForm(fb: FormBuilder): FormGroup {
+	public readonly orgBonusForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
+	static buildOrgBonusForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			bonusType: [],
 			bonusPercentage: [
@@ -140,8 +140,8 @@ export class OrganizationsStepFormComponent
 	/*
 	* Organization Settings Form
 	*/
-	public readonly orgSettingsForm: FormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
-	static buildOrgSettingsForm(fb: FormBuilder): FormGroup {
+	public readonly orgSettingsForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
+	static buildOrgSettingsForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			timeZone: [],
 			startWeekOn: [],
@@ -174,8 +174,8 @@ export class OrganizationsStepFormComponent
 	/*
 	* Employee Feature Form
 	*/
-	readonly employeeFeatureForm: FormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
-	static buildEmployeeFeatureForm(fb: FormBuilder): FormGroup {
+	readonly employeeFeatureForm: UntypedFormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
+	static buildEmployeeFeatureForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			registerAsEmployee: [true],
 			startedWorkOn: [new Date(), Validators.required]
@@ -183,7 +183,7 @@ export class OrganizationsStepFormComponent
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly store: Store,
@@ -236,7 +236,7 @@ export class OrganizationsStepFormComponent
 		/**
 		 * location controls value changes
 		 */
-		const locationForm = <FormGroup>this.locationForm;
+		const locationForm = <UntypedFormGroup>this.locationForm;
 		locationForm.valueChanges.subscribe((value) => {
 			if (value.hasOwnProperty('loc')) {
 				delete value['loc'];

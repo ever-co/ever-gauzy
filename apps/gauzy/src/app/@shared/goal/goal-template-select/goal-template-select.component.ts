@@ -26,7 +26,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,8 +56,8 @@ export class GoalTemplateSelectComponent
 	/*
 	* Goal Template Selection Mutation Form
 	*/
-	public form: FormGroup = GoalTemplateSelectComponent.buildForm(this.fb, this);
-	static buildForm(fb: FormBuilder, self: GoalTemplateSelectComponent): FormGroup {
+	public form: UntypedFormGroup = GoalTemplateSelectComponent.buildForm(this.fb, this);
+	static buildForm(fb: UntypedFormBuilder, self: GoalTemplateSelectComponent): UntypedFormGroup {
 		return fb.group({
 			deadline: ['', Validators.required],
 			ownerId: ['', Validators.required],
@@ -79,7 +79,7 @@ export class GoalTemplateSelectComponent
 		private readonly dialogService: NbDialogService,
 		private readonly goalService: GoalService,
 		private readonly keyResultService: KeyResultService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly goalSettingsService: GoalSettingsService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService
@@ -164,8 +164,8 @@ export class GoalTemplateSelectComponent
 				this.form.value.level === GoalLevelEnum.EMPLOYEE
 					? 'ownerEmployee'
 					: this.form.value.level === GoalLevelEnum.TEAM
-					? 'ownerTeam'
-					: 'organization'
+						? 'ownerTeam'
+						: 'organization'
 			] = this.form.value.owner;
 			delete goal.owner;
 			delete goal.keyResults;
@@ -235,5 +235,5 @@ export class GoalTemplateSelectComponent
 		this.dialogRef.close(data);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

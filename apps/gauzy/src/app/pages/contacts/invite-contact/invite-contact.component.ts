@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { IOrganization, IOrganizationContact } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
@@ -21,7 +21,7 @@ export class InviteContactComponent extends TranslationBaseComponent
 		private readonly dialogRef: NbDialogRef<InviteContactComponent>,
 		readonly translateService: TranslateService,
 		private readonly toastrService: ToastrService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly usersService: UsersService,
 		private readonly inviteService: InviteService,

@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	ProductTypesIconsEnum,
 	LanguagesEnum,
@@ -39,8 +39,8 @@ export class ProductTypeMutationComponent
 	translations: any = [];
 	public organization: IOrganization;
 
-	readonly form: FormGroup = ProductTypeMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = ProductTypeMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: ['', Validators.required],
 			icon: [ProductTypesIconsEnum.STAR],
@@ -51,7 +51,7 @@ export class ProductTypeMutationComponent
 	constructor(
 		public readonly dialogRef: NbDialogRef<IProductTypeTranslatable>,
 		public readonly translationService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly productTypeService: ProductTypeService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService
@@ -97,7 +97,7 @@ export class ProductTypeMutationComponent
 			translations,
 			icon
 		};
-		
+
 		let productType: IProductTypeTranslatable;
 		try {
 			if (!this.productType) {
@@ -126,10 +126,10 @@ export class ProductTypeMutationComponent
 
 	/**
 	 * PATCH product category old raw value
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
-	 private _patchRawValue() {
+	private _patchRawValue() {
 		if (!this.productType) {
 			return;
 		}
@@ -143,17 +143,17 @@ export class ProductTypeMutationComponent
 
 	/**
 	 * SET selected language active translation
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
-	private _setActiveTranslation() {		
+	private _setActiveTranslation() {
 		this.activeTranslation = this.translations.find(({ languageCode }) => {
 			return languageCode === this.selectedLanguage;
 		});
 
 		this.form.patchValue({
 			name: this.activeTranslation ? this.activeTranslation.name : '',
-			description: this.activeTranslation ? this.activeTranslation.description: ''
+			description: this.activeTranslation ? this.activeTranslation.description : ''
 		});
 	}
 
@@ -188,8 +188,8 @@ export class ProductTypeMutationComponent
 
 	/**
 	 * On language change set active translation
-	 * 
-	 * @param langCode 
+	 *
+	 * @param langCode
 	 */
 	onLangChange(langCode: LanguagesEnum) {
 		this.selectedLanguage = langCode;

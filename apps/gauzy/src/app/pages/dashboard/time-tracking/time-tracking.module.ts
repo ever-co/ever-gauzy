@@ -12,7 +12,7 @@ import {
 	NbPopoverModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { ChartModule } from 'angular2-chartjs';
+import { NgChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';
 import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
@@ -42,7 +42,7 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		NbBadgeModule,
 		ScreenshotsItemModule,
 		ActivityItemModule,
-		ChartModule,
+		NgChartsModule,
 		TranslateModule,
 		GalleryModule,
 		HeaderTitleModule,
@@ -58,4 +58,4 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 	exports: [TimeTrackingComponent],
 	providers: []
 })
-export class TimeTrackingModule {}
+export class TimeTrackingModule { }

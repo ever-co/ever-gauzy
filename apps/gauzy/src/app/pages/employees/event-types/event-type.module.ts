@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EventTypeRoutingModule } from './event-type.routing.module';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EventTypeComponent } from './event-type.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
@@ -41,7 +41,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		NbInputModule,
 		NbIconModule,
 		NbSelectModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbSpinnerModule,
 		EventTypeMutationModule,
 		UserFormsModule,
@@ -51,9 +51,9 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		TranslateModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-    PaginationModule
+		PaginationModule
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]
 })
-export class EventTypeModule {}
+export class EventTypeModule { }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import {
@@ -18,7 +18,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -55,30 +55,21 @@ import { ReplacePipe } from '../../@shared/pipes';
 export class ExpensesComponent extends PaginationFilterBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	smartTableSettings: object;
-	employeeId: string | null;
-	projectId: string | null;
-	selectedDateRange: IDateRangePicker;
-	smartTableSource: ServerDataSource;
-	expenses: IExpense[] = [];
-	selectedExpense: IExpense;
-	loading: boolean = false;
-	disableButton: boolean = true;
-	viewComponentName: ComponentEnum;
-	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
-	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-
-	organization: IOrganization;
-	expenses$: Subject<any> = this.subject$;
+	public smartTableSettings: object;
+	public employeeId: string | null;
+	public projectId: string | null;
+	public selectedDateRange: IDateRangePicker;
+	public smartTableSource: ServerDataSource;
+	public expenses: IExpense[] = [];
+	public selectedExpense: IExpense;
+	public loading: boolean = false;
+	public disableButton: boolean = true;
+	public viewComponentName: ComponentEnum;
+	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
+	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
+	public organization: IOrganization;
+	public expenses$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	expensesTable: Ng2SmartTableComponent;
-	@ViewChild('expensesTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.expensesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -100,74 +91,113 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 	ngOnInit() {
 		this._loadSettingsSmartTable();
 		this._applyTranslationOnSmartTable();
-		this.expenses$
-			.pipe(
-				debounceTime(100),
-				tap(() => this._clearItem()),
-				tap(() => this.getExpenses()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.pagination$
-			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				tap(() => this.expenses$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+
+		// Combine all observables into one observable using combineLatest
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 		const selectedProject$ = this.store.selectedProject$;
+
+		// Subscribe to expenses$ and perform actions when it emits a value
+		this.expenses$
+			.pipe(
+				// Introduce a debounce time of 100 milliseconds
+				debounceTime(100),
+				// Execute the _clearItem method
+				tap(() => this._clearItem()),
+				// Execute the getIncomes method
+				tap(() => this.getExpenses()),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// Subscribe to expenses$ and perform actions when it emits a value
+		this.expenses$
+			.pipe(
+				// Introduce a debounce time of 100 milliseconds
+				debounceTime(100),
+				// Execute the _clearItem method
+				tap(() => this._clearItem()),
+				// Execute the getIncomes method
+				tap(() => this.getExpenses()),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// Subscribe to the combined latest values from the all observables
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, selectedProject$])
 			.pipe(
+				// Introduce a debounce time of 300 milliseconds
 				debounceTime(300),
+				// Filter out combinations where organization and dateRange are truthy
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				// Only emit when there is a distinct change in the values
 				distinctUntilChange(),
+				// Perform actions when the combined values emit
 				tap(([organization, dateRange, employee, project]) => {
+					// Set component properties based on the emitted values
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
 					this.employeeId = employee ? employee.id : null;
 					this.projectId = project ? project.id : null;
 				}),
+				// Trigger the _refresh$ and expenses$ observables
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.expenses$.next(true)),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
+		// Subscribe to changes in the query parameters
 		this.route.queryParamMap
 			.pipe(
+				// Filter out null or undefined parameters
 				filter((params: ParamMap) => !!params),
+				// Check if 'openAddDialog' parameter is set to 'true'
 				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
+				// Add a debounce time to prevent rapid consecutive calls
 				debounceTime(1000),
+				// Open the add expense dialog
 				tap(() => this.openAddExpenseDialog()),
+				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._refresh$.pipe(
-			filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
-			tap(() => this.refreshPagination()),
-			tap(() => this.expenses = []),
-			untilDestroyed(this)
-		).subscribe();
-
+		// Subscribe to _refresh$ and perform actions when it emits a value
+		this._refresh$
+			.pipe(
+				// Filter based on the condition that dataLayoutStyle is CARDS_GRID
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
+				// Execute the refreshPagination method
+				tap(() => this.refreshPagination()),
+				// Perform actions when the condition is met
+				// Clear the incomes array
+				tap(() => (this.expenses = [])),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	ngAfterViewInit() {
-		if (this.store.user && !this.store.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+	ngAfterViewInit(): void {
+		// Check if the user has the permission to change the selected employee
+		if (this.store.user && !this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// If the user doesn't have the permission, remove the 'employee' column
 			delete this.smartTableSettings['columns']['employee'];
-			this.smartTableSettings = Object.assign(
-				{},
-				this.smartTableSettings
-			);
+
+			// Create a new object for smartTableSettings to trigger change detection
+			this.smartTableSettings = { ...this.smartTableSettings };
 		}
 	}
 
+	/**
+	 * Sets the view component and handles layout changes.
+	 */
 	setView() {
+		// Set the view component name
 		this.viewComponentName = ComponentEnum.EXPENSES;
+
+		// Subscribe to changes in the component layout
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
@@ -182,36 +212,37 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
+	/**
+	 * Maps an ExpenseStatusesEnum value to text and class properties.
+	 *
+	 * @param value - The ExpenseStatusesEnum value to map.
+	 * @returns An object with text and class properties.
 	 */
-	onChangedSource() {
-		this.expensesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this._clearItem())
-			)
-			.subscribe();
-	}
+	private statusMapper = (value: ExpenseStatusesEnum): { text: string; class: string | null } => {
+		let badgeClass: string | null = null;
 
-	private statusMapper = (value: ExpenseStatusesEnum) => {
-		const badgeClass = value
-			? [ExpenseStatusesEnum.PAID].includes(value)
-				? 'success'
-				: [ExpenseStatusesEnum.INVOICED].includes(value)
-					? 'warning'
-					: 'danger'
-			: null;
+		switch (value) {
+			case ExpenseStatusesEnum.PAID:
+				badgeClass = 'success';
+				break;
+			case ExpenseStatusesEnum.INVOICED:
+				badgeClass = 'warning';
+				break;
+			default:
+				badgeClass = 'danger';
+		}
+
 		return {
 			text: this.replacePipe.transform(value, '_', ' '),
-			class: badgeClass
+			class: badgeClass,
 		};
-	}
+	};
 
 	private _loadSettingsSmartTable() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
 			actions: false,
+			selectedRowIndex: -1,
 			editable: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EXPENSE'),
 			pager: {
@@ -223,8 +254,12 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '10%',
+					filter: false,
 					renderComponent: DateViewComponent,
-					filter: false
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
@@ -255,7 +290,11 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					filter: false,
 					type: 'custom',
 					sort: false,
-					renderComponent: EmployeeLinksComponent
+					renderComponent: EmployeeLinksComponent,
+					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getRawValue();
+					},
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
@@ -268,7 +307,11 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					width: '10%',
 					filter: false,
-					renderComponent: IncomeExpenseAmountComponent
+					renderComponent: IncomeExpenseAmountComponent,
+					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -299,22 +342,35 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					type: 'custom',
 					width: '5%',
 					filter: false,
-					renderComponent: StatusBadgeComponent
+					renderComponent: StatusBadgeComponent,
+					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+					},
 				}
 			}
 		};
 	}
 
-	manageCategories() {
+	/**
+	 * Navigates to the category management page for expenses.
+	 */
+	manageCategories(): void {
+		// You can add comments here if needed
 		this.router.navigate(['/pages/accounting/expenses/categories']);
 	}
 
-	async addExpense(expense: IExpense) {
+	/**
+	 * Adds an expense.
+	 *
+	 * @param expense - The expense to be added.
+	 */
+	async addExpense(expense: IExpense): Promise<void> {
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			const { employee } = expense;
 
+			// Create the expense using the expense service
 			await this.expenseService.create({
 				...expense,
 				valueDate: moment(expense.valueDate).startOf('day').toDate(),
@@ -322,81 +378,45 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 				organizationId,
 				tenantId
 			});
+
+			// Show success toast and refresh components
 			this.toastrService.success('NOTES.EXPENSES.ADD_EXPENSE', {
 				name: this.employeeName(employee)
 			});
-
-			this.dateRangePickerBuilderService.refreshDateRangePicker(
-				moment(expense.valueDate)
-			);
-			this._refresh$.next(true)
-			this.expenses$.next(true);
+			this.dateRangePickerBuilderService.refreshDateRangePicker(moment(expense.valueDate));
 		} catch (error) {
+			// Handle errors and show danger toast
 			this.errorHandler.handleError(error);
+		} finally {
+			// Trigger a refresh of data
+			this._refresh$.next(true);
+			this.expenses$.next(true);
 		}
 	}
 
-	openAddExpenseDialog() {
-		this.dialogService
-			.open(ExpensesMutationComponent)
-			.onClose
-			.pipe(untilDestroyed(this))
-			.subscribe(async (expense: IExpense) => {
-				if (expense) {
-					await this.addExpense(expense);
-				}
-			});
+	/**
+	 * Opens a dialog for adding a new expense.
+	 */
+	openAddExpenseDialog(): void {
+		// Open a dialog for adding expense
+		const addDialogRef = this.dialogService.open(ExpensesMutationComponent);
+
+		// Subscribe to the dialog result
+		addDialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (newExpense: IExpense) => {
+			// If a new expense is returned from the dialog
+			if (newExpense) {
+				// Call the addExpense method to handle the addition
+				await this.addExpense(newExpense);
+			}
+		});
 	}
 
-	openEditExpenseDialog(selectedItem?: IExpense) {
-		if (selectedItem) {
-			this.selectExpense({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-		this.dialogService
-			.open(ExpensesMutationComponent, {
-				context: {
-					expense: this.selectedExpense
-				}
-			})
-			.onClose
-			.pipe(untilDestroyed(this))
-			.subscribe(async (expense: IExpense) => {
-				if (expense) {
-					try {
-						if (!this.selectedExpense) {
-							return;
-						}
-						const { tenantId } = this.store.user;
-						const { id: organizationId } = this.organization;
-						const { id, employee } = this.selectedExpense;
-
-						await this.expenseService.update(id, {
-							...expense,
-							valueDate: moment(expense.valueDate).startOf('day').toDate(),
-							employeeId: employee ? employee.id : null,
-							tenantId,
-							organizationId
-						});
-
-						this.dateRangePickerBuilderService.refreshDateRangePicker(
-							moment(expense.valueDate)
-						);
-						this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
-							name: this.employeeName(employee)
-						});
-						this._refresh$.next(true)
-						this.expenses$.next(true);
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
-				}
-			});
-	}
-
-	openDuplicateExpenseDialog(selectedItem?: IExpense) {
+	/**
+	 * Opens a dialog for editing an expense.
+	 *
+	 * @param selectedItem - The expense to be edited.
+	 */
+	openEditExpenseDialog(selectedItem?: IExpense): void {
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,
@@ -404,82 +424,178 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			});
 		}
 
-		this.dialogService
-			.open(ExpensesMutationComponent, {
-				context: {
-					expense: this.selectedExpense,
-					duplicate: true
-				}
-			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (expense: IExpense) => {
-				if (expense) {
+		// Open a dialog for editing the expense
+		const editDialogRef = this.dialogService.open(ExpensesMutationComponent, {
+			context: {
+				expense: this.selectedExpense
+			}
+		});
+
+		// Subscribe to the dialog result
+		editDialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (editedExpense: IExpense) => {
+			if (editedExpense) {
+				try {
+					// Check if a valid expense is selected
 					if (!this.selectedExpense) {
 						return;
 					}
-					await this.addExpense(expense);
+
+					const { tenantId } = this.store.user;
+					const { id: organizationId } = this.organization;
+					const { id, employee } = this.selectedExpense;
+
+					// Update the expense using the expense service
+					await this.expenseService.update(id, {
+						...editedExpense,
+						valueDate: moment(editedExpense.valueDate).startOf('day').toDate(),
+						employeeId: employee ? employee.id : null,
+						tenantId,
+						organizationId
+					});
+
+					// Refresh the date range picker and show success toast
+					this.dateRangePickerBuilderService.refreshDateRangePicker(
+						moment(editedExpense.valueDate)
+					);
+					this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
+						name: this.employeeName(employee)
+					});
+				} catch (error) {
+					// Handle any errors that occur during the update
+					this.errorHandler.handleError(error);
+				} finally {
+					// Trigger a refresh of data
+					this._refresh$.next(true);
+					this.expenses$.next(true);
 				}
-			});
+			}
+		});
 	}
 
-	async deleteExpense(selectedItem?: IExpense) {
+	/**
+	 * Opens a dialog for duplicating the selected expense.
+	 *
+	 * @param selectedItem - The selected expense to be duplicated.
+	 */
+	openDuplicateExpenseDialog(selectedItem?: IExpense): void {
+		// If an expense is selected, update the selected expense
 		if (selectedItem) {
 			this.selectExpense({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType: this.getTranslation(
-						'FORM.DELETE_CONFIRMATION.EXPENSE'
-					)
+
+		// Open a dialog for duplicating expense
+		const duplicateDialogRef = this.dialogService.open(ExpensesMutationComponent, {
+			context: {
+				expense: this.selectedExpense,
+				duplicate: true
+			}
+		});
+
+		// Subscribe to the dialog result
+		duplicateDialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (duplicatedExpense: IExpense) => {
+			// If a duplicated expense is returned from the dialog
+			if (duplicatedExpense) {
+				// Check if there is a selected expense
+				if (!this.selectedExpense) {
+					return;
 				}
-			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (result) => {
-				if (result) {
-					try {
-						if (!this.selectedExpense) {
-							return;
-						}
-						const { id, employee, employeeId, organizationId } = this.selectedExpense;
-						await this.expenseService.delete(
-							id,
-							{
-								employeeId,
-								organizationId
-							}
-						);
-						this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
-							name: this.employeeName(employee)
-						});
-						this._refresh$.next(true)
-						this.expenses$.next(true);
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
-				}
-			});
+
+				// Call the addExpense method to handle the duplication
+				await this.addExpense(duplicatedExpense);
+			}
+		});
 	}
 
-	selectExpense({ isSelected, data }) {
+	/**
+	 * Deletes the selected expense.
+	 *
+	 * @param selectedItem - The selected expense to be deleted.
+	 */
+	async deleteExpense(selectedItem?: IExpense): Promise<void> {
+		// If an expense is selected, update the selected expense
+		if (selectedItem) {
+			this.selectExpense({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		// Open a confirmation dialog
+		const confirmationDialogRef = this.dialogService.open(DeleteConfirmationComponent, {
+			context: {
+				recordType: this.getTranslation('FORM.DELETE_CONFIRMATION.EXPENSE')
+			}
+		});
+
+		// Subscribe to the dialog result
+		confirmationDialogRef.onClose.pipe(untilDestroyed(this)).subscribe(async (dialogResult) => {
+			// If the user confirmed the deletion
+			if (dialogResult) {
+				try {
+					// Check if there is a selected expense
+					if (!this.selectedExpense) {
+						return;
+					}
+
+					const { id: organizationId, tenantId } = this.organization;
+					// Extract necessary information from the selected expense
+					const { id, employee, employeeId } = this.selectedExpense;
+
+					// Delete the expense
+					await this.expenseService.delete(id, {
+						employeeId,
+						organizationId,
+						tenantId
+					});
+
+					// Display success message
+					this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', {
+						name: this.employeeName(employee)
+					});
+				} catch (error) {
+					// Handle errors
+					this.errorHandler.handleError(error);
+				} finally {
+					// Trigger refresh for the data and expenses
+					this._refresh$.next(true);
+					this.expenses$.next(true);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Handles the selection of an expense item.
+	 *
+	 * @param {Object} param - Destructured parameter object.
+	 *                        - isSelected: A boolean indicating whether the item is selected.
+	 *                        - data: The expense data associated with the selected item.
+	 */
+	selectExpense({ isSelected, data }: { isSelected: boolean, data: IExpense }): void {
+		// Update the disableButton property based on the isSelected value
 		this.disableButton = !isSelected;
+
+		// Update the selectedExpense property based on the isSelected value
 		this.selectedExpense = isSelected ? data : null;
 	}
 
-	/*
-	* Register Smart Table Source Config
-	*/
-	setSmartTableSource() {
+	/**
+	 * Registers Smart Table Source Config for expenses.
+	 */
+	setSmartTableSource(): void {
 		if (!this.organization) {
 			return;
 		}
+
+		// Extract necessary information from the store, organization, and selected date range
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
+		// Create a new ServerDataSource for expenses
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense/pagination`,
 			relations: [
@@ -494,36 +610,25 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			where: {
 				organizationId,
 				tenantId,
-				...(
-					this.employeeId ? {
-						employeeId: this.employeeId
-					} : {}
-				),
-				...(
-					this.projectId ? {
-						projectId: this.projectId
-					} : {}
-				),
+				...(this.employeeId ? { employeeId: this.employeeId } : {}),
+				...(this.projectId ? { projectId: this.projectId } : {}),
 				valueDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 				},
 				...(this.filters.where ? this.filters.where : {})
 			},
-			resultMap: (expense: IExpense) => {
-				return Object.assign({}, expense, {
-					vendorName: expense.vendor ? expense.vendor.name : null,
-					categoryName: expense.category ? expense.category.name : null,
-					projectName: expense.project ? expense.project.name : null,
-					statuses: this.statusMapper(expense.status),
-					employee: { ...employeeMapper(expense) }
-				});
-			},
+			resultMap: (expense: IExpense): any => ({
+				...expense,
+				vendorName: expense.vendor ? expense.vendor.name : null,
+				categoryName: expense.category ? expense.category.name : null,
+				projectName: expense.project ? expense.project.name : null,
+				statuses: this.statusMapper(expense.status),
+				employee: { ...employeeMapper(expense) }
+			}),
 			finalize: () => {
-				if (
-					this.dataLayoutStyle ===
-					this.componentLayoutStyleEnum.CARDS_GRID
-				) {
+				// Handle finalization logic, such as updating the UI and pagination
+				if (this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID) {
 					this.expenses.push(...this.smartTableSource.getData());
 				}
 				this.setPagination({
@@ -535,30 +640,43 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		});
 	}
 
+	/**
+	 * Fetches and initializes expenses data based on the selected organization and pagination settings.
+	 * If the organization is not available, the method returns early.
+	 * Handles the retrieval of expenses data and updates the Smart Table source accordingly.
+	 */
 	private async getExpenses() {
+		// Check if the organization is available
 		if (!this.organization) {
 			return;
 		}
+
 		try {
+			// Set up the Smart Table source
 			this.setSmartTableSource();
 
+			// Retrieve pagination settings
 			const { activePage, itemsPerPage } = this.getPagination();
-			this.smartTableSource.setPaging(
-				activePage,
-				itemsPerPage,
-				false
-			);
 
+			// Set the paging configuration for the Smart Table source
+			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			// Fetch elements if the data layout style is set to cards grid
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 			}
 		} catch (error) {
+			// Handle errors and display a danger toast notification
 			this.toastrService.danger('NOTES.EXPENSES.EXPENSES_ERROR', null, {
 				error: error.error.message || error.message
 			});
 		}
 	}
 
+	/**
+	 * Subscribe to the language change event and apply translations to the Smart Table.
+	 * Calls the _loadSettingsSmartTable method when the language changes.
+	 */
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
@@ -568,31 +686,23 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 	}
 
-	/*
-	* Clear selected item
-	*/
+	/**
+	 * Clears the selected expense.
+	 */
 	private _clearItem() {
 		this.selectExpense({
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/*
-	 * Deselect all table rows
+	/**
+	 * Gets the name of an employee.
+	 * @param employee - The employee for which to retrieve the name.
+	 * @returns The full name of the employee or the first name of the default employee if not available.
 	 */
-	deselectAll() {
-		if (this.expensesTable && this.expensesTable.grid) {
-			this.expensesTable.grid.dataSet['willSelect'] = 'false';
-			this.expensesTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	employeeName(employee: IEmployee) {
-		return (
-			employee && employee.id
-		) ? (employee.fullName).trim() : ALL_EMPLOYEES_SELECTED.firstName;
+	employeeName(employee: IEmployee): string {
+		return employee && employee.id ? employee.fullName.trim() : ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
 	ngOnDestroy() { }

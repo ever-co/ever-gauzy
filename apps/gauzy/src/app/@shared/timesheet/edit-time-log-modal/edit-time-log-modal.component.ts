@@ -17,7 +17,7 @@ import {
 	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
@@ -64,11 +64,11 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	/*
 	 * TimeLog Mutation Form
 	 */
-	public form: FormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
 	static buildForm(
-		fb: FormBuilder,
+		fb: UntypedFormBuilder,
 		self: EditTimeLogModalComponent
-	): FormGroup {
+	): UntypedFormGroup {
 		return fb.group({
 			isBillable: [true],
 			employeeId: [],
@@ -82,7 +82,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	}
 
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly timesheetService: TimesheetService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,

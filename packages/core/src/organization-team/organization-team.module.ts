@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user/user.module';
@@ -19,9 +19,7 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/organization-team', module: OrganizationTeamModule },
-		]),
+		RouterModule.register([{ path: '/organization-team', module: OrganizationTeamModule }]),
 		TypeOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
 		TenantModule,
@@ -32,10 +30,10 @@ import { TaskModule } from './../tasks/task.module';
 		TimerModule,
 		CqrsModule,
 		StatisticModule,
-		TaskModule,
+		TaskModule
 	],
 	controllers: [OrganizationTeamController],
 	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
-	exports: [TypeOrmModule, OrganizationTeamService],
+	exports: [TypeOrmModule, OrganizationTeamService]
 })
 export class OrganizationTeamModule {}

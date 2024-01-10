@@ -1,7 +1,13 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
+import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
+import { combineLatest, Subject } from 'rxjs';
+import { Cell } from 'angular2-smart-table';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import * as moment from 'moment';
 import {
 	StatusTypesEnum,
 	ITimeOff,
@@ -9,13 +15,7 @@ import {
 	IOrganization,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
-import { combineLatest, Subject } from 'rxjs';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
-import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import * as moment from 'moment';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	DateRangePickerBuilderService,
@@ -48,9 +48,8 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './time-off.component.html',
 	styleUrls: ['./time-off.component.scss']
 })
-export class TimeOffComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class TimeOffComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	selectedEmployeeId: string | null;
 	selectedDateRange: IDateRangePicker;
@@ -72,17 +71,8 @@ export class TimeOffComponent
 	showFilter: boolean = false;
 
 	public organization: IOrganization;
-	timeOff$: Subject<any> = this.subject$;
-
+	public timeOff$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	timeOffTable: Ng2SmartTableComponent;
-	@ViewChild('timeOffTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.timeOffTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		private readonly router: Router,
@@ -405,6 +395,7 @@ export class TimeOffComponent
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -414,8 +405,12 @@ export class TimeOffComponent
 				fullName: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'custom',
-					renderComponent: PictureNameTagsComponent,
 					class: 'align-row',
+					renderComponent: PictureNameTagsComponent,
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -442,6 +437,10 @@ export class TimeOffComponent
 					title: this.getTranslation('SM_TABLE.POLICY'),
 					type: 'custom',
 					renderComponent: ApprovalPolicyComponent,
+					componentInitFunction: (instance: ApprovalPolicyComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -454,26 +453,38 @@ export class TimeOffComponent
 					title: this.getTranslation('SM_TABLE.START'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				},
 				end: {
 					title: this.getTranslation('SM_TABLE.END'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				},
 				requestDate: {
 					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
 					type: 'custom',
 					filter: false,
-					renderComponent: DateViewComponent
+					renderComponent: DateViewComponent,
+					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
+						instance.value = cell.getValue();
+					},
 				},
 				statusBadge: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
+					filter: false,
 					renderComponent: StatusBadgeComponent,
-					filter: false
+					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
+						instance.value = cell.getRawValue();
+					},
 				}
 			}
 		};
@@ -677,18 +688,6 @@ export class TimeOffComponent
 	}
 
 	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.timeOffTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
-	/*
 	 * Clear selected item
 	 */
 	clearItem() {
@@ -696,17 +695,6 @@ export class TimeOffComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.timeOffTable && this.timeOffTable.grid) {
-			this.timeOffTable.grid.dataSet['willSelect'] = 'false';
-			this.timeOffTable.grid.dataSet.deselectAll();
-		}
 	}
 
 	/**

@@ -4,7 +4,7 @@ import { environment } from '@gauzy/config';
 
 @Injectable()
 export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
-	protected getTracker(req: Record<string, any>): string {
+	protected async getTracker(req: Record<string, any>): Promise<string> {
 		let tracker: string;
 
 		// Handle Cloudflare proxy

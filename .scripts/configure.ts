@@ -17,7 +17,6 @@ let envFileContent = `// NOTE: Auto-generated file
 declare const window:any;
 
 import { Environment } from './model';
-import { CloudinaryConfiguration } from '@cloudinary/angular-5.x';
 
 `;
 
@@ -31,12 +30,6 @@ if (!env.IS_DOCKER) {
 	if (!env.SENTRY_DSN) {
 		console.warn(
 			'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
-		);
-	}
-
-	if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY) {
-		console.warn(
-			'WARNING: No Cloudinary API keys defined in the .env file.'
 		);
 	}
 
@@ -102,9 +95,6 @@ if (!env.IS_DOCKER) {
 		COMPANY_FACEBOOK_LINK: '${env.COMPANY_FACEBOOK_LINK}',
 		COMPANY_TWITTER_LINK: '${env.COMPANY_TWITTER_LINK}',
 		COMPANY_LINKEDIN_LINK: '${env.COMPANY_LINKEDIN_LINK}',
-
-		CLOUDINARY_CLOUD_NAME: '${env.CLOUDINARY_CLOUD_NAME}',
-		CLOUDINARY_API_KEY: '${env.CLOUDINARY_API_KEY}',
 
 		GOOGLE_AUTH_LINK: API_BASE_URL + '/api/auth/google',
 		FACEBOOK_AUTH_LINK: API_BASE_URL + '/api/auth/facebook',
@@ -236,9 +226,6 @@ if (!env.IS_DOCKER) {
 		COMPANY_TWITTER_LINK: '${env.COMPANY_TWITTER_LINK}',
 		COMPANY_LINKEDIN_LINK: '${env.COMPANY_LINKEDIN_LINK}',
 
-		CLOUDINARY_CLOUD_NAME: 'DOCKER_CLOUDINARY_CLOUD_NAME',
-		CLOUDINARY_API_KEY: 'DOCKER_CLOUDINARY_API_KEY',
-
 		GOOGLE_AUTH_LINK: API_BASE_URL + '/api/auth/google',
 		FACEBOOK_AUTH_LINK: API_BASE_URL + '/api/auth/facebook',
 		LINKEDIN_AUTH_LINK: API_BASE_URL + '/api/auth/linkedin',
@@ -326,15 +313,6 @@ if (!env.IS_DOCKER) {
 	};
 `;
 }
-
-envFileContent += `
-
-	export const cloudinaryConfiguration: CloudinaryConfiguration = {
-		cloud_name: environment.CLOUDINARY_CLOUD_NAME,
-		api_key: environment.CLOUDINARY_API_KEY
-	};
-
-`;
 
 if (!isProd) {
 	envFileContent += `

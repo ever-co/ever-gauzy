@@ -1,5 +1,5 @@
-@import '~bootstrap/scss/mixins/breakpoints';
-@import '~@nebular/theme/styles/global/breakpoints';
+@import 'bootstrap/scss/mixins/breakpoints';
+@import '@nebular/theme/styles/global/breakpoints';
 @import '../../styles/themes';
 $orange: #f56d58;
 @include nb-install-component() {
@@ -241,7 +241,7 @@ $orange: #f56d58;
 .project-selector {
   ::ng-deep {
     .ng-select.ng-select-opened.ng-select-bottom > .ng-select-container {
-      border-radius: nb-theme(button-rectangle-border-radius);
+      border-radius: var(--button-rectangle-border-radius) !important;
     }
     .ng-select.ng-select-single .ng-select-container {
       height: 2rem;
@@ -251,7 +251,7 @@ $orange: #f56d58;
     }
     .ng-select .ng-select-container {
       box-shadow: var(--gauzy-shadow);
-      border-radius: nb-theme(button-rectangle-border-radius);
+      border-radius: var(--button-rectangle-border-radius) !important;;
       background-color: var(--gauzy-card-1);
     }
   }

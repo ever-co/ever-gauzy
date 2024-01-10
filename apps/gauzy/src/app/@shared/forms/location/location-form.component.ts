@@ -10,17 +10,17 @@ import {
 	Renderer2,
 	ChangeDetectorRef,
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
-import { FormHelpers } from '../helpers';
-import { pick, isEmpty } from 'underscore';
-import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
-import { environment as env } from '../../../../environments/environment';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { TranslateService } from '@ngx-translate/core';
-import { CountryService } from '../../../@core/services/country.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
 import { DOCUMENT } from '@angular/common';
+import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { pick, isEmpty } from 'underscore';
+import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
+import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
+import { environment as env } from '@env/environment';
+import { FormHelpers } from '../helpers';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { CountryService } from '../../../@core/services/country.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,62 +28,65 @@ import { DOCUMENT } from '@angular/common';
 	styleUrls: ['./location-form.component.scss'],
 	templateUrl: 'location-form.component.html',
 })
-export class LocationFormComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit
-{
+export class LocationFormComponent extends TranslationBaseComponent implements AfterViewInit {
+
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	private _lastUsedAddressText: string;
 	private _lat: number;
 	private _lng: number;
-	private _showAutocompleteSearch = false;
-	private _showCoordinateInput = true;
 	public showCoordinates: boolean;
 	public country: string;
 	public countries: ICountry[] = [];
 
-	@Input()
-	readonly form: FormGroup;
+	@Input() readonly form: UntypedFormGroup;
 
-	@Input()
-	set showAutocompleteSearch(val: boolean) {
-		this._showAutocompleteSearch = val;
-	}
+	/**
+	 *
+	 */
+	private _showAutocompleteSearch: boolean = false;
 	get showAutocompleteSearch(): boolean {
 		return this._showAutocompleteSearch;
 	}
-
-	@Input()
-	set showCoordinateInput(val: boolean) {
-		this._showCoordinateInput = val;
+	@Input() set showAutocompleteSearch(val: boolean) {
+		this._showAutocompleteSearch = val;
 	}
+
+	/**
+	 *
+	 */
+	private _showCoordinateInput: boolean = true;
 	get showCoordinateInput(): boolean {
 		return this._showCoordinateInput;
 	}
+	@Input() set showCoordinateInput(val: boolean) {
+		this._showAutocompleteSearch = val;
+	}
 
-	@Output()
-	mapCoordinatesEmitter = new EventEmitter<
-		google.maps.LatLng | google.maps.LatLngLiteral
-	>();
+	//
+	@Output() mapCoordinatesEmitter = new EventEmitter<google.maps.LatLng | google.maps.LatLngLiteral>();
 
-	@Output()
-	mapGeometryEmitter = new EventEmitter<
-		google.maps.places.PlaceGeometry | google.maps.GeocoderGeometry
-	>();
+	//
+	@Output() mapGeometryEmitter = new EventEmitter<google.maps.places.PlaceGeometry | google.maps.GeocoderGeometry>();
 
+	//
 	@ViewChild('autocomplete') searchElement: ElementRef;
 
-	static buildForm(formBuilder: FormBuilder): FormGroup {
-		const form = formBuilder.group({
+	/**
+	 *
+	 * @param fb
+	 * @returns
+	 */
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		const form = fb.group({
 			country: [],
 			city: [],
 			address: [],
 			address2: [],
 			postcode: [],
-			loc: formBuilder.group({
+			loc: fb.group({
 				type: ['Point'],
-				coordinates: formBuilder.array([null, null]),
+				coordinates: fb.array([null, null]),
 			}),
 		});
 		return form;
@@ -115,42 +118,70 @@ export class LocationFormComponent
 		this._initGoogleAutocompleteApi();
 	}
 
+	/**
+	 *
+	 */
 	get countryControl() {
 		return this.form.get('country');
 	}
 
+	/**
+	 *
+	 */
 	get cityControl() {
 		return this.form.get('city');
 	}
 
+	/**
+	 *
+	 */
 	get addressControl() {
 		return this.form.get('address');
 	}
 
+	/**
+	 *
+	 */
 	get address2Control() {
 		return this.form.get('address2');
 	}
 
+	/**
+	 *
+	 */
 	get postcodeControl() {
 		return this.form.get('postcode');
 	}
 
+	/**
+	 *
+	 */
 	get coordinates() {
 		return this.form.get('loc').get('coordinates') as FormArray;
 	}
 
+	/**
+	 *
+	 */
 	onAddressChanges() {
 		if (this.showAutocompleteSearch) {
 			this._tryFindNewAddress();
 		}
 	}
 
+	/**
+	 *
+	 */
 	onCoordinatesChanged() {
 		if (this.showAutocompleteSearch) {
 			this._tryFindNewCoordinates();
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	getValue(): IGeoLocationCreateObject {
 		const location = this.form.getRawValue() as IGeoLocationCreateObject;
 		if (!location.postcode) {
@@ -159,6 +190,10 @@ export class LocationFormComponent
 		return location;
 	}
 
+	/**
+	 *
+	 * @param geoLocation
+	 */
 	setValue<T extends IGeoLocationCreateObject>(geoLocation: T) {
 		if (this.form.controls) {
 			FormHelpers.deepMark(this.form, 'dirty');
@@ -173,10 +208,16 @@ export class LocationFormComponent
 		this._tryFindNewCoordinates();
 	}
 
+	/**
+	 *
+	 */
 	toggleShowCoordinates() {
 		this.showCoordinates = !this.showCoordinates;
 	}
 
+	/**
+	 *
+	 */
 	setDefaultCoords() {
 		const lat = env.DEFAULT_LATITUDE;
 		const lng = env.DEFAULT_LONGITUDE;
@@ -186,20 +227,23 @@ export class LocationFormComponent
 		}
 	}
 
+	/**
+	 *
+	 * @param address
+	 */
 	private _applyFormattedAddress(address: string) {
 		if (this.searchElement) {
 			this.searchElement.nativeElement.value = address;
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	private _tryFindNewAddress() {
 		const { country, city, address, address2 } = this.form.value;
-		if (
-			isEmpty(address) ||
-			isEmpty(address2) ||
-			isEmpty(city) ||
-			isEmpty(country)
-		) {
+		if (isEmpty(address) || isEmpty(address2) || isEmpty(city) || isEmpty(country)) {
 			return;
 		}
 
@@ -254,12 +298,20 @@ export class LocationFormComponent
 		);
 	}
 
+	/**
+	 *
+	 * @param location
+	 */
 	private _emitCoordinates(
 		location: google.maps.LatLng | google.maps.LatLngLiteral
 	) {
 		this.mapCoordinatesEmitter.emit(location);
 	}
 
+	/**
+	 *
+	 * @param geometry
+	 */
 	private _emitGeometry(
 		geometry:
 			| google.maps.places.PlaceGeometry
@@ -268,14 +320,27 @@ export class LocationFormComponent
 		this.mapGeometryEmitter.emit(geometry);
 	}
 
-	private _popInvalidAddressMessage() {}
+	/**
+	 *
+	 */
+	private _popInvalidAddressMessage() { }
 
+	/**
+	 *
+	 * @param autocomplete
+	 */
 	private _setupGoogleAutocompleteOptions(
 		autocomplete: google.maps.places.Autocomplete
 	) {
 		autocomplete['setFields'](['address_components', 'geometry']);
 	}
 
+	/**
+	 *
+	 * @param place
+	 * @param useGeometryLatLng
+	 * @returns
+	 */
 	private _applyNewPlaceOnTheMap(
 		place: google.maps.places.PlaceResult | google.maps.GeocoderResult,
 		useGeometryLatLng: boolean = true
@@ -301,6 +366,10 @@ export class LocationFormComponent
 		this._gatherAddressInformation(place);
 	}
 
+	/**
+	 *
+	 * @param autocomplete
+	 */
 	private _listenForGoogleAutocompleteAddressChanges(
 		autocomplete: google.maps.places.Autocomplete
 	) {
@@ -311,6 +380,10 @@ export class LocationFormComponent
 		});
 	}
 
+	/**
+	 *
+	 * @param locationResult
+	 */
 	private _gatherAddressInformation(
 		locationResult:
 			| google.maps.GeocoderResult
@@ -397,6 +470,9 @@ export class LocationFormComponent
 		}
 	}
 
+	/**
+	 * Initializes the Google Autocomplete API on the specified DOM element.
+	 */
 	private _initGoogleAutocompleteApi() {
 		if (this.searchElement) {
 			const autocomplete = new google.maps.places.Autocomplete(
@@ -407,6 +483,14 @@ export class LocationFormComponent
 		}
 	}
 
+	/**
+	 *
+	 * @param country
+	 * @param city
+	 * @param address
+	 * @param address2
+	 * @param postcode
+	 */
 	private _setFormLocationValues(
 		country: string,
 		city: string,

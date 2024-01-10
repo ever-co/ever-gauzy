@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
 import { IncomeController } from './income.controller';
@@ -16,10 +16,8 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/income', module: IncomeModule }
-		]),
-		TypeOrmModule.forFeature([ Income ]),
+		RouterModule.register([{ path: '/income', module: IncomeModule }]),
+		TypeOrmModule.forFeature([Income]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
@@ -30,10 +28,7 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 		CqrsModule
 	],
 	controllers: [IncomeController],
-	providers: [
-		IncomeService,
-		...CommandHandlers
-	],
+	providers: [IncomeService, ...CommandHandlers],
 	exports: [IncomeService]
 })
 export class IncomeModule {}

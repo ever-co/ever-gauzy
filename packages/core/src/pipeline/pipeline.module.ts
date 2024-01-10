@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { AuthModule } from '../auth/auth.module';
 import { PipelineController } from './pipeline.controller';
 import { PipelineService } from './pipeline.service';
@@ -13,9 +13,7 @@ import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/pipelines', module: PipelineModule }
-		]),
+		RouterModule.register([{ path: '/pipelines', module: PipelineModule }]),
 		TypeOrmModule.forFeature([Pipeline, Deal]),
 		StageModule,
 		DealModule,

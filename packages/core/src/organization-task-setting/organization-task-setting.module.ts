@@ -1,7 +1,7 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { OrganizationTaskSettingController } from './organization-task-setting.controller';
 import { OrganizationTaskSettingService } from './organization-task-setting.service';
 import { TenantModule } from '../tenant/tenant.module';
@@ -11,27 +11,19 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/organization-task-setting',
-				module: OrganizationTaskSettingModule,
+				module: OrganizationTaskSettingModule
 			}
 		]),
-		TypeOrmModule.forFeature([
-			OrganizationTaskSetting
-		]),
+		TypeOrmModule.forFeature([OrganizationTaskSetting]),
 		TenantModule,
 		UserModule,
 		CqrsModule
 	],
 	controllers: [OrganizationTaskSettingController],
-	providers: [
-		OrganizationTaskSettingService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationTaskSettingService
-	],
+	providers: [OrganizationTaskSettingService, ...CommandHandlers],
+	exports: [TypeOrmModule, OrganizationTaskSettingService]
 })
 export class OrganizationTaskSettingModule {}

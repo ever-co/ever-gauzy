@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Validators, FormBuilder, FormGroup, AbstractControl } from '@angular/forms';
+import { Validators, UntypedFormBuilder, UntypedFormGroup, AbstractControl } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 
 @Component({
@@ -12,8 +12,8 @@ export class UploadDocumentComponent implements OnInit {
 	@Input() documentId: string;
 	@Input() isDocument: boolean = false;
 
-	public form: FormGroup = UploadDocumentComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = UploadDocumentComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			docUrl: [
 				null,
@@ -39,7 +39,7 @@ export class UploadDocumentComponent implements OnInit {
 	}
 
 	constructor(
-		private readonly fb: FormBuilder
+		private readonly fb: UntypedFormBuilder
 	) { }
 
 	ngOnInit(): void { }

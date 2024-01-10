@@ -8,9 +8,9 @@ import {
 	ViewChild
 } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	FormControl,
-	FormGroup,
+	UntypedFormGroup,
 	FormGroupDirective,
 	Validators
 } from '@angular/forms';
@@ -59,8 +59,8 @@ export class SMTPComponent extends TranslationBaseComponent
 	/*
 	* SMTP Mutation Form
 	*/
-	public form: FormGroup = SMTPComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	public form: UntypedFormGroup = SMTPComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			id: [],
 			organizationId: [],
@@ -82,7 +82,7 @@ export class SMTPComponent extends TranslationBaseComponent
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly customSmtpService: CustomSmtpService,
 		public readonly translate: TranslateService,
 		private readonly toastrService: ToastrService,
@@ -162,9 +162,9 @@ export class SMTPComponent extends TranslationBaseComponent
 			.getSMTPSetting({
 				tenantId,
 				...(this.organization && this.isOrganization
-					? 	{
-							organizationId: this.organization.id
-					  	}
+					? {
+						organizationId: this.organization.id
+					}
 					: {})
 			})
 			.then((setting) => {

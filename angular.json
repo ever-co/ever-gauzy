@@ -5,9 +5,11 @@
 			"typescriptMismatch": false,
 			"versionMismatch": false
 		},
-		"defaultCollection": "@nstudio/xplat",
 		"packageManager": "yarn",
-		"analytics": false
+		"analytics": false,
+		"schematicCollections": [
+			"@nstudio/xplat"
+		]
 	},
 	"version": 1,
 	"newProjectRoot": "",
@@ -54,21 +56,21 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
 							"node_modules/echarts/dist/echarts.min.js",
 							"node_modules/echarts/dist/extension/bmap.min.js",
-							"node_modules/chart.js/dist/Chart.min.js"
+							"node_modules/chart.js/dist/chart.js"
 						],
 						"allowedCommonJsDependencies": [
 							"underscore.string",
 							"moment-timezone",
 							"@gauzy/contracts",
 							"cloudinary-core",
-							"angular2-chartjs",
 							"brace/mode/handlebars"
 						]
 					},
@@ -367,14 +369,15 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
 							"node_modules/echarts/dist/echarts.min.js",
 							"node_modules/echarts/dist/extension/bmap.min.js",
-							"node_modules/chart.js/dist/Chart.min.js"
+							"node_modules/chart.js/dist/chart.js"
 						]
 					},
 					"configurations": {
@@ -501,10 +504,11 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
 					},
@@ -697,9 +701,10 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/desktop-timer/src/assets/styles/styles.scss"
+							"apps/desktop-timer/src/assets/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
 					},
@@ -815,9 +820,10 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/server/src/assets/styles/styles.scss"
+							"apps/server/src/assets/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [],
 						"stylePreprocessorOptions": {
@@ -933,14 +939,15 @@
 							"node_modules/@fortawesome/fontawesome-free/css/all.css",
 							"node_modules/socicon/css/socicon.css",
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
-							"apps/gauzy/node_modules/@circlon/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss"
+							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
 							"node_modules/echarts/dist/echarts.min.js",
 							"node_modules/echarts/dist/extension/bmap.min.js",
-							"node_modules/chart.js/dist/Chart.min.js"
+							"node_modules/chart.js/dist/chart.js"
 						]
 					},
 					"configurations": {
@@ -1052,7 +1059,12 @@
 			"style": "scss",
 			"linter": "eslint",
 			"unitTestRunner": "jest"
+		},
+		"@angular-eslint/schematics:application": {
+			"setParserOptionsProject": true
+		},
+		"@angular-eslint/schematics:library": {
+			"setParserOptionsProject": true
 		}
-	},
-	"defaultProject": "gauzy"
+	}
 }

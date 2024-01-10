@@ -1,4 +1,4 @@
-/* It's a pagination component that works with the ng2-smart-table component */
+/* It's a pagination component that works with the angular2-smart-table component */
 import {
 	Component,
 	EventEmitter,
@@ -8,7 +8,7 @@ import {
 	Output,
 	SimpleChanges,
 } from '@angular/core';
-import { LocalDataSource } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { Subscription, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 

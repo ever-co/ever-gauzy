@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import {
 	IGoalTimeFrame,
 	IOrganization,
@@ -32,16 +32,16 @@ export class EditTimeFrameComponent
 	extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
 
-	timeFrameForm: FormGroup;
+	timeFrameForm: UntypedFormGroup;
 	timeFrame: IGoalTimeFrame;
 	type: string;
-	predefinedTimeFrames = [];
+	preDefinedTimeFrames = [];
 	timeFrameStatusEnum = TimeFrameStatusEnum;
 	organization: IOrganization;
 
 	constructor(
 		private dialogRef: NbDialogRef<EditTimeFrameComponent>,
-		private fb: FormBuilder,
+		private fb: UntypedFormBuilder,
 		private goalSettingsService: GoalSettingsService,
 		private dateService: NbDateService<Date>,
 		readonly translate: TranslateService,
@@ -88,14 +88,14 @@ export class EditTimeFrameComponent
 		const today = new Date();
 		let date = today;
 		let year = getYear(today);
-		this.predefinedTimeFrames = [];
+		this.preDefinedTimeFrames = [];
 		// Add Quarters
 		if (getQuarter(date) > 2) {
 			year = getYear(addDays(lastDayOfYear(today), 1));
 		}
 		while (getYear(date) <= year) {
 			const timeFrameName = `Q${getQuarter(date)}-${getYear(date)}`;
-			this.predefinedTimeFrames.push({
+			this.preDefinedTimeFrames.push({
 				name: timeFrameName,
 				start: new Date(startOfQuarter(date)),
 				end: new Date(endOfQuarter(date))
@@ -103,7 +103,7 @@ export class EditTimeFrameComponent
 			date = addDays(lastDayOfQuarter(date), 1);
 		}
 		// Annual Time Frames
-		this.predefinedTimeFrames.push({
+		this.preDefinedTimeFrames.push({
 			name: `${this.getTranslation(
 				'GOALS_PAGE.SETTINGS.ANNUAL'
 			)}-${getYear(today)}`,
@@ -111,7 +111,7 @@ export class EditTimeFrameComponent
 			end: new Date(endOfYear(today))
 		});
 		if (year > getYear(today)) {
-			this.predefinedTimeFrames.push({
+			this.preDefinedTimeFrames.push({
 				name: `${this.getTranslation(
 					'GOALS_PAGE.SETTINGS.ANNUAL'
 				)}-${year}`,
@@ -121,7 +121,7 @@ export class EditTimeFrameComponent
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 
 	updateTimeFrameValues(timeFrame, event) {
 		event.stopPropagation();

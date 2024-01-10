@@ -1,6 +1,6 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Ng2SmartTableComponent } from 'ng2-smart-table';
+import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -33,10 +33,8 @@ import { ServerDataSource } from './../../../../@core/utils/smart-table/server.d
 	templateUrl: './product-categories.component.html',
 	styleUrls: ['./product-categories.component.scss']
 })
-export class ProductCategoriesComponent
-	extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit
-{
+export class ProductCategoriesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
+
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -51,16 +49,6 @@ export class ProductCategoriesComponent
 	public organization: IOrganization;
 	categories$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
-
-	productCategoriesTable: Ng2SmartTableComponent;
-	@ViewChild('productCategoriesTable') set content(
-		content: Ng2SmartTableComponent
-	) {
-		if (content) {
-			this.productCategoriesTable = content;
-			this.onChangedSource();
-		}
-	}
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -125,18 +113,6 @@ export class ProductCategoriesComponent
 			.subscribe();
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.productCategoriesTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.clearItem())
-			)
-			.subscribe();
-	}
-
 	setView() {
 		this.viewComponentName = ComponentEnum.PRODUCT_CATEGORY;
 		this.store
@@ -164,20 +140,23 @@ export class ProductCategoriesComponent
 		this.settingsSmartTable = {
 			actions: false,
 			editable: true,
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PRODUCT_CATEGORY'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.PRODUCT_CATEGORY'
-			),
 			columns: {
 				imageUrl: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					width: '10%',
 					filter: false,
 					type: 'custom',
-					renderComponent: ImageRowComponent
+					renderComponent: ImageRowComponent,
+					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					},
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -241,8 +220,8 @@ export class ProductCategoriesComponent
 		try {
 			const editProductCategory = this.selectedProductCategory
 				? await this.productCategoryService.getById(
-						this.selectedProductCategory.id
-				  )
+					this.selectedProductCategory.id
+				)
 				: null;
 
 			const dialog = this.dialogService.open(
@@ -382,18 +361,7 @@ export class ProductCategoriesComponent
 			isSelected: false,
 			data: null
 		});
-		this.deselectAll();
 	}
 
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.productCategoriesTable && this.productCategoriesTable.grid) {
-			this.productCategoriesTable.grid.dataSet['willSelect'] = 'false';
-			this.productCategoriesTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

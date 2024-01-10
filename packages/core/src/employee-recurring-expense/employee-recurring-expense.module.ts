@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeRecurringExpenseController } from './employee-recurring-expense.controller';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
@@ -13,7 +13,7 @@ import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
+		RouterModule.register([
 			{
 				path: '/employee-recurring-expense',
 				module: EmployeeRecurringExpenseModule

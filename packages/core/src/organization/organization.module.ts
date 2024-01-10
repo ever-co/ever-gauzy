@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RouterModule } from 'nest-router';
+import { RouterModule } from '@nestjs/core';
 import { UserOrganizationModule } from './../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
@@ -12,23 +12,15 @@ import { OrganizationService } from './organization.service';
 
 @Module({
 	imports: [
-		RouterModule.forRoutes([
-			{ path: '/organization', module: OrganizationModule }
-		]),
-		TypeOrmModule.forFeature([ Organization ]),
+		RouterModule.register([{ path: '/organization', module: OrganizationModule }]),
+		TypeOrmModule.forFeature([Organization]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => UserModule),
-		CqrsModule,
+		CqrsModule
 	],
 	controllers: [OrganizationController],
-	providers: [
-		OrganizationService,
-		...CommandHandlers
-	],
-	exports: [
-		TypeOrmModule,
-		OrganizationService
-	]
+	providers: [OrganizationService, ...CommandHandlers],
+	exports: [TypeOrmModule, OrganizationService]
 })
 export class OrganizationModule {}

@@ -14,7 +14,7 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExpensesRoutingModule } from './expenses-routing.module';
 import { ExpensesComponent } from './expenses.component';
-import { Ng2SmartTableModule } from 'ng2-smart-table';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ExpensesMutationModule } from '../../@shared/expenses/expenses-mutation/expenses-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -44,7 +44,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Ng2SmartTableModule,
+		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		ExpensesMutationModule,
 		UserFormsModule,
@@ -57,7 +57,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		PaginationModule,
-    	GauzyButtonActionModule,
+		GauzyButtonActionModule,
 		NoDataMessageModule,
 		NbTooltipModule,
 		InfiniteScrollModule
@@ -72,4 +72,4 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		OrganizationExpenseCategoriesService
 	]
 })
-export class ExpensesModule {}
+export class ExpensesModule { }

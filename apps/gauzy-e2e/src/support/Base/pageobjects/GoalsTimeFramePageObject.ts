@@ -5,9 +5,8 @@ export const GoalstimeFramePage = {
 	startDateInputCss: '#start-date',
 	endDateInputCss: '#end-date',
 	addTimeFrameButtonCss: 'nb-tab[tabid="timeframe"] > div.mb-3 > button[status="success"]',
-	selectTableRowCss: 'table > tbody > tr.ng2-smart-row',
-	saveTimeFrameButtonCss:
-		'nb-card-footer.text-right > button[status="success"]',
+	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	saveTimeFrameButtonCss: 'nb-card-footer.text-right > button[status="success"]',
 	editButtonCss: 'nb-tab[tabid="timeframe"] > div.mb-3 > button[status="info"]',
 	deleteButtonCss: 'nb-tab[tabid="timeframe"] > div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="success"]',

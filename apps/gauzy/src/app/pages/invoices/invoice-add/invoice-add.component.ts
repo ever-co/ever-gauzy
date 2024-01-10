@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IInvoice,
 	IOrganizationContact,
@@ -20,7 +20,7 @@ import {
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
@@ -59,9 +59,10 @@ import {
 	styleUrls: ['./invoice-add.component.scss']
 })
 export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+
 	settingsSmartTable: object;
 	loading: boolean;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	invoice?: IInvoice;
 	createdInvoice: IInvoice;
 	formInvoiceNumber: number;
@@ -110,16 +111,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		return this._isEstimate;
 	}
 
-	invoiceItemTable: Ng2SmartTableComponent;
-	@ViewChild('invoiceItemTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.invoiceItemTable = content;
-			this.onChangedSource();
-		}
-	}
-
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly router: Router,
@@ -608,11 +601,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				await this.invoiceEstimateHistoryService.add({
 					action: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-								name: organizationContact.name
-						  })
+							name: organizationContact.name
+						})
 						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-								name: organizationContact.name
-						  }),
+							name: organizationContact.name
+						}),
 					invoice: this.createdInvoice,
 					invoiceId: this.createdInvoice.id,
 					user: this.store.user,
@@ -1132,22 +1125,5 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		return date;
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.invoiceItemTable.source.onChangedSource
-			.pipe(
-				tap(() => {
-					if (this.invoiceItemTable && this.invoiceItemTable.grid) {
-						this.invoiceItemTable.grid.dataSet['willSelect'] = 'false';
-						this.invoiceItemTable.grid.dataSet.deselectAll();
-					}
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

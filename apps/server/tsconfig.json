@@ -9,9 +9,16 @@
 		"downlevelIteration": true,
 		"esModuleInterop": true,
 		"module": "commonjs",
-		"target": "es2020",
-		"typeRoots": ["../../node_modules/@types"]
+		"target": "ES2022",
+		"types": [
+			"pino-pretty"
+		]
 	},
-	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload"]
+	"files": [
+		"global.d.ts"
+	],
+	"include": [
+		"src/index.ts",
+		"src/preload"
+	]
 }

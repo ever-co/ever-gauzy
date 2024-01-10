@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
-	FormBuilder,
+	UntypedFormBuilder,
 	Validators,
-	FormGroup,
+	UntypedFormGroup,
 	FormArray,
 	FormControl
 } from '@angular/forms';
@@ -21,7 +21,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { LocalDataSource, Ng2SmartTableComponent } from 'ng2-smart-table';
+import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 import { ComponentEnum } from './../../../../../@core/constants';
 import {
@@ -53,7 +53,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	feedbackList: ICandidateFeedback[] = [];
 	allFeedbacks: ICandidateFeedback[] = [];
 	candidateId: string;
-	form: FormGroup;
+	form: UntypedFormGroup;
 	status: string;
 	disableButton = true;
 	currentInterview: ICandidateInterview;
@@ -80,16 +80,8 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	selectedOrganization: IOrganization;
 
-	feedbackTable: Ng2SmartTableComponent;
-	@ViewChild('feedbackTable') set content(content: Ng2SmartTableComponent) {
-		if (content) {
-			this.feedbackTable = content;
-			this.onChangedSource();
-		}
-	}
-
 	constructor(
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly candidateFeedbacksService: CandidateFeedbacksService,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
@@ -150,7 +142,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 			});
 	}
 	private _initializeForm() {
-		this.form = new FormGroup({
+		this.form = new UntypedFormGroup({
 			feedbacks: this.fb.array([])
 		});
 		const feedbackForm = this.feedbacks;
@@ -166,46 +158,46 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	async loadSmartTableSettings() {
 		this.settingsSmartTable = {
 			actions: false,
+			selectedRowIndex: -1,
 			columns: {
 				description: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'),
 					type: 'string',
 					filter: false
 				},
 				rating: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
 					width: '136px',
+					filter: false,
 					renderComponent: InterviewStarRatingComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				interviewTitle: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'),
 					type: 'string',
 					width: '200px'
 				},
 				employees: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'),
 					type: 'custom',
 					width: '130px',
+					filter: false,
 					renderComponent: InterviewersTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				status: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACK_STATUS'),
 					type: 'custom',
 					width: '5%',
-					renderComponent: FeedbackStatusTableComponent
+					renderComponent: FeedbackStatusTableComponent,
+					componentInitFunction: (instance: FeedbackStatusTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				}
 			},
 			pager: {
@@ -234,16 +226,16 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 					interviewTitle: interview ? interview.title : null,
 					employees: fb.interviewer
 						? [
-								this.employeeList.find(
-									(emp) =>
-										emp.id === fb.interviewer.employeeId
-								)
-						  ]
+							this.employeeList.find(
+								(emp) =>
+									emp.id === fb.interviewer.employeeId
+							)
+						]
 						: null
 				});
 			});
 			this.sourceSmartTable.load(feedbacksForTable);
-			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID){
+			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				this._loadGridLayoutData();
 			}
 			this.setPagination({
@@ -316,12 +308,12 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		const techSum =
 			technologies.length > 0
 				? technologies.reduce((sum, current) => sum + current, 0) /
-				  technologies.length
+				technologies.length
 				: 0;
 		const qualSum =
 			qualities.length > 0
 				? qualities.reduce((sum, current) => sum + current, 0) /
-				  qualities.length
+				qualities.length
 				: 0;
 		const isSomeEmpty =
 			(technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
@@ -441,7 +433,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 				description: formValue.description,
 				rating:
 					this.technologiesList.length === 0 &&
-					this.personalQualitiesList.length === 0
+						this.personalQualitiesList.length === 0
 						? formValue.rating
 						: this.averageRating,
 				interviewer: this.feedbackInterviewer,
@@ -578,27 +570,5 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		return this.form.get('feedbacks') as FormArray;
 	}
 
-	/*
-	 * Table on changed source event
-	 */
-	onChangedSource() {
-		this.feedbackTable.source.onChangedSource
-			.pipe(
-				untilDestroyed(this),
-				tap(() => this.deselectAll())
-			)
-			.subscribe();
-	}
-
-	/*
-	 * Deselect all table rows
-	 */
-	deselectAll() {
-		if (this.feedbackTable && this.feedbackTable.grid) {
-			this.feedbackTable.grid.dataSet['willSelect'] = 'false';
-			this.feedbackTable.grid.dataSet.deselectAll();
-		}
-	}
-
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

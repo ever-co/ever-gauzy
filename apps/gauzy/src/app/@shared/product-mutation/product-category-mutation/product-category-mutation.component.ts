@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
 	IImageAsset,
@@ -39,8 +39,8 @@ export class ProductCategoryMutationComponent
 	organization: IOrganization;
 	translations: any = [];
 
-	readonly form: FormGroup = ProductCategoryMutationComponent.buildForm(this.fb);
-	static buildForm(fb: FormBuilder): FormGroup {
+	readonly form: UntypedFormGroup = ProductCategoryMutationComponent.buildForm(this.fb);
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			imageUrl: [
@@ -54,7 +54,7 @@ export class ProductCategoryMutationComponent
 	constructor(
 		public readonly dialogRef: NbDialogRef<IProductCategoryTranslatable>,
 		public readonly translationService: TranslateService,
-		private readonly fb: FormBuilder,
+		private readonly fb: UntypedFormBuilder,
 		private readonly productCategoryService: ProductCategoryService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService

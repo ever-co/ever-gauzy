@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ViewCell } from 'ng2-smart-table';
 import { JobPostStatusEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
@@ -10,7 +9,7 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 	styleUrls: ['./job-status.component.scss'],
 	providers: []
 })
-export class JobStatusComponent extends TranslationBaseComponent implements ViewCell {
+export class JobStatusComponent extends TranslationBaseComponent {
 
 	constructor(
 		public readonly translateService: TranslateService
