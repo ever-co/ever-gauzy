@@ -12,7 +12,8 @@ import { Store } from './../../../../../@core/services';
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
 	API_SECRET = 'apiSecret',
-	OPEN_AI_API_SECRET_KEY = 'openAiApiSecretKey'
+	OPEN_AI_API_SECRET_KEY = 'openAiApiSecretKey',
+	OPEN_AI_ORGANIZATION_ID = 'openAiOrganizationId'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -26,6 +27,8 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
 	public settings$: Observable<IIntegrationSetting[]>;
 	public settings: IIntegrationSetting[] = [];
+	public openAISettings$: Observable<IIntegrationSetting[]>;
+	public openAISettings: IIntegrationSetting[] = [];
 
 	// Define a mapping object for setting names to titles and information
 	public settingTitles: Record<string, string>[] = [
@@ -43,6 +46,11 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_SECRET_KEY'),
 			matching: SettingTitlesEnum.OPEN_AI_API_SECRET_KEY,
 			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_API_SECRET_KEY')
+		},
+		{
+			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_ORGANIZATION_ID'),
+			matching: SettingTitlesEnum.OPEN_AI_ORGANIZATION_ID,
+			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_ORGANIZATION_ID')
 		}
 	];
 
@@ -64,6 +72,9 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 			untilDestroyed(this)
 		);
 
+		// Filter only API_KEY and API_SECRET
+		const settingsFilters = [SettingTitlesEnum.API_KEY, SettingTitlesEnum.API_SECRET];
+
 		// Setting up the settings$ observable pipeline
 		this.settings$ = this._activatedRoute.data.pipe(
 			map(({ settings }: Data) => settings),
@@ -71,6 +82,26 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 			tap((settings: IIntegrationSetting[]) => {
 				this.settings = settings;
 			}),
+			map((settings: IIntegrationSetting[]) =>
+				settings.filter((setting) => settingsFilters.includes(setting.settingsName as SettingTitlesEnum))
+			),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
+
+		// Filter only OPEN_AI_API_SECRET_KEY and OPEN_AI_ORGANIZATION_ID
+		const openAISettingsFilters = [SettingTitlesEnum.OPEN_AI_API_SECRET_KEY, SettingTitlesEnum.OPEN_AI_ORGANIZATION_ID];
+
+		// Setting up the openAISettings$ observable pipeline
+		this.openAISettings$ = this._activatedRoute.data.pipe(
+			map(({ settings }: Data) => settings),
+			// Update component state with fetched settings
+			tap((settings: IIntegrationSetting[]) => {
+				this.openAISettings = settings;
+			}),
+			map((settings: IIntegrationSetting[]) =>
+				settings.filter((setting) => openAISettingsFilters.includes(setting.settingsName as SettingTitlesEnum))
+			),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		);

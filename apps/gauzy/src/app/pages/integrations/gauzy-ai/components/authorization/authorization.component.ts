@@ -33,7 +33,8 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		return fb.group({
 			client_id: [null, Validators.required],
 			client_secret: [null, Validators.required],
-			openai_api_secret_key: [null]
+			openai_api_secret_key: [null],
+			openai_organization_id: [null]
 		});
 	}
 
@@ -51,9 +52,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		private readonly _replacePipe: ReplacePipe
 	) { }
 
-	/**
-	 *
-	 */
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
@@ -67,9 +65,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 			.subscribe();
 	}
 
-	/**
-	 *
-	 */
 	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
@@ -101,7 +96,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 			}
 
 			// Extract values from the form
-			const { client_id, client_secret, openai_api_secret_key } = this.form.value;
+			const { client_id, client_secret, openai_api_secret_key, openai_organization_id } = this.form.value;
 
 			// Extract values from the organization
 			const { id: organizationId, tenantId, name: organizationName } = this.organization;
@@ -111,6 +106,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				client_id,
 				client_secret,
 				openai_api_secret_key,
+				openai_organization_id,
 				organizationId,
 				tenantId
 			}).pipe(
@@ -135,7 +131,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				// Redirect to the Gauzy AI integration after creation
 				tap((integration: IIntegrationTenant) => {
 					this._redirectToGauzyAIIntegration(integration.id);
-					// this.formDirective.reset();
 				}),
 				// Catch and handle errors
 				catchError((error) => {

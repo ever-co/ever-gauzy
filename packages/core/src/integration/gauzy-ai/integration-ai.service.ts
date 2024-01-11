@@ -15,17 +15,18 @@ export class IntegrationAIService {
 	) { }
 
 	/**
-	 *
-	 *
-	 * @param input
-	 * @returns
+	 * Creates a new integration tenant for Gauzy AI.
+	 * @param input - The input data for creating the integration tenant.
+	 * @returns A promise that resolves to the created integration tenant.
 	 */
 	async create(
 		input: IIntegrationAICreateInput
 	): Promise<IIntegrationTenant> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { client_id, client_secret, openai_api_secret_key, organizationId } = input;
+			const organizationId = input.organizationId;
+
+			const { client_id, client_secret, openai_api_secret_key, openai_organization_id } = input;
 
 			/**
 			 * Retrieves an integration from the database based on specified options.
@@ -69,7 +70,13 @@ export class IntegrationAIService {
 									settingsName: 'openAiApiSecretKey',
 									settingsValue: openai_api_secret_key
 								}
-							] : [])
+							] : []),
+							...(isNotEmpty(openai_organization_id) ? [
+								{
+									settingsName: 'openAiOrganizationId',
+									settingsValue: openai_organization_id
+								}
+							] : []),
 						].map((setting) => ({
 							...setting,
 							tenantId,
