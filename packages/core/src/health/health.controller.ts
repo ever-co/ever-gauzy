@@ -1,12 +1,12 @@
 import { Public } from '@gauzy/common';
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheckService, TypeOrmHealthIndicator, DiskHealthIndicator } from '@nestjs/terminus';
-import { CacheHealthIndicator } from './indicators/cache-health.indicator';
-import { RedisHealthIndicator } from './indicators/redis-health.indicator';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import path from 'path';
-import { DataSource } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
+import { CacheHealthIndicator } from './indicators/cache-health.indicator';
+import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 
 @Controller('health')
 export class HealthController {
@@ -18,7 +18,7 @@ export class HealthController {
 		private readonly disk: DiskHealthIndicator,
 		private readonly cacheHealthIndicator: CacheHealthIndicator,
 		private readonly redisHealthIndicator: RedisHealthIndicator
-	) {}
+	) { }
 
 	@Public()
 	@Get()

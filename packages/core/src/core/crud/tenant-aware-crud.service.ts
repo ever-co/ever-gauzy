@@ -321,7 +321,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 
 	/**
 	 * Creates a new entity instance and copies all entity properties from this object into a new entity.
-	 * Note that it copies only properties that are present in entity schema.
+	 * Note that it copies only properties that are present in the entity schema.
 	 *
 	 * @param entity
 	 * @returns
@@ -332,14 +332,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 
 		return super.create({
 			...entity,
-			...(
-				this.repository.metadata.hasColumnWithPropertyPath('tenantId')
-			) ? {
+			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId') && {
 				tenant: {
 					id: tenantId
 				},
 				tenantId,
-			} : {},
+			}),
 			/**
 			 * If employee has login & create data for self
 			 */
@@ -349,7 +347,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 						!RequestContext.hasPermission(
 							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 						) &&
-						this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+						this.repository.metadata?.hasColumnWithPropertyPath('employeeId')
 					) ? {
 						employee: {
 							id: employeeId

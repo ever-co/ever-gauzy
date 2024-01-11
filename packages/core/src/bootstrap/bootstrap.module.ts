@@ -1,5 +1,5 @@
-import { MiddlewareConsumer, Module, NestModule, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
-import { ConfigModule, getConfig } from '@gauzy/config';
+import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
+import { ConfigModule } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { Logger, LoggerModule } from '../logger';
 import { AppModule } from './../app.module';
@@ -8,12 +8,12 @@ import tracer from './tracer';
 @Module({
 	imports: [
 		ConfigModule,
-		PluginModule.init(getConfig().plugins), // Import PluginModule first
+		AppModule,
+		PluginModule.init(), // Import PluginModule first
 		LoggerModule.forRoot(),
-		AppModule
 	]
 })
-export class BootstrapModule implements NestModule, OnApplicationBootstrap, OnApplicationShutdown {
+export class BootstrapModule implements NestModule, OnApplicationShutdown {
 
 	constructor() { }
 
@@ -23,14 +23,6 @@ export class BootstrapModule implements NestModule, OnApplicationBootstrap, OnAp
 	 */
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply().forRoutes('*');
-	}
-
-	/**
-	 * This method will be called after the application has fully started.
-	 */
-	async onApplicationBootstrap() {
-		// Perform any initialization or setup logic here...
-		console.log('Application has started. Performing additional setup...');
 	}
 
 	/**

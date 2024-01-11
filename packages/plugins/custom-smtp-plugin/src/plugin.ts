@@ -14,12 +14,15 @@ import { CustomSmtpSubscriber } from './custom-smtp.subscriber';
  */
 @CorePlugin({
 	imports: [
-		TypeOrmModule.forFeature([
-			CustomSmtp
-		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
-		CqrsModule
+		CqrsModule,
+		TypeOrmModule.forRoot({
+			entities: [CustomSmtp]
+		})
+	],
+	exports: [
+		TypeOrmModule
 	],
 	controllers: [
 		CustomSmtpController

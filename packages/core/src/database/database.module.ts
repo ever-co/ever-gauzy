@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { TypeOrmModule, TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@gauzy/config';
 
 /**
@@ -17,12 +17,10 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 			// to configure the DataSourceOptions.
 			useFactory: async (configService: ConfigService) => {
 				const { dbConnectionOptions } = configService.config;
-
 				console.log('DB Connection Options: ', dbConnectionOptions);
-
 				return dbConnectionOptions;
 			}
-		} as TypeOrmModuleAsyncOptions)
+		})
 	],
 	providers: [],
 	exports: [TypeOrmModule]

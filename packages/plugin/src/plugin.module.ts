@@ -7,7 +7,6 @@ import {
 import { ModuleRef } from '@nestjs/core';
 import * as chalk from 'chalk';
 import { ConfigService, getConfig } from '@gauzy/config';
-import { IPluginConfig } from '@gauzy/common';
 import { PluginLifecycleMethods } from './plugin.interface';
 import { getPluginModules, hasLifecycleMethod } from './plugin.helper';
 
@@ -16,14 +15,12 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 
 	/**
 	 * Configure the plugin module with the provided options.
-	 * @param options The configuration options for the plugin module.
-	 * @returns A dynamic module configuration.
+	 * @returns
 	 */
-	static init(plugins: IPluginConfig['plugins']): DynamicModule {
-		console.log(getConfig().plugins, 'Get Plugin Config');
+	static init(): DynamicModule {
 		return {
 			module: PluginModule,
-			imports: [...plugins],
+			imports: [...getConfig().plugins],
 		};
 	}
 

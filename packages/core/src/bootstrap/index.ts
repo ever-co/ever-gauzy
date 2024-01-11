@@ -26,6 +26,7 @@ import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
 		tracer.start();
@@ -35,8 +36,6 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	}
 
 	const config = await registerPluginConfig(pluginConfig);
-	console.log(getEntitiesFromPlugins(pluginConfig.plugins));
-
 	const { BootstrapModule } = await import('./bootstrap.module');
 
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
