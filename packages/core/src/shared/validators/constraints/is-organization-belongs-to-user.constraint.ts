@@ -16,13 +16,13 @@ import { RequestContext } from "../../../core/context";
 export class IsOrganizationBelongsToUserConstraint implements ValidatorConstraintInterface {
 
 	constructor(
-        @InjectRepository(UserOrganization)
-		private readonly repository: Repository<UserOrganization>
-    ) {}
+		@InjectRepository(UserOrganization)
+		private readonly userOrganizationRepository: Repository<UserOrganization>
+	) { }
 
 	/**
-     * Method to be called to perform custom validation over given value.
-     */
+	 * Method to be called to perform custom validation over given value.
+	 */
 	async validate(
 		value: IOrganization['id'] | IOrganization,
 		args: ValidationArguments
@@ -30,14 +30,14 @@ export class IsOrganizationBelongsToUserConstraint implements ValidatorConstrain
 		if (isEmpty(value)) { return true; }
 
 		let organizationId: string;
-		if (typeof(value) === 'string') {
+		if (typeof (value) === 'string') {
 			organizationId = value;
-		} else if (typeof(value) == 'object') {
+		} else if (typeof (value) == 'object') {
 			organizationId = value.id
 		}
 
 		try {
-            return !!await this.repository.findOneByOrFail({
+			return !!await this.userOrganizationRepository.findOneByOrFail({
 				tenantId: RequestContext.currentTenantId(),
 				userId: RequestContext.currentUserId(),
 				organizationId
@@ -48,8 +48,8 @@ export class IsOrganizationBelongsToUserConstraint implements ValidatorConstrain
 	}
 
 	/**
-     * Gets default message when validation for this constraint fail.
-     */
+	 * Gets default message when validation for this constraint fail.
+	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
 		return `This user is not belongs to this organization (${JSON.stringify(value)}).`;

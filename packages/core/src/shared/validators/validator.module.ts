@@ -1,40 +1,43 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import {
-    Employee,
-    ExpenseCategory,
-    OrganizationTeam,
     Role,
+    Employee,
+    OrganizationTeam,
+    ExpenseCategory,
     UserOrganization
 } from "./../../core/entities/internal";
 import {
-    IsEmployeeBelongsToOrganizationConstraint,
-    IsExpenseCategoryAlreadyExistConstraint,
-    IsOrganizationBelongsToUserConstraint,
+    IsTenantBelongsToUserConstraint,
     IsRoleAlreadyExistConstraint,
     IsRoleShouldExistConstraint,
+    IsEmployeeBelongsToOrganizationConstraint,
     IsTeamAlreadyExistConstraint,
-    IsTenantBelongsToUserConstraint
+    IsExpenseCategoryAlreadyExistConstraint,
+    IsOrganizationBelongsToUserConstraint
 } from "./constraints";
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([
-            ExpenseCategory,
             Role,
-            UserOrganization,
             Employee,
             OrganizationTeam,
-        ])
+            ExpenseCategory
+        ]),
+        forwardRef(() => TypeOrmModule.forFeature([
+            UserOrganization
+        ]))
     ],
     providers: [
-        IsEmployeeBelongsToOrganizationConstraint,
-        IsExpenseCategoryAlreadyExistConstraint,
-        IsOrganizationBelongsToUserConstraint,
+        IsTenantBelongsToUserConstraint,
         IsRoleAlreadyExistConstraint,
         IsRoleShouldExistConstraint,
+        IsEmployeeBelongsToOrganizationConstraint,
         IsTeamAlreadyExistConstraint,
-        IsTenantBelongsToUserConstraint,
-    ]
+        IsExpenseCategoryAlreadyExistConstraint,
+        IsOrganizationBelongsToUserConstraint
+    ],
+    exports: [TypeOrmModule]
 })
-export class ValidatorModule {}
+export class ValidatorModule { }

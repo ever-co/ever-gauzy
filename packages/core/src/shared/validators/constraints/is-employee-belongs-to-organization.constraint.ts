@@ -17,12 +17,12 @@ export class IsEmployeeBelongsToOrganizationConstraint implements ValidatorConst
 
 	constructor(
 		@InjectRepository(Employee)
-		private readonly repository: Repository<Employee>
-    ) {}
+		private readonly employeeRepository: Repository<Employee>
+	) { }
 
 	/**
-     * Method to be called to perform custom validation over given value.
-     */
+	 * Method to be called to perform custom validation over given value.
+	 */
 	async validate(
 		value: IEmployee['id'] | IEmployee,
 		args: ValidationArguments
@@ -30,16 +30,16 @@ export class IsEmployeeBelongsToOrganizationConstraint implements ValidatorConst
 		if (isEmpty(value)) { return true; }
 
 		let employeeId: string;
-		if (typeof(value) === 'string') {
+		if (typeof (value) === 'string') {
 			employeeId = value;
-		} else if (typeof(value) == 'object') {
+		} else if (typeof (value) == 'object') {
 			employeeId = value.id;
 		}
 		const object: object = args.object;
 		try {
 			if (object['organizationId'] || object['organization']['id']) {
 				const organizationId = object['organizationId'] || object['organization']['id'];
-				return !!await this.repository.findOneByOrFail({
+				return !!await this.employeeRepository.findOneByOrFail({
 					id: employeeId,
 					organizationId,
 					tenantId: RequestContext.currentTenantId()
@@ -52,8 +52,8 @@ export class IsEmployeeBelongsToOrganizationConstraint implements ValidatorConst
 	}
 
 	/**
-     * Gets default message when validation for this constraint fail.
-     */
+	 * Gets default message when validation for this constraint fail.
+	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
 		return `This employee (${JSON.stringify(value)}) is not belongs to this organization.`;

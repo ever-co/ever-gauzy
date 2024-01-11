@@ -21,9 +21,9 @@ import { RequestContext } from "../../../core/context";
 export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterface {
 
 	constructor(
-        @InjectRepository(Role)
-		private readonly repository: Repository<Role>
-    ) {}
+		@InjectRepository(Role)
+		private readonly roleRepository: Repository<Role>
+	) { }
 
 	/**
 	 * Method to be called to perform custom validation over given value.
@@ -32,7 +32,7 @@ export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterfac
 		if (isEmpty(name)) return true;
 
 		return !(
-			await this.repository.findOne({
+			await this.roleRepository.findOne({
 				where: {
 					name,
 					tenantId: RequestContext.currentTenantId()
@@ -42,8 +42,8 @@ export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterfac
 	}
 
 	/**
-     * Gets default message when validation for this constraint fail.
-     */
+	 * Gets default message when validation for this constraint fail.
+	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
 		return `Role ${value} already exists.`;

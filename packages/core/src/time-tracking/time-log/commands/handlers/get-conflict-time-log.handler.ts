@@ -6,11 +6,11 @@ import { ConfigService } from '@gauzy/config';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../../../../core/utils';
 
 @CommandHandler(IGetConflictTimeLogCommand)
-export class GetConflictTimeLogHandler
-	implements ICommandHandler<IGetConflictTimeLogCommand> {
+export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTimeLogCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,

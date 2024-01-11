@@ -1,4 +1,3 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Entity, Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import {
 	IActivity,
@@ -21,7 +20,7 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 import { databaseTypes, getConfig } from "@gauzy/config";
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../../core/utils';
 
 let options: IDBConnectionOptions;
 try {

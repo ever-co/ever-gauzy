@@ -17,7 +17,8 @@ import { indexBy, pluck } from 'underscore';
 import { isNotEmpty } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../../core/utils';
+
 const config = getConfig();
 
 @Injectable()

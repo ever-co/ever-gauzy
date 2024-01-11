@@ -24,7 +24,6 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
 	assetPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets']));
-
 	assetPublicPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']));
 }
 
@@ -57,5 +56,8 @@ export const pluginConfig: IPluginConfig = {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
-	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
+	plugins: [
+		KnowledgeBasePlugin,
+		ChangelogPlugin
+	]
 };

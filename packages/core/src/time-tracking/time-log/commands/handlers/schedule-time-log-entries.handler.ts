@@ -7,7 +7,7 @@ import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { RequestContext } from './../../../../core/context';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../../../../core/utils';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler

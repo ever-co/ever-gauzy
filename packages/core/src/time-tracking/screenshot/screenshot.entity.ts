@@ -1,4 +1,3 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Entity, Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
@@ -7,7 +6,7 @@ import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoole
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../../core/utils';
 
 let options: IDBConnectionOptions;
 try {

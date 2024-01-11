@@ -19,23 +19,24 @@ import { RequestContext } from "../../../core/context";
 @ValidatorConstraint({ name: "IsRoleShouldExist", async: true })
 @Injectable()
 export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface {
+
 	constructor(
-        @InjectRepository(Role)
-		private readonly repository: Repository<Role>
-    ) {}
+		@InjectRepository(Role)
+		private readonly roleRepository: Repository<Role>
+	) { }
 
 	/**
-     * Method to be called to perform custom validation over given value.
-     */
+	 * Method to be called to perform custom validation over given value.
+	 */
 	async validate(role: string | IRole, args: ValidationArguments) {
 		if (!role) {
 			return false;
 		}
 
 		let roleId: string;
-		if (typeof(role) === 'string') {
+		if (typeof (role) === 'string') {
 			roleId = role;
-		} else if (typeof(role) == 'object') {
+		} else if (typeof (role) == 'object') {
 			roleId = role.id
 		}
 		if (!roleId) {
@@ -43,7 +44,7 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 		}
 
 		try {
-			return !!await this.repository.findOneByOrFail({
+			return !!await this.roleRepository.findOneByOrFail({
 				id: roleId,
 				tenantId: RequestContext.currentTenantId()
 			});
@@ -53,8 +54,8 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 	}
 
 	/**
-     * Gets default message when validation for this constraint fail.
-     */
+	 * Gets default message when validation for this constraint fail.
+	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
 		return `Role ${value} must be a valid value.`;

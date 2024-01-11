@@ -43,6 +43,14 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		bufferLogs: true
 	});
 
+	/**
+	 * Dependency injection with class-validator
+	 */
+	useContainer(app.select(AppModule).get(SharedModule), {
+		fallback: true,
+		fallbackOnErrors: true
+	});
+
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
 	app.set('trust proxy', true);
 
@@ -242,11 +250,6 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
-
-	/**
-	 * Dependency injection with class-validator
-	 */
-	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	// Configure Atlassian Connect Express
 	// const addon = ac(express());

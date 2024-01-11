@@ -4,21 +4,19 @@ import { ConfigModule, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { AppModule } from './../app.module';
 import { Logger, LoggerModule } from '../logger';
-import { SharedModule } from './../shared/shared.module';
-import { HealthModule } from 'health';
+import { HealthModule } from './../health/health.module';
 
 @Module({
 	imports: [
 		ConfigModule,
-		AppModule,
 		LoggerModule.forRoot(),
 		PluginModule.forRoot(getConfig()),
-		HealthModule,
-		SharedModule
+		AppModule,
+		HealthModule
 	]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
-	constructor() {}
+	constructor() { }
 
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply().forRoutes('*');

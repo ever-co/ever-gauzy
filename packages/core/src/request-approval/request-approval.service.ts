@@ -27,7 +27,7 @@ import {
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../core/utils';
 
 const config = getConfig();
 

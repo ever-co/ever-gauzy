@@ -4,7 +4,7 @@ import { getConfig } from '@gauzy/config';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../core/utils';
 
 export class IntegrationsUtils {
 	/**

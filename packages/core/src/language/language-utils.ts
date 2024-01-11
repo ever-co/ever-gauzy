@@ -4,7 +4,7 @@ import allLanguages from './all-languages';
 import { Language } from './language.entity';
 import { faker } from '@faker-js/faker';
 import { v4 as uuidV4 } from 'uuid';
-import { isSqliteDB } from 'core';
+import { isSqliteDB } from './../core/utils';
 
 export class LanguageUtils {
 	private static async addLanguages(queryRunner: QueryRunner, languages: ILanguage[]): Promise<void> {
