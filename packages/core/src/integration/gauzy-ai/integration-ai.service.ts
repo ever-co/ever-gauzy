@@ -5,6 +5,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../core/context';
 import { IntegrationTenantUpdateOrCreateCommand } from '../../integration-tenant/commands';
 import { IntegrationService } from './../../integration/integration.service';
+import { DEFAULT_ENTITY_SETTINGS } from './integration-ai-entity-settings';
 
 @Injectable()
 export class IntegrationAIService {
@@ -39,6 +40,12 @@ export class IntegrationAIService {
 				}
 			});
 
+			const entitySettings = DEFAULT_ENTITY_SETTINGS.map((setting) => ({
+				...setting,
+				organizationId,
+				tenantId
+			}));
+
 			/** Execute the command to create the integration tenant settings */
 			return await this._commandBus.execute(
 				new IntegrationTenantUpdateOrCreateCommand(
@@ -55,7 +62,7 @@ export class IntegrationAIService {
 						integration,
 						organizationId,
 						tenantId,
-						entitySettings: [],
+						entitySettings,
 						settings: [
 							{
 								settingsName: 'apiKey',

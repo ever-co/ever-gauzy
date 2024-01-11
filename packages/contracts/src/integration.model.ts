@@ -133,7 +133,10 @@ export enum IntegrationEntity {
 	SCREENSHOT = 'Screenshot',
 	INCOME = 'Income',
 	EXPENSE = 'Expense',
-	PROPOSAL = 'Proposal'
+	PROPOSAL = 'Proposal',
+	/** AI Integration Entity */
+	JOB_MATCHING = 'JOB_MATCHING',
+	EMPLOYEE_PERFORMANCE = 'EMPLOYEE_PERFORMANCE'
 }
 
 export enum IntegrationTypeGroupEnum {

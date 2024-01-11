@@ -56,21 +56,23 @@
 				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate"
 				[tabIcon]="'settings-outline'"
 			>
-				<nb-card>
+				<nb-card *ngIf="organization$ | async">
 					<nb-card-body>
 						<form>
 							<div class="fields">
 								<div class="row">
 									<div class="col-6">
 										<div class="form-group">
-											<label for="isTasksAutoSync" class="label">
+											<label for="isJobSearchMatchingSync" class="label">
 												{{ 'FORM.LABELS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
 											</label>
 											<nb-toggle
-												id="isTasksAutoSync"
+												id="isJobSearchMatchingSync"
 												class="d-block"
 												status="primary"
 												labelPosition="start"
+												[checked]="jobSearchMatchingSync?.sync"
+												(checkedChange)="toggleIntegrationEntitySync($event, jobSearchMatchingSync)"
 											>
 												{{ 'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
 												<button
@@ -89,14 +91,16 @@
 								<div class="row">
 									<div class="col-6">
 										<div class="form-group">
-											<label for="isTasksAutoSyncOnLabel" class="label">
+											<label for="isEmployeePerformanceAnalysisSync" class="label">
 												{{ 'FORM.LABELS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
 											</label>
 											<nb-toggle
-												id="isTasksAutoSyncOnLabel"
+												id="isEmployeePerformanceAnalysisSync"
 												class="d-block"
 												status="primary"
 												labelPosition="start"
+												[checked]="employeePerformanceAnalysisSync?.sync"
+												(checkedChange)="toggleIntegrationEntitySync($event, employeePerformanceAnalysisSync)"
 											>
 												{{ 'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
 												<button

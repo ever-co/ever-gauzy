@@ -10,9 +10,13 @@ export class IntegrationEntitySettingGetHandler implements ICommandHandler<Integ
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService
 	) { }
 
-	public async execute(
-		command: IntegrationEntitySettingGetCommand
-	): Promise<IPagination<IIntegrationEntitySetting>> {
+	/**
+	 * Execute the get command for integration entity settings.
+	 *
+	 * @param command - The IntegrationEntitySettingGetCommand containing the integrationId.
+	 * @returns A promise resolving to paginated integration entity settings.
+	 */
+	public async execute(command: IntegrationEntitySettingGetCommand): Promise<IPagination<IIntegrationEntitySetting>> {
 		const { integrationId } = command;
 		return await this._integrationEntitySettingService.getIntegrationEntitySettings(integrationId);
 	}
