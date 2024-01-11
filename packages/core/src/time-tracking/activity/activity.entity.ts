@@ -41,7 +41,10 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...( process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text'}: {} )
+	})
 	description?: string;
 
 	@ApiPropertyOptional({

@@ -186,16 +186,16 @@ export const recalculateTimesheetActivity = async (
 			.addSelect('AVG(overall)', 'overall')
 			.where(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+					qb.andWhere(`\`${query.alias}\`.\`employeeId\` = :employeeId`, {
 						employeeId
 					});
-					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					qb.andWhere(`\`${query.alias}\`.\`organizationId\` = :organizationId`, {
 						organizationId
 					});
-					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					qb.andWhere(`\`${query.alias}\`.\`tenantId\` = :tenantId`, {
 						tenantId
 					});
-					qb.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+					qb.andWhere(`\`${query.alias}\`.\`startedAt\` >= :startedAt AND \`${query.alias}\`.\`startedAt\` < :stoppedAt`, {
 						startedAt: start,
 						stoppedAt: end
 					});

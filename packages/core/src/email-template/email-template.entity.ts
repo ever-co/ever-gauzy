@@ -23,7 +23,7 @@ export class EmailTemplate extends TenantOrganizationBaseEntity
 	mjml: string;
 
 	@ApiProperty({ type: () => String })
-	@Column(process.env.DB_TYPE === databaseTypes.mysql ? { type: "longtext" } : {})
+	@Column({...(process.env.DB_TYPE === databaseTypes.mysql ? { type: "longtext" } : {})})
 	hbs: string;
 
 	title?: string;

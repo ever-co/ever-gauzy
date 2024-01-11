@@ -20,7 +20,9 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column( process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text', nullable: true } : { nullable: true })
+	@Column({
+		nullable: true,
+		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text' } : {})})
 	content: string;
 
 	@ApiProperty({ type: () => String })

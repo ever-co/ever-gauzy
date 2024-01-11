@@ -76,7 +76,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text', nullable: true } : { nullable: true })
+	@Column({
+		nullable: true,
+		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text' } : {})})
 	description?: string;
 
 	@ApiProperty({ type: () => String })

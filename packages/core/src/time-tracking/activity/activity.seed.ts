@@ -34,7 +34,7 @@ export const createRandomActivities = async (
 		.getRepository(OrganizationProject)
 		.createQueryBuilder();
 	query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-	query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId: tenant.id });
+	query.andWhere(`\`${query.alias}\`.\`tenantId\` = :tenantId`, { tenantId: tenant.id });
 
 	const projects: OrganizationProject[] = await query.getMany();
 

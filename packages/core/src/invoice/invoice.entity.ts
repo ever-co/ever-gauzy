@@ -41,6 +41,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { databaseTypes } from '@gauzy/config';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])
@@ -55,8 +56,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsNumber()
 	@Column({
 		nullable: true,
-		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe()
+		transformer: new ColumnNumericTransformerPipe(),
+		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'bigint' } : { type: 'numeric'})
 	})
 	invoiceNumber: number;
 
@@ -200,7 +201,10 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: "text" } : {})
+	})
 	token?: string;
 
 
