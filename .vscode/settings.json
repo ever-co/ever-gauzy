@@ -25,8 +25,5 @@
 		"**/public/**/*.jpg": true,
 		"**/public/**/*.pdf": true
 	},
-	"angular.enable-strict-mode-prompt": false,
-	"cSpell.words": [
-		"mikro"
-	]
+	"angular.enable-strict-mode-prompt": false
 }
