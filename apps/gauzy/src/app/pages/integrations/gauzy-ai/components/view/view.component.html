@@ -33,25 +33,9 @@
 							{{ 'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate }}
 						</header>
 						<div class="integration-container">
-							<div class="integration-row" *ngFor="let setting of settings$ | async">
-								<div class="integration-label-container">
-									<div class="integration-label">
-										{{ getTitleForSetting(setting) }}
-										<nb-icon icon="info-outline" size="small" [nbTooltip]="getTooltipForSetting(setting)"></nb-icon>
-									</div>
-									<div class="date">
-										{{ 'INTEGRATIONS.GAUZY_AI_PAGE.GENERATED' | translate }} {{ setting.createdAt | dateFormat }}
-									</div>
-								</div>
-								<div class="integration-value">
-									<nb-icon (click)="setting.show = !setting.show" [icon]="!!setting.show ? 'eye-outline' : 'eye-off-outline'"></nb-icon>
-									<div
-										gaTextMask
-										[config]="{ text: setting.settingsValue, showOriginal: !!setting.show }"
-										class="integration-mask"
-									></div>
-								</div>
-							</div>
+							<ng-container
+								*ngTemplateOutlet="settingTemplate; context: { $implicit: settings$ | async }">
+							</ng-container>
 						</div>
 					</nb-card-body>
 				</nb-card>
@@ -61,25 +45,9 @@
 							{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate }}
 						</header>
 						<div class="integration-container">
-							<div class="integration-row" *ngFor="let setting of openAISettings$ | async">
-								<div class="integration-label-container">
-									<div class="integration-label">
-										{{ getTitleForSetting(setting) }}
-										<nb-icon icon="info-outline" size="small" [nbTooltip]="getTooltipForSetting(setting)"></nb-icon>
-									</div>
-									<div class="date">
-										{{ 'INTEGRATIONS.GAUZY_AI_PAGE.GENERATED' | translate }} {{ setting.createdAt | dateFormat }}
-									</div>
-								</div>
-								<div class="integration-value">
-									<nb-icon (click)="setting.show = !setting.show" [icon]="!!setting.show ? 'eye-outline' : 'eye-off-outline'"></nb-icon>
-									<div
-										gaTextMask
-										[config]="{ text: setting.settingsValue, showOriginal: !!setting.show }"
-										class="integration-mask"
-									></div>
-								</div>
-							</div>
+							<ng-container
+								*ngTemplateOutlet="settingTemplate; context: { $implicit: openAISettings$ | async }">
+							</ng-container>
 						</div>
 					</nb-card-body>
 				</nb-card>
@@ -152,3 +120,25 @@
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
+
+<ng-template let-settings #settingTemplate>
+	<div class="integration-row" *ngFor="let setting of settings">
+		<div class="integration-label-container">
+			<div class="integration-label">
+				{{ getTitleForSetting(setting) }}
+				<nb-icon icon="info-outline" size="small" [nbTooltip]="getTooltipForSetting(setting)"></nb-icon>
+			</div>
+			<div class="date">
+				{{ 'INTEGRATIONS.GAUZY_AI_PAGE.GENERATED' | translate }} {{ setting.createdAt | dateFormat }}
+			</div>
+		</div>
+		<div class="integration-value">
+			<nb-icon (click)="setting.show = !setting.show" [icon]="!!setting.show ? 'eye-outline' : 'eye-off-outline'"></nb-icon>
+			<div
+				gaTextMask
+				[config]="{ text: setting.settingsValue, showOriginal: !!setting.show }"
+				class="integration-mask"
+			></div>
+		</div>
+	</div>
+</ng-template>

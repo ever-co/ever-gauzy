@@ -1257,7 +1257,7 @@
 			"OPEN_AI_ORGANIZATION_ID": "Open AI Organization ID",
 			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
 			"CONSUMER_KEYS": "Consumer Keys",
-			"OPEN_AI_API_KEYS": "OpenAI API Keys",
+			"OPEN_AI_API_KEYS": "Open AI API Keys",
 			"GENERATED": "Generated",
 			"TAB": {
 				"KEYS": "Keys",

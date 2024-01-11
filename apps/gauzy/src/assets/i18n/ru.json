@@ -1224,7 +1224,7 @@
 			"OPEN_AI_ORGANIZATION_ID": "Открыть идентификатор организации AI",
 			"DESCRIPTION": "Активируйте интеграцию Gauzy AI для более разумного поиска работы.",
 			"CONSUMER_KEYS": "Потребительские ключи",
-			"OPEN_AI_API_KEYS": "Ключи API OpenAI",
+			"OPEN_AI_API_KEYS": "Ключи API Open AI",
 			"GENERATED": "Сгенерировано",
 			"TAB": {
 				"KEYS": "Ключи",
