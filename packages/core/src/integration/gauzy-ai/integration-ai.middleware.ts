@@ -30,36 +30,43 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 			// Initialize custom headers
 			request.headers['X-APP-ID'] = null;
 			request.headers['X-API-KEY'] = null;
+			request.headers['X-OPENAI-SECRET-KEY'] = null;
+			request.headers['X-OPENAI-ORGANIZATION-ID'] = null;
+
+			// Set default configuration in the requestConfigProvider if no integration settings found
+			this.requestConfigProvider.setConfig({
+				apiKey: null,
+				apiSecret: null,
+				openAiApiSecretKey: null,
+				openAiOrganizationId: null
+			});
 
 			// Check if tenant and organization IDs are not empty
 			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 				// Fetch integration settings from the service
-
 				const integrationTenant = await this.integrationTenantService.getIntegrationTenantSettings({
 					tenantId,
 					organizationId,
 					name: IntegrationEnum.GAUZY_AI
 				});
 
-				/**
-				 *
-				 */
 				if (integrationTenant && integrationTenant.settings && integrationTenant.settings.length > 0) {
 					const settings = arrayToObject(integrationTenant.settings, 'settingsName', 'settingsValue');
 
-					// Convert settings array to an object
-					const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId } = settings;
-
+					// Log API Key and API Secret if logging is enabled
 					if (this.logging) {
-						console.log('AI Integration API Key: %s', apiKey);
-						console.log('AI Integration API Secret: %s', apiSecret);
+						console.log('AI Integration API Key:', settings.apiKey);
+						console.log('AI Integration API Secret:', settings.apiSecret);
 					}
+
+					const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId } = settings;
 
 					if (apiKey && apiSecret) {
 						// Update custom headers and request configuration with API key and secret
 						request.headers['X-APP-ID'] = apiKey;
 						request.headers['X-API-KEY'] = apiSecret;
 
+						// Add OpenAI headers if available
 						if (isNotEmpty(openAiApiSecretKey)) {
 							request.headers['X-OPENAI-SECRET-KEY'] = openAiApiSecretKey;
 						}
@@ -68,10 +75,12 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 							request.headers['X-OPENAI-ORGANIZATION-ID'] = openAiOrganizationId;
 						}
 
+						// Log configuration settings if logging is enabled
 						if (this.logging) {
-							console.log('AI Integration Config Settings: %s', { apiKey, apiSecret });
+							console.log('AI Integration Config Settings:', { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId });
 						}
 
+						// Set configuration in the requestConfigProvider
 						this.requestConfigProvider.setConfig({
 							apiKey,
 							apiSecret,

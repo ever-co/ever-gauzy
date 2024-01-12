@@ -100,8 +100,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 						isArchived: false
 					}
 				},
-				order: { updatedAt: 'DESC' },
-				relations: { integration: true }
+				order: {
+					updatedAt: 'DESC'
+				},
+				...(input.relations ? { relations: input.relations } : {}),
 			});
 
 			return integration || false;

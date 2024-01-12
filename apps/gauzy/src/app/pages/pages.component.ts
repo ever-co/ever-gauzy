@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';

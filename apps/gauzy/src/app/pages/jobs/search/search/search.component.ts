@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, combineLatest, firstValueFrom, Subject, Subscription, timer } from 'rxjs';
+import { ActivatedRoute, Data, Router } from '@angular/router';
+import { BehaviorSubject, combineLatest, firstValueFrom, map, Observable, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -21,7 +22,9 @@ import {
 	JobPostTypeEnum,
 	JobSearchTabsEnum,
 	PermissionsEnum,
-	IEmployee
+	IEmployee,
+	IIntegrationEntitySetting,
+	IntegrationEntity
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
@@ -37,6 +40,7 @@ import { ProposalTemplateService } from '../../proposal-template/proposal-templa
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
+
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -100,15 +104,42 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	constructor(
 		private readonly fb: UntypedFormBuilder,
 		private readonly http: HttpClient,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _router: Router,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		public readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
 		private readonly jobService: JobService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 	) {
 		super(translateService);
+
+		// Creating the observable pipeline
+		this._activatedRoute.data.pipe(
+			filter(({ integration }: Data) => {
+				if (!integration) {
+					this._router.navigate(['/pages/jobs']);
+					return false;
+				}
+				return true; // Continue with the pipeline if integration is found
+			}),
+			// Extracting the 'entitySettings' property from the 'integration_tenant' object in the route's data
+			map(({ integration }: Data) => integration?.entitySettings),
+			// Finding the entity setting related to the specified entity type
+			map((entitySettings: IIntegrationEntitySetting[]) =>
+				entitySettings.find((setting) => setting.entity === IntegrationEntity.JOB_MATCHING)
+			),
+			// Updating the specified component property with the fetched entity setting
+			tap((entity: IIntegrationEntitySetting) => {
+				if (!entity || !entity.sync || !entity.isActive) {
+					this._router.navigate(['/pages/jobs']);
+				}
+			}),
+			// Handling the component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	ngOnInit(): void {
@@ -148,7 +179,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
-				filter(([organization, dateRange, employee]) => !!organization && !!dateRange),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
 				tap(([organization, dateRange, employee]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;

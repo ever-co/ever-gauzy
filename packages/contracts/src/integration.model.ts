@@ -1,4 +1,4 @@
-import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 
 export interface IRelationIntegration {
@@ -48,7 +48,7 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
+export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationIntegration {
 	name?: IntegrationEnum;
 }
 

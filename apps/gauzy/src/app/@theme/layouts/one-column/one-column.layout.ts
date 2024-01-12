@@ -8,14 +8,14 @@ import {
 	OnDestroy
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
-import { IUser } from '@gauzy/contracts';
-import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
-import { NavigationBuilderService, Store } from '../../../@core/services';
-import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { LayoutService } from '../../../@core/utils/layout.service';
 import { Observable } from 'rxjs';
+import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { IUser } from '@gauzy/contracts';
+import { NavigationBuilderService, Store } from '../../../@core/services';
+import { LayoutService } from '../../../@core/utils/layout.service';
+import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
+import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -24,9 +24,8 @@ import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/the
 	styleUrls: ['./one-column.layout.scss'],
 	templateUrl: './one-column.layout.html'
 })
-export class OneColumnLayoutComponent
-	implements OnInit, AfterViewInit, OnDestroy
-{
+export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
+
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	private _user$: Observable<IUser>;
@@ -76,7 +75,7 @@ export class OneColumnLayoutComponent
 		if (this.isExpanded) {
 			this.sidebarService.expand('menu-sidebar');
 		} else {
-      this.trigger = true;
+			this.trigger = true;
 			this.sidebarService.toggle(true, 'menu-sidebar');
 			this.layoutService.changeLayoutSize();
 		}
@@ -89,7 +88,7 @@ export class OneColumnLayoutComponent
 
 	onStateChange(event) {
 		this.isExpanded = event === 'expanded' ? true : false;
-    this.trigger = event === 'compacted' ? true : this.isCollapse;
+		this.trigger = event === 'compacted' ? true : this.isCollapse;
 	}
 
 	ngOnDestroy() {
