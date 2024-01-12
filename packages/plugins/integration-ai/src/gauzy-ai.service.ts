@@ -116,7 +116,7 @@ export class GauzyAIService {
         }
     ): Observable<AxiosResponse<T>> {
         /** */
-        const { apiKey, apiSecret, openAiApiSecretKey, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
+        const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
         // Add your custom headers
         const customHeaders = (): AxiosRequestHeaders => ({
@@ -130,6 +130,7 @@ export class GauzyAIService {
             ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
             ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
             ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
+            ...(openAiOrganizationId ? { 'X-OPENAI-ORGANIZATION-ID': openAiOrganizationId } : {}),
 
             /** */
             ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
@@ -1321,7 +1322,7 @@ export class GauzyAIService {
     private initClient() {
         // Create a custom ApolloLink to modify headers
         const authLink = new ApolloLink((operation, forward) => {
-            const { apiKey, apiSecret, openAiApiSecretKey, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
+            const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
             // Add your custom headers here
             const customHeaders = {
@@ -1333,6 +1334,7 @@ export class GauzyAIService {
                 ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
                 ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
                 ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
+                ...(openAiOrganizationId ? { 'X-OPENAI-ORGANIZATION-ID': openAiOrganizationId } : {}),
 
                 ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
                 ...(tenantIdApi ? { 'Tenant-Id': tenantIdApi } : {}),

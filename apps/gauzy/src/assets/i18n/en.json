@@ -1270,6 +1270,12 @@
 				"OPEN_AI_ORGANIZATION_ID": "An optional identifier for organizational purposes when interacting with the OpenAI API. It helps organize and distinguish between different entities or projects within your organization.",
 				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enables advanced job search and matching analyses for enhanced accuracy. Disabling hides 'Browse' and 'Matching' menu items for a streamlined interface.",
 				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Manages the transmission of employee work metrics, including keyboard inputs, mouse movements, and screenshots, for analysis by Gauzy AI. Enable for comprehensive performance analysis; disable for strict user privacy and data control."
+			},
+			"MESSAGE": {
+				"JOBS_SEARCH_MATCHING_ENABLED": "Jobs Search & Matching Analysis has been successfully enabled.",
+				"JOBS_SEARCH_MATCHING_DISABLED": "Jobs Search & Matching Analysis has been successfully disabled.",
+				"EMPLOYEE_PERFORMANCE_ENABLED": "Employee Performance Analysis has been successfully enabled.",
+				"EMPLOYEE_PERFORMANCE_DISABLED": "Employee Performance Analysis has been successfully disabled."
 			}
 		},
 		"GITHUB_PAGE": {

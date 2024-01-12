@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, finalize, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationEntitySetting, IIntegrationSetting, IOrganization, IntegrationEntity } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { IntegrationEntitySettingService, Store } from './../../../../../@core/services';
+import { IntegrationEntitySettingService, Store, ToastrService } from './../../../../../@core/services';
 
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
@@ -60,6 +60,7 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
 		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService
 	) {
 		super(translateService);
@@ -154,6 +155,7 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		const integrationId = this._activatedRoute.snapshot.paramMap.get('id');
 		// Destructure organization properties from the organization object
 		const { tenantId, id: organizationId } = this.organization;
+
 		// Call the updateEntitySettings method of the integration entity service
 		const update$ = this._integrationEntitySettingService.updateEntitySettings(integrationId, {
 			...entity,
@@ -163,22 +165,33 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 			sync
 		}).pipe(
 			tap(([updatedSetting]) => {
+				let messageKey: string;
+				let successMessageKey: string;
+
 				switch (updatedSetting.entity) {
 					case IntegrationEntity.JOB_MATCHING:
 						this.jobSearchMatchingSync = updatedSetting;
+						messageKey = 'JOBS_SEARCH_MATCHING';
 						break;
 					case IntegrationEntity.EMPLOYEE_PERFORMANCE:
 						this.employeePerformanceAnalysisSync = updatedSetting;
+						messageKey = 'EMPLOYEE_PERFORMANCE';
 						break;
+				}
+
+				// Display a success toast message using the _toastrService.
+				if (messageKey) {
+					successMessageKey = `INTEGRATIONS.GAUZY_AI_PAGE.MESSAGE.${messageKey}_${sync ? 'ENABLED' : 'DISABLED'}`;
+					this._toastrService.success(this.getTranslation(successMessageKey), this.getTranslation('TOASTR.TITLE.SUCCESS'));
 				}
 			}),
 			// Handling the component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		);
+
 		// Subscribe to the observable returned by the updateEntitySettings method
 		update$.subscribe();
 	}
-
 
 	/**
 	 * Gets the title for a given integration setting.

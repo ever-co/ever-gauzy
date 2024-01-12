@@ -13,7 +13,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 	constructor(
 		private readonly integrationTenantService: IntegrationTenantService,
 		private readonly requestConfigProvider: RequestConfigProvider
-	) {}
+	) { }
 
 	async use(request: Request, _response: Response, next: NextFunction) {
 		try {
@@ -41,13 +41,14 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 					name: IntegrationEnum.GAUZY_AI
 				});
 
+				/**
+				 *
+				 */
 				if (integrationTenant && integrationTenant.settings && integrationTenant.settings.length > 0) {
+					const settings = arrayToObject(integrationTenant.settings, 'settingsName', 'settingsValue');
+
 					// Convert settings array to an object
-					const { apiKey, apiSecret, openAiApiSecretKey } = arrayToObject(
-						integrationTenant.settings,
-						'settingsName',
-						'settingsValue'
-					);
+					const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId } = settings;
 
 					if (this.logging) {
 						console.log('AI Integration API Key: %s', apiKey);
@@ -63,6 +64,10 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 							request.headers['X-OPENAI-SECRET-KEY'] = openAiApiSecretKey;
 						}
 
+						if (isNotEmpty(openAiOrganizationId)) {
+							request.headers['X-OPENAI-ORGANIZATION-ID'] = openAiOrganizationId;
+						}
+
 						if (this.logging) {
 							console.log('AI Integration Config Settings: %s', { apiKey, apiSecret });
 						}
@@ -70,7 +75,8 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 						this.requestConfigProvider.setConfig({
 							apiKey,
 							apiSecret,
-							...(isNotEmpty(openAiApiSecretKey) && { openAiApiSecretKey })
+							...(isNotEmpty(openAiApiSecretKey) && { openAiApiSecretKey }),
+							...(isNotEmpty(openAiOrganizationId) && { openAiOrganizationId }),
 						});
 					}
 				}

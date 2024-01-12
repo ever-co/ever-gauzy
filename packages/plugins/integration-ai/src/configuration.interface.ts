@@ -4,6 +4,7 @@ export interface IApiKeyMethod {
     apiKey?: string;
     apiSecret?: string;
     openAiApiSecretKey?: string;
+    openAiOrganizationId?: string;
 }
 
 export interface IBearerTokenMethod {
