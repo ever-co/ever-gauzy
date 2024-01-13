@@ -5,7 +5,7 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 	private _id?: number;
 	private _day: Date;
 	private _duration: number;
-	private _employeeId: number;
+	private _employeeId: string;
 	private _projectId: string;
 	private _taskId: string;
 	private _timelogId: string;
@@ -94,10 +94,10 @@ export class Timer implements TimerTO, Serializable<TimerTO> {
 		this._duration = value;
 	}
 
-	public get employeeId(): number {
+	public get employeeId(): string {
 		return this._employeeId;
 	}
-	public set employeeId(value: number) {
+	public set employeeId(value: string) {
 		this._employeeId = value;
 	}
 	public get projectId(): string {
