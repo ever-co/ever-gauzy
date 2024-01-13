@@ -713,9 +713,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					type: 'custom',
 					renderComponent: TaskProgressComponent,
 					width: '192px',
-					onComponentInitFunction: (
-						instance: TaskProgressComponent
-					) => {
+					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updated.subscribe({
 							next: async (estimate: number) => {
 								const { tenantId, organizationId } =
@@ -746,17 +745,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							},
 						});
 					},
-					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					},
 				},
 				taskStatus: {
 					title: this._translateService.instant('SM_TABLE.STATUS'),
 					type: 'custom',
 					renderComponent: TaskStatusComponent,
-					onComponentInitFunction: (
-						instance: TaskStatusComponent
-					) => {
+					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updated.subscribe({
 							next: async (taskStatus: ITaskStatus) => {
 								const { tenantId, organizationId } =
@@ -787,9 +782,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								console.warn(err);
 							},
 						});
-					},
-					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
 					},
 				},
 			},
@@ -1473,6 +1465,21 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			}
 		);
+
+		this.electronService.ipcRenderer.on('update_view', (event, arg) => {
+			this._ngZone.run(async () => {
+				const idle = arg?.idleDuration ?? 0;
+				this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday - idle);
+				this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek - idle);
+				await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+					...arg.timer,
+					startedAt: arg.stoppedAt
+				});
+                if (this.start) {
+					event.sender.send('update_session', arg);
+				}
+			});
+		});
 
 		this.electronService.ipcRenderer.on(
 			'auth_success_tray_init',
