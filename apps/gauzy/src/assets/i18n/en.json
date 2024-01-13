@@ -4091,7 +4091,8 @@
 			"OPEN_TIMER": "Open Time Tracker",
 			"WINDOW": "Window",
 			"HELP": "Help",
-			"LEARN_MORE": "Learn More"
+			"LEARN_MORE": "Learn More",
+			"OPEN_MAIN_WINDOW": "Open Main Window"
 		}
 	},
 	"SERVER": "Server",
@@ -4520,7 +4521,7 @@
 			"FULL_NAME": "Full name:",
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password",
-			"CONFIRM_PASSWORD":"Confirm Password:"
+			"CONFIRM_PASSWORD": "Confirm Password:"
 		},
 		"PLACEHOLDERS": {
 			"FULL_NAME": "Full name",
@@ -4532,15 +4533,15 @@
 			"FULL_NAME_REQUIRED": "Full name is required!",
 			"FULL_NAME_SHOULD_CONTAIN": "Full name should contain from {{ minLength }} to {{ maxLength }} characters",
 			"EMAIL_REQUIRED": "Email is required!",
-			"EMAIL_SHOULD_BE_REAL":"Email should be a real one!",
+			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
 			"CHECK_BOX_TEXTS": {
-				"AGREE_TO":"Agree to",
-				"TERMS_AND_CONDITIONS":"Terms & Conditions",
+				"AGREE_TO": "Agree to",
+				"TERMS_AND_CONDITIONS": "Terms & Conditions",
 				"AND": " and ",
 				"PRIVACY_POLICY": "Privacy Policy"
 			}
@@ -4591,7 +4592,7 @@
 			"DEMO_TITLE": "Demo",
 			"CREDENTIALS_TITLE": "Credentials",
 			"LABELS": {
-				"EMAIL":"Email: ",
+				"EMAIL": "Email: ",
 				"PASSWORD": "Password: "
 			}
 		}

@@ -3985,7 +3985,8 @@
 			"OPEN_TIMER": "Offener Zeit-Tracker",
 			"WINDOW": "Fenster.",
 			"HELP": "Hilfe",
-			"LEARN_MORE": "Erfahren Sie mehr"
+			"LEARN_MORE": "Erfahren Sie mehr",
+			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster"
 		}
 	},
 	"SERVER": "Server",

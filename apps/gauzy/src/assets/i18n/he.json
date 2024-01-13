@@ -3992,7 +3992,8 @@
 			"OPEN_TIMER": "פתח פוקוס זמן",
 			"WINDOW": "חלון",
 			"HELP": "עזרה",
-			"LEARN_MORE": "למד עוד"
+			"LEARN_MORE": "למד עוד",
+			"OPEN_MAIN_WINDOW": "פתח חלון ראשי"
 		}
 	},
 	"SERVER": "שרת",
