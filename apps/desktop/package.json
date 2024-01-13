@@ -54,7 +54,7 @@
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
 		"@sentry/angular": "^7.90.0",
-		"@sentry/electron": "^4.15.1",
+		"@sentry/electron": "^4.17.0",
 		"@sentry/node": "^7.90.0",
 		"@sentry/tracing": "^7.90.0",
 		"@sentry/types": "^7.90.0",

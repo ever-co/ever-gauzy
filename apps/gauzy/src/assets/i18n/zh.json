@@ -3989,7 +3989,8 @@
 			"OPEN_TIMER": "打开时间追踪器",
 			"WINDOW": "窗户",
 			"HELP": "帮助",
-			"LEARN_MORE": "了解更多"
+			"LEARN_MORE": "了解更多",
+			"OPEN_MAIN_WINDOW": "打开主窗口"
 		}
 	},
 	"SERVER": "服务器",

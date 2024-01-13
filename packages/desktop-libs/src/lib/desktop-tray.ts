@@ -1,17 +1,16 @@
-import { app, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
-const Store = require('electron-store');
-import { LocalStore } from './desktop-store';
-import { ipcMain } from 'electron';
 import {
 	createSettingsWindow,
+	getApiBaseUrl,
 	loginPage,
 	timeTrackerPage,
-	getApiBaseUrl,
 } from '@gauzy/desktop-window';
-import TitleOptions = Electron.TitleOptions;
-import { User, UserService } from './offline';
+import { Menu, MenuItemConstructorOptions, Tray, app, ipcMain, nativeImage } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
+import { LocalStore } from './desktop-store';
+import { User, UserService } from './offline';
 import { TranslateService } from './translation';
+const Store = require('electron-store');
+import TitleOptions = Electron.TitleOptions;
 
 export class TrayIcon {
 	tray: Tray;
@@ -267,6 +266,24 @@ export class TrayIcon {
 				},
 			},
 		];
+
+		if (!!appConfig.gauzyWindow && mainWindow) {
+			// Prepare open main window option.
+			const openGauzyMenu = {
+				id: '8',
+				label: TranslateService.instant(
+					'TIMER_TRACKER.MENU.OPEN_MAIN_WINDOW'
+				),
+				async click() {
+					mainWindow.focus();
+					mainWindow.show();
+				},
+			}
+			// Put before the logout element
+			menuAuth.splice(menuAuth.length - 2, 0, openGauzyMenu);
+			// Put on the top of menu
+			unAuthMenu.unshift(openGauzyMenu);
+		}
 
 		const menuWindowTime =
 			Menu.getApplicationMenu().getMenuItemById('window-time-track');

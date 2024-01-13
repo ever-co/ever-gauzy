@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core';
-import { ElectronService, Store } from '@gauzy/desktop-ui-lib';
+import { ActivityWatchElectronService, ElectronService, Store} from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
 
 @Component({
@@ -12,9 +12,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private _electronService: ElectronService,
 		private _appService: AppService,
 		private _ngZone: NgZone,
-		private _store: Store
+		private _store: Store,
+		readonly activityWatchElectronService: ActivityWatchElectronService
 	) {
 		this._isInitialized = false;
+		activityWatchElectronService.setupActivitiesCollection();
 	}
 	ngAfterViewInit(): void {
 		this._electronService.ipcRenderer.on(
