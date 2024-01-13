@@ -13,7 +13,7 @@ import { DesktopPowerManager } from './desktop-power-manager';
 import { PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity } from './decorators';
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
 import { DesktopOfflineModeHandler, IntervalTO } from './offline';
-import { Interval, IntervalService, Timer, TimerService, TimerTO, User, UserService } from './offline';
+import { Interval, IntervalService, Timer, TimerService, TimerTO, UserService } from './offline';
 import { DialogStopTimerLogoutConfirmation } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
 import { TranslateService } from './translation';
