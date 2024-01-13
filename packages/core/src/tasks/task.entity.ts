@@ -61,7 +61,10 @@ import { databaseTypes }  from "@gauzy/config";
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'bigint' } : {})
+	})
 	number?: number;
 
 	@Column({ nullable: true })

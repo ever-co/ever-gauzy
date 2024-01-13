@@ -43,7 +43,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsString()
 	@Column({
 		nullable: true,
-		...( process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text'}: {} )
+		...( process.env.DB_TYPE === databaseTypes.mysql ? { type: 'longtext'}: {} )
 	})
 	description?: string;
 
