@@ -15,6 +15,12 @@ export enum databaseTypes {
 	mysql = 'mysql'
 }
 
+export const isMySQL = (): boolean => process.env.DB_TYPE === databaseTypes.mysql;
+export const isSqlite = (): boolean => process.env.DB_TYPE === databaseTypes.sqlite;
+export const isBetterSqlite3 = (): boolean => process.env.DB_TYPE === databaseTypes.betterSqlite3;
+export const isPostgres = (): boolean => process.env.DB_TYPE === databaseTypes.postgres;
+export const isMongodb = (): boolean => process.env.DB_TYPE === databaseTypes.mongodb;
+
 let dbType: string;
 
 if (process.env.DB_TYPE) dbType = process.env.DB_TYPE;

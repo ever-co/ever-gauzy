@@ -7,7 +7,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { databaseTypes } from '@gauzy/config';
+import { isMySQL } from '@gauzy/config';
 
 @Entity('email_sent')
 export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
@@ -22,7 +22,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsOptional()
 	@Column({
 		nullable: true,
-		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text' } : {})})
+		...(isMySQL() ? { type: 'text' } : {})})
 	content: string;
 
 	@ApiProperty({ type: () => String })

@@ -24,7 +24,7 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { databaseTypes } from '@gauzy/config';
+import { isMySQL } from '@gauzy/config';
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
@@ -67,7 +67,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsString()
 	@Column({
 		nullable: true,
-		...(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'longtext' } : {})
+		...(isMySQL() ? { type: 'longtext' } : {})
 	})
 	description?: string;
 

@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
 import { AccountingTemplateTypeEnum, IAccountingTemplate } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { databaseTypes } from '@gauzy/config';
+import { isMySQL } from '@gauzy/config';
 
 @Entity('accounting_template')
 export class AccountingTemplate extends TenantOrganizationBaseEntity
@@ -23,7 +23,7 @@ export class AccountingTemplate extends TenantOrganizationBaseEntity
 	mjml?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({...(process.env.DB_TYPE === databaseTypes.mysql ? { type: "longtext" } : {})})
+	@Column({...(isMySQL() ? { type: "longtext" } : {})})
 	hbs?: string;
 
 	@ApiProperty({ type: () => String, enum: AccountingTemplateTypeEnum })

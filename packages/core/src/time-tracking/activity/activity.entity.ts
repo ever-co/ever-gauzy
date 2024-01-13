@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
-import { getConfig } from '@gauzy/config';
+import { getConfig, isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -20,7 +20,6 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { databaseTypes } from "@gauzy/config";
 
 let options: TypeOrmModuleOptions;
 try {
@@ -43,7 +42,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsString()
 	@Column({
 		nullable: true,
-		...( process.env.DB_TYPE === databaseTypes.mysql ? { type: 'longtext'}: {} )
+		...(isMySQL() ? { type: 'longtext'}: {} )
 	})
 	description?: string;
 
@@ -61,7 +60,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => 'date' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'datetime' } : { type: 'date' })
+	@CreateDateColumn(isMySQL() ? { type: 'datetime' } : { type: 'date' })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
