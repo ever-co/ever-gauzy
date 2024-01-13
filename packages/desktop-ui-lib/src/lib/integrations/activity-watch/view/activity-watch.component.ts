@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ActivityWatchViewService } from '../activity-watch-view.service';
-import { ActivityWatchElectronService } from '../activity-watch-electron.service';
 
 @Component({
 	selector: 'gauzy-activity-watch',
@@ -9,12 +8,7 @@ import { ActivityWatchElectronService } from '../activity-watch-electron.service
 	styleUrls: ['./activity-watch.component.scss']
 })
 export class ActivityWatchComponent {
-	constructor(
-		private readonly activityWatchViewService: ActivityWatchViewService,
-		private readonly activityWatchElectronService: ActivityWatchElectronService
-	) {
-		activityWatchElectronService.setupActivitiesCollection();
-	}
+	constructor(private readonly activityWatchViewService: ActivityWatchViewService) {}
 
 	public get isTimerRunning$(): Observable<boolean> {
 		return this.activityWatchViewService.isTimerRunning$.asObservable();
