@@ -1,20 +1,20 @@
 // Nestjs imports
 import { CallHandler, ExecutionContext, HttpException, Injectable, NestInterceptor } from '@nestjs/common';
-import { HttpArgumentsHost, WsArgumentsHost, RpcArgumentsHost, ContextType } from '@nestjs/common/interfaces';
+import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
 // Rxjs imports
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 // Sentry imports
-import { Scope } from '@sentry/hub';
 import { Handlers } from '@sentry/node';
+import { Scope } from '@sentry/types';
 
-import { SentryService } from './sentry.service';
 import { SentryInterceptorOptions, SentryInterceptorOptionsFilter } from './sentry.interfaces';
+import { SentryService } from './sentry.service';
 
 @Injectable()
 export class SentryInterceptor implements NestInterceptor {
 	protected readonly client: SentryService = SentryService.SentryServiceInstance();
-	constructor(private readonly options?: SentryInterceptorOptions) {}
+	constructor(private readonly options?: SentryInterceptorOptions) { }
 
 	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
 		// first param would be for events, second is for errors
