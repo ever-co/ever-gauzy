@@ -3991,7 +3991,8 @@
 			"OPEN_TIMER": "Abrir Seguimiento de Tiempo",
 			"WINDOW": "Ventana",
 			"HELP": "Ayuda",
-			"LEARN_MORE": "Aprende más."
+			"LEARN_MORE": "Aprende más.",
+			"OPEN_MAIN_WINDOW": "Abrir ventana principal"
 		}
 	},
 	"SERVER": "Servidor",

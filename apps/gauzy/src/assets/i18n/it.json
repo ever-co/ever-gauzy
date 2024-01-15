@@ -3989,7 +3989,8 @@
 			"OPEN_TIMER": "Apri il tracker del tempo",
 			"WINDOW": "Finestra",
 			"HELP": "Aiuto",
-			"LEARN_MORE": "Scopri di più"
+			"LEARN_MORE": "Scopri di più",
+			"OPEN_MAIN_WINDOW": "Apri la finestra principale"
 		}
 	},
 	"SERVER": "Server",

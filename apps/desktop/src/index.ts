@@ -5,68 +5,73 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
+import * as remoteMain from '@electron/remote/main';
+import * as Sentry from '@sentry/electron';
 import {
-	app,
-	dialog,
 	BrowserWindow,
-	ipcMain,
-	shell,
 	Menu,
 	MenuItemConstructorOptions,
-	MessageBoxOptions
+	MessageBoxOptions,
+	app,
+	dialog,
+	ipcMain,
+	shell
 } from 'electron';
-import { environment } from './environments/environment';
-import * as Sentry from '@sentry/electron';
 import * as path from 'path';
+import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
 
-process.env = Object.assign(process.env, environment);
+Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 const Store = require('electron-store');
-import * as remoteMain from '@electron/remote/main';
 remoteMain.initialize();
 
 import {
-	ipcMainHandler,
-	ipcTimer,
-	TrayIcon,
-	LocalStore,
+	AppError,
 	AppMenu,
 	DesktopUpdater,
-	removeMainListener,
-	removeTimerListener,
+	DialogErrorHandler,
+	ErrorEventManager,
+	ErrorReport,
+	ErrorReportRepository,
+	LocalStore,
 	ProviderFactory,
 	TranslateLoader,
 	TranslateService,
-	DialogErrorHandler,
-	ErrorReport,
-	ErrorReportRepository,
-	ErrorEventManager,
-	AppError,
-	UIError
+	TrayIcon,
+	UIError,
+	ipcMainHandler,
+	ipcTimer,
+	removeMainListener,
+	removeTimerListener
 } from '@gauzy/desktop-libs';
 import {
+	AlwaysOn,
+	ScreenCaptureNotification,
+	SplashScreen,
 	createGauzyWindow,
+	createImageViewerWindow,
+	createSettingsWindow,
 	createSetupWindow,
 	createTimeTrackerWindow,
-	createSettingsWindow,
-	createUpdaterWindow,
-	createImageViewerWindow,
-	SplashScreen,
-	AlwaysOn,
-	ScreenCaptureNotification
+	createUpdaterWindow
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
 
-initSentry();
+try {
+	initSentry();
+} catch (error) {
+	log.error(error);
+}
+
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -260,7 +265,7 @@ async function startServer(value, restart = false) {
 			setupWindow.webContents.send('setup-progress', {
 				msg: msgData
 			});
-			if (!value.isSetup && (!value.serverConfigConnected || value.isLocalServer)) {
+			if (!value.serverConfigConnected || value.isLocalServer) {
 				if (msgData.indexOf('Listening at http') > -1) {
 					try {
 						setupWindow.hide();
@@ -271,6 +276,7 @@ async function startServer(value, restart = false) {
 							{ ...environment, gauzyWindow: value.gauzyWindow },
 							pathWindow.gauzyWindow
 						);
+						createTrayMenu();
 						gauzyWindow.show();
 					} catch (error) {
 						throw new AppError('MAINWININIT', error);
@@ -326,8 +332,37 @@ async function startServer(value, restart = false) {
 			throw new AppError('MAINWININIT', error);
 		}
 	}
-	const auth = store.get('auth');
 
+	createTrayMenu();
+
+	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
+	await notificationWindow.loadURL();
+	if (gauzyWindow) {
+		gauzyWindow.setVisibleOnAllWorkspaces(false);
+		gauzyWindow.show();
+	}
+	splashScreen.close();
+
+	TranslateService.onLanguageChange(() => {
+		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
+		createTrayMenu();
+	});
+
+	/* ping server before launch the ui */
+	ipcMain.on('app_is_init', () => {
+		if (!isAlreadyRun && value && !restart) {
+			onWaitingServer = true;
+			setupWindow.webContents.send('server_ping', {
+				host: getApiBaseUrl(value)
+			});
+		}
+	});
+
+	return true;
+}
+
+function createTrayMenu() {
+	const auth = store.get('auth');
 	if (tray) {
 		tray.destroy();
 	}
@@ -343,46 +378,6 @@ async function startServer(value, restart = false) {
 		gauzyWindow,
 		alwaysOn
 	);
-
-	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
-	await notificationWindow.loadURL();
-	if (gauzyWindow) {
-		gauzyWindow.setVisibleOnAllWorkspaces(false);
-		gauzyWindow.show();
-	}
-	splashScreen.close();
-
-	TranslateService.onLanguageChange(() => {
-		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
-
-		if (tray) {
-			tray.destroy();
-		}
-		tray = new TrayIcon(
-			setupWindow,
-			knex,
-			timeTrackerWindow,
-			auth,
-			settingsWindow,
-			{ ...environment },
-			pathWindow,
-			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-			gauzyWindow,
-			alwaysOn
-		);
-	});
-
-	/* ping server before launch the ui */
-	ipcMain.on('app_is_init', () => {
-		if (!isAlreadyRun && value && !restart) {
-			onWaitingServer = true;
-			setupWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value)
-			});
-		}
-	});
-
-	return true;
 }
 
 function setEnvAdditional() {
@@ -766,16 +761,16 @@ function launchAtStartup(autoLaunch, hidden) {
 				path: app.getPath('exe'),
 				args: hidden
 					? [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-							`"--hidden"`,
-					  ]
+						'--processStart',
+						`"${exeName}"`,
+						'--process-start-args',
+						`"--hidden"`,
+					]
 					: [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-					  ],
+						'--processStart',
+						`"${exeName}"`,
+						'--process-start-args',
+					],
 			});
 			break;
 		case 'linux':
