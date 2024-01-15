@@ -1,4 +1,5 @@
 export * from './default-configuration';
+export * from './database-helpers';
 export * from './database';
 
 export * from './config-manager';

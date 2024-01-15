@@ -1,25 +1,10 @@
 import * as path from 'path';
 import * as chalk from 'chalk';
-import { TlsOptions } from 'tls';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { parseToBoolean } from '@gauzy/common';
-
-export enum databaseTypes {
-	mongodb = 'mongodb',
-	sqlite = 'sqlite',
-	betterSqlite3 = 'better-sqlite3',
-	postgres = 'postgres',
-	mysql = 'mysql'
-}
-
-export const isMySQL = (): boolean => process.env.DB_TYPE === databaseTypes.mysql;
-export const isSqlite = (): boolean => process.env.DB_TYPE === databaseTypes.sqlite;
-export const isBetterSqlite3 = (): boolean => process.env.DB_TYPE === databaseTypes.betterSqlite3;
-export const isPostgres = (): boolean => process.env.DB_TYPE === databaseTypes.postgres;
-export const isMongodb = (): boolean => process.env.DB_TYPE === databaseTypes.mongodb;
+import { databaseTypes, getTlsOptions } from './database-helpers';
 
 let dbType: string;
 
@@ -37,18 +22,6 @@ let dbPoolSize: number;
 let dbConnectionTimeout: number;
 let idleTimeoutMillis: number;
 let dbSlowQueryLoggingTimeout: number;
-
-const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
-	if (!parseToBoolean(dbSslMode)) return undefined;
-
-	const base64data = process.env.DB_CA_CERT;
-	const buff = Buffer.from(base64data, 'base64');
-	const sslCert = buff.toString('ascii');
-	return {
-		rejectUnauthorized: true,
-		ca: sslCert
-	};
-}
 
 switch (dbType) {
 	case databaseTypes.mongodb:
