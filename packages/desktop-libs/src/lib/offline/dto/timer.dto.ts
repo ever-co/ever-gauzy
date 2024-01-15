@@ -2,7 +2,7 @@ export interface TimerTO {
 	id?: number;
 	day?: Date;
 	duration?: number;
-	employeeId?: number;
+	employeeId?: string;
 	projectId?: string;
 	taskId?: string;
 	timelogId?: string;

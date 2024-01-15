@@ -5,7 +5,13 @@ import {
 	AfterViewInit,
 	Renderer2,
 } from '@angular/core';
-import { ElectronService, Store, AuthStrategy, TimeTrackerDateManager } from '@gauzy/desktop-ui-lib';
+import {
+	ElectronService,
+	Store,
+	AuthStrategy,
+	TimeTrackerDateManager,
+	ActivityWatchElectronService
+} from '@gauzy/desktop-ui-lib';
 import { AppService } from './app.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
@@ -29,8 +35,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private store: Store,
 		private toastrService: NbToastrService,
 		private _ngZone: NgZone,
-		private _renderer: Renderer2
-	) {}
+		private _renderer: Renderer2,
+	    readonly activityWatchElectronService: ActivityWatchElectronService
+	) {
+		activityWatchElectronService.setupActivitiesCollection();
+	}
 
 	ngOnInit(): void {
 		console.log('On Init');
