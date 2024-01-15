@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
@@ -15,7 +15,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { SelectorService } from '../@core/utils/selector.service';
-import { Store, UsersService } from '../@core/services';
+import { IJobMatchingEntity, IntegrationEntitySettingServiceStoreService, Store, UsersService } from '../@core/services';
 import { ReportService } from './reports/all-report/report.service';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 import { TranslationBaseComponent } from '../@shared/language-base';
@@ -43,13 +43,14 @@ interface GaMenuItem extends NbMenuItem {
 	`
 })
 export class PagesComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
 
-	isEmployee: boolean;
-	organization: IOrganization;
-	user: IUser;
-	menu: NbMenuItem[] = [];
-	reportMenuItems: NbMenuItem[] = [];
+	public isEmployeeJobMatchingEntity: boolean = false;
+	public isEmployee: boolean;
+	public organization: IOrganization;
+	public user: IUser;
+	public menu: NbMenuItem[] = [];
+	public reportMenuItems: NbMenuItem[] = [];
 
 	constructor(
 		private readonly router: Router,
@@ -60,7 +61,8 @@ export class PagesComponent extends TranslationBaseComponent
 		private readonly selectorService: SelectorService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
-		private readonly authStrategy: AuthStrategy
+		private readonly authStrategy: AuthStrategy,
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
 	) {
 		super(translate);
 	}
@@ -441,29 +443,32 @@ export class PagesComponent extends TranslationBaseComponent
 							]
 						}
 					},
-					{
-						title: 'Browse',
-						icon: 'fas fa-list',
-						link: '/pages/jobs/search',
-						data: {
-							translationKey: 'MENU.JOBS_SEARCH',
-							permissionKeys: [
-								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-								PermissionsEnum.ORG_JOB_MATCHING_VIEW
-							]
-						}
-					},
-					{
-						title: 'Matching',
-						icon: 'fas fa-user',
-						link: '/pages/jobs/matching',
-						data: {
-							translationKey: 'MENU.JOBS_MATCHING',
-							permissionKeys: [
-								PermissionsEnum.ORG_JOB_MATCHING_VIEW
-							]
-						}
-					},
+					/** */
+					...(this.isEmployeeJobMatchingEntity ? [
+						{
+							title: 'Browse',
+							icon: 'fas fa-list',
+							link: '/pages/jobs/search',
+							data: {
+								translationKey: 'MENU.JOBS_SEARCH',
+								permissionKeys: [
+									PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
+									PermissionsEnum.ORG_JOB_MATCHING_VIEW
+								]
+							}
+						},
+						{
+							title: 'Matching',
+							icon: 'fas fa-user',
+							link: '/pages/jobs/matching',
+							data: {
+								translationKey: 'MENU.JOBS_MATCHING',
+								permissionKeys: [
+									PermissionsEnum.ORG_JOB_MATCHING_VIEW
+								]
+							}
+						},
+					] : []),
 					{
 						title: 'Proposal Template',
 						icon: 'far fa-file-alt',
@@ -969,7 +974,6 @@ export class PagesComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		await this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
 
@@ -1062,6 +1066,18 @@ export class PagesComponent extends TranslationBaseComponent
 			);
 		});
 		this.menu = this.getMenuItems();
+	}
+
+	ngAfterViewInit() {
+		this._integrationEntitySettingServiceStoreService.jobMatchingEntity$
+			.pipe(
+				distinctUntilChange(),
+				filter(({ currentValue }: IJobMatchingEntity) => !!currentValue),
+				tap(({ currentValue }: IJobMatchingEntity) => {
+					this.isEmployeeJobMatchingEntity = !!currentValue.sync && !!currentValue.isActive;
+					this.menu = this.getMenuItems();
+				})
+			).subscribe();
 	}
 
 	async getReportsMenus() {

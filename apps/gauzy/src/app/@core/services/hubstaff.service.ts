@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, forkJoin, debounceTime } from 'rxjs';
+import { v4 as uuid } from 'uuid';
+import { switchMap, tap } from 'rxjs/operators';
+import { clone } from 'underscore';
+import * as moment from 'moment';
 import {
 	IIntegrationTenant,
 	IIntegrationSetting,
@@ -12,10 +16,6 @@ import {
 	IDateRangeActivityFilter,
 	IEntitySettingToSync,
 } from '@gauzy/contracts';
-import { v4 as uuid } from 'uuid';
-import { switchMap, tap } from 'rxjs/operators';
-import { clone } from 'underscore';
-import * as moment from 'moment';
 import { toParams } from '@gauzy/common-angular';
 import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
 import { environment } from '@env/environment';

@@ -4,10 +4,22 @@ import { Observable } from 'rxjs/internal/Observable';
 import { clone } from 'underscore';
 import { IEntitySettingToSync, IIntegrationEntitySetting } from '@gauzy/contracts';
 
+export interface IJobMatchingEntity {
+    previousValue: IIntegrationEntitySetting | null;
+    currentValue: IIntegrationEntitySetting | null;
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class IntegrationEntitySettingServiceStoreService {
+    // Declare a private BehaviorSubject named '_jobMatchingEntity$' with an initial value.
+    // This BehaviorSubject will hold and emit the current state of job matching entity settings synchronization.
+    private _jobMatchingEntity$ = new BehaviorSubject<IJobMatchingEntity>({
+        previousValue: null,
+        currentValue: null
+    });
+    public jobMatchingEntity$: Observable<IJobMatchingEntity> = this._jobMatchingEntity$.asObservable();
 
     // Declare a private BehaviorSubject named '_entitiesToSync$' with an initial value.
     // This BehaviorSubject will hold and emit the current state of entity settings synchronization.
@@ -40,5 +52,22 @@ export class IntegrationEntitySettingServiceStoreService {
     public getEntitySettingsValue(): IEntitySettingToSync {
         // Use the 'getValue' method of '_entitiesToSync$' to retrieve the current value
         return this._entitiesToSync$.getValue();
+    }
+
+    /**
+     * Sets the job matching entity state in the IntegrationEntitySettingServiceStoreService.
+     * This function takes a new job matching entity setting and updates the internal state.
+     *
+     * @param newEntity - The new job matching entity setting to be set. It represents the updated state for job matching entities.
+     */
+    public setJobMatchingEntity(newEntity: IIntegrationEntitySetting): void {
+        // Retrieve the current value from the '_jobMatchingEntity$' BehaviorSubject
+        const { currentValue } = this._jobMatchingEntity$.getValue();
+
+        // Update the job matching entity state using 'next' on the BehaviorSubject
+        this._jobMatchingEntity$.next({
+            previousValue: currentValue,
+            currentValue: newEntity
+        });
     }
 }

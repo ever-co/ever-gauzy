@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationEntitySetting, IIntegrationSetting, IOrganization, IntegrationEntity } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { IntegrationEntitySettingService, Store, ToastrService } from './../../../../../@core/services';
+import { IntegrationEntitySettingService, IntegrationEntitySettingServiceStoreService, Store, ToastrService } from './../../../../../@core/services';
 
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
@@ -61,7 +61,8 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		public readonly translateService: TranslateService,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
-		private readonly _integrationEntitySettingService: IntegrationEntitySettingService
+		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
 	) {
 		super(translateService);
 	}
@@ -139,6 +140,11 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 			),
 			// Updating the specified component property with the fetched entity setting
 			tap((entity: IIntegrationEntitySetting) => this[propertyName] = entity),
+			tap(() => {
+				if (entityType === IntegrationEntity.JOB_MATCHING) {
+					this._integrationEntitySettingServiceStoreService.setJobMatchingEntity(this.jobSearchMatchingSync);
+				}
+			}),
 			// Handling the component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		).subscribe();
@@ -171,6 +177,8 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 				switch (updatedSetting.entity) {
 					case IntegrationEntity.JOB_MATCHING:
 						this.jobSearchMatchingSync = updatedSetting;
+						this.setJobMatchingEntity(this.jobSearchMatchingSync);
+
 						messageKey = 'JOBS_SEARCH_MATCHING';
 						break;
 					case IntegrationEntity.EMPLOYEE_PERFORMANCE:
@@ -191,6 +199,17 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 
 		// Subscribe to the observable returned by the updateEntitySettings method
 		update$.subscribe();
+	}
+
+	/**
+	 * Updates the job matching entity state in the IntegrationEntitySettingServiceStoreService.
+	 * This function is responsible for setting the current job matching entity state
+	 * based on the provided synchronization value.
+	 *
+	 * @param jobSearchMatchingSync - A boolean value indicating whether job search matching is synchronized. This value is used to update the job matching entity state.
+	 */
+	setJobMatchingEntity(jobSearchMatchingSync: IIntegrationEntitySetting): void {
+		this._integrationEntitySettingServiceStoreService.setJobMatchingEntity(jobSearchMatchingSync);
 	}
 
 	/**
