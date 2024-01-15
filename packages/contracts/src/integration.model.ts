@@ -176,8 +176,8 @@ export interface IDateRangeActivityFilter {
 }
 
 export interface IIntegrationAICreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	client_secret: string;
-	openai_api_secret_key?: string;
-	openai_organization_id?: string;
+	apiKey: string;
+	apiSecret: string;
+	openAiSecretKey?: string;
+	openAiOrganizationId?: string;
 }

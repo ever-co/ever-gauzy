@@ -17,7 +17,9 @@ import {
     UpworkJobsSearchCriterion,
     UserConnection,
     Query,
-    TenantConnection
+    TenantConnection,
+    UpdateTenantApiKey,
+    TenantApiKeyConnection
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -116,7 +118,7 @@ export class GauzyAIService {
         }
     ): Observable<AxiosResponse<T>> {
         /** */
-        const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
+        const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
         // Add your custom headers
         const customHeaders = (): AxiosRequestHeaders => ({
@@ -129,7 +131,7 @@ export class GauzyAIService {
             /** */
             ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
             ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
-            ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
+            ...(openAiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiSecretKey } : {}),
             ...(openAiOrganizationId ? { 'X-OPENAI-ORGANIZATION-ID': openAiOrganizationId } : {}),
 
             /** */
@@ -1322,7 +1324,7 @@ export class GauzyAIService {
     private initClient() {
         // Create a custom ApolloLink to modify headers
         const authLink = new ApolloLink((operation, forward) => {
-            const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
+            const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
             // Add your custom headers here
             const customHeaders = {
@@ -1333,7 +1335,7 @@ export class GauzyAIService {
 
                 ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
                 ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
-                ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
+                ...(openAiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiSecretKey } : {}),
                 ...(openAiOrganizationId ? { 'X-OPENAI-ORGANIZATION-ID': openAiOrganizationId } : {}),
 
                 ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
@@ -1724,6 +1726,97 @@ export class GauzyAIService {
         } catch (error) {
             // Handle other types of errors (e.g., network errors)
             console.error('Non-Apollo Client Error while while synced user: %s', error?.message);
+            // Use this (using the "options" parameter):
+            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Updates the API key of a tenant in the Gauzy AI service.
+     *
+     * @param input - The updated API key data.
+     * @returns The updated tenant API key information.
+     */
+    public async updateOneTenantApiKey(input: UpdateTenantApiKey) {
+        // Search for the tenant API key by its external API key
+        let tenantApiKeyFilterByExternalFieldsQuery: DocumentNode<TenantApiKeyConnection> = gql`
+            query tenantKeyFilterByExternalFieldsQuery(
+                $externalApiKeyFilter: String!
+            ) {
+                tenantApiKeys(
+                    filter: {
+                        apiKey: { eq: $externalApiKeyFilter }
+                    }
+                ) {
+                    edges {
+                        node {
+                            id,
+                            isActive
+                            isArchived
+                        }
+                    }
+                }
+            }
+        `;
+
+        let tenantApiKeysQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+            query: tenantApiKeyFilterByExternalFieldsQuery,
+            variables: {
+                externalApiKeyFilter: input.apiKey,
+            },
+        });
+
+        try {
+            // Check if there are any GraphQL errors
+            if (tenantApiKeysQueryResult.errors && tenantApiKeysQueryResult.errors.length > 0) {
+                // Handle GraphQL errors
+                const [error] = tenantApiKeysQueryResult.errors;
+                // You can also access error.extensions for additional error details
+
+                // Use this (using the "options" parameter):
+                throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+            }
+
+            // Process the query result if successful
+            // You can access the data via tenantApiKeysQueryResult.data
+            let tenantApiKeysResponse = tenantApiKeysQueryResult.data.tenantApiKeys.edges;
+
+            try {
+                // Process the query result
+                const id = tenantApiKeysResponse[0].node.id;
+
+                // Update the tenant API key using a GraphQL mutation
+                const updateOneTenantApiKeyMutation: DocumentNode<any> = gql`
+                    mutation updateOneTenantApiKey($input: UpdateOneTenantApiKeyInput!) {
+                        updateOneTenantApiKey(input: $input) {
+                            openAiSecretKey
+                            openAiOrganizationId
+                        }
+                    }
+                `;
+
+                const updateOneTenantApiKeyResponse = await this._client.mutate({
+                    mutation: updateOneTenantApiKeyMutation,
+                    variables: {
+                        input: {
+                            id: id,
+                            update: {
+                                openAiSecretKey: input.openAiSecretKey,
+                                openAiOrganizationId: input.openAiOrganizationId
+                            },
+                        },
+                    },
+                });
+
+                // Return the updated tenant API key information
+                return <UpdateTenantApiKey>updateOneTenantApiKeyResponse.data.updateOneTenantApiKey;
+            } catch (error) {
+                console.error('Error while updating Tenant Api Key: %s', error?.message);
+                this._logger.error(`Error while updating Tenant Api Key: ${error?.message}`);
+            }
+        } catch (error) {
+            // Handle other types of errors (e.g., network errors)
+            console.error('Non-Apollo Client Error while while synced Tenant Api Key: %s', error?.message);
             // Use this (using the "options" parameter):
             throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
         }

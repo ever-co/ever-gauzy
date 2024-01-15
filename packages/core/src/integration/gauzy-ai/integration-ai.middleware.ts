@@ -3,16 +3,16 @@ import { Request, Response, NextFunction } from 'express';
 import { isNotEmpty } from '@gauzy/common';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { RequestConfigProvider } from '@gauzy/integration-ai';
-import { arrayToObject } from 'core/utils';
-import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { arrayToObject } from './../../core/utils';
+import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
 	private logging = true;
 
 	constructor(
-		private readonly integrationTenantService: IntegrationTenantService,
-		private readonly requestConfigProvider: RequestConfigProvider
+		private readonly _integrationTenantService: IntegrationTenantService,
+		private readonly _requestConfigProvider: RequestConfigProvider
 	) { }
 
 	async use(request: Request, _response: Response, next: NextFunction) {
@@ -34,17 +34,12 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 			request.headers['X-OPENAI-ORGANIZATION-ID'] = null;
 
 			// Set default configuration in the requestConfigProvider if no integration settings found
-			this.requestConfigProvider.setConfig({
-				apiKey: null,
-				apiSecret: null,
-				openAiApiSecretKey: null,
-				openAiOrganizationId: null
-			});
+			this._requestConfigProvider.resetConfig();
 
 			// Check if tenant and organization IDs are not empty
 			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 				// Fetch integration settings from the service
-				const integrationTenant = await this.integrationTenantService.getIntegrationTenantSettings({
+				const integrationTenant = await this._integrationTenantService.getIntegrationTenantSettings({
 					tenantId,
 					organizationId,
 					name: IntegrationEnum.GAUZY_AI
@@ -59,7 +54,7 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 						console.log('AI Integration API Secret:', settings.apiSecret);
 					}
 
-					const { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId } = settings;
+					const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId } = settings;
 
 					if (apiKey && apiSecret) {
 						// Update custom headers and request configuration with API key and secret
@@ -67,8 +62,8 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 						request.headers['X-API-KEY'] = apiSecret;
 
 						// Add OpenAI headers if available
-						if (isNotEmpty(openAiApiSecretKey)) {
-							request.headers['X-OPENAI-SECRET-KEY'] = openAiApiSecretKey;
+						if (isNotEmpty(openAiSecretKey)) {
+							request.headers['X-OPENAI-SECRET-KEY'] = openAiSecretKey;
 						}
 
 						if (isNotEmpty(openAiOrganizationId)) {
@@ -77,14 +72,14 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
 						// Log configuration settings if logging is enabled
 						if (this.logging) {
-							console.log('AI Integration Config Settings:', { apiKey, apiSecret, openAiApiSecretKey, openAiOrganizationId });
+							console.log('AI Integration Config Settings:', { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId });
 						}
 
 						// Set configuration in the requestConfigProvider
-						this.requestConfigProvider.setConfig({
+						this._requestConfigProvider.setConfig({
 							apiKey,
 							apiSecret,
-							...(isNotEmpty(openAiApiSecretKey) && { openAiApiSecretKey }),
+							...(isNotEmpty(openAiSecretKey) && { openAiSecretKey }),
 							...(isNotEmpty(openAiOrganizationId) && { openAiOrganizationId }),
 						});
 					}

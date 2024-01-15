@@ -3,7 +3,7 @@
 export interface IApiKeyMethod {
     apiKey?: string;
     apiSecret?: string;
-    openAiApiSecretKey?: string;
+    openAiSecretKey?: string;
     openAiOrganizationId?: string;
 }
 

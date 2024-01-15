@@ -15,12 +15,12 @@
 		<div class="col-xl-6 col-12">
 			<form [formGroup]="form" #formDirective="ngForm" (ngSubmit)="onSubmit()">
 				<div class="form-group">
-					<label for="client_id" class="label">
+					<label for="apiKey" class="label">
 						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.API_KEY' | translate }}
 					</label>
 					<input
-						id="client_id"
-						formControlName="client_id"
+						id="apiKey"
+						formControlName="apiKey"
 						nbInput
 						[placeholder]="'FORM.PLACEHOLDERS.GAUZY_API_KEY' | translate"
 						required
@@ -28,12 +28,12 @@
 					/>
 				</div>
 				<div class="form-group">
-					<label for="client_secret" class="label">
+					<label for="apiSecret" class="label">
 						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.API_SECRET' | translate }}
 					</label>
 					<input
-						id="client_secret"
-						formControlName="client_secret"
+						id="apiSecret"
+						formControlName="apiSecret"
 						nbInput
 						[placeholder]="'FORM.PLACEHOLDERS.GAUZY_API_SECRET' | translate"
 						required
@@ -41,24 +41,24 @@
 					/>
 				</div>
 				<div class="form-group">
-					<label for="openai_api_secret_key" class="label">
+					<label for="openAiSecretKey" class="label">
 						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_SECRET_KEY' | translate }}
 					</label>
 					<input
-						id="openai_api_secret_key"
-						formControlName="openai_api_secret_key"
+						id="openAiSecretKey"
+						formControlName="openAiSecretKey"
 						nbInput
 						[placeholder]="'FORM.PLACEHOLDERS.OPEN_AI_API_SECRET_KEY' | translate"
 						fullWidth
 					/>
 				</div>
 				<div class="form-group">
-					<label for="openai_organization_id" class="label">
+					<label for="openAiOrganizationId" class="label">
 						{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_ORGANIZATION_ID' | translate }}
 					</label>
 					<input
-						id="openai_organization_id"
-						formControlName="openai_organization_id"
+						id="openAiOrganizationId"
+						formControlName="openAiOrganizationId"
 						nbInput
 						[placeholder]="'FORM.PLACEHOLDERS.OPEN_AI_ORGANIZATION_ID' | translate"
 						fullWidth

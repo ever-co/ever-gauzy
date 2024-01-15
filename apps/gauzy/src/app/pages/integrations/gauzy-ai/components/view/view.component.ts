@@ -12,7 +12,7 @@ import { IntegrationEntitySettingService, IntegrationEntitySettingServiceStoreSe
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
 	API_SECRET = 'apiSecret',
-	OPEN_AI_API_SECRET_KEY = 'openAiApiSecretKey',
+	OPEN_AI_API_SECRET_KEY = 'openAiSecretKey',
 	OPEN_AI_ORGANIZATION_ID = 'openAiOrganizationId'
 }
 

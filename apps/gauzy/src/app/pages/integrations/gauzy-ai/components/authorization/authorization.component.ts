@@ -31,10 +31,10 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	 */
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			client_id: [null, Validators.required],
-			client_secret: [null, Validators.required],
-			openai_api_secret_key: [null],
-			openai_organization_id: [null]
+			apiKey: [null, Validators.required],
+			apiSecret: [null, Validators.required],
+			openAiSecretKey: [null],
+			openAiOrganizationId: [null]
 		});
 	}
 
@@ -96,17 +96,17 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 			}
 
 			// Extract values from the form
-			const { client_id, client_secret, openai_api_secret_key, openai_organization_id } = this.form.value;
+			const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId } = this.form.value;
 
 			// Extract values from the organization
 			const { id: organizationId, tenantId, name: organizationName } = this.organization;
 
 			// Create a new integration using the provided values
 			this._gauzyAIService.create({
-				client_id,
-				client_secret,
-				openai_api_secret_key,
-				openai_organization_id,
+				apiKey,
+				apiSecret,
+				openAiSecretKey,
+				openAiOrganizationId,
 				organizationId,
 				tenantId
 			}).pipe(
