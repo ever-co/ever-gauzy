@@ -44,7 +44,7 @@ export class IntegrationAIService {
 				...setting,
 				organizationId,
 				tenantId
-			}));
+			})) || [];
 
 			/** Execute the command to create the integration tenant settings */
 			return await this._commandBus.execute(

@@ -82,17 +82,10 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 					const integrationId = integration['id'];
 
 					// Check if employee performance analysis sync is enabled
-					await this._integrationTenantService.findOneByIdString(integrationId, {
-						where: {
-							isActive: true,
-							isArchived: false,
-							entitySettings: {
-								entity: IntegrationEntity.EMPLOYEE_PERFORMANCE,
-								sync: true,
-								isActive: true,
-								isArchived: false
-							}
-						}
+					await this._integrationTenantService.findIntegrationTenantByEntity({
+						integrationId,
+						organizationId,
+						entityType: IntegrationEntity.EMPLOYEE_PERFORMANCE
 					});
 
 					// Analyze image using Gauzy AI service

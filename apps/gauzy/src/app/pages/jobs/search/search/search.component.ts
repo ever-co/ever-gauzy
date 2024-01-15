@@ -607,7 +607,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			const { activePage, itemsPerPage } = this.getPagination();
 			const { title, jobSource, jobType, jobStatus, budget } = this.form.value;
 			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
-			const { id: organizationId } = this.organization;
+			const { id: organizationId, tenantId } = this.organization;
 
 			/**
 			 * Set header selectors filters configuration
@@ -619,6 +619,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 							{
 								field: 'organizationId',
 								search: organizationId
+							},
+							{
+								field: 'tenantId',
+								search: tenantId
 							}
 						]
 						: []),
