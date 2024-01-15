@@ -14,6 +14,7 @@ import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
@@ -89,10 +90,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-					web.andWhere(`"${qb.alias}"."isActive" = :isActive`, { isActive: true });
-					web.andWhere(`"user"."isArchived" = :isArchived`, { isArchived: false });
+					web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+					web.andWhere(p(`"${qb.alias}"."isActive" = :isActive`), { isActive: true });
+					web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
 				})
 			);
 			if (isNotEmpty(forRange)) {
@@ -103,15 +104,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					);
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							web.andWhere(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`, {
+							web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
 								startedWorkOn: endDate
 							});
 						})
 					);
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							web.where(`"${qb.alias}"."endWork" IS NULL`);
-							web.orWhere(`"${qb.alias}"."endWork" >= :endWork`, {
+							web.where(p(`"${qb.alias}"."endWork" IS NULL`));
+							web.orWhere(p(`"${qb.alias}"."endWork" >= :endWork`), {
 								endWork: startDate
 							});
 						})
@@ -120,7 +121,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			}
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const employeeId = RequestContext.currentEmployeeId();
-				qb.andWhere(`"${qb.alias}"."id" = :employeeId`, { employeeId });
+				qb.andWhere(p(`"${qb.alias}"."id" = :employeeId`), { employeeId });
 			}
 		});
 		const [items, total] = await query.getManyAndCount();
@@ -214,14 +215,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			query.where((qb: SelectQueryBuilder<Employee>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 							tenantId: RequestContext.currentTenantId()
 						});
 						if (isNotEmpty(options.where)) {
 							const { where } = options;
 							if (isNotEmpty(where.organizationId)) {
 								const { organizationId } = where;
-								web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+								web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 									organizationId
 								});
 							}
@@ -233,7 +234,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					if ('isActive' in where) {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
+								web.andWhere(p(`"${qb.alias}"."isActive" = :isActive`), {
 									isActive: Boolean(JSON.parse(where.isActive))
 								});
 							})
@@ -242,7 +243,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					if ('isArchived' in where) {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"user"."isArchived" = :isArchived`, {
+								web.andWhere(p(`"user"."isArchived" = :isArchived`), {
 									isArchived: Boolean(JSON.parse(where.isArchived))
 								});
 							})
@@ -252,7 +253,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
 								const { isTrackingEnabled } = where;
-								web.andWhere(`"${qb.alias}"."isTrackingEnabled" = :isTrackingEnabled`, {
+								web.andWhere(p(`"${qb.alias}"."isTrackingEnabled" = :isTrackingEnabled`), {
 									isTrackingEnabled: Boolean(JSON.parse(isTrackingEnabled))
 								});
 							})
@@ -262,7 +263,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						qb.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
 								const { allowScreenshotCapture } = where;
-								web.andWhere(`"${qb.alias}"."allowScreenshotCapture" = :allowScreenshotCapture`, {
+								web.andWhere(p(`"${qb.alias}"."allowScreenshotCapture" = :allowScreenshotCapture`), {
 									allowScreenshotCapture: Boolean(JSON.parse(allowScreenshotCapture))
 								});
 							})
@@ -272,7 +273,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						new Brackets((web: WhereExpressionBuilder) => {
 							if (isNotEmpty(where.tags)) {
 								const { tags } = where;
-								web.andWhere(`"tags"."id" IN (:...tags)`, { tags });
+								web.andWhere(p(`"tags"."id" IN (:...tags)`), { tags });
 							}
 						})
 					);
@@ -282,17 +283,17 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 								if (isNotEmpty(where.user.name)) {
 									const keywords: string[] = where.user.name.split(' ');
 									keywords.forEach((keyword: string, index: number) => {
-										web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
+										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`), {
 											[`keyword_${index}`]: `%${keyword}%`
 										});
-										web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
+										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`), {
 											[`${index}_keyword`]: `%${keyword}%`
 										});
 									});
 								}
 								if (isNotEmpty(where.user.email)) {
 									const { email } = where.user;
-									web.orWhere(`LOWER("user"."email") like LOWER(:email)`, {
+									web.orWhere(p(`LOWER("user"."email") like LOWER(:email)`), {
 										email: `%${email}%`
 									});
 								}

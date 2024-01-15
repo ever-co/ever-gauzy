@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { getConfig } from '@gauzy/config';
+import { getConfig, prepareSQLQuery as p } from '@gauzy/config';
 import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
@@ -34,22 +34,22 @@ export class ScheduleTimeLogEntriesHandler
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+						web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
+						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 					})
 				);
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
-								web.andWhere(`"${qb.alias}"."isRunning" = :isRunning`, { isRunning: true });
+								web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
+								web.andWhere(p(`"${qb.alias}"."isRunning" = :isRunning`), { isRunning: true });
 							})
 						);
 						web.orWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"${qb.alias}"."stoppedAt" IS NULL`);
+								web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NULL`));
 							})
 						);
 					})
@@ -67,13 +67,13 @@ export class ScheduleTimeLogEntriesHandler
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
-						web.andWhere(`"${qb.alias}"."isRunning" = :isRunning`, { isRunning: true });
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
+						web.andWhere(p(`"${qb.alias}"."isRunning" = :isRunning`), { isRunning: true });
 					})
 				);
 				qb.orWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."stoppedAt" IS NULL`);
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NULL`));
 					})
 				);
 				console.log('Schedule Time Log Query For All Entries', query.getQueryAndParameters());

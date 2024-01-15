@@ -6,6 +6,7 @@ import { ConfigService } from '@gauzy/config';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler
@@ -31,13 +32,13 @@ export class GetConflictTimeLogHandler
 
 		conflictQuery = conflictQuery
 			.innerJoinAndSelect(`${conflictQuery.alias}.timeSlots`, 'timeSlots')
-			.where(`"${conflictQuery.alias}"."employeeId" = :employeeId`, { employeeId })
-			.andWhere(`"${conflictQuery.alias}"."tenantId" = :tenantId`, { tenantId })
-			.andWhere(`"${conflictQuery.alias}"."organizationId" = :organizationId`, { organizationId })
+			.where(p(`"${conflictQuery.alias}"."employeeId" = :employeeId`), { employeeId })
+			.andWhere(p(`"${conflictQuery.alias}"."tenantId" = :tenantId`), { tenantId })
+			.andWhere(p(`"${conflictQuery.alias}"."organizationId" = :organizationId`), { organizationId })
 			.andWhere(
 				['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
 					? `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`
-					: `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
+					: p(`("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`)
 			);
 
 		if (input.relations) {

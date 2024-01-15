@@ -10,6 +10,7 @@ import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler
@@ -61,20 +62,20 @@ export class TimeSlotMergeHandler
 			}
 		});
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-			qb.andWhere(`"${qb.alias}"."startedAt" >= :startedAt AND "${qb.alias}"."startedAt" < :stoppedAt`, {
+			qb.andWhere(p(`"${qb.alias}"."startedAt" >= :startedAt AND "${qb.alias}"."startedAt" < :stoppedAt`), {
 				startedAt,
 				stoppedAt
 			});
-			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+			qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), {
 				employeeId
 			});
-			qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+			qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 				organizationId
 			});
-			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 				tenantId
 			});
-			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+			qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
 		});
 		const timerSlots = await query.getMany();
 

@@ -59,6 +59,7 @@ import {
 import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -733,24 +734,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, {
+				qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), {
 					organizationId
 				});
-				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, {
+				qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), {
 					tenantId
 				});
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"employee"."organizationId" =:organizationId`, {
+				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), {
 					organizationId
 				});
-				qb.andWhere(`"employee"."tenantId" =:tenantId`, {
+				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), {
 					tenantId
 				});
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
@@ -758,28 +759,28 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, {
+				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), {
 					organizationId
 				});
-				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
 
 				// Date range condition
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
-				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
 					startDate: start,
 					endDate: end
 				});
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}
@@ -857,42 +858,42 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), { organizationId });
+				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), { tenantId });
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, { employeeIds });
+					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds });
 				}
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), { organizationId });
+				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
 
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
-				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
 					startDate: start,
 					endDate: end
 				});
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
 
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}
@@ -947,7 +948,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
 
 		if (isNotEmpty(request.timesheetId)) {
-			query.andWhere(`"${query.alias}"."timesheetId" = :timesheetId`, {
+			query.andWhere(p(`"${query.alias}"."timesheetId" = :timesheetId`), {
 				timesheetId: request.timesheetId
 			});
 		}
@@ -958,7 +959,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				moment.utc(request.startDate || moment().startOf('day')),
 				moment.utc(request.endDate || moment().endOf('day'))
 			);
-			query.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
+			query.andWhere(p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`), {
 				startDate,
 				endDate
 			});
@@ -966,21 +967,21 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		//
 		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+			query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), {
 				employeeIds
 			});
 		}
 
 		//
 		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+			query.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), {
 				projectIds
 			});
 		}
 
 		// Filter by organization team ID if used in the request
 		if (isNotEmpty(teamIds)) {
-			query.andWhere(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`, {
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`), {
 				teamIds
 			});
 		}
@@ -993,7 +994,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			 */
 			const { activityLevel } = request;
 
-			query.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
+			query.andWhere(p(`"time_slot"."overall" BETWEEN :start AND :end`), {
 				start: activityLevel.start * 6,
 				end: activityLevel.end * 6
 			});
@@ -1002,7 +1003,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filters records based on the source column.
 		if (isNotEmpty(request.source)) {
 			const { source } = request;
-			const condition = source instanceof Array ? `"${query.alias}"."source" IN (:...source)` : `"${query.alias}"."source" = :source`;
+			const condition = source instanceof Array ? p(`"${query.alias}"."source" IN (:...source)`) : p(`"${query.alias}"."source" = :source`);
 
 			query.andWhere(condition, { source });
 		}
@@ -1010,7 +1011,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filters records based on the logType column.
 		if (isNotEmpty(request.logType)) {
 			const { logType } = request;
-			const condition = logType instanceof Array ? `"${query.alias}"."logType" IN (:...logType)` : `"${query.alias}"."logType" = :logType`;
+			const condition = logType instanceof Array ? p(`"${query.alias}"."logType" IN (:...logType)`) : p(`"${query.alias}"."logType" = :logType`);
 
 			query.andWhere(condition, { logType });
 		}
@@ -1018,10 +1019,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Additional conditions for filtering by tenantId and organizationId
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 					tenantId
 				});
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
 					organizationId
 				});
 			})
@@ -1212,14 +1213,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			});
 			db.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${db.alias}"."tenantId" = :tenantId`, {
+					web.andWhere(p(`"${db.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
 					web.andWhere(
-						`"${db.alias}"."organizationId" = :organizationId`,
+						p(`"${db.alias}"."organizationId" = :organizationId`),
 						{ organizationId }
 					);
-					web.andWhere(`"${db.alias}"."id" IN (:...logIds)`, {
+					web.andWhere(p(`"${db.alias}"."id" IN (:...logIds)`), {
 						logIds
 					});
 				})

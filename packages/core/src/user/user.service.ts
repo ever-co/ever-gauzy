@@ -31,7 +31,7 @@ import {
 	RolesEnum,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { ConfigService, environment as env } from '@gauzy/config';
+import { ConfigService, environment as env, prepareSQLQuery as p } from '@gauzy/config';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
@@ -316,8 +316,8 @@ export class UserService extends TenantAwareCrudService<User> {
 			query.where((query: SelectQueryBuilder<User>) => {
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${query.alias}"."id" = :id`, { id });
-						web.andWhere(`"${query.alias}"."email" = :email`, {
+						web.andWhere(p(`"${query.alias}"."id" = :id`), { id });
+						web.andWhere(p(`"${query.alias}"."email" = :email`), {
 							email,
 						});
 					})
@@ -326,16 +326,16 @@ export class UserService extends TenantAwareCrudService<User> {
 					new Brackets((web: WhereExpressionBuilder) => {
 						if (isNotEmpty(tenantId)) {
 							web.andWhere(
-								`"${query.alias}"."tenantId" = :tenantId`,
+								p(`"${query.alias}"."tenantId" = :tenantId`),
 								{ tenantId }
 							);
 						}
 						if (isNotEmpty(role)) {
-							web.andWhere(`"role"."name" = :role`, { role });
+							web.andWhere(p(`"role"."name" = :role`), { role });
 						}
 					})
 				);
-				query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+				query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 			});
 			const user = await query.getOneOrFail();
 			const isRefreshTokenMatching = await bcrypt.compare(

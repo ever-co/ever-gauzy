@@ -7,7 +7,7 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
-import { sanitizeSqlQuotes } from '@gauzy/config';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
@@ -107,84 +107,32 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			* Adds new selection to the SELECT query.
 			*/
 			query.select(`${query.alias}.*`);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("candidate"."id")`), `candidate_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("employee"."id")`), `employee_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("employeeLevel"."id")`), `employee_level_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("equipment"."id")`), `equipment_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("eventType"."id")`), `event_type_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("expense"."id")`), `expense_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("income"."id")`), `income_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("integration"."id")`), `integration_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("invoice"."id")`), `invoice_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("merchant"."id")`), `merchant_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organization"."id")`), `organization_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationContact"."id")`), `organization_contact_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationDepartment"."id")`), `organization_department_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationEmploymentType"."id")`), `organization_employment_type_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("expenseCategory"."id")`), `expense_category_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationPosition"."id")`), `organization_position_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationProject"."id")`), `organization_project_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationTeam"."id")`), `organization_team_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("organizationVendor"."id")`), `organization_vendor_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("payment"."id")`), `payment_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("product"."id")`), `product_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("proposal"."id")`), `proposal_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("requestApproval"."id")`), `request_approval_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("task"."id")`), `task_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("user"."id")`), `user_counter`
-			);
-			query.addSelect(
-				sanitizeSqlQuotes(`COUNT("warehouse"."id")`), `warehouse_counter`
-			);
+			query.addSelect(p(`COUNT("candidate"."id")`), `candidate_counter`);
+			query.addSelect(p(`COUNT("employee"."id")`), `employee_counter`);
+			query.addSelect(p(`COUNT("employeeLevel"."id")`), `employee_level_counter`);
+			query.addSelect(p(`COUNT("equipment"."id")`), `equipment_counter`);
+			query.addSelect(p(`COUNT("eventType"."id")`), `event_type_counter`);
+			query.addSelect(p(`COUNT("expense"."id")`), `expense_counter`);
+			query.addSelect(p(`COUNT("income"."id")`), `income_counter`);
+			query.addSelect(p(`COUNT("integration"."id")`), `integration_counter`);
+			query.addSelect(p(`COUNT("invoice"."id")`), `invoice_counter`);
+			query.addSelect(p(`COUNT("merchant"."id")`), `merchant_counter`);
+			query.addSelect(p(`COUNT("organization"."id")`), `organization_counter`);
+			query.addSelect(p(`COUNT("organizationContact"."id")`), `organization_contact_counter`);
+			query.addSelect(p(`COUNT("organizationDepartment"."id")`), `organization_department_counter`);
+			query.addSelect(p(`COUNT("organizationEmploymentType"."id")`), `organization_employment_type_counter`);
+			query.addSelect(p(`COUNT("expenseCategory"."id")`), `expense_category_counter`);
+			query.addSelect(p(`COUNT("organizationPosition"."id")`), `organization_position_counter`);
+			query.addSelect(p(`COUNT("organizationProject"."id")`), `organization_project_counter`);
+			query.addSelect(p(`COUNT("organizationTeam"."id")`), `organization_team_counter`);
+			query.addSelect(p(`COUNT("organizationVendor"."id")`), `organization_vendor_counter`);
+			query.addSelect(p(`COUNT("payment"."id")`), `payment_counter`);
+			query.addSelect(p(`COUNT("product"."id")`), `product_counter`);
+			query.addSelect(p(`COUNT("proposal"."id")`), `proposal_counter`);
+			query.addSelect(p(`COUNT("requestApproval"."id")`), `request_approval_counter`);
+			query.addSelect(p(`COUNT("task"."id")`), `task_counter`);
+			query.addSelect(p(`COUNT("user"."id")`), `user_counter`);
+			query.addSelect(p(`COUNT("warehouse"."id")`), `warehouse_counter`);
 			/**
 			* Adds GROUP BY condition in the query builder.
 			*/
@@ -233,7 +181,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(
-					sanitizeSqlQuotes(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
+					p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
 				);
 			})
 		);
@@ -255,14 +203,14 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(organizationTeamId)) {
 					qb.andWhere(
-						sanitizeSqlQuotes(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+						p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
 						organizationTeamId
 					});
 				}
 			})
 		);
 		query.andWhere(
-			sanitizeSqlQuotes(`"${query.alias}"."isSystem" = :isSystem`), {
+			p(`"${query.alias}"."isSystem" = :isSystem`), {
 			isSystem: false
 		});
 		/**
@@ -270,19 +218,19 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		 */
 		if (isNotEmpty(name)) {
 			query.andWhere(
-				sanitizeSqlQuotes(`"${query.alias}"."name" ILIKE :name`), {
+				p(`"${query.alias}"."name" ILIKE :name`), {
 				name: `%${name}%`
 			});
 		}
 		if (isNotEmpty(color)) {
 			query.andWhere(
-				sanitizeSqlQuotes(`"${query.alias}"."color" ILIKE :color`), {
+				p(`"${query.alias}"."color" ILIKE :color`), {
 				color: `%${color}%`
 			});
 		}
 		if (isNotEmpty(description)) {
 			query.andWhere(
-				sanitizeSqlQuotes(`"${query.alias}"."description" ILIKE :description`), {
+				p(`"${query.alias}"."description" ILIKE :description`), {
 				description: `%${description}%`
 			});
 		}

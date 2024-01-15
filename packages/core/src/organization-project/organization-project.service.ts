@@ -6,6 +6,7 @@ import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrgani
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
@@ -47,9 +48,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const tenantId = RequestContext.currentTenantId();
 				const { organizationId, organizationContactId, organizationTeamId } = options;
 
-				qb.andWhere('member.id = :employeeId', { employeeId });
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(p("member.id = :employeeId"), { employeeId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 				if (isNotEmpty(organizationContactId)) {
 					query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
@@ -177,23 +178,23 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Define where conditions for the query
 		query.where((qb: SelectQueryBuilder<OrganizationProject>) => {
 			const tenantId = RequestContext.currentTenantId();
-			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 				tenantId
 			});
-			qb.andWhere(`"repository"."tenantId" = :tenantId`, {
+			qb.andWhere(p(`"repository"."tenantId" = :tenantId`), {
 				tenantId
 			});
 
 			if (options?.where) {
 				for (const key of Object.keys(options.where)) {
-					qb.andWhere(`"${query.alias}"."${key}" = :${key}`, { [key]: options.where[key] });
+					qb.andWhere(p(`"${query.alias}"."${key}" = :${key}`), { [key]: options.where[key] });
 				}
 				for (const key of Object.keys(options.where)) {
-					qb.andWhere(`"repository"."${key}" = :${key}`, { [key]: options.where[key] });
+					qb.andWhere(p(`"repository"."${key}" = :${key}`), { [key]: options.where[key] });
 				}
 			}
 
-			qb.andWhere(`"${query.alias}"."repositoryId" IS NOT NULL`);
+			qb.andWhere(p(`"${query.alias}"."repositoryId" IS NOT NULL`));
 		});
 
 		// Log the SQL query (for debugging)

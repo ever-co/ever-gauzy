@@ -14,6 +14,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler
@@ -99,10 +100,10 @@ export class CreateTimeSlotHandler
 				}
 			});
 			query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-				qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-				qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-				qb.andWhere(`"${qb.alias}"."startedAt" = :startedAt`, { startedAt: input.startedAt });
+				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+				qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
+				qb.andWhere(p(`"${qb.alias}"."startedAt" = :startedAt`), { startedAt: input.startedAt });
 				console.log(`Get Time Slot Query & Parameters For employee (${user.name})`, qb.getQueryAndParameters());
 			});
 			timeSlot = await query.getOneOrFail();
@@ -125,15 +126,15 @@ export class CreateTimeSlotHandler
 				console.log({ input });
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-						web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-						web.andWhere(`"${qb.alias}"."source" = :source`, { source });
-						web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType });
-						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+						web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
+						web.andWhere(p(`"${qb.alias}"."source" = :source`), { source });
+						web.andWhere(p(`"${qb.alias}"."logType" = :logType`), { logType });
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
 					})
 				);
-				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'DESC');
+				qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
 			});
 			console.log('Find timelog for specific timeslot range query', query.getQueryAndParameters());
 			const timeLog = await query.getOneOrFail();
@@ -155,15 +156,15 @@ export class CreateTimeSlotHandler
 				query.where((qb: SelectQueryBuilder<TimeLog>) => {
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-							web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-							web.andWhere(`"${qb.alias}"."source" = :source`, { source });
-							web.andWhere(`"${qb.alias}"."logType" = :logType`, { logType });
-							web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-							web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
+							web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+							web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+							web.andWhere(p(`"${qb.alias}"."source" = :source`), { source });
+							web.andWhere(p(`"${qb.alias}"."logType" = :logType`), { logType });
+							web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
+							web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
 						})
 					);
-					qb.andWhere(`"${qb.alias}"."id" IN (:...timeLogIds)`, {
+					qb.andWhere(p(`"${qb.alias}"."id" IN (:...timeLogIds)`), {
 						timeLogIds
 					});
 				});

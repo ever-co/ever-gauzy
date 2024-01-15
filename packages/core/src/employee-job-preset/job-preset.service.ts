@@ -23,6 +23,7 @@ import {
 	SavePresetCriterionCommand
 } from './commands';
 import { isNotEmpty } from 'class-validator';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
@@ -64,20 +65,20 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			},
 		});
 		query.where((qb: SelectQueryBuilder<JobPreset>) => {
-			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 
 			if (isNotEmpty(organizationId)) {
-				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 					organizationId
 				});
 			}
 			if (isNotEmpty(search)) {
-				qb.andWhere(`"${query.alias}"."name" ILIKE :search`, {
+				qb.andWhere(p(`"${query.alias}"."name" ILIKE :search`), {
 					search: `%${search}%`
 				});
 			}
 			if (isNotEmpty(employeeId)) {
-				qb.andWhere(`"employees"."id" = :employeeId`, {
+				qb.andWhere(p(`"employees"."id" = :employeeId`), {
 					employeeId
 				});
 			}

@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { ConfigService } from '@gauzy/config';
+import { ConfigService, prepareSQLQuery as p } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
@@ -36,7 +36,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
 				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
-				.leftJoinAndSelect( `${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
+				.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
 			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
 				query.leftJoinAndSelect(
@@ -59,8 +59,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.where(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					})
 				)
 				.getMany();
@@ -198,16 +198,16 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			 * Adds new AND WHERE condition in the query builder.
 			 * Additionally you can add parameters used in where expression.
 			 */
-			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (filter.where) {
 						const { tenantId, organizationId } = filter.where;
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-						qb.andWhere(`"equipment"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"equipment"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"equipment"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"equipment"."organizationId" = :organizationId`), { organizationId });
 					}
 				})
 			);
@@ -229,16 +229,16 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 						}
 						qb.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => {
-								qb.andWhere(`"employees"."id" IN (:...employeeIds)`, {
+								qb.andWhere(p(`"employees"."id" IN (:...employeeIds)`), {
 									employeeIds
 								});
-								qb.orWhere(`"${query.alias}"."createdBy" IN (:...employeeIds)`, {
+								qb.orWhere(p(`"${query.alias}"."createdBy" IN (:...employeeIds)`), {
 									employeeIds
 								});
 							})
 						);
-						qb.andWhere(`"employees"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"employees"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"employees"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"employees"."organizationId" = :organizationId`), { organizationId });
 					}
 				})
 			);

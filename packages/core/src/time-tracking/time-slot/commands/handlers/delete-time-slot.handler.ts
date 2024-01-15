@@ -8,6 +8,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { RequestContext } from './../../../../core/context';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @CommandHandler(DeleteTimeSlotCommand)
 export class DeleteTimeSlotHandler
@@ -49,17 +50,17 @@ export class DeleteTimeSlotHandler
 			query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-						web.andWhere(`"${qb.alias}"."id" = :id`, { id });
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+						web.andWhere(p(`"${qb.alias}"."id" = :id`), { id });
 					})
 				);
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
-				qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+				qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
 			});
 			const timeSlots: ITimeSlot[] = await query.getMany();
 			if (isEmpty(timeSlots)) {

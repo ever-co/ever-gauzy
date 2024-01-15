@@ -26,7 +26,7 @@ import {
 	IWorkspaceResponse,
 	ITenant,
 } from '@gauzy/contracts';
-import { environment, sanitizeSqlQuotes } from '@gauzy/config';
+import { environment, prepareSQLQuery as p } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
@@ -903,81 +903,81 @@ export class AuthService extends SocialAuthService {
 	): Promise<IOrganizationTeam[]> {
 		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
 		query.innerJoin('organization_team_employee',
-			sanitizeSqlQuotes("team_member"),
-			sanitizeSqlQuotes('"team_member"."organizationTeamId" = "organization_team"."id"')
+			p("team_member"),
+			p('"team_member"."organizationTeamId" = "organization_team"."id"')
 		);
 
 		query.select([
-			sanitizeSqlQuotes(`"${query.alias}"."id" AS "team_id"`),
-			sanitizeSqlQuotes(`"${query.alias}"."name" AS "team_name"`),
-			sanitizeSqlQuotes(`"${query.alias}"."logo" AS "team_logo"`),
-			sanitizeSqlQuotes(`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`),
-			sanitizeSqlQuotes(`"${query.alias}"."profile_link" AS "profile_link"`),
-			sanitizeSqlQuotes(`"${query.alias}"."prefix" AS "prefix")`)
+			p(`"${query.alias}"."id" AS "team_id"`),
+			p(`"${query.alias}"."name" AS "team_name"`),
+			p(`"${query.alias}"."logo" AS "team_logo"`),
+			p(`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`),
+			p(`"${query.alias}"."profile_link" AS "profile_link"`),
+			p(`"${query.alias}"."prefix" AS "prefix")`)
 		]);
 
 		query.andWhere(
-			sanitizeSqlQuotes(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
+			p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
 		);
 
 		// Sub Query to get only assigned teams for specific organizations
 		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
 			const subQuery = cb.subQuery()
 			.select(
-				sanitizeSqlQuotes('"user_organization"."organizationId"')
+				p('"user_organization"."organizationId"')
 			).from(
-				sanitizeSqlQuotes("user_organization"),
-				sanitizeSqlQuotes("user_organization")
+				p("user_organization"),
+				p("user_organization")
 			);
 			subQuery.andWhere(
-				sanitizeSqlQuotes(`"${subQuery.alias}"."isActive" = true`)
+				p(`"${subQuery.alias}"."isActive" = true`)
 			);
 			subQuery.andWhere(
-				sanitizeSqlQuotes(`"${subQuery.alias}"."userId" = :userId`), { userId }
+				p(`"${subQuery.alias}"."userId" = :userId`), { userId }
 			);
 			subQuery.andWhere(
-				sanitizeSqlQuotes(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
+				p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
 			);
 			return subQuery.distinct(true).getQuery();
 		};
 
 		// Sub Query to get only assigned teams for specific organizations
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			return (sanitizeSqlQuotes(`"${query.alias}"."organizationId" IN `) + orgSubQuery(cb));
+			return (p(`"${query.alias}"."organizationId" IN `) + orgSubQuery(cb));
 		});
 
 		// Sub Query to get only assigned teams for a specific employee for specific tenant
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
 			const subQuery = cb.subQuery()
 				.select(
-					sanitizeSqlQuotes('"organization_team_employee"."organizationTeamId"')
+					p('"organization_team_employee"."organizationTeamId"')
 				)
 				.from(
-					sanitizeSqlQuotes("organization_team_employee"),
-					sanitizeSqlQuotes("organization_team_employee")
+					p("organization_team_employee"),
+					p("organization_team_employee")
 				);
 			subQuery.andWhere(
-				sanitizeSqlQuotes(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
+				p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
 			);
 
 			if (isNotEmpty(employeeId)) {
 				subQuery.andWhere(
-					sanitizeSqlQuotes(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId }
+					p(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId }
 				);
 			}
 
 			// Sub Query to get only assigned teams for specific organizations
 			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				return (sanitizeSqlQuotes(`"${subQuery.alias}"."organizationId" IN `) + orgSubQuery(cb));
+				return (p(`"${subQuery.alias}"."organizationId" IN `) + orgSubQuery(cb));
 			});
-			return (sanitizeSqlQuotes(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery());
+			return (p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery());
 		});
 
 		query.addGroupBy(
-			sanitizeSqlQuotes(`"${query.alias}"."id"`)
+			p(`"${query.alias}"."id"`)
 		);
 		query.orderBy(
-			sanitizeSqlQuotes(`"${query.alias}"."createdAt"`), 'DESC'
+			p(`"${query.alias}"."createdAt"`), 'DESC'
 		);
 
 		return await query.getRawMany();

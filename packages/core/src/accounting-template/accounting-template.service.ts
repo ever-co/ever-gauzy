@@ -8,7 +8,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { sanitizeSqlQuotes } from '@gauzy/config';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
@@ -258,18 +258,18 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 					const { organizationId, languageCode } = params.where;
 					if (isNotEmpty(organizationId)) {
 						bck.andWhere(
-							sanitizeSqlQuotes(`"${qb.alias}"."organizationId" = :organizationId`), {
+							p(`"${qb.alias}"."organizationId" = :organizationId`), {
 							organizationId
 						});
 					}
 					if (isNotEmpty(languageCode)) {
 						bck.andWhere(
-							sanitizeSqlQuotes(`"${qb.alias}"."languageCode" = :languageCode`), {
+							p(`"${qb.alias}"."languageCode" = :languageCode`), {
 							languageCode
 						});
 					}
 					bck.andWhere(
-						sanitizeSqlQuotes(`"${qb.alias}"."tenantId" = :tenantId`), {
+						p(`"${qb.alias}"."tenantId" = :tenantId`), {
 						tenantId: RequestContext.currentTenantId()
 					});
 				})
@@ -277,10 +277,10 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			qb.orWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
 					bck.andWhere(
-						sanitizeSqlQuotes(`"${qb.alias}"."organizationId" IS NULL`)
+						p(`"${qb.alias}"."organizationId" IS NULL`)
 					);
 					bck.andWhere(
-						sanitizeSqlQuotes(`"${qb.alias}"."tenantId" IS NULL`)
+						p(`"${qb.alias}"."tenantId" IS NULL`)
 					);
 				})
 			)
