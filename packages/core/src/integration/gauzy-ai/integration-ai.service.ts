@@ -48,7 +48,7 @@ export class IntegrationAIService {
 				...setting,
 				organizationId,
 				tenantId
-			})) || [];
+			}));
 
 			// Execute the command to create/update the integration tenant settings
 			const createdIntegration: IIntegrationTenant = await this._commandBus.execute(
