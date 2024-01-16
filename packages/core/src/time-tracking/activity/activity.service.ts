@@ -46,7 +46,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.addSelect(p(`"${query.alias}"."date"`), `date`);
 
 		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-			query.addSelect(p(`time("${query.alias}"."time")`), `time`);
+			query.addSelect(`time("${query.alias}"."time")`, `time`);
 		} else {
 			query.addSelect(
 				p(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`),
@@ -57,7 +57,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.groupBy(p(`"${query.alias}"."date"`));
 
 		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-			query.addGroupBy(p(`time("${query.alias}"."time")`));
+			query.addGroupBy(`time("${query.alias}"."time")`);
 		} else {
 			query.addGroupBy(
 				p(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`)
