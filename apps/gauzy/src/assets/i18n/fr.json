@@ -3990,7 +3990,8 @@
 			"OPEN_TIMER": "Ouvrir le suivi du temps",
 			"WINDOW": "Fenêtre",
 			"HELP": "Aidez-moi",
-			"LEARN_MORE": "En savoir plus"
+			"LEARN_MORE": "En savoir plus",
+			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale"
 		}
 	},
 	"SERVER": "Serveur",
