@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective, FormControl } from '@angular/forms';
 import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -63,9 +63,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				untilDestroyed(this) // Ensure that subscriptions are automatically unsubscribed on component destruction.
 			)
 			.subscribe();
-	}
-
-	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -73,6 +70,29 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		/**
+		 * Get references to the 'openAiSecretKey' and 'openAiOrganizationId' form controls.
+		 */
+		const openAiSecretKey = <FormControl>this.form.get('openAiSecretKey');
+		const openAiOrganizationId = <FormControl>this.form.get('openAiOrganizationId');
+
+		// Subscribe to changes in the 'openAiSecretKey' form control value.
+		openAiSecretKey.valueChanges.subscribe((value) => {
+			// Check if 'openAiSecretKey' has a value.
+			if (value) {
+				// If 'openAiSecretKey' has a value, set 'Validators.required' on 'openAiOrganizationId'.
+				openAiOrganizationId.setValidators([Validators.required]);
+			} else {
+				// If 'openAiSecretKey' does not have a value, remove validators from 'openAiOrganizationId'.
+				openAiOrganizationId.setValidators(null);
+			}
+
+			// Update the validation status of 'openAiOrganizationId'.
+			openAiOrganizationId.updateValueAndValidity();
+		});
 	}
 
 	ngOnDestroy(): void { }

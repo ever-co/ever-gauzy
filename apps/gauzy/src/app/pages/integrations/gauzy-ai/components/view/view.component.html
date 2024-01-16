@@ -27,30 +27,34 @@
 				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.KEYS' | translate"
 				[tabIcon]="'list-outline'"
 			>
-				<nb-card class="mb-3">
-					<nb-card-body>
-						<header class="mb-3">
-							{{ 'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate }}
-						</header>
-						<div class="integration-container">
-							<ng-container
-								*ngTemplateOutlet="settingTemplate; context: { $implicit: settings$ | async }">
-							</ng-container>
-						</div>
-					</nb-card-body>
-				</nb-card>
-				<nb-card>
-					<nb-card-body>
-						<header class="mb-3">
-							{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate }}
-						</header>
-						<div class="integration-container">
-							<ng-container
-								*ngTemplateOutlet="settingTemplate; context: { $implicit: openAISettings$ | async }">
-							</ng-container>
-						</div>
-					</nb-card-body>
-				</nb-card>
+				<ng-container *ngIf="(settings$ | async) as settings">
+					<nb-card class="mb-3" *ngIf="settings.length">
+						<nb-card-body>
+							<header class="mb-3">
+								{{ 'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate }}
+							</header>
+							<div class="integration-container">
+								<ng-container
+									*ngTemplateOutlet="settingTemplate; context: { $implicit: settings }">
+								</ng-container>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</ng-container>
+				<ng-container *ngIf="(openAISettings$ | async) as openAISettings">
+					<nb-card *ngIf="openAISettings.length">
+						<nb-card-body>
+							<header class="mb-3">
+								{{ 'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate }}
+							</header>
+							<div class="integration-container">
+								<ng-container
+									*ngTemplateOutlet="settingTemplate; context: { $implicit: openAISettings }">
+								</ng-container>
+							</div>
+						</nb-card-body>
+					</nb-card>
+				</ng-container>
 			</nb-tab>
 			<nb-tab
 				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate"

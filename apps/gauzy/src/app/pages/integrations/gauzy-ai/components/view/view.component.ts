@@ -1,13 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { filter, finalize, map, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationEntitySetting, IIntegrationSetting, IOrganization, IntegrationEntity } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { IntegrationEntitySettingService, IntegrationEntitySettingServiceStoreService, Store, ToastrService } from './../../../../../@core/services';
+import {
+	IntegrationEntitySettingService,
+	IntegrationEntitySettingServiceStoreService,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
