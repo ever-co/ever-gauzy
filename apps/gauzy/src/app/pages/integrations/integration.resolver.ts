@@ -27,12 +27,15 @@ export class IntegrationResolver implements Resolve<Observable<IIntegrationTenan
     resolve(route: ActivatedRouteSnapshot): Observable<IIntegrationTenant | boolean> {
         try {
             const integration = route.data['integration'];
+            const relations = route.data['relations'] || [];
+
             const { id: organizationId, tenantId } = this._store.selectedOrganization;
 
             return this._integrationsService.getIntegrationByOptions({
                 organizationId,
                 tenantId,
-                name: integration
+                name: integration,
+                relations
             }).pipe(
                 catchError(() => {
                     this._router.navigate(['/pages/integrations/new']);

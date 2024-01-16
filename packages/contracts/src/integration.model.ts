@@ -1,4 +1,4 @@
-import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 
 export interface IRelationIntegration {
@@ -48,7 +48,7 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationIntegration {
+export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationIntegration {
 	name?: IntegrationEnum;
 }
 
@@ -133,7 +133,10 @@ export enum IntegrationEntity {
 	SCREENSHOT = 'Screenshot',
 	INCOME = 'Income',
 	EXPENSE = 'Expense',
-	PROPOSAL = 'Proposal'
+	PROPOSAL = 'Proposal',
+	/** AI Integration Entity */
+	JOB_MATCHING = 'JOB_MATCHING',
+	EMPLOYEE_PERFORMANCE = 'EMPLOYEE_PERFORMANCE'
 }
 
 export enum IntegrationTypeGroupEnum {
@@ -173,7 +176,8 @@ export interface IDateRangeActivityFilter {
 }
 
 export interface IIntegrationAICreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	client_id: string;
-	client_secret: string;
-	openai_api_secret_key: string;
+	apiKey: string;
+	apiSecret: string;
+	openAiSecretKey?: string;
+	openAiOrganizationId?: string;
 }
