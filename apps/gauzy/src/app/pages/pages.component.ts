@@ -1,21 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, NavigationEnd, Router } from '@angular/router';
 import {
 	FeatureEnum,
 	IOrganization,
 	IRolePermission,
 	IUser,
+	IntegrationEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { SelectorService } from '../@core/utils/selector.service';
-import { Store, UsersService } from '../@core/services';
+import { IJobMatchingEntity, IntegrationEntitySettingServiceStoreService, IntegrationsService, Store, UsersService } from '../@core/services';
 import { ReportService } from './reports/all-report/report.service';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 import { TranslationBaseComponent } from '../@shared/language-base';
@@ -43,13 +44,14 @@ interface GaMenuItem extends NbMenuItem {
 	`
 })
 export class PagesComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements AfterViewInit, OnInit, OnDestroy {
 
-	isEmployee: boolean;
-	organization: IOrganization;
-	user: IUser;
-	menu: NbMenuItem[] = [];
-	reportMenuItems: NbMenuItem[] = [];
+	public isEmployeeJobMatchingEntity: boolean = false;
+	public isEmployee: boolean;
+	public organization: IOrganization;
+	public user: IUser;
+	public menu: NbMenuItem[] = [];
+	public reportMenuItems: NbMenuItem[] = [];
 
 	constructor(
 		private readonly router: Router,
@@ -60,7 +62,9 @@ export class PagesComponent extends TranslationBaseComponent
 		private readonly selectorService: SelectorService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
 		private readonly usersService: UsersService,
-		private readonly authStrategy: AuthStrategy
+		private readonly authStrategy: AuthStrategy,
+		private readonly _integrationsService: IntegrationsService,
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
 	) {
 		super(translate);
 	}
@@ -441,29 +445,32 @@ export class PagesComponent extends TranslationBaseComponent
 							]
 						}
 					},
-					{
-						title: 'Browse',
-						icon: 'fas fa-list',
-						link: '/pages/jobs/search',
-						data: {
-							translationKey: 'MENU.JOBS_SEARCH',
-							permissionKeys: [
-								PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-								PermissionsEnum.ORG_JOB_MATCHING_VIEW
-							]
-						}
-					},
-					{
-						title: 'Matching',
-						icon: 'fas fa-user',
-						link: '/pages/jobs/matching',
-						data: {
-							translationKey: 'MENU.JOBS_MATCHING',
-							permissionKeys: [
-								PermissionsEnum.ORG_JOB_MATCHING_VIEW
-							]
-						}
-					},
+					/** */
+					...(this.isEmployeeJobMatchingEntity ? [
+						{
+							title: 'Browse',
+							icon: 'fas fa-list',
+							link: '/pages/jobs/search',
+							data: {
+								translationKey: 'MENU.JOBS_SEARCH',
+								permissionKeys: [
+									PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
+									PermissionsEnum.ORG_JOB_MATCHING_VIEW
+								]
+							}
+						},
+						{
+							title: 'Matching',
+							icon: 'fas fa-user',
+							link: '/pages/jobs/matching',
+							data: {
+								translationKey: 'MENU.JOBS_MATCHING',
+								permissionKeys: [
+									PermissionsEnum.ORG_JOB_MATCHING_VIEW
+								]
+							}
+						},
+					] : []),
 					{
 						title: 'Proposal Template',
 						icon: 'far fa-file-alt',
@@ -969,7 +976,6 @@ export class PagesComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		await this._createEntryPoint();
 		this._applyTranslationOnSmartTable();
 
@@ -984,11 +990,9 @@ export class PagesComponent extends TranslationBaseComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getReportsMenus()),
+				tap(() => this.getIntegrationEntitySettings()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1062,6 +1066,47 @@ export class PagesComponent extends TranslationBaseComponent
 			);
 		});
 		this.menu = this.getMenuItems();
+	}
+
+	ngAfterViewInit(): void {
+		this._integrationEntitySettingServiceStoreService.jobMatchingEntity$
+			.pipe(
+				distinctUntilChange(), // Ensure that only distinct changes are considered
+				filter(({ currentValue }: IJobMatchingEntity) => !!currentValue), // Filter out falsy values
+				tap(({ currentValue }: IJobMatchingEntity) => {
+					// Update component properties based on the current job matching entity settings
+					this.isEmployeeJobMatchingEntity = !!currentValue.sync && !!currentValue.isActive;
+					this.menu = this.getMenuItems(); // Recreate menu items based on the updated settings
+				}),
+				// Handling the component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			).subscribe();
+	}
+
+	/**
+	 * Retrieves and processes integration entity settings for the specified organization.
+	 * This function fetches integration data, filters, and updates the job matching entity state.
+	 * If the organization is not available, the function exits early.
+	 */
+	getIntegrationEntitySettings(): void {
+		// Check if the organization is available
+		if (!this.organization) {
+			return;
+		}
+
+		// Extract necessary properties from the organization
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Fetch integration data from the service based on specified options
+		const integration$ = this._integrationsService.getIntegrationByOptions({
+			organizationId,
+			tenantId,
+			name: IntegrationEnum.GAUZY_AI,
+			relations: ['entitySettings']
+		});
+
+		// Update job matching entity setting using the integration$ observable
+		this._integrationEntitySettingServiceStoreService.updateAIJobMatchingEntity(integration$).subscribe();
 	}
 
 	async getReportsMenus() {

@@ -4,11 +4,7 @@ query employeeJobPosts(
 	$filter: EmployeeJobPostFilter!
 	$sorting: [EmployeeJobPostSort!]
 ) {
-	employeeJobPosts(
-		paging: { after: $after, first: $first }
-		filter: $filter
-		sorting: $sorting
-	) {
+	employeeJobPosts(paging: { after: $after, first: $first }, filter: $filter, sorting: $sorting) {
 		totalCount
 		pageInfo {
 			hasNextPage
@@ -64,16 +60,8 @@ query employeeJobPosts(
 	}
 }
 
-query employeeJobPostsByEmployeeIdJobPostId(
-	$employeeIdFilter: String!
-	$jobPostIdFilter: String!
-) {
-	employeeJobPosts(
-		filter: {
-			employeeId: { eq: $employeeIdFilter }
-			jobPostId: { eq: $jobPostIdFilter }
-		}
-	) {
+query employeeJobPostsByEmployeeIdJobPostId($employeeIdFilter: String!, $jobPostIdFilter: String!) {
+	employeeJobPosts(filter: { employeeId: { eq: $employeeIdFilter }, jobPostId: { eq: $jobPostIdFilter } }) {
 		edges {
 			node {
 				id
@@ -104,9 +92,7 @@ query employee {
 }
 
 query employeeByExternalEmployeeId($externalEmployeeIdFilter: String!) {
-	employees(
-		filter: { externalEmployeeId: { eq: $externalEmployeeIdFilter } }
-	) {
+	employees(filter: { externalEmployeeId: { eq: $externalEmployeeIdFilter } }) {
 		edges {
 			node {
 				id
@@ -118,12 +104,7 @@ query employeeByExternalEmployeeId($externalEmployeeIdFilter: String!) {
 }
 
 query employeeByName($firstNameFilter: String!, $lastNameFilter: String!) {
-	employees(
-		filter: {
-			firstName: { eq: $firstNameFilter }
-			lastName: { eq: $lastNameFilter }
-		}
-	) {
+	employees(filter: { firstName: { eq: $firstNameFilter }, lastName: { eq: $lastNameFilter } }) {
 		edges {
 			node {
 				id
@@ -157,29 +138,20 @@ mutation updateOneEmployeeJobPost($input: UpdateOneEmployeeJobPostInput!) {
 	}
 }
 
-mutation deleteManyUpworkJobsSearchCriteria(
-	$input: DeleteManyUpworkJobsSearchCriteriaInput!
-) {
+mutation deleteManyUpworkJobsSearchCriteria($input: DeleteManyUpworkJobsSearchCriteriaInput!) {
 	deleteManyUpworkJobsSearchCriteria(input: $input) {
 		deletedCount
 	}
 }
 
-mutation createManyUpworkJobsSearchCriteria(
-	$input: CreateManyUpworkJobsSearchCriteriaInput!
-) {
+mutation createManyUpworkJobsSearchCriteria($input: CreateManyUpworkJobsSearchCriteriaInput!) {
 	createManyUpworkJobsSearchCriteria(input: $input) {
 		id
 	}
 }
 
 query jobPosts($providerCodeFilter: String!, $providerJobIdFilter: String!) {
-	jobPosts(
-		filter: {
-			providerCode: { eq: $providerCodeFilter }
-			providerJobId: { eq: $providerJobIdFilter }
-		}
-	) {
+	jobPosts(filter: { providerCode: { eq: $providerCodeFilter }, providerJobId: { eq: $providerJobIdFilter } }) {
 		edges {
 			node {
 				id
