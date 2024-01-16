@@ -11,4 +11,4 @@ import { JobTableComponentsModule } from './table-components/job-table-component
 	declarations: [JobLayoutComponent],
 	imports: [CommonModule, JobsRoutingModule, SharedModule, JobTableComponentsModule]
 })
-export class JobsModule {}
+export class JobsModule { }

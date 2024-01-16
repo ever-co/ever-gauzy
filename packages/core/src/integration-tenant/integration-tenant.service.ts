@@ -7,7 +7,8 @@ import {
 	IIntegrationTenant,
 	IIntegrationTenantCreateInput,
 	IIntegrationTenantFindInput,
-	IPagination
+	IPagination,
+	IntegrationEntity
 } from '@gauzy/contracts';
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
@@ -100,8 +101,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 						isArchived: false
 					}
 				},
-				order: { updatedAt: 'DESC' },
-				relations: { integration: true }
+				order: {
+					updatedAt: 'DESC'
+				},
+				...(input.relations ? { relations: input.relations } : {}),
 			});
 
 			return integration || false;
@@ -141,5 +144,39 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		} catch {
 			return null;
 		}
+	}
+
+	/**
+	 * Find an IntegrationTenant by entity type.
+	 *
+	 * @param param0 - Destructured parameters object.
+	 *   @param organizationId - The ID of the organization.
+	 *   @param integrationId - The ID of the integration.
+	 *   @param entityType - The entity type for which to find the IntegrationTenant.
+	 * @returns A promise that resolves to the found IntegrationTenant or null if not found.
+	 */
+	public async findIntegrationTenantByEntity({
+		organizationId,
+		integrationId,
+		entityType,
+	}: {
+		organizationId: string;
+		integrationId: string;
+		entityType: IntegrationEntity;
+	}): Promise<IIntegrationTenant> {
+		return await this.findOneByIdString(integrationId, {
+			where: {
+				organizationId, // It's included here as a safeguard to ensure the organization context is correct
+				isActive: true,
+				isArchived: false,
+				entitySettings: {
+					entity: entityType,
+					organizationId, // It's included here as a safeguard to ensure the organization context is correct
+					sync: true,
+					isActive: true,
+					isArchived: false,
+				},
+			},
+		})
 	}
 }

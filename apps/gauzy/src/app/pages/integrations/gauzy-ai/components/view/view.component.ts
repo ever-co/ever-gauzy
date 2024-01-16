@@ -5,14 +5,20 @@ import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationSetting, IOrganization } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationSetting, IOrganization, IntegrationEntity } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { Store } from './../../../../../@core/services';
+import {
+	IntegrationEntitySettingService,
+	IntegrationEntitySettingServiceStoreService,
+	Store,
+	ToastrService
+} from './../../../../../@core/services';
 
 enum SettingTitlesEnum {
 	API_KEY = 'apiKey',
 	API_SECRET = 'apiSecret',
-	OPEN_AI_API_SECRET_KEY = 'openAiApiSecretKey'
+	OPEN_AI_API_SECRET_KEY = 'openAiSecretKey',
+	OPEN_AI_ORGANIZATION_ID = 'openAiOrganizationId'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -23,9 +29,12 @@ enum SettingTitlesEnum {
 })
 export class GauzyAIViewComponent extends TranslationBaseComponent implements OnInit {
 
+	public organization: IOrganization;
 	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
 	public settings$: Observable<IIntegrationSetting[]>;
-	public settings: IIntegrationSetting[] = [];
+	public openAISettings$: Observable<IIntegrationSetting[]>;
+	public jobSearchMatchingSync: IIntegrationEntitySetting;
+	public employeePerformanceAnalysisSync: IIntegrationEntitySetting;
 
 	// Define a mapping object for setting names to titles and information
 	public settingTitles: Record<string, string>[] = [
@@ -43,6 +52,11 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_SECRET_KEY'),
 			matching: SettingTitlesEnum.OPEN_AI_API_SECRET_KEY,
 			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_API_SECRET_KEY')
+		},
+		{
+			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_ORGANIZATION_ID'),
+			matching: SettingTitlesEnum.OPEN_AI_ORGANIZATION_ID,
+			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_ORGANIZATION_ID')
 		}
 	];
 
@@ -50,7 +64,10 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
 	) {
 		super(translateService);
 	}
@@ -60,20 +77,144 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		this.organization$ = this._store.selectedOrganization$.pipe(
 			// Exclude falsy values from the emitted values
 			filter((organization: IOrganization) => !!organization),
+			// Tap operator for side effects - setting the organization property
+			tap((organization: IOrganization) => this.organization = organization),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		);
 
-		// Setting up the settings$ observable pipeline
-		this.settings$ = this._activatedRoute.data.pipe(
+		// Filter only API_KEY and API_SECRET
+		const settingsFilters = [SettingTitlesEnum.API_KEY, SettingTitlesEnum.API_SECRET];
+		this.settings$ = this.getFilteredSettings$(settingsFilters);
+
+		// Filter only OPEN_AI_API_SECRET_KEY and OPEN_AI_ORGANIZATION_ID
+		const openAISettingsFilters = [SettingTitlesEnum.OPEN_AI_API_SECRET_KEY, SettingTitlesEnum.OPEN_AI_ORGANIZATION_ID];
+		this.openAISettings$ = this.getFilteredSettings$(openAISettingsFilters);
+
+		// Creating the jobSearchMatchingSync pipeline
+		this.setupEntitySync(IntegrationEntity.JOB_MATCHING, 'jobSearchMatchingSync', {
+			entity: IntegrationEntity.JOB_MATCHING,
+			sync: false
+		});
+
+		// Creating the employeePerformanceAnalysisSync pipeline
+		this.setupEntitySync(IntegrationEntity.EMPLOYEE_PERFORMANCE, 'employeePerformanceAnalysisSync', {
+			entity: IntegrationEntity.EMPLOYEE_PERFORMANCE,
+			sync: false
+		});
+	}
+
+	/**
+	 * Retrieves filtered integration settings based on specified conditions.
+	 *
+	 * @param filters - An array of SettingTitlesEnum values used to filter settings.
+	 * @returns An Observable emitting an array of IIntegrationSetting objects that match the specified filters.
+	 */
+	private getFilteredSettings$(filters: SettingTitlesEnum[]): Observable<IIntegrationSetting[]> {
+		return this._activatedRoute.data.pipe(
+			// Extracting the 'settings' property from the 'integration_tenant' object in the route's data
 			map(({ settings }: Data) => settings),
-			// Update component state with fetched settings
-			tap((settings: IIntegrationSetting[]) => {
-				this.settings = settings;
-			}),
-			// Handle component lifecycle to avoid memory leaks
+			// Filtering settings based on specified conditions using filters
+			map((settings: IIntegrationSetting[]) =>
+				settings.filter((setting) => filters.includes(setting.settingsName as SettingTitlesEnum))
+			),
+			// Handling the component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		);
+	}
+
+	/**
+	 * Sets up an observable pipeline to fetch and handle an integration entity setting.
+	 *
+	 * @param entityType - The type of integration entity to fetch (e.g., JOB_MATCHING, EMPLOYEE_PERFORMANCE).
+	 * @param propertyName - The name of the property where the fetched entity setting will be stored in the component.
+	 * @param defaultEntitySetting - The default setting to use if no setting is found.
+	 */
+	private setupEntitySync(
+		entityType: IntegrationEntity,
+		propertyName: string,
+		defaultEntitySetting: IIntegrationEntitySetting
+	): void {
+		// Creating the observable pipeline
+		this._activatedRoute.data.pipe(
+			// Extracting the 'entitySettings' property from the 'integration_tenant' object in the route's data
+			map(({ entitySettings }: Data) => entitySettings),
+			// Finding the entity setting related to the specified entity type
+			map((entitySettings: IIntegrationEntitySetting[]) =>
+				entitySettings.find((setting) => setting.entity === entityType) || defaultEntitySetting
+			),
+			// Updating the specified component property with the fetched entity setting
+			tap((entity: IIntegrationEntitySetting) => this[propertyName] = entity),
+			tap(() => {
+				if (entityType === IntegrationEntity.JOB_MATCHING) {
+					this._integrationEntitySettingServiceStoreService.setJobMatchingEntity(this.jobSearchMatchingSync);
+				}
+			}),
+			// Handling the component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		).subscribe();
+	}
+
+	/**
+	 * Toggles the synchronization state for a specific integration entity.
+	 *
+	 * @param sync - A boolean value indicating whether the synchronization should be enabled (true) or disabled (false).
+	 * @param entity - An IIntegrationEntitySetting object representing the integration entity for which to toggle the synchronization state.
+	 */
+	public toggleIntegrationEntitySync(sync: boolean, entity: IIntegrationEntitySetting) {
+		// Get the integrationId from the current route snapshot
+		const integrationId = this._activatedRoute.snapshot.paramMap.get('id');
+		// Destructure organization properties from the organization object
+		const { tenantId, id: organizationId } = this.organization;
+
+		// Call the updateEntitySettings method of the integration entity service
+		const update$ = this._integrationEntitySettingService.updateEntitySettings(integrationId, {
+			...entity,
+			integrationId,
+			tenantId,
+			organizationId,
+			sync
+		}).pipe(
+			tap(([updatedSetting]) => {
+				let messageKey: string;
+				let successMessageKey: string;
+
+				switch (updatedSetting.entity) {
+					case IntegrationEntity.JOB_MATCHING:
+						this.jobSearchMatchingSync = updatedSetting;
+						this.setJobMatchingEntity(this.jobSearchMatchingSync);
+
+						messageKey = 'JOBS_SEARCH_MATCHING';
+						break;
+					case IntegrationEntity.EMPLOYEE_PERFORMANCE:
+						this.employeePerformanceAnalysisSync = updatedSetting;
+						messageKey = 'EMPLOYEE_PERFORMANCE';
+						break;
+				}
+
+				// Display a success toast message using the _toastrService.
+				if (messageKey) {
+					successMessageKey = `INTEGRATIONS.GAUZY_AI_PAGE.MESSAGE.${messageKey}_${sync ? 'ENABLED' : 'DISABLED'}`;
+					this._toastrService.success(this.getTranslation(successMessageKey), this.getTranslation('TOASTR.TITLE.SUCCESS'));
+				}
+			}),
+			// Handling the component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
+
+		// Subscribe to the observable returned by the updateEntitySettings method
+		update$.subscribe();
+	}
+
+	/**
+	 * Updates the job matching entity state in the IntegrationEntitySettingServiceStoreService.
+	 * This function is responsible for setting the current job matching entity state
+	 * based on the provided synchronization value.
+	 *
+	 * @param jobSearchMatchingSync - A boolean value indicating whether job search matching is synchronized. This value is used to update the job matching entity state.
+	 */
+	setJobMatchingEntity(jobSearchMatchingSync: IIntegrationEntitySetting): void {
+		this._integrationEntitySettingServiceStoreService.setJobMatchingEntity(jobSearchMatchingSync);
 	}
 
 	/**
@@ -82,7 +223,7 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	 * @param setting - The integration setting for which to retrieve the title.
 	 * @returns The title for the integration setting, or the original setting name if not found.
 	 */
-	getTitleForSetting(setting: IIntegrationSetting): string {
+	public getTitleForSetting(setting: IIntegrationSetting): string {
 		// Find the key configuration that matches the setting name
 		const keyConfig = this.settingTitles.find((key) => key.matching === setting.settingsName);
 
@@ -96,7 +237,7 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	 * @param setting - The integration setting for which to retrieve the tooltip content.
 	 * @returns The tooltip content for the integration setting, or an empty string if not found.
 	 */
-	getTooltipForSetting(setting: IIntegrationSetting): string {
+	public getTooltipForSetting(setting: IIntegrationSetting): string {
 		// Find the key configuration that matches the setting name
 		const keyConfig = this.settingTitles.find((key) => key.matching === setting.settingsName);
 
@@ -107,14 +248,14 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	/**
 	 * Navigate to the "Integrations" page.
 	 */
-	navigateToIntegrations(): void {
+	public navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
 	}
 
 	/**
 	 * Navigates to the 'Reset Integration' route within the GitHub integration setup wizard.
 	 */
-	navigateToResetIntegration(): void {
+	public navigateToResetIntegration(): void {
 		this._router.navigate(['/pages/integrations/gauzy-ai/reset']);
 	}
 }
