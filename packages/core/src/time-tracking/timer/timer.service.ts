@@ -31,6 +31,7 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand,
 } from './../time-log/commands';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class TimerService {
@@ -478,12 +479,12 @@ export class TimerService {
 			...(isNotEmpty(source) ? { source } : {}),
 			...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
 		});
-		query.orderBy(`"${query.alias}"."employeeId"`, 'ASC'); // Adjust ORDER BY to match the SELECT list
-		query.addOrderBy(`"${query.alias}"."startedAt"`, 'DESC');
-		query.addOrderBy(`"${query.alias}"."createdAt"`, 'DESC');
+		query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
+		query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
+		query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 
 		// Get last logs group by employees (running or completed)
-		const lastLogs = await query.distinctOn([`"${query.alias}"."employeeId"`]).getMany();
+		const lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
 
 		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
 		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => {

@@ -57,8 +57,8 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { databaseTypes } from '@gauzy/config';
 import { Entity } from '@gauzy/common';
+import { isMySQL } from '@gauzy/config';
 
 @Entity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
@@ -119,7 +119,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@Column({
 		nullable: true,
 		default: OrganizationProjectBudgetTypeEnum.COST,
-		...(process.env.DB_TYPE === databaseTypes.mysql ?
+		...(isMySQL() ?
 			{ type: 'enum', enum: OrganizationProjectBudgetTypeEnum }
 			: { type: 'text' }
 		)

@@ -21,6 +21,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
@@ -80,8 +81,8 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			query
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					})
 				);
 
@@ -94,7 +95,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const start = moment(startDate).format('YYYY-MM-DD hh:mm:ss');
 			const end = moment(endDate).format('YYYY-MM-DD hh:mm:ss');
 
-			query.andWhere(`"${query.alias}"."start" BETWEEN :begin AND :end`, {
+			query.andWhere(p(`"${query.alias}"."start" BETWEEN :begin AND :end`), {
 				begin: start,
 				end: end
 			});
@@ -164,14 +165,14 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 							tenantId: RequestContext.currentTenantId()
 						});
 						if (isNotEmpty(options.where)) {
 							const { where } = options;
 							if (isNotEmpty(where.organizationId)) {
 								const { organizationId } = where;
-								web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+								web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 									organizationId
 								});
 							}
@@ -182,7 +183,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					const { where } = options;
 					if (isNotEmpty(where.employeeIds)) {
 						const { employeeIds } = where;
-						qb.andWhere(`"employees"."id" IN (:...employeeIds)`, {
+						qb.andWhere(p(`"employees"."id" IN (:...employeeIds)`), {
 							employeeIds
 						});
 					}
@@ -230,10 +231,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 							if (isNotEmpty(where.user) && isNotEmpty(where.user.name)) {
 								const keywords: string[] = where.user.name.split(' ');
 								keywords.forEach((keyword: string, index: number) => {
-									web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
+									web.orWhere(p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`), {
 										[`keyword_${index}`]: `%${keyword}%`
 									});
-									web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
+									web.orWhere(p(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`), {
 										[`${index}_keyword`]: `%${keyword}%`
 									});
 								});
@@ -254,7 +255,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 										name: Like(`%${where.policy.name}%`)
 									}
 								});
-								web.andWhere(`LOWER("policy"."name") like LOWER(:name)`, {
+								web.andWhere(p(`LOWER("policy"."name") like LOWER(:name)`), {
 									name: `%${where.policy.name}%`
 								});
 							}

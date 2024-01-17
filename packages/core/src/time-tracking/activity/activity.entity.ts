@@ -11,7 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
-import { IDBConnectionOptions } from '@gauzy/common';
+import { getConfig, isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -19,16 +19,16 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { databaseTypes, getConfig } from "@gauzy/config";
 import { isSqliteDB } from './../../core/utils';
+import { Entity } from '@gauzy/common';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
-let options: IDBConnectionOptions;
+let options: TypeOrmModuleOptions;
 try {
 	options = getConfig().dbConnectionOptions;
 } catch (error) {
 	console.error('Cannot load DB connection options', error);
 }
-import { Entity } from '@gauzy/common';
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -42,7 +42,10 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'longtext' } : {})
+	})
 	description?: string;
 
 	@ApiPropertyOptional({
@@ -59,7 +62,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => 'date' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'datetime' } : { type: 'date' })
+	@CreateDateColumn(isMySQL() ? { type: 'datetime' } : { type: 'date' })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })

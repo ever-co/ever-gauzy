@@ -13,6 +13,7 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from './../../../../core/context';
 import { TimeSlot } from './../../../../core/entities/internal';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler
@@ -107,16 +108,16 @@ export class TimeLogUpdateHandler
 					}
 				});
 				query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+					qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 						organizationId
 					});
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
-					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), {
 						employeeId
 					});
-					qb.andWhere(`"${qb.alias}"."startedAt" IN (:...startTimes)`, {
+					qb.andWhere(p(`"${qb.alias}"."startedAt" IN (:...startTimes)`), {
 						startTimes
 					});
 				});

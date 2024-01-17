@@ -6,6 +6,7 @@ import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
 import { OrganizationProject } from './../../core/entities/internal';
 import { Employee } from '../../employee/employee.entity';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 export const AppsNames: string[] = [
 	'Sublime Text',
@@ -34,7 +35,7 @@ export const createRandomActivities = async (
 		.getRepository(OrganizationProject)
 		.createQueryBuilder();
 	query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-	query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId: tenant.id });
+	query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId: tenant.id });
 
 	const projects: OrganizationProject[] = await query.getMany();
 

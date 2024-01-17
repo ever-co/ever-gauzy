@@ -17,7 +17,7 @@ import {
 	IEmployee,
 	IRequestApprovalTeam
 } from '@gauzy/contracts';
-import { getConfig } from '@gauzy/config';
+import { getConfig, prepareSQLQuery as p } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import {
 	Employee,
@@ -68,12 +68,12 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			query.leftJoinAndSelect(
 				'time_off_request',
 				'time_off_request',
-				'"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+				p('"time_off_request"."id"::"varchar" = "request_approval"."requestId"')
 			);
 			query.leftJoinAndSelect(
 				'equipment_sharing',
 				'equipment_sharing',
-				'"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+				p('"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"')
 			);
 		}
 
@@ -88,28 +88,28 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const [items, total] = await query
 			.where(
 				new Brackets((sqb) => {
-					sqb.where('approvalPolicy.organizationId =:organizationId', {
+					sqb.where(p("approvalPolicy.organizationId =:organizationId"), {
 						organizationId
-					}).andWhere('approvalPolicy.tenantId =:tenantId', {
+					}).andWhere(p("approvalPolicy.tenantId =:tenantId"), {
 						tenantId
 					});
 				})
 			)
 			.orWhere(
 				new Brackets((sqb) => {
-					sqb.where('time_off_request.organizationId =:organizationId', {
+					sqb.where(p("time_off_request.organizationId =:organizationId"), {
 						organizationId
 					})
-						.andWhere('time_off_request.tenantId =:tenantId', {
+						.andWhere(p("time_off_request.tenantId =:tenantId"), {
 							tenantId
 						});
 				})
 			)
 			.orWhere(
 				new Brackets((sqb) => {
-					sqb.where('equipment_sharing.organizationId =:organizationId', {
+					sqb.where(p("equipment_sharing.organizationId =:organizationId"), {
 						organizationId
-					}).andWhere('equipment_sharing.tenantId =:tenantId', {
+					}).andWhere(p("equipment_sharing.tenantId =:tenantId"), {
 						tenantId
 					});
 				})
@@ -251,14 +251,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				.createQueryBuilder()
 				.delete()
 				.from(RequestApprovalEmployee)
-				.where('requestApprovalId = :id', { id: id })
+				.where(p("requestApprovalId = :id"), { id: id })
 				.execute();
 
 			await this.repository
 				.createQueryBuilder()
 				.delete()
 				.from(RequestApprovalTeam)
-				.where('requestApprovalId = :id', { id: id })
+				.where(p("requestApprovalId = :id"), { id: id })
 				.execute();
 
 			if (entity.employeeApprovals) {

@@ -20,6 +20,7 @@ import {
 	User,
 	Employee,
 } from './../core/entities/internal';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 const GITHUB_API_URL = 'https://api.github.com';
 
@@ -252,16 +253,16 @@ export async function getMaxTaskNumberByProject(
 	);
 	query.andWhere(
 		new Brackets((qb: WhereExpressionBuilder) => {
-			qb.andWhere(`\`${query.alias}\`.\`organizationId\` =:organizationId`, {
+			qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), {
 				organizationId,
 			});
-			qb.andWhere(`\`${query.alias}\`.\`tenantId\` =:tenantId`, { tenantId });
+			qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
 			if (isNotEmpty(projectId)) {
-				qb.andWhere(`\`${query.alias}\`.\`projectId\` = :projectId`, {
+				qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), {
 					projectId,
 				});
 			} else {
-				qb.andWhere(`\`${query.alias}\`.\`projectId\` IS NULL`);
+				qb.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 			}
 		})
 	);

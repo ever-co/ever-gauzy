@@ -29,6 +29,7 @@ import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto
 import { EmailService } from './../email-send/email.service';
 import { EmployeeService } from './../employee/employee.service';
 import { AuthService } from './../auth/auth.service';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
@@ -174,7 +175,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					},
 				]);
 
-				qb.orderBy(`"${qb.alias}"."createdAt"`, 'DESC');
+				qb.orderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
 			});
 
 			return await query.getOneOrFail();

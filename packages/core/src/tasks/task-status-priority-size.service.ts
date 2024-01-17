@@ -12,6 +12,7 @@ import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from
 import { TenantBaseEntity } from '../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 export type IFindEntityByParams =
 	| ITaskStatusFindInput
@@ -63,11 +64,11 @@ export class TaskStatusPrioritySizeService<
 		query.where((qb: SelectQueryBuilder<BaseEntity>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."projectId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."organizationTeamId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."isSystem" = :isSystem`, {
+					bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
+					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
+					bck.andWhere(p(`"${qb.alias}"."projectId" IS NULL`));
+					bck.andWhere(p(`"${qb.alias}"."organizationTeamId" IS NULL`));
+					bck.andWhere(p(`"${qb.alias}"."isSystem" = :isSystem`), {
 						isSystem: true
 					});
 				})
@@ -90,42 +91,42 @@ export class TaskStatusPrioritySizeService<
 		 * GET by tenant level
 		 */
 		if (isNotEmpty(tenantId)) {
-			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 				tenantId: RequestContext.currentTenantId()
 			});
 		} else {
-			query.andWhere(`"${query.alias}"."tenantId" IS NULL`);
+			query.andWhere(p(`"${query.alias}"."tenantId" IS NULL`));
 		}
 		/**
 		 * GET by organization level
 		 */
 		if (isNotEmpty(organizationId)) {
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
 				organizationId
 			});
 		} else {
-			query.andWhere(`"${query.alias}"."organizationId" IS NULL`);
+			query.andWhere(p(`"${query.alias}"."organizationId" IS NULL`));
 		}
 		/**
 		 * GET by project level
 		 */
 		if (isNotEmpty(projectId)) {
-			query.andWhere(`"${query.alias}"."projectId" = :projectId`, {
+			query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), {
 				projectId
 			});
 		} else {
-			query.andWhere(`"${query.alias}"."projectId" IS NULL`);
+			query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 		}
 
 		/**
 		 * GET by team level
 		 */
 		if (isNotEmpty(organizationTeamId)) {
-			query.andWhere(`"${query.alias}"."organizationTeamId" = :organizationTeamId`, {
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
 				organizationTeamId
 			});
 		} else {
-			query.andWhere(`"${query.alias}"."organizationTeamId" IS NULL`);
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" IS NULL`));
 		}
 		return query;
 	}

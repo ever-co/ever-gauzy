@@ -15,6 +15,7 @@ import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage, User } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {
@@ -39,13 +40,13 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		const items: Deal[] = await this.dealRepository
 			.createQueryBuilder('deal')
 			.leftJoin('deal.stage', 'pipeline_stage')
-			.where('pipeline_stage.pipelineId = :pipelineId', { pipelineId })
-			.andWhere('pipeline_stage.tenantId = :tenantId', { tenantId })
-			.groupBy('pipeline_stage.id')
+			.where(p("pipeline_stage.pipelineId = :pipelineId"), { pipelineId })
+			.andWhere(p("pipeline_stage.tenantId = :tenantId"), { tenantId })
+			.groupBy(p("pipeline_stage.id"))
 			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
-			.addGroupBy('deal.id')
+			.addGroupBy(p("deal.id"))
 			// END_FIX
-			.orderBy('pipeline_stage.index', 'ASC')
+			.orderBy(p("pipeline_stage.index"), "ASC")
 			.getMany();
 
 		const { length: total } = items;

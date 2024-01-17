@@ -19,6 +19,7 @@ import {
 	UpdateTimeSlotCommand,
 	UpdateTimeSlotMinutesCommand
 } from './commands';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
@@ -86,12 +87,12 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+					web.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
 						startDate: start,
 						endDate: end
 					});
 					if (isEmpty(syncSlots)) {
-						web.andWhere(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`, {
+						web.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
 							startDate: start,
 							endDate: end
 						});
@@ -101,16 +102,16 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					if (isNotEmpty(employeeIds)) {
-						web.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeIds)`, {
+						web.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), {
 							employeeIds
 						});
-						web.andWhere(`"time_log"."employeeId" IN (:...employeeIds)`, {
+						web.andWhere(p(`"time_log"."employeeId" IN (:...employeeIds)`), {
 							employeeIds
 						});
 					}
 					if (isNotEmpty(request.projectIds)) {
 						const { projectIds } = request;
-						web.andWhere('"time_log"."projectId" IN (:...projectIds)', {
+						web.andWhere(p('"time_log"."projectId" IN (:...projectIds)'), {
 							projectIds
 						});
 					}
@@ -126,7 +127,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 						 */
 						const { activityLevel } = request;
 
-						web.andWhere(`"${qb.alias}"."overall" BETWEEN :start AND :end`, {
+						web.andWhere(p(`"${qb.alias}"."overall" BETWEEN :start AND :end`), {
 							start: activityLevel.start * 6,
 							end: activityLevel.end * 6
 						});
@@ -136,14 +137,14 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					if (isNotEmpty(request.source)) {
 						const { source } = request;
 
-						const condition = source instanceof Array ? `"time_log"."source" IN (:...source)` : `"time_log"."source" = :source`;
+						const condition = source instanceof Array ? p(`"time_log"."source" IN (:...source)`) : p(`"time_log"."source" = :source`);
 						web.andWhere(condition, { source });
 					}
 
 					// Filters records based on the logType column.
 					if (isNotEmpty(request.logType)) {
 						const { logType } = request;
-						const condition = logType instanceof Array ? `"time_log"."logType" IN (:...logType)` : `"time_log"."logType" = :logType`;
+						const condition = logType instanceof Array ? p(`"time_log"."logType" IN (:...logType)`) : p(`"time_log"."logType" = :logType`);
 
 						web.andWhere(condition, { logType });
 					}
@@ -152,18 +153,18 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			// Additional conditions for filtering by tenantId and organizationId
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(p(`"time_log"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"time_log"."organizationId" = :organizationId`), { organizationId });
 				})
 			);
 			// Additional conditions for filtering by tenantId and organizationId
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 				})
 			);
-			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+			qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
 		});
 		const slots = await query.getMany();
 		return slots;

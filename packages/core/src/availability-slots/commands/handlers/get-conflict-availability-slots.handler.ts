@@ -7,7 +7,7 @@ import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { RequestContext } from './../../../core/context';
-import { isSqliteDB } from './../../../core/utils';
+import { prepareSQLQuery as p, databaseTypes } from '@gauzy/config';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
 export class GetConflictAvailabilitySlotsHandler
@@ -31,22 +31,41 @@ export class GetConflictAvailabilitySlotsHandler
 		const stoppedAt = moment(endTime).toISOString();
 
 		const query = this.availabilitySlotRepository.createQueryBuilder();
-		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 			tenantId
 		});
-		query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+		query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), {
 			employeeId
 		});
 
-		query.andWhere(
-			isSqliteDB(this.configService.dbConnectionOptions)
-				? `'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
-				: `("${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
-		);
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				query.andWhere(`'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`);
+				break;
+			case databaseTypes.postgres:
+				query.andWhere(
+					`(
+						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'
+					)`
+				);
+				break;
+			case databaseTypes.mysql:
+				query.andWhere(
+					p(`(
+						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'
+					)`)
+				);
+				break;
+			default:
+				throw Error(
+					`cannot compare startTime/endTime due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
+		}
 
 		// organization and tenant for availability slots conflicts
 		if (organizationId) {
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
 				organizationId
 			});
 		}

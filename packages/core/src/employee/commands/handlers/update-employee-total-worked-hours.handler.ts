@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { getConfig } from '@gauzy/config';
+import { getConfig, prepareSQLQuery as p } from '@gauzy/config';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { EmployeeService } from '../../employee.service';
 import { TimeLog } from './../../../core/entities/internal';
@@ -32,7 +32,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 				.select(
 					`${isSqliteDB(config.dbConnectionOptions)
 						? 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)'
-						: 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))'
+						: p('SUM(extract(epoch from ("stoppedAt" - "startedAt")))')
 					}`,
 					`duration`
 				)

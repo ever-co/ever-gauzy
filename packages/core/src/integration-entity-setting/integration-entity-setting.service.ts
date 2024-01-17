@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IIntegrationEntitySetting, IIntegrationTenant } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 
@@ -15,12 +15,14 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	}
 
 	/**
-	 * GET integration entity settings by integration
+	 * Get integration entity settings by integration ID.
 	 *
-	 * @param integrationId
-	 * @returns
+	 * @param integrationId - The ID of the integration.
+	 * @returns A promise resolving to an array of integration entity settings.
 	 */
-	async getIntegrationEntitySettings(integrationId: IIntegrationTenant['id']) {
+	async getIntegrationEntitySettings(
+		integrationId: IIntegrationTenant['id']
+	): Promise<IPagination<IntegrationEntitySetting>> {
 		return await this.findAll({
 			where: {
 				integrationId
@@ -33,20 +35,15 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	}
 
 	/**
-	 * CREATE | UPDATE bulk integration entity setting by integration
+	 * Create or update integration entity settings in bulk by integration.
 	 *
-	 * @param input
-	 * @returns
+	 * @param input - An individual IIntegrationEntitySetting or an array of IIntegrationEntitySetting objects to be created or updated.
+	 * @returns A promise resolving to an array of created or updated IIntegrationEntitySetting objects.
 	 */
 	async bulkUpdateOrCreate(
 		input: IIntegrationEntitySetting | IIntegrationEntitySetting[]
 	): Promise<IIntegrationEntitySetting[]> {
-		const settings: IIntegrationEntitySetting[] = [];
-		if (input instanceof Array) {
-			settings.push(...input);
-		} else {
-			settings.push(input);
-		}
+		const settings = Array.isArray(input) ? input : [input];
 		return await this.repository.save(settings);
 	}
 }

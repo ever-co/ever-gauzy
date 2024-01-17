@@ -17,6 +17,7 @@ import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
 import { getDateRangeFormat } from './../../core/utils';
 import { BadRequestException } from '@nestjs/common';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 export const createRandomTimeLogs = async (
 	dataSource: DataSource,
@@ -28,8 +29,8 @@ export const createRandomTimeLogs = async (
 	const projects: IOrganizationProject[] = await query
 		.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks')
 		.leftJoinAndSelect(`${query.alias}.organizationContact`, 'organizationContact')
-		.andWhere(`\`${query.alias}\`.\`tenantId\` =:tenantId`, { tenantId: tenant.id })
-		.andWhere(`\`tasks\`.\`tenantId\` =:tenantId`, { tenantId: tenant.id })
+		.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId: tenant.id })
+		.andWhere(p(`"tasks"."tenantId" =:tenantId`), { tenantId: tenant.id })
 		.getMany();
 	if (isEmpty(projects)) {
 		console.warn(
@@ -186,16 +187,16 @@ export const recalculateTimesheetActivity = async (
 			.addSelect('AVG(overall)', 'overall')
 			.where(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), {
 						employeeId
 					});
-					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
 						organizationId
 					});
-					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
-					qb.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+					qb.andWhere(p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`), {
 						startedAt: start,
 						stoppedAt: end
 					});

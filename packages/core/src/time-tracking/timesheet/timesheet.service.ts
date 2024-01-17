@@ -12,6 +12,7 @@ import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
@@ -112,8 +113,8 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		);
 
 		// Additional conditions for filtering by tenantId and organizationId
-		qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-		qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+		qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+		qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 		return qb;
 	}
 }

@@ -3989,7 +3989,8 @@
 			"OPEN_TIMER": "Otwarty śledzik czasu",
 			"WINDOW": "Okno",
 			"HELP": "Pomoc",
-			"LEARN_MORE": "Dowiedz się więcej"
+			"LEARN_MORE": "Dowiedz się więcej",
+			"OPEN_MAIN_WINDOW": "Otwórz główne okno"
 		}
 	},
 	"SERVER": "Serwer",

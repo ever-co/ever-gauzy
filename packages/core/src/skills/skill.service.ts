@@ -3,6 +3,7 @@ import { Skill } from './skill.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { prepareSQLQuery as p } from '@gauzy/config';
 
 @Injectable()
 export class SkillService extends TenantAwareCrudService<Skill> {
@@ -16,7 +17,7 @@ export class SkillService extends TenantAwareCrudService<Skill> {
 	async findOneByName(name: string): Promise<Skill> {
 		const query = this.repository
 			.createQueryBuilder('skill')
-			.where('"skill"."name" = :name', {
+			.where(p(`"skill"."name" = :name`), {
 				name
 			});
 		const item = await query.getOne();

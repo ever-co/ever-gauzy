@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as chalk from 'chalk';
-import { TlsOptions } from 'tls';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
@@ -10,15 +9,7 @@ import { Options as MikroOrmMySqlOptions } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { parseToBoolean } from '@gauzy/common';
-
-export enum databaseTypes {
-	mongodb = 'mongodb',
-	sqlite = 'sqlite',
-	betterSqlite3 = 'better-sqlite3',
-	postgres = 'postgres',
-	mysql = 'mysql'
-}
+import { databaseTypes, getTlsOptions } from './database-helpers';
 
 let dbType: string;
 const dbORM: 'typeorm' | 'mikro-orm' = process.env.DB_ORM as any || 'typeorm';
@@ -39,18 +30,6 @@ let dbPoolSize: number;
 let dbConnectionTimeout: number;
 let idleTimeoutMillis: number;
 let dbSlowQueryLoggingTimeout: number;
-
-const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
-	if (!parseToBoolean(dbSslMode)) return undefined;
-
-	const base64data = process.env.DB_CA_CERT;
-	const buff = Buffer.from(base64data, 'base64');
-	const sslCert = buff.toString('ascii');
-	return {
-		rejectUnauthorized: true,
-		ca: sslCert
-	};
-}
 
 switch (dbType) {
 	case databaseTypes.mongodb:

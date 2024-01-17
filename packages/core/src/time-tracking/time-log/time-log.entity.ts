@@ -25,6 +25,7 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 import { Entity } from '@gauzy/common';
+import { isMySQL } from '@gauzy/config';
 
 @Entity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
@@ -65,7 +66,10 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'longtext' } : {})
+	})
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
