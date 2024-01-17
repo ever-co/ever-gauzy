@@ -11,15 +11,15 @@ import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { UserModule } from './../../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	controllers: [
 		ActivityController
 	],
 	imports: [
-		TypeOrmModule.forFeature([
-			Activity
-		]),
+		TypeOrmModule.forFeature([Activity]),
+		MikroOrmModule.forFeature([Activity]),
 		TenantModule,
 		UserModule,
 		EmployeeModule,

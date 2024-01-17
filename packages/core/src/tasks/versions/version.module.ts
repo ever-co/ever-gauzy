@@ -8,11 +8,13 @@ import { TaskVersionController } from './version.controller';
 import { TaskVersionService } from './version.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-versions', module: TaskVersionModule }]),
 		TypeOrmModule.forFeature([TaskVersion]),
+		MikroOrmModule.forFeature([TaskVersion]),
 		TenantModule,
 		CqrsModule
 	],
@@ -20,4 +22,4 @@ import { QueryHandlers } from './queries/handlers';
 	providers: [TaskVersionService, ...QueryHandlers, ...CommandHandlers],
 	exports: [TaskVersionService]
 })
-export class TaskVersionModule {}
+export class TaskVersionModule { }

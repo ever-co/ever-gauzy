@@ -8,11 +8,13 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { PaymentMapService } from './payment.map.service';
 import { EmailSendModule } from './../email-send/email-send.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/payments', module: PaymentModule }]),
 		TypeOrmModule.forFeature([Payment]),
+		MikroOrmModule.forFeature([Payment]),
 		TenantModule,
 		UserModule,
 		EmailSendModule
@@ -21,4 +23,4 @@ import { EmailSendModule } from './../email-send/email-send.module';
 	providers: [PaymentService, PaymentMapService],
 	exports: [TypeOrmModule, PaymentService, PaymentMapService]
 })
-export class PaymentModule {}
+export class PaymentModule { }

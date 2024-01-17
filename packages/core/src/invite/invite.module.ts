@@ -21,11 +21,13 @@ import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { EmailSendModule } from './../email-send/email-send.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/invite', module: InviteModule }]),
 		TypeOrmModule.forFeature([Invite]),
+		MikroOrmModule.forFeature([Invite]),
 		CqrsModule,
 		EmailSendModule,
 		TenantModule,
@@ -46,4 +48,4 @@ import { EmailSendModule } from './../email-send/email-send.module';
 	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
 	exports: [TypeOrmModule, InviteService]
 })
-export class InviteModule {}
+export class InviteModule { }

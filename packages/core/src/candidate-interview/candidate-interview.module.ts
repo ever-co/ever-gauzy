@@ -6,11 +6,13 @@ import { CandidateInterviewController } from './candidate-interview.controller';
 import { CandidateInterview } from './candidate-interview.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/candidate-interview', module: CandidateInterviewModule }]),
 		TypeOrmModule.forFeature([CandidateInterview]),
+		MikroOrmModule.forFeature([CandidateInterview]),
 		TenantModule,
 		UserModule
 	],
@@ -18,4 +20,4 @@ import { UserModule } from './../user/user.module';
 	controllers: [CandidateInterviewController],
 	exports: [TypeOrmModule, CandidateInterviewService]
 })
-export class CandidateInterviewModule {}
+export class CandidateInterviewModule { }

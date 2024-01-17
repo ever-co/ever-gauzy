@@ -13,11 +13,13 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { RoleModule } from './../role/role.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/candidate', module: CandidateModule }]),
 		TypeOrmModule.forFeature([Candidate]),
+		MikroOrmModule.forFeature([Candidate]),
 		EmailSendModule,
 		CqrsModule,
 		UserOrganizationModule,
@@ -31,4 +33,4 @@ import { RoleModule } from './../role/role.module';
 	providers: [CandidateService, ...CommandHandlers],
 	exports: [TypeOrmModule, CandidateService]
 })
-export class CandidateModule {}
+export class CandidateModule { }

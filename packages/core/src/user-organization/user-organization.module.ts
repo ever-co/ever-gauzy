@@ -10,11 +10,13 @@ import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/user-organization', module: UserOrganizationModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([UserOrganization])),
+		forwardRef(() => MikroOrmModule.forFeature([UserOrganization])),
 		CqrsModule,
 		TenantModule,
 		forwardRef(() => OrganizationModule),
@@ -25,4 +27,4 @@ import { RoleModule } from './../role/role.module';
 	providers: [UserOrganizationService, ...CommandHandlers],
 	exports: [TypeOrmModule, UserOrganizationService]
 })
-export class UserOrganizationModule {}
+export class UserOrganizationModule { }

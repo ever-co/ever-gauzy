@@ -7,12 +7,12 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationSettingController } from './integration-setting.controller';
 import { IntegrationSettingService } from './integration-setting.service';
 import { IntegrationSetting } from './integration-setting.entity';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			IntegrationSetting
-		]),
+		TypeOrmModule.forFeature([IntegrationSetting]),
+		MikroOrmModule.forFeature([IntegrationSetting]),
 		TenantModule,
 		UserModule,
 		CqrsModule

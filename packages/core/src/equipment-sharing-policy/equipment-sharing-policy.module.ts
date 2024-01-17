@@ -8,6 +8,7 @@ import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { TaskModule } from '../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { TaskModule } from '../tasks/task.module';
 			}
 		]),
 		TypeOrmModule.forFeature([User, EquipmentSharingPolicy]),
+		MikroOrmModule.forFeature([User, EquipmentSharingPolicy]),
 		TenantModule,
 		TaskModule
 	],
@@ -25,4 +27,4 @@ import { TaskModule } from '../tasks/task.module';
 	providers: [EquipmentSharingPolicyService, UserService],
 	exports: [TypeOrmModule, EquipmentSharingPolicyService]
 })
-export class EquipmentSharingPolicyModule {}
+export class EquipmentSharingPolicyModule { }

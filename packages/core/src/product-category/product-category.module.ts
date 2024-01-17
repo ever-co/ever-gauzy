@@ -9,11 +9,13 @@ import { ProductCategoryTranslation } from './product-category-translation.entit
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/product-categories', module: ProductCategoryModule }]),
 		TypeOrmModule.forFeature([ProductCategory, ProductCategoryTranslation]),
+		MikroOrmModule.forFeature([ProductCategory, ProductCategoryTranslation]),
 		TenantModule,
 		UserModule,
 		CqrsModule
@@ -22,4 +24,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [ProductCategoryService, ...CommandHandlers],
 	exports: [TypeOrmModule, ProductCategoryService]
 })
-export class ProductCategoryModule {}
+export class ProductCategoryModule { }

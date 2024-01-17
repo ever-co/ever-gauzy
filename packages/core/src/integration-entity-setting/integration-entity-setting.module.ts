@@ -9,6 +9,7 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { IntegrationEntitySettingController } from './integration-entity-setting.controller';
 import { IntegrationEntitySettingService } from './integration-entity-setting.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 			}
 		]),
 		TypeOrmModule.forFeature([IntegrationEntitySetting]),
+		MikroOrmModule.forFeature([IntegrationEntitySetting]),
 		forwardRef(() => IntegrationTenantModule),
 		TenantModule,
 		UserModule,
@@ -28,4 +30,4 @@ import { IntegrationEntitySettingService } from './integration-entity-setting.se
 	providers: [IntegrationEntitySettingService, ...CommandHandlers],
 	exports: [TypeOrmModule, IntegrationEntitySettingService]
 })
-export class IntegrationEntitySettingModule {}
+export class IntegrationEntitySettingModule { }

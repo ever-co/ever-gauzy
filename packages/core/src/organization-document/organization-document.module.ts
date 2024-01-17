@@ -5,6 +5,7 @@ import { OrganizationDocument } from './organization-document.entity';
 import { OrganizationDocumentService } from './organization-document.service';
 import { OrganizationDocumentController } from './organization-document.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -15,10 +16,11 @@ import { TenantModule } from '../tenant/tenant.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationDocument]),
+		MikroOrmModule.forFeature([OrganizationDocument]),
 		TenantModule
 	],
 	providers: [OrganizationDocumentService],
 	controllers: [OrganizationDocumentController],
 	exports: [TypeOrmModule]
 })
-export class OrganizationDocumentModule {}
+export class OrganizationDocumentModule { }

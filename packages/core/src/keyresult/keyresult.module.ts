@@ -6,11 +6,13 @@ import { KeyResult } from './keyresult.entity';
 import { KeyResultService } from './keyresult.service';
 import { KeyResultController } from './keyresult.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/key-results', module: KeyResultModule }]),
 		TypeOrmModule.forFeature([KeyResult]),
+		MikroOrmModule.forFeature([KeyResult]),
 		CqrsModule,
 		TenantModule
 	],
@@ -18,4 +20,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	providers: [KeyResultService],
 	exports: [KeyResultService]
 })
-export class KeyResultModule {}
+export class KeyResultModule { }

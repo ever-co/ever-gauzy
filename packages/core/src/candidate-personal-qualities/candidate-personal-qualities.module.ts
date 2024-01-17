@@ -7,6 +7,7 @@ import { CandidatePersonalQualities } from './candidate-personal-qualities.entit
 import { CommandHandlers } from './commands/handlers';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -17,6 +18,7 @@ import { TenantModule } from '../tenant/tenant.module';
 			}
 		]),
 		TypeOrmModule.forFeature([CandidatePersonalQualities]),
+		MikroOrmModule.forFeature([CandidatePersonalQualities]),
 		TenantModule,
 		CqrsModule
 	],
@@ -24,4 +26,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	controllers: [CandidatePersonalQualitiesController],
 	exports: [TypeOrmModule, CandidatePersonalQualitiesService]
 })
-export class CandidatePersonalQualitiesModule {}
+export class CandidatePersonalQualitiesModule { }

@@ -13,6 +13,7 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 import { InviteModule } from 'invite/invite.module';
 import { OrganizationTeamEmployee } from 'core';
 import { RoleModule } from 'role/role.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { RoleModule } from 'role/role.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationTeamJoinRequest, OrganizationTeamEmployee]),
+		MikroOrmModule.forFeature([OrganizationTeamJoinRequest, OrganizationTeamEmployee]),
 		CqrsModule,
 		TenantModule,
 		UserModule,
@@ -35,4 +37,4 @@ import { RoleModule } from 'role/role.module';
 	providers: [OrganizationTeamJoinRequestService, ...CommandHandlers],
 	exports: [TypeOrmModule, OrganizationTeamJoinRequestService]
 })
-export class OrganizationTeamJoinRequestModule {}
+export class OrganizationTeamJoinRequestModule { }

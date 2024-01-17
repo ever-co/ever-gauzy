@@ -11,11 +11,13 @@ import { TenantController } from './tenant.controller';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/tenant', module: TenantModule }]),
 		TypeOrmModule.forFeature([Tenant]),
+		MikroOrmModule.forFeature([Tenant]),
 		AuthModule,
 		CqrsModule,
 		forwardRef(() => UserModule),
@@ -27,4 +29,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [TenantService, ...CommandHandlers],
 	exports: [TenantService]
 })
-export class TenantModule {}
+export class TenantModule { }

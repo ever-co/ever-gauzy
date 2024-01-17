@@ -10,6 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationMapController } from './integration-map.controller';
 import { IntegrationMapService } from './integration-map.service';
 import { IntegrationMap } from './integration-map.entity';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { IntegrationMap } from './integration-map.entity';
 			}
 		]),
 		TypeOrmModule.forFeature([IntegrationMap]),
+		MikroOrmModule.forFeature([IntegrationMap]),
 		TenantModule,
 		UserModule,
 		TaskModule,
@@ -30,4 +32,4 @@ import { IntegrationMap } from './integration-map.entity';
 	providers: [IntegrationMapService, ...CommandHandlers],
 	exports: [TypeOrmModule, IntegrationMapService]
 })
-export class IntegrationMapModule {}
+export class IntegrationMapModule { }

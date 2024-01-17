@@ -7,12 +7,12 @@ import { PublicTeamController } from './public-team.controller';
 import { PublicTeamService } from './public-team.service';
 import { QueryHandlers } from './queries/handlers';
 import { TimerModule } from 'time-tracking/timer/timer.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			OrganizationTeam
-		]),
+		TypeOrmModule.forFeature([OrganizationTeam]),
+		MikroOrmModule.forFeature([OrganizationTeam]),
 		CqrsModule,
 		StatisticModule,
 		TimerModule

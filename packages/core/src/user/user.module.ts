@@ -13,11 +13,13 @@ import { UserController } from './user.controller';
 import { TenantModule } from '../tenant/tenant.module';
 import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/user', module: UserModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
+		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => TaskModule),
 		CqrsModule,
@@ -27,4 +29,4 @@ import { TaskModule } from './../tasks/task.module';
 	providers: [UserService, ...CommandHandlers],
 	exports: [TypeOrmModule, UserService]
 })
-export class UserModule {}
+export class UserModule { }

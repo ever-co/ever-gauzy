@@ -10,11 +10,13 @@ import { FeatureOrganizationService } from './feature-organization.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/feature/toggle', module: FeatureModule }]),
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
+		MikroOrmModule.forFeature([Feature, FeatureOrganization]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
@@ -23,4 +25,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [FeatureService, FeatureOrganizationService, ...CommandHandlers],
 	exports: [FeatureService, FeatureOrganizationService]
 })
-export class FeatureModule {}
+export class FeatureModule { }

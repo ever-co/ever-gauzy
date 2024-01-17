@@ -8,6 +8,7 @@ import { CandidateInterviewersController } from './candidate-interviewers.contro
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([CandidateInterviewers]),
+		MikroOrmModule.forFeature([CandidateInterviewers]),
 		TenantModule,
 		UserModule,
 		CqrsModule
@@ -26,4 +28,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [CandidateInterviewersService, ...CommandHandlers],
 	exports: [TypeOrmModule, CandidateInterviewersService]
 })
-export class CandidateInterviewersModule {}
+export class CandidateInterviewersModule { }

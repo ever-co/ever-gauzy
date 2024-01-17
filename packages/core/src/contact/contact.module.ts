@@ -7,11 +7,13 @@ import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/contact', module: ContactModule }]),
 		TypeOrmModule.forFeature([Contact]),
+		MikroOrmModule.forFeature([Contact]),
 		TenantModule,
 		CqrsModule
 	],
@@ -19,4 +21,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	providers: [ContactService, ...CommandHandlers],
 	exports: [TypeOrmModule, ContactService]
 })
-export class ContactModule {}
+export class ContactModule { }

@@ -9,11 +9,13 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/equipment-sharing', module: EquipmentSharingModule }]),
 		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
+		MikroOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		CqrsModule,
 		TenantModule,
 		UserModule
@@ -22,4 +24,4 @@ import { UserModule } from './../user/user.module';
 	providers: [EquipmentSharingService, ...CommandHandlers],
 	exports: [EquipmentSharingService]
 })
-export class EquipmentSharingModule {}
+export class EquipmentSharingModule { }

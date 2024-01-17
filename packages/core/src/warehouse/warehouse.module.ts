@@ -10,11 +10,13 @@ import { Product } from './../core/entities/internal';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/warehouses', module: WarehouseModule }]),
 		TypeOrmModule.forFeature([Warehouse, Product, WarehouseProduct, WarehouseProductVariant]),
+		MikroOrmModule.forFeature([Warehouse, Product, WarehouseProduct, WarehouseProductVariant]),
 		TenantModule,
 		UserModule
 	],
@@ -22,4 +24,4 @@ import { WarehouseProductService } from './warehouse-product-service';
 	providers: [WarehouseService, WarehouseProductService],
 	exports: [WarehouseService, WarehouseProductService]
 })
-export class WarehouseModule {}
+export class WarehouseModule { }

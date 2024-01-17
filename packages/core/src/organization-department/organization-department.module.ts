@@ -8,6 +8,7 @@ import { OrganizationDepartmentService } from './organization-department.service
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { UserModule } from './../user/user.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationDepartment]),
+		MikroOrmModule.forFeature([OrganizationDepartment]),
 		CqrsModule,
 		TenantModule,
 		UserModule
@@ -26,4 +28,4 @@ import { UserModule } from './../user/user.module';
 	providers: [OrganizationDepartmentService, ...CommandHandlers],
 	exports: [TypeOrmModule, OrganizationDepartmentService]
 })
-export class OrganizationDepartmentModule {}
+export class OrganizationDepartmentModule { }

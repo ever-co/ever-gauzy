@@ -8,11 +8,13 @@ import { CustomSmtpService } from './custom-smtp.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/smtp', module: CustomSmtpModule }]),
 		TypeOrmModule.forFeature([CustomSmtp]),
+		MikroOrmModule.forFeature([CustomSmtp]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
@@ -21,4 +23,4 @@ import { CommandHandlers } from './commands';
 	providers: [CustomSmtpService, ...CommandHandlers],
 	exports: [TypeOrmModule, CustomSmtpService]
 })
-export class CustomSmtpModule {}
+export class CustomSmtpModule { }

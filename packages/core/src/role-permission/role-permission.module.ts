@@ -8,11 +8,13 @@ import { RolePermissionService } from './role-permission.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: 'role-permissions', module: RolePermissionModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([RolePermission])),
+		forwardRef(() => MikroOrmModule.forFeature([RolePermission])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => RoleModule),
@@ -22,4 +24,4 @@ import { RoleModule } from './../role/role.module';
 	providers: [RolePermissionService],
 	exports: [TypeOrmModule, RolePermissionService]
 })
-export class RolePermissionModule {}
+export class RolePermissionModule { }

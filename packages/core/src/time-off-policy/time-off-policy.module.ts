@@ -8,11 +8,13 @@ import { EmployeeModule } from './../employee/employee.module';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { TaskModule } from '../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: 'time-off-policy', module: TimeOffPolicyModule }]),
 		TypeOrmModule.forFeature([TimeOffPolicy]),
+		MikroOrmModule.forFeature([TimeOffPolicy]),
 		TenantModule,
 		UserModule,
 		EmployeeModule,
@@ -22,4 +24,4 @@ import { TaskModule } from '../tasks/task.module';
 	providers: [TimeOffPolicyService],
 	exports: [TypeOrmModule, TimeOffPolicyService]
 })
-export class TimeOffPolicyModule {}
+export class TimeOffPolicyModule { }

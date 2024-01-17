@@ -9,6 +9,7 @@ import { TagController } from './tag.controller';
 import { TagService } from './tag.service';
 import { Tag } from './tag.entity';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { CommandHandlers } from './commands/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([Tag, IntegrationMap]),
+		MikroOrmModule.forFeature([Tag, IntegrationMap]),
 		TenantModule,
 		UserModule,
 		CqrsModule
@@ -27,4 +29,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [TagService, ...CommandHandlers],
 	exports: [TagService]
 })
-export class TagModule {}
+export class TagModule { }

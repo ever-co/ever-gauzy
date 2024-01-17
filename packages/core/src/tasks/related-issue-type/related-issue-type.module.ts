@@ -8,6 +8,7 @@ import { TaskRelatedIssueTypesController } from './related-issue-type.controller
 import { TaskRelatedIssueTypesService } from './related-issue-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { QueryHandlers } from './queries/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([TaskRelatedIssueTypes]),
+		MikroOrmModule.forFeature([TaskRelatedIssueTypes]),
 		TenantModule,
 		CqrsModule
 	],
@@ -25,4 +27,4 @@ import { QueryHandlers } from './queries/handlers';
 	providers: [TaskRelatedIssueTypesService, ...QueryHandlers, ...CommandHandlers],
 	exports: [TaskRelatedIssueTypesService]
 })
-export class TaskRelatedIssueTypesModule {}
+export class TaskRelatedIssueTypesModule { }

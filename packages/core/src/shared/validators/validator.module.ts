@@ -16,6 +16,7 @@ import {
     IsExpenseCategoryAlreadyExistConstraint,
     IsOrganizationBelongsToUserConstraint
 } from "./constraints";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 
 @Module({
     imports: [
@@ -25,7 +26,16 @@ import {
             OrganizationTeam,
             ExpenseCategory
         ]),
+        MikroOrmModule.forFeature([
+            Role,
+            Employee,
+            OrganizationTeam,
+            ExpenseCategory
+        ]),
         forwardRef(() => TypeOrmModule.forFeature([
+            UserOrganization
+        ])),
+        forwardRef(() => MikroOrmModule.forFeature([
             UserOrganization
         ]))
     ],

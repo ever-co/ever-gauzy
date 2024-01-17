@@ -10,11 +10,13 @@ import { DealModule } from '../deal/deal.module';
 import { Deal } from '../deal/deal.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/pipelines', module: PipelineModule }]),
 		TypeOrmModule.forFeature([Pipeline, Deal]),
+		MikroOrmModule.forFeature([Pipeline, Deal]),
 		StageModule,
 		DealModule,
 		AuthModule,
@@ -25,4 +27,4 @@ import { UserModule } from './../user/user.module';
 	providers: [PipelineService],
 	exports: [PipelineService]
 })
-export class PipelineModule {}
+export class PipelineModule { }

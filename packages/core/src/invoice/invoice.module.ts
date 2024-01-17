@@ -13,11 +13,13 @@ import { TenantModule } from '../tenant/tenant.module';
 import { PdfmakerService } from './pdfmaker.service';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/invoices', module: InvoiceModule }]),
 		TypeOrmModule.forFeature([Invoice]),
+		MikroOrmModule.forFeature([Invoice]),
 		EmailSendModule,
 		EstimateEmailModule,
 		TenantModule,
@@ -37,4 +39,4 @@ import { UserModule } from './../user/user.module';
 	],
 	exports: [TypeOrmModule, InvoiceService, PdfmakerService]
 })
-export class InvoiceModule {}
+export class InvoiceModule { }

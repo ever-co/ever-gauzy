@@ -10,11 +10,13 @@ import { UserModule } from './../user/user.module';
 import { EmailHistoryService } from './email-history.service';
 import { CommandHandlers } from './commands/handler';
 import { EmailSendModule } from 'email-send/email-send.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/email', module: EmailHistoryModule }]),
 		TypeOrmModule.forFeature([EmailHistory]),
+		MikroOrmModule.forFeature([EmailHistory]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmailSendModule),
@@ -24,4 +26,4 @@ import { EmailSendModule } from 'email-send/email-send.module';
 	providers: [EmailHistoryService, ...CommandHandlers],
 	exports: [TypeOrmModule, EmailHistoryService]
 })
-export class EmailHistoryModule {}
+export class EmailHistoryModule { }

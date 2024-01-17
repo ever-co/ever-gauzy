@@ -20,11 +20,13 @@ import { Activity, TimeLog, TimeSlot, TimeSlotMinute } from './../core/entities/
 import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
 import { UpworkAuthorizationController } from './upwork-authorization.controller';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/integrations/upwork', module: UpworkModule }]),
 		TypeOrmModule.forFeature([TimeSlot, Activity, TimeLog, TimeSlotMinute]),
+		MikroOrmModule.forFeature([TimeSlot, Activity, TimeLog, TimeSlotMinute]),
 		TenantModule,
 		UserModule,
 		EmployeeModule,
@@ -48,4 +50,4 @@ import { UpworkAuthorizationController } from './upwork-authorization.controller
 		TimeSlotService
 	]
 })
-export class UpworkModule {}
+export class UpworkModule { }

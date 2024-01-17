@@ -9,11 +9,13 @@ import { CommandHandlers } from './commands/handlers';
 import { OrganizationController } from './organization.controller';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/organization', module: OrganizationModule }]),
 		TypeOrmModule.forFeature([Organization]),
+		MikroOrmModule.forFeature([Organization]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => UserModule),
@@ -23,4 +25,4 @@ import { OrganizationService } from './organization.service';
 	providers: [OrganizationService, ...CommandHandlers],
 	exports: [TypeOrmModule, OrganizationService]
 })
-export class OrganizationModule {}
+export class OrganizationModule { }

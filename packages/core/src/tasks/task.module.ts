@@ -13,11 +13,13 @@ import { EmployeeModule } from './../employee/employee.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/tasks', module: TaskModule }]),
 		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
+		MikroOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		RoleModule,
@@ -29,4 +31,4 @@ import { TaskController } from './task.controller';
 	providers: [TaskService, ...CommandHandlers, ...EventHandlers],
 	exports: [TypeOrmModule, TaskService]
 })
-export class TaskModule {}
+export class TaskModule { }

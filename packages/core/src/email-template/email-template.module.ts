@@ -10,11 +10,13 @@ import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/email-template', module: EmailTemplateModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
+		forwardRef(() => MikroOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
@@ -23,4 +25,4 @@ import { UserModule } from './../user/user.module';
 	providers: [EmailTemplateService, EmailTemplateReaderService, ...QueryHandlers, ...CommandHandlers],
 	exports: [TypeOrmModule, EmailTemplateService]
 })
-export class EmailTemplateModule {}
+export class EmailTemplateModule { }

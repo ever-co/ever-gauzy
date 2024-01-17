@@ -10,6 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { TimeSheetController } from './timesheet.controller';
 import { TimeSheetService } from './timesheet.service';
 import { Timesheet } from './timesheet.entity';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	controllers: [
@@ -17,6 +18,7 @@ import { Timesheet } from './timesheet.entity';
 	],
 	imports: [
 		TypeOrmModule.forFeature([Timesheet]),
+		MikroOrmModule.forFeature([Timesheet]),
 		CqrsModule,
 		EmailSendModule,
 		TenantModule,

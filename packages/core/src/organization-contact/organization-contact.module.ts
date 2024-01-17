@@ -10,6 +10,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { UserModule } from './../user/user.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationContact]),
+		MikroOrmModule.forFeature([OrganizationContact]),
 		TenantModule,
 		UserModule,
 		OrganizationModule,
@@ -30,4 +32,4 @@ import { UserModule } from './../user/user.module';
 	providers: [OrganizationContactService, ...CommandHandlers],
 	exports: [TypeOrmModule, OrganizationContactService]
 })
-export class OrganizationContactModule {}
+export class OrganizationContactModule { }
