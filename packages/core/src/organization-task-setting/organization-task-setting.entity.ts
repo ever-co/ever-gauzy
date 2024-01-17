@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, Index, RelationId } from 'typeorm';
+import { Column, ManyToOne, Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTaskSetting,
@@ -18,6 +18,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_task_setting')
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {

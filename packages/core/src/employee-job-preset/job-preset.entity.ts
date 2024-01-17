@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinTable,
 	ManyToMany,
@@ -19,6 +18,7 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('job_preset')
 export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {

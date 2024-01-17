@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { IEmailHistory, IEmailTemplate, IUser, EmailStatusEnum } from '@gauzy/contracts';
 import {
@@ -8,6 +8,7 @@ import {
 	User,
 } from '../core/entities/internal';
 import { databaseTypes } from '@gauzy/config';
+import { Entity } from '@gauzy/common';
 
 @Entity('email_sent')
 export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
@@ -20,7 +21,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column( process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text', nullable: true } : { nullable: true })
+	@Column(process.env.DB_TYPE === databaseTypes.mysql ? { type: 'text', nullable: true } : { nullable: true })
 	content: string;
 
 	@ApiProperty({ type: () => String })

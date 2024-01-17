@@ -15,8 +15,9 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Index } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_recurring_expense')
 export class OrganizationRecurringExpense

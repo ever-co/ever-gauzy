@@ -1,7 +1,8 @@
-import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductTypeTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductType, TranslationBase } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('product_type_translation')
 export class ProductTypeTranslation extends TranslationBase
@@ -20,10 +21,10 @@ export class ProductTypeTranslation extends TranslationBase
 	languageCode: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductType

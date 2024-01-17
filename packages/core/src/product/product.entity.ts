@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	OneToMany,
 	RelationId,
@@ -30,6 +29,7 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {

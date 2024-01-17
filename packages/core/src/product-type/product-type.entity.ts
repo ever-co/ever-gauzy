@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Column, OneToMany } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -6,6 +6,7 @@ import {
 	ProductTypeTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('product_type')
 export class ProductType extends TranslatableBase {

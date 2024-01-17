@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	RelationId,
 	ManyToOne,
@@ -26,6 +25,7 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
+import { Entity } from '@gauzy/common';
 
 @Entity('time_slot')
 export class TimeSlot extends TenantOrganizationBaseEntity

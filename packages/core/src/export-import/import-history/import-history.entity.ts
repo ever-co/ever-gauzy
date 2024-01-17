@@ -1,9 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IImportHistory, ImportStatusEnum } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('import-history')
 export class ImportHistory extends TenantBaseEntity implements IImportHistory {

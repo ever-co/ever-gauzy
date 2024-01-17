@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	ManyToMany,
@@ -42,6 +41,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_contact')
 export class OrganizationContact extends TenantOrganizationBaseEntity

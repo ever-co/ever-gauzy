@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
-	Entity,
 	JoinColumn,
 	RelationId,
 	ManyToOne,
@@ -20,6 +19,7 @@ import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('integration_entity_setting')
 export class IntegrationEntitySetting extends TenantOrganizationBaseEntity implements IIntegrationEntitySetting {

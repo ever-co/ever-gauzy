@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	RelationId,
 	ManyToOne,
@@ -15,6 +14,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('timesheet')
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {

@@ -1,10 +1,11 @@
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('employee_proposal_template')
 export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
@@ -26,10 +27,10 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	isDefault?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'

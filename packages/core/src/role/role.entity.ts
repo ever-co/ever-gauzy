@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Index, OneToMany } from 'typeorm';
 import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
 import { RolesEnum, IRolePermission, IRole } from '@gauzy/contracts';
 import { RolePermission, TenantBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('role')
 export class Role extends TenantBaseEntity implements IRole {

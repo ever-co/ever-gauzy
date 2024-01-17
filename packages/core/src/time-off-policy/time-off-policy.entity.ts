@@ -1,4 +1,4 @@
-import { Entity, Index, Column, ManyToMany, OneToMany } from 'typeorm';
+import { Index, Column, ManyToMany, OneToMany } from 'typeorm';
 import {
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
@@ -11,6 +11,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffRequest
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('time_off_policy')
 export class TimeOffPolicy
@@ -38,15 +39,15 @@ export class TimeOffPolicy
 	 */
 	@ApiPropertyOptional({ type: () => TimeOffRequest, isArray: true })
 	@OneToMany(() => TimeOffRequest, (it) => it.policy, {
-		onDelete: 'SET NULL' 
+		onDelete: 'SET NULL'
 	})
 	timeOffRequests?: ITimeOffRequest[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToMany(() => Employee, (employee) => employee.timeOffPolicies, {
 		onUpdate: 'CASCADE',

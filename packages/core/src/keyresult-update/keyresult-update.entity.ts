@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
+import { Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
 import { IKeyResult, IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
@@ -6,6 +6,7 @@ import {
 	KeyResult,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('key_result_update')
 export class KeyResultUpdate

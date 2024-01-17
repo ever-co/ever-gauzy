@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
@@ -10,6 +10,8 @@ import {
 	IntegrationEntitySetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
+
 @Entity('integration_entity_setting_tied')
 export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity implements IIntegrationEntitySettingTied {
 

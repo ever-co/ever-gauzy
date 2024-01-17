@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -13,6 +13,7 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_sprint')
 export class OrganizationSprint

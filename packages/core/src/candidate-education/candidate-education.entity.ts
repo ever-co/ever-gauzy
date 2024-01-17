@@ -1,10 +1,11 @@
-import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
+import { Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateEducation, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('candidate_education')
 export class CandidateEducation extends TenantOrganizationBaseEntity
@@ -31,10 +32,10 @@ export class CandidateEducation extends TenantOrganizationBaseEntity
 	notes?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate

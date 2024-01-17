@@ -1,5 +1,4 @@
 import {
-	Entity,
 	ManyToOne,
 	JoinColumn,
 	Column,
@@ -21,6 +20,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common';
 
 @Entity('warehouse_product')
 export class WarehouseProduct extends TenantOrganizationBaseEntity
@@ -36,10 +36,10 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	quantity: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Warehouse
@@ -74,10 +74,10 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	productId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })
 	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.warehouseProduct, {
 		cascade: true

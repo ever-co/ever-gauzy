@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Entity, Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
@@ -17,6 +17,7 @@ import {
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('tenant')
 export class Tenant extends BaseEntity implements ITenant {

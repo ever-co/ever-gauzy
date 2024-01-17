@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
@@ -6,6 +6,7 @@ import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
+import { Entity } from '@gauzy/common';
 
 @Entity('custom_smtp')
 export class CustomSmtp extends TenantOrganizationBaseEntity

@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
 import { IIntegrationMap, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('integration_map')
 export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {

@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -16,12 +16,13 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('availability_slot')
 export class AvailabilitySlot
 	extends TenantOrganizationBaseEntity
 	implements IAvailabilitySlot {
-	
+
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
@@ -44,10 +45,10 @@ export class AvailabilitySlot
 	type: AvailabilitySlotType;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

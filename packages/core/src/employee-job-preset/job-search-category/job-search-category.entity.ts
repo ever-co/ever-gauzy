@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Index, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -13,6 +13,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
 import { databaseTypes } from '@gauzy/config';
+import { Entity } from '@gauzy/common';
 
 @Entity('job_search_category')
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {

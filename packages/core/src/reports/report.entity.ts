@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Index,
 	Column,
 	RelationId,
@@ -13,6 +12,7 @@ import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts'
 import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
+import { Entity } from '@gauzy/common';
 
 @Entity('report')
 export class Report extends BaseEntity implements IReport {

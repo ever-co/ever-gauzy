@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	OneToOne,
@@ -30,6 +29,7 @@ import {
 	TenantOrganizationBaseEntity,
 	WarehouseProductVariant
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('product_variant')
 export class ProductVariant

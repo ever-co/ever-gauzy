@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Index,
 	Column,
 	JoinColumn,
@@ -10,6 +9,7 @@ import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('user_organization')
 export class UserOrganization extends TenantOrganizationBaseEntity implements IUserOrganization {

@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	JoinColumn,
@@ -31,6 +30,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { IsOptional, IsUUID } from 'class-validator';
+import { Entity } from '@gauzy/common';
 
 @Entity('payment')
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {

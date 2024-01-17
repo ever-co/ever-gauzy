@@ -1,26 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IFeature, IFeatureOrganization } from '@gauzy/contracts';
 import {
 	Feature,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
+import { Entity } from '@gauzy/common';
 
 @Entity('feature_organization')
 export class FeatureOrganization
 	extends TenantOrganizationBaseEntity
 	implements IFeatureOrganization {
-	
+
 	@Column({ default: true })
 	isEnabled: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
-	
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
 	/**
 	 * Feature
 	 */

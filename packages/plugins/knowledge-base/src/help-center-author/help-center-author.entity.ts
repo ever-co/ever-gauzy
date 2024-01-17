@@ -1,9 +1,10 @@
-import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IEmployee, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
 import { Employee, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
+import { Entity } from '@gauzy/common';
 
 @Entity('knowledge_base_author')
 export class HelpCenterAuthor
@@ -11,10 +12,10 @@ export class HelpCenterAuthor
 	implements IHelpCenterAuthor {
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'

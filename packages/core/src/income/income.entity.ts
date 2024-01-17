@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -32,6 +31,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common';
 
 @Entity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
@@ -77,10 +77,10 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	reference?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * Employee
 	 */
@@ -116,14 +116,14 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	clientId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	* Tag
-    */
+	*/
 	@ApiProperty({ type: () => () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.incomes, {
 		onUpdate: 'CASCADE',

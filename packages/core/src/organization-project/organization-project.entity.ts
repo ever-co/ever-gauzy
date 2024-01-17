@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	ManyToOne,
@@ -59,6 +58,7 @@ import {
 	TimeLog
 } from '../core/entities/internal';
 import { databaseTypes } from '@gauzy/config';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {

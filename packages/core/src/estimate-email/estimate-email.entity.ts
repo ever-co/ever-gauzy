@@ -1,7 +1,8 @@
 import { IEstimateEmail } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { Column } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('estimate_email')
 export class EstimateEmail extends TenantOrganizationBaseEntity

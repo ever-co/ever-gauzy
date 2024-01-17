@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
 	IGoalKPITemplate,
 	KpiMetricEnum,
@@ -10,6 +10,7 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('goal_kpi_template')
 export class GoalKPITemplate

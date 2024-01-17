@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateTechnologies, ICandidateInterview, ICandidateCriterionsRating } from '@gauzy/contracts';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common';
 
 @Entity('candidate_technology')
 export class CandidateTechnologies
@@ -26,14 +27,14 @@ export class CandidateTechnologies
 	rating?: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (interview) => interview.technologies, { 
-		onDelete: 'CASCADE' 
+	@ManyToOne(() => CandidateInterview, (interview) => interview.technologies, {
+		onDelete: 'CASCADE'
 	})
 	interview?: ICandidateInterview;
 
@@ -45,14 +46,14 @@ export class CandidateTechnologies
 	interviewId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.technology, { 
-		cascade: true 
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.technology, {
+		cascade: true
 	})
 	@JoinColumn()
 	criterionsRatings?: ICandidateCriterionsRating[];

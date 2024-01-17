@@ -1,10 +1,11 @@
-import { Entity, ManyToOne, JoinColumn, Column, RelationId, Index } from 'typeorm';
+import { ManyToOne, JoinColumn, Column, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
 import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common';
 
 @Entity('warehouse_product_variant')
 export class WarehouseProductVariant extends TenantOrganizationBaseEntity
@@ -20,10 +21,10 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	quantity: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductVariant

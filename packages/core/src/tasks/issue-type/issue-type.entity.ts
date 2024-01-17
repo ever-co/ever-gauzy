@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	ManyToOne,
@@ -20,6 +19,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('issue_type')
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {

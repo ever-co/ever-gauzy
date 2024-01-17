@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductOptionTranslation, LanguagesEnum } from '@gauzy/contracts';
 import {
 	TenantOrganizationBaseEntity,
@@ -6,6 +6,7 @@ import {
 } from '../core/entities/internal';
 import { IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Entity } from '@gauzy/common';
 
 @Entity('product_option_translation')
 export class ProductOptionTranslation
@@ -27,10 +28,10 @@ export class ProductOptionTranslation
 	languageCode: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductOption

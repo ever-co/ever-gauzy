@@ -1,5 +1,5 @@
 import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { Entity, Column, OneToMany, ManyToOne, Index, RelationId } from 'typeorm';
+import { Column, OneToMany, ManyToOne, Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
@@ -8,10 +8,11 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('goal')
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
-	
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -35,10 +36,10 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	progress: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * OrganizationTeam
@@ -65,7 +66,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 		onDelete: 'CASCADE'
 	})
 	ownerEmployee?: IEmployee;
- 
+
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Goal) => it.ownerEmployee)
 	@IsString()
@@ -107,10 +108,10 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	alignedKeyResultId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * KeyResult

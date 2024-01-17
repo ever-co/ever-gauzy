@@ -6,19 +6,20 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Column, Entity, Index, JoinTable, ManyToMany } from 'typeorm';
+import { Column, Index, JoinTable, ManyToMany } from 'typeorm';
 import {
 	Candidate,
 	Employee,
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_department')
 export class OrganizationDepartment
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationDepartment {
-		
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -26,10 +27,10 @@ export class OrganizationDepartment
 	@Column()
 	name: string;
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
@@ -61,11 +62,11 @@ export class OrganizationDepartment
 	 */
 	@ApiProperty({ type: () => Candidate, isArray: true })
 	@ManyToMany(() => Candidate, (candidate) => candidate.organizationDepartments, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
-    @JoinTable({
+	})
+	@JoinTable({
 		name: 'candidate_department'
 	})
-    candidates?: ICandidate[];
+	candidates?: ICandidate[];
 }

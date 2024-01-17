@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	OneToOne,
 	JoinColumn,
 	OneToMany,
@@ -25,6 +24,7 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('candidate_feedback')
 export class CandidateFeedback extends TenantOrganizationBaseEntity
@@ -51,10 +51,10 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	status?: CandidateStatusEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate
@@ -86,10 +86,10 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	interviewId?: ICandidateInterview['id'];
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate Criterions Rating
@@ -101,10 +101,10 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	criterionsRating?: ICandidateCriterionsRating[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate Interviewers

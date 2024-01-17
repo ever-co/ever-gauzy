@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import {
@@ -7,6 +7,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('task_status')
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {

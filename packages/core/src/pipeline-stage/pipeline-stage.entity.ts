@@ -1,17 +1,18 @@
 import { IPipeline, IPipelineStage as IStage } from '@gauzy/contracts';
-import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	Pipeline,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('pipeline_stage')
 export class PipelineStage
 	extends TenantOrganizationBaseEntity
 	implements IStage {
-	
+
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true, type: 'text' })
 	@IsString()
@@ -31,10 +32,10 @@ export class PipelineStage
 	public name: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Pipeline })
 	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: () => Pipeline })

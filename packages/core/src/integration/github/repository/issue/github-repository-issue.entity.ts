@@ -1,9 +1,10 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId, } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from 'core/entities/internal';
 import { OrganizationGithubRepository } from './../github-repository.entity';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_github_repository_issue')
 export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEntity implements IOrganizationGithubRepositoryIssue {

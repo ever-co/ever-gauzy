@@ -2,7 +2,6 @@ import { IInvoice, IInvoiceEstimateHistory } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import {
-	Entity,
 	Column,
 	JoinColumn,
 	ManyToOne,
@@ -14,12 +13,12 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('invoice_estimate_history')
 export class InvoiceEstimateHistory
 	extends TenantOrganizationBaseEntity
-	implements IInvoiceEstimateHistory
-{
+	implements IInvoiceEstimateHistory {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()
@@ -32,10 +31,10 @@ export class InvoiceEstimateHistory
 	title?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => User })
 	@ManyToOne(() => User, {
 		onDelete: 'SET NULL',

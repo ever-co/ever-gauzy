@@ -1,8 +1,9 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset as IDocumentAsset, IOrganizationDocument } from '@gauzy/contracts';
 import { ImageAsset, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_document')
 export class OrganizationDocument extends TenantOrganizationBaseEntity implements IOrganizationDocument {

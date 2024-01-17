@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTeam,
@@ -11,6 +11,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('task_related_issue_type')
 export class TaskRelatedIssueTypes

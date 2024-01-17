@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	JoinColumn,
@@ -30,6 +29,7 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
+import { Entity } from '@gauzy/common';
 
 @Entity('warehouse')
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
@@ -55,10 +55,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	active: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ImageAsset
@@ -77,10 +77,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	logoId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Contact
@@ -100,10 +100,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	contactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * WarehouseProduct
@@ -116,19 +116,19 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	products?: IWarehouseProduct[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.warehouses, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
+	})
 	@JoinTable({
 		name: 'tag_warehouse'
 	})

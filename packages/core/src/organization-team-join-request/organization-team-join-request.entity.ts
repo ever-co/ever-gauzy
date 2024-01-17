@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -9,6 +9,7 @@ import {
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_team_join_request')
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity

@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
@@ -13,12 +13,13 @@ import {
 	GoalTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('key_result_template')
 export class KeyResultTemplate
 	extends TenantOrganizationBaseEntity
 	implements IKeyResultTemplate {
-		
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -49,10 +50,10 @@ export class KeyResultTemplate
 	deadline: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => GoalKPITemplate })
 	@ManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })

@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Index } from 'typeorm';
 import { IEmailTemplate } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { databaseTypes } from "@gauzy/config";
+import { Entity } from '@gauzy/common';
 
 @Entity('email_template')
 export class EmailTemplate extends TenantOrganizationBaseEntity

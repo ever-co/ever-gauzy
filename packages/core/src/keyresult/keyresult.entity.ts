@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	RelationId,
@@ -28,12 +27,13 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('key_result')
 export class KeyResult
 	extends TenantOrganizationBaseEntity
 	implements IKeyResult {
-		
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -97,10 +97,10 @@ export class KeyResult
 	weight?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Owner Employee
@@ -204,10 +204,10 @@ export class KeyResult
 	readonly goalId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => KeyResultUpdate })
 	@OneToMany(() => KeyResultUpdate, (keyResultUpdate) => keyResultUpdate.keyResult, {

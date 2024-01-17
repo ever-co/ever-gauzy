@@ -33,7 +33,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Column,
-	Entity,
 	JoinColumn,
 	JoinTable,
 	ManyToMany,
@@ -75,6 +74,7 @@ import {
 	User,
 } from '../core/entities/internal';
 import { IsOptional, IsString } from 'class-validator';
+import { Entity } from '@gauzy/common';
 
 @Entity('employee')
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {

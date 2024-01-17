@@ -1,4 +1,4 @@
-import { Entity, Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
+import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -14,6 +14,7 @@ try {
 } catch (error) {
 	console.error('Cannot load DB connection options', error);
 }
+import { Entity } from '@gauzy/common';
 
 @Entity('screenshot')
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {

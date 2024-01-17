@@ -5,7 +5,6 @@ import {
 	AfterUpdate,
 	BeforeInsert,
 	Column,
-	Entity,
 	OneToMany
 } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -14,6 +13,7 @@ import {
 	PipelineStage,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('pipeline')
 export class Pipeline

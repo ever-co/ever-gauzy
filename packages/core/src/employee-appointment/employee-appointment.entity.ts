@@ -9,7 +9,6 @@ import {
 } from 'class-validator';
 import {
 	Column,
-	Entity,
 	OneToMany,
 	JoinColumn,
 	ManyToOne,
@@ -20,6 +19,7 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('employee_appointment')
 export class EmployeeAppointment

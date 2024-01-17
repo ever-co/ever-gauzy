@@ -20,7 +20,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import {
-	Entity,
 	Column,
 	JoinColumn,
 	OneToMany,
@@ -41,6 +40,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('invoice')
 @Unique(['invoiceNumber'])

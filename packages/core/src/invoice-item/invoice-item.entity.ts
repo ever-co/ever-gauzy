@@ -1,4 +1,4 @@
-import { Entity, Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import {
 	IEmployee,
 	IExpense,
@@ -20,6 +20,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common';
 
 @Entity('invoice_item')
 export class InvoiceItem

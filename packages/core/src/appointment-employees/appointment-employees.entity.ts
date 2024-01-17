@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { IAppointmentEmployee, IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { IsString, IsNotEmpty } from 'class-validator';
 import {
@@ -7,6 +7,7 @@ import {
 	EmployeeAppointment,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('appointment_employee')
 export class AppointmentEmployee
@@ -19,10 +20,10 @@ export class AppointmentEmployee
 	public appointmentId!: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

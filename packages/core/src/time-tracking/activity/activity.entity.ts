@@ -1,4 +1,4 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import { Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -28,6 +28,7 @@ try {
 } catch (error) {
 	console.error('Cannot load DB connection options', error);
 }
+import { Entity } from '@gauzy/common';
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {

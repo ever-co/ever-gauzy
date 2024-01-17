@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Index } from 'typeorm';
 import { AccountingTemplateTypeEnum, IAccountingTemplate } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { databaseTypes } from '@gauzy/config';
+import { Entity } from '@gauzy/common'
 
 @Entity('accounting_template')
 export class AccountingTemplate extends TenantOrganizationBaseEntity

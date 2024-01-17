@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -56,7 +55,8 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
-import { databaseTypes }  from "@gauzy/config";
+import { databaseTypes } from "@gauzy/config";
+import { Entity } from '@gauzy/common';
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })

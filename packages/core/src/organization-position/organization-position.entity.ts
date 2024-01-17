@@ -1,8 +1,9 @@
-import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
+import { Column, Index, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationPosition, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_position')
 export class OrganizationPosition
@@ -17,10 +18,10 @@ export class OrganizationPosition
 	name: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.organizationPositions, {
 		onUpdate: 'CASCADE',

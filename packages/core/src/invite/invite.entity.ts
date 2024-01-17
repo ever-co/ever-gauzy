@@ -12,7 +12,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -29,6 +28,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('invite')
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {

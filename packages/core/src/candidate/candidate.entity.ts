@@ -20,7 +20,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
-	Entity,
 	JoinColumn,
 	ManyToMany,
 	ManyToOne,
@@ -48,6 +47,7 @@ import {
 	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common'
 
 @Entity('candidate')
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {

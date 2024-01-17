@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	ManyToOne,
@@ -14,6 +13,7 @@ import {
 	IFeatureOrganization
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('feature')
 export class Feature extends BaseEntity implements IFeature {
@@ -56,10 +56,10 @@ export class Feature extends BaseEntity implements IFeature {
 	imageUrl?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Feature
@@ -77,10 +77,10 @@ export class Feature extends BaseEntity implements IFeature {
 	parentId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * FeatureOrganization

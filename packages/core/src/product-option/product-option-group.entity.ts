@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
 import {
 	Product,
 	TenantOrganizationBaseEntity
@@ -10,6 +10,7 @@ import {
 	ProductOption,
 	ProductOptionGroupTranslation
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('product_option_group')
 export class ProductOptionGroup

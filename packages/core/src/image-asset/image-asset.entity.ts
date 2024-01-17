@@ -2,7 +2,7 @@ import { FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@g
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
+import { Column, ManyToMany, OneToMany } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Product,
@@ -10,6 +10,7 @@ import {
 	Equipment,
 	Warehouse
 } from './../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('image_asset')
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {

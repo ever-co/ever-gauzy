@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Index,
 	Column,
 	ManyToOne,
@@ -11,6 +10,7 @@ import { IsEmail, IsOptional, IsUUID } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('email_reset')
 export class EmailReset extends TenantBaseEntity implements IEmailReset {

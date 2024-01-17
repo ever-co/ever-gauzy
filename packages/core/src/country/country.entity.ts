@@ -1,8 +1,9 @@
 import { ICountry } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Index } from 'typeorm';
 import { BaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('country')
 export class Country extends BaseEntity implements ICountry {

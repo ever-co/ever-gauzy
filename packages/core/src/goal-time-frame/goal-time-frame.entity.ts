@@ -1,8 +1,9 @@
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { IGoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('goal_time_frame')
 export class GoalTimeFrame

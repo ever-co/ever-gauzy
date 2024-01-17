@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	OneToMany,
 	ManyToMany,
@@ -53,6 +52,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('organization_team')
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {

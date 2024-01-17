@@ -7,7 +7,6 @@ import {
 	IContact
 } from '@gauzy/contracts';
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	JoinColumn,
@@ -25,6 +24,7 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('merchant')
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
@@ -58,10 +58,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	currency: CurrenciesEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Contact
@@ -81,10 +81,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	contactId?: IContact['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ImageAsset
@@ -101,19 +101,19 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	logoId?: IImageAsset['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.merchants, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
+	})
 	@JoinTable({
 		name: 'tag_merchant'
 	})

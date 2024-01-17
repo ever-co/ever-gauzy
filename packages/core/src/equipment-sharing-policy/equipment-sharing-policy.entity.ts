@@ -3,11 +3,12 @@
  * E.g. for example, "Business Trip", "Borrow Items", ...
  * Approval Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
  */
-import { Entity, Index, Column, OneToMany } from 'typeorm';
+import { Index, Column, OneToMany } from 'typeorm';
 import { IEquipmentSharing, IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EquipmentSharing, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('equipment_sharing_policy')
 export class EquipmentSharingPolicy
@@ -26,15 +27,15 @@ export class EquipmentSharingPolicy
 	description: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
-   
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+
 	/**
 	* EquipmentSharing
-    */
-	@ApiProperty({ type: () => EquipmentSharing, isArray: true })	
+	*/
+	@ApiProperty({ type: () => EquipmentSharing, isArray: true })
 	@OneToMany(() => EquipmentSharing, (it) => it.equipmentSharingPolicy, {
 		onDelete: 'CASCADE'
 	})

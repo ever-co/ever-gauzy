@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	ManyToOne,
 	RelationId,
@@ -22,6 +21,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Entity } from '@gauzy/common';
 
 @Entity('event_type')
 export class EventType

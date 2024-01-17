@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { IsDateString, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { IIntegration, IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
@@ -9,6 +9,7 @@ import {
 	IntegrationSetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('integration_tenant')
 export class IntegrationTenant extends TenantOrganizationBaseEntity implements IIntegrationTenant {

@@ -1,15 +1,16 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IReport, IReportOrganization } from '@gauzy/contracts';
 import { Report, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('report_organization')
 export class ReportOrganization extends TenantOrganizationBaseEntity implements IReportOrganization {
 
 	@ApiProperty({ type: () => Report })
 	@ManyToOne(() => Report, (report) => report.reportOrganizations, {
-        onDelete: 'CASCADE',
-    })
+		onDelete: 'CASCADE',
+	})
 	@JoinColumn()
 	report?: IReport;
 

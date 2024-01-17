@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidateCriterionsRating,
@@ -12,6 +12,7 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('candidate_criterion_rating')
 export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
@@ -22,10 +23,10 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	rating: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate Technologies

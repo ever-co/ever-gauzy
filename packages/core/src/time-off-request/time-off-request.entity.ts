@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	JoinColumn,
 	ManyToMany,
@@ -29,6 +28,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffPolicy
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('time_off_request')
 export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {

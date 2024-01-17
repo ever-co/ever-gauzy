@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, OneToMany, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset, IProductCategoryTranslatable } from '@gauzy/contracts';
@@ -8,6 +8,7 @@ import {
 	ProductCategoryTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('product_category')
 export class ProductCategory extends TranslatableBase

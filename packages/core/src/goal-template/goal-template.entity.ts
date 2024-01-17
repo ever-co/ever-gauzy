@@ -4,13 +4,14 @@ import {
 	GoalTemplateCategoriesEnum,
 	IKeyResultTemplate
 } from '@gauzy/contracts';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import {
 	KeyResultTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('goal_template')
 export class GoalTemplate

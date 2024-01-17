@@ -1,5 +1,4 @@
 import {
-	Entity,
 	RelationId,
 	Column,
 	ManyToMany,
@@ -23,6 +22,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('equipment_sharing')
 export class EquipmentSharing extends TenantOrganizationBaseEntity
@@ -56,10 +56,10 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	createdByName: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Equipment
@@ -94,10 +94,10 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

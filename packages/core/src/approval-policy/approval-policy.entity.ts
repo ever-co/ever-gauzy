@@ -3,10 +3,11 @@
  *	E.g. for example, "Business Trip", "Borrow Items", ...
  *  Approval Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
  */
-import { Entity, Index, Column } from 'typeorm';
+import { Index, Column } from 'typeorm';
 import { IApprovalPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('approval_policy')
 export class ApprovalPolicy extends TenantOrganizationBaseEntity

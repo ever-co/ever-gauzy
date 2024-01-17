@@ -1,8 +1,9 @@
-import { Entity, Column, Unique, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Unique, OneToMany, JoinColumn } from 'typeorm';
 import { ILanguage, IOrganizationLanguage } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { BaseEntity, OrganizationLanguage } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('language')
 @Unique(['code'])
@@ -29,8 +30,8 @@ export class Language extends BaseEntity implements ILanguage {
 	@Column()
 	color?: string;
 
-	@OneToMany(() => OrganizationLanguage, (organizationLanguage) => organizationLanguage.language, { 
-		cascade: true 
+	@OneToMany(() => OrganizationLanguage, (organizationLanguage) => organizationLanguage.language, {
+		cascade: true
 	})
 	@JoinColumn()
 	organizationLanguages?: IOrganizationLanguage[]

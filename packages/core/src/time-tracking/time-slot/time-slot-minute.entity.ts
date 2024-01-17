@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	RelationId,
 	ManyToOne,
@@ -12,6 +11,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { TimeSlot } from './time-slot.entity';
+import { Entity } from '@gauzy/common';
 
 @Entity('time_slot_minute')
 @Unique(['timeSlotId', 'datetime'])

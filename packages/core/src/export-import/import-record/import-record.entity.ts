@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { IsDate } from 'class-validator';
 import { IImportRecord } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('import-record')
 export class ImportRecord extends TenantBaseEntity implements IImportRecord {

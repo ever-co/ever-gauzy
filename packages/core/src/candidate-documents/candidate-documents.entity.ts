@@ -1,11 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ICandidateDocument, ICandidate } from '@gauzy/contracts';
 import { IsString } from 'class-validator';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common'
 
 @Entity('candidate_document')
 export class CandidateDocument
@@ -20,10 +21,10 @@ export class CandidateDocument
 	documentUrl: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiPropertyOptional({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.documents, {
 		onDelete: 'CASCADE'

@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -22,6 +21,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('proposal')
 export class Proposal extends TenantOrganizationBaseEntity
@@ -49,10 +49,10 @@ export class Proposal extends TenantOrganizationBaseEntity
 	status?: ProposalStatusEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
@@ -78,10 +78,10 @@ export class Proposal extends TenantOrganizationBaseEntity
 	organizationContactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Tags
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.proposals, {

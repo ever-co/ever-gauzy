@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, ManyToMany, Unique } from 'typeorm';
+import { Column, ManyToMany, Unique } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { BaseEntity, Integration } from '../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('integration_type')
 @Unique(['name'])

@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	ManyToOne,
@@ -15,22 +14,22 @@ import {
 } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
+import { Entity } from '@gauzy/common';
 
 @Entity('task_linked_issues')
 export class TaskLinkedIssue
 	extends TenantOrganizationBaseEntity
-	implements ITaskLinkedIssue
-{
+	implements ITaskLinkedIssue {
 	@ApiProperty({ type: () => String, enum: TaskRelatedIssuesRelationEnum })
 	@Column()
 	@IsEnum(TaskRelatedIssuesRelationEnum)
 	action: TaskRelatedIssuesRelationEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiPropertyOptional({ type: () => Task })
 	@ManyToOne(() => Task)
 	@JoinColumn()

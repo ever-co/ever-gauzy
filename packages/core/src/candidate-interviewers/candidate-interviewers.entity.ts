@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateInterviewers, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import {
@@ -7,18 +7,19 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
+import { Entity } from '@gauzy/common';
 
 @Entity('candidate_interviewer')
 export class CandidateInterviewers
 	extends TenantOrganizationBaseEntity
 	implements ICandidateInterviewers {
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne( () => CandidateInterview, (interview) => interview.interviewers, {
+	@ManyToOne(() => CandidateInterview, (interview) => interview.interviewers, {
 		onDelete: 'CASCADE'
 	})
 	interview: ICandidateInterview;
@@ -31,7 +32,7 @@ export class CandidateInterviewers
 	interviewId: string;
 
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne( () => Employee, {
+	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
 	})
 	employee: IEmployee;
