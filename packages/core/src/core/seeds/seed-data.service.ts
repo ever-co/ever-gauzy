@@ -311,7 +311,7 @@ import { createDefaultStatuses } from './../../tasks/statuses/status.seed';
 import { createDefaultPriorities } from './../../tasks/priorities/priority.seed';
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 import { createDefaultIssueTypes } from './../../tasks/issue-type/issue-type.seed';
-import { getDBType } from 'core/utils';
+import { getDBType } from './../../core/utils';
 
 export enum SeederTypeEnum {
 	ALL = 'all',

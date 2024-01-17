@@ -5,7 +5,8 @@ import { getConfig } from '@gauzy/config';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { EmployeeService } from '../../employee.service';
 import { TimeLog } from './../../../core/entities/internal';
-import { RequestContext, isSqliteDB } from 'core';
+import { RequestContext } from './../../../core';
+import { isSqliteDB } from './../../../core/utils';
 const config = getConfig();
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)

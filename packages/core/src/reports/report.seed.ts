@@ -13,7 +13,7 @@ import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/c
 import { ReportOrganization } from './report-organization.entity';
 import { Organization } from './../core/entities/internal';
 import { databaseTypes } from "@gauzy/config";
-import { getDBType } from 'core';
+import { getDBType } from '../core/utils';
 
 export const createDefaultReport = async (
 	dataSource: DataSource,

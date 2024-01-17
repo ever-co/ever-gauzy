@@ -7,7 +7,7 @@ import {
     InsertEvent
 } from "typeorm";
 import { Activity } from "./activity.entity";
-import { isSqliteDB } from "core";
+import { isSqliteDB } from "../../core/utils";
 
 @EventSubscriber()
 export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {

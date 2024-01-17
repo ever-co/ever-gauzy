@@ -6,7 +6,7 @@ import { IPluginConfig, isNotEmpty } from '@gauzy/common';
 import { registerPluginConfig } from '../bootstrap';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
-import { isDatabaseType, isSqliteDB } from 'core';
+import { isDatabaseType, isSqliteDB } from './../core/utils';
 import { databaseTypes } from '@gauzy/config';
 
 /**

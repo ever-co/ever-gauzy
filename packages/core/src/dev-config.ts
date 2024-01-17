@@ -4,18 +4,8 @@ import {
 	DEFAULT_API_PORT,
 	DEFAULT_GRAPHQL_API_PATH,
 	IPluginConfig,
-	IDBConnectionOptions
 } from '@gauzy/common';
-import { dbConnectionConfig } from '@gauzy/config';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { getORMType } from 'core';
-
-const typeORMDefaultConfig: any = {
-	retryAttempts: 100,
-	retryDelay: 3000,
-	migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
-	migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
-};
+import { dbConnectionConfig, dbMikroOrmConnectionConfig } from '@gauzy/config';
 
 // Define the dev configuration
 export const devConfig: IPluginConfig = {
@@ -32,8 +22,14 @@ export const devConfig: IPluginConfig = {
 		}
 	},
 	dbConnectionOptions: {
-		...(getORMType() === 'typeorm' ? typeORMDefaultConfig : {}),
+		retryAttempts: 100,
+		retryDelay: 3000,
+		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
+		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
 		...dbConnectionConfig
+	},
+	dbMikroOrmConnectionOptions: {
+		...dbMikroOrmConnectionConfig
 	},
 	plugins: []
 };

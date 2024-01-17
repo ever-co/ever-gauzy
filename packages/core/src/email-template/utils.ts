@@ -7,7 +7,7 @@ import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { EmailTemplateEnum } from '@gauzy/contracts';
 import { isNotEmpty } from "@gauzy/common";
-import { isSqliteDB } from "core";
+import { isSqliteDB } from "./../core/utils";
 
 /**
  * Email templates utils functions.

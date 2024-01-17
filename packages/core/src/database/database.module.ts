@@ -18,9 +18,6 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 			// to configure the DataSourceOptions.
 			useFactory: async (configService: ConfigService) => {
 				const { dbConnectionOptions } = configService.config;
-
-				console.log('DB Connection Options: ', dbConnectionOptions);
-
 				return dbConnectionOptions;
 			}
 		} as TypeOrmModuleAsyncOptions),
@@ -30,11 +27,8 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 			// Use useFactory, useClass, or useExisting
 			// to configure the DataSourceOptions.
 			useFactory: async (configService: ConfigService) => {
-				const { dbConnectionOptions } = configService.config;
-
-				console.log('DB Connection Options: ', dbConnectionOptions);
-
-				return dbConnectionOptions;
+				const { dbMikroOrmConnectionOptions } = configService.config;
+				return dbMikroOrmConnectionOptions;
 			}
 		} as MikroOrmModuleAsyncOptions)
 	],
