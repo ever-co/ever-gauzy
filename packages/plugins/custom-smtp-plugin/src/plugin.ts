@@ -1,5 +1,4 @@
 import { CqrsModule } from '@nestjs/cqrs';
-import { forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { TenantModule, UserModule } from '@gauzy/core';
@@ -14,12 +13,12 @@ import { CustomSmtpSubscriber } from './custom-smtp.subscriber';
  */
 @CorePlugin({
 	imports: [
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
-		CqrsModule,
-		TypeOrmModule.forRoot({
-			entities: [CustomSmtp]
-		})
+		TypeOrmModule.forFeature([
+			CustomSmtp
+		]),
+		TenantModule,
+		UserModule,
+		CqrsModule
 	],
 	exports: [
 		TypeOrmModule

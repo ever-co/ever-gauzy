@@ -30,7 +30,6 @@ if (__dirname.startsWith('/srv/gauzy')) {
 
 console.log('Plugin Config -> assetPath: ' + assetPath);
 console.log('Plugin Config -> assetPublicPath: ' + assetPublicPath);
-
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 
 export const pluginConfig: IPluginConfig = {
