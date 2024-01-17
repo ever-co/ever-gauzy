@@ -133,7 +133,6 @@ import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.modu
 import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
 import { ReportModule } from './reports/report.module';
 import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
-import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
 import { resolveServeStaticPath } from './helper';
@@ -464,7 +463,6 @@ if (environment.THROTTLE_ENABLED) {
 		CandidatePersonalQualitiesModule,
 		CandidateTechnologiesModule,
 		CandidateCriterionsRatingModule,
-		CustomSmtpModule,
 		ExportModule,
 		ImportModule,
 		EmployeeSettingModule,

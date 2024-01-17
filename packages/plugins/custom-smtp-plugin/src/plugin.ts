@@ -21,6 +21,7 @@ import { CustomSmtpSubscriber } from './custom-smtp.subscriber';
 		CqrsModule
 	],
 	exports: [
+		CustomSmtpService,
 		TypeOrmModule
 	],
 	controllers: [
