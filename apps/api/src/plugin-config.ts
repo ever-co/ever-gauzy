@@ -10,6 +10,7 @@ import { dbConnectionConfig } from '@gauzy/config';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
 import { CustomSmtpPlugin } from '@gauzy/custom-smtp-plugin';
+import { EmailTemplatePlugin } from '@gauzy/email-template-plugin';
 
 let assetPath: any;
 let assetPublicPath: any;
@@ -59,6 +60,7 @@ export const pluginConfig: IPluginConfig = {
 	plugins: [
 		CustomSmtpPlugin,
 		KnowledgeBasePlugin,
+		EmailTemplatePlugin,
 		ChangelogPlugin
 	]
 };
