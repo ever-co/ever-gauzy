@@ -17,7 +17,7 @@ import {
 	IEmployee,
 	IRequestApprovalTeam
 } from '@gauzy/contracts';
-import { getConfig, isBetterSqlite3, isMySQL, isPostgres, isSqlite, prepareSQLQuery as p } from '@gauzy/config';
+import { isBetterSqlite3, isMySQL, isPostgres, isSqlite, prepareSQLQuery as p } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import {
 	Employee,
@@ -27,8 +27,6 @@ import {
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
-
-const config = getConfig();
 
 @Injectable()
 export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
