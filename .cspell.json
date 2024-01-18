@@ -436,7 +436,8 @@
 		"Yoster",
 		"Yostorono",
 		"zfgk",
-		"Zrdm"
+		"Zrdm",
+		"TIMESTAMPDIFF"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
