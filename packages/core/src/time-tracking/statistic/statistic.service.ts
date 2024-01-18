@@ -31,7 +31,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateRangeFormat, isSqliteDB } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
