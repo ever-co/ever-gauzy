@@ -15,7 +15,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 import { indexBy, pluck } from 'underscore';
 import { isNotEmpty } from '@gauzy/common';
-import { getConfig, prepareSQLQuery as p } from '@gauzy/config';
+import { databaseTypes, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres, prepareSQLQuery as p } from '@gauzy/config';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
 const config = getConfig();
 
@@ -45,23 +45,36 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.addSelect(p(`"${query.alias}"."employeeId"`), `employeeId`);
 		query.addSelect(p(`"${query.alias}"."date"`), `date`);
 
-		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-			query.addSelect(`time("${query.alias}"."time")`, `time`);
-		} else {
-			query.addSelect(
-				p(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`),
-				`time`
-			);
+		switch(config.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				query.addSelect(`time("${query.alias}"."time")`, `time`);
+				break;
+			case databaseTypes.postgres:
+				query.addSelect(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`, 'time');
+				break;
+			case databaseTypes.mysql:
+				query.addSelect(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`), 'time');
+				break;
+			default:
+				throw Error(`cannot format daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`);
 		}
 		query.addSelect(p(`"${query.alias}"."title"`), `title`);
 		query.groupBy(p(`"${query.alias}"."date"`));
 
-		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-			query.addGroupBy(`time("${query.alias}"."time")`);
-		} else {
-			query.addGroupBy(
-				p(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`)
-			);
+		switch(config.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				query.addGroupBy(`time("${query.alias}"."time")`);
+				break;
+			case databaseTypes.postgres:
+				query.addGroupBy(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`);
+				break;
+			case databaseTypes.mysql:
+				query.addGroupBy(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`));
+				break;
+			default:
+				throw Error(`cannot group by daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`);
 		}
 
 		query.addGroupBy(p(`"${query.alias}"."title"`));
@@ -206,17 +219,16 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-					qb.andWhere(p(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`), {
+				qb.andWhere(
+					isSqlite() || isBetterSqlite3() ? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
+					: isPostgres() ? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
+					: isMySQL() ? p(`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`)
+					: '',
+					{
 						startDate,
 						endDate
-					});
-				} else {
-					qb.andWhere(p(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`), {
-						startDate,
-						endDate
-					});
-				}
+					}
+				)
 			})
 		);
 		query.andWhere(

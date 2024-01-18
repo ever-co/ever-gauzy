@@ -17,7 +17,7 @@ import {
 	IEmployee,
 	IRequestApprovalTeam
 } from '@gauzy/contracts';
-import { getConfig, prepareSQLQuery as p } from '@gauzy/config';
+import { getConfig, isBetterSqlite3, isMySQL, isPostgres, isSqlite, prepareSQLQuery as p } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import {
 	Employee,
@@ -52,29 +52,29 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const query = this.requestApprovalRepository.createQueryBuilder('request_approval');
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
-		if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-			query.leftJoinAndSelect(
-				'time_off_request',
-				'time_off_request',
-				'"time_off_request"."id" = "request_approval"."requestId"'
-			);
-			query.leftJoinAndSelect(
-				'equipment_sharing',
-				'equipment_sharing',
-				'"equipment_sharing"."id" = "request_approval"."requestId"'
-			);
-		} else {
-			query.leftJoinAndSelect(
-				'time_off_request',
-				'time_off_request',
-				p('"time_off_request"."id"::"varchar" = "request_approval"."requestId"')
-			);
-			query.leftJoinAndSelect(
-				'equipment_sharing',
-				'equipment_sharing',
-				p('"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"')
-			);
-		}
+		const timeOffRequestCheckIdQuery = `${
+			isSqlite() || isBetterSqlite3() ? '"time_off_request"."id" = "request_approval"."requestId"'
+			: isPostgres() ? '"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+			: isMySQL() ? p(`CAST("time_off_request"."id" AS CHAR) COLLATE utf8mb4_unicode_ci = "request_approval"."requestId" COLLATE utf8mb4_unicode_ci`)
+			: '"time_off_request"."id" = "request_approval"."requestId"'
+		}`;
+		const equipmentSharingCheckIdQuery = `${
+			isSqlite() || isBetterSqlite3() ? '"equipment_sharing"."id" = "request_approval"."requestId"'
+			: isPostgres() ? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+			: isMySQL() ? p(`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`)
+			: '"equipment_sharing"."id" = "request_approval"."requestId"'
+		}`;
+
+		query.leftJoinAndSelect(
+			'time_off_request',
+			'time_off_request',
+			timeOffRequestCheckIdQuery
+		);
+		query.leftJoinAndSelect(
+			'equipment_sharing',
+			'equipment_sharing',
+			equipmentSharingCheckIdQuery
+		);
 
 		const relations = filter.relations as string[];
 		if (relations && relations.length > 0) {
