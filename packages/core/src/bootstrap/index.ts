@@ -298,6 +298,9 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 		dbConnectionOptions: {
 			entities,
 			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>
+		},
+		dbMikroOrmConnectionOptions: {
+			entities,
 		}
 	});
 
@@ -330,7 +333,7 @@ export async function registerAllEntities(pluginConfig: Partial<IPluginConfig>) 
  * @returns
  */
 export function getMigrationsSetting() {
-	console.log(`Reporting __dirname: ${__dirname}`);
+	console.log(`Reporting __dirname: ${__dirname} `);
 
 	//TODO: We need to define some dynamic path here
 	return {

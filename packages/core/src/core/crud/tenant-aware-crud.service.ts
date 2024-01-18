@@ -17,6 +17,7 @@ import { CrudService } from './crud.service';
 import { ICrudService } from './icrud.service';
 import { ITryRequest } from './try-request';
 import { isNotEmpty } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 
 /**
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
@@ -26,9 +27,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	implements ICrudService<T> {
 
 	protected constructor(
-		protected readonly repository: Repository<T>
+		protected readonly repository: Repository<T>,
+		protected readonly mikroRepository?: EntityRepository<T>,
 	) {
-		super(repository);
+		super(repository, mikroRepository);
 	}
 
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {

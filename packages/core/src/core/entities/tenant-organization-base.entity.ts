@@ -6,6 +6,8 @@ import {
 	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { Organization, TenantBaseEntity } from '../entities/internal';
+import { MikroManyToOne } from '@gauzy/common';
+import { Cascade, Property } from '@mikro-orm/core';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 
@@ -14,6 +16,12 @@ export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity impl
 		nullable: true,
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
+	})
+	@MikroManyToOne(() => Organization, {
+		nullable: true,
+		deleteRule: 'cascade',
+		updateRule: 'cascade',
+		persist: false
 	})
 	@JoinColumn()
 	@IsOptional()
@@ -25,5 +33,6 @@ export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity impl
 	@IsOptional()
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	organizationId?: IOrganization['id'];
 }
