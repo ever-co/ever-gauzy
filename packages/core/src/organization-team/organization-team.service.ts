@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	BadRequestException,
@@ -43,14 +45,18 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
+		@MikroInjectRepository(OrganizationTeam)
+		protected readonly mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>,
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private readonly userService: UserService,
 		private readonly taskService: TaskService
 	) {
-		super(organizationTeamRepository);
+		super(organizationTeamRepository, mikroOrganizationTeamRepository);
 	}
 
 	async create(

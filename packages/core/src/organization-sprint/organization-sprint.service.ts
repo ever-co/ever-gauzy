@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Repository } from 'typeorm';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { TenantAwareCrudService } from './../core/crud';
@@ -8,8 +10,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class OrganizationSprintService extends TenantAwareCrudService<OrganizationSprint> {
 	constructor(
 		@InjectRepository(OrganizationSprint)
-		private readonly sprintRepository: Repository<OrganizationSprint>
+		private readonly sprintRepository: Repository<OrganizationSprint>,
+		@MikroInjectRepository(OrganizationSprint)
+		private readonly mikroSprintRepository: EntityRepository<OrganizationSprint>
 	) {
-		super(sprintRepository);
+		super(sprintRepository, mikroSprintRepository);
 	}
 }

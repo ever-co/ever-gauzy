@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,9 +10,11 @@ import { ProductVariantPrice } from './product-variant-price.entity';
 export class ProductVariantPriceService extends TenantAwareCrudService<ProductVariantPrice> {
 	constructor(
 		@InjectRepository(ProductVariantPrice)
-		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>
+		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
+		@MikroInjectRepository(ProductVariantPrice)
+		private readonly mikroProductVariantPriceRepository: EntityRepository<ProductVariantPrice>
 	) {
-		super(productVariantPriceRepository);
+		super(productVariantPriceRepository, mikroProductVariantPriceRepository);
 	}
 
 	async createDefaultProductVariantPrice(): Promise<ProductVariantPrice> {

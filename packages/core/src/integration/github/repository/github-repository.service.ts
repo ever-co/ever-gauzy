@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,9 +18,12 @@ export class GithubRepositoryService extends TenantAwareCrudService<Organization
         private readonly _commandBus: CommandBus,
 
         @InjectRepository(OrganizationGithubRepository)
-        private readonly organizationGithubRepository: Repository<OrganizationGithubRepository>
+        private readonly organizationGithubRepository: Repository<OrganizationGithubRepository>,
+
+        @MikroInjectRepository(OrganizationGithubRepository)
+        private readonly mikroOrganizationGithubRepository: EntityRepository<OrganizationGithubRepository>
     ) {
-        super(organizationGithubRepository);
+        super(organizationGithubRepository, mikroOrganizationGithubRepository);
     }
 
     /**

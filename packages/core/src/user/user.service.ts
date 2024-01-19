@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
@@ -43,11 +45,13 @@ export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+		@MikroInjectRepository(User)
+		private readonly mikroUserRepository: EntityRepository<User>,
 		private readonly _configService: ConfigService,
 		@Inject(forwardRef(() => TaskService))
 		private readonly _taskService: TaskService
 	) {
-		super(userRepository);
+		super(userRepository, mikroUserRepository);
 	}
 
 	/**

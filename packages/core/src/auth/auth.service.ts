@@ -28,7 +28,7 @@ import {
 } from '@gauzy/contracts';
 import { environment, prepareSQLQuery as p } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, MikroInjectRepository, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
@@ -41,15 +41,21 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
+import { EntityRepository } from '@mikro-orm/core';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
+		@MikroInjectRepository(User)
+		private readonly mikroUserRepository: EntityRepository<User>,
 
 		@InjectRepository(OrganizationTeam)
 		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
+
+		@MikroInjectRepository(OrganizationTeam)
+		protected readonly mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>,
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
@@ -104,6 +110,7 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			console.log(error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -923,12 +930,12 @@ export class AuthService extends SocialAuthService {
 		// Sub Query to get only assigned teams for specific organizations
 		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
 			const subQuery = cb.subQuery()
-			.select(
-				p('"user_organization"."organizationId"')
-			).from(
-				p("user_organization"),
-				p("user_organization")
-			);
+				.select(
+					p('"user_organization"."organizationId"')
+				).from(
+					p("user_organization"),
+					p("user_organization")
+				);
 			subQuery.andWhere(
 				p(`"${subQuery.alias}"."isActive" = true`)
 			);

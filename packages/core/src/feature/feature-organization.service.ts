@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,11 +15,13 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	constructor(
 		@InjectRepository(FeatureOrganization)
 		public readonly featureOrganizationRepository: Repository<FeatureOrganization>,
+		@MikroInjectRepository(FeatureOrganization)
+		public readonly mikroFeatureOrganizationRepository: EntityRepository<FeatureOrganization>,
 
 		@Inject(forwardRef(() => FeatureService))
 		private readonly _featureService: FeatureService
 	) {
-		super(featureOrganizationRepository);
+		super(featureOrganizationRepository, mikroFeatureOrganizationRepository);
 	}
 
 	/**
@@ -34,7 +38,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 		const { featureId, organizationId } = entity;
 
 		// find all feature organization by feature id
-		const { items : featureOrganizations, total } = await this.findAll({
+		const { items: featureOrganizations, total } = await this.findAll({
 			where: {
 				tenantId,
 				featureId,
@@ -44,7 +48,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 
 		try {
 			if (!total) {
-				const featureOrganization: IFeatureOrganization  = new FeatureOrganization({
+				const featureOrganization: IFeatureOrganization = new FeatureOrganization({
 					...entity,
 					tenantId
 				});

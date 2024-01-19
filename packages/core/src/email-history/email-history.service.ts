@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { FindManyOptions, Repository } from "typeorm";
@@ -11,8 +13,10 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
     constructor(
         @InjectRepository(EmailHistory)
         protected readonly emailRepository: Repository<EmailHistory>,
+        @MikroInjectRepository(EmailHistory)
+        protected readonly mikroEmailRepository: EntityRepository<EmailHistory>,
     ) {
-        super(emailRepository);
+        super(emailRepository, mikroEmailRepository);
     }
 
     /**

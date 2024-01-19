@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { ProductOptionGroupTranslation } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
@@ -14,11 +16,16 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 	constructor(
 		@InjectRepository(ProductOptionGroup)
 		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,
-		
+		@MikroInjectRepository(ProductOptionGroup)
+		private readonly mikroProductOptionGroupRepository: EntityRepository<ProductOptionGroup>,
+
 		@InjectRepository(ProductOptionGroupTranslation)
-		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>
+		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
+
+		@MikroInjectRepository(ProductOptionGroupTranslation)
+		private readonly mikroProductOptionGroupTranslationRepository: EntityRepository<ProductOptionGroupTranslation>
 	) {
-		super(productOptionGroupRepository);
+		super(productOptionGroupRepository, mikroProductOptionGroupRepository);
 	}
 
 	async create(

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
@@ -33,16 +35,28 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
 
+		@MikroInjectRepository(JobPreset)
+		private readonly mikroJobPresetRepository: EntityRepository<JobPreset>,
+
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
+
+		@MikroInjectRepository(JobPresetUpworkJobSearchCriterion)
+		private readonly mikroJobPresetUpworkJobSearchCriterionRepository: EntityRepository<JobPresetUpworkJobSearchCriterion>,
 
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
 
+		@MikroInjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly mikroEmployeeUpworkJobsSearchCriterionRepository: EntityRepository<EmployeeUpworkJobsSearchCriterion>,
+
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly employeeRepository: Repository<Employee>,
+
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>
 	) {
-		super(jobPresetRepository);
+		super(jobPresetRepository, mikroJobPresetRepository);
 	}
 
 	public async getAll(request?: IGetJobPresetInput) {

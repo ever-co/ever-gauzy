@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,9 +15,11 @@ import { ProductCategory } from './product-category.entity';
 export class ProductCategoryService extends TenantAwareCrudService<ProductCategory> {
 	constructor(
 		@InjectRepository(ProductCategory)
-		private readonly productCategoryRepository: Repository<ProductCategory>
+		private readonly productCategoryRepository: Repository<ProductCategory>,
+		@MikroInjectRepository(ProductCategory)
+		private readonly mikroProductCategoryRepository: EntityRepository<ProductCategory>
 	) {
-		super(productCategoryRepository);
+		super(productCategoryRepository, mikroProductCategoryRepository);
 	}
 
 	/**
@@ -108,7 +112,7 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param languageCode
 	 * @returns
 	 */
-	 async mapTranslatedProductType(
+	async mapTranslatedProductType(
 		type: IProductCategoryTranslatable,
 		languageCode: LanguagesEnum
 	) {

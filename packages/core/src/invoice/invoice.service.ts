@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -23,13 +25,15 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,
+		@MikroInjectRepository(Invoice)
+		private readonly mikroInvoiceRepository: EntityRepository<Invoice>,
 		private readonly emailService: EmailService,
 		private readonly estimateEmailService: EstimateEmailService,
 		private readonly pdfmakerService: PdfmakerService,
 		private readonly i18n: I18nService,
 		private readonly organizationService: OrganizationService
 	) {
-		super(invoiceRepository);
+		super(invoiceRepository, mikroInvoiceRepository);
 	}
 
 	/**

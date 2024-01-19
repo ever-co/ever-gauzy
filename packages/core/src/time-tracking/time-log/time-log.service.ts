@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	BadRequestException,
@@ -69,16 +71,28 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 
+		@MikroInjectRepository(TimeLog)
+		private readonly mikroTimeLogRepository: EntityRepository<TimeLog>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
 
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,
 
+		@MikroInjectRepository(OrganizationProject)
+		private readonly mikroOrganizationProjectRepository: EntityRepository<OrganizationProject>,
+
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>
+		private readonly organizationContactRepository: Repository<OrganizationContact>,
+
+		@MikroInjectRepository(OrganizationContact)
+		private readonly mikroOrganizationContactRepository: EntityRepository<OrganizationContact>
 	) {
-		super(timeLogRepository);
+		super(timeLogRepository, mikroTimeLogRepository);
 	}
 
 	/**

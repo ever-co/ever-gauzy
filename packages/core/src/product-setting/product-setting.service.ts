@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAwareCrudService } from '../core/crud';
@@ -8,9 +10,11 @@ import { ProductVariantSetting } from './product-setting.entity';
 export class ProductVariantSettingService extends TenantAwareCrudService<ProductVariantSetting> {
 	constructor(
 		@InjectRepository(ProductVariantSetting)
-		private readonly productVariantSettingRepository: Repository<ProductVariantSetting>
+		private readonly productVariantSettingRepository: Repository<ProductVariantSetting>,
+		@MikroInjectRepository(ProductVariantSetting)
+		private readonly mikroProductVariantSettingRepository: EntityRepository<ProductVariantSetting>
 	) {
-		super(productVariantSettingRepository);
+		super(productVariantSettingRepository, mikroProductVariantSettingRepository);
 	}
 
 	async createDefaultVariantSettings(): Promise<ProductVariantSetting> {

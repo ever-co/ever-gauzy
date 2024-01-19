@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	BadRequestException,
@@ -19,13 +21,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	constructor(
 		@InjectRepository(EquipmentSharing)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+		@MikroInjectRepository(EquipmentSharing)
+		private readonly mikroEquipmentSharingRepository: EntityRepository<EquipmentSharing>,
 
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 
+		@MikroInjectRepository(RequestApproval)
+		private readonly mikroRequestApprovalRepository: EntityRepository<RequestApproval>,
+
 		private readonly configService: ConfigService
 	) {
-		super(equipmentSharingRepository);
+		super(equipmentSharingRepository, mikroEquipmentSharingRepository);
 	}
 
 	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,9 +13,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeAppointment> {
 	constructor(
 		@InjectRepository(EmployeeAppointment)
-		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>
+		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>,
+		@MikroInjectRepository(EmployeeAppointment)
+		private readonly mikroEmployeeAppointmentRepository: EntityRepository<EmployeeAppointment>
 	) {
-		super(employeeAppointmentRepository);
+		super(employeeAppointmentRepository, mikroEmployeeAppointmentRepository);
 	}
 
 	async saveAppointment(

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,15 +11,17 @@ import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauz
 export class CandidateTechnologiesService extends TenantAwareCrudService<CandidateTechnologies> {
 	constructor(
 		@InjectRepository(CandidateTechnologies)
-		private readonly candidateTechnologiesRepository: Repository<CandidateTechnologies>
+		private readonly candidateTechnologiesRepository: Repository<CandidateTechnologies>,
+		@MikroInjectRepository(CandidateTechnologies)
+		private readonly mikroCandidateTechnologiesRepository: EntityRepository<CandidateTechnologies>
 	) {
-		super(candidateTechnologiesRepository);
+		super(candidateTechnologiesRepository, mikroCandidateTechnologiesRepository);
 	}
-	
+
 	async createBulk(createInput: ICandidateTechnologiesCreateInput[]) {
 		return await this.repository.save(createInput);
 	}
-	
+
 	async getTechnologiesByInterviewId(
 		interviewId: string
 	): Promise<ICandidateTechnologies[]> {

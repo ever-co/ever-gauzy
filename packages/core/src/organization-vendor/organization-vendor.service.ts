@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
@@ -9,9 +11,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class OrganizationVendorService extends TenantAwareCrudService<OrganizationVendor> {
 	constructor(
 		@InjectRepository(OrganizationVendor)
-		private readonly organizationVendorRepository: Repository<OrganizationVendor>
+		private readonly organizationVendorRepository: Repository<OrganizationVendor>,
+		@MikroInjectRepository(OrganizationVendor)
+		private readonly mikroOrganizationVendorRepository: EntityRepository<OrganizationVendor>
 	) {
-		super(organizationVendorRepository);
+		super(organizationVendorRepository, mikroOrganizationVendorRepository);
 	}
 
 	async deleteVendor(vendorId) {
@@ -30,7 +34,7 @@ export class OrganizationVendorService extends TenantAwareCrudService<Organizati
 		return await this.delete(vendorId);
 	}
 
-	public pagination(filter?: any) {		
+	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if (where.tags) {

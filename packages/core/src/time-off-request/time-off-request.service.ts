@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	BadRequestException,
@@ -28,11 +30,16 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	constructor(
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		@MikroInjectRepository(TimeOffRequest)
+		private readonly mikroTimeOffRequestRepository: EntityRepository<TimeOffRequest>,
 
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>
+		private readonly requestApprovalRepository: Repository<RequestApproval>,
+
+		@MikroInjectRepository(RequestApproval)
+		private readonly mikroRequestApprovalRepository: EntityRepository<RequestApproval>
 	) {
-		super(timeOffRequestRepository);
+		super(timeOffRequestRepository, mikroTimeOffRequestRepository);
 	}
 
 	async create(entity: ITimeOffCreateInput): Promise<TimeOffRequest> {

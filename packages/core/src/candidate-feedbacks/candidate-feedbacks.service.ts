@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { ICandidateFeedback, ICandidateInterview } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,9 +13,11 @@ export class CandidateFeedbacksService extends TenantAwareCrudService<CandidateF
 
 	constructor(
 		@InjectRepository(CandidateFeedback)
-		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>
+		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>,
+		@MikroInjectRepository(CandidateFeedback)
+		private readonly mikroCandidateFeedbackRepository: EntityRepository<CandidateFeedback>
 	) {
-		super(candidateFeedbackRepository);
+		super(candidateFeedbackRepository, mikroCandidateFeedbackRepository);
 	}
 
 	async getFeedbacksByInterviewId(

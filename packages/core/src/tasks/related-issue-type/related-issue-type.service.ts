@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { DeleteResult, Repository } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,9 +18,11 @@ import { TaskRelatedIssueTypes } from './related-issue-type.entity';
 export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<TaskRelatedIssueTypes> {
 	constructor(
 		@InjectRepository(TaskRelatedIssueTypes)
-		protected readonly taskRelatedIssueTypesRepository: Repository<TaskRelatedIssueTypes>
+		protected readonly taskRelatedIssueTypesRepository: Repository<TaskRelatedIssueTypes>,
+		@MikroInjectRepository(TaskRelatedIssueTypes)
+		protected readonly mikroTaskRelatedIssueTypesRepository: EntityRepository<TaskRelatedIssueTypes>
 	) {
-		super(taskRelatedIssueTypesRepository);
+		super(taskRelatedIssueTypesRepository, mikroTaskRelatedIssueTypesRepository);
 	}
 
 	/**

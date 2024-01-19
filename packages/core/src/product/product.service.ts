@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { FindManyOptions, Repository } from 'typeorm';
 import {
 	BadRequestException,
@@ -53,11 +55,16 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	constructor(
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>,
+		@MikroInjectRepository(Product)
+		private readonly mikroProductRepository: EntityRepository<Product>,
 
 		@InjectRepository(ProductTranslation)
-		private readonly productTranslationRepository: Repository<ProductTranslation>
+		private readonly productTranslationRepository: Repository<ProductTranslation>,
+
+		@MikroInjectRepository(ProductTranslation)
+		private readonly mikroProductTranslationRepository: EntityRepository<ProductTranslation>
 	) {
-		super(productRepository);
+		super(productRepository, mikroProductRepository);
 	}
 
 	public async pagination(

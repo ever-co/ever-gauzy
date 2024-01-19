@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IDateRangePicker, IPagination } from '@gauzy/contracts';
@@ -10,9 +12,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(
 		@InjectRepository(Income)
-		private readonly incomeRepository: Repository<Income>
+		private readonly incomeRepository: Repository<Income>,
+		@MikroInjectRepository(Income)
+		private readonly mikroIncomeRepository: EntityRepository<Income>
 	) {
-		super(incomeRepository);
+		super(incomeRepository, mikroIncomeRepository);
 	}
 
 	public async findAllIncomes(

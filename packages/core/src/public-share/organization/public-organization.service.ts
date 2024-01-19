@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,13 +12,21 @@ export class PublicOrganizationService {
 	constructor(
 		@InjectRepository(Organization)
 		private readonly repository: Repository<Organization>,
+		@MikroInjectRepository(Organization)
+		private readonly mikroRepository: EntityRepository<Organization>,
 
 		@InjectRepository(OrganizationContact)
 		private readonly organizationContact: Repository<OrganizationContact>,
 
+		@MikroInjectRepository(OrganizationContact)
+		private readonly mikroOrganizationContact: EntityRepository<OrganizationContact>,
+
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProject: Repository<OrganizationProject>
-	) {}
+		private readonly organizationProject: Repository<OrganizationProject>,
+
+		@MikroInjectRepository(OrganizationProject)
+		private readonly mikroOrganizationProject: EntityRepository<OrganizationProject>
+	) { }
 
 	/**
 	 * GET organization by profile link

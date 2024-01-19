@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
@@ -20,10 +22,12 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
 		private readonly paymentRepository: Repository<Payment>,
+		@MikroInjectRepository(Payment)
+		private readonly mikroPaymentRepository: EntityRepository<Payment>,
 
 		private readonly emailService: EmailService
 	) {
-		super(paymentRepository);
+		super(paymentRepository, mikroPaymentRepository);
 	}
 
 	/**

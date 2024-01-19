@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ICandidateSource } from '@gauzy/contracts';
@@ -9,9 +11,11 @@ import { CandidateSource } from './candidate-source.entity';
 export class CandidateSourceService extends TenantAwareCrudService<CandidateSource> {
 	constructor(
 		@InjectRepository(CandidateSource)
-		private readonly candidateSourceRepository: Repository<CandidateSource>
+		private readonly candidateSourceRepository: Repository<CandidateSource>,
+		@MikroInjectRepository(CandidateSource)
+		private readonly mikroCandidateSourceRepository: EntityRepository<CandidateSource>
 	) {
-		super(candidateSourceRepository);
+		super(candidateSourceRepository, mikroCandidateSourceRepository);
 	}
 
 	async createBulk(sources: ICandidateSource[]): Promise<ICandidateSource[]> {

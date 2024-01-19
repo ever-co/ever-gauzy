@@ -13,6 +13,7 @@ import { TenantBaseEntity } from '../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { prepareSQLQuery as p } from '@gauzy/config';
+import { EntityRepository } from '@mikro-orm/core';
 
 export type IFindEntityByParams =
 	| ITaskStatusFindInput
@@ -25,8 +26,11 @@ export type IFindEntityByParams =
 export class TaskStatusPrioritySizeService<
 	BaseEntity extends TenantBaseEntity
 > extends TenantAwareCrudService<BaseEntity> {
-	constructor(protected readonly repository: Repository<BaseEntity>) {
-		super(repository);
+	constructor(
+		protected readonly repository: Repository<BaseEntity>,
+		protected readonly mikroRepository?: EntityRepository<BaseEntity>,
+	) {
+		super(repository, mikroRepository);
 	}
 
 	async findEntitiesByParams(params: IFindEntityByParams): Promise<IPagination<BaseEntity>> {

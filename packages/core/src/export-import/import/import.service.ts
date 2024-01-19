@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Connection, IsNull, Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
@@ -177,369 +179,734 @@ export class ImportService implements OnModuleInit {
 	constructor(
 		@InjectRepository(AccountingTemplate)
 		private readonly accountingTemplateRepository: Repository<AccountingTemplate>,
+		@MikroInjectRepository(AccountingTemplate)
+		private readonly mikroAccountingTemplateRepository: EntityRepository<AccountingTemplate>,
 
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
+		@MikroInjectRepository(Activity)
+		private readonly mikroActivityRepository: EntityRepository<Activity>,
+
 		@InjectRepository(AppointmentEmployee)
 		private readonly appointmentEmployeesRepository: Repository<AppointmentEmployee>,
+
+		@MikroInjectRepository(AppointmentEmployee)
+		private readonly mikroAppointmentEmployeesRepository: EntityRepository<AppointmentEmployee>,
 
 		@InjectRepository(ApprovalPolicy)
 		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>,
 
+		@MikroInjectRepository(ApprovalPolicy)
+		private readonly mikroApprovalPolicyRepository: EntityRepository<ApprovalPolicy>,
+
 		@InjectRepository(AvailabilitySlot)
 		private readonly availabilitySlotsRepository: Repository<AvailabilitySlot>,
+
+		@MikroInjectRepository(AvailabilitySlot)
+		private readonly mikroAvailabilitySlotsRepository: EntityRepository<AvailabilitySlot>,
 
 		@InjectRepository(Candidate)
 		private readonly candidateRepository: Repository<Candidate>,
 
+		@MikroInjectRepository(Candidate)
+		private readonly mikroCandidateRepository: EntityRepository<Candidate>,
+
 		@InjectRepository(CandidateCriterionsRating)
 		private readonly candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>,
+
+		@MikroInjectRepository(CandidateCriterionsRating)
+		private readonly mikroCandidateCriterionsRatingRepository: EntityRepository<CandidateCriterionsRating>,
 
 		@InjectRepository(CandidateDocument)
 		private readonly candidateDocumentRepository: Repository<CandidateDocument>,
 
+		@MikroInjectRepository(CandidateDocument)
+		private readonly mikroCandidateDocumentRepository: EntityRepository<CandidateDocument>,
+
 		@InjectRepository(CandidateEducation)
 		private readonly candidateEducationRepository: Repository<CandidateEducation>,
+
+		@MikroInjectRepository(CandidateEducation)
+		private readonly mikroCandidateEducationRepository: EntityRepository<CandidateEducation>,
 
 		@InjectRepository(CandidateExperience)
 		private readonly candidateExperienceRepository: Repository<CandidateExperience>,
 
+		@MikroInjectRepository(CandidateExperience)
+		private readonly mikroCandidateExperienceRepository: EntityRepository<CandidateExperience>,
+
 		@InjectRepository(CandidateFeedback)
 		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>,
+
+		@MikroInjectRepository(CandidateFeedback)
+		private readonly mikroCandidateFeedbackRepository: EntityRepository<CandidateFeedback>,
 
 		@InjectRepository(CandidateInterview)
 		private readonly candidateInterviewRepository: Repository<CandidateInterview>,
 
+		@MikroInjectRepository(CandidateInterview)
+		private readonly mikroCandidateInterviewRepository: EntityRepository<CandidateInterview>,
+
 		@InjectRepository(CandidateInterviewers)
 		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
+
+		@MikroInjectRepository(CandidateInterviewers)
+		private readonly mikroCandidateInterviewersRepository: EntityRepository<CandidateInterviewers>,
 
 		@InjectRepository(CandidatePersonalQualities)
 		private readonly candidatePersonalQualitiesRepository: Repository<CandidatePersonalQualities>,
 
+		@MikroInjectRepository(CandidatePersonalQualities)
+		private readonly mikroCandidatePersonalQualitiesRepository: EntityRepository<CandidatePersonalQualities>,
+
 		@InjectRepository(CandidateSkill)
 		private readonly candidateSkillRepository: Repository<CandidateSkill>,
+
+		@MikroInjectRepository(CandidateSkill)
+		private readonly mikroCandidateSkillRepository: EntityRepository<CandidateSkill>,
 
 		@InjectRepository(CandidateSource)
 		private readonly candidateSourceRepository: Repository<CandidateSource>,
 
+		@MikroInjectRepository(CandidateSource)
+		private readonly mikroCandidateSourceRepository: EntityRepository<CandidateSource>,
+
 		@InjectRepository(CandidateTechnologies)
 		private readonly candidateTechnologiesRepository: Repository<CandidateTechnologies>,
+
+		@MikroInjectRepository(CandidateTechnologies)
+		private readonly mikroCandidateTechnologiesRepository: EntityRepository<CandidateTechnologies>,
 
 		@InjectRepository(Contact)
 		private readonly contactRepository: Repository<Contact>,
 
+		@MikroInjectRepository(Contact)
+		private readonly mikroContactRepository: EntityRepository<Contact>,
+
 		@InjectRepository(CustomSmtp)
 		private readonly customSmtpRepository: Repository<CustomSmtp>,
+
+		@MikroInjectRepository(CustomSmtp)
+		private readonly mikroCustomSmtpRepository: EntityRepository<CustomSmtp>,
 
 		@InjectRepository(Deal)
 		private readonly dealRepository: Repository<Deal>,
 
+		@MikroInjectRepository(Deal)
+		private readonly mikroDealRepository: EntityRepository<Deal>,
+
 		@InjectRepository(EmailHistory)
 		private readonly emailHistoryRepository: Repository<EmailHistory>,
+
+		@MikroInjectRepository(EmailHistory)
+		private readonly mikroEmailHistoryRepository: EntityRepository<EmailHistory>,
 
 		@InjectRepository(EmailTemplate)
 		private readonly emailTemplateRepository: Repository<EmailTemplate>,
 
+		@MikroInjectRepository(EmailTemplate)
+		private readonly mikroEmailTemplateRepository: EntityRepository<EmailTemplate>,
+
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
+
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
 
 		@InjectRepository(EmployeeAppointment)
 		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>,
 
+		@MikroInjectRepository(EmployeeAppointment)
+		private readonly mikroEmployeeAppointmentRepository: EntityRepository<EmployeeAppointment>,
+
 		@InjectRepository(EmployeeAward)
 		private readonly employeeAwardRepository: Repository<EmployeeAward>,
+
+		@MikroInjectRepository(EmployeeAward)
+		private readonly mikroEmployeeAwardRepository: EntityRepository<EmployeeAward>,
 
 		@InjectRepository(EmployeeProposalTemplate)
 		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
 
+		@MikroInjectRepository(EmployeeProposalTemplate)
+		private readonly mikroEmployeeProposalTemplateRepository: EntityRepository<EmployeeProposalTemplate>,
+
 		@InjectRepository(EmployeeRecurringExpense)
 		private readonly employeeRecurringExpenseRepository: Repository<EmployeeRecurringExpense>,
+
+		@MikroInjectRepository(EmployeeRecurringExpense)
+		private readonly mikroEmployeeRecurringExpenseRepository: EntityRepository<EmployeeRecurringExpense>,
 
 		@InjectRepository(EmployeeSetting)
 		private readonly employeeSettingRepository: Repository<EmployeeSetting>,
 
+		@MikroInjectRepository(EmployeeSetting)
+		private readonly mikroEmployeeSettingRepository: EntityRepository<EmployeeSetting>,
+
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
+
+		@MikroInjectRepository(EmployeeUpworkJobsSearchCriterion)
+		private readonly mikroEmployeeUpworkJobsSearchCriterionRepository: EntityRepository<EmployeeUpworkJobsSearchCriterion>,
 
 		@InjectRepository(Equipment)
 		private readonly equipmentRepository: Repository<Equipment>,
 
+		@MikroInjectRepository(Equipment)
+		private readonly mikroEquipmentRepository: EntityRepository<Equipment>,
+
 		@InjectRepository(EquipmentSharing)
 		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+
+		@MikroInjectRepository(EquipmentSharing)
+		private readonly mikroEquipmentSharingRepository: EntityRepository<EquipmentSharing>,
 
 		@InjectRepository(EquipmentSharingPolicy)
 		private readonly equipmentSharingPolicyRepository: Repository<EquipmentSharingPolicy>,
 
+		@MikroInjectRepository(EquipmentSharingPolicy)
+		private readonly mikroEquipmentSharingPolicyRepository: EntityRepository<EquipmentSharingPolicy>,
+
 		@InjectRepository(EstimateEmail)
 		private readonly estimateEmailRepository: Repository<EstimateEmail>,
+
+		@MikroInjectRepository(EstimateEmail)
+		private readonly mikroEstimateEmailRepository: EntityRepository<EstimateEmail>,
 
 		@InjectRepository(EventType)
 		private readonly eventTypeRepository: Repository<EventType>,
 
+		@MikroInjectRepository(EventType)
+		private readonly mikroEventTypeRepository: EntityRepository<EventType>,
+
 		@InjectRepository(Expense)
 		private readonly expenseRepository: Repository<Expense>,
+
+		@MikroInjectRepository(Expense)
+		private readonly mikroExpenseRepository: EntityRepository<Expense>,
 
 		@InjectRepository(ExpenseCategory)
 		private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
 
+		@MikroInjectRepository(ExpenseCategory)
+		private readonly mikroExpenseCategoryRepository: EntityRepository<ExpenseCategory>,
+
 		@InjectRepository(Feature)
 		private readonly featureRepository: Repository<Feature>,
+
+		@MikroInjectRepository(Feature)
+		private readonly mikroFeatureRepository: EntityRepository<Feature>,
 
 		@InjectRepository(FeatureOrganization)
 		private readonly featureOrganizationRepository: Repository<FeatureOrganization>,
 
+		@MikroInjectRepository(FeatureOrganization)
+		private readonly mikroFeatureOrganizationRepository: EntityRepository<FeatureOrganization>,
+
 		@InjectRepository(Goal)
 		private readonly goalRepository: Repository<Goal>,
+
+		@MikroInjectRepository(Goal)
+		private readonly mikroGoalRepository: EntityRepository<Goal>,
 
 		@InjectRepository(GoalTemplate)
 		private readonly goalTemplateRepository: Repository<GoalTemplate>,
 
+		@MikroInjectRepository(GoalTemplate)
+		private readonly mikroGoalTemplateRepository: EntityRepository<GoalTemplate>,
+
 		@InjectRepository(GoalKPI)
 		private readonly goalKpiRepository: Repository<GoalKPI>,
+
+		@MikroInjectRepository(GoalKPI)
+		private readonly mikroGoalKpiRepository: EntityRepository<GoalKPI>,
 
 		@InjectRepository(GoalKPITemplate)
 		private readonly goalKpiTemplateRepository: Repository<GoalKPITemplate>,
 
+		@MikroInjectRepository(GoalKPITemplate)
+		private readonly mikroGoalKpiTemplateRepository: EntityRepository<GoalKPITemplate>,
+
 		@InjectRepository(GoalTimeFrame)
 		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
+
+		@MikroInjectRepository(GoalTimeFrame)
+		private readonly mikroGoalTimeFrameRepository: EntityRepository<GoalTimeFrame>,
 
 		@InjectRepository(GoalGeneralSetting)
 		private readonly goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
 
+		@MikroInjectRepository(GoalGeneralSetting)
+		private readonly mikroGoalGeneralSettingRepository: EntityRepository<GoalGeneralSetting>,
+
 		@InjectRepository(Income)
 		private readonly incomeRepository: Repository<Income>,
+
+		@MikroInjectRepository(Income)
+		private readonly mikroIncomeRepository: EntityRepository<Income>,
 
 		@InjectRepository(Integration)
 		private readonly integrationRepository: Repository<Integration>,
 
+		@MikroInjectRepository(Integration)
+		private readonly mikroIntegrationRepository: EntityRepository<Integration>,
+
 		@InjectRepository(IntegrationType)
 		private readonly integrationTypeRepository: Repository<IntegrationType>,
+
+		@MikroInjectRepository(IntegrationType)
+		private readonly mikroIntegrationTypeRepository: EntityRepository<IntegrationType>,
 
 		@InjectRepository(IntegrationEntitySetting)
 		private readonly integrationEntitySettingRepository: Repository<IntegrationEntitySetting>,
 
+		@MikroInjectRepository(IntegrationEntitySetting)
+		private readonly mikroIntegrationEntitySettingRepository: EntityRepository<IntegrationEntitySetting>,
+
 		@InjectRepository(IntegrationEntitySettingTied)
 		private readonly integrationEntitySettingTiedRepository: Repository<IntegrationEntitySettingTied>,
+
+		@MikroInjectRepository(IntegrationEntitySettingTied)
+		private readonly mikroIntegrationEntitySettingTiedRepository: EntityRepository<IntegrationEntitySettingTied>,
 
 		@InjectRepository(IntegrationMap)
 		private readonly integrationMapRepository: Repository<IntegrationMap>,
 
+		@MikroInjectRepository(IntegrationMap)
+		private readonly mikroIntegrationMapRepository: EntityRepository<IntegrationMap>,
+
 		@InjectRepository(IntegrationSetting)
 		private readonly integrationSettingRepository: Repository<IntegrationSetting>,
+
+		@MikroInjectRepository(IntegrationSetting)
+		private readonly mikroIntegrationSettingRepository: EntityRepository<IntegrationSetting>,
 
 		@InjectRepository(IntegrationTenant)
 		private readonly integrationTenantRepository: Repository<IntegrationTenant>,
 
+		@MikroInjectRepository(IntegrationTenant)
+		private readonly mikroIntegrationTenantRepository: EntityRepository<IntegrationTenant>,
+
 		@InjectRepository(Invite)
 		private readonly inviteRepository: Repository<Invite>,
+
+		@MikroInjectRepository(Invite)
+		private readonly mikroInviteRepository: EntityRepository<Invite>,
 
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,
 
+		@MikroInjectRepository(Invoice)
+		private readonly mikroInvoiceRepository: EntityRepository<Invoice>,
+
 		@InjectRepository(InvoiceEstimateHistory)
 		private readonly invoiceEstimateHistoryRepository: Repository<InvoiceEstimateHistory>,
+
+		@MikroInjectRepository(InvoiceEstimateHistory)
+		private readonly mikroInvoiceEstimateHistoryRepository: EntityRepository<InvoiceEstimateHistory>,
 
 		@InjectRepository(InvoiceItem)
 		private readonly invoiceItemRepository: Repository<InvoiceItem>,
 
+		@MikroInjectRepository(InvoiceItem)
+		private readonly mikroInvoiceItemRepository: EntityRepository<InvoiceItem>,
+
 		@InjectRepository(JobPreset)
 		private readonly jobPresetRepository: Repository<JobPreset>,
+
+		@MikroInjectRepository(JobPreset)
+		private readonly mikroJobPresetRepository: EntityRepository<JobPreset>,
 
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
 
+		@MikroInjectRepository(JobPresetUpworkJobSearchCriterion)
+		private readonly mikroJobPresetUpworkJobSearchCriterionRepository: EntityRepository<JobPresetUpworkJobSearchCriterion>,
+
 		@InjectRepository(JobSearchCategory)
 		private readonly jobSearchCategoryRepository: Repository<JobSearchCategory>,
+
+		@MikroInjectRepository(JobSearchCategory)
+		private readonly mikroJobSearchCategoryRepository: EntityRepository<JobSearchCategory>,
 
 		@InjectRepository(JobSearchOccupation)
 		private readonly jobSearchOccupationRepository: Repository<JobSearchOccupation>,
 
+		@MikroInjectRepository(JobSearchOccupation)
+		private readonly mikroJobSearchOccupationRepository: EntityRepository<JobSearchOccupation>,
+
 		@InjectRepository(KeyResult)
 		private readonly keyResultRepository: Repository<KeyResult>,
+
+		@MikroInjectRepository(KeyResult)
+		private readonly mikroKeyResultRepository: EntityRepository<KeyResult>,
 
 		@InjectRepository(KeyResultTemplate)
 		private readonly keyResultTemplateRepository: Repository<KeyResultTemplate>,
 
+		@MikroInjectRepository(KeyResultTemplate)
+		private readonly mikroKeyResultTemplateRepository: EntityRepository<KeyResultTemplate>,
+
 		@InjectRepository(KeyResultUpdate)
 		private readonly keyResultUpdateRepository: Repository<KeyResultUpdate>,
+
+		@MikroInjectRepository(KeyResultUpdate)
+		private readonly mikroKeyResultUpdateRepository: EntityRepository<KeyResultUpdate>,
 
 		@InjectRepository(Language)
 		private readonly languageRepository: Repository<Language>,
 
+		@MikroInjectRepository(Language)
+		private readonly mikroLanguageRepository: EntityRepository<Language>,
+
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>,
+
+		@MikroInjectRepository(Organization)
+		private readonly mikroOrganizationRepository: EntityRepository<Organization>,
 
 		@InjectRepository(EmployeeLevel)
 		private readonly employeeLevelRepository: Repository<EmployeeLevel>,
 
+		@MikroInjectRepository(EmployeeLevel)
+		private readonly mikroEmployeeLevelRepository: EntityRepository<EmployeeLevel>,
+
 		@InjectRepository(OrganizationAward)
 		private readonly organizationAwardRepository: Repository<OrganizationAward>,
+
+		@MikroInjectRepository(OrganizationAward)
+		private readonly mikroOrganizationAwardRepository: EntityRepository<OrganizationAward>,
 
 		@InjectRepository(OrganizationContact)
 		private readonly organizationContactRepository: Repository<OrganizationContact>,
 
+		@MikroInjectRepository(OrganizationContact)
+		private readonly mikroOrganizationContactRepository: EntityRepository<OrganizationContact>,
+
 		@InjectRepository(OrganizationDepartment)
 		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
+
+		@MikroInjectRepository(OrganizationDepartment)
+		private readonly mikroOrganizationDepartmentRepository: EntityRepository<OrganizationDepartment>,
 
 		@InjectRepository(OrganizationDocument)
 		private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
 
+		@MikroInjectRepository(OrganizationDocument)
+		private readonly mikroOrganizationDocumentRepository: EntityRepository<OrganizationDocument>,
+
 		@InjectRepository(OrganizationEmploymentType)
 		private readonly organizationEmploymentTypeRepository: Repository<OrganizationEmploymentType>,
+
+		@MikroInjectRepository(OrganizationEmploymentType)
+		private readonly mikroOrganizationEmploymentTypeRepository: EntityRepository<OrganizationEmploymentType>,
 
 		@InjectRepository(OrganizationLanguage)
 		private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
 
+		@MikroInjectRepository(OrganizationLanguage)
+		private readonly mikroOrganizationLanguageRepository: EntityRepository<OrganizationLanguage>,
+
 		@InjectRepository(OrganizationPosition)
 		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
+
+		@MikroInjectRepository(OrganizationPosition)
+		private readonly mikroOrganizationPositionRepository: EntityRepository<OrganizationPosition>,
 
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,
 
+		@MikroInjectRepository(OrganizationProject)
+		private readonly mikroOrganizationProjectRepository: EntityRepository<OrganizationProject>,
+
 		@InjectRepository(OrganizationRecurringExpense)
 		private readonly organizationRecurringExpenseRepository: Repository<OrganizationRecurringExpense>,
+
+		@MikroInjectRepository(OrganizationRecurringExpense)
+		private readonly mikroOrganizationRecurringExpenseRepository: EntityRepository<OrganizationRecurringExpense>,
 
 		@InjectRepository(OrganizationSprint)
 		private readonly organizationSprintRepository: Repository<OrganizationSprint>,
 
+		@MikroInjectRepository(OrganizationSprint)
+		private readonly mikroOrganizationSprintRepository: EntityRepository<OrganizationSprint>,
+
 		@InjectRepository(OrganizationTeam)
 		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
+
+		@MikroInjectRepository(OrganizationTeam)
+		private readonly mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>,
 
 		@InjectRepository(OrganizationTeamEmployee)
 		private readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
 
+		@MikroInjectRepository(OrganizationTeamEmployee)
+		private readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
+
 		@InjectRepository(OrganizationVendor)
 		private readonly organizationVendorRepository: Repository<OrganizationVendor>,
+
+		@MikroInjectRepository(OrganizationVendor)
+		private readonly mikroOrganizationVendorRepository: EntityRepository<OrganizationVendor>,
 
 		@InjectRepository(Payment)
 		private readonly paymentRepository: Repository<Payment>,
 
+		@MikroInjectRepository(Payment)
+		private readonly mikroPaymentRepository: EntityRepository<Payment>,
+
 		@InjectRepository(Pipeline)
 		private readonly pipelineRepository: Repository<Pipeline>,
+
+		@MikroInjectRepository(Pipeline)
+		private readonly mikroPipelineRepository: EntityRepository<Pipeline>,
 
 		@InjectRepository(PipelineStage)
 		private readonly pipelineStageRepository: Repository<PipelineStage>,
 
+		@MikroInjectRepository(PipelineStage)
+		private readonly mikroPipelineStageRepository: EntityRepository<PipelineStage>,
+
 		@InjectRepository(Product)
 		private readonly productRepository: Repository<Product>,
+
+		@MikroInjectRepository(Product)
+		private readonly mikroProductRepository: EntityRepository<Product>,
 
 		@InjectRepository(ProductTranslation)
 		private readonly productTranslationRepository: Repository<ProductTranslation>,
 
+		@MikroInjectRepository(ProductTranslation)
+		private readonly mikroProductTranslationRepository: EntityRepository<ProductTranslation>,
+
 		@InjectRepository(ProductCategory)
 		private readonly productCategoryRepository: Repository<ProductCategory>,
+
+		@MikroInjectRepository(ProductCategory)
+		private readonly mikroProductCategoryRepository: EntityRepository<ProductCategory>,
 
 		@InjectRepository(ProductCategoryTranslation)
 		private readonly productCategoryTranslationRepository: Repository<ProductCategoryTranslation>,
 
+		@MikroInjectRepository(ProductCategoryTranslation)
+		private readonly mikroProductCategoryTranslationRepository: EntityRepository<ProductCategoryTranslation>,
+
 		@InjectRepository(ProductOption)
 		private readonly productOptionRepository: Repository<ProductOption>,
+
+		@MikroInjectRepository(ProductOption)
+		private readonly mikroProductOptionRepository: EntityRepository<ProductOption>,
 
 		@InjectRepository(ProductOptionTranslation)
 		private readonly productOptionTranslationRepository: Repository<ProductOptionTranslation>,
 
+		@MikroInjectRepository(ProductOptionTranslation)
+		private readonly mikroProductOptionTranslationRepository: EntityRepository<ProductOptionTranslation>,
+
 		@InjectRepository(ProductOptionGroup)
 		private readonly productOptionGroupRepository: Repository<ProductOptionGroup>,
+
+		@MikroInjectRepository(ProductOptionGroup)
+		private readonly mikroProductOptionGroupRepository: EntityRepository<ProductOptionGroup>,
 
 		@InjectRepository(ProductOptionGroupTranslation)
 		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
 
+		@MikroInjectRepository(ProductOptionGroupTranslation)
+		private readonly mikroProductOptionGroupTranslationRepository: EntityRepository<ProductOptionGroupTranslation>,
+
 		@InjectRepository(ProductVariantSetting)
 		private readonly productVariantSettingRepository: Repository<ProductVariantSetting>,
+
+		@MikroInjectRepository(ProductVariantSetting)
+		private readonly mikroProductVariantSettingRepository: EntityRepository<ProductVariantSetting>,
 
 		@InjectRepository(ProductType)
 		private readonly productTypeRepository: Repository<ProductType>,
 
+		@MikroInjectRepository(ProductType)
+		private readonly mikroProductTypeRepository: EntityRepository<ProductType>,
+
 		@InjectRepository(ProductTypeTranslation)
 		private readonly productTypeTranslationRepository: Repository<ProductTypeTranslation>,
+
+		@MikroInjectRepository(ProductTypeTranslation)
+		private readonly mikroProductTypeTranslationRepository: EntityRepository<ProductTypeTranslation>,
 
 		@InjectRepository(ProductVariant)
 		private readonly productVariantRepository: Repository<ProductVariant>,
 
+		@MikroInjectRepository(ProductVariant)
+		private readonly mikroProductVariantRepository: EntityRepository<ProductVariant>,
+
 		@InjectRepository(ProductVariantPrice)
 		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
+
+		@MikroInjectRepository(ProductVariantPrice)
+		private readonly mikroProductVariantPriceRepository: EntityRepository<ProductVariantPrice>,
 
 		@InjectRepository(ImageAsset)
 		private readonly imageAssetRepository: Repository<ImageAsset>,
 
+		@MikroInjectRepository(ImageAsset)
+		private readonly mikroImageAssetRepository: EntityRepository<ImageAsset>,
+
 		@InjectRepository(Warehouse)
 		private readonly warehouseRepository: Repository<Warehouse>,
+
+		@MikroInjectRepository(Warehouse)
+		private readonly mikroWarehouseRepository: EntityRepository<Warehouse>,
 
 		@InjectRepository(Merchant)
 		private readonly merchantRepository: Repository<Merchant>,
 
+		@MikroInjectRepository(Merchant)
+		private readonly mikroMerchantRepository: EntityRepository<Merchant>,
+
 		@InjectRepository(WarehouseProduct)
 		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
+
+		@MikroInjectRepository(WarehouseProduct)
+		private readonly mikroWarehouseProductRepository: EntityRepository<WarehouseProduct>,
 
 		@InjectRepository(WarehouseProductVariant)
 		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
 
+		@MikroInjectRepository(WarehouseProductVariant)
+		private readonly mikroWarehouseProductVariantRepository: EntityRepository<WarehouseProductVariant>,
+
 		@InjectRepository(Proposal)
 		private readonly proposalRepository: Repository<Proposal>,
+
+		@MikroInjectRepository(Proposal)
+		private readonly mikroProposalRepository: EntityRepository<Proposal>,
 
 		@InjectRepository(Skill)
 		private readonly skillRepository: Repository<Skill>,
 
+		@MikroInjectRepository(Skill)
+		private readonly mikroSkillRepository: EntityRepository<Skill>,
+
 		@InjectRepository(Screenshot)
 		private readonly screenShotRepository: Repository<Screenshot>,
+
+		@MikroInjectRepository(Screenshot)
+		private readonly mikroScreenShotRepository: EntityRepository<Screenshot>,
 
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
 
+		@MikroInjectRepository(RequestApproval)
+		private readonly mikroRequestApprovalRepository: EntityRepository<RequestApproval>,
+
 		@InjectRepository(RequestApprovalEmployee)
 		private readonly requestApprovalEmployeeRepository: Repository<RequestApprovalEmployee>,
+
+		@MikroInjectRepository(RequestApprovalEmployee)
+		private readonly mikroRequestApprovalEmployeeRepository: EntityRepository<RequestApprovalEmployee>,
 
 		@InjectRepository(RequestApprovalTeam)
 		private readonly requestApprovalTeamRepository: Repository<RequestApprovalTeam>,
 
+		@MikroInjectRepository(RequestApprovalTeam)
+		private readonly mikroRequestApprovalTeamRepository: EntityRepository<RequestApprovalTeam>,
+
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
+
+		@MikroInjectRepository(Role)
+		private readonly mikroRoleRepository: EntityRepository<Role>,
 
 		@InjectRepository(RolePermission)
 		private readonly rolePermissionRepository: Repository<RolePermission>,
 
+		@MikroInjectRepository(RolePermission)
+		private readonly mikroRolePermissionRepository: EntityRepository<RolePermission>,
+
 		@InjectRepository(Report)
 		private readonly reportRepository: Repository<Report>,
+
+		@MikroInjectRepository(Report)
+		private readonly mikroReportRepository: EntityRepository<Report>,
 
 		@InjectRepository(ReportCategory)
 		private readonly reportCategoryRepository: Repository<ReportCategory>,
 
+		@MikroInjectRepository(ReportCategory)
+		private readonly mikroReportCategoryRepository: EntityRepository<ReportCategory>,
+
 		@InjectRepository(ReportOrganization)
 		private readonly reportOrganizationRepository: Repository<ReportOrganization>,
+
+		@MikroInjectRepository(ReportOrganization)
+		private readonly mikroReportOrganizationRepository: EntityRepository<ReportOrganization>,
 
 		@InjectRepository(Tag)
 		private readonly tagRepository: Repository<Tag>,
 
+		@MikroInjectRepository(Tag)
+		private readonly mikroTagRepository: EntityRepository<Tag>,
+
 		@InjectRepository(Task)
 		private readonly taskRepository: Repository<Task>,
+
+		@MikroInjectRepository(Task)
+		private readonly mikroTaskRepository: EntityRepository<Task>,
 
 		@InjectRepository(TenantSetting)
 		private readonly tenantSettingRepository: Repository<TenantSetting>,
 
+		@MikroInjectRepository(TenantSetting)
+		private readonly mikroTenantSettingRepository: EntityRepository<TenantSetting>,
+
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
+
+		@MikroInjectRepository(Timesheet)
+		private readonly mikroTimeSheetRepository: EntityRepository<Timesheet>,
 
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
 
+		@MikroInjectRepository(TimeLog)
+		private readonly mikroTimeLogRepository: EntityRepository<TimeLog>,
+
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+
+		@MikroInjectRepository(TimeSlot)
+		private readonly mikroTimeSlotRepository: EntityRepository<TimeSlot>,
 
 		@InjectRepository(TimeSlotMinute)
 		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
 
+		@MikroInjectRepository(TimeSlotMinute)
+		private readonly mikroTimeSlotMinuteRepository: EntityRepository<TimeSlotMinute>,
+
 		@InjectRepository(TimeOffRequest)
 		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+
+		@MikroInjectRepository(TimeOffRequest)
+		private readonly mikroTimeOffRequestRepository: EntityRepository<TimeOffRequest>,
 
 		@InjectRepository(TimeOffPolicy)
 		private readonly timeOffPolicyRepository: Repository<TimeOffPolicy>,
 
+		@MikroInjectRepository(TimeOffPolicy)
+		private readonly mikroTimeOffPolicyRepository: EntityRepository<TimeOffPolicy>,
+
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
 
+		@MikroInjectRepository(User)
+		private readonly mikroUserRepository: EntityRepository<User>,
+
 		@InjectRepository(UserOrganization)
 		private readonly userOrganizationRepository: Repository<UserOrganization>,
+
+		@MikroInjectRepository(UserOrganization)
+		private readonly mikroUserOrganizationRepository: EntityRepository<UserOrganization>,
 
 		@InjectConnection()
 		private readonly dataSource: Connection,

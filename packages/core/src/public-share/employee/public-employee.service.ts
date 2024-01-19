@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
@@ -9,8 +11,10 @@ export class PublicEmployeeService {
 
 	constructor(
 		@InjectRepository(Employee)
-		private readonly repository: Repository<Employee>
-	) {}
+		private readonly repository: Repository<Employee>,
+		@MikroInjectRepository(Employee)
+		private readonly mikroRepository: EntityRepository<Employee>
+	) { }
 
 	/**
 	 * GET all public employees by organization condition

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
@@ -11,8 +13,10 @@ export class PublicInvoiceService {
 
 	constructor(
 		@InjectRepository(Invoice)
-		private readonly repository: Repository<Invoice>
-	) {}
+		private readonly repository: Repository<Invoice>,
+		@MikroInjectRepository(Invoice)
+		private readonly mikroRepository: EntityRepository<Invoice>
+	) { }
 
 	/**
 	 * Find public invoice by token

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,7 +12,9 @@ export class GithubRepositoryIssueService extends TenantAwareCrudService<Organiz
 
     constructor(
         @InjectRepository(OrganizationGithubRepositoryIssue)
-        private readonly organizationGithubRepositoryIssue: Repository<OrganizationGithubRepositoryIssue>
+        private readonly organizationGithubRepositoryIssue: Repository<OrganizationGithubRepositoryIssue>,
+        @MikroInjectRepository(OrganizationGithubRepositoryIssue)
+        private readonly mikroOrganizationGithubRepositoryIssue: EntityRepository<OrganizationGithubRepositoryIssue>
     ) {
         super(organizationGithubRepositoryIssue);
     }

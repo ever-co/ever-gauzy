@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IPagination } from '@gauzy/contracts';
@@ -9,9 +11,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class EventTypeService extends TenantAwareCrudService<EventType> {
 	constructor(
 		@InjectRepository(EventType)
-		private readonly eventTypeRepository: Repository<EventType>
+		private readonly eventTypeRepository: Repository<EventType>,
+		@MikroInjectRepository(EventType)
+		private readonly mikroEventTypeRepository: EntityRepository<EventType>
 	) {
-		super(eventTypeRepository);
+		super(eventTypeRepository, mikroEventTypeRepository);
 	}
 
 	public async findAll(

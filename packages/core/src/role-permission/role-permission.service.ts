@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
@@ -27,10 +29,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	constructor(
 		@InjectRepository(RolePermission)
 		private readonly rolePermissionRepository: Repository<RolePermission>,
+		@MikroInjectRepository(RolePermission)
+		private readonly mikroRolePermissionRepository: EntityRepository<RolePermission>,
 		private readonly roleService: RoleService,
 		private readonly _commandBus: CommandBus
 	) {
-		super(rolePermissionRepository);
+		super(rolePermissionRepository, mikroRolePermissionRepository);
 	}
 
 	/**
@@ -87,7 +91,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 					roleId: In(pluck(roles, 'id')),
 					tenantId
 				}
-			} else if(filter.where && filter.where['roleId']) {
+			} else if (filter.where && filter.where['roleId']) {
 				/**
 				 * If, ADMIN try to retrieve "SUPER_ADMIN" role-permissions via API filter, not allow them.
 				 * Retrieve current user role (ADMIN) all role-permissions.
@@ -289,7 +293,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				/**
 				 * Reject request, if ADMIN try to update permissions for SUPER ADMIN role.
 				 */
-				 if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
+				if (wantToDeletePermissionForRole.name === RolesEnum.SUPER_ADMIN) {
 					throw new NotAcceptableException(
 						'You can not delete SUPER_ADMIN permission, please ask your SUPER_ADMIN to give you more permissions'
 					);

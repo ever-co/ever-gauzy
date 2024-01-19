@@ -1,6 +1,8 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder,  } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, } from 'typeorm';
 import { ICandidateCreateInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Candidate } from './candidate.entity';
@@ -12,9 +14,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class CandidateService extends TenantAwareCrudService<Candidate> {
 	constructor(
 		@InjectRepository(Candidate)
-		private readonly candidateRepository: Repository<Candidate>
+		private readonly candidateRepository: Repository<Candidate>,
+		@MikroInjectRepository(Candidate)
+		private readonly mikroCandidateRepository: EntityRepository<Candidate>
 	) {
-		super(candidateRepository);
+		super(candidateRepository, mikroCandidateRepository);
 	}
 
 	async createBulk(input: ICandidateCreateInput[]) {
@@ -97,17 +101,17 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 									const keywords: string[] = where.user.name.split(' ');
 									keywords.forEach((keyword: string, index: number) => {
 										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:keyword_${index})`), {
-											[`keyword_${index}`]:`%${keyword}%`
+											[`keyword_${index}`]: `%${keyword}%`
 										});
 										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`), {
-											[`${index}_keyword`]:`%${keyword}%`
+											[`${index}_keyword`]: `%${keyword}%`
 										});
 									});
 								}
 								if (isNotEmpty(where.user.email)) {
 									const { email } = where.user;
 									web.orWhere(p(`LOWER("user"."email") like LOWER(:email)`), {
-										email:`%${email}%`
+										email: `%${email}%`
 									});
 								}
 							}

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Repository } from 'typeorm';
 import { Skill } from './skill.entity';
 import { TenantAwareCrudService } from './../core/crud';
@@ -9,9 +11,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class SkillService extends TenantAwareCrudService<Skill> {
 	constructor(
 		@InjectRepository(Skill)
-		private readonly skillRepository: Repository<Skill>
+		private readonly skillRepository: Repository<Skill>,
+		@MikroInjectRepository(Skill)
+		private readonly mikroSkillRepository: EntityRepository<Skill>
 	) {
-		super(skillRepository);
+		super(skillRepository, mikroSkillRepository);
 	}
 
 	async findOneByName(name: string): Promise<Skill> {

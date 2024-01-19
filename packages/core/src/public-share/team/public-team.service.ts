@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	IDateRangePicker,
 	IOrganizationTeam,
@@ -18,6 +20,8 @@ export class PublicTeamService {
 	constructor(
 		@InjectRepository(OrganizationTeam)
 		private readonly repository: Repository<OrganizationTeam>,
+		@MikroInjectRepository(OrganizationTeam)
+		private readonly mikroRepository: EntityRepository<OrganizationTeam>,
 
 		private readonly _statisticService: StatisticService,
 		private readonly _timerService: TimerService

@@ -427,7 +427,16 @@ export abstract class CrudService<T extends BaseEntity>
 		let record: T;
 		switch (ormType) {
 			case 'mikro-orm':
-				record = await this.mikroRepository.findOne(options.where as MikroFilterQuery<T>, options as MikroFindOneOptions<T>);
+				const mikroOptions = options as any;
+				const mikroFilterQuery: MikroFilterQuery<T> = options.where as any;
+				const mikroFindOneOptions: MikroFindOneOptions<T> = {
+					populate: mikroOptions.relations,
+					orderBy: mikroOptions.order,
+					...mikroOptions
+				};
+				console.log('findOneByOptions', mikroFilterQuery, mikroFindOneOptions)
+
+				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
 
 			default:
 				record = await this.repository.findOne(options as FindOneOptions<T>);

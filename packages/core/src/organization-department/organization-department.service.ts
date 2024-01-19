@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
@@ -8,9 +10,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class OrganizationDepartmentService extends TenantAwareCrudService<OrganizationDepartment> {
 	constructor(
 		@InjectRepository(OrganizationDepartment)
-		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>
+		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
+		@MikroInjectRepository(OrganizationDepartment)
+		private readonly mikroOrganizationDepartmentRepository: EntityRepository<OrganizationDepartment>
 	) {
-		super(organizationDepartmentRepository);
+		super(organizationDepartmentRepository, mikroOrganizationDepartmentRepository);
 	}
 
 	async findByEmployee(id: string): Promise<any> {
@@ -29,12 +33,12 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 				filter.where.name = Like(`%${name}%`);
 			}
 			if ('tags' in where) {
-				const { tags } = where; 
+				const { tags } = where;
 				filter.where.tags = {
 					id: In(tags)
 				}
 			}
-		}		
+		}
 		return super.paginate(filter);
 	}
 }

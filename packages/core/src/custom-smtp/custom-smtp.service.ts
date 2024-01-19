@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
@@ -11,9 +13,11 @@ import { CustomSmtp } from './custom-smtp.entity';
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	constructor(
 		@InjectRepository(CustomSmtp)
-		protected readonly customSmtpRepository: Repository<CustomSmtp>
+		protected readonly customSmtpRepository: Repository<CustomSmtp>,
+		@MikroInjectRepository(CustomSmtp)
+		protected readonly mikroCustomSmtpRepository: EntityRepository<CustomSmtp>
 	) {
-		super(customSmtpRepository);
+		super(customSmtpRepository, mikroCustomSmtpRepository);
 	}
 
 	/**

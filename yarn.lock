@@ -6844,21 +6844,12 @@
     knex "3.1.0"
     sqlstring "2.3.3"
 
-"@mikro-orm/knex@6.0.2":
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.0.2.tgz#48e383b8323d8032ecc6844ddd4a4c994b0e562a"
-  integrity sha512-OrW0JriZuo5o3AwjHDR4MP5RHoYuYNoluxXXLBBhfG/QhOiFJGt5TZRvygRwwkUVTATyrd386rB90y7wIOk07A==
+"@mikro-orm/mysql@6.0.1":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/mysql/-/mysql-6.0.1.tgz#62f6425df8072b8aa93f18ae9fb5beb6067985d4"
+  integrity sha512-rmMudiU+JQIhSZ9sl3JkZ4eJJiX99/A/76eL4HnY7qVZSrUb/TS8TkGT8XvblmE6WJLdIFN1ZDlbx9tLszKyiw==
   dependencies:
-    fs-extra "11.2.0"
-    knex "3.1.0"
-    sqlstring "2.3.3"
-
-"@mikro-orm/mysql@^6.0.2":
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/mysql/-/mysql-6.0.2.tgz#d4d27b4541784d9d5e161bb56c81fec06ea5762f"
-  integrity sha512-tGG1gRl6bdeoonZCponeGtkijE1fJxrF/khDbwz5vtjPGYvcLBnqKM1Ce6mCWi34e3hcgIq9MNI47sy7lnNLnQ==
-  dependencies:
-    "@mikro-orm/knex" "6.0.2"
+    "@mikro-orm/knex" "6.0.1"
     mysql2 "3.7.0"
 
 "@mikro-orm/nestjs@^5.2.3":

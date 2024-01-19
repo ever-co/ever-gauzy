@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
 	HttpStatus,
@@ -36,6 +38,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	constructor(
 		@InjectRepository(EmailReset)
 		private readonly _emailResetRepository: Repository<EmailReset>,
+		@MikroInjectRepository(EmailReset)
+		private readonly mikro_emailResetRepository: EntityRepository<EmailReset>,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
@@ -43,7 +47,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		private readonly employeeService: EmployeeService,
 		private readonly authService: AuthService
 	) {
-		super(_emailResetRepository);
+		super(_emailResetRepository, mikro_emailResetRepository);
 	}
 
 	async requestChangeEmail(

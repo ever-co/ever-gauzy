@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as nodemailer from 'nodemailer';
@@ -34,8 +36,11 @@ export class EmailService {
 
 	constructor(
 		@InjectRepository(EmailHistory) private readonly emailHistoryRepository: Repository<EmailHistory>,
+		@MikroInjectRepository(EmailHistory) private readonly mikroEmailHistoryRepository: EntityRepository<EmailHistory>,
 		@InjectRepository(EmailTemplate) private readonly emailTemplateRepository: Repository<EmailTemplate>,
+		@MikroInjectRepository(EmailTemplate) private readonly mikroEmailTemplateRepository: EntityRepository<EmailTemplate>,
 		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+		@MikroInjectRepository(Organization) private readonly mikroOrganizationRepository: EntityRepository<Organization>,
 		private readonly _emailSendService: EmailSendService
 	) { }
 

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,9 +10,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class KeyResultService extends TenantAwareCrudService<KeyResult> {
 	constructor(
 		@InjectRepository(KeyResult)
-		private readonly keyResultRepository: Repository<KeyResult>
+		private readonly keyResultRepository: Repository<KeyResult>,
+		@MikroInjectRepository(KeyResult)
+		private readonly mikroKeyResultRepository: EntityRepository<KeyResult>
 	) {
-		super(keyResultRepository);
+		super(keyResultRepository, mikroKeyResultRepository);
 	}
 
 	async createBulk(input: KeyResult[]) {

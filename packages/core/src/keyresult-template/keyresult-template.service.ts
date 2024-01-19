@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { KeyResultTemplate } from './keyresult-template.entity';
@@ -8,8 +10,10 @@ import { Repository } from 'typeorm';
 export class KeyresultTemplateService extends TenantAwareCrudService<KeyResultTemplate> {
 	constructor(
 		@InjectRepository(KeyResultTemplate)
-		private readonly keyResultTemplateRepository: Repository<KeyResultTemplate>
+		private readonly keyResultTemplateRepository: Repository<KeyResultTemplate>,
+		@MikroInjectRepository(KeyResultTemplate)
+		private readonly mikroKeyResultTemplateRepository: EntityRepository<KeyResultTemplate>
 	) {
-		super(keyResultTemplateRepository);
+		super(keyResultTemplateRepository, mikroKeyResultTemplateRepository);
 	}
 }

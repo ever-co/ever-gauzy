@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,9 +11,11 @@ import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
 		@InjectRepository(EmployeeProposalTemplate)
-		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>
+		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
+		@MikroInjectRepository(EmployeeProposalTemplate)
+		private readonly mikroEmployeeProposalTemplateRepository: EntityRepository<EmployeeProposalTemplate>
 	) {
-		super(employeeProposalTemplateRepository);
+		super(employeeProposalTemplateRepository, mikroEmployeeProposalTemplateRepository);
 	}
 
 	async makeDefault(

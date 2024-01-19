@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -13,9 +15,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class EmailTemplateService extends CrudService<EmailTemplate> {
 	constructor(
 		@InjectRepository(EmailTemplate)
-		private readonly emailRepository: Repository<EmailTemplate>
+		private readonly emailRepository: Repository<EmailTemplate>,
+		@MikroInjectRepository(EmailTemplate)
+		private readonly mikroEmailRepository: EntityRepository<EmailTemplate>
 	) {
-		super(emailRepository);
+		super(emailRepository, mikroEmailRepository);
 	}
 
 	/**

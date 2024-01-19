@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,7 +10,9 @@ import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 export class EmployeeRecurringExpenseService extends TenantAwareCrudService<EmployeeRecurringExpense> {
 	constructor(
 		@InjectRepository(EmployeeRecurringExpense)
-		private readonly employeeRecurringExpense: Repository<EmployeeRecurringExpense>
+		private readonly employeeRecurringExpense: Repository<EmployeeRecurringExpense>,
+		@MikroInjectRepository(EmployeeRecurringExpense)
+		private readonly mikroEmployeeRecurringExpense: EntityRepository<EmployeeRecurringExpense>
 	) {
 		super(employeeRecurringExpense);
 	}

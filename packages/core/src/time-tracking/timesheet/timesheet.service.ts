@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
@@ -19,8 +21,10 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
 		private readonly timeSheetRepository: Repository<Timesheet>,
+		@MikroInjectRepository(Timesheet)
+		private readonly mikroTimeSheetRepository: EntityRepository<Timesheet>,
 	) {
-		super(timeSheetRepository);
+		super(timeSheetRepository, mikroTimeSheetRepository);
 	}
 
 	/**

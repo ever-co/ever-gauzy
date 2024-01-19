@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Raw, Repository, WhereExpressionBuilder } from 'typeorm';
@@ -12,9 +14,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>
+		private readonly organizationContactRepository: Repository<OrganizationContact>,
+		@MikroInjectRepository(OrganizationContact)
+		private readonly mikroOrganizationContactRepository: EntityRepository<OrganizationContact>
 	) {
-		super(organizationContactRepository);
+		super(organizationContactRepository, mikroOrganizationContactRepository);
 	}
 
 	/**

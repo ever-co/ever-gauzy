@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { DeleteResult, Repository } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,9 +20,11 @@ import { DEFAULT_GLOBAL_VERSIONS } from './default-global-versions';
 export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersion> {
 	constructor(
 		@InjectRepository(TaskVersion)
-		protected readonly taskVersionsRepository: Repository<TaskVersion>
+		protected readonly taskVersionsRepository: Repository<TaskVersion>,
+		@MikroInjectRepository(TaskVersion)
+		protected readonly mikroTaskVersionsRepository: EntityRepository<TaskVersion>
 	) {
-		super(taskVersionsRepository);
+		super(taskVersionsRepository, mikroTaskVersionsRepository);
 	}
 
 	/**

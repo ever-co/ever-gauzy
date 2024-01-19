@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, Raw } from 'typeorm';
@@ -10,9 +12,11 @@ import { TenantAwareCrudService } from './../core/crud';
 export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
-		private readonly proposalRepository: Repository<Proposal>
+		private readonly proposalRepository: Repository<Proposal>,
+		@MikroInjectRepository(Proposal)
+		private readonly mikroProposalRepository: EntityRepository<Proposal>
 	) {
-		super(proposalRepository);
+		super(proposalRepository, mikroProposalRepository);
 	}
 
 	async getAllProposals(

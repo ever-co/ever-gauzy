@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,7 +13,9 @@ import { IHelpCenterArticleUpdate } from '@gauzy/contracts';
 export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
 	constructor(
 		@InjectRepository(HelpCenterArticle)
-		private readonly helpCenterArticle: Repository<HelpCenterArticle>
+		private readonly helpCenterArticle: Repository<HelpCenterArticle>,
+		@MikroInjectRepository(HelpCenterArticle)
+		private readonly mikroHelpCenterArticle: EntityRepository<HelpCenterArticle>
 	) {
 		super(helpCenterArticle);
 	}

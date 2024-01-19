@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -10,9 +12,11 @@ import { OrganizationTaskSetting } from './organization-task-setting.entity';
 export class OrganizationTaskSettingService extends TenantAwareCrudService<OrganizationTaskSetting> {
     constructor(
         @InjectRepository(OrganizationTaskSetting)
-        private readonly organizationTaskSettingRepository: Repository<OrganizationTaskSetting>
+        private readonly organizationTaskSettingRepository: Repository<OrganizationTaskSetting>,
+        @MikroInjectRepository(OrganizationTaskSetting)
+        private readonly mikroOrganizationTaskSettingRepository: EntityRepository<OrganizationTaskSetting>
     ) {
-        super(organizationTaskSettingRepository);
+        super(organizationTaskSettingRepository, mikroOrganizationTaskSettingRepository);
     }
 
     /**

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,9 +13,11 @@ import { TenantAwareCrudService } from './../../core/crud';
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
 	constructor(
 		@InjectRepository(TenantSetting)
-		private readonly tenantSettingRepository: Repository<TenantSetting>
+		private readonly tenantSettingRepository: Repository<TenantSetting>,
+		@MikroInjectRepository(TenantSetting)
+		private readonly mikroTenantSettingRepository: EntityRepository<TenantSetting>
 	) {
-		super(tenantSettingRepository);
+		super(tenantSettingRepository, mikroTenantSettingRepository);
 	}
 
 	async get(request?: FindManyOptions) {

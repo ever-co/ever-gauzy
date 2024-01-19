@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,17 +29,25 @@ export class TenantService extends CrudService<Tenant> {
 	constructor(
 		@InjectRepository(Tenant)
 		private readonly tenantRepository: Repository<Tenant>,
+		@MikroInjectRepository(Tenant)
+		private readonly mikroTenantRepository: EntityRepository<Tenant>,
 
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
 
+		@MikroInjectRepository(User)
+		private readonly mikroUserRepository: EntityRepository<User>,
+
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
+
+		@MikroInjectRepository(Role)
+		private readonly mikroRoleRepository: EntityRepository<Role>,
 
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {
-		super(tenantRepository);
+		super(tenantRepository, mikroTenantRepository);
 	}
 
 	public async onboardTenant(

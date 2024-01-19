@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	BadRequestException,
@@ -36,14 +38,22 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	constructor(
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
+		@MikroInjectRepository(RequestApproval)
+		private readonly mikroRequestApprovalRepository: EntityRepository<RequestApproval>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+
 		@InjectRepository(OrganizationTeam)
-		private readonly organizationTeamRepository: Repository<OrganizationTeam>
+		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
+
+		@MikroInjectRepository(OrganizationTeam)
+		private readonly mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>
 	) {
-		super(requestApprovalRepository);
+		super(requestApprovalRepository, mikroRequestApprovalRepository);
 	}
 
 	async findAllRequestApprovals(

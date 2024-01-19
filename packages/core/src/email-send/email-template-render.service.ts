@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { IsNull, Repository } from "typeorm";
@@ -13,9 +15,14 @@ export class EmailTemplateRenderService {
     constructor(
         @InjectRepository(EmailTemplate)
         protected readonly emailTemplateRepository: Repository<EmailTemplate>,
+        @MikroInjectRepository(EmailTemplate)
+        protected readonly mikroEmailTemplateRepository: EntityRepository<EmailTemplate>,
 
         @InjectRepository(CustomSmtp)
         protected readonly customSmtpRepository: Repository<CustomSmtp>,
+
+        @MikroInjectRepository(CustomSmtp)
+        protected readonly mikroCustomSmtpRepository: EntityRepository<CustomSmtp>,
     ) { }
 
     /**

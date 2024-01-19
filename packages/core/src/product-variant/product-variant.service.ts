@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Repository } from 'typeorm';
 import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
@@ -9,9 +11,11 @@ import { ProductVariant } from './product-variant.entity';
 export class ProductVariantService extends TenantAwareCrudService<ProductVariant> {
 	constructor(
 		@InjectRepository(ProductVariant)
-		private readonly productVariantRepository: Repository<ProductVariant>
+		private readonly productVariantRepository: Repository<ProductVariant>,
+		@MikroInjectRepository(ProductVariant)
+		private readonly mikroProductVariantRepository: EntityRepository<ProductVariant>
 	) {
-		super(productVariantRepository);
+		super(productVariantRepository, mikroProductVariantRepository);
 	}
 
 	async findAllProductVariants(): Promise<IPagination<IProductVariant>> {
@@ -27,7 +31,7 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		const total = await this.productVariantRepository.count();
 		const items = await this.productVariantRepository.find({
 			relations: ['image'],
-			where: {'productId' : productId}
+			where: { 'productId': productId }
 		});
 
 		return { items, total };

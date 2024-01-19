@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	BadRequestException,
 	ConflictException,
@@ -43,6 +45,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	constructor(
 		@InjectRepository(OrganizationTeamJoinRequest)
 		private readonly _organizationTeamJoinRequestRepository: Repository<OrganizationTeamJoinRequest>,
+		@MikroInjectRepository(OrganizationTeamJoinRequest)
+		private readonly mikro_organizationTeamJoinRequestRepository: EntityRepository<OrganizationTeamJoinRequest>,
 
 		private readonly _organizationTeamService: OrganizationTeamService,
 		private readonly _emailService: EmailService,
@@ -52,10 +56,16 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		@InjectRepository(User)
 		protected readonly userRepository: Repository<User>,
 
+		@MikroInjectRepository(User)
+		protected readonly mikroUserRepository: EntityRepository<User>,
+
 		@InjectRepository(OrganizationTeamEmployee)
-		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>
+		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
+
+		@MikroInjectRepository(OrganizationTeamEmployee)
+		protected readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>
 	) {
-		super(_organizationTeamJoinRequestRepository);
+		super(_organizationTeamJoinRequestRepository, mikro_organizationTeamJoinRequestRepository);
 	}
 
 	/**

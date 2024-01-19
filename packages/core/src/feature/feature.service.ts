@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
@@ -14,9 +16,11 @@ import { CrudService } from '../core/crud/crud.service';
 export class FeatureService extends CrudService<Feature> {
 	constructor(
 		@InjectRepository(Feature)
-		public readonly featureRepository: Repository<Feature>
+		public readonly featureRepository: Repository<Feature>,
+		@MikroInjectRepository(Feature)
+		public readonly mikroFeatureRepository: EntityRepository<Feature>
 	) {
-		super(featureRepository);
+		super(featureRepository, mikroFeatureRepository);
 	}
 
 	async getParentFeatures(relations: string[] = []): Promise<IPagination<IFeature>> {

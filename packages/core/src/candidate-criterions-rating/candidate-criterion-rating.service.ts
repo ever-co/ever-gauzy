@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,9 +14,11 @@ import {
 export class CandidateCriterionsRatingService extends TenantAwareCrudService<CandidateCriterionsRating> {
 	constructor(
 		@InjectRepository(CandidateCriterionsRating)
-		private readonly candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>
+		private readonly candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>,
+		@MikroInjectRepository(CandidateCriterionsRating)
+		private readonly mikroCandidateCriterionsRatingRepository: EntityRepository<CandidateCriterionsRating>
 	) {
-		super(candidateCriterionsRatingRepository);
+		super(candidateCriterionsRatingRepository, mikroCandidateCriterionsRatingRepository);
 	}
 
 	async createBulk(
@@ -37,7 +41,7 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 			})
 			.getMany();
 	}
-	
+
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
 	}

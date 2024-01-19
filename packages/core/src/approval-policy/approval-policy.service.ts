@@ -12,14 +12,18 @@ import {
 import { ApprovalPolicy } from './approval-policy.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { EntityRepository } from '@mikro-orm/core';
+import { MikroInjectRepository } from '@gauzy/common';
 
 @Injectable()
 export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy> {
 	constructor(
 		@InjectRepository(ApprovalPolicy)
-		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>
+		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>,
+		@MikroInjectRepository(ApprovalPolicy)
+		private readonly mikroApprovalPolicyRepository: EntityRepository<ApprovalPolicy>
 	) {
-		super(approvalPolicyRepository);
+		super(approvalPolicyRepository, mikroApprovalPolicyRepository);
 	}
 
 	/**

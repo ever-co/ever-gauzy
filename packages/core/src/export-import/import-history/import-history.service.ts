@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -11,8 +13,10 @@ export class ImportHistoryService extends TenantAwareCrudService<ImportHistory> 
 	constructor(
 		@InjectRepository(ImportHistory)
 		private readonly importHistoryRepository: Repository<ImportHistory>,
+		@MikroInjectRepository(ImportHistory)
+		private readonly mikroImportHistoryRepository: EntityRepository<ImportHistory>,
 	) {
-		super(importHistoryRepository);
+		super(importHistoryRepository, mikroImportHistoryRepository);
 	}
 
 	/**

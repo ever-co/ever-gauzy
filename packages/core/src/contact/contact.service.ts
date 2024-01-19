@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -9,9 +11,11 @@ import { IContactCreateInput } from '@gauzy/contracts';
 export class ContactService extends TenantAwareCrudService<Contact> {
 	constructor(
 		@InjectRepository(Contact)
-		private readonly contactRepository: Repository<Contact>
+		private readonly contactRepository: Repository<Contact>,
+		@MikroInjectRepository(Contact)
+		private readonly mikroContactRepository: EntityRepository<Contact>
 	) {
-		super(contactRepository);
+		super(contactRepository, mikroContactRepository);
 	}
 
 	async saveContact(contactRequest: IContactCreateInput): Promise<Contact> {

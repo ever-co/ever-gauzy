@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
@@ -13,10 +15,12 @@ export class RoleService extends TenantAwareCrudService<Role> {
 	constructor(
 		@InjectRepository(Role)
 		private readonly roleRepository: Repository<Role>,
+		@MikroInjectRepository(Role)
+		private readonly mikroRoleRepository: EntityRepository<Role>,
 
 		private readonly _commandBus: CommandBus
 	) {
-		super(roleRepository);
+		super(roleRepository, mikroRoleRepository);
 	}
 
 	async createBulk(tenants: ITenant[]): Promise<IRole[] & Role[]> {

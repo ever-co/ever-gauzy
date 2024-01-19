@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -10,9 +12,11 @@ import { HelpCenter } from './help-center.entity';
 export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	constructor(
 		@InjectRepository(HelpCenter)
-		private readonly helpCenterRepository: Repository<HelpCenter>
+		private readonly helpCenterRepository: Repository<HelpCenter>,
+		@MikroInjectRepository(HelpCenter)
+		private readonly mikroHelpCenterRepository: EntityRepository<HelpCenter>
 	) {
-		super(helpCenterRepository);
+		super(helpCenterRepository, mikroHelpCenterRepository);
 	}
 
 	async updateBulk(updateInput: IHelpCenter[]) {

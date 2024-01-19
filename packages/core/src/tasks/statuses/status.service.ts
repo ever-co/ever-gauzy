@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -22,9 +24,11 @@ import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
 	constructor(
 		@InjectRepository(TaskStatus)
-		protected readonly taskStatusRepository: Repository<TaskStatus>
+		protected readonly taskStatusRepository: Repository<TaskStatus>,
+		@MikroInjectRepository(TaskStatus)
+		protected readonly mikroTaskStatusRepository: EntityRepository<TaskStatus>
 	) {
-		super(taskStatusRepository);
+		super(taskStatusRepository, mikroTaskStatusRepository);
 	}
 
 	/**

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
@@ -14,10 +16,12 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	constructor(
 		@InjectRepository(Screenshot)
 		protected readonly screenshotRepository: Repository<Screenshot>,
+		@MikroInjectRepository(Screenshot)
+		protected readonly mikroScreenshotRepository: EntityRepository<Screenshot>,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _gauzyAIService: GauzyAIService
 	) {
-		super(screenshotRepository);
+		super(screenshotRepository, mikroScreenshotRepository);
 	}
 
 	/**

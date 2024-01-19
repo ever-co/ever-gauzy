@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
@@ -15,14 +17,22 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	constructor(
 		@InjectRepository(EstimateEmail)
 		private readonly estimateEmailRepository: Repository<EstimateEmail>,
+		@MikroInjectRepository(EstimateEmail)
+		private readonly mikroEstimateEmailRepository: EntityRepository<EstimateEmail>,
 
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,
 
+		@MikroInjectRepository(Invoice)
+		private readonly mikroInvoiceRepository: EntityRepository<Invoice>,
+
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>
+		private readonly organizationRepository: Repository<Organization>,
+
+		@MikroInjectRepository(Organization)
+		private readonly mikroOrganizationRepository: EntityRepository<Organization>
 	) {
-		super(estimateEmailRepository);
+		super(estimateEmailRepository, mikroEstimateEmailRepository);
 	}
 
 	async createEstimateEmail(

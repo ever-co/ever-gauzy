@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -26,16 +28,24 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
+		@MikroInjectRepository(Activity)
+		private readonly mikroActivityRepository: EntityRepository<Activity>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+
 		@InjectRepository(OrganizationProject)
 		private readonly organizationProjectRepository: Repository<OrganizationProject>,
 
+		@MikroInjectRepository(OrganizationProject)
+		private readonly mikroOrganizationProjectRepository: EntityRepository<OrganizationProject>,
+
 		private readonly commandBus: CommandBus
 	) {
-		super(activityRepository);
+		super(activityRepository, mikroActivityRepository);
 	}
 
 	async getDailyActivities(

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
@@ -20,9 +22,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		protected readonly employeeRepository: Repository<Employee>
+		protected readonly employeeRepository: Repository<Employee>,
+		@MikroInjectRepository(Employee)
+		protected readonly mikroEmployeeRepository: EntityRepository<Employee>
 	) {
-		super(employeeRepository);
+		super(employeeRepository, mikroEmployeeRepository);
 	}
 
 	public async findAllActive(): Promise<Employee[]> {

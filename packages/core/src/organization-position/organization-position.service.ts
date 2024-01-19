@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,8 +10,10 @@ import { OrganizationPosition } from './organization-position.entity';
 export class OrganizationPositionService extends TenantAwareCrudService<OrganizationPosition> {
 	constructor(
 		@InjectRepository(OrganizationPosition)
-		private readonly organizationPositionRepository: Repository<OrganizationPosition>
+		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
+		@MikroInjectRepository(OrganizationPosition)
+		private readonly mikroOrganizationPositionRepository: EntityRepository<OrganizationPosition>
 	) {
-		super(organizationPositionRepository);
+		super(organizationPositionRepository, mikroOrganizationPositionRepository);
 	}
 }

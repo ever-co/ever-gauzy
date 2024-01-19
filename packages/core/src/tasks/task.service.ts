@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -27,9 +29,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
-		private readonly taskRepository: Repository<Task>
+		private readonly taskRepository: Repository<Task>,
+		@MikroInjectRepository(Task)
+		private readonly mikroTaskRepository: EntityRepository<Task>
 	) {
-		super(taskRepository);
+		super(taskRepository, mikroTaskRepository);
 	}
 
 	/**

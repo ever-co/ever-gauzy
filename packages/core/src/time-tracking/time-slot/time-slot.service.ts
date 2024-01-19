@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
@@ -26,10 +28,12 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+		@MikroInjectRepository(TimeSlot)
+		private readonly mikroTimeSlotRepository: EntityRepository<TimeSlot>,
 
 		private readonly commandBus: CommandBus
 	) {
-		super(timeSlotRepository);
+		super(timeSlotRepository, mikroTimeSlotRepository);
 	}
 
 	/**

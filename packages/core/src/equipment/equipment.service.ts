@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { Repository, Like } from 'typeorm';
@@ -10,9 +12,11 @@ import { isNotEmpty } from '@gauzy/common';
 export class EquipmentService extends TenantAwareCrudService<Equipment> {
 	constructor(
 		@InjectRepository(Equipment)
-		private readonly equipmentRepository: Repository<Equipment>
+		private readonly equipmentRepository: Repository<Equipment>,
+		@MikroInjectRepository(Equipment)
+		private readonly mikroEquipmentRepository: EntityRepository<Equipment>
 	) {
-		super(equipmentRepository);
+		super(equipmentRepository, mikroEquipmentRepository);
 	}
 
 	async getAll(): Promise<IPagination<Equipment>> {
@@ -25,8 +29,8 @@ export class EquipmentService extends TenantAwareCrudService<Equipment> {
 		if ('where' in filter) {
 			const { where } = filter;
 			['name', 'type', 'serialNumber'].forEach((param) => {
-        if (param in where) {
-          const value = where[param];
+				if (param in where) {
+					const value = where[param];
 					if (isNotEmpty(value)) filter.where[param] = Like(`%${value}%`);
 				}
 			});

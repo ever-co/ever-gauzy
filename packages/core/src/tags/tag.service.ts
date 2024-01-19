@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Brackets, FindOptionsRelations, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,9 +16,11 @@ export class TagService extends TenantAwareCrudService<Tag> {
 
 	constructor(
 		@InjectRepository(Tag)
-		private readonly tagRepository: Repository<Tag>
+		private readonly tagRepository: Repository<Tag>,
+		@MikroInjectRepository(Tag)
+		private readonly mikroTagRepository: EntityRepository<Tag>
 	) {
-		super(tagRepository);
+		super(tagRepository, mikroTagRepository);
 	}
 
 	/**

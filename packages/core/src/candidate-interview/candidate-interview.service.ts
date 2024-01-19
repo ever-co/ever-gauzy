@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { ICandidate, ICandidateInterview } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,9 +13,11 @@ export class CandidateInterviewService extends TenantAwareCrudService<CandidateI
 
 	constructor(
 		@InjectRepository(CandidateInterview)
-		protected readonly candidateInterviewRepository: Repository<CandidateInterview>
+		protected readonly candidateInterviewRepository: Repository<CandidateInterview>,
+		@MikroInjectRepository(CandidateInterview)
+		protected readonly mikroCandidateInterviewRepository: EntityRepository<CandidateInterview>
 	) {
-		super(candidateInterviewRepository);
+		super(candidateInterviewRepository, mikroCandidateInterviewRepository);
 	}
 
 	async findByCandidateId(candidateId: ICandidate['id']): Promise<ICandidateInterview[]> {

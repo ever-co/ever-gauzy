@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	NotFoundException,
@@ -37,7 +39,9 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class TimerService {
 	constructor(
 		@InjectRepository(TimeLog) private readonly timeLogRepository: Repository<TimeLog>,
+		@MikroInjectRepository(TimeLog) private readonly mikroTimeLogRepository: EntityRepository<TimeLog>,
 		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
+		@MikroInjectRepository(Employee) private readonly mikroEmployeeRepository: EntityRepository<Employee>,
 		private readonly commandBus: CommandBus
 	) { }
 

@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,9 +14,11 @@ import {
 export class CandidateInterviewersService extends TenantAwareCrudService<CandidateInterviewers> {
 	constructor(
 		@InjectRepository(CandidateInterviewers)
-		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>
+		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
+		@MikroInjectRepository(CandidateInterviewers)
+		private readonly mikroCandidateInterviewersRepository: EntityRepository<CandidateInterviewers>
 	) {
-		super(candidateInterviewersRepository);
+		super(candidateInterviewersRepository, mikroCandidateInterviewersRepository);
 	}
 
 	async getInterviewersByInterviewId(

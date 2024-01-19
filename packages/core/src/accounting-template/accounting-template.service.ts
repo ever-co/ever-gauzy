@@ -4,19 +4,22 @@ import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilde
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import { AccountingTemplateTypeEnum, IAccountingTemplate, IAccountingTemplateFindInput, IAccountingTemplateUpdateInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { MikroInjectRepository, isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from '@gauzy/config';
+import { EntityRepository } from '@mikro-orm/core';
 
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
-		private readonly accountingRepository: Repository<AccountingTemplate>
+		private readonly accountingRepository: Repository<AccountingTemplate>,
+		@MikroInjectRepository(AccountingTemplate)
+		private readonly mikroAccountingRepository: EntityRepository<AccountingTemplate>
 	) {
-		super(accountingRepository);
+		super(accountingRepository, mikroAccountingRepository);
 	}
 
 	generatePreview(input) {
@@ -25,7 +28,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		try {
 			const mjmlTohtml = mjml2html(data);
 			textToHtml = mjmlTohtml.errors.length ? data : mjmlTohtml.html;
-		} catch (error) {}
+		} catch (error) { }
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 

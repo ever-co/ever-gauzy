@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -38,15 +40,26 @@ export class StatisticService {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
+		@MikroInjectRepository(TimeSlot)
+		private readonly mikroTimeSlotRepository: EntityRepository<TimeSlot>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
 
+		@MikroInjectRepository(Employee)
+		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+
 		@InjectRepository(Activity)
 		private readonly activityRepository: Repository<Activity>,
 
+		@MikroInjectRepository(Activity)
+		private readonly mikroActivityRepository: EntityRepository<Activity>,
+
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
+
+		@MikroInjectRepository(TimeLog)
+		private readonly mikroTimeLogRepository: EntityRepository<TimeLog>,
 
 		private readonly configService: ConfigService
 	) { }

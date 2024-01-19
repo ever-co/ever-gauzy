@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,9 +11,11 @@ import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 export class EquipmentSharingPolicyService extends TenantAwareCrudService<EquipmentSharingPolicy> {
 	constructor(
 		@InjectRepository(EquipmentSharingPolicy)
-		private readonly equipmentSharingRepository: Repository<EquipmentSharingPolicy>
+		private readonly equipmentSharingRepository: Repository<EquipmentSharingPolicy>,
+		@MikroInjectRepository(EquipmentSharingPolicy)
+		private readonly mikroEquipmentSharingRepository: EntityRepository<EquipmentSharingPolicy>
 	) {
-		super(equipmentSharingRepository);
+		super(equipmentSharingRepository, mikroEquipmentSharingRepository);
 	}
 
 	async create(

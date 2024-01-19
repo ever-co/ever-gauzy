@@ -15,23 +15,36 @@ import {
 	Product,
 	Warehouse
 } from './../core/entities/internal';
+import { EntityRepository } from '@mikro-orm/core';
+import { MikroInjectRepository } from '@gauzy/common';
 
 @Injectable()
 export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {
 	constructor(
 		@InjectRepository(Warehouse)
 		private readonly warehouseRepository: Repository<Warehouse>,
+		@MikroInjectRepository(Warehouse)
+		private readonly mikroWarehouseRepository: EntityRepository<Warehouse>,
 
 		@InjectRepository(WarehouseProduct)
 		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
 
+		@MikroInjectRepository(WarehouseProduct)
+		private readonly mikroWarehouseProductRepository: EntityRepository<WarehouseProduct>,
+
 		@InjectRepository(WarehouseProductVariant)
 		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
 
+		@MikroInjectRepository(WarehouseProductVariant)
+		private readonly mikroWarehouseProductVariantRepository: EntityRepository<WarehouseProductVariant>,
+
 		@InjectRepository(Product)
-		private readonly productRespository: Repository<Product>
+		private readonly productRespository: Repository<Product>,
+
+		@InjectRepository(Product)
+		private readonly mikroProductRespository: EntityRepository<Product>
 	) {
-		super(warehouseProductRepository);
+		super(warehouseProductRepository, mikroWarehouseProductRepository);
 	}
 
 	async getAllWarehouseProducts(warehouseId: string): Promise<IWarehouseProduct[]> {

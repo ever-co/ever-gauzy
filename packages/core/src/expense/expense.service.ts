@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
@@ -15,9 +17,11 @@ import { prepareSQLQuery as p } from '@gauzy/config';
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		private readonly expenseRepository: Repository<Expense>
+		private readonly expenseRepository: Repository<Expense>,
+		@MikroInjectRepository(Expense)
+		private readonly mikroExpenseRepository: EntityRepository<Expense>
 	) {
-		super(expenseRepository);
+		super(expenseRepository, mikroExpenseRepository);
 	}
 
 	public async findAllExpenses(

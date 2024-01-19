@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { ConfigService, environment } from '@gauzy/config';
 import {
 	ICreateEmailInvitesInput,
@@ -72,12 +74,20 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
 		@InjectRepository(Invite)
 		protected readonly inviteRepository: Repository<Invite>,
+		@MikroInjectRepository(Invite)
+		protected readonly mikroInviteRepository: EntityRepository<Invite>,
 		@InjectRepository(User)
 		protected readonly userRepository: Repository<User>,
+		@MikroInjectRepository(User)
+		protected readonly mikroUserRepository: EntityRepository<User>,
 		@InjectRepository(Employee)
 		protected readonly employeeRepository: Repository<Employee>,
+		@MikroInjectRepository(Employee)
+		protected readonly mikroEmployeeRepository: EntityRepository<Employee>,
 		@InjectRepository(OrganizationTeamEmployee)
 		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
+		@MikroInjectRepository(OrganizationTeamEmployee)
+		protected readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
 
 		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
@@ -92,7 +102,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		private readonly commandBus: CommandBus,
 		private readonly userOrganizationService: UserOrganizationService
 	) {
-		super(inviteRepository);
+		super(inviteRepository, mikroInviteRepository);
 	}
 
 	/**

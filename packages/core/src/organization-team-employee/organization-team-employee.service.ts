@@ -1,3 +1,5 @@
+import { MikroInjectRepository } from '@gauzy/common';
+import { EntityRepository } from '@mikro-orm/core';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository, UpdateResult } from 'typeorm';
@@ -23,9 +25,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	constructor(
 		@InjectRepository(OrganizationTeamEmployee)
 		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
+		@MikroInjectRepository(OrganizationTeamEmployee)
+		protected readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
 		private readonly taskService: TaskService
 	) {
-		super(organizationTeamEmployeeRepository);
+		super(organizationTeamEmployeeRepository, mikroOrganizationTeamEmployeeRepository);
 	}
 
 	async updateOrganizationTeam(
