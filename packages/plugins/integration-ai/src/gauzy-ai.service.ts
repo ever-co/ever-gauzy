@@ -19,7 +19,8 @@ import {
     Query,
     TenantConnection,
     UpdateTenantApiKey,
-    TenantApiKeyConnection
+    TenantApiKeyConnection,
+    Tenant
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -697,21 +698,20 @@ export class GauzyAIService {
             return false;
         }
 
-        console.log(
-            `syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(
-                criteria
-            )}. Employee: ${JSON.stringify(employee)}`
-        );
+        console.log(`syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(criteria)}. Employee: ${JSON.stringify(employee)}`);
 
-        let tenantId: string;
+        let tenant: Tenant;
+
         try {
             // First we need to get tenant id because we have only externalId
-            tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+            tenant = await this.getTenantByExternalTenantId(employee.user.tenantId);
         } catch (error) {
             this._logger.error(error);
             // Use this (using the "options" parameter):
             throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
         }
+
+        console.log(`Tenant: ${JSON.stringify(tenant)}`);
 
         try {
             const gauzyAIUser: User = await this.syncUser({
@@ -720,7 +720,7 @@ export class GauzyAIService {
                 email: employee.user.email,
                 username: employee.user.username,
                 hash: employee.user.hash,
-                tenantId: tenantId,
+                tenantId: tenant.id,
                 externalTenantId: employee.user.tenantId,
                 externalUserId: employee.user.id,
                 isActive: employee.isActive,
@@ -730,7 +730,7 @@ export class GauzyAIService {
             /** */
             const gauzyAIEmployee: Employee = await this.syncEmployee({
                 externalEmployeeId: employee.id,
-                tenantId: tenantId,
+                tenantId: tenant.id,
                 externalTenantId: employee.tenantId,
                 externalOrgId: employee.organizationId,
                 upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -765,11 +765,14 @@ export class GauzyAIService {
                             isActive: {
                                 is: true,
                             },
+                            isArchived: {
+                                is: false
+                            },
                             employeeId: {
                                 eq: gauzyAIEmployee.id,
                             },
                             tenantId: {
-                                eq: tenantId
+                                eq: tenant.id
                             }
                         },
                     },
@@ -790,7 +793,7 @@ export class GauzyAIService {
                 criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
                     gauzyAICriteria.push({
                         employeeId: gauzyAIEmployee.id,
-                        tenantId,
+                        tenantId: tenant.id,
                         isActive: true,
                         isArchived: false,
                         jobType: criterion.jobType,
@@ -852,10 +855,10 @@ export class GauzyAIService {
             await Promise.all(
                 employees.map(async (employee) => {
                     try {
-                        let tenantId: string;
+                        let tenant: Tenant;
                         try {
                             // First we need to get tenant id because we have only externalId
-                            tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
+                            tenant = await this.getTenantByExternalTenantId(employee.user.tenantId);
                         } catch (error) {
                             console.error('Error while retrieving tenantId: %s', error?.message);
                             this._logger.error(error);
@@ -867,7 +870,7 @@ export class GauzyAIService {
                         try {
                             /** */
                             const gauzyAIUser: User = await this.syncUser({
-                                tenantId: tenantId,
+                                tenantId: tenant.id,
                                 firstName: employee.user.firstName,
                                 lastName: employee.user.lastName,
                                 email: employee.user.email,
@@ -883,7 +886,7 @@ export class GauzyAIService {
                                 /**  */
                                 const gauzyAIEmployee: Employee = await this.syncEmployee({
                                     externalEmployeeId: employee.id,
-                                    tenantId: tenantId,
+                                    tenantId: tenant.id,
                                     externalTenantId: employee.tenantId,
                                     externalOrgId: employee.organizationId,
                                     upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -1823,39 +1826,44 @@ export class GauzyAIService {
     }
 
     /**
+     * Retrieves a Tenant based on its external ID.
      *
-     * @param externalTenantId
-     * @returns
+     * @param externalTenantId - The external ID of the tenant.
+     * @returns A Promise resolving to the Tenant instance or null if not found.
      */
-    private async getTenantGauzyAIId(
-        externalTenantId: string
-    ): Promise<string | null> {
-        /** */
-        let tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
-			query tenantByExternalEmployeeId(
-				$externalTenantIdFilter: String!
-			) {
-				tenants(
-					filter: {
-						externalTenantId: {
-							eq: $externalTenantIdFilter
-						}
-					}
-				) {
-					edges {
-						node {
-							id,
-							externalTenantId
-						}
-					}
-					totalCount
-				}
-			}
-		`;
-        /** */
+    private async getTenantByExternalTenantId(externalTenantId: string): Promise<Tenant> {
+        // Validate externalTenantId
+        if (!externalTenantId) {
+            throw new HttpException('External Tenant ID is required', HttpStatus.BAD_REQUEST);
+        }
+
+        // Define the GraphQL query outside the function
+        const tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
+            query tenantByExternalTenantId($externalTenantIdFilter: String!) {
+                tenants(
+                    filter: {
+                        externalTenantId: {
+                            eq: $externalTenantIdFilter
+                        }
+                    }
+                ) {
+                    edges {
+                        node {
+                            id
+                            isActive
+                            isArchived
+                            name
+                            externalTenantId
+                        }
+                    }
+                    totalCount
+                }
+            }
+        `;
+
         try {
-            /** */
-            let tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+            // Make the GraphQL query
+            const tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
                 query: tenantByExternalTenantIdQuery,
                 variables: {
                     externalTenantIdFilter: externalTenantId
@@ -1872,11 +1880,10 @@ export class GauzyAIService {
                 throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
             }
 
-            // Process the query result if successful
-            // You can access the data via tenantsQueryResult.data
+            // Process the query result
             const tenantsResponse = tenantsQueryResult.data.tenants;
             if (tenantsResponse.totalCount > 0) {
-                return tenantsResponse.edges[0].node.id;
+                return tenantsResponse.edges[0].node;
             }
             return null;
         } catch (error) {
