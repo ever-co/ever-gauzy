@@ -20,7 +20,8 @@ import {
     TenantConnection,
     UpdateTenantApiKey,
     TenantApiKeyConnection,
-    Tenant
+    Tenant,
+    EmployeeJobPostFilter
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -944,10 +945,19 @@ export class GauzyAIService {
         const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
         console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
-        const employeeIdFilter =
-            filters && filters.employeeIds && filters.employeeIds.length > 0
-                ? filters.employeeIds[0]
-                : undefined;
+        const employeeIdFilter = filters && filters.employeeIds && filters.employeeIds.length > 0 ? filters.employeeIds[0] : undefined;
+
+        let tenant: Tenant;
+        try {
+            // First we need to get tenant id because we have only externalId
+            tenant = await this.getTenantByExternalTenantId(filters?.tenantId);
+        } catch (error) {
+            this._logger.error(error);
+            // Use this (using the "options" parameter):
+            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+        }
+
+        console.log(`Tenant: ${JSON.stringify(tenant)}`);
 
         try {
             // TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
@@ -1025,14 +1035,20 @@ export class GauzyAIService {
             let isContinue: boolean;
             let after = '';
 
-            const filter = {
+            const filter: EmployeeJobPostFilter = {
                 isActive: {
                     is: true,
                 },
                 isArchived: {
                     is: false,
                 },
-                employeeId: undefined,
+                ...(filters && filters.tenantId
+                    ? {
+                        tenantId: {
+                            eq: tenant.id
+                        }
+                    }
+                    : {}),
                 ...(filters && filters.isApplied
                     ? {
                         isApplied: {
@@ -1078,10 +1094,7 @@ export class GauzyAIService {
             };
 
             if (employeeIdFilter) {
-                const employeeId = await this.getEmployeeGauzyAIId(
-                    employeeIdFilter
-                );
-
+                const employeeId = await this.getEmployeeGauzyAIId(employeeIdFilter);
                 filter.employeeId = {
                     eq: employeeId,
                 };

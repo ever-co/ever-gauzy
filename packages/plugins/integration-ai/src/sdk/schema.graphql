@@ -107,6 +107,7 @@ type JobPost {
 type EmployeeJobPost {
 	id: ID
 	employeeId: String!
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -196,11 +197,11 @@ type UpdateManyResponse {
 	updatedCount: Int!
 }
 
-type UserEdge {
+type JobPostEdge {
 	"""
-	The node containing the User
+	The node containing the JobPost
 	"""
-	node: User!
+	node: JobPost!
 
 	"""
 	Cursor for this node.
@@ -233,129 +234,6 @@ type PageInfo {
 	The cursor of the last returned record.
 	"""
 	endCursor: ConnectionCursor
-}
-
-type UserConnection {
-	"""
-	Paging information
-	"""
-	pageInfo: PageInfo!
-
-	"""
-	Array of edges.
-	"""
-	edges: [UserEdge!]!
-
-	"""
-	Fetch total count of records
-	"""
-	totalCount: Int!
-}
-
-type UserAggregateGroupBy {
-	id: ID
-	firstName: String
-	lastName: String
-	username: String
-	email: String
-	hash: String
-	tenantId: String
-	externalTenantId: String
-	externalUserId: String
-	isActive: Boolean
-	isArchived: Boolean
-	createdAt(by: GroupBy! = DAY): DateTime
-	updatedAt(by: GroupBy! = DAY): DateTime
-}
-
-"""
-Group by
-"""
-enum GroupBy {
-	DAY
-	WEEK
-	MONTH
-	YEAR
-}
-
-type UserCountAggregate {
-	id: Int
-	firstName: Int
-	lastName: Int
-	username: Int
-	email: Int
-	hash: Int
-	tenantId: Int
-	externalTenantId: Int
-	externalUserId: Int
-	isActive: Int
-	isArchived: Int
-	createdAt: Int
-	updatedAt: Int
-}
-
-type UserMinAggregate {
-	id: ID
-	firstName: String
-	lastName: String
-	username: String
-	email: String
-	hash: String
-	tenantId: String
-	externalTenantId: String
-	externalUserId: String
-	createdAt: DateTime
-	updatedAt: DateTime
-}
-
-type UserMaxAggregate {
-	id: ID
-	firstName: String
-	lastName: String
-	username: String
-	email: String
-	hash: String
-	tenantId: String
-	externalTenantId: String
-	externalUserId: String
-	createdAt: DateTime
-	updatedAt: DateTime
-}
-
-type UserAggregateResponse {
-	groupBy: UserAggregateGroupBy
-	count: UserCountAggregate
-	min: UserMinAggregate
-	max: UserMaxAggregate
-}
-
-type UserDeleteResponse {
-	id: ID
-	firstName: String
-	lastName: String
-	name: String
-	username: String
-	email: String
-	hash: String
-	tenantId: String
-	externalTenantId: String
-	externalUserId: String
-	isActive: Boolean
-	isArchived: Boolean
-	createdAt: DateTime
-	updatedAt: DateTime
-}
-
-type JobPostEdge {
-	"""
-	The node containing the JobPost
-	"""
-	node: JobPost!
-
-	"""
-	Cursor for this node.
-	"""
-	cursor: ConnectionCursor!
 }
 
 type JobPostConnection {
@@ -395,6 +273,16 @@ type JobPostAggregateGroupBy {
 	updatedAt(by: GroupBy! = DAY): DateTime
 	isActive: Boolean
 	isArchived: Boolean
+}
+
+"""
+Group by
+"""
+enum GroupBy {
+	DAY
+	WEEK
+	MONTH
+	YEAR
 }
 
 type JobPostCountAggregate {
@@ -738,6 +626,119 @@ type EmployeeDeleteResponse {
 	isArchived: Boolean
 }
 
+type UserEdge {
+	"""
+	The node containing the User
+	"""
+	node: User!
+
+	"""
+	Cursor for this node.
+	"""
+	cursor: ConnectionCursor!
+}
+
+type UserConnection {
+	"""
+	Paging information
+	"""
+	pageInfo: PageInfo!
+
+	"""
+	Array of edges.
+	"""
+	edges: [UserEdge!]!
+
+	"""
+	Fetch total count of records
+	"""
+	totalCount: Int!
+}
+
+type UserAggregateGroupBy {
+	id: ID
+	firstName: String
+	lastName: String
+	username: String
+	email: String
+	hash: String
+	tenantId: String
+	externalTenantId: String
+	externalUserId: String
+	isActive: Boolean
+	isArchived: Boolean
+	createdAt(by: GroupBy! = DAY): DateTime
+	updatedAt(by: GroupBy! = DAY): DateTime
+}
+
+type UserCountAggregate {
+	id: Int
+	firstName: Int
+	lastName: Int
+	username: Int
+	email: Int
+	hash: Int
+	tenantId: Int
+	externalTenantId: Int
+	externalUserId: Int
+	isActive: Int
+	isArchived: Int
+	createdAt: Int
+	updatedAt: Int
+}
+
+type UserMinAggregate {
+	id: ID
+	firstName: String
+	lastName: String
+	username: String
+	email: String
+	hash: String
+	tenantId: String
+	externalTenantId: String
+	externalUserId: String
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type UserMaxAggregate {
+	id: ID
+	firstName: String
+	lastName: String
+	username: String
+	email: String
+	hash: String
+	tenantId: String
+	externalTenantId: String
+	externalUserId: String
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type UserAggregateResponse {
+	groupBy: UserAggregateGroupBy
+	count: UserCountAggregate
+	min: UserMinAggregate
+	max: UserMaxAggregate
+}
+
+type UserDeleteResponse {
+	id: ID
+	firstName: String
+	lastName: String
+	name: String
+	username: String
+	email: String
+	hash: String
+	tenantId: String
+	externalTenantId: String
+	externalUserId: String
+	isActive: Boolean
+	isArchived: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
 type EmployeeJobPostEdge {
 	"""
 	The node containing the EmployeeJobPost
@@ -770,6 +771,7 @@ type EmployeeJobPostConnection {
 type EmployeeJobPostAggregateGroupBy {
 	id: ID
 	employeeId: String
+	tenantId: String
 	jobPostId: String
 	jobDateCreated(by: GroupBy! = DAY): DateTime
 	jobStatus: String
@@ -788,6 +790,7 @@ type EmployeeJobPostAggregateGroupBy {
 type EmployeeJobPostCountAggregate {
 	id: Int
 	employeeId: Int
+	tenantId: Int
 	jobPostId: Int
 	jobDateCreated: Int
 	jobStatus: Int
@@ -806,6 +809,7 @@ type EmployeeJobPostCountAggregate {
 type EmployeeJobPostMinAggregate {
 	id: ID
 	employeeId: String
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -821,6 +825,7 @@ type EmployeeJobPostMinAggregate {
 type EmployeeJobPostMaxAggregate {
 	id: ID
 	employeeId: String
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -843,6 +848,7 @@ type EmployeeJobPostAggregateResponse {
 type EmployeeJobPostDeleteResponse {
 	id: ID
 	employeeId: String
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -1220,6 +1226,42 @@ type TenantAggregateResponse {
 	max: TenantMaxAggregate
 }
 
+type TenantApiKey {
+	id: ID
+	apiKey: String!
+	apiSecret: String!
+	openAiSecretKey: String
+	openAiOrganizationId: String
+	isActive: Boolean!
+	isArchived: Boolean!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+type TenantApiKeyEdge {
+	"""
+	The node containing the TenantApiKey
+	"""
+	node: TenantApiKey!
+
+	"""
+	Cursor for this node.
+	"""
+	cursor: ConnectionCursor!
+}
+
+type TenantApiKeyConnection {
+	"""
+	Paging information
+	"""
+	pageInfo: PageInfo!
+
+	"""
+	Array of edges.
+	"""
+	edges: [TenantApiKeyEdge!]!
+}
+
 input UserInput {
 	id: ID
 	firstName: String
@@ -1318,6 +1360,7 @@ input JobPostInput {
 input EmployeeJobPostInput {
 	id: ID
 	employeeId: String!
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -1338,6 +1381,18 @@ input TenantInput {
 	name: String!
 	logo: String
 	externalTenantId: String
+	isActive: Boolean!
+	isArchived: Boolean!
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+input TenantApiKeyInput {
+	id: ID
+	apiKey: String!
+	apiSecret: String!
+	openAiSecretKey: String
+	openAiOrganizationId: String
 	isActive: Boolean!
 	isArchived: Boolean!
 	createdAt: DateTime
@@ -1513,34 +1568,6 @@ type Query {
 		"""
 		sorting: [EmployeeSort!]! = []
 	): EmployeeConnection!
-	tenantAggregate(
-		"""
-		Filter to find records to aggregate on
-		"""
-		filter: TenantAggregateFilter
-	): [TenantAggregateResponse!]!
-	tenant(
-		"""
-		The id of the record to find.
-		"""
-		id: ID!
-	): Tenant!
-	tenants(
-		"""
-		Limit or page results.
-		"""
-		paging: CursorPaging! = { first: 10 }
-
-		"""
-		Specify to filter the records returned.
-		"""
-		filter: TenantFilter! = {}
-
-		"""
-		Specify to sort results.
-		"""
-		sorting: [TenantSort!]! = []
-	): TenantConnection!
 	userAggregate(
 		"""
 		Filter to find records to aggregate on
@@ -1569,6 +1596,56 @@ type Query {
 		"""
 		sorting: [UserSort!]! = []
 	): UserConnection!
+	tenantApiKey(
+		"""
+		The id of the record to find.
+		"""
+		id: ID!
+	): TenantApiKey!
+	tenantApiKeys(
+		"""
+		Limit or page results.
+		"""
+		paging: CursorPaging! = { first: 10 }
+
+		"""
+		Specify to filter the records returned.
+		"""
+		filter: TenantApiKeyFilter! = {}
+
+		"""
+		Specify to sort results.
+		"""
+		sorting: [TenantApiKeySort!]! = []
+	): TenantApiKeyConnection!
+	tenantAggregate(
+		"""
+		Filter to find records to aggregate on
+		"""
+		filter: TenantAggregateFilter
+	): [TenantAggregateResponse!]!
+	tenant(
+		"""
+		The id of the record to find.
+		"""
+		id: ID!
+	): Tenant!
+	tenants(
+		"""
+		Limit or page results.
+		"""
+		paging: CursorPaging! = { first: 10 }
+
+		"""
+		Specify to filter the records returned.
+		"""
+		filter: TenantFilter! = {}
+
+		"""
+		Specify to sort results.
+		"""
+		sorting: [TenantSort!]! = []
+	): TenantConnection!
 }
 
 input UpworkJobsSearchCriterionAggregateFilter {
@@ -1772,6 +1849,7 @@ input AutomationTaskFilterEmployeeJobPostFilter {
 	or: [AutomationTaskFilterEmployeeJobPostFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
@@ -1912,6 +1990,7 @@ input EmployeeJobApplicationFilterEmployeeJobPostFilter {
 	or: [EmployeeJobApplicationFilterEmployeeJobPostFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
@@ -2080,6 +2159,7 @@ input EmployeeJobPostAggregateFilter {
 	or: [EmployeeJobPostAggregateFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
@@ -2100,6 +2180,7 @@ input EmployeeJobPostFilter {
 	or: [EmployeeJobPostFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
@@ -2172,6 +2253,7 @@ input EmployeeJobPostSort {
 enum EmployeeJobPostSortFields {
 	id
 	employeeId
+	tenantId
 	jobPostId
 	jobDateCreated
 	jobStatus
@@ -2257,49 +2339,6 @@ enum EmployeeSortFields {
 	isArchived
 }
 
-input TenantAggregateFilter {
-	and: [TenantAggregateFilter!]
-	or: [TenantAggregateFilter!]
-	id: IDFilterComparison
-	name: StringFieldComparison
-	logo: StringFieldComparison
-	externalTenantId: StringFieldComparison
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
-	createdAt: DateFieldComparison
-	updatedAt: DateFieldComparison
-}
-
-input TenantFilter {
-	and: [TenantFilter!]
-	or: [TenantFilter!]
-	id: IDFilterComparison
-	name: StringFieldComparison
-	logo: StringFieldComparison
-	externalTenantId: StringFieldComparison
-	isActive: BooleanFieldComparison
-	isArchived: BooleanFieldComparison
-	createdAt: DateFieldComparison
-	updatedAt: DateFieldComparison
-}
-
-input TenantSort {
-	field: TenantSortFields!
-	direction: SortDirection!
-	nulls: SortNulls
-}
-
-enum TenantSortFields {
-	id
-	name
-	logo
-	externalTenantId
-	isActive
-	isArchived
-	createdAt
-	updatedAt
-}
-
 input UserAggregateFilter {
 	and: [UserAggregateFilter!]
 	or: [UserAggregateFilter!]
@@ -2358,85 +2397,114 @@ enum UserSortFields {
 	updatedAt
 }
 
+input TenantApiKeyFilter {
+	and: [TenantApiKeyFilter!]
+	or: [TenantApiKeyFilter!]
+	id: IDFilterComparison
+	apiKey: StringFieldComparison
+	apiSecret: StringFieldComparison
+	openAiSecretKey: StringFieldComparison
+	openAiOrganizationId: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+}
+
+input TenantApiKeySort {
+	field: TenantApiKeySortFields!
+	direction: SortDirection!
+	nulls: SortNulls
+}
+
+enum TenantApiKeySortFields {
+	id
+	apiKey
+	apiSecret
+	openAiSecretKey
+	openAiOrganizationId
+	isActive
+	isArchived
+	createdAt
+	updatedAt
+}
+
+input TenantAggregateFilter {
+	and: [TenantAggregateFilter!]
+	or: [TenantAggregateFilter!]
+	id: IDFilterComparison
+	name: StringFieldComparison
+	logo: StringFieldComparison
+	externalTenantId: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+}
+
+input TenantFilter {
+	and: [TenantFilter!]
+	or: [TenantFilter!]
+	id: IDFilterComparison
+	name: StringFieldComparison
+	logo: StringFieldComparison
+	externalTenantId: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+}
+
+input TenantSort {
+	field: TenantSortFields!
+	direction: SortDirection!
+	nulls: SortNulls
+}
+
+enum TenantSortFields {
+	id
+	name
+	logo
+	externalTenantId
+	isActive
+	isArchived
+	createdAt
+	updatedAt
+}
+
 type Mutation {
-	createOneUpworkJobsSearchCriterion(
-		input: CreateOneUpworkJobsSearchCriterionInput!
-	): UpworkJobsSearchCriterion!
-	createManyUpworkJobsSearchCriteria(
-		input: CreateManyUpworkJobsSearchCriteriaInput!
-	): [UpworkJobsSearchCriterion!]!
-	updateOneUpworkJobsSearchCriterion(
-		input: UpdateOneUpworkJobsSearchCriterionInput!
-	): UpworkJobsSearchCriterion!
-	updateManyUpworkJobsSearchCriteria(
-		input: UpdateManyUpworkJobsSearchCriteriaInput!
-	): UpdateManyResponse!
+	createOneUpworkJobsSearchCriterion(input: CreateOneUpworkJobsSearchCriterionInput!): UpworkJobsSearchCriterion!
+	createManyUpworkJobsSearchCriteria(input: CreateManyUpworkJobsSearchCriteriaInput!): [UpworkJobsSearchCriterion!]!
+	updateOneUpworkJobsSearchCriterion(input: UpdateOneUpworkJobsSearchCriterionInput!): UpworkJobsSearchCriterion!
+	updateManyUpworkJobsSearchCriteria(input: UpdateManyUpworkJobsSearchCriteriaInput!): UpdateManyResponse!
 	deleteOneUpworkJobsSearchCriterion(
 		input: DeleteOneUpworkJobsSearchCriterionInput!
 	): UpworkJobsSearchCriterionDeleteResponse!
-	deleteManyUpworkJobsSearchCriteria(
-		input: DeleteManyUpworkJobsSearchCriteriaInput!
-	): DeleteManyResponse!
-	createOneAutomationTask(
-		input: CreateOneAutomationTaskInput!
-	): AutomationTask!
-	createManyAutomationTasks(
-		input: CreateManyAutomationTasksInput!
-	): [AutomationTask!]!
-	updateOneAutomationTask(
-		input: UpdateOneAutomationTaskInput!
-	): AutomationTask!
-	updateManyAutomationTasks(
-		input: UpdateManyAutomationTasksInput!
-	): UpdateManyResponse!
-	deleteOneAutomationTask(
-		input: DeleteOneAutomationTaskInput!
-	): AutomationTaskDeleteResponse!
-	deleteManyAutomationTasks(
-		input: DeleteManyAutomationTasksInput!
-	): DeleteManyResponse!
-	createOneEmployeeJobApplication(
-		input: CreateOneEmployeeJobApplicationInput!
-	): EmployeeJobApplication!
-	createManyEmployeeJobApplications(
-		input: CreateManyEmployeeJobApplicationsInput!
-	): [EmployeeJobApplication!]!
-	updateOneEmployeeJobApplication(
-		input: UpdateOneEmployeeJobApplicationInput!
-	): EmployeeJobApplication!
-	updateManyEmployeeJobApplications(
-		input: UpdateManyEmployeeJobApplicationsInput!
-	): UpdateManyResponse!
-	deleteOneEmployeeJobApplication(
-		input: DeleteOneEmployeeJobApplicationInput!
-	): EmployeeJobApplicationDeleteResponse!
-	deleteManyEmployeeJobApplications(
-		input: DeleteManyEmployeeJobApplicationsInput!
-	): DeleteManyResponse!
+	deleteManyUpworkJobsSearchCriteria(input: DeleteManyUpworkJobsSearchCriteriaInput!): DeleteManyResponse!
+	createOneAutomationTask(input: CreateOneAutomationTaskInput!): AutomationTask!
+	createManyAutomationTasks(input: CreateManyAutomationTasksInput!): [AutomationTask!]!
+	updateOneAutomationTask(input: UpdateOneAutomationTaskInput!): AutomationTask!
+	updateManyAutomationTasks(input: UpdateManyAutomationTasksInput!): UpdateManyResponse!
+	deleteOneAutomationTask(input: DeleteOneAutomationTaskInput!): AutomationTaskDeleteResponse!
+	deleteManyAutomationTasks(input: DeleteManyAutomationTasksInput!): DeleteManyResponse!
+	createOneEmployeeJobApplication(input: CreateOneEmployeeJobApplicationInput!): EmployeeJobApplication!
+	createManyEmployeeJobApplications(input: CreateManyEmployeeJobApplicationsInput!): [EmployeeJobApplication!]!
+	updateOneEmployeeJobApplication(input: UpdateOneEmployeeJobApplicationInput!): EmployeeJobApplication!
+	updateManyEmployeeJobApplications(input: UpdateManyEmployeeJobApplicationsInput!): UpdateManyResponse!
+	deleteOneEmployeeJobApplication(input: DeleteOneEmployeeJobApplicationInput!): EmployeeJobApplicationDeleteResponse!
+	deleteManyEmployeeJobApplications(input: DeleteManyEmployeeJobApplicationsInput!): DeleteManyResponse!
 	createOneJobPost(input: CreateOneJobPostInput!): JobPost!
 	createManyJobPosts(input: CreateManyJobPostsInput!): [JobPost!]!
 	updateOneJobPost(input: UpdateOneJobPostInput!): JobPost!
 	updateManyJobPosts(input: UpdateManyJobPostsInput!): UpdateManyResponse!
 	deleteOneJobPost(input: DeleteOneJobPostInput!): JobPostDeleteResponse!
 	deleteManyJobPosts(input: DeleteManyJobPostsInput!): DeleteManyResponse!
-	createOneEmployeeJobPost(
-		input: CreateOneEmployeeJobPostInput!
-	): EmployeeJobPost!
-	createManyEmployeeJobPosts(
-		input: CreateManyEmployeeJobPostsInput!
-	): [EmployeeJobPost!]!
-	updateOneEmployeeJobPost(
-		input: UpdateOneEmployeeJobPostInput!
-	): EmployeeJobPost!
-	updateManyEmployeeJobPosts(
-		input: UpdateManyEmployeeJobPostsInput!
-	): UpdateManyResponse!
-	deleteOneEmployeeJobPost(
-		input: DeleteOneEmployeeJobPostInput!
-	): EmployeeJobPostDeleteResponse!
-	deleteManyEmployeeJobPosts(
-		input: DeleteManyEmployeeJobPostsInput!
-	): DeleteManyResponse!
+	createOneEmployeeJobPost(input: CreateOneEmployeeJobPostInput!): EmployeeJobPost!
+	createManyEmployeeJobPosts(input: CreateManyEmployeeJobPostsInput!): [EmployeeJobPost!]!
+	updateOneEmployeeJobPost(input: UpdateOneEmployeeJobPostInput!): EmployeeJobPost!
+	updateManyEmployeeJobPosts(input: UpdateManyEmployeeJobPostsInput!): UpdateManyResponse!
+	deleteOneEmployeeJobPost(input: DeleteOneEmployeeJobPostInput!): EmployeeJobPostDeleteResponse!
+	deleteManyEmployeeJobPosts(input: DeleteManyEmployeeJobPostsInput!): DeleteManyResponse!
 	createOneEmployee(input: CreateOneEmployeeInput!): Employee!
 	createManyEmployees(input: CreateManyEmployeesInput!): [Employee!]!
 	updateOneEmployee(input: UpdateOneEmployeeInput!): Employee!
@@ -2449,6 +2517,8 @@ type Mutation {
 	updateManyUsers(input: UpdateManyUsersInput!): UpdateManyResponse!
 	deleteOneUser(input: DeleteOneUserInput!): UserDeleteResponse!
 	deleteManyUsers(input: DeleteManyUsersInput!): DeleteManyResponse!
+	updateOneTenantApiKey(input: UpdateOneTenantApiKeyInput!): TenantApiKey!
+	updateManyTenantApiKeys(input: UpdateManyTenantApiKeysInput!): UpdateManyResponse!
 }
 
 input CreateOneUpworkJobsSearchCriterionInput {
@@ -3053,6 +3123,7 @@ input CreateOneEmployeeJobPostInput {
 input CreateEmployeeJobPost {
 	id: ID
 	employeeId: String!
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -3090,6 +3161,7 @@ input UpdateOneEmployeeJobPostInput {
 input UpdateEmployeeJobPost {
 	id: ID
 	employeeId: String
+	tenantId: String
 	jobPostId: String
 	jobDateCreated: DateTime
 	jobStatus: String
@@ -3122,6 +3194,7 @@ input EmployeeJobPostUpdateFilter {
 	or: [EmployeeJobPostUpdateFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
@@ -3156,6 +3229,7 @@ input EmployeeJobPostDeleteFilter {
 	or: [EmployeeJobPostDeleteFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
@@ -3431,6 +3505,56 @@ input UserDeleteFilter {
 	updatedAt: DateFieldComparison
 }
 
+input UpdateOneTenantApiKeyInput {
+	"""
+	The id of the record to update
+	"""
+	id: ID!
+
+	"""
+	The update to apply.
+	"""
+	update: UpdateTenantApiKey!
+}
+
+input UpdateTenantApiKey {
+	id: ID
+	apiKey: String
+	apiSecret: String
+	openAiSecretKey: String
+	openAiOrganizationId: String
+	isActive: Boolean
+	isArchived: Boolean
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+input UpdateManyTenantApiKeysInput {
+	"""
+	Filter used to find fields to update
+	"""
+	filter: TenantApiKeyUpdateFilter!
+
+	"""
+	The update to apply to all records found using the filter
+	"""
+	update: UpdateTenantApiKey!
+}
+
+input TenantApiKeyUpdateFilter {
+	and: [TenantApiKeyUpdateFilter!]
+	or: [TenantApiKeyUpdateFilter!]
+	id: IDFilterComparison
+	apiKey: StringFieldComparison
+	apiSecret: StringFieldComparison
+	openAiSecretKey: StringFieldComparison
+	openAiOrganizationId: StringFieldComparison
+	isActive: BooleanFieldComparison
+	isArchived: BooleanFieldComparison
+	createdAt: DateFieldComparison
+	updatedAt: DateFieldComparison
+}
+
 type Subscription {
 	createdUpworkJobsSearchCriterion(
 		input: CreateUpworkJobsSearchCriterionSubscriptionFilterInput
@@ -3443,20 +3567,12 @@ type Subscription {
 		input: DeleteOneUpworkJobsSearchCriterionSubscriptionFilterInput
 	): UpworkJobsSearchCriterionDeleteResponse!
 	deletedManyUpworkJobsSearchCriteria: DeleteManyResponse!
-	createdAutomationTask(
-		input: CreateAutomationTaskSubscriptionFilterInput
-	): AutomationTask!
-	updatedOneAutomationTask(
-		input: UpdateOneAutomationTaskSubscriptionFilterInput
-	): AutomationTask!
+	createdAutomationTask(input: CreateAutomationTaskSubscriptionFilterInput): AutomationTask!
+	updatedOneAutomationTask(input: UpdateOneAutomationTaskSubscriptionFilterInput): AutomationTask!
 	updatedManyAutomationTasks: UpdateManyResponse!
-	deletedOneAutomationTask(
-		input: DeleteOneAutomationTaskSubscriptionFilterInput
-	): AutomationTaskDeleteResponse!
+	deletedOneAutomationTask(input: DeleteOneAutomationTaskSubscriptionFilterInput): AutomationTaskDeleteResponse!
 	deletedManyAutomationTasks: DeleteManyResponse!
-	createdEmployeeJobApplication(
-		input: CreateEmployeeJobApplicationSubscriptionFilterInput
-	): EmployeeJobApplication!
+	createdEmployeeJobApplication(input: CreateEmployeeJobApplicationSubscriptionFilterInput): EmployeeJobApplication!
 	updatedOneEmployeeJobApplication(
 		input: UpdateOneEmployeeJobApplicationSubscriptionFilterInput
 	): EmployeeJobApplication!
@@ -3468,36 +3584,22 @@ type Subscription {
 	createdJobPost(input: CreateJobPostSubscriptionFilterInput): JobPost!
 	updatedOneJobPost(input: UpdateOneJobPostSubscriptionFilterInput): JobPost!
 	updatedManyJobPosts: UpdateManyResponse!
-	deletedOneJobPost(
-		input: DeleteOneJobPostSubscriptionFilterInput
-	): JobPostDeleteResponse!
+	deletedOneJobPost(input: DeleteOneJobPostSubscriptionFilterInput): JobPostDeleteResponse!
 	deletedManyJobPosts: DeleteManyResponse!
-	createdEmployeeJobPost(
-		input: CreateEmployeeJobPostSubscriptionFilterInput
-	): EmployeeJobPost!
-	updatedOneEmployeeJobPost(
-		input: UpdateOneEmployeeJobPostSubscriptionFilterInput
-	): EmployeeJobPost!
+	createdEmployeeJobPost(input: CreateEmployeeJobPostSubscriptionFilterInput): EmployeeJobPost!
+	updatedOneEmployeeJobPost(input: UpdateOneEmployeeJobPostSubscriptionFilterInput): EmployeeJobPost!
 	updatedManyEmployeeJobPosts: UpdateManyResponse!
-	deletedOneEmployeeJobPost(
-		input: DeleteOneEmployeeJobPostSubscriptionFilterInput
-	): EmployeeJobPostDeleteResponse!
+	deletedOneEmployeeJobPost(input: DeleteOneEmployeeJobPostSubscriptionFilterInput): EmployeeJobPostDeleteResponse!
 	deletedManyEmployeeJobPosts: DeleteManyResponse!
 	createdEmployee(input: CreateEmployeeSubscriptionFilterInput): Employee!
-	updatedOneEmployee(
-		input: UpdateOneEmployeeSubscriptionFilterInput
-	): Employee!
+	updatedOneEmployee(input: UpdateOneEmployeeSubscriptionFilterInput): Employee!
 	updatedManyEmployees: UpdateManyResponse!
-	deletedOneEmployee(
-		input: DeleteOneEmployeeSubscriptionFilterInput
-	): EmployeeDeleteResponse!
+	deletedOneEmployee(input: DeleteOneEmployeeSubscriptionFilterInput): EmployeeDeleteResponse!
 	deletedManyEmployees: DeleteManyResponse!
 	createdUser(input: CreateUserSubscriptionFilterInput): User!
 	updatedOneUser(input: UpdateOneUserSubscriptionFilterInput): User!
 	updatedManyUsers: UpdateManyResponse!
-	deletedOneUser(
-		input: DeleteOneUserSubscriptionFilterInput
-	): UserDeleteResponse!
+	deletedOneUser(input: DeleteOneUserSubscriptionFilterInput): UserDeleteResponse!
 	deletedManyUsers: DeleteManyResponse!
 }
 
@@ -3681,6 +3783,7 @@ input EmployeeJobPostSubscriptionFilter {
 	or: [EmployeeJobPostSubscriptionFilter!]
 	id: IDFilterComparison
 	employeeId: StringFieldComparison
+	tenantId: StringFieldComparison
 	jobPostId: StringFieldComparison
 	jobDateCreated: DateFieldComparison
 	jobStatus: StringFieldComparison
