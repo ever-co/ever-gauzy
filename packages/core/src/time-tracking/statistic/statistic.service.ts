@@ -25,7 +25,7 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
-import { ConfigService, prepareSQLQuery as p } from '@gauzy/config';
+import { ConfigService, databaseTypes, isBetterSqlite3, isMySQL, isPostgres, isSqlite, prepareSQLQuery as p } from '@gauzy/config';
 import { RequestContext } from '../../core/context';
 import {
 	Activity,
@@ -33,7 +33,7 @@ import {
 	TimeLog,
 	TimeSlot
 } from './../../core/entities/internal';
-import { getDateRangeFormat, isSqliteDB } from './../../core/utils';
+import { getDateRangeFormat } from './../../core/utils';
 
 @Injectable()
 export class StatisticService {
@@ -119,16 +119,26 @@ export class StatisticService {
 			duration: 0
 		};
 		const weekQuery = this.timeSlotRepository.createQueryBuilder();
+		let weekQueryString;
 		weekQuery.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs');
 
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				weekQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekQuery.alias}"."id")), 0)`;
+				break;
+			case databaseTypes.postgres:
+				weekQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`;
+				break;
+			case databaseTypes.mysql:
+				weekQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekQuery.alias}"."id")), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		const weekTimeStatistics = await weekQuery
-			.select(
-				`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekQuery.alias}"."id")), 0)`
-					: p(`COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`)
-				}`,
-				`week_duration`
-			)
+			.select(weekQueryString, `week_duration`)
 			.addSelect(p(`COALESCE(SUM("${weekQuery.alias}"."overall"), 0)`), `overall`)
 			.addSelect(p(`COALESCE(SUM("${weekQuery.alias}"."duration"), 0)`), `duration`)
 			.addSelect(p(`COUNT("${weekQuery.alias}"."id")`), `time_slot_count`)
@@ -205,7 +215,6 @@ export class StatisticService {
 			)
 			.groupBy(p(`"timeLogs"."id"`))
 			.getRawMany();
-
 		const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
 		const weekPercentage = (
 			(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) /
@@ -229,16 +238,26 @@ export class StatisticService {
 		);
 
 		const todayQuery = this.timeSlotRepository.createQueryBuilder();
+		let todayQueryString;
 		todayQuery.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs');
 
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				todayQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${todayQuery.alias}"."id")), 0)`;
+				break;
+			case databaseTypes.postgres:
+				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`;
+				break;
+			case databaseTypes.mysql:
+				todayQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${todayQuery.alias}"."id")), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		const todayTimeStatistics = await todayQuery
-			.select(
-				`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${todayQuery.alias}"."id")), 0)`
-					: p(`COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`)
-				}`,
-				`today_duration`
-			)
+			.select(todayQueryString, `today_duration`)
 			.addSelect(p(`COALESCE(SUM("${todayQuery.alias}"."overall"), 0)`), `overall`)
 			.addSelect(p(`COALESCE(SUM("${todayQuery.alias}"."duration"), 0)`), `duration`)
 			.addSelect(p(`COUNT("${todayQuery.alias}"."id")`), `time_slot_count`)
@@ -315,7 +334,6 @@ export class StatisticService {
 			)
 			.groupBy(p(`"timeLogs"."id"`))
 			.getRawMany();
-
 		const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
 		const todayPercentage = (
 			(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) /
@@ -337,6 +355,7 @@ export class StatisticService {
 			),
 			todayDuration: todayActivities.duration
 		};
+
 	}
 
 	/**
@@ -378,17 +397,29 @@ export class StatisticService {
 		}
 
 		const query = this.employeeRepository.createQueryBuilder();
+		let queryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`;
+				break;
+			case databaseTypes.postgres:
+				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`;
+				break;
+			case databaseTypes.mysql:
+				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+
+		}
+
 		let employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
 			.addSelect(p(`("user"."firstName" || ' ' ||  "user"."lastName")`), 'user_name')
 			.addSelect(p(`"user"."imageUrl"`), 'user_image_url')
-			.addSelect(
-				`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
-					: p(`COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`)
-				}`,
-				`duration`
-			)
+			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'time_slot')
@@ -433,7 +464,6 @@ export class StatisticService {
 			.addGroupBy(p(`"user"."id"`))
 			.orderBy('duration', 'DESC')
 			.getRawMany();
-
 		if (employees.length > 0) {
 			const employeeIds = pluck(employees, 'id');
 
@@ -441,14 +471,24 @@ export class StatisticService {
 			 * Weekly Member Activity
 			 */
 			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
+			let weekTimeQueryString;
+
+			switch (this.configService.dbConnectionOptions.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					weekTimeQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`;
+					break;
+				case databaseTypes.postgres:
+					weekTimeQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`;
+					break;
+				case databaseTypes.mysql:
+					weekTimeQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`);
+					break;
+				default:
+					throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+			}
 			weekTimeQuery
-				.select(
-					`${isSqliteDB(this.configService.dbConnectionOptions)
-						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
-						: p(`COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`)
-					}`,
-					`week_duration`
-				)
+				.select(weekTimeQueryString, `week_duration`)
 				.addSelect(p(`COALESCE(SUM("${weekTimeQuery.alias}"."overall"), 0)`), `overall`)
 				.addSelect(p(`COALESCE(SUM("${weekTimeQuery.alias}"."duration"), 0)`), `duration`)
 				.addSelect(p(`COUNT("${weekTimeQuery.alias}"."id")`), `time_slot_count`)
@@ -527,12 +567,26 @@ export class StatisticService {
 			 * Daily Member Activity
 			 */
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
+			let dayTimeQueryString;
+
+			switch (this.configService.dbConnectionOptions.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					dayTimeQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`;
+					break;
+				case databaseTypes.postgres:
+					dayTimeQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`;
+					break;
+				case databaseTypes.mysql:
+					dayTimeQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`);
+					break;
+				default:
+					throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+			}
+
 			dayTimeQuery
 				.select(
-					`${isSqliteDB(this.configService.dbConnectionOptions)
-						? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
-						: p(`COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`)
-					}`,
+					dayTimeQueryString,
 					`today_duration`
 				)
 				.addSelect(p(`COALESCE(SUM("${dayTimeQuery.alias}"."overall"), 0)`), `overall`)
@@ -587,7 +641,6 @@ export class StatisticService {
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
 
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
-
 			dayTimeSlots = mapObject(
 				groupBy(dayTimeSlots, 'employeeId'),
 				function (values, employeeId) {
@@ -630,18 +683,37 @@ export class StatisticService {
 				delete member.user_image_url;
 
 				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
+				let weekHoursQueryString;
+
+				switch (this.configService.dbConnectionOptions.type) {
+					case databaseTypes.sqlite:
+					case databaseTypes.betterSqlite3:
+						weekHoursQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`;
+						break;
+					case databaseTypes.postgres:
+						weekHoursQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`;
+						break;
+					case databaseTypes.mysql:
+						weekHoursQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`);
+						break;
+					default:
+						throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				}
+
 				weekHoursQuery
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
 					.select(
-						`${isSqliteDB(this.configService.dbConnectionOptions)
-							? `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`
-							: p(`COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`)
-						}`,
+						weekHoursQueryString,
 						`duration`
 					)
-					.addSelect(p(`${isSqliteDB(this.configService.dbConnectionOptions) ?
-						`(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`), 'day'
+					.addSelect(
+						// -- why we minus 1 if MySQL is selected, Sunday DOW in postgres is 0, in MySQL is 1
+						// -- in case no database type is selected we return "0" as the DOW
+						isSqlite() || isBetterSqlite3() ? `(strftime('%w', timeLogs.startedAt))`
+							: isPostgres() ? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+								: isMySQL() ? p('DayOfWeek("timeLogs"."startedAt") - 1') : '0'
+						, 'day'
 					)
 					.andWhere(p(`"${weekHoursQuery.alias}"."id" = :memberId`), { memberId: member.id })
 					.andWhere(p(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`), { tenantId })
@@ -674,7 +746,11 @@ export class StatisticService {
 							}
 						})
 					)
-					.addGroupBy(p(`${isSqliteDB(this.configService.dbConnectionOptions) ? `(strftime('%w', timeLogs.startedAt))` : 'EXTRACT(DOW FROM "timeLogs"."startedAt")'}`));
+					.addGroupBy(
+						isSqlite() || isBetterSqlite3() ? `(strftime('%w', timeLogs.startedAt))`
+							: isPostgres() ? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+								: isMySQL() ? p('DayOfWeek("timeLogs"."startedAt") - 1') : '0'
+					);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
 			}
@@ -717,16 +793,27 @@ export class StatisticService {
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		let queryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
+				break;
+			case databaseTypes.postgres:
+				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
+				break;
+			case databaseTypes.mysql:
+				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		query
 			.select(p(`"project"."name"`), "name")
 			.addSelect(p(`"project"."id"`), "projectId")
-			.addSelect(
-				p(`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
-					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
-					}`),
-				`duration`
-			)
+			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.project`, 'project')
 			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
 			.andWhere(
@@ -792,14 +879,25 @@ export class StatisticService {
 			.splice(0, 5);
 
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder('time_log');
+		let totalDurationQueryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				totalDurationQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`;
+				break;
+			case databaseTypes.postgres:
+				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
+				break;
+			case databaseTypes.mysql:
+				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		totalDurationQuery
-			.select(
-				p(`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
-					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
-					}`),
-				`duration`
-			)
+			.select(totalDurationQueryString, `duration`)
 			.innerJoin(`${totalDurationQuery.alias}.project`, 'project')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -833,7 +931,6 @@ export class StatisticService {
 				})
 			);
 		const totalDuration = await totalDurationQuery.getRawOne();
-
 		projects = projects.map((project: IProjectsStatistics) => {
 			project.durationPercentage = parseFloat(
 				parseFloat(
@@ -931,17 +1028,28 @@ export class StatisticService {
 		}
 
 		const todayQuery = this.timeLogRepository.createQueryBuilder();
+		let todayQueryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				todayQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
+				break;
+			case databaseTypes.postgres:
+				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
+				break;
+			case databaseTypes.mysql:
+				todayQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${todayQuery.alias}"."startedAt", COALESCE("${todayQuery.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		todayQuery
 			.select(p(`"task"."title"`), 'title')
 			.addSelect(p(`"task"."id"`), 'taskId')
 			.addSelect(p(`"${todayQuery.alias}"."updatedAt"`), 'updatedAt')
-			.addSelect(
-				p(`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
-					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
-					}`),
-				`today_duration`
-			)
+			.addSelect(todayQueryString, `today_duration`)
 			.innerJoin(`${todayQuery.alias}.task`, 'task')
 			.innerJoin(`${todayQuery.alias}.timeSlots`, 'time_slot')
 			.andWhere(
@@ -1034,17 +1142,28 @@ export class StatisticService {
 			);
 		const todayStatistics = await todayQuery.getRawMany();
 		const query = this.timeLogRepository.createQueryBuilder();
+		let queryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
+				break;
+			case databaseTypes.postgres:
+				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
+				break;
+			case databaseTypes.mysql:
+				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		query
 			.select(p(`"task"."title"`), "title")
 			.addSelect(p(`"task"."id"`), "taskId")
 			.addSelect(p(`"${query.alias}"."updatedAt"`), 'updatedAt')
-			.addSelect(
-				p(`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`
-					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`
-					}`),
-				`duration`
-			)
+			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.task`, 'task')
 			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
 			.andWhere(
@@ -1143,14 +1262,25 @@ export class StatisticService {
 		if (isNotEmpty(take)) { tasks = tasks.splice(0, take); }
 
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
+		let totalDurationQueryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				totalDurationQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`;
+				break;
+			case databaseTypes.postgres:
+				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
+				break;
+			case databaseTypes.mysql:
+				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		totalDurationQuery
-			.select(
-				p(`${isSqliteDB(this.configService.dbConnectionOptions)
-					? `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`
-					: `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`
-					}`),
-				`duration`
-			)
+			.select(totalDurationQueryString, `duration`)
 			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -1340,6 +1470,23 @@ export class StatisticService {
 		}
 
 		const query = this.activityRepository.createQueryBuilder();
+		let queryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				queryString = `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`;
+				break;
+			case databaseTypes.postgres:
+				queryString = `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`;
+				break;
+			case databaseTypes.mysql:
+				queryString = p(`CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time") BETWEEN :start AND :end`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		query
 			.select(p(`COUNT("${query.alias}"."id")`), `sessions`)
 			.addSelect(p(`SUM("${query.alias}"."duration")`), `duration`)
@@ -1349,11 +1496,7 @@ export class StatisticService {
 			.addGroupBy(p(`"${query.alias}"."title"`))
 			.andWhere(
 				new Brackets((qb) => {
-					if (isSqliteDB(this.configService.dbConnectionOptions)) {
-						qb.andWhere(p(`datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`), { start, end });
-					} else {
-						qb.andWhere(p(`concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`), { start, end });
-					}
+					qb.andWhere(queryString, { start, end });
 				})
 			)
 			.andWhere(
@@ -1402,23 +1545,30 @@ export class StatisticService {
 		* Fetch total duration of the week for calculate duration percentage
 		*/
 		const totalDurationQuery = this.activityRepository.createQueryBuilder();
+		let totalDurationQueryString;
+
+		switch (this.configService.dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				totalDurationQueryString = `datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`;
+				break;
+			case databaseTypes.postgres:
+				totalDurationQueryString = `concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`;
+				break;
+			case databaseTypes.mysql:
+				totalDurationQueryString = p(`CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time") BETWEEN :start AND :end`);
+				break;
+			default:
+				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+		}
+
 		totalDurationQuery
 			.select(p(`SUM("${totalDurationQuery.alias}"."duration")`), `duration`)
 			.innerJoin(`${totalDurationQuery.alias}.timeSlot`, 'time_slot')
 			.innerJoin(`time_slot.timeLogs`, 'time_log')
 			.andWhere(
 				new Brackets((qb) => {
-					if (isSqliteDB(this.configService.dbConnectionOptions)) {
-						qb.andWhere(p(`datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`), {
-							start,
-							end
-						});
-					} else {
-						qb.andWhere(p(`concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`), {
-							start,
-							end
-						});
-					}
+					qb.andWhere(totalDurationQueryString, { start, end });
 				})
 			)
 			.andWhere(

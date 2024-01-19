@@ -437,7 +437,8 @@
 		"Yostorono",
 		"zfgk",
 		"Zrdm",
-		"mikro"
+		"mikro",
+		"TIMESTAMPDIFF"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
