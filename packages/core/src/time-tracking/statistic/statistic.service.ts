@@ -1711,12 +1711,12 @@ export class StatisticService {
 					}
 				},
 				join: {
-					alias: 'time_slot',
+					alias: 'timeSlots',
 					leftJoin: {
-						employee: 'time_slot.employee'
+						employee: 'timeSlots.employee'
 					},
 					innerJoinAndSelect: {
-						timeLogs: 'time_slot.timeLogs'
+						timeLogs: 'timeSlots.timeLogs'
 					}
 				},
 				relations: {
