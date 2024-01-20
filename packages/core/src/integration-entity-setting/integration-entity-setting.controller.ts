@@ -14,7 +14,7 @@ import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe } from './../shared/pipes';
-import { IntegrationEntitySettingGetCommand, IntegrationEntitySettingUpdateCommand } from './commands';
+import { IntegrationEntitySettingGetCommand, IntegrationEntitySettingUpdateOrCreateCommand } from './commands';
 
 @ApiTags('IntegrationsEntitySetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -25,6 +25,12 @@ export class IntegrationEntitySettingController {
 		private readonly _commandBus: CommandBus
 	) { }
 
+	/**
+	 * Get settings by integration.
+	 *
+	 * @param integrationId - The ID of the integration (validated using UUIDValidationPipe).
+	 * @returns A promise resolving to paginated integration entity settings.
+	 */
 	@ApiOperation({ summary: 'Get settings by integration.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -40,12 +46,17 @@ export class IntegrationEntitySettingController {
 		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id']
 	): Promise<IPagination<IntegrationEntitySetting>> {
 		return await this._commandBus.execute(
-			new IntegrationEntitySettingGetCommand(
-				integrationId
-			)
+			new IntegrationEntitySettingGetCommand(integrationId)
 		);
 	}
 
+	/**
+	 * Update settings.
+	 *
+	 * @param integrationId - The ID of the integration (validated using UUIDValidationPipe).
+	 * @param entity - An individual IIntegrationEntitySetting or an array of IIntegrationEntitySetting objects to be updated.
+	 * @returns A promise resolving to an array of updated IIntegrationEntitySetting objects.
+	 */
 	@ApiOperation({ summary: 'Update settings.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -59,13 +70,10 @@ export class IntegrationEntitySettingController {
 	@Put('integration/:id')
 	async updateIntegrationEntitySettingByIntegration(
 		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
-		@Body() entity: IIntegrationEntitySetting | IIntegrationEntitySetting[]
+		@Body() input: IIntegrationEntitySetting | IIntegrationEntitySetting[]
 	): Promise<IIntegrationEntitySetting[]> {
 		return await this._commandBus.execute(
-			new IntegrationEntitySettingUpdateCommand(
-				integrationId,
-				entity
-			)
+			new IntegrationEntitySettingUpdateOrCreateCommand(integrationId, input)
 		);
 	}
 }

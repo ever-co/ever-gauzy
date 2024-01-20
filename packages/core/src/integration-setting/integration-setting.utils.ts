@@ -1,7 +1,7 @@
 import { isNotEmpty, isObject } from "@gauzy/common";
 
 // Assuming you have fetched sensitive keys specific entity
-export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openAiApiSecretKey'];
+export const sensitiveSecretKeys = ['apiKey', 'apiSecret', 'openAiSecretKey', 'openAiOrganizationId'];
 
 /**
  * Wrap specified keys in an object with a specific character.

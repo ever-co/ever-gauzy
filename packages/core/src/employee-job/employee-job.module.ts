@@ -9,7 +9,9 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/employee-job', module: EmployeeJobPostModule }]),
+		RouterModule.register([
+			{ path: '/employee-job', module: EmployeeJobPostModule }
+		]),
 		CountryModule,
 		EmployeeModule,
 		IntegrationTenantModule,
@@ -19,4 +21,4 @@ import { IntegrationTenantModule } from './../integration-tenant/integration-ten
 	providers: [EmployeeJobPostService],
 	exports: [EmployeeJobPostService]
 })
-export class EmployeeJobPostModule {}
+export class EmployeeJobPostModule { }
