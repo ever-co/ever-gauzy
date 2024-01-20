@@ -5,6 +5,7 @@ import { getConfig } from '@gauzy/config';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_SYSTEM_INTEGRATIONS } from './../../integration/default-integration';
 import { IntegrationsUtils } from './../../integration/utils';
+import * as path from 'path';
 
 export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 	name = 'SeedIntegrationTable1691494801748';
@@ -36,12 +37,12 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_SYSTEM_INTEGRATIONS) {
 			try {
-				const filepath = `integrations/${imgSrc}`;
+				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
 
 				let upsertQuery = ``;
 
 				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-					const payload = [name, filepath, isComingSoon ? 1 : 0, order];
+					const payload = [name, filePath, isComingSoon ? 1 : 0, order];
 
 					// For SQLite, manually generate a UUID using uuidv4()
 					const generatedId = uuidv4();
@@ -65,7 +66,7 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 						await IntegrationsUtils.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 					);
 				} else {
-					const payload = [name, filepath, isComingSoon, order];
+					const payload = [name, filePath, isComingSoon, order];
 
 					upsertQuery = `
                         INSERT INTO "integration" (
@@ -90,9 +91,6 @@ export class SeedIntegrationTable1691494801748 implements MigrationInterface {
 						await IntegrationsUtils.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 					);
 				}
-
-				// Step 3: Insert entry in join table to associate Integration with IntegrationType
-				copyAssets(imgSrc, getConfig(), destDir);
 			} catch (error) {
 				// since we have errors let's rollback changes we made
 				console.log(`Error while updating integration: (${name}) in production server`, error);
