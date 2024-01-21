@@ -8,9 +8,9 @@ import { getConfig } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
+import { environment as env } from '@gauzy/config';
 
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
-	private config = getConfig();
 	name = 'SeedDafaultGlobalIssueType1680622389221';
 
 	/**
@@ -40,19 +40,20 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 		try {
 			for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
 				const { name, value, description, icon, color, isSystem } = issueType;
+				const destDirName = 'ever-icons';
+				const filePath = copyAssets(icon, getConfig(), destDirName);
+				const baseDir = env.isElectron
+					? path.resolve(env.gauzyUserPath, ...['public'])
+					: getConfig().assetOptions.assetPublicPath ||
+					path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+				const absoluteFilePath = path.join(baseDir, filePath);
+				const { height = 0, width = 0 } = imageSize(absoluteFilePath);
+				const { size } = fs.statSync(absoluteFilePath);
 
-				/** Move issue types icons to the public static folder */
-				const filepath = path.join('ever-icons', icon);
-				copyAssets(icon, this.config);
-
-				const iconPath = path.join(this.config.assetOptions.assetPath, ...['seed', 'ever-icons', icon]);
-				const { height, width } = imageSize(iconPath);
-				const { size } = fs.statSync(iconPath);
-
-				const imageAsset = [name, filepath, FileStorageProviderEnum.LOCAL, height, width, size];
+				const imageAsset = [name, filePath, FileStorageProviderEnum.LOCAL, height, width, size];
 
 				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-					const payload = [name, value, description, filepath, color, isSystem ? 1 : 0];
+					const payload = [name, value, description, filePath, color, isSystem ? 1 : 0];
 
 					const imageAssetId = uuidv4();
 					imageAsset.push(imageAssetId);
@@ -80,7 +81,7 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 						payload
 					);
 				} else {
-					const payload = [name, value, description, filepath, color, isSystem];
+					const payload = [name, value, description, filePath, color, isSystem];
 
 					const insertQuery = `
 						INSERT INTO "image_asset" (

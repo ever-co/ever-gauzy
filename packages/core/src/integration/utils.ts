@@ -4,6 +4,7 @@ import { getConfig } from '@gauzy/config';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';
+import * as path from 'path';
 
 export class IntegrationsUtils {
 	/**
@@ -25,12 +26,12 @@ export class IntegrationsUtils {
 			integrationTypesMap
 		} of integrations) {
 			try {
-				const filepath = `integrations/${imgSrc}`;
+				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
 
 				let upsertQuery = ``;
 
 				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-					const payload = [name, filepath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
+					const payload = [name, filePath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
 
 					// For SQLite, manually generate a UUID using uuidv4()
 					const generatedId = uuidv4();
@@ -60,7 +61,7 @@ export class IntegrationsUtils {
 						await this.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 					);
 				} else {
-					const payload = [name, filepath, isComingSoon, order, redirectUrl, provider];
+					const payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
 
 					upsertQuery = `
                         INSERT INTO "integration" (
@@ -88,8 +89,6 @@ export class IntegrationsUtils {
 						await this.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 					);
 				}
-
-				copyAssets(imgSrc, getConfig(), destDir);
 			} catch (error) {
 				// since we have errors let's rollback changes we made
 				console.log(`Error while updating integration: (${name}) in production server`, error);
