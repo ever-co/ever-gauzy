@@ -74,6 +74,9 @@ remoteMain.initialize();
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 
+process.env.GAUZY_SEED_PATH = path.join(__dirname, 'api', 'assets', 'seed');
+log.info(`GAUZY_SEED_PATH: ${process.env.GAUZY_SEED_PATH}`);
+
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 

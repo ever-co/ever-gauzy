@@ -4,6 +4,7 @@ import { databaseTypes, getConfig, prepareSQLQuery as p } from '@gauzy/config';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';
+import * as path from 'path';
 
 export class IntegrationsUtils {
 	/**
@@ -25,7 +26,7 @@ export class IntegrationsUtils {
 			integrationTypesMap
 		} of integrations) {
 			try {
-				const filepath = `integrations/${imgSrc}`;
+				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
 
 				const sqliteUpsertQuery = `
 					INSERT INTO integration (
@@ -77,32 +78,32 @@ export class IntegrationsUtils {
 				switch(queryRunner.connection.options.type) {
 					case databaseTypes.sqlite:
 					case databaseTypes.betterSqlite3:
-						payload = [name, filepath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
+						payload = [name, filePath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
 						// For SQLite, manually generate a UUID using uuidv4()
 						const generatedId = uuidv4();
 						payload.push(generatedId);
 						upsertQuery = sqliteUpsertQuery;
 						break;
 					case databaseTypes.postgres:
-						payload = [name, filepath, isComingSoon, order, redirectUrl, provider];
+						payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
 						upsertQuery = postgresUpsertQuery;
 						break;
 					case databaseTypes.mysql:
-						payload = [name, filepath, isComingSoon, order, redirectUrl, provider];
+						payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
 						upsertQuery = mysqlUpsertQuery;
 						break;
 					default:
 						throw Error(`cannot upsert integration and integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
 				}
+
 				const [integration] = await queryRunner.query(upsertQuery, payload);
+
 				// Step 3: Insert entry in join table to associate Integration with IntegrationType
 				await IntegrationsUtils.syncIntegrationType(
 					queryRunner,
 					integration,
 					await this.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 				);
-
-				copyAssets(imgSrc, getConfig(), destDir);
 			} catch (error) {
 				// since we have errors let's rollback changes we made
 				console.log(`Error while updating integration: (${name}) in production server`, error);

@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { getConfig } from '@gauzy/config';
+import { getConfig, databaseTypes } from '@gauzy/config';
 import * as chalk from 'chalk';
-import { copyAssets } from '../../core/seeds/utils';
-import { DEFAULT_AI_INTEGRATIONS } from '../../integration/default-integration';
-import { IntegrationsUtils } from '../../integration/utils';
-import { databaseTypes } from "@gauzy/config";
+import { copyAssets } from './../../core/seeds/utils';
+import { DEFAULT_AI_INTEGRATIONS } from './../../integration/default-integration';
+import { IntegrationsUtils } from './../../integration/utils';
+import * as path from 'path';
 
 export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 	name = 'SeedIntegrationTable1692171665427';
@@ -50,14 +50,14 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
 			try {
-				const filepath = `integrations/${imgSrc}`;
-				let upsertQuery = ``;
-				const payload = [name, filepath, isComingSoon ? 1 : 0, order];
+				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const payload = [name, filePath, isComingSoon ? 1 : 0, order];
+
 				// For SQLite, manually generate a UUID using uuidv4()
 				const generatedId = uuidv4();
 				payload.push(generatedId);
 
-				upsertQuery = `
+				const upsertQuery = `
 					INSERT INTO "integration" ("name", "imgSrc", "isComingSoon", "order", "id")
 					VALUES (?, ?, ?, ?, ?)
 					ON CONFLICT ("name")
@@ -66,6 +66,7 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 									"order" = EXCLUDED."order"
 					RETURNING "id";
 				`;
+
 				const [integration] = await queryRunner.query(upsertQuery, payload);
 
 				// Step 3: Insert entry in join table to associate Integration with IntegrationType
@@ -74,7 +75,6 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 					integration,
 					await IntegrationsUtils.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 				);
-				copyAssets(imgSrc, getConfig(), destDir);
 			} catch (error) {
 				// since we have errors let's rollback changes we made
 				console.log(`Error while updating integration: (${name}) in production server`, error);
@@ -92,11 +92,10 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 
 		for await (const { name, imgSrc, isComingSoon, order, integrationTypesMap } of DEFAULT_AI_INTEGRATIONS) {
 			try {
-				const filepath = `integrations/${imgSrc}`;
-				let upsertQuery = ``;
-				const payload = [name, filepath, isComingSoon, order];
+				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+				const payload = [name, filePath, isComingSoon, order];
 
-				upsertQuery = `
+				const upsertQuery = `
 					INSERT INTO "integration" (
 						"name", "imgSrc", "isComingSoon", "order"
 					)
@@ -112,13 +111,13 @@ export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 				`;
 
 				const [integration] = await queryRunner.query(upsertQuery, payload);
+
 				// Step 3: Insert entry in join table to associate Integration with IntegrationType
 				await IntegrationsUtils.syncIntegrationType(
 					queryRunner,
 					integration,
 					await IntegrationsUtils.getIntegrationTypeByName(queryRunner, integrationTypesMap)
 				);
-				copyAssets(imgSrc, getConfig(), destDir);
 			} catch (error) {
 				// since we have errors let's rollback changes we made
 				console.log(`Error while updating integration: (${name}) in production server`, error);
