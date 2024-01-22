@@ -169,36 +169,37 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			query.leftJoin(`${query.alias}.tags`, 'tags');
 			query.innerJoin(`user.organizations`, 'organizations');
 
+			/**
+			 * Load selected table properties/fields for self & relational select.
+			 */
+			query.select([
+				// -- employee fields
+				`${query.alias}.id`,
+				`${query.alias}.isActive`,
+				`${query.alias}.short_description`,
+				`${query.alias}.description`,
+				`${query.alias}.averageIncome`,
+				`${query.alias}.averageExpenses`,
+				`${query.alias}.averageBonus`,
+				`${query.alias}.startedWorkOn`,
+				`${query.alias}.endWork`,
+				`${query.alias}.isTrackingEnabled`,
+				`${query.alias}.deletedAt`,
+				`${query.alias}.allowScreenshotCapture`,
+				// ... user fields
+				p(`"user".id AS user_id`),
+				p(`"user".firstName AS user_firstName`),
+				p(`"user".lastName AS user_lastName`),
+				p(`"user".email AS user_email`),
+				p(`"user".imageUrl AS user_imageUrl`),
+			]);
+
 			query.setFindOptions({
 				/**
 				 * Set skip/take options for pagination
 				 */
 				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 				take: options && options.take ? options.take : 10,
-				/**
-				 * Load selected table properties/fields for self & relational select.
-				 */
-				select: {
-					id: true,
-					isActive: true,
-					short_description: true,
-					description: true,
-					averageIncome: true,
-					averageExpenses: true,
-					averageBonus: true,
-					startedWorkOn: true,
-					endWork: true,
-					isTrackingEnabled: true,
-					deletedAt: true,
-					allowScreenshotCapture: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						email: true,
-						imageUrl: true
-					}
-				},
 				/**
 				 * Load tables relations.
 				 */
