@@ -105,15 +105,6 @@ async function cleanFeature(dataSource, config) {
 				cannot clean feature, feature_organization tables due to unsupported database type:
 				${config.dbConnectionOptions.type}
 			`);
-// =======
-// 	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-// 	if (allowedDbTypes.includes(config.dbConnectionOptions.type)) {
-// 		await dataSource.query('DELETE FROM feature');
-// 		await dataSource.query('DELETE FROM feature_organization');
-// 	} else {
-// 		await dataSource.query('TRUNCATE TABLE feature RESTART IDENTITY CASCADE');
-// 		await dataSource.query('TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE');
-// >>>>>>> ab5293af595efcb971fb9d6eee87512cafe1cb6e
 	}
 
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
@@ -121,19 +112,6 @@ async function cleanFeature(dataSource, config) {
 	await new Promise((resolve, reject) => {
 		const destDir = 'features';
 		const configService = new ConfigService();
-
-		// console.log('FEATURE SEED -> IS ELECTRON: ' + env.isElectron);
-
-		/*
-		console.log(
-			'FEATURE SEED -> assetPath: ' + config.assetOptions.assetPath
-		);
-		console.log(
-			'FEATURE SEED -> assetPublicPath: ' +
-				config.assetOptions.assetPublicPath
-		);
-		console.log('FEATURE SEED -> __dirname: ' + __dirname);
-		*/
 
 		let dir: string;
 
@@ -182,12 +160,7 @@ function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 			}
 		}
 
-		// console.log('FEATURE SEED -> dir: ' + dir);
-		// console.log('FEATURE SEED -> baseDir: ' + baseDir);
-
 		const finalDir = path.join(baseDir, destDir);
-
-		// console.log('FEATURE SEED -> finalDir: ' + finalDir);
 
 		mkdirSync(finalDir, { recursive: true });
 
