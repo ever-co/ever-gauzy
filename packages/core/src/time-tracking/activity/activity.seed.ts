@@ -6,7 +6,7 @@ import { ActivityType, ITenant, ITimeSlot } from '@gauzy/contracts';
 import { Activity } from './activity.entity';
 import { OrganizationProject } from './../../core/entities/internal';
 import { Employee } from '../../employee/employee.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 export const AppsNames: string[] = [
 	'Sublime Text',

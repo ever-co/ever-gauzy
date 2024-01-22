@@ -31,7 +31,8 @@ import {
 	RolesEnum,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { ConfigService, environment as env, prepareSQLQuery as p } from '@gauzy/config';
+import { ConfigService, environment as env } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';

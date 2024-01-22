@@ -1,6 +1,7 @@
 import { QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { databaseTypes, getConfig, prepareSQLQuery as p } from '@gauzy/config';
+import { databaseTypes, getConfig } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';

@@ -17,7 +17,7 @@ import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
 import { getDateRangeFormat } from './../../core/utils';
 import { BadRequestException } from '@nestjs/common';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 export const createRandomTimeLogs = async (
 	dataSource: DataSource,

@@ -21,7 +21,7 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { GetTaskByIdDTO } from './dto';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {

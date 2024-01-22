@@ -4,7 +4,7 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { ScheduleTimeSlotEntriesCommand } from '../schedule-time-slot-entries.command';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(ScheduleTimeSlotEntriesCommand)
 export class ScheduleTimeSlotEntriesHandler

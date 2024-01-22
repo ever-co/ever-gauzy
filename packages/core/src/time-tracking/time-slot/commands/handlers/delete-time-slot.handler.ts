@@ -8,7 +8,7 @@ import { TimeSlot } from './../../time-slot.entity';
 import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-span.command';
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { RequestContext } from './../../../../core/context';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(DeleteTimeSlotCommand)
 export class DeleteTimeSlotHandler

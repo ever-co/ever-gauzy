@@ -13,7 +13,7 @@ import { EmailService } from './../email-send/email.service';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { IPayment } from '@gauzy/contracts';
 import { IInvoice } from '@gauzy/contracts';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {

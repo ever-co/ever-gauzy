@@ -9,7 +9,7 @@ import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
 import { TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler

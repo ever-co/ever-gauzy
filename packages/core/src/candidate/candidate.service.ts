@@ -6,7 +6,8 @@ import { isNotEmpty } from '@gauzy/common';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
+
 
 @Injectable()
 export class CandidateService extends TenantAwareCrudService<Candidate> {

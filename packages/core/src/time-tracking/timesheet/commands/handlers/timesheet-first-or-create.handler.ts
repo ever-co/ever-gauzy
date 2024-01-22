@@ -7,7 +7,7 @@ import { Employee, Timesheet } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { TimesheetFirstOrCreateCommand } from './../timesheet-first-or-create.command';
 import { TimesheetCreateCommand } from './../timesheet-create.command';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimesheetFirstOrCreateCommand)
 export class TimesheetFirstOrCreateHandler

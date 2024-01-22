@@ -20,7 +20,7 @@ import {
 	User,
 	Employee,
 } from './../core/entities/internal';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 const GITHUB_API_URL = 'https://api.github.com';
 

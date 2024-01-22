@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { IIntegration } from '@gauzy/contracts';
 import { IntegrationGetCommand } from './../integration.get.command';
 import { Integration } from '../../integration.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../database/database.helper';
 
 @CommandHandler(IntegrationGetCommand)
 export class IntegrationGetHandler

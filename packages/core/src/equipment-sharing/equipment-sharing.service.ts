@@ -6,7 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { ConfigService, prepareSQLQuery as p } from '@gauzy/config';
+import { ConfigService } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { isNotEmpty } from '@gauzy/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';

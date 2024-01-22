@@ -7,7 +7,8 @@ import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { RequestContext } from './../../../core/context';
-import { prepareSQLQuery as p, databaseTypes } from '@gauzy/config';
+import { databaseTypes } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../database/database.helper';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
 export class GetConflictAvailabilitySlotsHandler

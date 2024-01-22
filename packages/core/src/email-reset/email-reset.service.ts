@@ -29,7 +29,7 @@ import { VerifyEmailResetRequestDTO } from './dto/verify-email-reset-request.dto
 import { EmailService } from './../email-send/email.service';
 import { EmployeeService } from './../employee/employee.service';
 import { AuthService } from './../auth/auth.service';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {

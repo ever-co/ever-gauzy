@@ -23,7 +23,8 @@ import {
 	ITask
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
-import { ConfigService, databaseTypes, isBetterSqlite3, isMySQL, isPostgres, isSqlite, prepareSQLQuery as p } from '@gauzy/config';
+import { ConfigService, databaseTypes, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import {
 	Activity,

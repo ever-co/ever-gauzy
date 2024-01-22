@@ -6,7 +6,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {

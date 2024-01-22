@@ -15,7 +15,7 @@ import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage, User } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {

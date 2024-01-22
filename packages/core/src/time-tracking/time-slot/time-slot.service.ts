@@ -19,7 +19,7 @@ import {
 	UpdateTimeSlotCommand,
 	UpdateTimeSlotMinutesCommand
 } from './commands';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {

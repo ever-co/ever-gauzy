@@ -6,7 +6,7 @@ import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrgani
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {

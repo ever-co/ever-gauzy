@@ -59,7 +59,7 @@ import {
 import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {

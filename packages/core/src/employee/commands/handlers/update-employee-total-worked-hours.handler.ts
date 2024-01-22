@@ -1,7 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { databaseTypes, getConfig, prepareSQLQuery as p } from '@gauzy/config';
+import { databaseTypes, getConfig } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../database/database.helper';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { EmployeeService } from '../../employee.service';
 import { TimeLog } from './../../../core/entities/internal';

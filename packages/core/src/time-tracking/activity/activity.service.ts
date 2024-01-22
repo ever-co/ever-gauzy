@@ -15,7 +15,8 @@ import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 import { indexBy, pluck } from 'underscore';
 import { isNotEmpty } from '@gauzy/common';
-import { databaseTypes, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres, prepareSQLQuery as p } from '@gauzy/config';
+import { databaseTypes, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
 const config = getConfig();
 
