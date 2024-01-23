@@ -1,6 +1,6 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Entity, Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { getConfig } from '@gauzy/config';
+import { getConfig, isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
@@ -83,14 +83,14 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	 * Applications associated with the image or screenshot.
 	 */
 	@ApiPropertyOptional({
-		type: () => (['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'),
+		type: () => (isSqlite() || isBetterSqlite3() ? 'text' : 'json'),
 		description: 'Applications associated with the image or screenshot.'
 	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'
+		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
 	apps?: string | string[];
 

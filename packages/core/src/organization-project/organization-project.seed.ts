@@ -15,6 +15,7 @@ import {
 } from '@gauzy/contracts';
 import { DEFAULT_ORGANIZATION_PROJECTS } from './default-organization-projects';
 import { Employee, OrganizationContact, Tag } from './../core/entities/internal';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 export const createDefaultOrganizationProjects = async (
 	dataSource: DataSource,
@@ -197,9 +198,9 @@ export async function seedProjectMembersCount(
 		 * GET all tenant projects for specific tenant
 		 */
 		const projects = await dataSource.manager.query(
-			`SELECT * FROM \`organization_project\` WHERE \`organization_project\`.\`tenantId\` = ${
+			p(`SELECT * FROM "organization_project" WHERE "organization_project"."tenantId" = ${
 				isSqliteOrMysql ? '?' : '$1'
-			}`,
+			}`),
 			[tenantId]
 		);
 
@@ -210,23 +211,23 @@ export async function seedProjectMembersCount(
 			/**
 			 * GET member counts for organization project
 			 */
-			const [members] = await dataSource.manager.query(`
+			const [members] = await dataSource.manager.query(p(`
 				SELECT
-					COUNT(\`organization_project_employee\`.\`employeeId\`) AS count
-				FROM \`organization_project_employee\`
+					COUNT("organization_project_employee"."employeeId") AS count
+				FROM "organization_project_employee"
 				INNER JOIN
-					\`employee\` ON \`employee\`.\`id\`=\`organization_project_employee\`.\`employeeId\`
+					"employee" ON "employee"."id"="organization_project_employee"."employeeId"
 				INNER JOIN
-					\`organization_project\` ON \`organization_project\`.\`id\`=\`organization_project_employee\`.\`organizationProjectId\`
+					"organization_project" ON "organization_project"."id"="organization_project_employee"."organizationProjectId"
 				WHERE
-					\`organization_project_employee\`.\`organizationProjectId\` = ${isSqliteOrMysql ? '?' : '$1'}
-			`, [projectId]);
+					"organization_project_employee"."organizationProjectId" = ${isSqliteOrMysql ? '?' : '$1'}
+			`), [projectId]);
 
 			const count = members['count'];
 
 			await dataSource.manager.query(
-				`UPDATE \`organization_project\` SET \`membersCount\` = ${isSqliteOrMysql ? '?' : '$1'
-				} WHERE \`id\` = ${isSqliteOrMysql ? '?' : '$2'}`,
+				p(`UPDATE "organization_project" SET "membersCount" = ${isSqliteOrMysql ? '?' : '$1'
+				} WHERE "id" = ${isSqliteOrMysql ? '?' : '$2'}`),
 				[count, projectId]
 			);
 		}

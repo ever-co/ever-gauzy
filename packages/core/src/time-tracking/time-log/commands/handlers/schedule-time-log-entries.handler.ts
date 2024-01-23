@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { getConfig } from '@gauzy/config';
+import { databaseTypes, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
@@ -104,12 +104,19 @@ export class ScheduleTimeLogEntriesHandler
 				/**
 				 * Adjust stopped date as per database selection
 				 */
-				if (['sqlite', 'better-sqlite3'].includes(getConfig().dbConnectionOptions.type)) {
-					stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
-					slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
-				} else {
-					stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
-					slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
+				switch(getConfig().dbConnectionOptions.type) {
+					case databaseTypes.sqlite:
+					case databaseTypes.betterSqlite3:
+						stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
+						slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
+						break;
+					case databaseTypes.postgres:
+					case databaseTypes.mysql:
+						stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
+						slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
+						break;
+					default:
+						throw Error(`cannot format startedAt, slotDifference due to unsupported database type: ${getConfig().dbConnectionOptions.type}`);
 				}
 
 				console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);

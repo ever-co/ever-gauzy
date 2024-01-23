@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { ConfigService } from '@gauzy/config';
+import { ConfigService, databaseTypes } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { isNotEmpty } from '@gauzy/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
@@ -39,19 +39,27 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
 				.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'"equipment_sharing"."id" = "requestApproval"."requestId"'
-				);
-			} else {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
-				);
+			switch(this.configService.dbConnectionOptions.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'"equipment_sharing"."id" = "requestApproval"."requestId"'
+					);
+					break;
+				case databaseTypes.postgres:
+				case databaseTypes.mysql:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+					);
+					break;
+				default:
+					throw Error(`cannot create query to find equipment sharings by orgId due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 			}
+
 			return await query
 				.leftJoinAndSelect(
 					'requestApproval.approvalPolicy',
@@ -179,18 +187,25 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
-			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'"equipment_sharing"."id" = "requestApproval"."requestId"'
-				);
-			} else {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
-				);
+			switch(this.configService.dbConnectionOptions.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'"equipment_sharing"."id" = "requestApproval"."requestId"'
+					);
+					break;
+				case databaseTypes.postgres:
+				case databaseTypes.mysql:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+					);
+					break;
+				default:
+					throw Error(`cannot paginate equipment sharings due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 			}
 
 			query.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy');
