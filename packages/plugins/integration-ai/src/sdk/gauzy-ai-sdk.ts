@@ -45,6 +45,7 @@ export type AutomationTask = {
 	providerCode: Scalars['String']['output'];
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status: Scalars['String']['output'];
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -68,6 +69,7 @@ export type AutomationTaskAggregateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -90,6 +92,7 @@ export type AutomationTaskAggregateGroupBy = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -150,6 +153,7 @@ export type AutomationTaskCountAggregate = {
 	providerCode?: Maybe<Scalars['Int']['output']>;
 	providerJobId?: Maybe<Scalars['Int']['output']>;
 	status?: Maybe<Scalars['Int']['output']>;
+	tenantId?: Maybe<Scalars['Int']['output']>;
 	updatedAt?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -173,6 +177,7 @@ export type AutomationTaskDeleteFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -198,6 +203,7 @@ export type AutomationTaskDeleteResponse = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -233,6 +239,7 @@ export type AutomationTaskFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -319,6 +326,7 @@ export type AutomationTaskMaxAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -338,6 +346,7 @@ export type AutomationTaskMinAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -365,6 +374,7 @@ export enum AutomationTaskSortFields {
 	ProviderCode = 'providerCode',
 	ProviderJobId = 'providerJobId',
 	Status = 'status',
+	TenantId = 'tenantId',
 	UpdatedAt = 'updatedAt'
 }
 
@@ -388,6 +398,7 @@ export type AutomationTaskSubscriptionFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -411,6 +422,7 @@ export type AutomationTaskUpdateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -440,6 +452,7 @@ export type CreateAutomationTask = {
 	providerCode: Scalars['String']['input'];
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	status: Scalars['String']['input'];
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -492,6 +505,7 @@ export type CreateEmployeeJobApplication = {
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	qa?: InputMaybe<Scalars['String']['input']>;
 	rate?: InputMaybe<Scalars['Float']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	terms?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
@@ -1068,6 +1082,7 @@ export type EmployeeJobApplication = {
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	qa?: Maybe<Scalars['String']['output']>;
 	rate?: Maybe<Scalars['Float']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	terms?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
@@ -1091,6 +1106,7 @@ export type EmployeeJobApplicationAggregateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1112,6 +1128,7 @@ export type EmployeeJobApplicationAggregateGroupBy = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1171,6 +1188,7 @@ export type EmployeeJobApplicationCountAggregate = {
 	providerCode?: Maybe<Scalars['Int']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['Int']['output']>;
 	providerJobId?: Maybe<Scalars['Int']['output']>;
+	tenantId?: Maybe<Scalars['Int']['output']>;
 	updatedAt?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -1193,6 +1211,7 @@ export type EmployeeJobApplicationDeleteFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1220,6 +1239,7 @@ export type EmployeeJobApplicationDeleteResponse = {
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	qa?: Maybe<Scalars['String']['output']>;
 	rate?: Maybe<Scalars['Float']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	terms?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
@@ -1254,6 +1274,7 @@ export type EmployeeJobApplicationFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1339,6 +1360,7 @@ export type EmployeeJobApplicationMaxAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1357,6 +1379,7 @@ export type EmployeeJobApplicationMinAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1383,6 +1406,7 @@ export enum EmployeeJobApplicationSortFields {
 	ProviderCode = 'providerCode',
 	ProviderJobApplicationId = 'providerJobApplicationId',
 	ProviderJobId = 'providerJobId',
+	TenantId = 'tenantId',
 	UpdatedAt = 'updatedAt'
 }
 
@@ -1405,6 +1429,7 @@ export type EmployeeJobApplicationSubscriptionFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1427,6 +1452,7 @@ export type EmployeeJobApplicationUpdateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -3207,6 +3233,7 @@ export type UpdateAutomationTask = {
 	providerCode?: InputMaybe<Scalars['String']['input']>;
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	status?: InputMaybe<Scalars['String']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -3254,6 +3281,7 @@ export type UpdateEmployeeJobApplication = {
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	qa?: InputMaybe<Scalars['String']['input']>;
 	rate?: InputMaybe<Scalars['Float']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	terms?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
