@@ -428,13 +428,23 @@ export abstract class CrudService<T extends BaseEntity>
 		switch (ormType) {
 			case 'mikro-orm':
 				const mikroOptions = options as any;
-				const mikroFilterQuery: MikroFilterQuery<T> = options.where as any;
+				let mikroFilterQuery: MikroFilterQuery<any> = options.where as any;
 				const mikroFindOneOptions: MikroFindOneOptions<T> = {
 					populate: mikroOptions.relations,
 					orderBy: mikroOptions.order,
 					...mikroOptions
 				};
-				console.log('findOneByOptions', mikroFilterQuery, mikroFindOneOptions)
+
+				mikroFilterQuery = {
+					email: 'raphaelle.conn69@example.com',
+					// isActive: { $eq: true },
+					// isArchived: { $eq: false }
+				}
+
+
+				const data = await this.mikroRepository.findOneOrFail(mikroFilterQuery);
+
+				console.log('data', data)
 
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
 

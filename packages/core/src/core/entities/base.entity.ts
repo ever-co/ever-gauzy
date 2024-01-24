@@ -26,7 +26,7 @@ export abstract class Model {
 }
 export abstract class BaseEntity extends Model implements IBaseEntityModel {
 
-	@PrimaryKey()
+	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
 	@ApiPropertyOptional({ type: () => String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;

@@ -28,7 +28,6 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 			// to configure the DataSourceOptions.
 			useFactory: async (configService: ConfigService) => {
 				const { dbMikroOrmConnectionOptions } = configService.config;
-				console.log(dbMikroOrmConnectionOptions);
 				return dbMikroOrmConnectionOptions;
 			}
 		} as MikroOrmModuleAsyncOptions)
