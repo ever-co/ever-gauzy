@@ -434,18 +434,6 @@ export abstract class CrudService<T extends BaseEntity>
 					orderBy: mikroOptions.order,
 					...mikroOptions
 				};
-
-				mikroFilterQuery = {
-					email: 'raphaelle.conn69@example.com',
-					// isActive: { $eq: true },
-					// isArchived: { $eq: false }
-				}
-
-
-				const data = await this.mikroRepository.findOneOrFail(mikroFilterQuery);
-
-				console.log('data', data)
-
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
 
 			default:
