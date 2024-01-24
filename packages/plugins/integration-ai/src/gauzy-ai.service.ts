@@ -701,19 +701,6 @@ export class GauzyAIService {
 
         console.log(`syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(criteria)}. Employee: ${JSON.stringify(employee)}`);
 
-        let tenant: Tenant;
-
-        try {
-            // First we need to get tenant id because we have only externalId
-            tenant = await this.getTenantByExternalTenantId(employee.user.tenantId);
-        } catch (error) {
-            this._logger.error(error);
-            // Use this (using the "options" parameter):
-            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
-        }
-
-        console.log(`Tenant: ${JSON.stringify(tenant)}`);
-
         try {
             const gauzyAIUser: User = await this.syncUser({
                 firstName: employee.user.firstName,
@@ -721,7 +708,6 @@ export class GauzyAIService {
                 email: employee.user.email,
                 username: employee.user.username,
                 hash: employee.user.hash,
-                tenantId: tenant.id,
                 externalTenantId: employee.user.tenantId,
                 externalUserId: employee.user.id,
                 isActive: employee.isActive,
@@ -731,7 +717,6 @@ export class GauzyAIService {
             /** */
             const gauzyAIEmployee: Employee = await this.syncEmployee({
                 externalEmployeeId: employee.id,
-                tenantId: tenant.id,
                 externalTenantId: employee.tenantId,
                 externalOrgId: employee.organizationId,
                 upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -771,9 +756,6 @@ export class GauzyAIService {
                             },
                             employeeId: {
                                 eq: gauzyAIEmployee.id,
-                            },
-                            tenantId: {
-                                eq: tenant.id
                             }
                         },
                     },
@@ -794,7 +776,6 @@ export class GauzyAIService {
                 criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
                     gauzyAICriteria.push({
                         employeeId: gauzyAIEmployee.id,
-                        tenantId: tenant.id,
                         isActive: true,
                         isArchived: false,
                         jobType: criterion.jobType,
@@ -839,7 +820,6 @@ export class GauzyAIService {
     }
 
     /**
-     *
      * Creates employees in Gauzy AI if not exists yet. If exists, updates fields, including externalEmployeeId
      * How it works:
      * - search done externalEmployeeId field first in Gauzy AI to be equal to Gauzy employee Id.
@@ -856,22 +836,9 @@ export class GauzyAIService {
             await Promise.all(
                 employees.map(async (employee) => {
                     try {
-                        let tenant: Tenant;
-                        try {
-                            // First we need to get tenant id because we have only externalId
-                            tenant = await this.getTenantByExternalTenantId(employee.user.tenantId);
-                        } catch (error) {
-                            console.error('Error while retrieving tenantId: %s', error?.message);
-                            this._logger.error(error);
-
-                            // Use this (using the "options" parameter):
-                            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
-                        }
-
                         try {
                             /** */
                             const gauzyAIUser: User = await this.syncUser({
-                                tenantId: tenant.id,
                                 firstName: employee.user.firstName,
                                 lastName: employee.user.lastName,
                                 email: employee.user.email,
@@ -883,11 +850,11 @@ export class GauzyAIService {
                                 isArchived: !employee.isActive
                             });
                             console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
+
                             try {
                                 /**  */
                                 const gauzyAIEmployee: Employee = await this.syncEmployee({
                                     externalEmployeeId: employee.id,
-                                    tenantId: tenant.id,
                                     externalTenantId: employee.tenantId,
                                     externalOrgId: employee.organizationId,
                                     upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -946,19 +913,6 @@ export class GauzyAIService {
         console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
         const employeeIdFilter = filters && filters.employeeIds && filters.employeeIds.length > 0 ? filters.employeeIds[0] : undefined;
-
-        let tenant: Tenant;
-        try {
-            // First we need to get tenant id because we have only externalId
-            tenant = await this.getTenantByExternalTenantId(filters?.tenantId);
-        } catch (error) {
-            this._logger.error(error);
-            // Use this (using the "options" parameter):
-            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
-        }
-
-        console.log(`Tenant: ${JSON.stringify(tenant)}`);
-
         try {
             // TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
             const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
@@ -1042,13 +996,6 @@ export class GauzyAIService {
                 isArchived: {
                     is: false,
                 },
-                ...(filters && filters.tenantId
-                    ? {
-                        tenantId: {
-                            eq: tenant.id
-                        }
-                    }
-                    : {}),
                 ...(filters && filters.isApplied
                     ? {
                         isApplied: {
@@ -1113,7 +1060,7 @@ export class GauzyAIService {
 
             let currentCount = 1;
 
-            let totalCount;
+            let totalCount: number;
 
             do {
                 const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<EmployeeJobPostsQuery>({
