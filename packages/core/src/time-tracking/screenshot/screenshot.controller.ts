@@ -35,7 +35,10 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly _screenshotService: ScreenshotService) {}
+
+	constructor(
+		private readonly _screenshotService: ScreenshotService
+	) { }
 
 	/**
 	 *
@@ -59,12 +62,11 @@ export class ScreenshotController {
 			// Define storage settings for uploaded files
 			storage: () => {
 				return new FileStorage().storage({
-					dest: () =>
-						path.join(
-							'screenshots',
-							moment().format('YYYY/MM/DD'),
-							RequestContext.currentTenantId() || uuid()
-						),
+					dest: () => path.join(
+						'screenshots',
+						moment().format('YYYY/MM/DD'),
+						RequestContext.currentTenantId() || uuid()
+					),
 					prefix: 'screenshots'
 				});
 			}
@@ -75,6 +77,8 @@ export class ScreenshotController {
 			console.warn('Screenshot file key is empty');
 			return;
 		}
+
+		console.log('Screenshot Http Request Entity: ', { entity });
 
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();

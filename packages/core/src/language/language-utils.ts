@@ -4,7 +4,7 @@ import allLanguages from './all-languages';
 import { Language } from './language.entity';
 import { faker } from '@faker-js/faker';
 import { v4 as uuidV4 } from 'uuid';
-import { isSqliteDB } from './../core/utils';
+import { databaseTypes } from '@gauzy/config';
 
 export class LanguageUtils {
 	private static async addLanguages(queryRunner: QueryRunner, languages: ILanguage[]): Promise<void> {
@@ -12,41 +12,56 @@ export class LanguageUtils {
 			const { name, code, is_system, description, color } = language;
 
 			let insertOrUpdateQuery = '';
-			if (isSqliteDB(queryRunner.connection.options)) {
-				const payload = [name, code, is_system ? 1 : 0, description, color];
-
-				payload.push(uuidV4());
-
-				console.log('Inserting languages: ', JSON.stringify(payload));
-
-				insertOrUpdateQuery = `
-					INSERT INTO language (name, code, is_system, description, color, id)
-					VALUES (?, ?, ?, ?, ?, ?)
-					ON CONFLICT (code)
-					DO UPDATE SET
-						name = EXCLUDED.name,
-						is_system = EXCLUDED.is_system,
-						description = EXCLUDED.description,
-						color = EXCLUDED.color;
-				`;
-
-				await queryRunner.connection.manager.query(insertOrUpdateQuery, payload);
-			} else {
-				const payload = [name, code, is_system, description, color];
-
-				insertOrUpdateQuery = `
-					INSERT INTO language (name, code, is_system, description, color)
-					VALUES ($1, $2, $3, $4, $5)
-					ON CONFLICT (code)
-					DO UPDATE SET
-						name = EXCLUDED.name,
-						is_system = EXCLUDED.is_system,
-						description = EXCLUDED.description,
-						color = EXCLUDED.color;
-				`;
-
-				await queryRunner.connection.manager.query(insertOrUpdateQuery, payload);
+			let payload: any[];
+			switch (queryRunner.connection.options.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					payload = [name, code, is_system ? 1 : 0, description, color];
+					payload.push(uuidV4());
+					console.log('Inserting languages: ', JSON.stringify(payload));
+					insertOrUpdateQuery = `
+						INSERT INTO language (name, code, is_system, description, color, id)
+						VALUES (?, ?, ?, ?, ?, ?)
+						ON CONFLICT (code)
+						DO UPDATE SET
+							name = EXCLUDED.name,
+							is_system = EXCLUDED.is_system,
+							description = EXCLUDED.description,
+							color = EXCLUDED.color;
+					`;
+					break;
+				case databaseTypes.postgres:
+					payload = [name, code, is_system, description, color];
+					insertOrUpdateQuery = `
+						INSERT INTO language (name, code, is_system, description, color)
+						VALUES ($1, $2, $3, $4, $5)
+						ON CONFLICT (code)
+						DO UPDATE SET
+							name = EXCLUDED.name,
+							is_system = EXCLUDED.is_system,
+							description = EXCLUDED.description,
+							color = EXCLUDED.color;
+					`;
+					break;
+				case databaseTypes.mysql:
+					payload = [name, code, is_system, description, color];
+					insertOrUpdateQuery = `
+						INSERT INTO language (name, code, is_system, description, color)
+						VALUES (?, ?, ?, ?, ?)
+						ON DUPLICATE KEY UPDATE
+						name = VALUES(name),
+						is_system = VALUES(is_system),
+						description = VALUES(description),
+						color = VALUES(color);
+					`;
+					break;
+				default:
+					throw Error(`
+						cannot create query to add languages due to unsupported database type: ${queryRunner.connection.options.type}
+					`);
 			}
+
+			await queryRunner.connection.manager.query(insertOrUpdateQuery, payload);
 		}
 	}
 

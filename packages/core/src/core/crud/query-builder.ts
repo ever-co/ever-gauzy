@@ -1,5 +1,5 @@
 import { Brackets, FindOperator, ObjectLiteral, SelectQueryBuilder, WhereExpressionBuilder } from "typeorm";
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 export const filterQuery = <T>(
     qb: SelectQueryBuilder<T>,

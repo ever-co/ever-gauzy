@@ -8,8 +8,8 @@ import { MikroInjectRepository, isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { prepareSQLQuery as p } from '@gauzy/config';
 import { EntityRepository } from '@mikro-orm/core';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {

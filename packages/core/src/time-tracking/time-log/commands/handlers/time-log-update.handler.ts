@@ -13,7 +13,7 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from './../../../../core/context';
 import { TimeSlot } from './../../../../core/entities/internal';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimeLogUpdateCommand)
 export class TimeLogUpdateHandler

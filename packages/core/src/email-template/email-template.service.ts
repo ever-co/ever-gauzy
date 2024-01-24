@@ -9,7 +9,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class EmailTemplateService extends CrudService<EmailTemplate> {

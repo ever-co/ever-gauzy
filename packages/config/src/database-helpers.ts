@@ -32,14 +32,3 @@ export const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
 		ca: sslCert
 	};
 }
-
-/**
- *
- * @Desc Used to replace double quotes " with backticks ` in case the selected DB type is MySQL
- */
-export const prepareSQLQuery = (queryStr: string): string => {
-	if (isMySQL()) {
-		return queryStr.replace(/"/g, '`');
-	}
-	return queryStr;
-}

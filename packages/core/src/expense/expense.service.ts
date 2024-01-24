@@ -11,7 +11,7 @@ import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {

@@ -33,7 +33,7 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand,
 } from './../time-log/commands';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class TimerService {

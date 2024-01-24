@@ -25,7 +25,7 @@ import {
 	SavePresetCriterionCommand
 } from './commands';
 import { isNotEmpty } from 'class-validator';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {

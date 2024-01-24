@@ -9,7 +9,7 @@ import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 import { Screenshot } from './screenshot.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {

@@ -11,7 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
-import { getConfig, isMySQL } from '@gauzy/config';
+import { isBetterSqlite3, isMySQL, isSqlite } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -21,14 +21,6 @@ import {
 } from './../../core/entities/internal';
 import { isSqliteDB } from './../../core/utils';
 import { Entity } from '@gauzy/common';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-
-let options: TypeOrmModuleOptions;
-try {
-	options = getConfig().dbConnectionOptions;
-} catch (error) {
-	console.error('Cannot load DB connection options', error);
-}
 
 @Entity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -49,13 +41,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	description?: string;
 
 	@ApiPropertyOptional({
-		type: () => (isSqliteDB(options) ? 'text' : 'json')
+		type: () => (isSqlite() || isBetterSqlite3() ? 'text' : 'json')
 	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: isSqliteDB(options) ? 'text' : 'json'
+		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 

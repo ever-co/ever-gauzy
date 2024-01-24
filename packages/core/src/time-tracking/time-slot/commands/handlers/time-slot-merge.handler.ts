@@ -10,7 +10,7 @@ import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler

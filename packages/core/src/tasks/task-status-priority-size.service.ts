@@ -12,8 +12,8 @@ import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from
 import { TenantBaseEntity } from '../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { prepareSQLQuery as p } from '@gauzy/config';
 import { EntityRepository } from '@mikro-orm/core';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 export type IFindEntityByParams =
 	| ITaskStatusFindInput

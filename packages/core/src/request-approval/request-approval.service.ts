@@ -19,7 +19,8 @@ import {
 	IEmployee,
 	IRequestApprovalTeam
 } from '@gauzy/contracts';
-import { isBetterSqlite3, isMySQL, isPostgres, isSqlite, prepareSQLQuery as p } from '@gauzy/config';
+import { isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { RequestContext } from '../core/context';
 import {
 	Employee,

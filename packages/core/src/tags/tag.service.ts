@@ -9,7 +9,7 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {

@@ -26,7 +26,7 @@ import {
 	IWorkspaceResponse,
 	ITenant,
 } from '@gauzy/contracts';
-import { environment, prepareSQLQuery as p } from '@gauzy/config';
+import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, MikroInjectRepository, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
@@ -42,6 +42,7 @@ import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils'
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EntityRepository } from '@mikro-orm/core';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class AuthService extends SocialAuthService {

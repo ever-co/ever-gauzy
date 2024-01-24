@@ -14,7 +14,7 @@ import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {

@@ -16,7 +16,7 @@ import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {

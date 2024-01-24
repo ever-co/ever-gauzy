@@ -4,8 +4,8 @@ import { IDateRange, IUser } from '@gauzy/contracts';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { getConfig, databaseTypes } from '@gauzy/config';
 import { IDBConnectionOptions } from '@gauzy/common';
+import { getConfig, databaseTypes } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { SqliteDriver } from '@mikro-orm/sqlite';
@@ -81,12 +81,17 @@ export function unixTimestampToDate(
 /*
  * To convert any datetime to any datetime format
  */
-export function convertToDatetime(datetime) {
+export function convertToDatetime(datetime): Date | string | null {
 	if (moment(new Date(datetime)).isValid()) {
-		if (isSqliteDB()) {
-			return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
-		} else {
-			return moment(new Date(datetime)).toDate();
+		switch (getConfig().dbConnectionOptions.type) {
+			case databaseTypes.sqlite:
+			case databaseTypes.betterSqlite3:
+				return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
+			case databaseTypes.postgres:
+			case databaseTypes.mysql:
+				return moment(new Date(datetime)).toDate();
+			default:
+				throw Error('cannot convert to date time');
 		}
 	}
 	return null;
@@ -136,17 +141,24 @@ export function getDateRange(
 		throw 'End date must be greater than start date.';
 	}
 
-	if (isSqliteDB()) {
-		start = start.format('YYYY-MM-DD HH:mm:ss');
-		end = end.format('YYYY-MM-DD HH:mm:ss');
-	} else {
-		if (!isFormat) {
-			start = start.toDate();
-			end = end.toDate();
-		} else {
-			start = start.format();
-			end = end.format();
-		}
+	switch (getConfig().dbConnectionOptions.type) {
+		case databaseTypes.sqlite:
+		case databaseTypes.betterSqlite3:
+			start = start.format('YYYY-MM-DD HH:mm:ss');
+			end = end.format('YYYY-MM-DD HH:mm:ss');
+			break;
+		case databaseTypes.postgres:
+		case databaseTypes.mysql:
+			if (!isFormat) {
+				start = start.toDate();
+				end = end.toDate();
+			} else {
+				start = start.format();
+				end = end.format();
+			}
+			break;
+		default:
+			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`)
 	}
 
 	return {
@@ -227,16 +239,21 @@ export function getDateRangeFormat(
 		throw 'End date must be greater than start date.';
 	}
 
-	if (isSqliteDB()) {
-		return {
-			start: start.format('YYYY-MM-DD HH:mm:ss'),
-			end: end.format('YYYY-MM-DD HH:mm:ss'),
-		};
-	} else {
-		return {
-			start: start.toDate(),
-			end: end.toDate(),
-		};
+	switch (getConfig().dbConnectionOptions.type) {
+		case databaseTypes.sqlite:
+		case databaseTypes.betterSqlite3:
+			return {
+				start: start.format('YYYY-MM-DD HH:mm:ss'),
+				end: end.format('YYYY-MM-DD HH:mm:ss'),
+			};
+		case databaseTypes.postgres:
+		case databaseTypes.mysql:
+			return {
+				start: start.toDate(),
+				end: end.toDate(),
+			};
+		default:
+			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`)
 	}
 }
 

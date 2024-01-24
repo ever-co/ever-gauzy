@@ -5,7 +5,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from '../../time-slot.entity';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
 import { RequestContext } from '../../../../core/context';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
 export class TimeSlotBulkDeleteHandler

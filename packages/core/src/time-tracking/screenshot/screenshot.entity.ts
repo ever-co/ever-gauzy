@@ -1,20 +1,20 @@
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { IDBConnectionOptions } from '@gauzy/common';
-import { getConfig } from '@gauzy/config';
+import { getConfig, isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
-import { isSqliteDB } from './../../core/utils';
+import { Entity } from '@gauzy/common';
 
-let options: IDBConnectionOptions;
+
+let options: TypeOrmModuleOptions;
 try {
 	options = getConfig().dbConnectionOptions;
 } catch (error) {
 	console.error('Cannot load DB connection options', error);
 }
-import { Entity } from '@gauzy/common';
 
 @Entity('screenshot')
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
@@ -85,14 +85,14 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	 * Applications associated with the image or screenshot.
 	 */
 	@ApiPropertyOptional({
-		type: () => (isSqliteDB(options) ? 'text' : 'json'),
+		type: () => (isSqlite() || isBetterSqlite3() ? 'text' : 'json'),
 		description: 'Applications associated with the image or screenshot.'
 	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: isSqliteDB(options) ? 'text' : 'json'
+		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
 	apps?: string | string[];
 

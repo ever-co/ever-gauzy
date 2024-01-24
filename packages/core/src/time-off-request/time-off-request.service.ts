@@ -23,7 +23,7 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {

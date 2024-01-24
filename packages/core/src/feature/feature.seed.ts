@@ -1,7 +1,7 @@
-import { DataSource } from 'typeorm';
-import * as path from 'path';
-import { copyFileSync, mkdirSync } from 'fs';
+import { IPluginConfig } from '@gauzy/common';
 import * as chalk from 'chalk';
+import { copyFileSync, mkdirSync } from 'fs';
+import * as path from 'path';
 import * as rimraf from 'rimraf';
 import { ConfigService, environment as env, databaseTypes } from '@gauzy/config';
 import {
@@ -9,10 +9,10 @@ import {
 	IFeatureOrganization,
 	ITenant
 } from '@gauzy/contracts';
+import { DataSource } from 'typeorm';
 import { DEFAULT_FEATURES } from './default-features';
-import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature-organization.entity';
-import { IPluginConfig } from '@gauzy/common';
+import { Feature } from './feature.entity';
 
 export const createDefaultFeatureToggle = async (
 	dataSource: DataSource,
@@ -30,11 +30,7 @@ export const createDefaultFeatureToggle = async (
 			const featureChildren: IFeature[] = [];
 
 			for await (const child of children) {
-				const childFeature: IFeature = await createFeature(
-					child,
-					tenant,
-					config
-				);
+				const childFeature: IFeature = await createFeature(child, tenant, config);
 				childFeature.parent = parent;
 				featureChildren.push(childFeature);
 			}
@@ -45,23 +41,18 @@ export const createDefaultFeatureToggle = async (
 	return await dataSource.getRepository(Feature).find();
 };
 
-export const createRandomFeatureToggle = async (
-	dataSource: DataSource,
-	tenants: ITenant[]
-) => {
+export const createRandomFeatureToggle = async (dataSource: DataSource, tenants: ITenant[]) => {
 	const features: IFeature[] = await dataSource.getRepository(Feature).find();
 	const featureOrganizations: IFeatureOrganization[] = [];
 
 	for await (const feature of features) {
 		for await (const tenant of tenants) {
 			const { isEnabled } = feature;
-			const featureOrganization: IFeatureOrganization = new FeatureOrganization(
-				{
-					isEnabled,
-					tenant,
-					feature
-				}
-			);
+			const featureOrganization: IFeatureOrganization = new FeatureOrganization({
+				isEnabled,
+				tenant,
+				feature
+			});
 			featureOrganizations.push(featureOrganization);
 		}
 	}
@@ -70,21 +61,8 @@ export const createRandomFeatureToggle = async (
 	return features;
 };
 
-async function createFeature(
-	item: IFeature,
-	tenant: ITenant,
-	config: Partial<IPluginConfig>
-) {
-	const {
-		name,
-		code,
-		description,
-		image,
-		link,
-		isEnabled,
-		status,
-		icon
-	} = item;
+async function createFeature(item: IFeature, tenant: ITenant, config: Partial<IPluginConfig>) {
+	const { name, code, description, image, link, isEnabled, status, icon } = item;
 	const feature: IFeature = new Feature({
 		name,
 		code,
@@ -104,6 +82,7 @@ async function createFeature(
 }
 
 async function cleanFeature(dataSource, config) {
+// <<<<<<< HEAD
 	switch (config.dbConnectionOptions.type) {
 		case databaseTypes.sqlite:
 		case databaseTypes.betterSqlite3:
@@ -134,28 +113,12 @@ async function cleanFeature(dataSource, config) {
 		const destDir = 'features';
 		const configService = new ConfigService();
 
-		// console.log('FEATURE SEED -> IS ELECTRON: ' + env.isElectron);
-
-		/*
-		console.log(
-			'FEATURE SEED -> assetPath: ' + config.assetOptions.assetPath
-		);
-		console.log(
-			'FEATURE SEED -> assetPublicPath: ' +
-				config.assetOptions.assetPublicPath
-		);
-		console.log('FEATURE SEED -> __dirname: ' + __dirname);
-		*/
-
 		let dir: string;
 
 		if (env.isElectron) {
 			dir = path.resolve(env.gauzyUserPath, ...['public', destDir]);
 		} else {
-			dir = path.join(
-				configService.assetOptions.assetPublicPath,
-				destDir
-			);
+			dir = path.join(configService.assetOptions.assetPublicPath, destDir);
 		}
 
 		// delete old generated feature image
@@ -180,52 +143,30 @@ function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 		let baseDir: string;
 
 		if (env.isElectron) {
-			dir = path.resolve(
-				env.gauzyUserPath,
-				...['src', 'assets', 'seed', destDir]
-			);
+			dir = path.resolve(env.gauzySeedPath, destDir);
 
 			baseDir = path.resolve(env.gauzyUserPath, ...['public']);
 		} else {
 			if (config.assetOptions.assetPath) {
-				dir = path.join(
-					config.assetOptions.assetPath,
-					...['seed', destDir]
-				);
+				dir = path.join(config.assetOptions.assetPath, ...['seed', destDir]);
 			} else {
-				dir = path.resolve(
-					__dirname,
-					'../../../',
-					...['apps', 'api', 'src', 'assets', 'seed', destDir]
-				);
+				dir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
 			}
 
 			if (config.assetOptions.assetPublicPath) {
 				baseDir = config.assetOptions.assetPublicPath;
 			} else {
-				baseDir = path.resolve(
-					__dirname,
-					'../../../',
-					...['apps', 'api', 'public']
-				);
+				baseDir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
 			}
 		}
 
-		// console.log('FEATURE SEED -> dir: ' + dir);
-		// console.log('FEATURE SEED -> baseDir: ' + baseDir);
-
 		const finalDir = path.join(baseDir, destDir);
-
-		// console.log('FEATURE SEED -> finalDir: ' + finalDir);
 
 		mkdirSync(finalDir, { recursive: true });
 
 		const destFilePath = path.join(destDir, fileName);
 
-		copyFileSync(
-			path.join(dir, fileName),
-			path.join(baseDir, destFilePath)
-		);
+		copyFileSync(path.join(dir, fileName), path.join(baseDir, destFilePath));
 
 		return destFilePath;
 	} catch (err) {

@@ -5,7 +5,7 @@ import { Skill } from './skill.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { prepareSQLQuery as p } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class SkillService extends TenantAwareCrudService<Skill> {
