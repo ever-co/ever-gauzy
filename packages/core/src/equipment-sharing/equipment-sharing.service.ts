@@ -197,11 +197,17 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					);
 					break;
 				case databaseTypes.postgres:
-				case databaseTypes.mysql:
 					query.leftJoinAndSelect(
 						'request_approval',
 						'requestApproval',
 						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+					);
+					break;
+				case databaseTypes.mysql:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						p(`"equipment_sharing"."id" = "requestApproval"."requestId"`)
 					);
 					break;
 				default:
