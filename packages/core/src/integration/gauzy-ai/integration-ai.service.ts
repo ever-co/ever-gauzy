@@ -97,24 +97,28 @@ export class IntegrationAIService {
 				)
 			);
 
-			// Set configuration in the requestConfigProvider
-			this._requestConfigProvider.setConfig({
-				apiKey,
-				apiSecret,
-				...(isNotEmpty(openAiSecretKey) && { openAiSecretKey }),
-				...(isNotEmpty(openAiOrganizationId) && { openAiOrganizationId }),
-			});
+			try {
+				// Set configuration in the requestConfigProvider
+				this._requestConfigProvider.setConfig({
+					apiKey,
+					apiSecret,
+					...(isNotEmpty(openAiSecretKey) && { openAiSecretKey }),
+					...(isNotEmpty(openAiOrganizationId) && { openAiOrganizationId }),
+				});
 
-			// Update Gauzy AI service with the new API key
-			await this._gauzyAIService.updateOneTenantApiKey({
-				apiKey,
-				apiSecret,
-				openAiSecretKey,
-				openAiOrganizationId
-			});
+				// Update Gauzy AI service with the new API key
+				await this._gauzyAIService.updateOneTenantApiKey({
+					apiKey,
+					apiSecret,
+					openAiSecretKey,
+					openAiOrganizationId
+				});
 
-			// Reset configuration in the requestConfigProvider
-			this._requestConfigProvider.resetConfig();
+				// Reset configuration in the requestConfigProvider
+				this._requestConfigProvider.resetConfig();
+			} catch (error) {
+				console.log(`Error while updating Tenant Api Key: %s`, error?.message);
+			}
 
 			// Return the created integration tenant
 			return createdIntegration;
