@@ -145,7 +145,7 @@ async function cleanReport(dataSource: DataSource, config: Partial<IPluginConfig
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
-	const dbType = getDBType(config.dbConnectionOptions) as any;
+	const dbType = config.dbConnectionOptions.type as any;
 
 	switch (dbType) {
 		case databaseTypes.sqlite:
