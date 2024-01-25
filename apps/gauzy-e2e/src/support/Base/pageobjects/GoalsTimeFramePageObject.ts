@@ -1,4 +1,4 @@
-export const GoalstimeFramePage = {
+export const GoalsTimeFramePage = {
 	gridButtonCss: 'div.layout-switch > button',
 	tabButtonCss: 'ul.tabset > li.tab',
 	titleInputCss: '#time-frame-title',
@@ -11,6 +11,6 @@ export const GoalstimeFramePage = {
 	deleteButtonCss: 'nb-tab[tabid="timeframe"] > div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyTimeFrameCss: 'div.ng-star-inserted',
-	verifyEmpytTableCss: 'tr.ng-star-inserted > td',
+	verifyEmptyTableCss: 'tr.ng-star-inserted > td',
 	toastrMessageCss: 'nb-toast.ng-trigger'
 };

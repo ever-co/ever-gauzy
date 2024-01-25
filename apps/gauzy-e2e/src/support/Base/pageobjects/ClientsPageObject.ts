@@ -36,6 +36,6 @@ export const ClientsPage = {
 	clientsTableRow: 'tr[class="angular2-smart-row ng-star-inserted"]',
 	viewButtonCss: 'div.mb-3 > button[status="info"]',
 	clientNameViewCss: 'div.profile-user-title-name',
-	clientTypeViewCss: 'div.profile-usertitle-type',
+	clientTypeViewCss: 'div.profile-user-title-type',
 	backBtn: 'ngx-back-navigation > div > button[status="primary"]'
 };
