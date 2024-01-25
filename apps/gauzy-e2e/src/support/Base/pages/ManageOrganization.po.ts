@@ -30,11 +30,11 @@ export const manageBtnClick = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(ManageOrganizationPage.organisationNameFieldCss);
+	verifyElementIsVisible(ManageOrganizationPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	enterInput(ManageOrganizationPage.organisationNameFieldCss, data);
+	enterInput(ManageOrganizationPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {

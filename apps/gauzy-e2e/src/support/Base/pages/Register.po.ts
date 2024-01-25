@@ -45,11 +45,11 @@ export const clickRegisterButton = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(RegisterPage.organisationNameFieldCss);
+	verifyElementIsVisible(RegisterPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	enterInput(RegisterPage.organisationNameFieldCss, data);
+	enterInput(RegisterPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {

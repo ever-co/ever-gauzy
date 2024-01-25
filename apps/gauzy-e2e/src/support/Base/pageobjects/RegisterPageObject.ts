@@ -6,7 +6,7 @@ export const RegisterPage = {
 	confirmPassFieldCss: '#input-re-password',
 	termAndConditionCheckboxCss: 'span.custom-checkbox',
 	registerButtonCss: 'ngx-register > form > button',
-	organisationNameFieldCss: '[placeholder="Organization Name"]',
+	organizationNameFieldCss: '[placeholder="Organization Name"]',
 	currencyFieldCss: '[class="select-button placeholder"]',
 	dropdownOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',

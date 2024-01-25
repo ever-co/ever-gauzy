@@ -29,12 +29,12 @@ export const addBtnClick = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(AddOrganizationPage.organisationNameFieldCss);
+	verifyElementIsVisible(AddOrganizationPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	clearField(AddOrganizationPage.organisationNameFieldCss);
-	enterInput(AddOrganizationPage.organisationNameFieldCss, data);
+	clearField(AddOrganizationPage.organizationNameFieldCss);
+	enterInput(AddOrganizationPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {

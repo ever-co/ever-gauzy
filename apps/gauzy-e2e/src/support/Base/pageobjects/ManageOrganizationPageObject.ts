@@ -9,7 +9,7 @@ export const ManageOrganizationPage = {
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	saveButtonCss: 'div.actions > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
-	organisationNameFieldCss: '#nameInput',
+	organizationNameFieldCss: '#nameInput',
 	currencyFieldCss: '#currencySelect',
 	officialNameFieldCss: '#officialNameInput',
 	taxFieldCss: '#taxIdInput',

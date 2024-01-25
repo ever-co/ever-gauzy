@@ -7,11 +7,11 @@ import {
 } from '../utils/util';
 import { OnboardingPage } from '../pageobjects/OnboardingPageObject';
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(OnboardingPage.organisationNameFieldCss);
+	verifyElementIsVisible(OnboardingPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	enterInput(OnboardingPage.organisationNameFieldCss, data);
+	enterInput(OnboardingPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {

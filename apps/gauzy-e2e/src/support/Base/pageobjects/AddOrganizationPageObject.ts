@@ -1,5 +1,5 @@
 export const AddOrganizationPage = {
-	organisationNameFieldCss: '[placeholder="Organization Name"]',
+	organizationNameFieldCss: '[placeholder="Organization Name"]',
 	currencyFieldCss: 'div.ng-select-container.ng-has-value',
 	dropdownOptionCss: 'ng-dropdown-panel[role="listbox"]',
 	startofweekOptionCss: 'ul.option-list',

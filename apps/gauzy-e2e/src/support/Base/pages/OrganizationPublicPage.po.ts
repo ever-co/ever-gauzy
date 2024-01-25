@@ -333,12 +333,12 @@ export const addBtnClick = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(OrganizationPublicPage.organisationNameFieldCss);
+	verifyElementIsVisible(OrganizationPublicPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	clearField(OrganizationPublicPage.organisationNameFieldCss);
-	enterInput(OrganizationPublicPage.organisationNameFieldCss, data);
+	clearField(OrganizationPublicPage.organizationNameFieldCss);
+	enterInput(OrganizationPublicPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {

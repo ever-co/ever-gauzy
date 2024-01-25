@@ -42,7 +42,7 @@ export const OrganizationPublicPage = {
 	clientFocusCss: 'div.org-head div.org-client-focus > h5.org-title > span.client-focus',
 	skillsCss: 'div.org-skills > .org-value > li.org_list_data',
 
-	organisationNameFieldCss: '[placeholder="Organization Name"]',
+	organizationNameFieldCss: '[placeholder="Organization Name"]',
 	currencyFieldCss: '#currencySelect',
 	dropdownOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',
