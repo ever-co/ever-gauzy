@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Repository, Brackets, In, SelectQueryBuilder, WhereExpressionBuilder, Between } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as _ from 'underscore';
 import * as moment from 'moment';
@@ -20,7 +20,8 @@ import {
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
 	TimeLogType,
-	ITask
+	ITask,
+	ITimeLog
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
 import { ConfigService, databaseTypes, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
@@ -83,8 +84,6 @@ export class StatisticService {
 		 */
 		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
-		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		/**
@@ -107,9 +106,8 @@ export class StatisticService {
 			duration: 0
 		};
 		const weekQuery = this.timeSlotRepository.createQueryBuilder();
-		let weekQueryString;
-		weekQuery.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs');
 
+		let weekQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -125,20 +123,31 @@ export class StatisticService {
 				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 		}
 
-		const weekTimeStatistics = await weekQuery
+		weekQuery
+			.innerJoin(`${weekQuery.alias}.timeLogs`, 'timeLogs')
 			.select(weekQueryString, `week_duration`)
 			.addSelect(p(`COALESCE(SUM("${weekQuery.alias}"."overall"), 0)`), `overall`)
 			.addSelect(p(`COALESCE(SUM("${weekQuery.alias}"."duration"), 0)`), `duration`)
 			.addSelect(p(`COUNT("${weekQuery.alias}"."id")`), `time_slot_count`)
-			.andWhere(p(`"${weekQuery.alias}"."tenantId" = :tenantId`), { tenantId })
-			.andWhere(p(`"${weekQuery.alias}"."organizationId" = :organizationId`), { organizationId })
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), {
+					qb.andWhere(p(`"${weekQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${weekQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${weekQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
 						startDate: start,
 						endDate: end
 					});
-					qb.andWhere(p(`"${weekQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
+					qb.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), {
 						startDate: start,
 						endDate: end
 					});
@@ -146,20 +155,14 @@ export class StatisticService {
 					 * If Employee Selected
 					 */
 					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(p(`"${weekQuery.alias}"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
-						qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
+						qb.andWhere(p(`"${weekQuery.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+						qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), { employeeIds });
 					}
 					/**
 					 * If Project Selected
 					 */
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
-							projectIds
-						});
+						qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds });
 					}
 					if (isNotEmpty(request.activityLevel)) {
 						/**
@@ -193,16 +196,12 @@ export class StatisticService {
 							source
 						});
 					}
-					qb.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
-						})
-					);
 				})
 			)
-			.groupBy(p(`"timeLogs"."id"`))
-			.getRawMany();
+			.groupBy(p(`"timeLogs"."id"`));
+
+		const weekTimeStatistics = await weekQuery.getRawMany();
+
 		const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
 		const weekPercentage = (
 			(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) /
@@ -226,9 +225,8 @@ export class StatisticService {
 		);
 
 		const todayQuery = this.timeSlotRepository.createQueryBuilder();
-		let todayQueryString;
-		todayQuery.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs');
 
+		let todayQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -244,13 +242,24 @@ export class StatisticService {
 				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 		}
 
-		const todayTimeStatistics = await todayQuery
+		todayQuery
+			.innerJoin(`${todayQuery.alias}.timeLogs`, 'timeLogs')
 			.select(todayQueryString, `today_duration`)
 			.addSelect(p(`COALESCE(SUM("${todayQuery.alias}"."overall"), 0)`), `overall`)
 			.addSelect(p(`COALESCE(SUM("${todayQuery.alias}"."duration"), 0)`), `duration`)
 			.addSelect(p(`COUNT("${todayQuery.alias}"."id")`), `time_slot_count`)
-			.andWhere(p(`"${todayQuery.alias}"."tenantId" = :tenantId`), { tenantId })
-			.andWhere(p(`"${todayQuery.alias}"."organizationId" = :organizationId`), { organizationId })
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${todayQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${todayQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
+				})
+			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), {
@@ -312,16 +321,12 @@ export class StatisticService {
 							source
 						});
 					}
-					qb.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
-						})
-					);
 				})
 			)
-			.groupBy(p(`"timeLogs"."id"`))
-			.getRawMany();
+			.groupBy(p(`"timeLogs"."id"`));
+
+		const todayTimeStatistics = await todayQuery.getRawMany();
+
 		const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
 		const todayPercentage = (
 			(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) /
@@ -334,16 +339,11 @@ export class StatisticService {
 		return {
 			employeesCount,
 			projectsCount,
-			weekActivities: parseFloat(
-				parseFloat(weekActivities.overall + '').toFixed(2)
-			),
+			weekActivities: parseFloat(parseFloat(weekActivities.overall + '').toFixed(2)),
 			weekDuration: weekActivities.duration,
-			todayActivities: parseFloat(
-				parseFloat(todayActivities.overall + '').toFixed(2)
-			),
+			todayActivities: parseFloat(parseFloat(todayActivities.overall + '').toFixed(2)),
 			todayDuration: todayActivities.duration
 		};
-
 	}
 
 	/**
@@ -380,13 +380,9 @@ export class StatisticService {
 		 */
 		if ((user.employeeId) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
-		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
-		const query = this.employeeRepository.createQueryBuilder();
-		let queryString;
-
+		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -400,19 +396,29 @@ export class StatisticService {
 				break;
 			default:
 				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
-
 		}
 
+		const query = this.employeeRepository.createQueryBuilder();
 		let employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
-			.addSelect(p(`("user"."firstName" || ' ' ||  "user"."lastName")`), 'user_name')
+			.addSelect(p(`CONCAT("user"."firstName", ' ', "user"."lastName")`), 'user_name')
 			.addSelect(p(`"user"."imageUrl"`), 'user_image_url')
 			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.user`, 'user')
 			.innerJoin(`${query.alias}.timeLogs`, 'timeLogs')
 			.innerJoin(`timeLogs.timeSlots`, 'time_slot')
-			.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-			.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			)
+			.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
+				})
+			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`), {
@@ -440,12 +446,6 @@ export class StatisticService {
 					if (isNotEmpty(projectIds)) {
 						qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), { projectIds });
 					}
-					qb.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
-						})
-					);
 				})
 			)
 			.addGroupBy(p(`"${query.alias}"."id"`))
@@ -459,8 +459,8 @@ export class StatisticService {
 			 * Weekly Member Activity
 			 */
 			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
-			let weekTimeQueryString;
 
+			let weekTimeQueryString: string;
 			switch (this.configService.dbConnectionOptions.type) {
 				case databaseTypes.sqlite:
 				case databaseTypes.betterSqlite3:
@@ -475,6 +475,7 @@ export class StatisticService {
 				default:
 					throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 			}
+
 			weekTimeQuery
 				.select(weekTimeQueryString, `week_duration`)
 				.addSelect(p(`COALESCE(SUM("${weekTimeQuery.alias}"."overall"), 0)`), `overall`)
@@ -482,8 +483,18 @@ export class StatisticService {
 				.addSelect(p(`COUNT("${weekTimeQuery.alias}"."id")`), `time_slot_count`)
 				.addSelect(`${weekTimeQuery.alias}.employeeId`, 'employeeId')
 				.innerJoin(`${weekTimeQuery.alias}.timeLogs`, 'timeLogs')
-				.andWhere(p(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`), { tenantId })
-				.andWhere(p(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`), { organizationId })
+				.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					})
+				)
+				.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
+					})
+				)
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(p(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`), {
@@ -513,12 +524,6 @@ export class StatisticService {
 								projectIds
 							});
 						}
-						qb.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
-								qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
-							})
-						);
 					})
 				)
 				.groupBy(`timeLogs.id`)
@@ -526,21 +531,18 @@ export class StatisticService {
 
 			let weekTimeSlots: any = await weekTimeQuery.getRawMany();
 
-			weekTimeSlots = mapObject(
-				groupBy(weekTimeSlots, 'employeeId'),
-				function (values, employeeId) {
-					const weekDuration = reduce(pluck(values, 'week_duration'), ArraySum, 0);
-					const weekPercentage = (
-						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
-						(reduce(pluck(values, 'duration'), ArraySum, 0))
-					);
-					return {
-						employeeId,
-						duration: weekDuration,
-						overall: weekPercentage
-					};
-				}
-			);
+			weekTimeSlots = mapObject(groupBy(weekTimeSlots, 'employeeId'), (values, employeeId) => {
+				const weekDuration = reduce(pluck(values, 'week_duration'), ArraySum, 0);
+				const weekPercentage = (
+					(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
+					(reduce(pluck(values, 'duration'), ArraySum, 0))
+				);
+				return {
+					employeeId,
+					duration: weekDuration,
+					overall: weekPercentage
+				};
+			});
 			weekTimeSlots = chain(weekTimeSlots)
 				.map((weekTimeSlot: any) => {
 					if (weekTimeSlot && weekTimeSlot.overall) {
@@ -555,8 +557,8 @@ export class StatisticService {
 			 * Daily Member Activity
 			 */
 			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
-			let dayTimeQueryString;
 
+			let dayTimeQueryString: string;
 			switch (this.configService.dbConnectionOptions.type) {
 				case databaseTypes.sqlite:
 				case databaseTypes.betterSqlite3:
@@ -573,17 +575,24 @@ export class StatisticService {
 			}
 
 			dayTimeQuery
-				.select(
-					dayTimeQueryString,
-					`today_duration`
-				)
+				.select(dayTimeQueryString, `today_duration`)
 				.addSelect(p(`COALESCE(SUM("${dayTimeQuery.alias}"."overall"), 0)`), `overall`)
 				.addSelect(p(`COALESCE(SUM("${dayTimeQuery.alias}"."duration"), 0)`), `duration`)
 				.addSelect(p(`COUNT("${dayTimeQuery.alias}"."id")`), `time_slot_count`)
 				.addSelect(`${dayTimeQuery.alias}.employeeId`, 'employeeId')
 				.innerJoin(`${dayTimeQuery.alias}.timeLogs`, 'timeLogs')
-				.andWhere(p(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`), { tenantId })
-				.andWhere(p(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`), { organizationId })
+				.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					})
+				)
+				.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
+					})
+				)
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						const { start: startToday, end: endToday } = getDateRangeFormat(
@@ -617,33 +626,24 @@ export class StatisticService {
 								projectIds
 							});
 						}
-						qb.andWhere(
-							new Brackets((qb: WhereExpressionBuilder) => {
-								qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
-								qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
-							})
-						);
 					})
 				)
 				.groupBy(`timeLogs.id`)
 				.addGroupBy(`${dayTimeQuery.alias}.employeeId`);
 
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
-			dayTimeSlots = mapObject(
-				groupBy(dayTimeSlots, 'employeeId'),
-				function (values, employeeId) {
-					const todayDuration = reduce(pluck(values, 'today_duration'), ArraySum, 0);
-					const todayPercentage = (
-						(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
-						(reduce(pluck(values, 'duration'), ArraySum, 0))
-					);
-					return {
-						employeeId,
-						duration: todayDuration,
-						overall: todayPercentage
-					};
-				}
-			);
+			dayTimeSlots = mapObject(groupBy(dayTimeSlots, 'employeeId'), (values, employeeId) => {
+				const todayDuration = reduce(pluck(values, 'today_duration'), ArraySum, 0);
+				const todayPercentage = (
+					(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
+					(reduce(pluck(values, 'duration'), ArraySum, 0))
+				);
+				return {
+					employeeId,
+					duration: todayDuration,
+					overall: todayPercentage
+				};
+			});
 			dayTimeSlots = chain(dayTimeSlots)
 				.map((dayTimeSlot: any) => {
 					if (dayTimeSlot && dayTimeSlot.overall) {
@@ -670,9 +670,7 @@ export class StatisticService {
 				delete member.user_name;
 				delete member.user_image_url;
 
-				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
-				let weekHoursQueryString;
-
+				let weekHoursQueryString: string;
 				switch (this.configService.dbConnectionOptions.type) {
 					case databaseTypes.sqlite:
 					case databaseTypes.betterSqlite3:
@@ -688,13 +686,11 @@ export class StatisticService {
 						throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 				}
 
+				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
 				weekHoursQuery
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
-					.select(
-						weekHoursQueryString,
-						`duration`
-					)
+					.select(weekHoursQueryString, `duration`)
 					.addSelect(
 						// -- why we minus 1 if MySQL is selected, Sunday DOW in postgres is 0, in MySQL is 1
 						// -- in case no database type is selected we return "0" as the DOW
@@ -704,8 +700,18 @@ export class StatisticService {
 						, 'day'
 					)
 					.andWhere(p(`"${weekHoursQuery.alias}"."id" = :memberId`), { memberId: member.id })
-					.andWhere(p(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`), { tenantId })
-					.andWhere(p(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`), { organizationId })
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(p(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+							qb.andWhere(p(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+						})
+					)
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
+							qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
+						})
+					)
 					.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(p(`"timeLogs"."startedAt" BETWEEN :weeklyStart AND :weeklyEnd`), {
@@ -716,8 +722,6 @@ export class StatisticService {
 								weeklyStart,
 								weeklyEnd
 							});
-							qb.andWhere(p(`"timeLogs"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"timeLogs"."organizationId" = :organizationId`), { organizationId });
 						})
 					)
 					.andWhere(
@@ -758,6 +762,7 @@ export class StatisticService {
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
@@ -776,13 +781,11 @@ export class StatisticService {
 		 */
 		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
-		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder('time_log');
-		let queryString;
 
+		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -867,8 +870,8 @@ export class StatisticService {
 			.splice(0, 5);
 
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder('time_log');
-		let totalDurationQueryString;
 
+		let totalDurationQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -985,12 +988,6 @@ export class StatisticService {
 			} else {
 				employeeIds = [user.employeeId];
 			}
-		} else {
-			employeeIds = await this.getEmployeesIds(
-				organizationId,
-				employeeIds,
-				tenantId
-			);
 		}
 
 		if (todayStart && todayEnd) {
@@ -1016,8 +1013,8 @@ export class StatisticService {
 		}
 
 		const todayQuery = this.timeLogRepository.createQueryBuilder();
-		let todayQueryString;
 
+		let todayQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -1043,95 +1040,65 @@ export class StatisticService {
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (todayStart && todayEnd) {
-						qb.andWhere(
-							p(`"${todayQuery.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`),
-							{
-								todayStart,
-								todayEnd,
-							}
-						);
-						qb.andWhere(
-							p(`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`),
-							{
-								todayStart,
-								todayEnd,
-							}
-						);
+						qb.andWhere(p(`"${todayQuery.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`), {
+							todayStart,
+							todayEnd
+						});
+						qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`), {
+							todayStart,
+							todayEnd
+						});
 					}
 				})
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${todayQuery.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
-					qb.andWhere(p(`"${todayQuery.alias}"."organizationId" = :organizationId`), {
-						organizationId
-					});
+					qb.andWhere(p(`"${todayQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${todayQuery.alias}"."organizationId" = :organizationId`), { organizationId });
 				})
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"time_slot"."tenantId" = :tenantId`), {
-						tenantId,
-					});
-					qb.andWhere(p(`"time_slot"."organizationId" = :organizationId`), {
-						organizationId
-					});
+					qb.andWhere(p(`"time_slot"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"time_slot"."organizationId" = :organizationId`), { organizationId });
 				})
 			)
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(
-							p(`"${todayQuery.alias}"."employeeId" IN (:...employeeIds)`),
-							{
-								employeeIds,
-							}
-						);
-						qb.andWhere(
-							p(`"time_slot"."employeeId" IN (:...employeeIds)`),
-							{
-								employeeIds,
-							}
-						);
+						qb.andWhere(p(`"${todayQuery.alias}"."employeeId" IN (:...employeeIds)`), {
+							employeeIds
+						});
+						qb.andWhere(p(`"time_slot"."employeeId" IN (:...employeeIds)`), {
+							employeeIds
+						});
 					}
 					if (isNotEmpty(projectIds)) {
-						qb.andWhere(
-							p(`"${todayQuery.alias}"."projectId" IN (:...projectIds)`),
-							{
-								projectIds,
-							}
-						);
+						qb.andWhere(p(`"${todayQuery.alias}"."projectId" IN (:...projectIds)`), {
+							projectIds
+						});
 					}
 					if (isNotEmpty(taskIds)) {
-						qb.andWhere(
-							p(`"${todayQuery.alias}"."taskId" IN (:...taskIds)`),
-							{
-								taskIds,
-							}
-						);
+						qb.andWhere(p(`"${todayQuery.alias}"."taskId" IN (:...taskIds)`), {
+							taskIds
+						});
 					}
 					if (isNotEmpty(organizationTeamId)) {
-						qb.andWhere(
-							p(`"${todayQuery.alias}"."organizationTeamId" = :organizationTeamId`),
-							{
-								organizationTeamId,
-							}
-						);
+						qb.andWhere(p(`"${todayQuery.alias}"."organizationTeamId" = :organizationTeamId`), {
+							organizationTeamId
+						});
 					}
 				})
 			)
 			.groupBy(p(`"${todayQuery.alias}"."id"`))
 			.addGroupBy(p(`"task"."id"`))
-			.orderBy(
-				p(`"${todayQuery.alias}"."updatedAt"`),
-				'DESC'
-			);
-		const todayStatistics = await todayQuery.getRawMany();
-		const query = this.timeLogRepository.createQueryBuilder();
-		let queryString;
+			.orderBy(p(`"${todayQuery.alias}"."updatedAt"`), 'DESC');
 
+		const todayStatistics = await todayQuery.getRawMany();
+
+		const query = this.timeLogRepository.createQueryBuilder();
+
+		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -1209,10 +1176,7 @@ export class StatisticService {
 			)
 			.groupBy(p(`"${query.alias}"."id"`))
 			.addGroupBy(p(`"task"."id"`))
-			.orderBy(
-				p(`"${todayQuery.alias}"."updatedAt"`),
-				'DESC'
-			);
+			.orderBy(p(`"${todayQuery.alias}"."updatedAt"`), 'DESC');
 		const statistics = await query.getRawMany();
 		const mergedStatistics = _.map(statistics, (statistic) => {
 			const updatedAt = String(statistic.updatedAt);
@@ -1250,8 +1214,8 @@ export class StatisticService {
 		if (isNotEmpty(take)) { tasks = tasks.splice(0, take); }
 
 		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
-		let totalDurationQueryString;
 
+		let totalDurationQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
@@ -1324,15 +1288,19 @@ export class StatisticService {
 	 * @returns
 	 */
 	async manualTimes(request: IGetManualTimesStatistics): Promise<IManualTimesStatistics[]> {
+		console.time('Get Manual Time Log');
+
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [], projectIds = [] } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
+
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
 		);
+
 		// Check if the current user has the permission to change the selected employee
 		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
@@ -1346,27 +1314,17 @@ export class StatisticService {
 		 */
 		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
-		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.timeLogRepository.createQueryBuilder("time_log");
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
+		query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+		query.leftJoinAndSelect(`employee.user`, 'user');
 		query.setFindOptions({
-			join: {
-				alias: 'time_log',
-				innerJoin: {
-					time_slots: 'time_log.timeSlots'
-				}
-			},
-			relations: {
-				project: true,
-				employee: {
-					user: true
-				}
-			},
 			take: 5,
 			order: {
-				startedAt: 'DESC'
+				startedAt: "DESC"
 			}
 		});
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
@@ -1375,11 +1333,15 @@ export class StatisticService {
 					web.andWhere(p(`"${qb.alias}"."logType" = :logType`), {
 						logType: TimeLogType.MANUAL
 					});
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), {
 						start,
 						end
 					});
-					web.andWhere(p(`"time_slots"."startedAt" BETWEEN :start AND :end`), {
+					web.andWhere(p(`"timeSlots"."startedAt" BETWEEN :start AND :end`), {
 						start,
 						end
 					});
@@ -1389,6 +1351,12 @@ export class StatisticService {
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 					web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			);
+			qb.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
 				})
 			);
 			qb.andWhere(
@@ -1407,18 +1375,17 @@ export class StatisticService {
 			);
 		});
 		const timeLogs = await query.getMany();
-		const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
-			(timeLog) => {
-				return {
-					id: timeLog.id,
-					startedAt: timeLog.startedAt,
-					duration: timeLog.duration,
-					user: pick(timeLog.employee.user, ['name', 'imageUrl']),
-					project: pick(timeLog.project, ['name']),
-					employeeId: timeLog.employee.id
-				} as IManualTimesStatistics;
-			}
-		);
+
+		const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map((timeLog: ITimeLog): IManualTimesStatistics => ({
+			id: timeLog.id,
+			startedAt: timeLog.startedAt,
+			duration: timeLog.duration,
+			user: { ...pick(timeLog.employee.user, ['name', 'imageUrl']) },
+			project: { ...pick(timeLog.project, ['name', 'imageUrl']) },
+			employeeId: timeLog.employee.id,
+		}));
+
+		console.timeEnd('Get Manual Time Log');
 		return mappedTimeLogs || [];
 	}
 
@@ -1453,8 +1420,6 @@ export class StatisticService {
 		 */
 		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
-		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.activityRepository.createQueryBuilder();
@@ -1533,7 +1498,7 @@ export class StatisticService {
 		* Fetch total duration of the week for calculate duration percentage
 		*/
 		const totalDurationQuery = this.activityRepository.createQueryBuilder();
-		let totalDurationQueryString;
+		let totalDurationQueryString: string;
 
 		switch (this.configService.dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
@@ -1639,8 +1604,6 @@ export class StatisticService {
 		 */
 		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
-		} else {
-			employeeIds = await this.getEmployeesIds(organizationId, employeeIds, tenantId);
 		}
 
 		const query = this.timeLogRepository.createQueryBuilder();
@@ -1727,33 +1690,6 @@ export class StatisticService {
 
 		console.timeEnd('Get Employee TimeSlots');
 		return employees;
-	}
-
-	/**
-	 *
-	 * @param organizationId
-	 * @param employeeIds
-	 * @param tenantId
-	 * @returns
-	 */
-	private async getEmployeesIds(
-		organizationId: string,
-		employeeIds: string[],
-		tenantId = RequestContext.currentTenantId()
-	) {
-		const query = this.employeeRepository.createQueryBuilder('employee');
-		query
-			.select(['id'])
-			.andWhere(p('"organizationId" = :organizationId'), { organizationId })
-			.andWhere(p('"tenantId" = :tenantId'), { tenantId });
-
-		if (isNotEmpty(employeeIds)) {
-			query.andWhere(p(`"${query.alias}"."id" IN (:...employeeIds)`), {
-				employeeIds
-			});
-		}
-		const employees = await query.getRawMany();
-		return pluck(employees, 'id');
 	}
 
 	/**
