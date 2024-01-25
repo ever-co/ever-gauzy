@@ -53,7 +53,7 @@ export const OrganizationPublicPage = {
 	verifyOrganizationCss: 'div.d-block',
 	countryDropdownCss: 'ga-country div.form-group nb-select',
 	cityInputCss: '#cityInput',
-	postcodeInputCss: '#postcodeInput',
+	postCodeInputCss: '#postcodeInput',
 	streetInputCss: '#addressInput',
 	bonusTypeDropdownCss: '[formcontrolname="bonusType"]',
 	bonusPercentageCss: '[formcontrolname="bonusPercentage"]',

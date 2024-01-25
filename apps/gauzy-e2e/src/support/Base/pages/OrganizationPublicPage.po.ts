@@ -384,12 +384,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(OrganizationPublicPage.postcodeInputCss);
+	verifyElementIsVisible(OrganizationPublicPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(OrganizationPublicPage.postcodeInputCss);
-	enterInput(OrganizationPublicPage.postcodeInputCss, data);
+	clearField(OrganizationPublicPage.postCodeInputCss);
+	enterInput(OrganizationPublicPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {

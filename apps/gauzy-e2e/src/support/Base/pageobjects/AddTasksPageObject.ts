@@ -1,9 +1,8 @@
 export const AddTaskPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'button[status="success"]',
-	selectProjectDropdownCss:
-		'ga-project-selector.ng-untouched > .ng-select-taggable > .ng-select-container > .ng-value-container > .ng-input > input',
-	selectProjectDrodownOptionCss: 'div.ng-dropdown-panel-items.scroll-host',
+	selectProjectDropdownCss: 'ga-project-selector.ng-untouched > .ng-select-taggable > .ng-select-container > .ng-value-container > .ng-input > input',
+	selectProjectDropdownOptionCss: 'div.ng-dropdown-panel-items.scroll-host',
 	editTaskButtonCss: '.ng-star-inserted .appearance-filled.ng-star-inserted.nb-transition:nth-of-type(2)',
 	duplicateTaskButtonCss: '.ng-star-inserted .nb-transition:nth-of-type(3)',
 	deleteTaskButtonCss: '.appearance-filled.icon-end.ng-star-inserted',

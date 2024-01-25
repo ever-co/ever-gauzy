@@ -84,12 +84,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(AddOrganizationPage.postcodeInputCss);
+	verifyElementIsVisible(AddOrganizationPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(AddOrganizationPage.postcodeInputCss);
-	enterInput(AddOrganizationPage.postcodeInputCss, data);
+	clearField(AddOrganizationPage.postCodeInputCss);
+	enterInput(AddOrganizationPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {
@@ -152,7 +152,7 @@ export const clickStartOfWeekDropdown = () => {
 };
 
 export const selectStartOfWeekFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.startofweekOptionCss, text);
+	clickElementByText(AddOrganizationPage.startOfWeekOptionCss, text);
 };
 
 export const dateTypeDropdownVisible = () => {
@@ -188,7 +188,7 @@ export const clickNumberFormatDropdown = () => {
 };
 
 export const selectNumberFormatFromDropdown = (text) => {
-	clickElementByText(AddOrganizationPage.numformatDropdownOptionCss, text);
+	clickElementByText(AddOrganizationPage.numberFormatDropdownOptionCss, text);
 };
 
 export const dateFormatDropdownVisible = () => {

@@ -99,12 +99,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(RegisterPage.postcodeInputCss);
+	verifyElementIsVisible(RegisterPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(RegisterPage.postcodeInputCss);
-	enterInput(RegisterPage.postcodeInputCss, data);
+	clearField(RegisterPage.postCodeInputCss);
+	enterInput(RegisterPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {

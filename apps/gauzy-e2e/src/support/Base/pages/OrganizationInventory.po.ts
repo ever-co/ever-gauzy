@@ -336,12 +336,12 @@ export const enterCity = (city) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(OrganizationInventoryPage.postcodeInputCss);
+	verifyElementIsVisible(OrganizationInventoryPage.postCodeInputCss);
 };
 
 export const enterPostcode = (postcode) => {
-	clearField(OrganizationInventoryPage.postcodeInputCss);
-	enterInput(OrganizationInventoryPage.postcodeInputCss, postcode);
+	clearField(OrganizationInventoryPage.postCodeInputCss);
+	enterInput(OrganizationInventoryPage.postCodeInputCss, postcode);
 };
 
 export const addressInputVisible = () => {

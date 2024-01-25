@@ -8,10 +8,10 @@ export const ClientsPage = {
 	emailInputCss: '#email',
 	lastStepBtnCss: 'div.step-content > form > div > button[status="success"]',
 	phoneInputCss: '[formcontrolname="primaryPhone"]',
-	budgetInpuCss: 'input[formcontrolname="budget"]',
+	budgetInputCss: 'input[formcontrolname="budget"]',
 	countryDropdownCss: 'ga-country > div.form-group > nb-select',
-	cityInpuCss: '[formcontrolname="city"]',
-	postcodeinputCss: '[formcontrolname="postcode"]',
+	cityInputCss: '[formcontrolname="city"]',
+	postCodeInputCss: '[formcontrolname="postcode"]',
 	streetInputCss: '[formcontrolname="address"]',
 	projectsDropdownCss: '[formcontrolname="projects"]',
 	projectsDropdownOptionCss: 'div.ng-option',
@@ -35,7 +35,7 @@ export const ClientsPage = {
 	clientsTableData: 'td.ng-star-inserted',
 	clientsTableRow: 'tr[class="angular2-smart-row ng-star-inserted"]',
 	viewButtonCss: 'div.mb-3 > button[status="info"]',
-	clientNameViewCss: 'div.profile-usertitle-name',
+	clientNameViewCss: 'div.profile-user-title-name',
 	clientTypeViewCss: 'div.profile-usertitle-type',
 	backBtn: 'ngx-back-navigation > div > button[status="primary"]'
 };

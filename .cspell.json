@@ -437,7 +437,10 @@
 		"Yostorono",
 		"zfgk",
 		"Zrdm",
-		"TIMESTAMPDIFF"
+		"TIMESTAMPDIFF",
+		"listbox",
+		"combobox",
+		"tabid"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
