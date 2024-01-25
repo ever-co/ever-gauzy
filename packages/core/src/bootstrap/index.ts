@@ -26,9 +26,11 @@ import { AuthGuard } from './../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+	console.time('Application Bootstrap Time');
+
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
-		await tracer.start();
+		tracer.start();
 		console.log('OTEL/Signoz Tracing started');
 	} else {
 		console.log('OTEL/Signoz Tracing not enabled');
@@ -265,6 +267,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		}
 	});
 
+	console.timeEnd('Application Bootstrap Time');
 	return app;
 }
 

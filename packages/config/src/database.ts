@@ -29,13 +29,9 @@ switch (dbType) {
 
 	case databaseTypes.mysql:
 		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
-		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
-			? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-			: 5000; // 5 seconds default
+		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
 		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-			: 10000; // 10 seconds default
+		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 
 		console.log('DB Pool Size: ' + dbPoolSize);
 		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
@@ -56,10 +52,10 @@ switch (dbType) {
 				process.env.DB_LOGGING == 'false'
 					? false
 					: process.env.DB_LOGGING == 'all'
-					? 'all'
-					: process.env.DB_LOGGING == 'query'
-					? ['query', 'error']
-					: ['error'], // by default set to error only
+						? 'all'
+						: process.env.DB_LOGGING == 'query'
+							? ['query', 'error']
+							: ['error'], // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 10 sec as warnings
 			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
@@ -80,16 +76,9 @@ switch (dbType) {
 
 		// We set default pool size as 80. Usually PG has 100 connections max by default.
 		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
-
-		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT
-			? parseInt(process.env.DB_CONNECTION_TIMEOUT)
-			: 5000; // 5 seconds default
-
+		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
 		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-
-		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-			: 10000; // 10 seconds default
+		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 
 		console.log('DB Pool Size: ' + dbPoolSize);
 		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
@@ -108,10 +97,10 @@ switch (dbType) {
 				process.env.DB_LOGGING == 'false'
 					? false
 					: process.env.DB_LOGGING == 'all'
-					? 'all'
-					: process.env.DB_LOGGING == 'query'
-					? ['query', 'error']
-					: ['error'], // by default set to error only
+						? 'all'
+						: process.env.DB_LOGGING == 'query'
+							? ['query', 'error']
+							: ['error'], // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 10 sec as warnings
 			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
@@ -157,8 +146,7 @@ switch (dbType) {
 		break;
 
 	case databaseTypes.betterSqlite3:
-		const betterSqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
