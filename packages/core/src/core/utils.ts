@@ -4,7 +4,7 @@ import { IDateRange, IUser } from '@gauzy/contracts';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { getConfig, isSqlite, isBetterSqlite3, databaseTypes } from '@gauzy/config';
+import { getConfig, databaseTypes } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 
@@ -77,7 +77,7 @@ export function unixTimestampToDate(
  */
 export function convertToDatetime(datetime): Date | string | null {
 	if (moment(new Date(datetime)).isValid()) {
-		switch(getConfig().dbConnectionOptions.type) {
+		switch (getConfig().dbConnectionOptions.type) {
 			case databaseTypes.sqlite:
 			case databaseTypes.betterSqlite3:
 				return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
@@ -135,7 +135,7 @@ export function getDateRange(
 		throw 'End date must be greater than start date.';
 	}
 
-	switch(getConfig().dbConnectionOptions.type) {
+	switch (getConfig().dbConnectionOptions.type) {
 		case databaseTypes.sqlite:
 		case databaseTypes.betterSqlite3:
 			start = start.format('YYYY-MM-DD HH:mm:ss');
@@ -233,7 +233,7 @@ export function getDateRangeFormat(
 		throw 'End date must be greater than start date.';
 	}
 
-	switch(getConfig().dbConnectionOptions.type) {
+	switch (getConfig().dbConnectionOptions.type) {
 		case databaseTypes.sqlite:
 		case databaseTypes.betterSqlite3:
 			return {
