@@ -178,7 +178,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				select: {
 					// Selected fields for the Employee entity
 					id: true,
-					isActive: true,
 					short_description: true,
 					description: true,
 					averageIncome: true,
@@ -188,7 +187,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					endWork: true,
 					isTrackingEnabled: true,
 					deletedAt: true,
-					allowScreenshotCapture: true
+					allowScreenshotCapture: true,
+					isActive: true,
+					isArchived: true
 				},
 				...(options && options.relations ? { relations: options.relations } : {}),
 				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {})
@@ -255,9 +256,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					}));
 				}
 			});
-
-			// Log the generated SQL query and parameters (for debugging)
-			console.log(query.getQueryAndParameters());
 
 			// Execute the query and retrieve paginated items and total count
 			const [items, total] = await query.getManyAndCount();
