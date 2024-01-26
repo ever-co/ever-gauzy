@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { isNotEmpty } from '@gauzy/common';
 import {
 	IGetTimesheetInput,
 	PermissionsEnum,
 	ITimesheet
-} from '@gauzy/contracts';
+} from '@gauzycontracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
