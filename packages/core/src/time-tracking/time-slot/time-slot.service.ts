@@ -12,11 +12,9 @@ import { generateTimeSlots } from './utils';
 import { TimeSlot } from './time-slot.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import {
-	CreateTimeSlotCommand,
 	CreateTimeSlotMinutesCommand,
 	TimeSlotBulkCreateCommand,
 	TimeSlotBulkCreateOrUpdateCommand,
-	UpdateTimeSlotCommand,
 	UpdateTimeSlotMinutesCommand
 } from './commands';
 import { prepareSQLQuery as p } from './../../database/database.helper';
@@ -26,7 +24,6 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
-
 		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository);
@@ -38,9 +35,10 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns A list of time slots matching the specified criteria.
 	 */
 	async getTimeSlots(request: IGetTimeSlotInput) {
-
 		// Extract parameters from the request object
 		const { organizationId, startDate, endDate, syncSlots = false } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 
@@ -55,8 +53,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
 		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		// Create a query builder for the TimeSlot entity
 		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
@@ -170,6 +173,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		return slots;
 	}
 
+	/**
+	 *
+	 * @param slots
+	 * @param employeeId
+	 * @param organizationId
+	 * @returns
+	 */
 	async bulkCreateOrUpdate(
 		slots: ITimeSlot[],
 		employeeId: ITimeSlot['employeeId'],
@@ -184,6 +194,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
+	/**
+	 *
+	 * @param slots
+	 * @param employeeId
+	 * @param organizationId
+	 * @returns
+	 */
 	async bulkCreate(
 		slots: ITimeSlot[],
 		employeeId: ITimeSlot['employeeId'],
@@ -198,20 +215,14 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		);
 	}
 
+	/**
+	 *
+	 * @param start
+	 * @param end
+	 * @returns
+	 */
 	generateTimeSlots(start: Date, end: Date) {
 		return generateTimeSlots(start, end);
-	}
-
-	async create(request: TimeSlot) {
-		return await this.commandBus.execute(
-			new CreateTimeSlotCommand(request)
-		);
-	}
-
-	async update(id: TimeSlot['id'], request: TimeSlot) {
-		return await this.commandBus.execute(
-			new UpdateTimeSlotCommand(id, request)
-		);
 	}
 
 	/*
