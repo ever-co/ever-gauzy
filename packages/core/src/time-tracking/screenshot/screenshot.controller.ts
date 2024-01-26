@@ -35,7 +35,10 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly _screenshotService: ScreenshotService) {}
+
+	constructor(
+		private readonly _screenshotService: ScreenshotService
+	) { }
 
 	/**
 	 *
@@ -54,17 +57,21 @@ export class ScreenshotController {
 	})
 	@Post()
 	@UseInterceptors(
-		// Use the LazyFileInterceptor to handle file uploads
+		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
 			storage: () => {
+				// Define the base directory for storing screenshots
+				const baseDirectory = path.join('screenshots', moment().format('YYYY/MM/DD'));
+
+				// Generate unique subdirectories based on the current tenant and employee IDs
+				const subdirectory = path.join(
+					RequestContext.currentTenantId() || uuid(),
+					RequestContext.currentEmployeeId() || uuid()
+				);
+
 				return new FileStorage().storage({
-					dest: () =>
-						path.join(
-							'screenshots',
-							moment().format('YYYY/MM/DD'),
-							RequestContext.currentTenantId() || uuid()
-						),
+					dest: () => path.join(baseDirectory, subdirectory),
 					prefix: 'screenshots'
 				});
 			}
