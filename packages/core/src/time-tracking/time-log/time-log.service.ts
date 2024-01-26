@@ -1032,7 +1032,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 		);
 
-		console.log(query.getQueryAndParameters());
 		return query;
 	}
 
