@@ -16,7 +16,7 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	name?: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@Index({ fulltext: true })
 	@Column({ type: 'text', nullable: true })
 	content?: string;
 

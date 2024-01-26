@@ -43,6 +43,11 @@ export class TimerController {
 		return await this.timerService.getTimerWorkedStatus(query);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Toggle timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -58,6 +63,11 @@ export class TimerController {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Start timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -74,6 +84,11 @@ export class TimerController {
 		return await this.timerService.startTimer(entity);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Stop timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,

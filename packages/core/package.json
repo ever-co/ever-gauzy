@@ -141,7 +141,7 @@
 		"mqtt": "^4.3.7",
 		"multer-s3": "^3.0.1",
 		"multer-storage-cloudinary": "^4.0.0",
-		"mysql": "^2.18.1",
+		"mysql2": "^3.6.5",
 		"nats": "^2.6.1",
 		"nestjs-i18n": "^10.4.0",
 		"node-fetch": "^2.6.7",

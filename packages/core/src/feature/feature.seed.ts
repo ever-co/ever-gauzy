@@ -1,10 +1,14 @@
 import { IPluginConfig } from '@gauzy/common';
-import { ConfigService, environment as env } from '@gauzy/config';
-import { IFeature, IFeatureOrganization, ITenant } from '@gauzy/contracts';
 import * as chalk from 'chalk';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import { ConfigService, environment as env, databaseTypes } from '@gauzy/config';
+import {
+	IFeature,
+	IFeatureOrganization,
+	ITenant
+} from '@gauzy/contracts';
 import { DataSource } from 'typeorm';
 import { DEFAULT_FEATURES } from './default-features';
 import { FeatureOrganization } from './feature-organization.entity';
@@ -78,13 +82,29 @@ async function createFeature(item: IFeature, tenant: ITenant, config: Partial<IP
 }
 
 async function cleanFeature(dataSource, config) {
-	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-	if (allowedDbTypes.includes(config.dbConnectionOptions.type)) {
-		await dataSource.query('DELETE FROM feature');
-		await dataSource.query('DELETE FROM feature_organization');
-	} else {
-		await dataSource.query('TRUNCATE TABLE feature RESTART IDENTITY CASCADE');
-		await dataSource.query('TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE');
+// <<<<<<< HEAD
+	switch (config.dbConnectionOptions.type) {
+		case databaseTypes.sqlite:
+		case databaseTypes.betterSqlite3:
+			await dataSource.query('DELETE FROM feature');
+			await dataSource.query('DELETE FROM feature_organization');
+			break;
+		case databaseTypes.postgres:
+			await dataSource.query('TRUNCATE TABLE feature RESTART IDENTITY CASCADE');
+			await dataSource.query('TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE');
+			break;
+		case databaseTypes.mysql:
+			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
+			await dataSource.query('SET foreign_key_checks = 0;');
+			await dataSource.query('DELETE FROM feature;');
+			await dataSource.query('DELETE FROM feature_organization;');
+			await dataSource.query('SET foreign_key_checks = 1;');
+			break;
+		default:
+			throw Error(`
+				cannot clean feature, feature_organization tables due to unsupported database type:
+				${config.dbConnectionOptions.type}
+			`);
 	}
 
 	console.log(chalk.green(`CLEANING UP FEATURE IMAGES...`));
@@ -92,19 +112,6 @@ async function cleanFeature(dataSource, config) {
 	await new Promise((resolve, reject) => {
 		const destDir = 'features';
 		const configService = new ConfigService();
-
-		// console.log('FEATURE SEED -> IS ELECTRON: ' + env.isElectron);
-
-		/*
-		console.log(
-			'FEATURE SEED -> assetPath: ' + config.assetOptions.assetPath
-		);
-		console.log(
-			'FEATURE SEED -> assetPublicPath: ' +
-				config.assetOptions.assetPublicPath
-		);
-		console.log('FEATURE SEED -> __dirname: ' + __dirname);
-		*/
 
 		let dir: string;
 
@@ -153,12 +160,7 @@ function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 			}
 		}
 
-		// console.log('FEATURE SEED -> dir: ' + dir);
-		// console.log('FEATURE SEED -> baseDir: ' + baseDir);
-
 		const finalDir = path.join(baseDir, destDir);
-
-		// console.log('FEATURE SEED -> finalDir: ' + finalDir);
 
 		mkdirSync(finalDir, { recursive: true });
 

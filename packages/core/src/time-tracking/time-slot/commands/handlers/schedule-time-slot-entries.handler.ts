@@ -4,6 +4,7 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
 import { ScheduleTimeSlotEntriesCommand } from '../schedule-time-slot-entries.command';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(ScheduleTimeSlotEntriesCommand)
 export class ScheduleTimeSlotEntriesHandler
@@ -22,16 +23,16 @@ export class ScheduleTimeSlotEntriesHandler
 			}
 		});
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-			qb.orWhere(`"${qb.alias}"."overall" < :overall`, {
+			qb.orWhere(p(`"${qb.alias}"."overall" < :overall`), {
 				overall: 0
 			});
-			qb.orWhere(`"${qb.alias}"."keyboard" < :keyboard`, {
+			qb.orWhere(p(`"${qb.alias}"."keyboard" < :keyboard`), {
 				keyboard: 0
 			});
-			qb.orWhere(`"${qb.alias}"."mouse" < :mouse`, {
+			qb.orWhere(p(`"${qb.alias}"."mouse" < :mouse`), {
 				mouse: 0
 			});
-			qb.orWhere(`"${qb.alias}"."duration" > :duration`, {
+			qb.orWhere(p(`"${qb.alias}"."duration" > :duration`), {
 				duration: 600
 			});
 		});

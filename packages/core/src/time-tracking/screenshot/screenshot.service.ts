@@ -7,6 +7,7 @@ import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 import { Screenshot } from './screenshot.entity';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
@@ -39,7 +40,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			});
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				query.leftJoin(`${query.alias}.timeSlot`, 'time_slot');
-				query.andWhere(`"time_slot"."employeeId" = :employeeId`, {
+				query.andWhere(p(`"time_slot"."employeeId" = :employeeId`), {
 					employeeId: RequestContext.currentEmployeeId()
 				});
 			}

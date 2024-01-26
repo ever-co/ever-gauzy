@@ -13,6 +13,7 @@ import { EmailService } from './../email-send/email.service';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { IPayment } from '@gauzy/contracts';
 import { IInvoice } from '@gauzy/contracts';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
@@ -164,19 +165,19 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}
 				if (isNotEmpty(contactIds)) {
-					qb.andWhere(`"${query.alias}"."organizationContactId" IN (:...contactIds)`, {
+					qb.andWhere(p(`"${query.alias}"."organizationContactId" IN (:...contactIds)`), {
 						contactIds
 					});
 				}

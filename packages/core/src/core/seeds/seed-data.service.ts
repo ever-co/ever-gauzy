@@ -9,7 +9,7 @@ import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
-import { environment as env, ConfigService } from '@gauzy/config';
+import { environment as env, ConfigService, databaseTypes } from '@gauzy/config';
 import {
 	IEmployee,
 	IOrganization,
@@ -2255,7 +2255,7 @@ export class SeedDataService {
 			const database = this.configService.dbConnectionOptions;
 
 			switch (database.type) {
-				case 'postgres':
+				case databaseTypes.postgres:
 					const tables = entities.map(
 						(entity) => '"' + entity.tableName + '"'
 					);
@@ -2264,13 +2264,27 @@ export class SeedDataService {
 					)} RESTART IDENTITY CASCADE;`;
 					await manager.query(truncateSql);
 					break;
-				default:
+				case databaseTypes.mysql:
+					// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
+					await manager.query(`SET foreign_key_checks = 0;`);
+					for (const entity of entities) {
+						await manager.query(
+							`DELETE FROM \`${entity.tableName}\`;`
+						);
+					}
+					await manager.query(`SET foreign_key_checks = 1;`);
+					break;
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
 					await manager.query(`PRAGMA foreign_keys = OFF;`);
 					for (const entity of entities) {
 						await manager.query(
 							`DELETE FROM "${entity.tableName}";`
 						);
-					}
+					};
+					break;
+				default:
+					throw Error(`Unsupported database type: ${database.type}`);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

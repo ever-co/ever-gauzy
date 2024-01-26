@@ -86,6 +86,8 @@ export class ScreenshotController {
 			return;
 		}
 
+		console.log('Screenshot Http Request Input: ', { input });
+
 		// Extract user information from the request context
 		const user = RequestContext.currentUser();
 

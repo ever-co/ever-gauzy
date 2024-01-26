@@ -331,7 +331,7 @@ export class DeleteTimeSpanHandler
 							}
 						}
 					} catch (error) {
-						console.log('Error while synce TimeSlot & TimeLog', error)
+						console.log('Error while syncing TimeSlot & TimeLog', error)
 					}
 				}
 			}

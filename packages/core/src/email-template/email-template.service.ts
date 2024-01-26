@@ -7,6 +7,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { EmailTemplate } from './email-template.entity';
 import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class EmailTemplateService extends CrudService<EmailTemplate> {
@@ -50,17 +51,17 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 				new Brackets((web: WhereExpressionBuilder) => {
 					const { tenantId, organizationId, languageCode } = params.where;
 					if (isNotEmpty(tenantId)) {
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 							tenantId: RequestContext.currentTenantId()
 						});
 					}
 					if (isNotEmpty(organizationId)) {
-						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 							organizationId
 						});
 					}
 					if (isNotEmpty(languageCode)) {
-						web.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
+						web.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), {
 							languageCode
 						});
 					}
@@ -68,8 +69,8 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 			);
 			qb.orWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-					web.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
+					web.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
+					web.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
 				})
 			)
 		});
