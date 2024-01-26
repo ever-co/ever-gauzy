@@ -6,7 +6,7 @@ import {
 	IGetTimesheetInput,
 	PermissionsEnum,
 	ITimesheet
-} from '@gauzycontracts';
+} from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
