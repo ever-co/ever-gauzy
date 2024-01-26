@@ -35,7 +35,10 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly _screenshotService: ScreenshotService) {}
+
+	constructor(
+		private readonly _screenshotService: ScreenshotService
+	) { }
 
 	/**
 	 *
@@ -54,23 +57,30 @@ export class ScreenshotController {
 	})
 	@Post()
 	@UseInterceptors(
-		// Use the LazyFileInterceptor to handle file uploads
+		// Use LazyFileInterceptor for handling file uploads with custom storage settings
 		LazyFileInterceptor('file', {
 			// Define storage settings for uploaded files
 			storage: () => {
+				// Define the base directory for storing screenshots
+				const baseDirectory = path.join('screenshots', moment().format('YYYY/MM/DD'));
+
+				// Generate unique sub directories based on the current tenant and employee IDs
+				const subDirectory = path.join(
+					RequestContext.currentTenantId() || uuid(),
+					RequestContext.currentEmployeeId() || uuid()
+				);
+
 				return new FileStorage().storage({
-					dest: () =>
-						path.join(
-							'screenshots',
-							moment().format('YYYY/MM/DD'),
-							RequestContext.currentTenantId() || uuid()
-						),
+					dest: () => path.join(baseDirectory, subDirectory),
 					prefix: 'screenshots'
 				});
 			}
 		})
 	)
-	async create(@Body() entity: Screenshot, @UploadedFileStorage() file: UploadedFile) {
+	async create(
+		@Body() input: Screenshot,
+		@UploadedFileStorage() file: UploadedFile
+	) {
 		if (!file.key) {
 			console.warn('Screenshot file key is empty');
 			return;
@@ -81,8 +91,8 @@ export class ScreenshotController {
 
 		try {
 			// Extract necessary properties from the request body
-			const { organizationId } = entity;
-			const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+			const { organizationId } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Initialize file storage provider and process thumbnail
 			const provider = new FileStorage().getProvider();
@@ -129,17 +139,20 @@ export class ScreenshotController {
 			console.log(`Screenshot thumb created for employee (${user.name})`, thumb);
 
 			// Populate entity properties for the screenshot
-			entity.organizationId = organizationId;
-			entity.tenantId = tenantId;
-			entity.userId = RequestContext.currentUserId();
-			entity.file = file.key;
-			entity.thumb = thumb.key;
-			entity.storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
-			entity.recordedAt = entity.recordedAt ? entity.recordedAt : new Date();
+			const entity = new Screenshot({
+				organizationId: organizationId,
+				tenantId: tenantId,
+				userId: RequestContext.currentUserId(),
+				file: file.key,
+				thumb: thumb.key,
+				storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
+				timeSlotId: input.timeSlotId,
+				recordedAt: input.recordedAt ? input.recordedAt : new Date()
+			});
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);
-			console.log(`Created screenshot for ${user.name}: %s`, screenshot);
+			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 
 			// Analyze image using Gauzy AI service
 			this._screenshotService.analyzeScreenshot(
@@ -168,7 +181,6 @@ export class ScreenshotController {
 				}
 			);
 
-			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
 			console.error(`Error while creating screenshot for employee (${user.name})`, error);
