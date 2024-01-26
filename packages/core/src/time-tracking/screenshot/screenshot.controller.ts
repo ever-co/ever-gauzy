@@ -64,14 +64,14 @@ export class ScreenshotController {
 				// Define the base directory for storing screenshots
 				const baseDirectory = path.join('screenshots', moment().format('YYYY/MM/DD'));
 
-				// Generate unique subdirectories based on the current tenant and employee IDs
-				const subdirectory = path.join(
+				// Generate unique sub directories based on the current tenant and employee IDs
+				const subDirectory = path.join(
 					RequestContext.currentTenantId() || uuid(),
 					RequestContext.currentEmployeeId() || uuid()
 				);
 
 				return new FileStorage().storage({
-					dest: () => path.join(baseDirectory, subdirectory),
+					dest: () => path.join(baseDirectory, subDirectory),
 					prefix: 'screenshots'
 				});
 			}
