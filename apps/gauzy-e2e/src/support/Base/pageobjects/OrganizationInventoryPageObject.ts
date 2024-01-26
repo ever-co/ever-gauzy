@@ -38,7 +38,7 @@ export const OrganizationInventoryPage = {
 	merchantNextBtnCss: 'div.row > div[class="form-group col-4"] > button[status="primary"]',
 	countrySelectCss: 'div.col-4 > ga-country > div.form-group > nb-select > button.select-button',
 	cityInputCss: 'div.form-group > input[id="cityInput"]',
-	postcodeInputCss: 'div.form-group > input[id="postcodeInput"]',
+	postCodeInputCss: 'div.form-group > input[id="postcodeInput"]',
 	addressInputCss: 'div.form-group > input[id="addressInput"]',
 	saveMerchantBtnCss: 'div.row > div[class="form-group col-4"] > button[status="success"]',
 	editMerchantBtnCss: 'div.mb-3 > button[status="info"]',

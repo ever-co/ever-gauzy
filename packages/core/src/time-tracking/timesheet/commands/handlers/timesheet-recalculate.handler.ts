@@ -9,13 +9,14 @@ import { TimesheetRecalculateCommand } from '../timesheet-recalculate.command';
 import { TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimesheetRecalculateCommand)
 export class TimesheetRecalculateHandler
 	implements ICommandHandler<TimesheetRecalculateCommand> {
 	constructor(
 		private readonly timesheetService: TimeSheetService,
-		
+
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>
 	) {}
@@ -33,7 +34,7 @@ export class TimesheetRecalculateHandler
 			moment.utc(timesheet.startedAt),
 			moment.utc(timesheet.stoppedAt)
 		);
-		
+
 		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
 		const timeSlot = await query
 			.select('SUM(duration)', 'duration')
@@ -42,16 +43,16 @@ export class TimesheetRecalculateHandler
 			.addSelect('AVG(overall)', 'overall')
 			.where(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), {
 						employeeId
 					});
-					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
 						organizationId
 					});
-					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
-					qb.andWhere(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`, {
+					qb.andWhere(p(`"${query.alias}"."startedAt" >= :startedAt AND "${query.alias}"."startedAt" < :stoppedAt`), {
 						startedAt,
 						stoppedAt
 					});

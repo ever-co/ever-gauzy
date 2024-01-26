@@ -5,6 +5,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from '../../time-slot.entity';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
 import { RequestContext } from '../../../../core/context';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
 export class TimeSlotBulkDeleteHandler
@@ -31,17 +32,17 @@ export class TimeSlotBulkDeleteHandler
 		});
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 			if (isNotEmpty(timeSlotsIds)) {
-				qb.andWhere(`"${qb.alias}"."id" IN (:...timeSlotsIds)`, {
+				qb.andWhere(p(`"${qb.alias}"."id" IN (:...timeSlotsIds)`), {
 					timeSlotsIds
 				});
 			}
-			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+			qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), {
 				employeeId
 			});
-			qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+			qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 				organizationId
 			});
-			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 				tenantId
 			});
 			console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());

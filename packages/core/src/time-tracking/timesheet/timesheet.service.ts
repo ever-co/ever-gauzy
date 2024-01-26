@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { isNotEmpty } from '@gauzy/common';
 import {
 	IGetTimesheetInput,
 	PermissionsEnum,
@@ -12,6 +11,7 @@ import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
@@ -85,6 +85,8 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		request: IGetTimesheetInput
 	) {
 		const { organizationId, startDate, endDate } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const user = RequestContext.currentUser();
 
@@ -99,8 +101,12 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
@@ -112,8 +118,8 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		);
 
 		// Additional conditions for filtering by tenantId and organizationId
-		qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-		qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+		qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+		qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 		return qb;
 	}
 }

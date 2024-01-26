@@ -1,10 +1,10 @@
-import { readdir, mkdirSync, copyFileSync } from 'fs';
-import * as path from 'path';
 import { faker } from '@faker-js/faker';
-import * as moment from 'moment';
 import { IPluginConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { copyFileSync, mkdirSync, readdir } from 'fs';
+import * as moment from 'moment';
+import * as path from 'path';
 import { Screenshot } from '../../core/entities/internal';
 import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 import { AppsNames } from './../activity/activity.seed';
@@ -24,23 +24,13 @@ export const createRandomScreenshot = async (
 	let baseDir: string;
 
 	if (env.isElectron) {
-		dir = path.join(
-			path.resolve(env.gauzyUserPath, ...['src', 'assets', 'seed']),
-			'screenshots'
-		);
+		dir = path.join(env.gauzySeedPath, destDirName);
 		baseDir = path.join(path.resolve(env.gauzyUserPath));
 	} else {
 		if (config.assetOptions.assetPath) {
-			dir = path.join(
-				config.assetOptions.assetPath,
-				...['seed', destDirName]
-			);
+			dir = path.join(config.assetOptions.assetPath, ...['seed', destDirName]);
 		} else {
-			dir = path.resolve(
-				__dirname,
-				'../../../',
-				...['apps', 'api', 'src', 'assets', 'seed', destDirName]
-			);
+			dir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDirName]);
 		}
 
 		if (config.assetOptions.assetPublicPath) {
@@ -66,11 +56,7 @@ export const createRandomScreenshot = async (
 
 	const screenshots: Screenshot[] = [];
 
-	for (
-		let index = 0;
-		index < randomSeedConfig.noOfScreenshotPerTimeSlot;
-		index++
-	) {
+	for (let index = 0; index < randomSeedConfig.noOfScreenshotPerTimeSlot; index++) {
 		const sourceFile = faker.helpers.arrayElement(fileList);
 		const sourceName = 'screenshot-' + moment().unix() + faker.number.int(999) + '.png';
 		const destFile = path.join(destDir, sourceName);

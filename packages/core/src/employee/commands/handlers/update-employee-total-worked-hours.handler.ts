@@ -1,7 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { getConfig } from '@gauzy/config';
+import { databaseTypes, getConfig } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../database/database.helper';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { EmployeeService } from '../../employee.service';
 import { TimeLog } from './../../../core/entities/internal';
@@ -26,14 +27,26 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 		if (hours) {
 			totalWorkHours = hours;
 		} else {
+			let query:string = '';
+			switch(config.dbConnectionOptions.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					query = 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)';
+					break;
+				case databaseTypes.postgres:
+					query = 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))';
+					break;
+				case databaseTypes.mysql:
+					query = p('SUM(TIMESTAMPDIFF(SECOND, "startedAt", "stoppedAt"))');
+					break;
+				default:
+					throw Error(`cannot update employee total worked hours due to unsupported database type: ${config.dbConnectionOptions.type}`);
+
+			}
 			const logs = await this.timeLogRepository
 				.createQueryBuilder()
 				.select(
-					`${
-						['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)
-							? 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)'
-							: 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))'
-					}`,
+					query,
 					`duration`
 				)
 				.where({

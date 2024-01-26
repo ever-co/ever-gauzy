@@ -168,7 +168,7 @@ export class DesktopOsInactivityHandler {
 		const proofResultDuration = now.diff(this._startedAt, 'minutes');
 		const idleDuration = proofResultDuration + inactivityTimeLimit;
 		this._stoppedAt = new Date();
-		this._startedAt = now.subtract(idleDuration, 'minutes').toDate();
+		this._startedAt = now.subtract(idleDuration - inactivityTimeLimit / 2, 'minutes').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
 		const timer = await this._timerService.findLastOne();
 		const lastInterval = await this._intervalService.findLastInterval();

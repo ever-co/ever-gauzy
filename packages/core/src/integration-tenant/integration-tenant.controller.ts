@@ -59,6 +59,7 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 		description: 'Invalid request'
 	})
 	@Get('integration')
+	@UsePipes(new ValidationPipe())
 	async getIntegrationByOptions(
 		@Query() options: IntegrationTenantQueryDTO
 	): Promise<IIntegrationTenant | boolean> {

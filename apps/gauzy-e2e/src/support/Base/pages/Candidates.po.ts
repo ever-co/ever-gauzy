@@ -255,12 +255,12 @@ export const enterAddressOneInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(CandidatesPage.postcodeInputCss);
+	verifyElementIsVisible(CandidatesPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(CandidatesPage.postcodeInputCss);
-	enterInput(CandidatesPage.postcodeInputCss, data);
+	clearField(CandidatesPage.postCodeInputCss);
+	enterInput(CandidatesPage.postCodeInputCss, data);
 };
 
 export const saveActionButtonVisible = () => {

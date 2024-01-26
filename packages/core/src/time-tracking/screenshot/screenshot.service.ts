@@ -2,17 +2,18 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { GauzyAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
-import { IScreenshot, IntegrationEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
+import { IScreenshot, IntegrationEntity, IntegrationEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 import { Screenshot } from './screenshot.entity';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	constructor(
-		@InjectRepository(Screenshot) protected readonly screenshotRepository: Repository<Screenshot>,
-		/** */
+		@InjectRepository(Screenshot)
+		protected readonly screenshotRepository: Repository<Screenshot>,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _gauzyAIService: GauzyAIService
 	) {
@@ -39,7 +40,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			});
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				query.leftJoin(`${query.alias}.timeSlot`, 'time_slot');
-				query.andWhere(`"time_slot"."employeeId" = :employeeId`, {
+				query.andWhere(p(`"time_slot"."employeeId" = :employeeId`), {
 					employeeId: RequestContext.currentEmployeeId()
 				});
 			}
@@ -77,21 +78,34 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 
 			// Check if integration exists
 			if (!!integration) {
-				console.log('Screenshot/Image Analyze Starting. AI Integration Tenant: %s', integration);
+				try {
+					console.log('Screenshot/Image Analyze Starting. AI Integration Tenant: %s', integration);
+					const integrationId = integration['id'];
 
-				// Analyze image using Gauzy AI service
-				const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
+					// Check if employee performance analysis sync is enabled
+					await this._integrationTenantService.findIntegrationTenantByEntity({
+						integrationId,
+						organizationId,
+						entityType: IntegrationEntity.EMPLOYEE_PERFORMANCE
+					});
 
-				if (!analysis.success) {
-					console.log('Screenshot/Image Analyze Failed. AI Integration Tenant: %s', integration);
+					// Analyze image using Gauzy AI service
+					const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
+
+					if (!analysis.success) {
+						console.log('Screenshot/Image Analyze Failed. AI Integration Tenant: %s', integration);
+					}
+
+					if (analysis.success && callback) {
+						// Call the callback function if provided
+						callback(analysis.data.analysis);
+					}
+
+					return analysis;
+				} catch (error) {
+					console.log('Error while getting Integration for Gauzy AI', error.message);
+					return null;
 				}
-
-				if (analysis.success && callback) {
-					// Call the callback function if provided
-					callback(analysis.data.analysis);
-				}
-
-				return analysis;
 			}
 
 			return null;

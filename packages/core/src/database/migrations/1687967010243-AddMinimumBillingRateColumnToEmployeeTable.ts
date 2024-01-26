@@ -1,36 +1,54 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from "chalk";
+import { databaseTypes } from "@gauzy/config";
 
 export class AddMinimumBillingRateColumnToEmployeeTable1687967010243 implements MigrationInterface {
 	name = 'AddMinimumBillingRateColumnToEmployeeTable1687967010243';
 
-	/**
-	 * Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async up(queryRunner: QueryRunner): Promise<any> {
-		console.log(chalk.yellow(this.name + ' start running!'));
+    /**
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
 
-		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-			await this.sqliteUpQueryRunner(queryRunner);
-		} else {
-			await this.postgresUpQueryRunner(queryRunner);
-		}
-	}
-
-	/**
-	 * Down Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async down(queryRunner: QueryRunner): Promise<any> {
-		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-			await this.sqliteDownQueryRunner(queryRunner);
-		} else {
-			await this.postgresDownQueryRunner(queryRunner);
-		}
-	}
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+                await this.sqliteUpQueryRunner(queryRunner);
+                break;
+            case databaseTypes.postgres:
+                await this.postgresUpQueryRunner(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlUpQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
+    /**
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+                await this.sqliteDownQueryRunner(queryRunner);
+                break;
+            case databaseTypes.postgres:
+                await this.postgresDownQueryRunner(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlDownQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
 
 	/**
 	 * PostgresDB Up Migration
@@ -109,4 +127,18 @@ export class AddMinimumBillingRateColumnToEmployeeTable1687967010243 implements 
 			`CREATE INDEX "IDX_5e719204dcafa8d6b2ecdeda13" ON "employee" ("organizationPositionId") `
 		);
 	}
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 }

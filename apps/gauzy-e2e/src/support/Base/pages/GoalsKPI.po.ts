@@ -122,7 +122,7 @@ export const waitMessageToHide = () => {
 };
 
 export const verifyElementDeleted = (text) => {
-	verifyText(GoalsKPIPage.verifyEmpytTableCss, text);
+	verifyText(GoalsKPIPage.verifyEmptyTableCss, text);
 };
 
 export const verifyKPIExists = (text) => {
@@ -138,6 +138,6 @@ export const searchClientName = (name: string) => {
 	enterInput(GoalsKPIPage.searchNameInputCss, name);
 };
 
-export const verifySearchResult = (length: number) =>{
+export const verifySearchResult = (length: number) => {
 	vefiryByLength(GoalsKPIPage.selectTableRowCss, length);
 };

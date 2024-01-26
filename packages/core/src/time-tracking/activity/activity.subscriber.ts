@@ -1,7 +1,6 @@
 import { isJsObject } from "@gauzy/common";
-import { getConfig } from "@gauzy/config";
+import { isBetterSqlite3, isSqlite } from "@gauzy/config";
 import {
-    DataSourceOptions,
     EntitySubscriberInterface,
     EventSubscriber,
     InsertEvent
@@ -26,8 +25,7 @@ export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {
     beforeInsert(event: InsertEvent<Activity>): void | Promise<any> {
         try {
             if (event) {
-                const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
-                if (['sqlite', 'better-sqlite3'].includes(options.type)) {
+                if (isSqlite() || isBetterSqlite3()) {
                     const { entity } = event;
                     try {
                         if (isJsObject(entity.metaData)) {

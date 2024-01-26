@@ -17,7 +17,11 @@ import {
     UpworkJobsSearchCriterion,
     UserConnection,
     Query,
-    TenantConnection
+    TenantConnection,
+    UpdateTenantApiKey,
+    TenantApiKeyConnection,
+    Tenant,
+    EmployeeJobPostFilter
 } from './sdk/gauzy-ai-sdk';
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 import fetch from 'cross-fetch';
@@ -116,7 +120,7 @@ export class GauzyAIService {
         }
     ): Observable<AxiosResponse<T>> {
         /** */
-        const { apiKey, apiSecret, openAiApiSecretKey, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
+        const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
         // Add your custom headers
         const customHeaders = (): AxiosRequestHeaders => ({
@@ -129,7 +133,8 @@ export class GauzyAIService {
             /** */
             ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
             ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
-            ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
+            ...(openAiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiSecretKey } : {}),
+            ...(openAiOrganizationId ? { 'X-OPENAI-ORGANIZATION-ID': openAiOrganizationId } : {}),
 
             /** */
             ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
@@ -694,21 +699,7 @@ export class GauzyAIService {
             return false;
         }
 
-        console.log(
-            `syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(
-                criteria
-            )}. Employee: ${JSON.stringify(employee)}`
-        );
-
-        let tenantId: string;
-        try {
-            // First we need to get tenant id because we have only externalId
-            tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
-        } catch (error) {
-            this._logger.error(error);
-            // Use this (using the "options" parameter):
-            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
-        }
+        console.log(`syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(criteria)}. Employee: ${JSON.stringify(employee)}`);
 
         try {
             const gauzyAIUser: User = await this.syncUser({
@@ -717,7 +708,6 @@ export class GauzyAIService {
                 email: employee.user.email,
                 username: employee.user.username,
                 hash: employee.user.hash,
-                tenantId: tenantId,
                 externalTenantId: employee.user.tenantId,
                 externalUserId: employee.user.id,
                 isActive: employee.isActive,
@@ -727,7 +717,6 @@ export class GauzyAIService {
             /** */
             const gauzyAIEmployee: Employee = await this.syncEmployee({
                 externalEmployeeId: employee.id,
-                tenantId: tenantId,
                 externalTenantId: employee.tenantId,
                 externalOrgId: employee.organizationId,
                 upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -762,11 +751,11 @@ export class GauzyAIService {
                             isActive: {
                                 is: true,
                             },
+                            isArchived: {
+                                is: false
+                            },
                             employeeId: {
                                 eq: gauzyAIEmployee.id,
-                            },
-                            tenantId: {
-                                eq: tenantId
                             }
                         },
                     },
@@ -787,7 +776,6 @@ export class GauzyAIService {
                 criteria.forEach((criterion: IEmployeeUpworkJobsSearchCriterion) => {
                     gauzyAICriteria.push({
                         employeeId: gauzyAIEmployee.id,
-                        tenantId,
                         isActive: true,
                         isArchived: false,
                         jobType: criterion.jobType,
@@ -832,7 +820,6 @@ export class GauzyAIService {
     }
 
     /**
-     *
      * Creates employees in Gauzy AI if not exists yet. If exists, updates fields, including externalEmployeeId
      * How it works:
      * - search done externalEmployeeId field first in Gauzy AI to be equal to Gauzy employee Id.
@@ -849,22 +836,9 @@ export class GauzyAIService {
             await Promise.all(
                 employees.map(async (employee) => {
                     try {
-                        let tenantId: string;
-                        try {
-                            // First we need to get tenant id because we have only externalId
-                            tenantId = await this.getTenantGauzyAIId(employee.user.tenantId);
-                        } catch (error) {
-                            console.error('Error while retrieving tenantId: %s', error?.message);
-                            this._logger.error(error);
-
-                            // Use this (using the "options" parameter):
-                            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
-                        }
-
                         try {
                             /** */
                             const gauzyAIUser: User = await this.syncUser({
-                                tenantId: tenantId,
                                 firstName: employee.user.firstName,
                                 lastName: employee.user.lastName,
                                 email: employee.user.email,
@@ -876,11 +850,11 @@ export class GauzyAIService {
                                 isArchived: !employee.isActive
                             });
                             console.log(`Synced User ${JSON.stringify(gauzyAIUser)}`);
+
                             try {
                                 /**  */
                                 const gauzyAIEmployee: Employee = await this.syncEmployee({
                                     externalEmployeeId: employee.id,
-                                    tenantId: tenantId,
                                     externalTenantId: employee.tenantId,
                                     externalOrgId: employee.organizationId,
                                     upworkOrganizationId: employee.organization.upworkOrganizationId,
@@ -938,11 +912,7 @@ export class GauzyAIService {
         const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
         console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
-        const employeeIdFilter =
-            filters && filters.employeeIds && filters.employeeIds.length > 0
-                ? filters.employeeIds[0]
-                : undefined;
-
+        const employeeIdFilter = filters && filters.employeeIds && filters.employeeIds.length > 0 ? filters.employeeIds[0] : undefined;
         try {
             // TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
             const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
@@ -1019,14 +989,13 @@ export class GauzyAIService {
             let isContinue: boolean;
             let after = '';
 
-            const filter = {
+            const filter: EmployeeJobPostFilter = {
                 isActive: {
                     is: true,
                 },
                 isArchived: {
                     is: false,
                 },
-                employeeId: undefined,
                 ...(filters && filters.isApplied
                     ? {
                         isApplied: {
@@ -1072,10 +1041,7 @@ export class GauzyAIService {
             };
 
             if (employeeIdFilter) {
-                const employeeId = await this.getEmployeeGauzyAIId(
-                    employeeIdFilter
-                );
-
+                const employeeId = await this.getEmployeeGauzyAIId(employeeIdFilter);
                 filter.employeeId = {
                     eq: employeeId,
                 };
@@ -1094,7 +1060,7 @@ export class GauzyAIService {
 
             let currentCount = 1;
 
-            let totalCount;
+            let totalCount: number;
 
             do {
                 const result: ApolloQueryResult<EmployeeJobPostsQuery> = await this._client.query<EmployeeJobPostsQuery>({
@@ -1321,7 +1287,7 @@ export class GauzyAIService {
     private initClient() {
         // Create a custom ApolloLink to modify headers
         const authLink = new ApolloLink((operation, forward) => {
-            const { apiKey, apiSecret, openAiApiSecretKey, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
+            const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId, bearerTokenApi, tenantIdApi } = this._requestConfigProvider.getConfig();
 
             // Add your custom headers here
             const customHeaders = {
@@ -1332,7 +1298,8 @@ export class GauzyAIService {
 
                 ...(apiKey ? { 'X-APP-ID': apiKey } : {}),
                 ...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
-                ...(openAiApiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiApiSecretKey } : {}),
+                ...(openAiSecretKey ? { 'X-OPENAI-SECRET-KEY': openAiSecretKey } : {}),
+                ...(openAiOrganizationId ? { 'X-OPENAI-ORGANIZATION-ID': openAiOrganizationId } : {}),
 
                 ...(bearerTokenApi ? { 'Authorization': bearerTokenApi } : {}),
                 ...(tenantIdApi ? { 'Tenant-Id': tenantIdApi } : {}),
@@ -1728,39 +1695,135 @@ export class GauzyAIService {
     }
 
     /**
+     * Updates the API key of a tenant in the Gauzy AI service.
      *
-     * @param externalTenantId
-     * @returns
+     * @param input - The updated API key data.
+     * @returns The updated tenant API key information.
      */
-    private async getTenantGauzyAIId(
-        externalTenantId: string
-    ): Promise<string | null> {
-        /** */
-        let tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
-			query tenantByExternalEmployeeId(
-				$externalTenantIdFilter: String!
-			) {
-				tenants(
-					filter: {
-						externalTenantId: {
-							eq: $externalTenantIdFilter
-						}
-					}
-				) {
-					edges {
-						node {
-							id,
-							externalTenantId
-						}
-					}
-					totalCount
-				}
-			}
-		`;
-        /** */
+    public async updateOneTenantApiKey(input: UpdateTenantApiKey) {
+        // Search for the tenant API key by its external API key
+        let tenantApiKeyFilterByExternalFieldsQuery: DocumentNode<TenantApiKeyConnection> = gql`
+            query tenantKeyFilterByExternalFieldsQuery(
+                $externalApiKeyFilter: String!
+            ) {
+                tenantApiKeys(
+                    filter: {
+                        apiKey: { eq: $externalApiKeyFilter }
+                    }
+                ) {
+                    edges {
+                        node {
+                            id,
+                            isActive
+                            isArchived
+                        }
+                    }
+                }
+            }
+        `;
+
+        let tenantApiKeysQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+            query: tenantApiKeyFilterByExternalFieldsQuery,
+            variables: {
+                externalApiKeyFilter: input.apiKey,
+            },
+        });
+
         try {
-            /** */
-            let tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
+            // Check if there are any GraphQL errors
+            if (tenantApiKeysQueryResult.errors && tenantApiKeysQueryResult.errors.length > 0) {
+                // Handle GraphQL errors
+                const [error] = tenantApiKeysQueryResult.errors;
+                // You can also access error.extensions for additional error details
+
+                // Use this (using the "options" parameter):
+                throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+            }
+
+            // Process the query result if successful
+            // You can access the data via tenantApiKeysQueryResult.data
+            let tenantApiKeysResponse = tenantApiKeysQueryResult.data.tenantApiKeys.edges;
+
+            try {
+                // Process the query result
+                const id = tenantApiKeysResponse[0].node.id;
+
+                // Update the tenant API key using a GraphQL mutation
+                const updateOneTenantApiKeyMutation: DocumentNode<any> = gql`
+                    mutation updateOneTenantApiKey($input: UpdateOneTenantApiKeyInput!) {
+                        updateOneTenantApiKey(input: $input) {
+                            openAiSecretKey
+                            openAiOrganizationId
+                        }
+                    }
+                `;
+
+                const updateOneTenantApiKeyResponse = await this._client.mutate({
+                    mutation: updateOneTenantApiKeyMutation,
+                    variables: {
+                        input: {
+                            id: id,
+                            update: {
+                                openAiSecretKey: input.openAiSecretKey,
+                                openAiOrganizationId: input.openAiOrganizationId
+                            },
+                        },
+                    },
+                });
+
+                // Return the updated tenant API key information
+                return <UpdateTenantApiKey>updateOneTenantApiKeyResponse.data.updateOneTenantApiKey;
+            } catch (error) {
+                console.error('Error while updating Tenant Api Key: %s', error?.message);
+                this._logger.error(`Error while updating Tenant Api Key: ${error?.message}`);
+            }
+        } catch (error) {
+            // Handle other types of errors (e.g., network errors)
+            console.error('Non-Apollo Client Error while while synced Tenant Api Key: %s', error?.message);
+            // Use this (using the "options" parameter):
+            throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    /**
+     * Retrieves a Tenant based on its external ID.
+     *
+     * @param externalTenantId - The external ID of the tenant.
+     * @returns A Promise resolving to the Tenant instance or null if not found.
+     */
+    private async getTenantByExternalTenantId(externalTenantId: string): Promise<Tenant> {
+        // Validate externalTenantId
+        if (!externalTenantId) {
+            throw new HttpException('External Tenant ID is required', HttpStatus.BAD_REQUEST);
+        }
+
+        // Define the GraphQL query outside the function
+        const tenantByExternalTenantIdQuery: DocumentNode<TenantConnection> = gql`
+            query tenantByExternalTenantId($externalTenantIdFilter: String!) {
+                tenants(
+                    filter: {
+                        externalTenantId: {
+                            eq: $externalTenantIdFilter
+                        }
+                    }
+                ) {
+                    edges {
+                        node {
+                            id
+                            isActive
+                            isArchived
+                            name
+                            externalTenantId
+                        }
+                    }
+                    totalCount
+                }
+            }
+        `;
+
+        try {
+            // Make the GraphQL query
+            const tenantsQueryResult: ApolloQueryResult<Query> = await this._client.query<Query>({
                 query: tenantByExternalTenantIdQuery,
                 variables: {
                     externalTenantIdFilter: externalTenantId
@@ -1777,11 +1840,10 @@ export class GauzyAIService {
                 throw new HttpException(error?.message, HttpStatus.BAD_REQUEST);
             }
 
-            // Process the query result if successful
-            // You can access the data via tenantsQueryResult.data
+            // Process the query result
             const tenantsResponse = tenantsQueryResult.data.tenants;
             if (tenantsResponse.totalCount > 0) {
-                return tenantsResponse.edges[0].node.id;
+                return tenantsResponse.edges[0].node;
             }
             return null;
         } catch (error) {

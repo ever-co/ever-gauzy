@@ -1,28 +1,54 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
-import { seedProjectMembersCount } from "./../../organization-project/organization-project.seed";
+import { seedProjectMembersCount } from "../../organization-project/organization-project.seed";
+import { databaseTypes } from "@gauzy/config";
 
 export class AlterOrganizationProject1650532321598 implements MigrationInterface {
 
     name = 'AlterOrganizationProject1650532321598';
 
+    /**
+     * Up Migration
+     *
+     * @param queryRunner
+     */
     public async up(queryRunner: QueryRunner): Promise<void> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
-        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            await this.sqliteUpQueryRunner(queryRunner);
-        } else {
-            await this.postgresUpQueryRunner(queryRunner);
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+                await this.sqliteUpQueryRunner(queryRunner);
+                break;
+            case databaseTypes.postgres:
+                await this.postgresUpQueryRunner(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlUpQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
         }
-
-        // await this._calculateProjectMembersCount(queryRunner);
     }
-
+    /**
+     * Down Migration
+     *
+     * @param queryRunner
+     */
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            await this.sqliteDownQueryRunner(queryRunner);
-        } else {
-            await this.postgresDownQueryRunner(queryRunner);
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+                await this.sqliteDownQueryRunner(queryRunner);
+                break;
+            case databaseTypes.postgres:
+                await this.postgresDownQueryRunner(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlDownQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
         }
     }
 
@@ -109,5 +135,21 @@ export class AlterOrganizationProject1650532321598 implements MigrationInterface
 
         console.log('_calculateProjectMembersCount called');
 
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

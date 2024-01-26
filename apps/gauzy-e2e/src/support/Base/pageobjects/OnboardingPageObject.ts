@@ -1,5 +1,5 @@
 export const OnboardingPage = {
-	organisationNameFieldCss: '#nameInput',
+	organizationNameFieldCss: '#nameInput',
 	currencyFieldCss: '#currencySelect',
 	currencyOptionCss: '.option-list nb-option',
 	officialNameFieldCss: '#officialNameInput',

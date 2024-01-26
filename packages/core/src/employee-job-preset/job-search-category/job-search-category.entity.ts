@@ -12,6 +12,7 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
+import { isMySQL } from '@gauzy/config';
 
 @Entity('job_search_category')
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
@@ -35,7 +36,13 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@Column({ type: 'text', default: JobPostSourceEnum.UPWORK })
+	@Column({
+		default: JobPostSourceEnum.UPWORK,
+		...(isMySQL() ?
+			{ type: 'enum', enum: JobPostSourceEnum }
+			: { type: 'text' }
+		)
+	})
 	jobSource?: JobPostSourceEnum;
 
 	/*

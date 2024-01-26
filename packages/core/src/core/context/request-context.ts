@@ -5,9 +5,9 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as cls from 'cls-hooked';
 import { Request, Response } from 'express';
-import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
+import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
 
