@@ -128,6 +128,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 */
 	private filterQuery(request: IGetExpenseInput) {
 		const { organizationId, startDate, endDate, projectIds = [] } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const user = RequestContext.currentUser();
 
@@ -142,8 +144,13 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
 		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		const query = this.expenseRepository.createQueryBuilder();
 		if (request.limit > 0) {

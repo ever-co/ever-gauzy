@@ -439,6 +439,9 @@
 		"Zrdm",
 		"mikro",
 		"TIMESTAMPDIFF"
+		"listbox",
+		"combobox",
+		"tabid"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

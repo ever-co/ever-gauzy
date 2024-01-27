@@ -4,7 +4,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { isNotEmpty } from '@gauzy/common';
 import {
 	IGetTimesheetInput,
 	PermissionsEnum,
@@ -90,6 +89,8 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 		request: IGetTimesheetInput
 	) {
 		const { organizationId, startDate, endDate } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const user = RequestContext.currentUser();
 
@@ -104,8 +105,12 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		qb.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {

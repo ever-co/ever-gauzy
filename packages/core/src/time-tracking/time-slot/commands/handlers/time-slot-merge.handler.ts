@@ -13,14 +13,12 @@ import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/co
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimeSlotMergeCommand)
-export class TimeSlotMergeHandler
-	implements ICommandHandler<TimeSlotMergeCommand> {
+export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeCommand> {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly timeSlotRepository: Repository<TimeSlot>,
-
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(command: TimeSlotMergeCommand) {
 		let { organizationId, employeeId, start, end } = command;
@@ -79,9 +77,7 @@ export class TimeSlotMergeHandler
 		});
 		const timerSlots = await query.getMany();
 
-		for (const timeSlot of timerSlots) {
-			console.log({ timeSlot }, timeSlot.timeLogs, 'Time Slot Merging Dates');
-		}
+		console.log({ timerSlots }, 'Time Slot Merging Dates');
 
 		const createdTimeSlots: any = [];
 		if (timerSlots.length > 0) {
@@ -152,8 +148,11 @@ export class TimeSlotMergeHandler
 						activities,
 						timeLogs,
 						startedAt: moment(slotStart).toDate(),
-						tenantId
+						tenantId,
+						organizationId,
+						employeeId
 					});
+					console.log('Newly Created Time Slot', newTimeSlot);
 
 					/**
 					 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer

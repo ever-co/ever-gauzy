@@ -273,19 +273,14 @@ export class TimerService {
 			tenantId,
 		});
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 
 		const { id: employeeId } = employee;
-		await this.employeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: false, // Employee status (Online/Offline)
-				isTrackingTime: false, // Employee time tracking status
-			}
-		);
+		await this.employeeRepository.update({ id: employeeId }, {
+			isOnline: false, // Employee status (Online/Offline)
+			isTrackingTime: false, // Employee time tracking status
+		});
 
 		let lastLog = await this.getLastRunningLog(request);
 		if (!lastLog) {
@@ -299,9 +294,7 @@ export class TimerService {
 		}
 
 		const now = moment.utc().toDate();
-		const stoppedAt = request.stoppedAt
-			? moment.utc(request.stoppedAt).toDate()
-			: now;
+		const stoppedAt = request.stoppedAt ? moment.utc(request.stoppedAt).toDate() : now;
 
 		/** Function that performs the date range validation */
 		try {

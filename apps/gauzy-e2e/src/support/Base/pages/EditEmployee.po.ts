@@ -155,12 +155,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(EditEmployeePage.postcodeInputCss);
+	verifyElementIsVisible(EditEmployeePage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(EditEmployeePage.postcodeInputCss);
-	enterInput(EditEmployeePage.postcodeInputCss, data);
+	clearField(EditEmployeePage.postCodeInputCss);
+	enterInput(EditEmployeePage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {

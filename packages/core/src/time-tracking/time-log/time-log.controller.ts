@@ -12,6 +12,7 @@ import {
 	ValidationPipe,
 	UsePipes
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import {
@@ -26,6 +27,7 @@ import { UUIDValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
+import { IGetConflictTimeLogCommand } from './commands';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
@@ -38,7 +40,8 @@ import { TimeLogBodyTransformPipe } from './pipes';
 export class TimeLogController {
 
 	constructor(
-		private readonly timeLogService: TimeLogService
+		private readonly timeLogService: TimeLogService,
+		private readonly commandBus: CommandBus,
 	) { }
 
 	/**
@@ -58,9 +61,11 @@ export class TimeLogController {
 	})
 	@Get('conflict')
 	async getConflict(
-		@Query() entity: IGetTimeLogConflictInput
+		@Query() request: IGetTimeLogConflictInput
 	): Promise<ITimeLog[]> {
-		return await this.timeLogService.checkConflictTime(entity);
+		return await this.commandBus.execute(
+			new IGetConflictTimeLogCommand(request)
+		);
 	}
 
 	/**

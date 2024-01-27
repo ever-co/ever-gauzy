@@ -1,20 +1,11 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { getConfig, isBetterSqlite3, isSqlite } from '@gauzy/config';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
+import { Entity } from '@gauzy/common';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
-
-
-let options: TypeOrmModuleOptions;
-try {
-	options = getConfig().dbConnectionOptions;
-} catch (error) {
-	console.error('Cannot load DB connection options', error);
-}
 
 @Entity('screenshot')
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {

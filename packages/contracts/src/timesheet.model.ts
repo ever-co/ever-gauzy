@@ -93,9 +93,8 @@ export interface ISubmitTimesheetInput
 	status: 'submit' | 'unsubmit';
 }
 
-export interface IGetTimesheetInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-	IBaseRelationsEntityModel {
+export interface IGetTimesheetInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
+	onlyMe?: boolean;
 	startDate?: Date | string;
 	endDate?: Date | string;
 	projectIds?: string[];
@@ -372,6 +371,7 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 }
 
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
+	onlyMe?: boolean;
 	timesheetId?: string;
 	timezone?: string;
 }
