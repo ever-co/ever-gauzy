@@ -14,7 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-pagination',
+	selector: 'ngx-pagination',
 	templateUrl: './pagination-v2.component.html',
 	styleUrls: ['./pagination-v2.component.scss'],
 })
