@@ -37,7 +37,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 @NgModule({
@@ -71,7 +71,7 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		CardGridModule,
-		PaginationModule,
+		PaginationV2Module,
 		DirectivesModule
 	],
 	declarations: [

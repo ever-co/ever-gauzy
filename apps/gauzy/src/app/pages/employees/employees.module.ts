@@ -71,7 +71,7 @@ import {
 } from '../../@core/services';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TimeZoneSelectorModule } from '../../@shared/selectors';
 import { DirectivesModule } from '../../@shared/directives/directives.module';
@@ -142,7 +142,7 @@ const COMPONENTS = [
 		GauzyButtonActionModule,
 		NbTabsetModule,
 		NbToggleModule,
-		PaginationModule,
+		PaginationV2Module,
 		CardGridModule,
 		TimeZoneSelectorModule,
 		DirectivesModule
