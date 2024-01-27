@@ -369,11 +369,33 @@ export function isSqliteDB(dbConnection?: IDBConnectionOptions): boolean {
 	return isDatabaseType([databaseTypes.sqlite, databaseTypes.betterSqlite3], dbConnection)
 }
 
-export function getORMType(defaultValue = 'typeorm'): 'typeorm' | 'mikro-orm' {
-	return process.env.DB_ORM as any || defaultValue;
+/**
+ * Enum representing different ORM types.
+ */
+export enum MultiORMEnum {
+	TypeORM = 'typeorm',
+	MikroORM = 'mikro-orm'
 }
 
+/**
+ * Type representing the ORM types.
+ */
+export type MultiORM = 'typeorm' | 'mikro-orm';
 
+/**
+ * Gets the ORM type based on the environment variable or a default value.
+ * @param defaultValue The default ORM type.
+ * @returns The ORM type ('typeorm' or 'mikro-orm').
+ */
+export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
+	return (process.env.DB_ORM as MultiORM) || defaultValue;
+}
+
+/**
+ *
+ * @param dbConnection
+ * @returns
+ */
 export function getDBType(dbConnection?: IDBConnectionOptions) {
 	const dbORM = getORMType();
 	if (!dbConnection) {

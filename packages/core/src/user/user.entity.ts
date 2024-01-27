@@ -1,6 +1,22 @@
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
+
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	Column,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	RelationId,
+	ManyToMany,
+	JoinTable,
+	OneToOne,
+	OneToMany
+} from 'typeorm';
+import { Property } from '@mikro-orm/core';
+import { Exclude } from 'class-transformer';
+import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IUser,
 	IRole,
@@ -14,20 +30,6 @@ import {
 	ICandidate,
 	IImageAsset
 } from '@gauzy/contracts';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	Column,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	RelationId,
-	ManyToMany,
-	JoinTable,
-	OneToOne,
-	OneToMany
-} from 'typeorm';
 import {
 	Candidate,
 	Employee,
@@ -39,10 +41,9 @@ import {
 	TenantBaseEntity,
 	UserOrganization
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
-import { Property } from '@mikro-orm/core';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('user')
+@MultiORMEntity('user')
 export class User extends TenantBaseEntity implements IUser {
 
 	@ApiPropertyOptional({ type: () => String })

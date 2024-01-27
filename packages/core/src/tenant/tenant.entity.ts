@@ -17,9 +17,9 @@ import {
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('tenant')
+@MultiORMEntity('tenant')
 export class Tenant extends BaseEntity implements ITenant {
 
 	@ApiProperty({ type: () => String })

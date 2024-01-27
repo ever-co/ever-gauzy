@@ -34,17 +34,11 @@ export interface ICrudService<T> {
 	findOneOrFailByWhereOptions(options: IFindWhereOptions<T>): Promise<ITryRequest<T>>;
 	create(entity: IPartialEntity<T>, ...options: any[]): Promise<T>;
 	save(entity: IPartialEntity<T>): Promise<T>;
-	update(
-		id: IUpdateCriteria<T>,
-		entity: QueryDeepPartialEntity<T>,
-		...options: any[]
-	): Promise<UpdateResult | T>;
+	update(id: IUpdateCriteria<T>, entity: QueryDeepPartialEntity<T>, ...options: any[]): Promise<UpdateResult | T>;
 	delete(id: IDeleteCriteria<T>, ...options: any[]): Promise<DeleteResult>;
 }
 
-export type IMikroOptions<T> = {
-	where?: MikroFilterQuery<T>
-} & MikroFindOptions<T>
+export type IMikroOptions<T> = { where?: MikroFilterQuery<T> } & MikroFindOptions<T>
 
 export type ICountOptions<T> = FindManyOptions<T> | IMikroOptions<T>
 
@@ -57,7 +51,6 @@ export type IFindOneOptions<T> = FindOneOptions<T> | IMikroOptions<T>
 export type IFindOrFailOptions<T> = FindOneOptions<T> | IMikroOptions<T>
 
 export type IFindWhereOptions<T> = FindOptionsWhere<T> | MikroFilterQuery<T>
-
 
 export type IPartialEntity<T> = DeepPartial<T> | RequiredEntityData<T>
 

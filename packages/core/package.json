@@ -59,6 +59,8 @@
 		"@jitsu/js": "^1.3.0",
 		"@mikro-orm/better-sqlite": "^6.0.5",
 		"@mikro-orm/core": "^6.0.5",
+		"@mikro-orm/knex": "^6.0.5",
+		"@mikro-orm/mongodb": "^6.0.5",
 		"@mikro-orm/mysql": "^6.0.5",
 		"@mikro-orm/nestjs": "^5.2.3",
 		"@mikro-orm/postgresql": "^6.0.5",

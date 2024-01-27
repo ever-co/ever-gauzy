@@ -40,9 +40,9 @@ import {
 	Tag,
 	TenantBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization')
+@MultiORMEntity('organization')
 export class Organization extends TenantBaseEntity implements IOrganization {
 	@Index()
 	@Column()

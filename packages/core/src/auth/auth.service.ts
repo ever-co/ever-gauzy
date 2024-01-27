@@ -49,8 +49,6 @@ export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
 		private readonly userRepository: Repository<User>,
-		@MikroInjectRepository(User)
-		private readonly mikroUserRepository: EntityRepository<User>,
 
 		@InjectRepository(OrganizationTeam)
 		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
