@@ -432,6 +432,7 @@ export abstract class CrudService<T extends BaseEntity>
 					populate: mikroOptions.relations,
 					orderBy: mikroOptions.order
 				};
+				console.log({ mikroFilterQuery }, { mikroFindOneOptions })
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
 				break;
 			default:

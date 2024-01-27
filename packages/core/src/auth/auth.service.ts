@@ -81,10 +81,7 @@ export class AuthService extends SocialAuthService {
 					isActive: true,
 					isArchived: false,
 				},
-				relations: {
-					employee: true,
-					role: true
-				},
+				relations: ['employee', 'role'],
 				order: {
 					createdAt: 'DESC'
 				}
