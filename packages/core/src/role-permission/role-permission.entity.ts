@@ -5,9 +5,9 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { Role, TenantBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('role_permission')
+@MultiORMEntity('role_permission')
 export class RolePermission extends TenantBaseEntity
 	implements IRolePermission {
 

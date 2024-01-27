@@ -9,9 +9,9 @@ import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('user_organization')
+@MultiORMEntity('user_organization')
 export class UserOrganization extends TenantOrganizationBaseEntity implements IUserOrganization {
 
 	@ApiProperty({ type: () => Boolean, default: true })

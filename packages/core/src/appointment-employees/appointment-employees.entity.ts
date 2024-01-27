@@ -7,12 +7,11 @@ import {
 	EmployeeAppointment,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('appointment_employee')
-export class AppointmentEmployee
-	extends TenantOrganizationBaseEntity
-	implements IAppointmentEmployee {
+@MultiORMEntity('appointment_employee')
+export class AppointmentEmployee extends TenantOrganizationBaseEntity implements IAppointmentEmployee {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

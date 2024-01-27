@@ -21,9 +21,9 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('proposal')
+@MultiORMEntity('proposal')
 export class Proposal extends TenantOrganizationBaseEntity
 	implements IProposal {
 

@@ -4,6 +4,7 @@ import { IDateRange, IUser } from '@gauzy/contracts';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, databaseTypes } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';

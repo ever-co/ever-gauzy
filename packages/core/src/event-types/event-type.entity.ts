@@ -21,9 +21,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('event_type')
+@MultiORMEntity('event_type')
 export class EventType
 	extends TenantOrganizationBaseEntity
 	implements IEventType {

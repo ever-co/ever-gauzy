@@ -5,9 +5,9 @@ import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@g
 import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('warehouse_product_variant')
+@MultiORMEntity('warehouse_product_variant')
 export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	implements IWarehouseProductVariant {
 

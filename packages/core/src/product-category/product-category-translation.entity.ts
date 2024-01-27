@@ -2,9 +2,9 @@ import { Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductTypeTranslation as IProductCategoryTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductCategory, TranslationBase } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_category_translation')
+@MultiORMEntity('product_category_translation')
 export class ProductCategoryTranslation extends TranslationBase
 	implements IProductCategoryTranslation {
 

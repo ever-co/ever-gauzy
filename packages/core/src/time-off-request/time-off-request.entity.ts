@@ -28,9 +28,9 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffPolicy
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('time_off_request')
+@MultiORMEntity('time_off_request')
 export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {
 
 	@ApiPropertyOptional({ type: () => String })

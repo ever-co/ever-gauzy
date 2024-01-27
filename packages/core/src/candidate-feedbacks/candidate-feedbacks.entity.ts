@@ -24,9 +24,9 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_feedback')
+@MultiORMEntity('candidate_feedback')
 export class CandidateFeedback extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
 

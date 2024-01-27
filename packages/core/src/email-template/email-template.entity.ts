@@ -2,10 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Index } from 'typeorm';
 import { IEmailTemplate } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from "@gauzy/config";
 
-@Entity('email_template')
+@MultiORMEntity('email_template')
 export class EmailTemplate extends TenantOrganizationBaseEntity
 	implements IEmailTemplate {
 

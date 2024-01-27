@@ -3,9 +3,9 @@ import { ILanguage, IOrganizationLanguage } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { BaseEntity, OrganizationLanguage } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('language')
+@MultiORMEntity('language')
 @Unique(['code'])
 export class Language extends BaseEntity implements ILanguage {
 	@ApiProperty({ type: () => String })

@@ -25,9 +25,9 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('time_slot')
+@MultiORMEntity('time_slot')
 export class TimeSlot extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
 

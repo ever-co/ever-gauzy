@@ -6,9 +6,9 @@ import {
 	ProductTypeTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_type')
+@MultiORMEntity('product_type')
 export class ProductType extends TranslatableBase {
 
 	@ApiProperty({ type: () => String, enum: ProductTypesIconsEnum })

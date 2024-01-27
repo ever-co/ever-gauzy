@@ -8,9 +8,9 @@ import {
 	ProductCategoryTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_category')
+@MultiORMEntity('product_category')
 export class ProductCategory extends TranslatableBase
 	implements IProductCategoryTranslatable {
 

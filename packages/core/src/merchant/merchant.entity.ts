@@ -24,9 +24,9 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('merchant')
+@MultiORMEntity('merchant')
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 	@ApiProperty({ type: () => String })

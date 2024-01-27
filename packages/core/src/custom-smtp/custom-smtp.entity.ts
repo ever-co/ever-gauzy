@@ -6,9 +6,9 @@ import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('custom_smtp')
+@MultiORMEntity('custom_smtp')
 export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
 

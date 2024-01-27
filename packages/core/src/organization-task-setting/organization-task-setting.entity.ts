@@ -18,9 +18,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_task_setting')
+@MultiORMEntity('organization_task_setting')
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
 
 	/**

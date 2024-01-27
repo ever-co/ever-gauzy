@@ -3,9 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset as IDocumentAsset, IOrganizationDocument } from '@gauzy/contracts';
 import { ImageAsset, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_document')
+@MultiORMEntity('organization_document')
 export class OrganizationDocument extends TenantOrganizationBaseEntity implements IOrganizationDocument {
 
 	@ApiProperty({ type: () => String })

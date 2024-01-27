@@ -7,9 +7,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('task_priority')
+@MultiORMEntity('task_priority')
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
 
 	@ApiProperty({ type: () => String })

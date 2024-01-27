@@ -8,9 +8,9 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_technology')
+@MultiORMEntity('candidate_technology')
 export class CandidateTechnologies
 	extends TenantOrganizationBaseEntity
 	implements ICandidateTechnologies {

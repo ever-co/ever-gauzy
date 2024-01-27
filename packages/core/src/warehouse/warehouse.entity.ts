@@ -29,9 +29,9 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('warehouse')
+@MultiORMEntity('warehouse')
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => String })

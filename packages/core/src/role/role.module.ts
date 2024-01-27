@@ -13,9 +13,11 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/roles', module: RoleModule }]),
-		forwardRef(() => TypeOrmModule.forFeature([Role])),
+		RouterModule.register([
+			{ path: '/roles', module: RoleModule }
+		]),
 		forwardRef(() => MikroOrmModule.forFeature([Role])),
+		forwardRef(() => TypeOrmModule.forFeature([Role])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
@@ -23,6 +25,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [RoleController],
 	providers: [RoleService, ...CommandHandlers],
-	exports: [TypeOrmModule, RoleService]
+	exports: [
+		MikroOrmModule,
+		TypeOrmModule,
+		RoleService
+	]
 })
 export class RoleModule { }

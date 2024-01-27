@@ -9,9 +9,9 @@ import {
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_team_join_request')
+@MultiORMEntity('organization_team_join_request')
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamJoinRequest {
 

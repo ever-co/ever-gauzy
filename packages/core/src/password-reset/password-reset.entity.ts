@@ -4,9 +4,9 @@ import * as moment from 'moment';
 import { IPasswordReset } from '@gauzy/contracts';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { TenantBaseEntity } from './../core/entities/tenant-base.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('password_reset')
+@MultiORMEntity('password_reset')
 export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 
 	/** */

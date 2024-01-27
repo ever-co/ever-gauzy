@@ -7,9 +7,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_interviewer')
+@MultiORMEntity('candidate_interviewer')
 export class CandidateInterviewers
 	extends TenantOrganizationBaseEntity
 	implements ICandidateInterviewers {

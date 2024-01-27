@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Index } from 'typeorm';
 import { BaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('country')
+@MultiORMEntity('country')
 export class Country extends BaseEntity implements ICountry {
 	@ApiProperty({ type: () => String })
 	@Index()

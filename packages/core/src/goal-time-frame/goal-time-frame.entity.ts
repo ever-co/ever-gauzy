@@ -3,9 +3,9 @@ import { IGoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('goal_time_frame')
+@MultiORMEntity('goal_time_frame')
 export class GoalTimeFrame
 	extends TenantOrganizationBaseEntity
 	implements IGoalTimeFrame {

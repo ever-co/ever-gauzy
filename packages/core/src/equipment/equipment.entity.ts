@@ -29,9 +29,9 @@ import {
 	ImageAsset
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('equipment')
+@MultiORMEntity('equipment')
 export class Equipment
 	extends TenantOrganizationBaseEntity
 	implements IEquipment {

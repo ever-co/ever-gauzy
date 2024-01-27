@@ -13,9 +13,9 @@ import {
 	IFeatureOrganization
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('feature')
+@MultiORMEntity('feature')
 export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })

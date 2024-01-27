@@ -20,9 +20,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('invoice_item')
+@MultiORMEntity('invoice_item')
 export class InvoiceItem
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceItem {

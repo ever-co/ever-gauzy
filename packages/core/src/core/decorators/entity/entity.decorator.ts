@@ -1,4 +1,4 @@
-import { Entity as MikroOrmEntity } from "@mikro-orm/core";
+import { Entity as MikroOrmEntity, EntityOptions as MikroEntityOptions } from "@mikro-orm/core";
 import { Entity as TypeOrmEntity, EntityOptions } from 'typeorm';
 import { isObject } from "@gauzy/common";
 
@@ -6,14 +6,14 @@ import { isObject } from "@gauzy/common";
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
  * @param options Options for the entity.
  */
-export function MultiORMEntity(options?: EntityOptions): ClassDecorator;
+export function MultiORMEntity(options?: EntityOptions | MikroEntityOptions<any>): ClassDecorator;
 
 /**
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
  * @param name Name of the entity table.
  * @param options Options for the entity.
  */
-export function MultiORMEntity(name?: string, options?: EntityOptions): ClassDecorator;
+export function MultiORMEntity(name?: string, options?: EntityOptions | MikroEntityOptions<any>): ClassDecorator;
 
 /**
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
@@ -21,13 +21,15 @@ export function MultiORMEntity(name?: string, options?: EntityOptions): ClassDec
  * @param maybeOptions Options for the entity (if nameOrOptions is a string).
  * @returns Class decorator.
  */
-export function MultiORMEntity(nameOrOptions?: string | EntityOptions, maybeOptions?: EntityOptions) {
-
-    // Extract options from parameters, defaulting to an empty object
-    const options = (isObject(nameOrOptions) ? (nameOrOptions as EntityOptions) : maybeOptions) || {};
-
+export function MultiORMEntity(
+    nameOrOptions?: string | EntityOptions | MikroEntityOptions<any>,
+    maybeOptions?: EntityOptions
+): ClassDecorator {
     // Extract MikroORM options based on the type of nameOrOptions
-    const mikroOrmOptions = typeof nameOrOptions === "string" ? { tableName: nameOrOptions } : nameOrOptions;
+    const mikroOrmOptions: any = isObject(nameOrOptions) ? nameOrOptions : typeof nameOrOptions === "string" ? { tableName: nameOrOptions } : {};
+
+    // Extract TypeORM options based on the type of nameOrOptions
+    const typeOrmOptions: any = isObject(nameOrOptions) ? (nameOrOptions as EntityOptions) : nameOrOptions || {};
 
     /**
      * Class decorator for creating entities with both MikroORM and TypeORM decorators.
@@ -38,6 +40,6 @@ export function MultiORMEntity(nameOrOptions?: string | EntityOptions, maybeOpti
         MikroOrmEntity(mikroOrmOptions)(target);
 
         // Apply TypeORM entity decorator to the target class
-        TypeOrmEntity(options)(target);
-    }
+        TypeOrmEntity(typeOrmOptions, maybeOptions)(target);
+    };
 }

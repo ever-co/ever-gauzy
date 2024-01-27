@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AuthModule } from '../auth/auth.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from '../role/role.module';
@@ -11,13 +12,12 @@ import { TenantController } from './tenant.controller';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 import { CommandHandlers } from './commands/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/tenant', module: TenantModule }]),
-		TypeOrmModule.forFeature([Tenant]),
 		MikroOrmModule.forFeature([Tenant]),
+		TypeOrmModule.forFeature([Tenant]),
 		AuthModule,
 		CqrsModule,
 		forwardRef(() => UserModule),
@@ -27,6 +27,10 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [TenantController],
 	providers: [TenantService, ...CommandHandlers],
-	exports: [TenantService]
+	exports: [
+		MikroOrmModule,
+		TypeOrmModule,
+		TenantService
+	]
 })
 export class TenantModule { }

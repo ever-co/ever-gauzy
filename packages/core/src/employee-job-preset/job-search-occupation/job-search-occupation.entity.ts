@@ -7,15 +7,15 @@ import {
 	IJobPresetUpworkJobSearchCriterion,
 	IEmployeeUpworkJobsSearchCriterion
 } from '@gauzy/contracts';
+import { isMySQL } from "@gauzy/config";
 import {
 	EmployeeUpworkJobsSearchCriterion,
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { Entity } from '@gauzy/common';
-import { isMySQL } from "@gauzy/config";
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('job_search_occupation')
+@MultiORMEntity('job_search_occupation')
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
 
 	@ApiProperty({ type: () => String })

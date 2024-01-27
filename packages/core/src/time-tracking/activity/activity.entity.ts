@@ -19,11 +19,11 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { isSqliteDB } from './../../core/utils';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from '../../core/decorators/entity';
 
-@Entity('activity')
+@MultiORMEntity('activity')
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()

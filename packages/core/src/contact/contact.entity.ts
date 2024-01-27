@@ -14,9 +14,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('contact')
+@MultiORMEntity('contact')
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@ApiProperty({ type: () => String })
 	@IsString()

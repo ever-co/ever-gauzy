@@ -6,9 +6,9 @@ import {
 	Language,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_language')
+@MultiORMEntity('organization_language')
 export class OrganizationLanguage
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationLanguage {

@@ -7,9 +7,9 @@ import {
 	TenantOrganizationBaseEntity,
 	Task,
 } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('task_estimation')
+@MultiORMEntity('task_estimation')
 export class TaskEstimation
 	extends TenantOrganizationBaseEntity
 	implements ITaskEstimation {

@@ -2,9 +2,9 @@ import { IEstimateEmail } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('estimate_email')
+@MultiORMEntity('estimate_email')
 export class EstimateEmail extends TenantOrganizationBaseEntity
 	implements IEstimateEmail {
 

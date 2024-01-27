@@ -28,9 +28,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('invite')
+@MultiORMEntity('invite')
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })

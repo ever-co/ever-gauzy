@@ -7,9 +7,9 @@ import { IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_option_group_translation')
+@MultiORMEntity('product_option_group_translation')
 export class ProductOptionGroupTranslation
 	extends TenantOrganizationBaseEntity
 	implements IProductOptionGroupTranslation {

@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
+import { EntityRepository } from '@mikro-orm/core';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -41,7 +42,6 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
-import { EntityRepository } from '@mikro-orm/core';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()

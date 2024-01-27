@@ -13,9 +13,9 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_department')
+@MultiORMEntity('organization_department')
 export class OrganizationDepartment
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationDepartment {

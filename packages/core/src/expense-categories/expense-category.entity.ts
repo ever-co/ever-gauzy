@@ -3,9 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IExpense, IExpenseCategory, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('expense_category')
+@MultiORMEntity('expense_category')
 export class ExpenseCategory
 	extends TenantOrganizationBaseEntity
 	implements IExpenseCategory {

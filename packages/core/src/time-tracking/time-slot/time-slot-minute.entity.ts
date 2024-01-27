@@ -10,10 +10,10 @@ import { ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
+import { MultiORMEntity } from './../../core/decorators/entity';
 import { TimeSlot } from './time-slot.entity';
-import { Entity } from '@gauzy/common';
 
-@Entity('time_slot_minute')
+@MultiORMEntity('time_slot_minute')
 @Unique(['timeSlotId', 'datetime'])
 export class TimeSlotMinute
 	extends TenantOrganizationBaseEntity

@@ -19,9 +19,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('issue_type')
+@MultiORMEntity('issue_type')
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
 
 	@ApiProperty({ type: () => String })

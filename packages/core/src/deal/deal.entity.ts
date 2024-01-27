@@ -27,9 +27,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('deal')
+@MultiORMEntity('deal')
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 
 	@ApiProperty({ type: () => String })

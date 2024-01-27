@@ -6,9 +6,9 @@ import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_variant_price')
+@MultiORMEntity('product_variant_price')
 export class ProductVariantPrice
 	extends TenantOrganizationBaseEntity
 	implements IProductVariantPrice {

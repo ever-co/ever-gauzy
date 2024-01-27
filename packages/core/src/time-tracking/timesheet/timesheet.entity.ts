@@ -14,9 +14,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('timesheet')
+@MultiORMEntity('timesheet')
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })

@@ -5,9 +5,9 @@ import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_skill')
+@MultiORMEntity('candidate_skill')
 export class CandidateSkill extends TenantOrganizationBaseEntity implements ICandidateSkill {
 
 	@ApiProperty({ type: () => String })

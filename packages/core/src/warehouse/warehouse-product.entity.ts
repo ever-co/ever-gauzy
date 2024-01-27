@@ -20,9 +20,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('warehouse_product')
+@MultiORMEntity('warehouse_product')
 export class WarehouseProduct extends TenantOrganizationBaseEntity
 	implements IWarehouseProduct {
 

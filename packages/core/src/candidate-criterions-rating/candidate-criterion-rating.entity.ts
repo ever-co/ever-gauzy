@@ -12,9 +12,9 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_criterion_rating')
+@MultiORMEntity('candidate_criterion_rating')
 export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
 

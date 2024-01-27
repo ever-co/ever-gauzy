@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IReport, IReportCategory } from '@gauzy/contracts';
 import { BaseEntity, Report } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('report_category')
+@MultiORMEntity('report_category')
 export class ReportCategory extends BaseEntity implements IReportCategory {
 	@ApiProperty({ type: () => String })
 	@IsString()

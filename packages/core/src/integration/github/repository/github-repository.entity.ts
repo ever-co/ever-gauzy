@@ -2,10 +2,10 @@ import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typ
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue, IOrganizationProject } from '@gauzy/contracts';
-import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from 'core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from '../../../core/entities/internal';
+import { MultiORMEntity } from '../../../core/decorators/entity';
 
-@Entity('organization_github_repository')
+@MultiORMEntity('organization_github_repository')
 export class OrganizationGithubRepository extends TenantOrganizationBaseEntity implements IOrganizationGithubRepository {
 
     @ApiProperty({ type: () => Number })

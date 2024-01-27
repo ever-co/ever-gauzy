@@ -41,9 +41,9 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_contact')
+@MultiORMEntity('organization_contact')
 export class OrganizationContact extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
 

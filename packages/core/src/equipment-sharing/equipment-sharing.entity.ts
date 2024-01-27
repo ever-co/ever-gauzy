@@ -22,9 +22,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('equipment_sharing')
+@MultiORMEntity('equipment_sharing')
 export class EquipmentSharing extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
 

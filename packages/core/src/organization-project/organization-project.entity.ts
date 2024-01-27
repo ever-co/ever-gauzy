@@ -57,10 +57,10 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
 
-@Entity('organization_project')
+@MultiORMEntity('organization_project')
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
 
 	@Index()

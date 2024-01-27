@@ -27,9 +27,9 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('key_result')
+@MultiORMEntity('key_result')
 export class KeyResult
 	extends TenantOrganizationBaseEntity
 	implements IKeyResult {

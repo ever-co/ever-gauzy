@@ -7,9 +7,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from '../../core/decorators/entity';
 
-@Entity('task_status')
+@MultiORMEntity('task_status')
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {
 
 	@ApiProperty({ type: () => String })

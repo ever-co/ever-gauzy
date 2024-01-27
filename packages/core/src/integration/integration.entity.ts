@@ -5,9 +5,9 @@ import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('integration')
+@MultiORMEntity('integration')
 @Unique(['name'])
 export class Integration extends BaseEntity implements IIntegration {
 

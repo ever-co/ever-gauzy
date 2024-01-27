@@ -31,9 +31,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('income')
+@MultiORMEntity('income')
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	@ApiProperty({ type: () => Number })

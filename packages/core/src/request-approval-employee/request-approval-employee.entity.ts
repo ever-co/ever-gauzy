@@ -11,9 +11,9 @@ import {
 	RequestApproval,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('request_approval_employee')
+@MultiORMEntity('request_approval_employee')
 export class RequestApprovalEmployee
 	extends TenantOrganizationBaseEntity
 	implements IRequestApprovalEmployee {

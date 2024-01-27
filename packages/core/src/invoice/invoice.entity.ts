@@ -40,10 +40,10 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
 
-@Entity('invoice')
+@MultiORMEntity('invoice')
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 

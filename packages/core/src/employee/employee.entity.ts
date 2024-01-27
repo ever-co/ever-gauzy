@@ -11,7 +11,7 @@ import {
 	Index,
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -76,7 +76,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 
-@Entity('employee')
+@MultiORMEntity('employee')
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
 
 	@ApiPropertyOptional({ type: () => Date })

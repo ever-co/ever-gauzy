@@ -32,9 +32,9 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('request_approval')
+@MultiORMEntity('request_approval')
 export class RequestApproval
 	extends TenantOrganizationBaseEntity
 	implements IRequestApproval {

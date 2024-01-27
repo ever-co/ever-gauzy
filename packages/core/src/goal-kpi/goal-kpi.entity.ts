@@ -6,9 +6,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('goal_kpi')
+@MultiORMEntity('goal_kpi')
 export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@ApiProperty({ type: () => String })
 	@Column()

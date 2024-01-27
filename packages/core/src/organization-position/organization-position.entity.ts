@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationPosition, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_position')
+@MultiORMEntity('organization_position')
 export class OrganizationPosition
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationPosition {

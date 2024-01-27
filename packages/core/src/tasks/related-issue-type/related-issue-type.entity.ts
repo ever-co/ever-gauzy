@@ -11,9 +11,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('task_related_issue_type')
+@MultiORMEntity('task_related_issue_type')
 export class TaskRelatedIssueTypes
 	extends TenantOrganizationBaseEntity
 	implements ITaskRelatedIssueType {

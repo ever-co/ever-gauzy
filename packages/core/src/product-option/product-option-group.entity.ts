@@ -10,9 +10,9 @@ import {
 	ProductOption,
 	ProductOptionGroupTranslation
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_option_group')
+@MultiORMEntity('product_option_group')
 export class ProductOptionGroup
 	extends TenantOrganizationBaseEntity
 	implements IProductOptionGroupTranslatable {

@@ -13,9 +13,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('employee_setting')
+@MultiORMEntity('employee_setting')
 export class EmployeeSetting
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeSetting {

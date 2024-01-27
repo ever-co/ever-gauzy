@@ -4,9 +4,9 @@ import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional } from 'class-validato
 import { Exclude } from 'class-transformer';
 import { IImportHistory, ImportStatusEnum } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from '../../core/decorators/entity';
 
-@Entity('import-history')
+@MultiORMEntity('import-history')
 export class ImportHistory extends TenantBaseEntity implements IImportHistory {
 
 	@ApiProperty({ type: () => String })

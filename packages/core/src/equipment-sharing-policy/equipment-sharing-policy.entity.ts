@@ -8,9 +8,9 @@ import { IEquipmentSharing, IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EquipmentSharing, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('equipment_sharing_policy')
+@MultiORMEntity('equipment_sharing_policy')
 export class EquipmentSharingPolicy
 	extends TenantOrganizationBaseEntity
 	implements IEquipmentSharingPolicy {

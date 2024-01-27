@@ -7,9 +7,9 @@ import { Index, Column } from 'typeorm';
 import { IApprovalPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('approval_policy')
+@MultiORMEntity('approval_policy')
 export class ApprovalPolicy extends TenantOrganizationBaseEntity
 	implements IApprovalPolicy {
 

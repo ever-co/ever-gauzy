@@ -3,9 +3,9 @@ import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('goal_general_setting')
+@MultiORMEntity('goal_general_setting')
 export class GoalGeneralSetting
 	extends TenantOrganizationBaseEntity
 	implements IGoalGeneralSetting {

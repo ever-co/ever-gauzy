@@ -17,9 +17,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_interview')
+@MultiORMEntity('candidate_interview')
 export class CandidateInterview extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
 

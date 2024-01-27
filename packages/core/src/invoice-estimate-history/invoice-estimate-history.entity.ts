@@ -13,9 +13,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('invoice_estimate_history')
+@MultiORMEntity('invoice_estimate_history')
 export class InvoiceEstimateHistory
 	extends TenantOrganizationBaseEntity
 	implements IInvoiceEstimateHistory {

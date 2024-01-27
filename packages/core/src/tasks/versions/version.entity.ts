@@ -3,9 +3,9 @@ import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskVersion } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from '../../core/decorators/entity';
 
-@Entity('task_version')
+@MultiORMEntity('task_version')
 export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
 
 	@ApiProperty({ type: () => String })

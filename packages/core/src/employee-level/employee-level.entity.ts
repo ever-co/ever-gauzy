@@ -3,9 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IEmployeeLevel, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity({ name: 'employee_level' })
+@MultiORMEntity({ name: 'employee_level' })
 export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmployeeLevel {
 
 	@ApiProperty({ type: () => String })

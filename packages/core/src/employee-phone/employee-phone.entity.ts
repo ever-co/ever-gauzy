@@ -2,9 +2,9 @@ import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeePhone } from '@gauzy/contracts';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('employee_phone')
+@MultiORMEntity('employee_phone')
 export class EmployeePhone extends TenantOrganizationBaseEntity implements IEmployeePhone {
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })

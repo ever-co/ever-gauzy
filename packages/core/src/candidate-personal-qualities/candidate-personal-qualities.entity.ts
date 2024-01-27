@@ -12,9 +12,9 @@ import {
 } from '../core/entities/internal';
 import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_personal_quality')
+@MultiORMEntity('candidate_personal_quality')
 export class CandidatePersonalQualities
 	extends TenantOrganizationBaseEntity
 	implements ICandidatePersonalQualities {

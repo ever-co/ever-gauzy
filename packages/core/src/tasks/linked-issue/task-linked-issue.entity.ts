@@ -14,9 +14,9 @@ import {
 } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('task_linked_issues')
+@MultiORMEntity('task_linked_issues')
 export class TaskLinkedIssue
 	extends TenantOrganizationBaseEntity
 	implements ITaskLinkedIssue {

@@ -6,9 +6,9 @@ import {
 	Pipeline,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('pipeline_stage')
+@MultiORMEntity('pipeline_stage')
 export class PipelineStage
 	extends TenantOrganizationBaseEntity
 	implements IStage {

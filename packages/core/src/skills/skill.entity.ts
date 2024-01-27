@@ -6,9 +6,9 @@ import {
 	Organization,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('skill')
+@MultiORMEntity('skill')
 export class Skill extends TenantOrganizationBaseEntity
 	implements ISkill {
 

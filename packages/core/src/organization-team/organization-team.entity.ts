@@ -52,9 +52,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_team')
+@MultiORMEntity('organization_team')
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
 
 	/**

@@ -4,9 +4,9 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { TranslationBase } from '../core/entities/internal';
 import { Product } from './product.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_translation')
+@MultiORMEntity('product_translation')
 export class ProductTranslation
 	extends TranslationBase
 	implements IProductTranslation {

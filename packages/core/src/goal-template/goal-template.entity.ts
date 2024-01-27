@@ -11,9 +11,9 @@ import {
 	KeyResultTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('goal_template')
+@MultiORMEntity('goal_template')
 export class GoalTemplate
 	extends TenantOrganizationBaseEntity
 	implements IGoalTemplate {

@@ -5,9 +5,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('employee_award')
+@MultiORMEntity('employee_award')
 export class EmployeeAward extends TenantOrganizationBaseEntity
 	implements IEmployeeAward {
 

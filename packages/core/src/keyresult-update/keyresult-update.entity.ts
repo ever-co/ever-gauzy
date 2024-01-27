@@ -6,9 +6,9 @@ import {
 	KeyResult,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('key_result_update')
+@MultiORMEntity('key_result_update')
 export class KeyResultUpdate
 	extends TenantOrganizationBaseEntity
 	implements IKeyResultUpdate {

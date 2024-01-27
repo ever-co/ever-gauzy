@@ -14,6 +14,7 @@ import {
 	ITimeSlot,
 	IOrganizationTeam
 } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationContact,
@@ -24,10 +25,9 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { Entity } from '@gauzy/common';
-import { isMySQL } from '@gauzy/config';
+import { MultiORMEntity } from '../../core/decorators/entity';
 
-@Entity('time_log')
+@MultiORMEntity('time_log')
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => 'timestamptz' })

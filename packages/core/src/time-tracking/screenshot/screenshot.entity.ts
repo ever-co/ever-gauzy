@@ -1,13 +1,13 @@
 import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
-import { Entity } from '@gauzy/common';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
+import { MultiORMEntity } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 
-@Entity('screenshot')
+@MultiORMEntity('screenshot')
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

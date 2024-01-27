@@ -13,9 +13,9 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_sprint')
+@MultiORMEntity('organization_sprint')
 export class OrganizationSprint
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationSprint {

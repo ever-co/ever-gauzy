@@ -29,9 +29,9 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product')
+@MultiORMEntity('product')
 export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@ApiPropertyOptional({ type: () => Boolean })

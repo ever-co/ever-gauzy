@@ -3,9 +3,9 @@ import { Column, ManyToMany, Unique } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { BaseEntity, Integration } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('integration_type')
+@MultiORMEntity('integration_type')
 @Unique(['name'])
 export class IntegrationType extends BaseEntity implements IIntegrationType {
 

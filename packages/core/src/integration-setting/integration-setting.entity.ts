@@ -8,9 +8,9 @@ import {
 	TenantOrganizationBaseEntity
 } from './../core/entities/internal';
 import { IsSecret } from './../core/decorators';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('integration_setting')
+@MultiORMEntity('integration_setting')
 export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {
 
 	@Exclude({ toPlainOnly: true })

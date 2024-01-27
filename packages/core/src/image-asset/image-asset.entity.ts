@@ -10,9 +10,9 @@ import {
 	Equipment,
 	Warehouse
 } from './../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('image_asset')
+@MultiORMEntity('image_asset')
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
 
 	@ApiPropertyOptional({ type: () => String })

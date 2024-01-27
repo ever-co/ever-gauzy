@@ -10,9 +10,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('goal_kpi_template')
+@MultiORMEntity('goal_kpi_template')
 export class GoalKPITemplate
 	extends TenantOrganizationBaseEntity
 	implements IGoalKPITemplate {

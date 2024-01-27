@@ -5,9 +5,9 @@ import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('product_variant_setting')
+@MultiORMEntity('product_variant_setting')
 export class ProductVariantSetting
 	extends TenantOrganizationBaseEntity
 	implements IProductVariantSetting {

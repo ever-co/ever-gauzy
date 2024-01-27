@@ -5,9 +5,9 @@ import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate_education')
+@MultiORMEntity('candidate_education')
 export class CandidateEducation extends TenantOrganizationBaseEntity
 	implements ICandidateEducation {
 

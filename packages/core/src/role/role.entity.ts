@@ -3,9 +3,9 @@ import { Column, Index, OneToMany } from 'typeorm';
 import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
 import { RolesEnum, IRolePermission, IRole } from '@gauzy/contracts';
 import { RolePermission, TenantBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('role')
+@MultiORMEntity('role')
 export class Role extends TenantBaseEntity implements IRole {
 
 	@ApiProperty({ type: () => String, enum: RolesEnum })

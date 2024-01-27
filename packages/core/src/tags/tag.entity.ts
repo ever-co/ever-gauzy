@@ -59,9 +59,9 @@ import {
 	User,
 	Warehouse
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('tag')
+@MultiORMEntity('tag')
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	@ApiProperty({ type: () => String, required: true })

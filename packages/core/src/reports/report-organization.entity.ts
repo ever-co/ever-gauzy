@@ -2,9 +2,9 @@ import { Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IReport, IReportOrganization } from '@gauzy/contracts';
 import { Report, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('report_organization')
+@MultiORMEntity('report_organization')
 export class ReportOrganization extends TenantOrganizationBaseEntity implements IReportOrganization {
 
 	@ApiProperty({ type: () => Report })

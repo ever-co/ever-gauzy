@@ -7,10 +7,10 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
 
-@Entity('email_sent')
+@MultiORMEntity('email_sent')
 export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
 
 	@ApiPropertyOptional({ type: () => String })

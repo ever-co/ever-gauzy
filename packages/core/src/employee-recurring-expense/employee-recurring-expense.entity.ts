@@ -17,9 +17,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('employee_recurring_expense')
+@MultiORMEntity('employee_recurring_expense')
 export class EmployeeRecurringExpense
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeRecurringExpense {

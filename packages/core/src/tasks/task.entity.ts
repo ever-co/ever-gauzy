@@ -55,10 +55,10 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from "@gauzy/config";
 
-@Entity('task')
+@MultiORMEntity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({

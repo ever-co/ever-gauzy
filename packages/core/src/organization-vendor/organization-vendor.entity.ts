@@ -3,9 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IExpense, IOrganizationVendor, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('organization_vendor')
+@MultiORMEntity('organization_vendor')
 export class OrganizationVendor
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationVendor {

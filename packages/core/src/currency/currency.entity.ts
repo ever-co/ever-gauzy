@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Index } from 'typeorm';
 import { BaseEntity } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('currency')
+@MultiORMEntity('currency')
 export class Currency extends BaseEntity implements ICurrency {
 	@ApiProperty({ type: () => String })
 	@Index()

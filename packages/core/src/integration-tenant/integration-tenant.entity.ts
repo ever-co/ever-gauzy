@@ -9,9 +9,9 @@ import {
 	IntegrationSetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('integration_tenant')
+@MultiORMEntity('integration_tenant')
 export class IntegrationTenant extends TenantOrganizationBaseEntity implements IIntegrationTenant {
 
 	@ApiProperty({ type: () => String, enum: IntegrationEnum })

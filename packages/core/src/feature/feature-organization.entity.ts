@@ -6,9 +6,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('feature_organization')
+@MultiORMEntity('feature_organization')
 export class FeatureOrganization
 	extends TenantOrganizationBaseEntity
 	implements IFeatureOrganization {

@@ -16,9 +16,9 @@ import {
 	JobSearchOccupation,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('employee_upwork_job_search_criterion')
+@MultiORMEntity('employee_upwork_job_search_criterion')
 export class EmployeeUpworkJobsSearchCriterion
 	extends TenantOrganizationBaseEntity
 	implements IEmployeeUpworkJobsSearchCriterion {

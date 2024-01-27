@@ -16,9 +16,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('availability_slot')
+@MultiORMEntity('availability_slot')
 export class AvailabilitySlot
 	extends TenantOrganizationBaseEntity
 	implements IAvailabilitySlot {

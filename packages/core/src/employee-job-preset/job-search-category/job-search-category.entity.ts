@@ -7,15 +7,15 @@ import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IJobPresetUpworkJobSearchCriterion
 } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
 import {
 	EmployeeUpworkJobsSearchCriterion,
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { Entity } from '@gauzy/common';
-import { isMySQL } from '@gauzy/config';
+import { MultiORMEntity } from './../../core/decorators/entity';
 
-@Entity('job_search_category')
+@MultiORMEntity('job_search_category')
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
 
 	@ApiProperty({ type: () => String })
@@ -39,10 +39,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@Index()
 	@Column({
 		default: JobPostSourceEnum.UPWORK,
-		...(isMySQL() ?
-			{ type: 'enum', enum: JobPostSourceEnum }
-			: { type: 'text' }
-		)
+		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
 	jobSource?: JobPostSourceEnum;
 

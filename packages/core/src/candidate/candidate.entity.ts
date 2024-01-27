@@ -47,9 +47,9 @@ import {
 	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Entity } from '@gauzy/common'
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('candidate')
+@MultiORMEntity('candidate')
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({

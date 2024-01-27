@@ -12,9 +12,9 @@ import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts'
 import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('report')
+@MultiORMEntity('report')
 export class Report extends BaseEntity implements IReport {
 
 	@ApiProperty({ type: () => String })

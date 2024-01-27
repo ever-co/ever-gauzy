@@ -8,9 +8,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { Entity } from '@gauzy/common';
+import { MultiORMEntity } from './../core/decorators/entity';
 
-@Entity('goal')
+@MultiORMEntity('goal')
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 
 	@ApiProperty({ type: () => String })
