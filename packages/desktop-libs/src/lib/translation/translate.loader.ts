@@ -1,12 +1,12 @@
 import fs from 'fs';
 import { AppError } from '../error-handler';
-import path from 'path';
+import * as path from 'path';
 import { ITranslation } from './i-translation';
 
 export class TranslateLoader {
 	private static _translations: ITranslation = {};
 
-	private constructor() { }
+	private constructor() {}
 
 	public static load(translationsFilesDirectoryPath: string): boolean {
 		try {
@@ -16,10 +16,7 @@ export class TranslateLoader {
 				.readdirSync(path.resolve(translationsFilesDirectoryPath))
 
 				// Filter only JSON files
-				.filter(
-					(files) =>
-						files.indexOf('.') !== 0 && files.slice(-5) === '.json'
-				)
+				.filter((files) => files.indexOf('.') !== 0 && files.slice(-5) === '.json')
 
 				// Parse those files
 				.forEach((fileName) => {
@@ -30,10 +27,7 @@ export class TranslateLoader {
 
 						// Read translation file
 						let fileContent = fs.readFileSync(
-							path.resolve(
-								translationsFilesDirectoryPath,
-								fileName
-							),
+							path.resolve(translationsFilesDirectoryPath, fileName),
 							'utf-8'
 						) as any;
 
@@ -42,7 +36,7 @@ export class TranslateLoader {
 
 						// Push dictionary into buffers
 						this._translations[language] = {
-							...this._flattenObject(fileContent),
+							...this._flattenObject(fileContent)
 						};
 					} catch (error) {
 						throw new AppError('TRANSLATION', error);
@@ -60,11 +54,7 @@ export class TranslateLoader {
 		}
 	}
 
-	private static _flattenObject(
-		nestedObject: ITranslation,
-		prefix = '',
-		result: ITranslation = {}
-	): ITranslation {
+	private static _flattenObject(nestedObject: ITranslation, prefix = '', result: ITranslation = {}): ITranslation {
 		for (const key in nestedObject) {
 			if (Object.prototype.hasOwnProperty.call(nestedObject, key)) {
 				const value = nestedObject[key];
