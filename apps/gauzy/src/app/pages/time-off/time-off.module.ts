@@ -32,7 +32,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { NbToggleModule } from '@nebular/theme';
 
 @NgModule({
@@ -63,7 +63,7 @@ import { NbToggleModule } from '@nebular/theme';
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule,
+		PaginationV2Module,
 		NbToggleModule
 	],
 	declarations: [

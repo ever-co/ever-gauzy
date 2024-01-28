@@ -19,7 +19,7 @@ import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
-import { PaginationModule } from './../../../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
 
@@ -47,7 +47,7 @@ const NB_MODULES = [
         ThemeModule,
         CardGridModule,
         ProductMutationModule,
-        PaginationModule,
+        PaginationV2Module,
         GauzyButtonActionModule,
         TableComponentsModule
     ],

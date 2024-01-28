@@ -26,7 +26,7 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -56,7 +56,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		TagsColorInputModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
-		PaginationModule,
+		PaginationV2Module,
 		GauzyButtonActionModule,
 		NoDataMessageModule,
 		NbTooltipModule,
