@@ -4,7 +4,7 @@ import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 import { MikroManyToOne } from '@gauzy/common';
 import { BaseEntity, Tenant } from '../entities/internal';
-import { Cascade, Property } from '@mikro-orm/core';
+import { Property } from '@mikro-orm/core';
 
 export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
 

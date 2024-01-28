@@ -1,5 +1,5 @@
 import { DynamicModule, Injectable, Type, Logger } from '@nestjs/common';
-import { IPluginConfig, IApiServerOptions, IAssetOptions, IDBConnectionOptions } from '@gauzy/common';
+import { IPluginConfig, IApiServerOptions, IAssetOptions } from '@gauzy/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { getConfig } from './config-manager';

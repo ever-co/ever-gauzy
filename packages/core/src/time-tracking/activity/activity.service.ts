@@ -20,7 +20,6 @@ import { isNotEmpty } from '@gauzy/common';
 import { databaseTypes, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
-import { isSqliteDB } from './../../core/utils';
 
 const config = getConfig();
 

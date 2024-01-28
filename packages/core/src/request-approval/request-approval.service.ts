@@ -30,7 +30,6 @@ import {
 } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
-import { isSqliteDB } from './../core/utils';
 
 @Injectable()
 export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
@@ -63,14 +62,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
 		const timeOffRequestCheckIdQuery = `${isSqlite() || isBetterSqlite3() ? '"time_off_request"."id" = "request_approval"."requestId"'
-				: isPostgres() ? '"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
-					: isMySQL() ? p(`CAST("time_off_request"."id" AS CHAR) COLLATE utf8mb4_unicode_ci = "request_approval"."requestId" COLLATE utf8mb4_unicode_ci`)
-						: '"time_off_request"."id" = "request_approval"."requestId"'
+			: isPostgres() ? '"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+				: isMySQL() ? p(`CAST("time_off_request"."id" AS CHAR) COLLATE utf8mb4_unicode_ci = "request_approval"."requestId" COLLATE utf8mb4_unicode_ci`)
+					: '"time_off_request"."id" = "request_approval"."requestId"'
 			}`;
 		const equipmentSharingCheckIdQuery = `${isSqlite() || isBetterSqlite3() ? '"equipment_sharing"."id" = "request_approval"."requestId"'
-				: isPostgres() ? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
-					: isMySQL() ? p(`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`)
-						: '"equipment_sharing"."id" = "request_approval"."requestId"'
+			: isPostgres() ? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+				: isMySQL() ? p(`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`)
+					: '"equipment_sharing"."id" = "request_approval"."requestId"'
 			}`;
 
 		query.leftJoinAndSelect(

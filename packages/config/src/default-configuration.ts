@@ -6,8 +6,7 @@ import {
 	DEFAULT_API_PORT,
 	DEFAULT_API_BASE_URL,
 	DEFAULT_GRAPHQL_API_PATH,
-	IPluginConfig,
-	IDBConnectionOptions,
+	IPluginConfig
 } from '@gauzy/common';
 import * as path from 'path';
 import { dbConnectionConfig, dbMikroOrmConnectionConfig } from './database';

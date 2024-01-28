@@ -15,7 +15,6 @@ import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from '../request-approval/request-approval.entity';
-import { isSqliteDB } from './../core/utils';
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {

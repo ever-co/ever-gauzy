@@ -7,7 +7,7 @@ import {
 } from '@gauzy/contracts';
 import { Organization, TenantBaseEntity } from '../entities/internal';
 import { MikroManyToOne } from '@gauzy/common';
-import { Cascade, Property } from '@mikro-orm/core';
+import { Property } from '@mikro-orm/core';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 
