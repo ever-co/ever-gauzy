@@ -1,4 +1,4 @@
-import { Public } from '@gauzy/common';
+import { MikroInjectRepository, Public } from '@gauzy/common';
 import { Controller, Get } from '@nestjs/common';
 import {
 	HealthCheckService,
@@ -10,9 +10,11 @@ import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import { DataSource } from 'typeorm';
-import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { getORMType, MultiORM, MultiORMEnum } from 'core/utils';
+import { User } from 'user/user.entity';
+import { EntityRepository } from '@mikro-orm/core';
 
 @Controller('health')
 export class HealthController {
@@ -24,7 +26,11 @@ export class HealthController {
 		private readonly mikroOrmHealthIndicator: MikroOrmHealthIndicator,
 		private readonly disk: DiskHealthIndicator,
 		private readonly cacheHealthIndicator: CacheHealthIndicator,
-		private readonly redisHealthIndicator: RedisHealthIndicator
+		private readonly redisHealthIndicator: RedisHealthIndicator,
+		@InjectRepository(User)
+		private readonly userRepository: Repository<User>,
+		@MikroInjectRepository(User)
+		private readonly mikroUserRepository: EntityRepository<User>
 	) {
 		this.ormType = getORMType();
 	}
@@ -50,6 +56,11 @@ export class HealthController {
 							connection: queryRunner.connection,
 							timeout: 60000
 						});
+
+						const usersCount = await this.userRepository.count();
+
+						console.log(`Database (TypeORM) users count ${uniqueLabel} is ${usersCount}`);
+
 						console.log(`Database (TypeORM) check ${uniqueLabel} completed`);
 						return resDatabase;
 					} catch (err) {
@@ -68,6 +79,11 @@ export class HealthController {
 						const resDatabase = await this.mikroOrmHealthIndicator.pingCheck('database', {
 							timeout: 60000
 						});
+
+						const usersCount = await this.mikroUserRepository.count();
+
+						console.log(`Database (MikroORM) users count ${uniqueLabel} is ${usersCount}`);
+
 						console.log(`Database (MikroORM) check ${uniqueLabel} completed`);
 						return resDatabase;
 					} catch (err) {
