@@ -10,7 +10,7 @@ import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { getORMType, MultiORM, MultiORMEnum } from 'core/utils';
 import { User } from 'user/user.entity';
@@ -50,8 +50,10 @@ export class HealthController {
 			console.log(`Checking ${uniqueLabel} Database...`);
 			switch (this.ormType) {
 				case MultiORMEnum.TypeORM:
-					const queryRunner = this.dataSource.createQueryRunner();
+					let queryRunner: QueryRunner;
 					try {
+						queryRunner = this.dataSource.createQueryRunner();
+
 						const resDatabase = await this.typeOrmHealthIndicator.pingCheck('database', {
 							connection: queryRunner.connection,
 							timeout: 60000
@@ -59,10 +61,16 @@ export class HealthController {
 
 						const usersCount = await this.userRepository.count();
 
-						console.log(`Database (TypeORM) users count ${uniqueLabel} is ${usersCount}`);
+						console.log(`Database (TypeORM) users count ${uniqueLabel} is: ${usersCount}`);
 
 						console.log(`Database (TypeORM) check ${uniqueLabel} completed`);
-						return resDatabase;
+
+						return {
+							database: {
+								status: 'up',
+								message: resDatabase?.database?.message
+							}
+						};
 					} catch (err) {
 						console.error(`Database (TypeORM) check ${uniqueLabel} failed`, err);
 						return {
@@ -72,7 +80,7 @@ export class HealthController {
 							}
 						};
 					} finally {
-						await queryRunner.release();
+						if (queryRunner) await queryRunner.release();
 					}
 				case MultiORMEnum.MikroORM:
 					try {
@@ -82,7 +90,7 @@ export class HealthController {
 
 						const usersCount = await this.mikroUserRepository.count();
 
-						console.log(`Database (MikroORM) users count ${uniqueLabel} is ${usersCount}`);
+						console.log(`Database (MikroORM) users count ${uniqueLabel} is: ${usersCount}`);
 
 						console.log(`Database (MikroORM) check ${uniqueLabel} completed`);
 						return resDatabase;

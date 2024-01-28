@@ -6,18 +6,28 @@ import { EntityCaseNamingStrategy } from '@mikro-orm/core';
 import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
 import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
-import { Options as MikroOrmMySqlOptions } from '@mikro-orm/mysql';
+import { Options as MikroOrmMySqlOptions, MySqlDriver } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
 import { databaseTypes, getLoggingOptions, getTlsOptions } from './database-helpers';
 
-let dbType: string;
-const dbORM: 'typeorm' | 'mikro-orm' = (process.env.DB_ORM as any) || 'typeorm';
+export type MultiORM = 'typeorm' | 'mikro-orm';
+
+enum MultiORMEnum {
+	TypeORM = 'typeorm',
+	MikroORM = 'mikro-orm'
+}
+
+function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
+	return (process.env.DB_ORM as MultiORM) || defaultValue;
+}
+
+const dbORM: MultiORM = getORMType();
+
 console.log('DB ORM: ' + dbORM);
 
-if (process.env.DB_TYPE) dbType = process.env.DB_TYPE;
-else dbType = 'sqlite';
+const dbType = process.env.DB_TYPE || databaseTypes.betterSqlite3;
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
@@ -27,19 +37,27 @@ console.log(chalk.magenta(`Currently running Node.js version %s`), process.versi
 
 let connectionConfig: TypeOrmModuleOptions;
 let mikroORMConnectionConfig: MikroOrmModuleOptions;
-let dbPoolSize: number;
-let dbConnectionTimeout: number;
-let idleTimeoutMillis: number;
-let dbSlowQueryLoggingTimeout: number;
+
+// We set default pool size as 80. Usually PG has 100 connections max by default.
+const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
+const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
+const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+	: 10000; // 10 seconds default
+
+console.log('DB Pool Size: ' + dbPoolSize);
+console.log('DB Connection Timeout: ' + dbConnectionTimeout);
+console.log('DB Idle Timeout: ' + idleTimeoutMillis);
+console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
 
 switch (dbType) {
 	case databaseTypes.mongodb:
 		throw 'MongoDB not supported yet';
 
 	case databaseTypes.mysql:
-		// MikroORM Config
 		const mikroOrmMySqlOptions: MikroOrmMySqlOptions = {
-			// driver: MySqlDriver,
+			driver: MySqlDriver,
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
 			dbName: process.env.DB_NAME || 'mysql',
@@ -54,31 +72,14 @@ switch (dbType) {
 			},
 			pool: {
 				min: 10,
-				max: dbPoolSize,
-				// number of milliseconds a client must sit idle in the pool and not be checked out
-				// before it is disconnected from the backend and discarded
-				idleTimeoutMillis: idleTimeoutMillis,
-				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-				acquireTimeoutMillis: dbConnectionTimeout
+				max: dbPoolSize
 			},
 			namingStrategy: EntityCaseNamingStrategy
 		};
+
 		mikroORMConnectionConfig = mikroOrmMySqlOptions;
 
-		// TypeORM Config
-		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
-		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
-		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-			: 10000; // 10 seconds default
-
-		console.log('DB Pool Size: ' + dbPoolSize);
-		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
-		console.log('DB Idle Timeout: ' + idleTimeoutMillis);
-		console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
-
-		const mysqlConnectionOptions: MysqlConnectionOptions = {
+		const typeOrmMySqlOptions: MysqlConnectionOptions = {
 			type: dbType,
 			ssl: getTlsOptions(process.env.DB_SSL_MODE),
 			host: process.env.DB_HOST || 'localhost',
@@ -98,21 +99,15 @@ switch (dbType) {
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			extra: {
 				connectionLimit: dbPoolSize,
-				maxIdle: dbPoolSize,
-				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
-				connectionTimeoutMillis: dbConnectionTimeout,
-				// number of milliseconds a client must sit idle in the pool and not be checked out
-				// before it is disconnected from the backend and discarded
-				idleTimeoutMillis: idleTimeoutMillis
+				maxIdle: dbPoolSize
 			}
 		};
 
-		connectionConfig = mysqlConnectionOptions;
+		connectionConfig = typeOrmMySqlOptions;
 
 		break;
 
 	case databaseTypes.postgres:
-		// MikroORM Config
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 			driver: PostgreSqlDriver,
 			host: process.env.DB_HOST || 'localhost',
@@ -138,24 +133,10 @@ switch (dbType) {
 			},
 			namingStrategy: EntityCaseNamingStrategy
 		};
+
 		mikroORMConnectionConfig = mikroOrmPostgresOptions;
 
-		// TypeORM Config
-
-		// We set default pool size as 80. Usually PG has 100 connections max by default.
-		dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
-		dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
-		idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-		dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-			? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-			: 10000; // 10 seconds default
-
-		console.log('DB Pool Size: ' + dbPoolSize);
-		console.log('DB Connection Timeout: ' + dbConnectionTimeout);
-		console.log('DB Idle Timeout: ' + idleTimeoutMillis);
-		console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
-
-		const postgresConnectionOptions: PostgresConnectionOptions = {
+		const typeOrmPostgresOptions: PostgresConnectionOptions = {
 			type: dbType,
 			ssl: getTlsOptions(process.env.DB_SSL_MODE),
 			host: process.env.DB_HOST || 'localhost',
@@ -187,7 +168,7 @@ switch (dbType) {
 			}
 		};
 
-		connectionConfig = postgresConnectionOptions;
+		connectionConfig = typeOrmPostgresOptions;
 
 		break;
 
@@ -200,6 +181,7 @@ switch (dbType) {
 			driver: SqliteDriver,
 			dbName: dbPath
 		};
+
 		mikroORMConnectionConfig = mikroORMSqliteConfig;
 
 		// TypeORM Config
@@ -226,6 +208,7 @@ switch (dbType) {
 			driver: BetterSqliteDriver,
 			dbName: betterSqlitePath
 		};
+
 		mikroORMConnectionConfig = mikroORMBetterSqliteConfig;
 
 		// TypeORM Config
