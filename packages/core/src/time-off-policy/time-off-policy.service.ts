@@ -12,9 +12,9 @@ import { Employee } from '../employee/employee.entity';
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {
 	constructor(
 		@InjectRepository(TimeOffPolicy)
-		private readonly policyRepository: Repository<TimeOffPolicy>,
+		policyRepository: Repository<TimeOffPolicy>,
 		@MikroInjectRepository(TimeOffPolicy)
-		private readonly mikroPolicyRepository: EntityRepository<TimeOffPolicy>,
+		mikroPolicyRepository: EntityRepository<TimeOffPolicy>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
@@ -43,12 +43,12 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			}
 		});
 		policy.employees = employees;
-		return this.policyRepository.save(policy);
+		return this.repository.save(policy);
 	}
 
 	async update(id: string, entity: ITimeOffPolicyUpdateInput): Promise<TimeOffPolicy> {
 		try {
-			await this.policyRepository.delete(id);
+			await this.repository.delete(id);
 			const policy = new TimeOffPolicy();
 
 			policy.name = entity.name;
@@ -66,7 +66,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 				}
 			});
 			policy.employees = employees;
-			return this.policyRepository.save(policy);
+			return this.repository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

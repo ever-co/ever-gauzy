@@ -10,9 +10,9 @@ import { TenantAwareCrudService } from './../core/crud';
 export class EmployeeSettingService extends TenantAwareCrudService<EmployeeSetting> {
 	constructor(
 		@InjectRepository(EmployeeSetting)
-		private readonly employeeSettingRepository: Repository<EmployeeSetting>,
+		employeeSettingRepository: Repository<EmployeeSetting>,
 		@MikroInjectRepository(EmployeeSetting)
-		private readonly mikroEmployeeSettingRepository: EntityRepository<EmployeeSetting>
+		mikroEmployeeSettingRepository: EntityRepository<EmployeeSetting>
 	) {
 		super(employeeSettingRepository, mikroEmployeeSettingRepository);
 	}

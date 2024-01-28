@@ -1,23 +1,10 @@
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-	HttpStatus,
-	Injectable,
-	NotFoundException
-} from '@nestjs/common';
+import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	IsNull,
-	MoreThanOrEqual,
-	Repository,
-	SelectQueryBuilder
-} from 'typeorm';
-import {
-	IEmailReset,
-	IEmailResetFindInput,
-	LanguagesEnum
-} from '@gauzy/contracts';
+import { IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
 import { TenantAwareCrudService } from '../core/crud';
@@ -37,9 +24,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	constructor(
 		@InjectRepository(EmailReset)
-		private readonly _emailResetRepository: Repository<EmailReset>,
+		emailResetRepository: Repository<EmailReset>,
 		@MikroInjectRepository(EmailReset)
-		private readonly mikro_emailResetRepository: EntityRepository<EmailReset>,
+		mikroEmailResetRepository: EntityRepository<EmailReset>,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
@@ -47,13 +34,10 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		private readonly employeeService: EmployeeService,
 		private readonly authService: AuthService
 	) {
-		super(_emailResetRepository, mikro_emailResetRepository);
+		super(emailResetRepository, mikroEmailResetRepository);
 	}
 
-	async requestChangeEmail(
-		request: UserEmailDTO,
-		languageCode: LanguagesEnum
-	) {
+	async requestChangeEmail(request: UserEmailDTO, languageCode: LanguagesEnum) {
 		try {
 			let user = RequestContext.currentUser();
 
@@ -61,7 +45,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				relations: {
 					role: true,
 					employee: true
-				},
+				}
 			});
 
 			const token = await this.authService.getJwtAccessToken(user);
@@ -69,10 +53,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			/**
 			 * User with email already exist
 			 */
-			if (
-				user.email === request.email ||
-				(await this.userService.checkIfExistsEmail(request.email))
-			) {
+			if (user.email === request.email || (await this.userService.checkIfExistsEmail(request.email))) {
 				return new Object({
 					status: HttpStatus.OK,
 					message: `OK`
@@ -108,8 +89,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 				verificationCode,
 				organization
 			);
-		}
-		finally {
+		} finally {
 			// we reply "OK" in any case for security reasons
 			return new Object({
 				status: HttpStatus.OK,
@@ -134,8 +114,8 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 			if (
 				!record ||
 				/**
-				  * Check if other user has already registered with same email
-				  */
+				 * Check if other user has already registered with same email
+				 */
 				(await this.userService.checkIfExistsEmail(record.email))
 			) {
 				// we reply with OK, but just do not update email for the user if something is wrong
@@ -154,7 +134,6 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					email: record.email
 				}
 			);
-
 		} finally {
 			// we reply "OK" in any case for security reasons
 			return new Object({
@@ -166,8 +145,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 
 	async getEmailResetIfCodeMatches(input: IEmailResetFindInput) {
 		try {
-			const query =
-				this._emailResetRepository.createQueryBuilder('email_reset');
+			const query = this.repository.createQueryBuilder('email_reset');
 			query.where((qb: SelectQueryBuilder<EmailReset>) => {
 				qb.andWhere(input);
 				qb.andWhere([
@@ -176,7 +154,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 					},
 					{
 						expiredAt: IsNull()
-					},
+					}
 				]);
 
 				qb.orderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');

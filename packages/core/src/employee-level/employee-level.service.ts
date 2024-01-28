@@ -10,9 +10,9 @@ import { Repository } from 'typeorm';
 export class EmployeeLevelService extends TenantAwareCrudService<EmployeeLevel> {
 	constructor(
 		@InjectRepository(EmployeeLevel)
-		private readonly employeeLevelRepository: Repository<EmployeeLevel>,
+		employeeLevelRepository: Repository<EmployeeLevel>,
 		@MikroInjectRepository(EmployeeLevel)
-		private readonly mikroEmployeeLevelRepository: EntityRepository<EmployeeLevel>
+		mikroEmployeeLevelRepository: EntityRepository<EmployeeLevel>
 	) {
 		super(employeeLevelRepository, mikroEmployeeLevelRepository);
 	}

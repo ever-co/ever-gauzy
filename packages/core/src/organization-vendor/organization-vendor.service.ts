@@ -11,24 +11,22 @@ import { TenantAwareCrudService } from './../core/crud';
 export class OrganizationVendorService extends TenantAwareCrudService<OrganizationVendor> {
 	constructor(
 		@InjectRepository(OrganizationVendor)
-		private readonly organizationVendorRepository: Repository<OrganizationVendor>,
+		organizationVendorRepository: Repository<OrganizationVendor>,
 		@MikroInjectRepository(OrganizationVendor)
-		private readonly mikroOrganizationVendorRepository: EntityRepository<OrganizationVendor>
+		mikroOrganizationVendorRepository: EntityRepository<OrganizationVendor>
 	) {
 		super(organizationVendorRepository, mikroOrganizationVendorRepository);
 	}
 
 	async deleteVendor(vendorId) {
-		const vendor = await this.organizationVendorRepository
+		const vendor = await this.repository
 			.createQueryBuilder('vendor')
 			.leftJoin(Expense, 'expense', 'vendor.id = expense."vendorId"')
 			.where('expense."vendorId" = :vendorId', { vendorId: vendorId })
 			.getOne();
 
 		if (vendor) {
-			throw new BadRequestException(
-				"This Vendor can't be deleted because it is used in expense records"
-			);
+			throw new BadRequestException("This Vendor can't be deleted because it is used in expense records");
 		}
 
 		return await this.delete(vendorId);
@@ -40,7 +38,7 @@ export class OrganizationVendorService extends TenantAwareCrudService<Organizati
 			if (where.tags) {
 				filter.where.tags = {
 					id: In(where.tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

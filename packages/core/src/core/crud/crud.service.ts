@@ -1,6 +1,6 @@
-// Code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
+// Modified code from https://github.com/xmlking/ngx-starter-kit.
+// Original license: MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
+// Original copyright: Copyright (c) 2018 Sumanth Chinthagunta
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
@@ -41,11 +41,13 @@ import {
 } from './icrud.service';
 import { ITryRequest } from './try-request';
 
-//
 const ormType: MultiORM = getORMType();
 
-export abstract class CrudService<T extends BaseEntity>
-	implements ICrudService<T> {
+export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
+	protected constructor(
+		protected readonly repository: Repository<T>,
+		protected readonly mikroRepository?: EntityRepository<T>
+	) {}
 
 	/**
 	 * Alias (default we used table name) for pagination crud
@@ -61,11 +63,6 @@ export abstract class CrudService<T extends BaseEntity>
 		return ormType;
 	}
 
-	protected constructor(
-		protected readonly repository: Repository<T>,
-		protected readonly mikroRepository?: EntityRepository<T>,
-	) { }
-
 	/**
 	 * Counts entities that match given options.
 	 * Useful for pagination.
@@ -77,8 +74,10 @@ export abstract class CrudService<T extends BaseEntity>
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
-			default:
+			case MultiORMEnum.TypeORM:
 				return await this.repository.count(options as FindManyOptions<T>);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 
@@ -93,8 +92,10 @@ export abstract class CrudService<T extends BaseEntity>
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
-			default:
+			case MultiORMEnum.TypeORM:
 				return await this.repository.countBy(options as FindOptionsWhere<T>);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 
@@ -113,12 +114,17 @@ export abstract class CrudService<T extends BaseEntity>
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				total = await this.mikroRepository.count(options as MikroFilterQuery<T>);
-				items = await this.mikroRepository.find(options?.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
+				items = await this.mikroRepository.find(
+					options?.where as MikroFilterQuery<T>,
+					options as MikroFindOptions<T>
+				);
 				break;
-			default:
+			case MultiORMEnum.TypeORM:
 				total = await this.repository.count(options as FindManyOptions<T>);
 				items = await this.repository.find(options as FindManyOptions<T>);
 				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 		return { items, total };
 	}
@@ -132,9 +138,14 @@ export abstract class CrudService<T extends BaseEntity>
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
-			default:
+				return await this.mikroRepository.find(
+					options.where as MikroFilterQuery<T>,
+					options as MikroFindOptions<T>
+				);
+			case MultiORMEnum.TypeORM:
 				return await this.repository.find(options as FindManyOptions<T>);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 
@@ -153,48 +164,53 @@ export abstract class CrudService<T extends BaseEntity>
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					[items, total] = await this.mikroRepository.findAndCount(options.where as MikroFilterQuery<T>, {
-						skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-						take: options && options.take ? (options.take) : 10,
-						...options,
-					} as MikroFindOptions<T>);
+					[items, total] = await this.mikroRepository.findAndCount(
+						options?.where as MikroFilterQuery<T>,
+						{
+							skip: options && options.skip ? options.take * (options.skip - 1) : 0,
+							take: options && options.take ? options.take : 10,
+							...options
+						} as MikroFindOptions<T>
+					);
 					break;
-				default:
+				case MultiORMEnum.TypeORM:
 					[items, total] = await this.repository.findAndCount({
-						skip: options && options.skip ? (options.take * (options.skip - 1)) : 0,
-						take: options && options.take ? (options.take) : 10,
+						skip: options && options.skip ? options.take * (options.skip - 1) : 0,
+						take: options && options.take ? options.take : 10,
 						/**
 						 * Specifies what relations should be loaded.
 						 *
 						 * @deprecated
 						 */
-						...(
-							(options && options.join) ? {
-								join: options.join
-							} : {}
-						),
-						...(
-							(options && options.select) ? {
-								select: options.select
-							} : {}
-						),
-						...(
-							(options && options.relations) ? {
-								relations: options.relations
-							} : {}
-						),
-						...(
-							(options && options.where) ? {
-								where: options.where
-							} : {}
-						),
-						...(
-							(options && options.order) ? {
-								order: options.order
-							} : {}
-						),
+						...(options && options.join
+							? {
+									join: options.join
+							  }
+							: {}),
+						...(options && options.select
+							? {
+									select: options.select
+							  }
+							: {}),
+						...(options && options.relations
+							? {
+									relations: options.relations
+							  }
+							: {}),
+						...(options && options.where
+							? {
+									where: options.where
+							  }
+							: {}),
+						...(options && options.order
+							? {
+									order: options.order
+							  }
+							: {})
 					});
 					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 			return { items, total };
 		} catch (error) {
@@ -217,10 +233,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByIdString(
-		id: string,
-		options?: IFindOneOptions<T>
-	): Promise<ITryRequest<T>> {
+	public async findOneOrFailByIdString(id: string, options?: IFindOneOptions<T>): Promise<ITryRequest<T>> {
 		try {
 			let record: T;
 			switch (this.ormType) {
@@ -230,43 +243,43 @@ export abstract class CrudService<T extends BaseEntity>
 
 					let where: MikroFilterQuery<T>;
 					if (options?.where instanceof Array) {
-						where = options.where.concat({ id } as any)
+						where = options.where.concat({ id } as any);
 					} else {
 						where = {
 							id,
-							...(options?.where ? options.where : {} as any)
-						}
+							...(options?.where ? options.where : ({} as any))
+						};
 					}
 
 					record = await this.mikroRepository.findOneOrFail(where, options as FindOneOrFailOptions<T>);
 					break;
 
-				default:
-					options = options as FindOneOptions<T>
+				case MultiORMEnum.TypeORM:
+					options = options as FindOneOptions<T>;
 					record = await this.repository.findOneOrFail({
-						...(
-							(options && options.select) ? {
-								select: options.select
-							} : {}
-						),
+						...(options && options.select
+							? {
+									select: options.select
+							  }
+							: {}),
 						where: {
 							id,
-							...(
-								(options && options.where) ? options.where : {}
-							)
+							...(options && options.where ? options.where : {})
 						},
-						...(
-							(options && options.relations) ? {
-								relations: options.relations
-							} : []
-						),
-						...(
-							(options && options.order) ? {
-								order: options.order
-							} : {}
-						),
+						...(options && options.relations
+							? {
+									relations: options.relations
+							  }
+							: []),
+						...(options && options.order
+							? {
+									order: options.order
+							  }
+							: {})
 					} as FindOneOptions<T>);
 					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 
 			return {
@@ -288,18 +301,21 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByOptions(
-		options: IFindOneOptions<T>
-	): Promise<ITryRequest<T>> {
+	public async findOneOrFailByOptions(options: IFindOneOptions<T>): Promise<ITryRequest<T>> {
 		try {
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					record = await this.mikroRepository.findOneOrFail(options.where as MikroFilterQuery<T>, options as FindOneOrFailOptions<T>);
+					record = await this.mikroRepository.findOneOrFail(
+						options.where as MikroFilterQuery<T>,
+						options as FindOneOrFailOptions<T>
+					);
 					break;
-				default:
+				case MultiORMEnum.TypeORM:
 					record = await this.repository.findOneOrFail(options as FindOneOptions<T>);
 					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 			return {
 				success: true,
@@ -320,18 +336,18 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneOrFailByWhereOptions(
-		options: IFindWhereOptions<T>
-	): Promise<ITryRequest<T>> {
+	public async findOneOrFailByWhereOptions(options: IFindWhereOptions<T>): Promise<ITryRequest<T>> {
 		try {
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					record = await this.mikroRepository.findOneOrFail(options as MikroFilterQuery<T>);
 					break;
-				default:
+				case MultiORMEnum.TypeORM:
 					record = await this.repository.findOneByOrFail(options as FindOptionsWhere<T>);
 					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 			return {
 				success: true,
@@ -358,10 +374,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByIdString(
-		id: T['id'],
-		options?: IFindOneOptions<T>
-	): Promise<T> {
+	public async findOneByIdString(id: T['id'], options?: IFindOneOptions<T>): Promise<T> {
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -370,46 +383,48 @@ export abstract class CrudService<T extends BaseEntity>
 
 				let where: MikroFilterQuery<T>;
 				if (options?.where instanceof Array) {
-					where = options.where.concat({ id } as any)
+					where = options.where.concat({ id } as any);
 				} else {
 					where = {
 						id,
-						...(options?.where ? options.where : {} as any)
-					}
+						...(options?.where ? options.where : ({} as any))
+					};
 				}
 
 				record = await this.mikroRepository.findOne(where, options as MikroFindOneOptions<T>);
 				break;
-			default:
-				options = options as FindOneOptions<T>
+			case MultiORMEnum.TypeORM:
+				options = options as FindOneOptions<T>;
 				record = await this.repository.findOne({
-					...(
-						(options && options.select) ? {
-							select: options.select
-						} : {}
-					),
+					...(options && options.select
+						? {
+								select: options.select
+						  }
+						: {}),
 					where: {
 						id,
-						...(
-							(options && options.where) ? options.where : {}
-						)
+						...(options && options.where ? options.where : {})
 					},
-					...(
-						(options && options.relations) ? {
-							relations: options.relations
-						} : []
-					),
-					...(
-						(options && options.order) ? {
-							order: options.order
-						} : {}
-					),
+					...(options && options.relations
+						? {
+								relations: options.relations
+						  }
+						: []),
+					...(options && options.order
+						? {
+								order: options.order
+						  }
+						: {})
 				} as FindOneOptions<T>);
 				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
+
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
+
 		return record;
 	}
 
@@ -420,9 +435,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByOptions(
-		options: IFindOneOptions<T>
-	): Promise<T | null> {
+	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T | null> {
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
@@ -430,18 +443,22 @@ export abstract class CrudService<T extends BaseEntity>
 				const mikroFilterQuery: MikroFilterQuery<T> = options.where as FilterQuery<T>;
 				const mikroFindOneOptions: MikroFindOneOptions<T> = {
 					...(mikroOptions.relations ? { populate: flatten(mikroOptions.relations) } : {}),
-					...(mikroOptions.order ? { orderBy: mikroOptions.order } : {}),
+					...(mikroOptions.order ? { orderBy: mikroOptions.order } : {})
 				};
-				console.log({ mikroFilterQuery }, { mikroFindOneOptions })
+				console.log({ mikroFilterQuery }, { mikroFindOneOptions });
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
 				break;
-			default:
+			case MultiORMEnum.TypeORM:
 				record = await this.repository.findOne(options as FindOneOptions<T>);
 				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
+
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
+
 		return record;
 	}
 
@@ -452,22 +469,23 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async findOneByWhereOptions(
-		options: IFindWhereOptions<T>
-	): Promise<T | null> {
+	public async findOneByWhereOptions(options: IFindWhereOptions<T>): Promise<T | null> {
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				record = await this.mikroRepository.findOne(options as MikroFilterQuery<T>);
 				break;
-			default:
+			case MultiORMEnum.TypeORM:
 				record = await this.repository.findOneBy(options as FindOptionsWhere<T>);
 				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 
 		if (!record) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
+
 		return record;
 	}
 
@@ -481,7 +499,7 @@ export abstract class CrudService<T extends BaseEntity>
 					throw new BadRequestException(err);
 				}
 
-			default:
+			case MultiORMEnum.TypeORM:
 				const obj = this.repository.create(entity as DeepPartial<T>);
 				try {
 					// https://github.com/Microsoft/TypeScript/issues/21592
@@ -489,6 +507,9 @@ export abstract class CrudService<T extends BaseEntity>
 				} catch (err /*: WriteError*/) {
 					throw new BadRequestException(err);
 				}
+
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 
@@ -504,8 +525,10 @@ export abstract class CrudService<T extends BaseEntity>
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					return await this.mikroRepository.upsert(entity as T);
-				default:
+				case MultiORMEnum.TypeORM:
 					return await this.repository.save(entity as DeepPartial<T>);
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -522,10 +545,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param partialEntity
 	 * @returns
 	 */
-	public async update(
-		id: IUpdateCriteria<T>,
-		partialEntity: QueryDeepPartialEntity<T>
-	): Promise<UpdateResult | T> {
+	public async update(id: IUpdateCriteria<T>, partialEntity: QueryDeepPartialEntity<T>): Promise<UpdateResult | T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -540,12 +560,17 @@ export abstract class CrudService<T extends BaseEntity>
 
 					return {
 						affected: updatedRow
-					} as UpdateResult
+					} as UpdateResult;
+
+				case MultiORMEnum.TypeORM:
+					return await this.repository.update(
+						id as string | number | FindOptionsWhere<T>,
+						partialEntity as QueryDeepPartialEntity<T>
+					);
 
 				default:
-					return await this.repository.update(id as string | number | FindOptionsWhere<T>, partialEntity as QueryDeepPartialEntity<T>);
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
-
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}
@@ -561,10 +586,7 @@ export abstract class CrudService<T extends BaseEntity>
 	 * @param options
 	 * @returns
 	 */
-	public async delete(
-		criteria: string | number | FindOptionsWhere<T>,
-		...options: any[]
-	): Promise<DeleteResult> {
+	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any[]): Promise<DeleteResult> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -574,8 +596,10 @@ export abstract class CrudService<T extends BaseEntity>
 					}
 					const result = await this.mikroRepository.nativeDelete(where, criteria as DeleteOptions<T>);
 					return { affected: result } as DeleteResult;
-				default:
+				case MultiORMEnum.TypeORM:
 					return await this.repository.delete(criteria);
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
 			}
 		} catch (error) {
 			throw new NotFoundException(`The record was not found`, error);
@@ -597,11 +621,7 @@ export abstract class CrudService<T extends BaseEntity>
 			stream$.pipe(
 				mergeMap((signal) => {
 					if (!signal) {
-						return throwError(() =>
-							new NotFoundException(
-								`The requested record was not found`
-							)
-						);
+						return throwError(() => new NotFoundException(`The requested record was not found`));
 					}
 					return observableOf(signal);
 				})

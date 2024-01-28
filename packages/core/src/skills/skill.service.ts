@@ -11,19 +11,17 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class SkillService extends TenantAwareCrudService<Skill> {
 	constructor(
 		@InjectRepository(Skill)
-		private readonly skillRepository: Repository<Skill>,
+		skillRepository: Repository<Skill>,
 		@MikroInjectRepository(Skill)
-		private readonly mikroSkillRepository: EntityRepository<Skill>
+		mikroSkillRepository: EntityRepository<Skill>
 	) {
 		super(skillRepository, mikroSkillRepository);
 	}
 
 	async findOneByName(name: string): Promise<Skill> {
-		const query = this.repository
-			.createQueryBuilder('skill')
-			.where(p(`"skill"."name" = :name`), {
-				name
-			});
+		const query = this.repository.createQueryBuilder('skill').where(p(`"skill"."name" = :name`), {
+			name
+		});
 		const item = await query.getOne();
 		return item;
 	}

@@ -12,41 +12,37 @@ import { TenantAwareCrudService } from './../core/crud';
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(
 		@InjectRepository(Income)
-		private readonly incomeRepository: Repository<Income>,
+		incomeRepository: Repository<Income>,
 		@MikroInjectRepository(Income)
-		private readonly mikroIncomeRepository: EntityRepository<Income>
+		mikroIncomeRepository: EntityRepository<Income>
 	) {
 		super(incomeRepository, mikroIncomeRepository);
 	}
 
-	public async findAllIncomes(
-		filter?: FindManyOptions<Income>,
-		filterDate?: string
-	): Promise<IPagination<Income>> {
+	public async findAllIncomes(filter?: FindManyOptions<Income>, filterDate?: string): Promise<IPagination<Income>> {
 		if (filterDate) {
 			const startOfMonth = moment(moment(filterDate).startOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-					where: {
-						valueDate: Between<Date>(startOfMonth, endOfMonth),
-						...(filter.where as Object)
-					},
-					relations: filter.relations
-				})
+						where: {
+							valueDate: Between<Date>(startOfMonth, endOfMonth),
+							...(filter.where as Object)
+						},
+						relations: filter.relations
+				  })
 				: await this.findAll({
-					where: {
-						valueDate: Between(startOfMonth, endOfMonth)
-					}
-				});
+						where: {
+							valueDate: Between(startOfMonth, endOfMonth)
+						}
+				  });
 		}
 		return await this.findAll(filter || {});
 	}
 
 	public countStatistic(data: number[]) {
 		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
-			? data.filter(Number).reduce((a, b) => a + b, 0) /
-			data.filter(Number).length
+			? data.filter(Number).reduce((a, b) => a + b, 0) / data.filter(Number).length
 			: 0;
 	}
 
@@ -75,7 +71,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 				const { tags } = where;
 				filter['where']['tags'] = {
 					id: In(tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

@@ -10,9 +10,9 @@ import { Repository } from 'typeorm';
 export class GoalGeneralSettingService extends TenantAwareCrudService<GoalGeneralSetting> {
 	constructor(
 		@InjectRepository(GoalGeneralSetting)
-		private readonly goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
+		goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
 		@MikroInjectRepository(GoalGeneralSetting)
-		private readonly mikroGoalGeneralSettingRepository: EntityRepository<GoalGeneralSetting>
+		mikroGoalGeneralSettingRepository: EntityRepository<GoalGeneralSetting>
 	) {
 		super(goalGeneralSettingRepository, mikroGoalGeneralSettingRepository);
 	}

@@ -8,25 +8,22 @@ import { isNotEmpty } from '@gauzy/common';
 import { HelpCenterArticle } from './help-center-article.entity';
 import { IHelpCenterArticleUpdate } from '@gauzy/contracts';
 
-
 @Injectable()
 export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterArticle> {
 	constructor(
 		@InjectRepository(HelpCenterArticle)
-		private readonly helpCenterArticle: Repository<HelpCenterArticle>,
+		helpCenterArticle: Repository<HelpCenterArticle>,
 		@MikroInjectRepository(HelpCenterArticle)
-		private readonly mikroHelpCenterArticle: EntityRepository<HelpCenterArticle>
+		mikroHelpCenterArticle: EntityRepository<HelpCenterArticle>
 	) {
-		super(helpCenterArticle);
+		super(helpCenterArticle, mikroHelpCenterArticle);
 	}
 
-	async getArticlesByCategoryId(
-		categoryId: string
-	): Promise<HelpCenterArticle[]> {
+	async getArticlesByCategoryId(categoryId: string): Promise<HelpCenterArticle[]> {
 		return await this.repository
 			.createQueryBuilder('knowledge_base_article')
 			.where('knowledge_base_article.categoryId = :categoryId', {
-				categoryId,
+				categoryId
 			})
 			.getMany();
 	}
@@ -37,10 +34,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 		}
 	}
 
-	public async updateArticleById(
-		id: string,
-		input: IHelpCenterArticleUpdate
-	): Promise<void> {
+	public async updateArticleById(id: string, input: IHelpCenterArticleUpdate): Promise<void> {
 		await this.repository.update(id, input);
 	}
 }

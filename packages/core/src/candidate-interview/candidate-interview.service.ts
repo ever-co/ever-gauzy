@@ -10,12 +10,11 @@ import { CandidateInterview } from './candidate-interview.entity';
 
 @Injectable()
 export class CandidateInterviewService extends TenantAwareCrudService<CandidateInterview> {
-
 	constructor(
 		@InjectRepository(CandidateInterview)
-		protected readonly candidateInterviewRepository: Repository<CandidateInterview>,
+		candidateInterviewRepository: Repository<CandidateInterview>,
 		@MikroInjectRepository(CandidateInterview)
-		protected readonly mikroCandidateInterviewRepository: EntityRepository<CandidateInterview>
+		mikroCandidateInterviewRepository: EntityRepository<CandidateInterview>
 	) {
 		super(candidateInterviewRepository, mikroCandidateInterviewRepository);
 	}

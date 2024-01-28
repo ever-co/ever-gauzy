@@ -5,18 +5,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
-import {
-	ICandidateCriterionsRating,
-	ICandidateCriterionsRatingCreateInput
-} from '@gauzy/contracts';
+import { ICandidateCriterionsRating, ICandidateCriterionsRatingCreateInput } from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateCriterionsRatingService extends TenantAwareCrudService<CandidateCriterionsRating> {
 	constructor(
 		@InjectRepository(CandidateCriterionsRating)
-		private readonly candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>,
+		candidateCriterionsRatingRepository: Repository<CandidateCriterionsRating>,
 		@MikroInjectRepository(CandidateCriterionsRating)
-		private readonly mikroCandidateCriterionsRatingRepository: EntityRepository<CandidateCriterionsRating>
+		mikroCandidateCriterionsRatingRepository: EntityRepository<CandidateCriterionsRating>
 	) {
 		super(candidateCriterionsRatingRepository, mikroCandidateCriterionsRatingRepository);
 	}
@@ -25,15 +22,10 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 		technologyCreateInput: ICandidateCriterionsRatingCreateInput[],
 		qualityCreateInput: ICandidateCriterionsRatingCreateInput[]
 	) {
-		return [
-			await this.repository.save(technologyCreateInput),
-			await this.repository.save(qualityCreateInput)
-		];
+		return [await this.repository.save(technologyCreateInput), await this.repository.save(qualityCreateInput)];
 	}
 
-	async getCriterionsByFeedbackId(
-		feedbackId: string
-	): Promise<CandidateCriterionsRating[]> {
+	async getCriterionsByFeedbackId(feedbackId: string): Promise<CandidateCriterionsRating[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_feedback')
 			.where('candidate_feedback.feedbackId = :feedbackId', {
@@ -46,13 +38,7 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 		return await this.repository.delete(ids);
 	}
 
-	async updateBulk(
-		tech: ICandidateCriterionsRating[],
-		qual: ICandidateCriterionsRating[]
-	) {
-		return [
-			await this.repository.save(tech),
-			await this.repository.save(qual)
-		];
+	async updateBulk(tech: ICandidateCriterionsRating[], qual: ICandidateCriterionsRating[]) {
+		return [await this.repository.save(tech), await this.repository.save(qual)];
 	}
 }

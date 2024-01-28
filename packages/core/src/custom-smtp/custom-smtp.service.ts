@@ -13,9 +13,9 @@ import { CustomSmtp } from './custom-smtp.entity';
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	constructor(
 		@InjectRepository(CustomSmtp)
-		protected readonly customSmtpRepository: Repository<CustomSmtp>,
+		customSmtpRepository: Repository<CustomSmtp>,
 		@MikroInjectRepository(CustomSmtp)
-		protected readonly mikroCustomSmtpRepository: EntityRepository<CustomSmtp>
+		mikroCustomSmtpRepository: EntityRepository<CustomSmtp>
 	) {
 		super(customSmtpRepository, mikroCustomSmtpRepository);
 	}
@@ -26,9 +26,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	 * @param query
 	 * @returns
 	 */
-	public async getSmtpSetting(
-		query: ICustomSmtpFindInput
-	): Promise<ICustomSmtp | ISMTPConfig> {
+	public async getSmtpSetting(query: ICustomSmtpFindInput): Promise<ICustomSmtp | ISMTPConfig> {
 		try {
 			const { organizationId } = query;
 			return await this.findOneByOptions({
@@ -52,7 +50,7 @@ export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	 */
 	public async verifyTransporter(transport: IVerifySMTPTransport): Promise<boolean> {
 		try {
-			return !!await SMTPUtils.verifyTransporter(transport);
+			return !!(await SMTPUtils.verifyTransporter(transport));
 		} catch (error) {
 			console.log('Error while verifying nodemailer transport: %s', error?.message);
 			return false;

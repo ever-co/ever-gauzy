@@ -10,9 +10,9 @@ import { TenantAwareCrudService } from '../../core/crud';
 export class TaskEstimationService extends TenantAwareCrudService<TaskEstimation> {
 	constructor(
 		@InjectRepository(TaskEstimation)
-		protected readonly taskEstimationRepository: Repository<TaskEstimation>,
+		taskEstimationRepository: Repository<TaskEstimation>,
 		@MikroInjectRepository(TaskEstimation)
-		protected readonly mikroTaskEstimationRepository: EntityRepository<TaskEstimation>
+		mikroTaskEstimationRepository: EntityRepository<TaskEstimation>
 	) {
 		super(taskEstimationRepository, mikroTaskEstimationRepository);
 	}

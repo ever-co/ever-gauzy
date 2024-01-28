@@ -12,9 +12,9 @@ import { ImageAsset } from './image-asset.entity';
 export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	constructor(
 		@InjectRepository(ImageAsset)
-		private readonly imageAssetRepository: Repository<ImageAsset>,
+		imageAssetRepository: Repository<ImageAsset>,
 		@MikroInjectRepository(ImageAsset)
-		private readonly mikroImageAssetRepository: EntityRepository<ImageAsset>
+		mikroImageAssetRepository: EntityRepository<ImageAsset>
 	) {
 		super(imageAssetRepository, mikroImageAssetRepository);
 	}
@@ -36,21 +36,15 @@ export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	}
 
 	async deleteAsset(imageId: string): Promise<ImageAsset> {
-		let result = await this.imageAssetRepository.findOne({
+		let result = await this.repository.findOne({
 			where: { id: imageId },
 			relations: ['productGallery', 'productFeaturedImage']
 		});
 
-		if (
-			result &&
-			(result.productGallery.length || result.productFeaturedImage.length)
-		) {
-			throw new HttpException(
-				'Image is under use',
-				HttpStatus.BAD_REQUEST
-			);
+		if (result && (result.productGallery.length || result.productFeaturedImage.length)) {
+			throw new HttpException('Image is under use', HttpStatus.BAD_REQUEST);
 		}
 
-		return this.imageAssetRepository.remove(result);
+		return this.repository.remove(result);
 	}
 }

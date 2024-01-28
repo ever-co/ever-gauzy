@@ -10,9 +10,9 @@ import { OrganizationLanguage } from './organization-language.entity';
 export class OrganizationLanguageService extends TenantAwareCrudService<OrganizationLanguage> {
 	constructor(
 		@InjectRepository(OrganizationLanguage)
-		private readonly organizationLanguageRepository: Repository<OrganizationLanguage>,
+		organizationLanguageRepository: Repository<OrganizationLanguage>,
 		@MikroInjectRepository(OrganizationLanguage)
-		private readonly mikroOrganizationLanguageRepository: EntityRepository<OrganizationLanguage>
+		mikroOrganizationLanguageRepository: EntityRepository<OrganizationLanguage>
 	) {
 		super(organizationLanguageRepository, mikroOrganizationLanguageRepository);
 	}

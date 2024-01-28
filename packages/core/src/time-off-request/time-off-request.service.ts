@@ -1,11 +1,6 @@
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
-import {
-	Injectable,
-	BadRequestException,
-	NotFoundException,
-	ConflictException
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Brackets, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
@@ -29,9 +24,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
-		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		timeOffRequestRepository: Repository<TimeOffRequest>,
 		@MikroInjectRepository(TimeOffRequest)
-		private readonly mikroTimeOffRequestRepository: EntityRepository<TimeOffRequest>,
+		mikroTimeOffRequestRepository: EntityRepository<TimeOffRequest>,
 
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
@@ -50,7 +45,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const tenantId = RequestContext.currentTenantId();
 			const currentUser = RequestContext.currentUser();
 
-			const timeOffRequest = await this.timeOffRequestRepository.save(request);
+			const timeOffRequest = await this.repository.save(request);
 
 			const requestApproval = new RequestApproval();
 			requestApproval.requestId = timeOffRequest.id;
@@ -80,18 +75,17 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		try {
 			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
-			const query = this.timeOffRequestRepository.createQueryBuilder('timeoff');
+			const query = this.repository.createQueryBuilder('timeoff');
 			query
 				.leftJoinAndSelect(`${query.alias}.employees`, `employees`)
 				.leftJoinAndSelect(`${query.alias}.policy`, `policy`)
 				.leftJoinAndSelect(`employees.user`, `user`);
-			query
-				.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					})
-				);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				})
+			);
 
 			if (employeeId) {
 				const employeeIds = [employeeId];
@@ -113,12 +107,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		}
 	}
 
-	async updateTimeOffByAdmin(
-		id: string,
-		timeOffRequest: ITimeOffCreateInput
-	) {
+	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			return await this.timeOffRequestRepository.save({
+			return await this.repository.save({
 				id,
 				...timeOffRequest
 			});
@@ -127,12 +118,9 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		}
 	}
 
-	async updateStatusTimeOffByAdmin(
-		id: string,
-		status: string
-	): Promise<TimeOffRequest> {
+	async updateStatusTimeOffByAdmin(id: string, status: string): Promise<TimeOffRequest> {
 		try {
-			const timeOffRequest = await this.timeOffRequestRepository.findOneBy({
+			const timeOffRequest = await this.repository.findOneBy({
 				id
 			});
 
@@ -144,7 +132,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			} else {
 				throw new ConflictException('Request time off is Conflict');
 			}
-			return await this.timeOffRequestRepository.save(timeOffRequest);
+			return await this.repository.save(timeOffRequest);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -166,7 +154,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					take: options.take ? options.take : 10,
 
 					...(options.join ? { join: options.join } : {}),
-					...(options.relations ? { relations: options.relations } : {}),
+					...(options.relations ? { relations: options.relations } : {})
 				});
 			}
 			query.where((qb: SelectQueryBuilder<TimeOffRequest>) => {
@@ -205,22 +193,17 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 					}
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							web.where(
-								[
-									{
-										start: Between(startDate, endDate)
-									},
-									{
-										end: Between(startDate, endDate)
-									}
-								]
-							);
+							web.where([
+								{
+									start: Between(startDate, endDate)
+								},
+								{
+									end: Between(startDate, endDate)
+								}
+							]);
 						})
 					);
-					if (
-						isNotEmpty(where.isHoliday) &&
-						isNotEmpty(Boolean(JSON.parse(where.isHoliday)))
-					) {
+					if (isNotEmpty(where.isHoliday) && isNotEmpty(Boolean(JSON.parse(where.isHoliday)))) {
 						qb.andWhere({ isHoliday: false });
 					}
 					if (isNotEmpty(where.includeArchived)) {

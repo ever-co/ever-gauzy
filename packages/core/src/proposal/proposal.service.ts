@@ -12,17 +12,14 @@ import { TenantAwareCrudService } from './../core/crud';
 export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
-		private readonly proposalRepository: Repository<Proposal>,
+		proposalRepository: Repository<Proposal>,
 		@MikroInjectRepository(Proposal)
-		private readonly mikroProposalRepository: EntityRepository<Proposal>
+		mikroProposalRepository: EntityRepository<Proposal>
 	) {
 		super(proposalRepository, mikroProposalRepository);
 	}
 
-	async getAllProposals(
-		filter?: FindManyOptions<IProposal>,
-		filterDate?: string
-	): Promise<IPagination<IProposal>> {
+	async getAllProposals(filter?: FindManyOptions<IProposal>, filterDate?: string): Promise<IPagination<IProposal>> {
 		const total = await this.repository.count(filter);
 		let items = await this.repository.find(filter);
 
@@ -49,7 +46,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		proposal.jobPostContent = entity.jobPostContent;
 		proposal.proposalContent = entity.proposalContent;
 		proposal.employeeId = entity.employeeId;
-		return this.proposalRepository.save(proposal);
+		return this.repository.save(proposal);
 	}
 
 	public pagination(filter: FindManyOptions) {

@@ -10,9 +10,9 @@ import { TenantAwareCrudService } from './../core/crud';
 export class KeyResultService extends TenantAwareCrudService<KeyResult> {
 	constructor(
 		@InjectRepository(KeyResult)
-		private readonly keyResultRepository: Repository<KeyResult>,
+		keyResultRepository: Repository<KeyResult>,
 		@MikroInjectRepository(KeyResult)
-		private readonly mikroKeyResultRepository: EntityRepository<KeyResult>
+		mikroKeyResultRepository: EntityRepository<KeyResult>
 	) {
 		super(keyResultRepository, mikroKeyResultRepository);
 	}

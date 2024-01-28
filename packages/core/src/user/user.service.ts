@@ -8,7 +8,7 @@ import {
 	Inject,
 	Injectable,
 	NotFoundException,
-	UnauthorizedException,
+	UnauthorizedException
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -23,20 +23,14 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import {
-	ComponentLayoutStyleEnum,
-	IUser,
-	LanguagesEnum,
-	PermissionsEnum,
-	RolesEnum,
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { freshTimestamp } from './../core/utils';
+import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { TaskService } from './../tasks/task.service';
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
@@ -45,10 +39,13 @@ import { EntityRepository } from '@mikro-orm/core';
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		userRepository: Repository<User>,
+
 		@MikroInjectRepository(User)
-		private readonly mikroUserRepository: EntityRepository<User>,
+		mikroUserRepository: EntityRepository<User>,
+
 		private readonly _configService: ConfigService,
+
 		@Inject(forwardRef(() => TaskService))
 		private readonly _taskService: TaskService
 	) {
@@ -62,15 +59,22 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	public async markEmailAsVerified(id: IUser['id']) {
-		return await this.userRepository.update(
-			{ id },
-			{
-				emailVerifiedAt: freshTimestamp(),
-				emailToken: null,
-				code: null,
-				codeExpireAt: null,
-			}
-		);
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				throw new Error(`Not implemented for ${this.ormType}`);
+			case MultiORMEnum.TypeORM:
+				return await this.repository.update(
+					{ id },
+					{
+						emailVerifiedAt: freshTimestamp(),
+						emailToken: null,
+						code: null,
+						codeExpireAt: null
+					}
+				);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -81,7 +85,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
 		return await this.repository.findOneBy({
-			email,
+			email
 		});
 	}
 
@@ -94,7 +98,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	async getOAuthLoginEmail(email: string): Promise<IUser> {
 		try {
 			return await this.repository.findOneByOrFail({
-				email,
+				email
 			});
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
@@ -109,31 +113,31 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
 		return !!(await this.repository.findOneBy({
-			email,
+			email
 		}));
 	}
 
 	async checkIfExists(id: string): Promise<boolean> {
 		return !!(await this.repository.findOneBy({
-			id,
+			id
 		}));
 	}
 
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
 		return !!(await this.repository.findOneBy({
-			thirdPartyId,
+			thirdPartyId
 		}));
 	}
 
 	async getIfExists(id: string): Promise<User> {
 		return await this.repository.findOneBy({
-			id,
+			id
 		});
 	}
 
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User> {
 		return await this.repository.findOneBy({
-			thirdPartyId,
+			thirdPartyId
 		});
 	}
 
@@ -171,19 +175,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (typeof id == 'string') {
 				user = await this.findOneByIdString(id, {
 					relations: {
-						role: true,
-					},
+						role: true
+					}
 				});
 			}
 			/**
 			 * If user try to update Super Admin without permission
 			 */
 			if (user.role.name === RolesEnum.SUPER_ADMIN) {
-				if (
-					!RequestContext.hasPermission(
-						PermissionsEnum.SUPER_ADMIN_EDIT
-					)
-				) {
+				if (!RequestContext.hasPermission(PermissionsEnum.SUPER_ADMIN_EDIT)) {
 					throw new ForbiddenException();
 				}
 			}
@@ -195,9 +195,9 @@ export class UserService extends TenantAwareCrudService<User> {
 			try {
 				return await this.findOneByWhereOptions({
 					id: id as string,
-					tenantId: RequestContext.currentTenantId(),
+					tenantId: RequestContext.currentTenantId()
 				});
-			} catch { }
+			} catch {}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -208,27 +208,25 @@ export class UserService extends TenantAwareCrudService<User> {
 			join: {
 				alias: 'user',
 				leftJoin: {
-					role: 'user.role',
-				},
+					role: 'user.role'
+				}
 			},
 			where: {
 				tenantId,
 				role: {
-					name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]),
-				},
-			},
+					name: In([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN])
+				}
+			}
 		});
 	}
 
 	/*
 	 * Update user preferred language
 	 */
-	async updatePreferredLanguage(
-		preferredLanguage: LanguagesEnum
-	): Promise<IUser | UpdateResult> {
+	async updatePreferredLanguage(preferredLanguage: LanguagesEnum): Promise<IUser | UpdateResult> {
 		try {
 			return await this.update(RequestContext.currentUserId(), {
-				preferredLanguage,
+				preferredLanguage
 			});
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
@@ -243,7 +241,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	): Promise<IUser | UpdateResult> {
 		try {
 			return await this.update(RequestContext.currentUserId(), {
-				preferredComponentLayout,
+				preferredComponentLayout
 			});
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
@@ -262,7 +260,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				refreshToken = await bcrypt.hash(refreshToken, 10);
 			}
 			return await this.repository.update(userId, {
-				refreshToken: refreshToken,
+				refreshToken: refreshToken
 			});
 		} catch (error) {
 			console.log('Error while set current refresh token', error);
@@ -285,7 +283,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				await this.repository.update(
 					{ id: userId, tenantId },
 					{
-						refreshToken: null,
+						refreshToken: null
 					}
 				);
 			} catch (error) {
@@ -303,10 +301,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param payload
 	 * @returns
 	 */
-	async getUserIfRefreshTokenMatches(
-		refreshToken: string,
-		payload: JwtPayload
-	) {
+	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
 		try {
 			const { id, email, tenantId, role } = payload;
 			const query = this.repository.createQueryBuilder('user');
@@ -314,26 +309,23 @@ export class UserService extends TenantAwareCrudService<User> {
 				join: {
 					alias: 'user',
 					leftJoin: {
-						role: 'user.role',
-					},
-				},
+						role: 'user.role'
+					}
+				}
 			});
 			query.where((query: SelectQueryBuilder<User>) => {
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere(p(`"${query.alias}"."id" = :id`), { id });
 						web.andWhere(p(`"${query.alias}"."email" = :email`), {
-							email,
+							email
 						});
 					})
 				);
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						if (isNotEmpty(tenantId)) {
-							web.andWhere(
-								p(`"${query.alias}"."tenantId" = :tenantId`),
-								{ tenantId }
-							);
+							web.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 						}
 						if (isNotEmpty(role)) {
 							web.andWhere(p(`"role"."name" = :role`), { role });
@@ -343,10 +335,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 			});
 			const user = await query.getOneOrFail();
-			const isRefreshTokenMatching = await bcrypt.compare(
-				refreshToken,
-				user.refreshToken
-			);
+			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
 			if (isRefreshTokenMatching) {
 				return user;
 			} else {
@@ -369,7 +358,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	public async findMe(relations: string[]): Promise<IUser> {
 		return await this.findOneByIdString(RequestContext.currentUserId(), {
-			relations,
+			relations
 		});
 	}
 
@@ -389,11 +378,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		const currentUserId = RequestContext.currentUserId();
 
 		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			// If user try to delete someone other user account, just denied the request.
 			if (currentUserId != userId) {
 				throw new ForbiddenException('You can not delete account for other users!');
@@ -402,20 +387,17 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		const user = await this.findOneByIdString(userId, {
 			relations: {
-				employee: true,
-			},
+				employee: true
+			}
 		});
 		if (!user) {
-			throw new ForbiddenException("User not found for this ID!");
+			throw new ForbiddenException('User not found for this ID!');
 		}
 
 		try {
 			// Unassign all the task assigned to this user
 			if (user.employeeId) {
-				await this._taskService.unassignEmployeeFromTeamTasks(
-					user.employeeId,
-					undefined
-				);
+				await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
 			}
 			return await super.delete(userId);
 		} catch (error) {

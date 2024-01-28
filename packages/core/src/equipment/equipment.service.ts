@@ -12,9 +12,9 @@ import { isNotEmpty } from '@gauzy/common';
 export class EquipmentService extends TenantAwareCrudService<Equipment> {
 	constructor(
 		@InjectRepository(Equipment)
-		private readonly equipmentRepository: Repository<Equipment>,
+		equipmentRepository: Repository<Equipment>,
 		@MikroInjectRepository(Equipment)
-		private readonly mikroEquipmentRepository: EntityRepository<Equipment>
+		mikroEquipmentRepository: EntityRepository<Equipment>
 	) {
 		super(equipmentRepository, mikroEquipmentRepository);
 	}

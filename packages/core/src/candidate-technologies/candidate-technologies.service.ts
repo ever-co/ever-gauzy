@@ -11,9 +11,9 @@ import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauz
 export class CandidateTechnologiesService extends TenantAwareCrudService<CandidateTechnologies> {
 	constructor(
 		@InjectRepository(CandidateTechnologies)
-		private readonly candidateTechnologiesRepository: Repository<CandidateTechnologies>,
+		candidateTechnologiesRepository: Repository<CandidateTechnologies>,
 		@MikroInjectRepository(CandidateTechnologies)
-		private readonly mikroCandidateTechnologiesRepository: EntityRepository<CandidateTechnologies>
+		mikroCandidateTechnologiesRepository: EntityRepository<CandidateTechnologies>
 	) {
 		super(candidateTechnologiesRepository, mikroCandidateTechnologiesRepository);
 	}
@@ -22,9 +22,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 		return await this.repository.save(createInput);
 	}
 
-	async getTechnologiesByInterviewId(
-		interviewId: string
-	): Promise<ICandidateTechnologies[]> {
+	async getTechnologiesByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_technology')
 			.where('candidate_technology.interviewId = :interviewId', {

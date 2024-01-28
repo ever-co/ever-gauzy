@@ -3,11 +3,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-	IPagination,
-	IProductCategoryTranslatable,
-	LanguagesEnum
-} from '@gauzy/contracts';
+import { IPagination, IProductCategoryTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ProductCategory } from './product-category.entity';
 
@@ -15,9 +11,9 @@ import { ProductCategory } from './product-category.entity';
 export class ProductCategoryService extends TenantAwareCrudService<ProductCategory> {
 	constructor(
 		@InjectRepository(ProductCategory)
-		private readonly productCategoryRepository: Repository<ProductCategory>,
+		productCategoryRepository: Repository<ProductCategory>,
 		@MikroInjectRepository(ProductCategory)
-		private readonly mikroProductCategoryRepository: EntityRepository<ProductCategory>
+		mikroProductCategoryRepository: EntityRepository<ProductCategory>
 	) {
 		super(productCategoryRepository, mikroProductCategoryRepository);
 	}
@@ -29,10 +25,7 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param language
 	 * @returns
 	 */
-	public async pagination(
-		options: PaginationParams<ProductCategory>,
-		language: LanguagesEnum
-	) {
+	public async pagination(options: PaginationParams<ProductCategory>, language: LanguagesEnum) {
 		const { items, total } = await super.paginate(options);
 		return await this.mapTranslatedProductCategories(items as any, language).then((items) => {
 			return { items, total };
@@ -46,13 +39,10 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param entity
 	 * @returns
 	 */
-	async updateProductCategory(
-		id: string,
-		entity: ProductCategory
-	): Promise<ProductCategory> {
+	async updateProductCategory(id: string, entity: ProductCategory): Promise<ProductCategory> {
 		try {
-			await this.productCategoryRepository.delete(id);
-			return this.productCategoryRepository.save(entity);
+			await this.repository.delete(id);
+			return this.repository.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -86,18 +76,11 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param languageCode
 	 * @returns
 	 */
-	async mapTranslatedProductCategories(
-		items: IProductCategoryTranslatable[],
-		languageCode: LanguagesEnum
-	) {
+	async mapTranslatedProductCategories(items: IProductCategoryTranslatable[], languageCode: LanguagesEnum) {
 		if (languageCode) {
 			return Promise.all(
 				items.map((category: IProductCategoryTranslatable) =>
-					Object.assign(
-						{},
-						category,
-						category.translate(languageCode)
-					)
+					Object.assign({}, category, category.translate(languageCode))
 				)
 			);
 		} else {
@@ -112,17 +95,10 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 * @param languageCode
 	 * @returns
 	 */
-	async mapTranslatedProductType(
-		type: IProductCategoryTranslatable,
-		languageCode: LanguagesEnum
-	) {
+	async mapTranslatedProductType(type: IProductCategoryTranslatable, languageCode: LanguagesEnum) {
 		try {
 			if (languageCode) {
-				return Object.assign(
-					{},
-					type,
-					type.translate(languageCode)
-				);
+				return Object.assign({}, type, type.translate(languageCode));
 			} else {
 				return type;
 			}

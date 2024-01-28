@@ -22,9 +22,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		protected readonly employeeRepository: Repository<Employee>,
+		employeeRepository: Repository<Employee>,
 		@MikroInjectRepository(Employee)
-		protected readonly mikroEmployeeRepository: EntityRepository<Employee>
+		mikroEmployeeRepository: EntityRepository<Employee>
 	) {
 		super(employeeRepository, mikroEmployeeRepository);
 	}
@@ -240,24 +240,32 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					);
 
 					// Apply conditions related to the user property in the 'where' object
-					qb.andWhere(new Brackets((web: WhereExpressionBuilder) => {
-						const { user } = where;
-						if (isNotEmpty(user)) {
-							if (isNotEmpty(user.name)) {
-								const keywords: string[] = user.name.split(' ');
-								keywords.forEach((keyword: string, index: number) => {
-									web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), { [`first_name_${index}`]: `%${keyword}%` });
-									web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), { [`last_name_${index}`]: `%${keyword}%` });
-								});
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const { user } = where;
+							if (isNotEmpty(user)) {
+								if (isNotEmpty(user.name)) {
+									const keywords: string[] = user.name.split(' ');
+									keywords.forEach((keyword: string, index: number) => {
+										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), {
+											[`first_name_${index}`]: `%${keyword}%`
+										});
+										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), {
+											[`last_name_${index}`]: `%${keyword}%`
+										});
+									});
+								}
+								if (isNotEmpty(user.email)) {
+									const keywords: string[] = user.email.split(' ');
+									keywords.forEach((keyword: string, index: number) => {
+										web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
+											[`email_${index}`]: `%${keyword}%`
+										});
+									});
+								}
 							}
-							if (isNotEmpty(user.email)) {
-								const keywords: string[] = user.email.split(' ');
-								keywords.forEach((keyword: string, index: number) => {
-									web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), { [`email_${index}`]: `%${keyword}%` });
-								});
-							}
-						}
-					}));
+						})
+					);
 				}
 			});
 

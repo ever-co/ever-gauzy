@@ -10,7 +10,7 @@ import { UserOrganization } from './user-organization.entity';
 export class UserOrganizationService extends TenantAwareCrudService<UserOrganization> {
 	constructor(
 		@InjectRepository(UserOrganization)
-		private readonly userOrganizationRepository: Repository<UserOrganization>,
+		userOrganizationRepository: Repository<UserOrganization>,
 
 		@InjectRepository(Organization)
 		private readonly organizationRepository: Repository<Organization>

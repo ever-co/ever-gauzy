@@ -14,9 +14,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>,
+		organizationContactRepository: Repository<OrganizationContact>,
 		@MikroInjectRepository(OrganizationContact)
-		private readonly mikroOrganizationContactRepository: EntityRepository<OrganizationContact>
+		mikroOrganizationContactRepository: EntityRepository<OrganizationContact>
 	) {
 		super(organizationContactRepository, mikroOrganizationContactRepository);
 	}
@@ -47,7 +47,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 					const tenantId = RequestContext.currentTenantId();
 					const { organizationId, contactType } = options;
 
-					qb.andWhere(p("member.id = :employeeId"), { employeeId });
+					qb.andWhere(p('member.id = :employeeId'), { employeeId });
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
@@ -85,9 +85,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		const { employeeId, organizationId, contactType } = findInput;
 		const { tenantId, id: createdBy } = RequestContext.currentUser();
 
-		const query = this.organizationContactRepository.createQueryBuilder(
-			'organization_contact'
-		);
+		const query = this.repository.createQueryBuilder('organization_contact');
 		if (relations.length > 0) {
 			relations.forEach((relation: string) => {
 				if (relation.indexOf('.') !== -1) {
@@ -95,10 +93,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 					query.leftJoinAndSelect(`${relation}`, alias);
 				} else {
 					const alias = relation;
-					query.leftJoinAndSelect(
-						`${query.alias}.${relation}`,
-						alias
-					);
+					query.leftJoinAndSelect(`${query.alias}.${relation}`, alias);
 				}
 			});
 		}
@@ -127,10 +122,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		return { items, total };
 	}
 
-	async findById(
-		id: string,
-		relations: string[]
-	): Promise<IOrganizationContact> {
+	async findById(id: string, relations: string[]): Promise<IOrganizationContact> {
 		return await this.findOneByIdString(id, { relations });
 	}
 
@@ -140,9 +132,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * @param params
 	 * @returns
 	 */
-	public async pagination(
-		params?: PaginationParams<any>
-	): Promise<IPagination<IOrganizationContact>> {
+	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
 		// Custom Filters
 		if ('where' in params) {
 			const { where } = params;
@@ -162,7 +152,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 				const { members } = where;
 				params['where']['members'] = {
 					id: In(members)
-				}
+				};
 			}
 		}
 		return await super.paginate(params);

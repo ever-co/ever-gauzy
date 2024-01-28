@@ -10,9 +10,9 @@ import { OrganizationPosition } from './organization-position.entity';
 export class OrganizationPositionService extends TenantAwareCrudService<OrganizationPosition> {
 	constructor(
 		@InjectRepository(OrganizationPosition)
-		private readonly organizationPositionRepository: Repository<OrganizationPosition>,
+		organizationPositionRepository: Repository<OrganizationPosition>,
 		@MikroInjectRepository(OrganizationPosition)
-		private readonly mikroOrganizationPositionRepository: EntityRepository<OrganizationPosition>
+		mikroOrganizationPositionRepository: EntityRepository<OrganizationPosition>
 	) {
 		super(organizationPositionRepository, mikroOrganizationPositionRepository);
 	}

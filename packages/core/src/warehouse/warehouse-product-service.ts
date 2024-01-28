@@ -9,28 +9,23 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import {
-	WarehouseProduct,
-	WarehouseProductVariant,
-	Product,
-	Warehouse
-} from './../core/entities/internal';
+import { WarehouseProduct, WarehouseProductVariant, Product, Warehouse } from './../core/entities/internal';
 import { EntityRepository } from '@mikro-orm/core';
 import { MikroInjectRepository } from '@gauzy/common';
 
 @Injectable()
 export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {
 	constructor(
+		@InjectRepository(WarehouseProduct)
+		warehouseProductRepository: Repository<WarehouseProduct>,
+
+		@MikroInjectRepository(WarehouseProduct)
+		mikroWarehouseProductRepository: EntityRepository<WarehouseProduct>,
+
 		@InjectRepository(Warehouse)
 		private readonly warehouseRepository: Repository<Warehouse>,
 		@MikroInjectRepository(Warehouse)
 		private readonly mikroWarehouseRepository: EntityRepository<Warehouse>,
-
-		@InjectRepository(WarehouseProduct)
-		private readonly warehouseProductRepository: Repository<WarehouseProduct>,
-
-		@MikroInjectRepository(WarehouseProduct)
-		private readonly mikroWarehouseProductRepository: EntityRepository<WarehouseProduct>,
 
 		@InjectRepository(WarehouseProductVariant)
 		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
@@ -39,16 +34,16 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		private readonly mikroWarehouseProductVariantRepository: EntityRepository<WarehouseProductVariant>,
 
 		@InjectRepository(Product)
-		private readonly productRespository: Repository<Product>,
+		private readonly productRepository: Repository<Product>,
 
 		@InjectRepository(Product)
-		private readonly mikroProductRespository: EntityRepository<Product>
+		private readonly mikroProductRepository: EntityRepository<Product>
 	) {
 		super(warehouseProductRepository, mikroWarehouseProductRepository);
 	}
 
 	async getAllWarehouseProducts(warehouseId: string): Promise<IWarehouseProduct[]> {
-		return await this.warehouseProductRepository.find({
+		return await this.repository.find({
 			where: {
 				warehouseId,
 				tenantId: RequestContext.currentTenantId()
@@ -72,7 +67,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 			id: warehouseId,
 			tenantId
 		});
-		let products = await this.productRespository.find({
+		let products = await this.productRepository.find({
 			where: {
 				id: In(productIds),
 				tenantId
@@ -97,9 +92,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 						warehouseVariant.organizationId = warehouse.organizationId;
 						warehouseVariant.tenantId = tenantId;
 
-						return this.warehouseProductVariantRepository.save(
-							warehouseVariant
-						);
+						return this.warehouseProductVariantRepository.save(warehouseVariant);
 					})
 				);
 
@@ -108,22 +101,17 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 			})
 		);
 
-		let result: any = await this.warehouseProductRepository.save(
-			warehouseProductArr
-		);
+		let result: any = await this.repository.save(warehouseProductArr);
 
 		return { items: result, total: result ? result.length : 0 };
 	}
 
-	async updateWarehouseProductQuantity(
-		warehouseProductId: String,
-		quantity: number
-	): Promise<IWarehouseProduct> {
-		let warehouseProduct = await this.warehouseProductRepository.findOneBy({
+	async updateWarehouseProductQuantity(warehouseProductId: String, quantity: number): Promise<IWarehouseProduct> {
+		let warehouseProduct = await this.repository.findOneBy({
 			id: warehouseProductId as any
 		});
 		warehouseProduct.quantity = quantity;
-		return this.warehouseProductRepository.save(warehouseProduct);
+		return this.repository.save(warehouseProduct);
 	}
 
 	async updateWarehouseProductVariantQuantity(
@@ -140,12 +128,9 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		});
 		warehouseProductVariant.quantity = quantity;
 
-		let updatedVariant = await this.warehouseProductVariantRepository.save(
-			warehouseProductVariant
-		);
+		let updatedVariant = await this.warehouseProductVariantRepository.save(warehouseProductVariant);
 
-
-		let warehouseProduct = await this.warehouseProductRepository.findOne({
+		let warehouseProduct = await this.repository.findOne({
 			where: {
 				id: warehouseProductVariant.warehouseProduct.id
 			},
@@ -153,18 +138,13 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 				variants: true
 			}
 		});
-		let sumQuantity = warehouseProduct.variants
-			.map((v) => +v.quantity)
-			.reduce((prev, current) => prev + current);
+		let sumQuantity = warehouseProduct.variants.map((v) => +v.quantity).reduce((prev, current) => prev + current);
 
 		if (warehouseProduct.quantity < sumQuantity) {
-			warehouseProduct.quantity =
-				+warehouseProduct.quantity +
-				sumQuantity -
-				warehouseProduct.quantity;
+			warehouseProduct.quantity = +warehouseProduct.quantity + sumQuantity - warehouseProduct.quantity;
 		}
 
-		await this.warehouseProductRepository.save(warehouseProduct);
+		await this.repository.save(warehouseProduct);
 		return updatedVariant;
 	}
 }

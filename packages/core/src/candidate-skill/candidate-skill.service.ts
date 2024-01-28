@@ -10,9 +10,9 @@ import { CandidateSkill } from './candidate-skill.entity';
 export class CandidateSkillService extends TenantAwareCrudService<CandidateSkill> {
 	constructor(
 		@InjectRepository(CandidateSkill)
-		private readonly candidateSkillRepository: Repository<CandidateSkill>,
+		candidateSkillRepository: Repository<CandidateSkill>,
 		@MikroInjectRepository(CandidateSkill)
-		private readonly mikroCandidateSkillRepository: EntityRepository<CandidateSkill>
+		mikroCandidateSkillRepository: EntityRepository<CandidateSkill>
 	) {
 		super(candidateSkillRepository, mikroCandidateSkillRepository);
 	}

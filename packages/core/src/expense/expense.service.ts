@@ -17,9 +17,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		private readonly expenseRepository: Repository<Expense>,
+		expenseRepository: Repository<Expense>,
 		@MikroInjectRepository(Expense)
-		private readonly mikroExpenseRepository: EntityRepository<Expense>
+		mikroExpenseRepository: EntityRepository<Expense>
 	) {
 		super(expenseRepository, mikroExpenseRepository);
 	}
@@ -33,25 +33,24 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-					where: {
-						valueDate: Between<Date>(startOfMonth, endOfMonth),
-						...(filter.where as Object)
-					},
-					relations: filter.relations
-				})
+						where: {
+							valueDate: Between<Date>(startOfMonth, endOfMonth),
+							...(filter.where as Object)
+						},
+						relations: filter.relations
+				  })
 				: await this.findAll({
-					where: {
-						valueDate: Between(startOfMonth, endOfMonth)
-					}
-				});
+						where: {
+							valueDate: Between(startOfMonth, endOfMonth)
+						}
+				  });
 		}
 		return await this.findAll(filter || {});
 	}
 
 	public countStatistic(data: number[]) {
 		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
-			? data.filter(Number).reduce((a, b) => a + b, 0) /
-			data.filter(Number).length
+			? data.filter(Number).reduce((a, b) => a + b, 0) / data.filter(Number).length
 			: 0;
 	}
 
@@ -59,15 +58,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		const query = this.filterQuery(request);
 		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
 
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			query.leftJoinAndSelect(
-				`${query.alias}.employee`,
-				'activityEmployee'
-			);
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
 			query.leftJoinAndSelect(
 				`activityEmployee.user`,
 				'activityUser',
@@ -89,9 +81,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 		const expenses = await query.getMany();
 		const byDate = chain(expenses)
-			.groupBy((expense) =>
-				moment(expense.valueDate).format('YYYY-MM-DD')
-			)
+			.groupBy((expense) => moment(expense.valueDate).format('YYYY-MM-DD'))
 			.mapObject((expenses: IExpense[], date) => {
 				const sum = expenses.reduce((iteratee: any, expense: any) => {
 					return iteratee + parseFloat(expense.amount);
@@ -152,7 +142,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.expenseRepository.createQueryBuilder();
+		const query = this.repository.createQueryBuilder();
 		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
@@ -163,7 +153,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			})
-		)
+		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where({
@@ -185,6 +175,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				}
 			})
 		);
+
 		return query;
 	}
 
@@ -215,7 +206,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			if ('tags' in where) {
 				filter['where']['tags'] = {
 					id: In(where.tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

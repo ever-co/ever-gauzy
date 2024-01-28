@@ -11,17 +11,14 @@ import { IInvoiceItemCreateInput } from '@gauzy/contracts';
 export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	constructor(
 		@InjectRepository(InvoiceItem)
-		private readonly invoiceItemRepository: Repository<InvoiceItem>,
+		invoiceItemRepository: Repository<InvoiceItem>,
 		@MikroInjectRepository(InvoiceItem)
-		private readonly mikroInvoiceItemRepository: EntityRepository<InvoiceItem>
+		mikroInvoiceItemRepository: EntityRepository<InvoiceItem>
 	) {
 		super(invoiceItemRepository, mikroInvoiceItemRepository);
 	}
 
-	async createBulk(
-		invoiceId: string,
-		createInput: IInvoiceItemCreateInput[]
-	) {
+	async createBulk(invoiceId: string, createInput: IInvoiceItemCreateInput[]) {
 		await this.repository.delete({ invoiceId: invoiceId });
 		return await this.repository.save(createInput);
 	}

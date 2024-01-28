@@ -2,7 +2,7 @@ import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, } from 'typeorm';
+import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import { ICandidateCreateInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Candidate } from './candidate.entity';
@@ -10,14 +10,13 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
-
 @Injectable()
 export class CandidateService extends TenantAwareCrudService<Candidate> {
 	constructor(
 		@InjectRepository(Candidate)
-		private readonly candidateRepository: Repository<Candidate>,
+		candidateRepository: Repository<Candidate>,
 		@MikroInjectRepository(Candidate)
-		private readonly mikroCandidateRepository: EntityRepository<Candidate>
+		mikroCandidateRepository: EntityRepository<Candidate>
 	) {
 		super(candidateRepository, mikroCandidateRepository);
 	}
@@ -43,18 +42,18 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 		try {
 			const query = this.repository.createQueryBuilder('candidate');
 			query.setFindOptions({
-				skip: (options && options.skip) ? (options.take * (options.skip - 1)) : 0,
-				take: (options && options.take) ? (options.take) : 10,
-				...(
-					(options && options.relations) ? {
-						relations: options.relations
-					} : {}
-				),
-				...(
-					(options && options.join) ? {
-						join: options.join
-					} : {}
-				),
+				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
+				take: options && options.take ? options.take : 10,
+				...(options && options.relations
+					? {
+							relations: options.relations
+					  }
+					: {}),
+				...(options && options.join
+					? {
+							join: options.join
+					  }
+					: {})
 			});
 			query.where((qb: SelectQueryBuilder<Candidate>) => {
 				qb.andWhere(
@@ -77,10 +76,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 					const { where } = options;
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							if (
-								isNotEmpty(where.isArchived) &&
-								isNotEmpty(Boolean(JSON.parse(where.isArchived)))
-							) {
+							if (isNotEmpty(where.isArchived) && isNotEmpty(Boolean(JSON.parse(where.isArchived)))) {
 								web.andWhere(p(`"${qb.alias}"."isArchived" = :isArchived`), {
 									isArchived: false
 								});

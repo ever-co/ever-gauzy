@@ -11,7 +11,7 @@ import {
 	IOrganizationTeamEmployeeFindInput,
 	IOrganizationTeamEmployeeUpdateInput,
 	PermissionsEnum,
-	RolesEnum,
+	RolesEnum
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -24,9 +24,9 @@ import { TaskService } from './../tasks/task.service';
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
 		@InjectRepository(OrganizationTeamEmployee)
-		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
+		organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
 		@MikroInjectRepository(OrganizationTeamEmployee)
-		protected readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
+		mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
 		private readonly taskService: TaskService
 	) {
 		super(organizationTeamEmployeeRepository, mikroOrganizationTeamEmployeeRepository);
@@ -47,18 +47,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			where: {
 				tenantId,
 				organizationId,
-				organizationTeamId,
+				organizationTeamId
 			},
 			relations: {
-				role: true,
-			},
+				role: true
+			}
 		});
 
 		// 1. Remove employee members from the organization team
 		const removedMemberIds =
-			teamMembers
-				.filter((employee) => !members.includes(employee.employeeId))
-				.map((emp) => emp.id) || [];
+			teamMembers.filter((employee) => !members.includes(employee.employeeId)).map((emp) => emp.id) || [];
 		if (isNotEmpty(removedMemberIds)) {
 			this.deleteMemberByIds(removedMemberIds);
 		}
@@ -72,27 +70,22 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					role: managerIds.includes(employeeId)
 						? role
 						: member.roleId !== role.id // Check if current member's role is not same as role(params)
-							? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
-							: null, // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
+						? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
+						: null // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
 				});
 			});
 
 		// 3. Add new team members
-		const existingMembers = teamMembers.map(
-			(member: IOrganizationTeamEmployee) => member.employeeId
-		);
+		const existingMembers = teamMembers.map((member: IOrganizationTeamEmployee) => member.employeeId);
 		employees
 			.filter((member: IEmployee) => !existingMembers.includes(member.id))
 			.forEach(async (employee: IEmployee) => {
 				const organizationTeamEmployee = new OrganizationTeamEmployee();
-				organizationTeamEmployee.organizationTeamId =
-					organizationTeamId;
+				organizationTeamEmployee.organizationTeamId = organizationTeamId;
 				organizationTeamEmployee.employeeId = employee.id;
 				organizationTeamEmployee.tenantId = tenantId;
 				organizationTeamEmployee.organizationId = organizationId;
-				organizationTeamEmployee.role = managerIds.includes(employee.id)
-					? role
-					: null;
+				organizationTeamEmployee.role = managerIds.includes(employee.id) ? role : null;
 
 				this.save(organizationTeamEmployee);
 			});
@@ -122,32 +115,22 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
 		try {
 			const { organizationId, organizationTeamId } = entity;
-			if (
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
+			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				try {
 					await this.findOneByWhereOptions({
 						employeeId: RequestContext.currentEmployeeId(),
 						organizationId,
 						organizationTeamId,
 						role: {
-							name: RolesEnum.MANAGER,
-						},
+							name: RolesEnum.MANAGER
+						}
 					});
-					return await super.update(
-						{ id: memberId, organizationId, organizationTeamId },
-						entity
-					);
+					return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
 				} catch (error) {
 					throw new ForbiddenException();
 				}
 			}
-			return await super.update(
-				{ id: memberId, organizationId, organizationTeamId },
-				entity
-			);
+			return await super.update({ id: memberId, organizationId, organizationTeamId }, entity);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -164,24 +147,19 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		memberId: IOrganizationTeamEmployee['id'],
 		entity: IOrganizationTeamEmployeeActiveTaskUpdateInput
 	): Promise<OrganizationTeamEmployee | UpdateResult> {
-
 		try {
 			const { organizationId, organizationTeamId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
 			// Admin, Super Admin can update activeTaskId of any Employee
-			if (
-				RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
+			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const member = await this.repository.findOneOrFail({
 					where: {
 						id: memberId,
 						tenantId,
 						organizationId,
-						organizationTeamId,
-					},
+						organizationTeamId
+					}
 				});
 
 				return await this.repository.update(member.id, { activeTaskId: entity.activeTaskId });
@@ -195,16 +173,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							organizationId,
 							organizationTeamId,
 							role: {
-								name: RolesEnum.MANAGER,
-							},
+								name: RolesEnum.MANAGER
+							}
 						});
 						member = await this.repository.findOneOrFail({
 							where: {
 								id: memberId,
 								organizationId,
 								tenantId,
-								organizationTeamId,
-							},
+								organizationTeamId
+							}
 						});
 					} catch (error) {
 						/** If employee has member of the team, he/she should be able to remove own self from team */
@@ -213,19 +191,20 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 								employeeId,
 								organizationId,
 								tenantId,
-								organizationTeamId,
-							},
+								organizationTeamId
+							}
 						});
 					}
-					return await this.repository.update({ id: member.id, organizationId, organizationTeamId }, { activeTaskId: entity.activeTaskId });
+					return await this.repository.update(
+						{ id: member.id, organizationId, organizationTeamId },
+						{ activeTaskId: entity.activeTaskId }
+					);
 				}
 				throw new ForbiddenException();
 			}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
-
-
 	}
 
 	/**
@@ -243,23 +222,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			const { organizationId, organizationTeamId } = options;
 			const tenantId = RequestContext.currentTenantId();
 
-			if (
-				RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
-			) {
+			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const member = await this.repository.findOneOrFail({
 					where: {
 						id: memberId,
 						tenantId,
 						organizationId,
-						organizationTeamId,
-					},
+						organizationTeamId
+					}
 				});
-				await this.taskService.unassignEmployeeFromTeamTasks(
-					member.employeeId,
-					organizationTeamId
-				);
+				await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 				return await this.repository.remove(member);
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
@@ -271,16 +243,16 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							organizationId,
 							organizationTeamId,
 							role: {
-								name: RolesEnum.MANAGER,
-							},
+								name: RolesEnum.MANAGER
+							}
 						});
 						member = await this.repository.findOneOrFail({
 							where: {
 								id: memberId,
 								organizationId,
 								tenantId,
-								organizationTeamId,
-							},
+								organizationTeamId
+							}
 						});
 					} catch (error) {
 						/** If employee has member of the team, he/she should be able to remove own self from team */
@@ -289,15 +261,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 								employeeId,
 								organizationId,
 								tenantId,
-								organizationTeamId,
-							},
+								organizationTeamId
+							}
 						});
 					}
 					/** Unassigned employee all tasks before remove from team  */
-					await this.taskService.unassignEmployeeFromTeamTasks(
-						member.employeeId,
-						organizationTeamId
-					);
+					await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
 					return await this.repository.remove(member);
 				}
 				throw new ForbiddenException();

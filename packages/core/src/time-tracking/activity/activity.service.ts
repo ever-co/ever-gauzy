@@ -27,9 +27,9 @@ const config = getConfig();
 export class ActivityService extends TenantAwareCrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>,
+		activityRepository: Repository<Activity>,
 		@MikroInjectRepository(Activity)
-		private readonly mikroActivityRepository: EntityRepository<Activity>,
+		mikroActivityRepository: EntityRepository<Activity>,
 
 		@InjectRepository(Employee)
 		private readonly employeeRepository: Repository<Employee>,
@@ -48,9 +48,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		super(activityRepository, mikroActivityRepository);
 	}
 
-	async getDailyActivities(
-		request: IGetActivitiesInput
-	): Promise<IDailyActivity[]> {
+	async getDailyActivities(request: IGetActivitiesInput): Promise<IDailyActivity[]> {
 		const query = this.filterQuery(request);
 		query.select(p(`COUNT("${query.alias}"."id")`), `sessions`);
 		query.addSelect(p(`SUM("${query.alias}"."duration")`), `duration`);
@@ -69,7 +67,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				query.addSelect(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`), 'time');
 				break;
 			default:
-				throw Error(`cannot format daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot format daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`
+				);
 		}
 		query.addSelect(p(`"${query.alias}"."title"`), `title`);
 		query.groupBy(p(`"${query.alias}"."date"`));
@@ -86,7 +86,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				query.addGroupBy(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`));
 				break;
 			default:
-				throw Error(`cannot group by daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot group by daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`
+				);
 		}
 
 		query.addGroupBy(p(`"${query.alias}"."title"`));
@@ -98,9 +100,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		return await query.getRawMany();
 	}
 
-	async getDailyActivitiesReport(
-		request: IGetActivitiesInput
-	): Promise<IActivity[]> {
+	async getDailyActivitiesReport(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
 
 		query.select(p(`COUNT("${query.alias}"."id")`), `sessions`);
@@ -151,15 +151,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 	async getActivities(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			query.leftJoinAndSelect(
-				`${query.alias}.employee`,
-				'activityEmployee'
-			);
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
 			query.leftJoinAndSelect(
 				`activityEmployee.user`,
 				'activityUser',
@@ -172,9 +165,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	async bulkSave(input: IBulkActivitiesInput) {
-		return await this.commandBus.execute(
-			new BulkActivitiesSaveCommand(input)
-		);
+		return await this.commandBus.execute(new BulkActivitiesSaveCommand(input));
 	}
 
 	private filterQuery(request: IGetActivitiesInput): SelectQueryBuilder<Activity> {
@@ -182,11 +173,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		const tenantId = RequestContext.currentTenantId();
 
 		let employeeIds: string[];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			if (request.employeeIds) {
 				employeeIds = request.employeeIds;
 			}
@@ -195,7 +182,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.activityRepository.createQueryBuilder();
+		const query = this.repository.createQueryBuilder();
 		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
@@ -232,15 +219,20 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(
-					isSqlite() || isBetterSqlite3() ? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
-						: isPostgres() ? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
-							: isMySQL() ? p(`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`)
-								: '',
+					isSqlite() || isBetterSqlite3()
+						? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
+						: isPostgres()
+						? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
+						: isMySQL()
+						? p(
+								`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
+						  )
+						: '',
 					{
 						startDate,
 						endDate
 					}
-				)
+				);
 			})
 		);
 		query.andWhere(
@@ -266,8 +258,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					 * Activity Level should be 0-100%
 					 * So, we have convert it into 10 minutes timeslot by multiply by 6
 					 */
-					const start = (activityLevel.start * 6);
-					const end = (activityLevel.end * 6);
+					const start = activityLevel.start * 6;
+					const end = activityLevel.end * 6;
 
 					qb.andWhere(p(`"time_slot"."overall" BETWEEN :start AND :end`), {
 						start,

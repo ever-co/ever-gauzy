@@ -12,9 +12,9 @@ import { HelpCenter } from './help-center.entity';
 export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	constructor(
 		@InjectRepository(HelpCenter)
-		private readonly helpCenterRepository: Repository<HelpCenter>,
+		helpCenterRepository: Repository<HelpCenter>,
 		@MikroInjectRepository(HelpCenter)
-		private readonly mikroHelpCenterRepository: EntityRepository<HelpCenter>
+		mikroHelpCenterRepository: EntityRepository<HelpCenter>
 	) {
 		super(helpCenterRepository, mikroHelpCenterRepository);
 	}
@@ -39,8 +39,6 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.repository
-			.createQueryBuilder('knowledge_base')
-			.getMany();
+		return await this.repository.createQueryBuilder('knowledge_base').getMany();
 	}
 }

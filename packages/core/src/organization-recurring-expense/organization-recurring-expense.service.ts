@@ -10,9 +10,9 @@ import { OrganizationRecurringExpense } from './organization-recurring-expense.e
 export class OrganizationRecurringExpenseService extends TenantAwareCrudService<OrganizationRecurringExpense> {
 	constructor(
 		@InjectRepository(OrganizationRecurringExpense)
-		private readonly organizationRecurringExpenseRepository: Repository<OrganizationRecurringExpense>,
+		organizationRecurringExpenseRepository: Repository<OrganizationRecurringExpense>,
 		@MikroInjectRepository(OrganizationRecurringExpense)
-		private readonly mikroOrganizationRecurringExpenseRepository: EntityRepository<OrganizationRecurringExpense>
+		mikroOrganizationRecurringExpenseRepository: EntityRepository<OrganizationRecurringExpense>
 	) {
 		super(organizationRecurringExpenseRepository, mikroOrganizationRecurringExpenseRepository);
 	}

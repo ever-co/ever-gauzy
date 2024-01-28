@@ -11,16 +11,16 @@ import { ProductVariant } from './product-variant.entity';
 export class ProductVariantService extends TenantAwareCrudService<ProductVariant> {
 	constructor(
 		@InjectRepository(ProductVariant)
-		private readonly productVariantRepository: Repository<ProductVariant>,
+		productVariantRepository: Repository<ProductVariant>,
 		@MikroInjectRepository(ProductVariant)
-		private readonly mikroProductVariantRepository: EntityRepository<ProductVariant>
+		mikroProductVariantRepository: EntityRepository<ProductVariant>
 	) {
 		super(productVariantRepository, mikroProductVariantRepository);
 	}
 
 	async findAllProductVariants(): Promise<IPagination<IProductVariant>> {
-		const total = await this.productVariantRepository.count();
-		const items = await this.productVariantRepository.find({
+		const total = await this.repository.count();
+		const items = await this.repository.find({
 			relations: ['settings', 'price', 'image']
 		});
 
@@ -28,17 +28,17 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 	}
 
 	async findAllVariantsByProductId(productId: string): Promise<IPagination<IProductVariant>> {
-		const total = await this.productVariantRepository.count();
-		const items = await this.productVariantRepository.find({
+		const total = await this.repository.count();
+		const items = await this.repository.find({
 			relations: ['image'],
-			where: { 'productId': productId }
+			where: { productId: productId }
 		});
 
 		return { items, total };
 	}
 
 	async findOne(id: string): Promise<ProductVariant> {
-		return await this.productVariantRepository.findOne({
+		return await this.repository.findOne({
 			where: {
 				id: id
 			},
@@ -50,35 +50,29 @@ export class ProductVariantService extends TenantAwareCrudService<ProductVariant
 		});
 	}
 
-	async createBulk(
-		productVariants: ProductVariant[]
-	): Promise<ProductVariant[]> {
-		return this.productVariantRepository.save(productVariants);
+	async createBulk(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
+		return this.repository.save(productVariants);
 	}
 
-	async createVariant(
-		productVariant: ProductVariant
-	): Promise<ProductVariant> {
-		return this.productVariantRepository.save(productVariant);
+	async createVariant(productVariant: ProductVariant): Promise<ProductVariant> {
+		return this.repository.save(productVariant);
 	}
 
-	async updateVariant(
-		productVariant: ProductVariant
-	): Promise<ProductVariant> {
-		return this.productVariantRepository.save(productVariant);
+	async updateVariant(productVariant: ProductVariant): Promise<ProductVariant> {
+		return this.repository.save(productVariant);
 	}
 
-	deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
-		return this.productVariantRepository.remove(productVariants);
+	async deleteMany(productVariants: ProductVariant[]): Promise<ProductVariant[]> {
+		return this.repository.remove(productVariants);
 	}
 
 	async deleteFeaturedImage(id: string): Promise<IProductVariant> {
 		try {
-			let variant = await this.productVariantRepository.findOneBy({
+			let variant = await this.repository.findOneBy({
 				id
 			});
 			variant.image = null;
-			return await this.productVariantRepository.save(variant);
+			return await this.repository.save(variant);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

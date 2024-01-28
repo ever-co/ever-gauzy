@@ -4,11 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import {
-	IGetTimesheetInput,
-	PermissionsEnum,
-	ITimesheet
-} from '@gauzy/contracts';
+import { IGetTimesheetInput, PermissionsEnum, ITimesheet } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
@@ -19,9 +15,9 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
-		private readonly timeSheetRepository: Repository<Timesheet>,
+		timeSheetRepository: Repository<Timesheet>,
 		@MikroInjectRepository(Timesheet)
-		private readonly mikroTimeSheetRepository: EntityRepository<Timesheet>,
+		mikroTimeSheetRepository: EntityRepository<Timesheet>
 	) {
 		super(timeSheetRepository, mikroTimeSheetRepository);
 	}
@@ -33,7 +29,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
-		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
+		const query = this.repository.createQueryBuilder('timesheet');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
@@ -48,7 +44,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
-		const query = this.timeSheetRepository.createQueryBuilder('timesheet');
+		const query = this.repository.createQueryBuilder('timesheet');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.setFindOptions({
 			select: {
@@ -65,11 +61,11 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 					brandColor: true
 				}
 			},
-			...(
-				(request && request.relations) ? {
-					relations: request.relations
-				} : {}
-			),
+			...(request && request.relations
+				? {
+						relations: request.relations
+				  }
+				: {})
 		});
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
@@ -84,10 +80,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @param request
 	 * @returns
 	 */
-	async getFilterTimesheetQuery(
-		qb: SelectQueryBuilder<Timesheet>,
-		request: IGetTimesheetInput
-	) {
+	async getFilterTimesheetQuery(qb: SelectQueryBuilder<Timesheet>, request: IGetTimesheetInput) {
 		const { organizationId, startDate, endDate } = request;
 		let { employeeIds = [] } = request;
 

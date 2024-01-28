@@ -10,9 +10,9 @@ import { OrganizationDocument } from './organization-document.entity';
 export class OrganizationDocumentService extends TenantAwareCrudService<OrganizationDocument> {
 	constructor(
 		@InjectRepository(OrganizationDocument)
-		private readonly organizationDocumentRepository: Repository<OrganizationDocument>,
+		organizationDocumentRepository: Repository<OrganizationDocument>,
 		@MikroInjectRepository(OrganizationDocument)
-		private readonly mikroOrganizationDocumentRepository: EntityRepository<OrganizationDocument>
+		mikroOrganizationDocumentRepository: EntityRepository<OrganizationDocument>
 	) {
 		super(organizationDocumentRepository, mikroOrganizationDocumentRepository);
 	}

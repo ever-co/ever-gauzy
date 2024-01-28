@@ -13,19 +13,15 @@ import { TenantAwareCrudService } from './../core/crud';
 export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeAppointment> {
 	constructor(
 		@InjectRepository(EmployeeAppointment)
-		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>,
+		employeeAppointmentRepository: Repository<EmployeeAppointment>,
 		@MikroInjectRepository(EmployeeAppointment)
-		private readonly mikroEmployeeAppointmentRepository: EntityRepository<EmployeeAppointment>
+		mikroEmployeeAppointmentRepository: EntityRepository<EmployeeAppointment>
 	) {
 		super(employeeAppointmentRepository, mikroEmployeeAppointmentRepository);
 	}
 
-	async saveAppointment(
-		employeeAppointmentRequest: IEmployeeAppointmentCreateInput
-	): Promise<EmployeeAppointment> {
-		return await this.employeeAppointmentRepository.save(
-			employeeAppointmentRequest
-		);
+	async saveAppointment(employeeAppointmentRequest: IEmployeeAppointmentCreateInput): Promise<EmployeeAppointment> {
+		return await this.repository.save(employeeAppointmentRequest);
 	}
 
 	signAppointmentId(id: string) {

@@ -10,9 +10,9 @@ import { Organization } from './organization.entity';
 export class OrganizationService extends TenantAwareCrudService<Organization> {
 	constructor(
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>,
+		organizationRepository: Repository<Organization>,
 		@MikroInjectRepository(Organization)
-		private readonly mikroOrganizationRepository: EntityRepository<Organization>
+		mikroOrganizationRepository: EntityRepository<Organization>
 	) {
 		super(organizationRepository, mikroOrganizationRepository);
 	}

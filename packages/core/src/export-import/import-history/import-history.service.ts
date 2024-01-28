@@ -1,20 +1,19 @@
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
-import { BadRequestException, Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { IPagination } from "@gauzy/contracts";
-import { TenantAwareCrudService } from "./../../core/crud";
-import { ImportHistory } from "./import-history.entity";
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { IPagination } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../../core/crud';
+import { ImportHistory } from './import-history.entity';
 
 @Injectable()
 export class ImportHistoryService extends TenantAwareCrudService<ImportHistory> {
-
 	constructor(
 		@InjectRepository(ImportHistory)
-		private readonly importHistoryRepository: Repository<ImportHistory>,
+		importHistoryRepository: Repository<ImportHistory>,
 		@MikroInjectRepository(ImportHistory)
-		private readonly mikroImportHistoryRepository: EntityRepository<ImportHistory>,
+		mikroImportHistoryRepository: EntityRepository<ImportHistory>
 	) {
 		super(importHistoryRepository, mikroImportHistoryRepository);
 	}

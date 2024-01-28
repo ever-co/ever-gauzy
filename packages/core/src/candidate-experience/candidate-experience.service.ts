@@ -11,9 +11,9 @@ import { CandidateExperience } from './candidate-experience.entity';
 export class CandidateExperienceService extends TenantAwareCrudService<CandidateExperience> {
 	constructor(
 		@InjectRepository(CandidateExperience)
-		private readonly candidateExperienceRepository: Repository<CandidateExperience>,
+		candidateExperienceRepository: Repository<CandidateExperience>,
 		@MikroInjectRepository(CandidateExperience)
-		private readonly mikroCandidateExperienceRepository: EntityRepository<CandidateExperience>
+		mikroCandidateExperienceRepository: EntityRepository<CandidateExperience>
 	) {
 		super(candidateExperienceRepository, mikroCandidateExperienceRepository);
 	}

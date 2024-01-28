@@ -11,16 +11,14 @@ import { TenantAwareCrudService } from './../core/crud';
 export class EventTypeService extends TenantAwareCrudService<EventType> {
 	constructor(
 		@InjectRepository(EventType)
-		private readonly eventTypeRepository: Repository<EventType>,
+		eventTypeRepository: Repository<EventType>,
 		@MikroInjectRepository(EventType)
-		private readonly mikroEventTypeRepository: EntityRepository<EventType>
+		mikroEventTypeRepository: EntityRepository<EventType>
 	) {
 		super(eventTypeRepository, mikroEventTypeRepository);
 	}
 
-	public async findAll(
-		filter?: FindManyOptions<EventType>
-	): Promise<IPagination<EventType>> {
+	public async findAll(filter?: FindManyOptions<EventType>): Promise<IPagination<EventType>> {
 		const total = await this.repository.count(filter);
 		let items = await this.repository.find(filter);
 

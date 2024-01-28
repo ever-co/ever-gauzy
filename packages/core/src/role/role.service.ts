@@ -14,9 +14,9 @@ import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-rec
 export class RoleService extends TenantAwareCrudService<Role> {
 	constructor(
 		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>,
+		roleRepository: Repository<Role>,
 		@MikroInjectRepository(Role)
-		private readonly mikroRoleRepository: EntityRepository<Role>,
+		mikroRoleRepository: EntityRepository<Role>,
 
 		private readonly _commandBus: CommandBus
 	) {
@@ -36,7 +36,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				roles.push(role);
 			}
 		}
-		return await this.roleRepository.save(roles);
+		return await this.repository.save(roles);
 	}
 
 	async migrateRoles(): Promise<IRoleMigrateInput[]> {
@@ -75,7 +75,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.roleRepository.metadata.tableName,
+								entityType: this.repository.metadata.tableName,
 								sourceId,
 								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()

@@ -10,9 +10,9 @@ import { TenantAwareCrudService } from './../core/crud';
 export class GoalTimeFrameService extends TenantAwareCrudService<GoalTimeFrame> {
 	constructor(
 		@InjectRepository(GoalTimeFrame)
-		private readonly goalTimeFrameRepository: Repository<GoalTimeFrame>,
+		goalTimeFrameRepository: Repository<GoalTimeFrame>,
 		@MikroInjectRepository(GoalTimeFrame)
-		private readonly mikroGoalTimeFrameRepository: EntityRepository<GoalTimeFrame>
+		mikroGoalTimeFrameRepository: EntityRepository<GoalTimeFrame>
 	) {
 		super(goalTimeFrameRepository, mikroGoalTimeFrameRepository);
 	}

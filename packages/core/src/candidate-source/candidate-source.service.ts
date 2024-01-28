@@ -11,9 +11,9 @@ import { CandidateSource } from './candidate-source.entity';
 export class CandidateSourceService extends TenantAwareCrudService<CandidateSource> {
 	constructor(
 		@InjectRepository(CandidateSource)
-		private readonly candidateSourceRepository: Repository<CandidateSource>,
+		candidateSourceRepository: Repository<CandidateSource>,
 		@MikroInjectRepository(CandidateSource)
-		private readonly mikroCandidateSourceRepository: EntityRepository<CandidateSource>
+		mikroCandidateSourceRepository: EntityRepository<CandidateSource>
 	) {
 		super(candidateSourceRepository, mikroCandidateSourceRepository);
 	}
@@ -22,9 +22,7 @@ export class CandidateSourceService extends TenantAwareCrudService<CandidateSour
 		const candidateSources: ICandidateSource[] = [];
 		if (sources) {
 			for await (const source of sources) {
-				candidateSources.push(
-					await this.create(source)
-				);
+				candidateSources.push(await this.create(source));
 			}
 		}
 		return candidateSources;

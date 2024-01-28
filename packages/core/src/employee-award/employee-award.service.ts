@@ -10,9 +10,9 @@ import { EmployeeAward } from './employee-award.entity';
 export class EmployeeAwardService extends TenantAwareCrudService<EmployeeAward> {
 	constructor(
 		@InjectRepository(EmployeeAward)
-		private readonly employeeAwardRepository: Repository<EmployeeAward>,
+		employeeAwardRepository: Repository<EmployeeAward>,
 		@MikroInjectRepository(EmployeeAward)
-		private readonly mikroEmployeeAwardRepository: EntityRepository<EmployeeAward>
+		mikroEmployeeAwardRepository: EntityRepository<EmployeeAward>
 	) {
 		super(employeeAwardRepository, mikroEmployeeAwardRepository);
 	}

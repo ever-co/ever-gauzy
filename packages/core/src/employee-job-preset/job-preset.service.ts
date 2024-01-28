@@ -33,28 +33,19 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		private readonly commandBus: CommandBus,
 
 		@InjectRepository(JobPreset)
-		private readonly jobPresetRepository: Repository<JobPreset>,
+		jobPresetRepository: Repository<JobPreset>,
 
 		@MikroInjectRepository(JobPreset)
-		private readonly mikroJobPresetRepository: EntityRepository<JobPreset>,
+		mikroJobPresetRepository: EntityRepository<JobPreset>,
 
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
 
-		@MikroInjectRepository(JobPresetUpworkJobSearchCriterion)
-		private readonly mikroJobPresetUpworkJobSearchCriterionRepository: EntityRepository<JobPresetUpworkJobSearchCriterion>,
-
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
 		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
 
-		@MikroInjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private readonly mikroEmployeeUpworkJobsSearchCriterionRepository: EntityRepository<EmployeeUpworkJobsSearchCriterion>,
-
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
-
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>
+		private readonly employeeRepository: Repository<Employee>
 	) {
 		super(jobPresetRepository, mikroJobPresetRepository);
 	}
@@ -63,7 +54,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, search, employeeId } = request;
 
-		const query = this.jobPresetRepository.createQueryBuilder('job_preset');
+		const query = this.repository.createQueryBuilder('job_preset');
 		query.setFindOptions({
 			join: {
 				alias: 'job_preset',
@@ -76,7 +67,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			},
 			order: {
 				name: 'ASC'
-			},
+			}
 		});
 		query.where((qb: SelectQueryBuilder<JobPreset>) => {
 			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -101,11 +92,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async get(id: string, request?: IGetJobPresetCriterionInput) {
-		const query = this.jobPresetRepository.createQueryBuilder();
-		query.leftJoinAndSelect(
-			`${query.alias}.jobPresetCriterions`,
-			'jobPresetCriterions'
-		);
+		const query = this.repository.createQueryBuilder();
+		query.leftJoinAndSelect(`${query.alias}.jobPresetCriterions`, 'jobPresetCriterions');
 		if (request.employeeId) {
 			query.leftJoinAndSelect(
 				`${query.alias}.employeeCriterions`,
@@ -133,21 +121,15 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async createJobPreset(request?: IJobPreset) {
-		return this.commandBus.execute(
-			new CreateJobPresetCommand(request)
-		);
+		return this.commandBus.execute(new CreateJobPresetCommand(request));
 	}
 
 	async saveJobPresetCriterion(request: IMatchingCriterions) {
-		return this.commandBus.execute(
-			new SavePresetCriterionCommand(request)
-		);
+		return this.commandBus.execute(new SavePresetCriterionCommand(request));
 	}
 
 	async saveEmployeeCriterion(request: IMatchingCriterions) {
-		return this.commandBus.execute(
-			new SaveEmployeeCriterionCommand(request)
-		);
+		return this.commandBus.execute(new SaveEmployeeCriterionCommand(request));
 	}
 
 	async getEmployeePreset(employeeId: string) {
@@ -174,8 +156,6 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	deleteJobPresetCriterion(creationId: string) {
-		return this.jobPresetUpworkJobSearchCriterionRepository.delete(
-			creationId
-		);
+		return this.jobPresetUpworkJobSearchCriterionRepository.delete(creationId);
 	}
 }

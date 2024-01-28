@@ -11,9 +11,9 @@ import { CandidatePersonalQualities } from './candidate-personal-qualities.entit
 export class CandidatePersonalQualitiesService extends TenantAwareCrudService<CandidatePersonalQualities> {
 	constructor(
 		@InjectRepository(CandidatePersonalQualities)
-		private readonly candidatePersonalQualitiesRepository: Repository<CandidatePersonalQualities>,
+		candidatePersonalQualitiesRepository: Repository<CandidatePersonalQualities>,
 		@MikroInjectRepository(CandidatePersonalQualities)
-		private readonly mikroCandidatePersonalQualitiesRepository: EntityRepository<CandidatePersonalQualities>
+		mikroCandidatePersonalQualitiesRepository: EntityRepository<CandidatePersonalQualities>
 	) {
 		super(candidatePersonalQualitiesRepository, mikroCandidatePersonalQualitiesRepository);
 	}
@@ -22,9 +22,7 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 		return await this.repository.save(createInput);
 	}
 
-	async getPersonalQualitiesByInterviewId(
-		interviewId: string
-	): Promise<ICandidatePersonalQualities[]> {
+	async getPersonalQualitiesByInterviewId(interviewId: string): Promise<ICandidatePersonalQualities[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_personal_quality')
 			.where('candidate_personal_quality.interviewId = :interviewId', {

@@ -10,9 +10,9 @@ import { Repository } from 'typeorm';
 export class KeyresultTemplateService extends TenantAwareCrudService<KeyResultTemplate> {
 	constructor(
 		@InjectRepository(KeyResultTemplate)
-		private readonly keyResultTemplateRepository: Repository<KeyResultTemplate>,
+		keyResultTemplateRepository: Repository<KeyResultTemplate>,
 		@MikroInjectRepository(KeyResultTemplate)
-		private readonly mikroKeyResultTemplateRepository: EntityRepository<KeyResultTemplate>
+		mikroKeyResultTemplateRepository: EntityRepository<KeyResultTemplate>
 	) {
 		super(keyResultTemplateRepository, mikroKeyResultTemplateRepository);
 	}

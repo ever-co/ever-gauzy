@@ -20,11 +20,11 @@ import { IntegrationTenant } from './integration-tenant.entity';
 export class IntegrationTenantService extends TenantAwareCrudService<IntegrationTenant> {
 	constructor(
 		@InjectRepository(IntegrationTenant)
-		protected readonly repository: Repository<IntegrationTenant>,
+		typeOrmIntegrationRepository: Repository<IntegrationTenant>,
 		@MikroInjectRepository(IntegrationTenant)
-		protected readonly mikroRepository: EntityRepository<IntegrationTenant>
+		mikroOrmIntegrationRepository: EntityRepository<IntegrationTenant>
 	) {
-		super(repository);
+		super(typeOrmIntegrationRepository, mikroOrmIntegrationRepository);
 	}
 
 	/**
@@ -108,7 +108,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				order: {
 					updatedAt: 'DESC'
 				},
-				...(input.relations ? { relations: input.relations } : {}),
+				...(input.relations ? { relations: input.relations } : {})
 			});
 
 			return integration || false;
@@ -162,7 +162,7 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	public async findIntegrationTenantByEntity({
 		organizationId,
 		integrationId,
-		entityType,
+		entityType
 	}: {
 		organizationId: string;
 		integrationId: string;
@@ -178,9 +178,9 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					organizationId, // It's included here as a safeguard to ensure the organization context is correct
 					sync: true,
 					isActive: true,
-					isArchived: false,
-				},
-			},
-		})
+					isArchived: false
+				}
+			}
+		});
 	}
 }

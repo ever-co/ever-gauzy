@@ -10,9 +10,9 @@ import { EntityRepository } from '@mikro-orm/core';
 export class AppointmentEmployeesService extends TenantAwareCrudService<AppointmentEmployee> {
 	constructor(
 		@InjectRepository(AppointmentEmployee)
-		private readonly appointmentEmployeesRepository: Repository<AppointmentEmployee>,
+		appointmentEmployeesRepository: Repository<AppointmentEmployee>,
 		@MikroInjectRepository(AppointmentEmployee)
-		private readonly mikroAppointmentEmployeesRepository: EntityRepository<AppointmentEmployee>
+		mikroAppointmentEmployeesRepository: EntityRepository<AppointmentEmployee>
 	) {
 		super(appointmentEmployeesRepository, mikroAppointmentEmployeesRepository);
 	}

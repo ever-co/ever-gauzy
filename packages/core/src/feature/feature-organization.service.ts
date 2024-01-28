@@ -14,9 +14,9 @@ import { FeatureService } from './feature.service';
 export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOrganization> {
 	constructor(
 		@InjectRepository(FeatureOrganization)
-		public readonly featureOrganizationRepository: Repository<FeatureOrganization>,
+		featureOrganizationRepository: Repository<FeatureOrganization>,
 		@MikroInjectRepository(FeatureOrganization)
-		public readonly mikroFeatureOrganizationRepository: EntityRepository<FeatureOrganization>,
+		mikroFeatureOrganizationRepository: EntityRepository<FeatureOrganization>,
 
 		@Inject(forwardRef(() => FeatureService))
 		private readonly _featureService: FeatureService
@@ -30,10 +30,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * @param input
 	 * @returns
 	 */
-	async updateFeatureOrganization(
-		entity: IFeatureOrganizationUpdateInput
-	): Promise<boolean> {
-
+	async updateFeatureOrganization(entity: IFeatureOrganizationUpdateInput): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const { featureId, organizationId } = entity;
 
@@ -42,7 +39,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 			where: {
 				tenantId,
 				featureId,
-				...(isNotEmpty(organizationId) ? { organizationId } : {}),
+				...(isNotEmpty(organizationId) ? { organizationId } : {})
 			}
 		});
 
@@ -52,15 +49,17 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 					...entity,
 					tenantId
 				});
-				await this.featureOrganizationRepository.save(featureOrganization);
+				await this.repository.save(featureOrganization);
 			} else {
 				featureOrganizations.map((item: IFeatureOrganization) => {
-					return new FeatureOrganization(Object.assign(item, {
-						...entity,
-						tenantId
-					}));
+					return new FeatureOrganization(
+						Object.assign(item, {
+							...entity,
+							tenantId
+						})
+					);
 				});
-				await this.featureOrganizationRepository.save(featureOrganizations);
+				await this.repository.save(featureOrganizations);
 			}
 			return true;
 		} catch (error) {
@@ -75,9 +74,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * @param tenants
 	 * @returns
 	 */
-	public async updateTenantFeatureOrganizations(
-		tenants: ITenant[]
-	): Promise<IFeatureOrganization[]> {
+	public async updateTenantFeatureOrganizations(tenants: ITenant[]): Promise<IFeatureOrganization[]> {
 		if (!tenants.length) {
 			return;
 		}
@@ -97,8 +94,6 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 				featureOrganizations.push(featureOrganization);
 			}
 		}
-		return await this.featureOrganizationRepository.save(
-			featureOrganizations
-		);
+		return await this.repository.save(featureOrganizations);
 	}
 }

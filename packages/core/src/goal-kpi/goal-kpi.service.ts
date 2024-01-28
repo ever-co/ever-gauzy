@@ -10,9 +10,9 @@ import { TenantAwareCrudService } from './../core/crud';
 export class GoalKpiService extends TenantAwareCrudService<GoalKPI> {
 	constructor(
 		@InjectRepository(GoalKPI)
-		private readonly goalKpiRepository: Repository<GoalKPI>,
+		goalKpiRepository: Repository<GoalKPI>,
 		@MikroInjectRepository(GoalKPI)
-		private readonly mikroGoalKpiRepository: EntityRepository<GoalKPI>
+		mikroGoalKpiRepository: EntityRepository<GoalKPI>
 	) {
 		super(goalKpiRepository, mikroGoalKpiRepository);
 	}

@@ -11,38 +11,33 @@ import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 export class EquipmentSharingPolicyService extends TenantAwareCrudService<EquipmentSharingPolicy> {
 	constructor(
 		@InjectRepository(EquipmentSharingPolicy)
-		private readonly equipmentSharingRepository: Repository<EquipmentSharingPolicy>,
+		equipmentSharingRepository: Repository<EquipmentSharingPolicy>,
 		@MikroInjectRepository(EquipmentSharingPolicy)
-		private readonly mikroEquipmentSharingRepository: EntityRepository<EquipmentSharingPolicy>
+		mikroEquipmentSharingRepository: EntityRepository<EquipmentSharingPolicy>
 	) {
 		super(equipmentSharingRepository, mikroEquipmentSharingRepository);
 	}
 
-	async create(
-		entity: IEquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+	async create(entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
 			const policy = new EquipmentSharingPolicy();
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.tenantId = entity.tenantId;
 			policy.description = entity.description;
-			return this.equipmentSharingRepository.save(policy);
+			return this.repository.save(policy);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
 
-	async update(
-		id: string,
-		entity: IEquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+	async update(id: string, entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
-			const policy = await this.equipmentSharingRepository.findOneBy({ id });
+			const policy = await this.repository.findOneBy({ id });
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.description = entity.description;
-			return this.equipmentSharingRepository.save(policy);
+			return this.repository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

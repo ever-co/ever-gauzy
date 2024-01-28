@@ -19,9 +19,9 @@ import { MikroInjectRepository } from '@gauzy/common';
 export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy> {
 	constructor(
 		@InjectRepository(ApprovalPolicy)
-		private readonly approvalPolicyRepository: Repository<ApprovalPolicy>,
+		approvalPolicyRepository: Repository<ApprovalPolicy>,
 		@MikroInjectRepository(ApprovalPolicy)
-		private readonly mikroApprovalPolicyRepository: EntityRepository<ApprovalPolicy>
+		mikroApprovalPolicyRepository: EntityRepository<ApprovalPolicy>
 	) {
 		super(approvalPolicyRepository, mikroApprovalPolicyRepository);
 	}
@@ -36,7 +36,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 		if ('where' in options) {
 			const { where } = options;
 			if ('name' in where) {
-				options.where.name = Like(`%${where.name}%`)
+				options.where.name = Like(`%${where.name}%`);
 			}
 		}
 		return super.paginate(options);
@@ -45,20 +45,18 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 	/*
 	 * Get all approval policies
 	 */
-	async findAllApprovalPolicies(
-		options: PaginationParams<ApprovalPolicy>
-	): Promise<IPagination<IApprovalPolicy>> {
+	async findAllApprovalPolicies(options: PaginationParams<ApprovalPolicy>): Promise<IPagination<IApprovalPolicy>> {
 		return await super.findAll({
-			...(
-				(options && options.where) ? {
-					where: options.where
-				} : {}
-			),
-			...(
-				(options && options.relations) ? {
-					relations: options.relations
-				} : {}
-			),
+			...(options && options.where
+				? {
+						where: options.where
+				  }
+				: {}),
+			...(options && options.relations
+				? {
+						relations: options.relations
+				  }
+				: {})
 		});
 	}
 
@@ -68,24 +66,19 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 	async findApprovalPoliciesForRequestApproval({
 		findInput,
 		relations
-	}: IListQueryInput<IRequestApprovalFindInput>): Promise<
-		IPagination<IApprovalPolicy>
-	> {
+	}: IListQueryInput<IRequestApprovalFindInput>): Promise<IPagination<IApprovalPolicy>> {
 		const query = {
 			where: {
 				approvalType: Not(
-					In([
-						ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
-						ApprovalPolicyTypesStringEnum.TIME_OFF
-					])
+					In([ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING, ApprovalPolicyTypesStringEnum.TIME_OFF])
 				),
 				...findInput
 			},
-			...(
-				(relations) ? {
-					relations: relations
-				} : {}
-			),
+			...(relations
+				? {
+						relations: relations
+				  }
+				: {})
 		};
 		return await super.findAll(query);
 	}
@@ -100,9 +93,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = RequestContext.currentTenantId();
 			approvalPolicy.description = entity.description;
-			approvalPolicy.approvalType = entity.name
-				? entity.name.replace(/\s+/g, '_').toUpperCase()
-				: null;
+			approvalPolicy.approvalType = entity.name ? entity.name.replace(/\s+/g, '_').toUpperCase() : null;
 			return this.repository.save(approvalPolicy);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -112,22 +103,17 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 	/*
 	 * Update approval policy
 	 */
-	async update(
-		id: string,
-		entity: IApprovalPolicyCreateInput
-	): Promise<ApprovalPolicy> {
+	async update(id: string, entity: IApprovalPolicyCreateInput): Promise<ApprovalPolicy> {
 		try {
-			const approvalPolicy = await this.approvalPolicyRepository.findOneBy({
+			const approvalPolicy = await this.repository.findOneBy({
 				id: id
 			});
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = RequestContext.currentTenantId();
 			approvalPolicy.description = entity.description;
-			approvalPolicy.approvalType = entity.name
-				? entity.name.replace(/\s+/g, '_').toUpperCase()
-				: null;
-			return this.approvalPolicyRepository.save(approvalPolicy);
+			approvalPolicy.approvalType = entity.name ? entity.name.replace(/\s+/g, '_').toUpperCase() : null;
+			return this.repository.save(approvalPolicy);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

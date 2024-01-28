@@ -10,9 +10,9 @@ import { Injectable } from '@nestjs/common';
 export class InvoiceEstimateHistoryService extends TenantAwareCrudService<InvoiceEstimateHistory> {
 	constructor(
 		@InjectRepository(InvoiceEstimateHistory)
-		private readonly invoiceEstimateHistoryRepository: Repository<InvoiceEstimateHistory>,
+		invoiceEstimateHistoryRepository: Repository<InvoiceEstimateHistory>,
 		@MikroInjectRepository(InvoiceEstimateHistory)
-		private readonly mikroInvoiceEstimateHistoryRepository: EntityRepository<InvoiceEstimateHistory>
+		mikroInvoiceEstimateHistoryRepository: EntityRepository<InvoiceEstimateHistory>
 	) {
 		super(invoiceEstimateHistoryRepository, mikroInvoiceEstimateHistoryRepository);
 	}

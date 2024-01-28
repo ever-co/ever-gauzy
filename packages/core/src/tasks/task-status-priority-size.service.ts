@@ -27,10 +27,10 @@ export class TaskStatusPrioritySizeService<
 	BaseEntity extends TenantBaseEntity
 > extends TenantAwareCrudService<BaseEntity> {
 	constructor(
-		protected readonly repository: Repository<BaseEntity>,
-		protected readonly mikroRepository?: EntityRepository<BaseEntity>,
+		typeOrmTaskStatusRepository: Repository<BaseEntity>,
+		mikroOrmTaskStatusRepository?: EntityRepository<BaseEntity>
 	) {
-		super(repository, mikroRepository);
+		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository);
 	}
 
 	async findEntitiesByParams(params: IFindEntityByParams): Promise<IPagination<BaseEntity>> {

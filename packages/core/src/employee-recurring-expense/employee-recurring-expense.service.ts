@@ -10,10 +10,10 @@ import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 export class EmployeeRecurringExpenseService extends TenantAwareCrudService<EmployeeRecurringExpense> {
 	constructor(
 		@InjectRepository(EmployeeRecurringExpense)
-		private readonly employeeRecurringExpense: Repository<EmployeeRecurringExpense>,
+		employeeRecurringExpense: Repository<EmployeeRecurringExpense>,
 		@MikroInjectRepository(EmployeeRecurringExpense)
-		private readonly mikroEmployeeRecurringExpense: EntityRepository<EmployeeRecurringExpense>
+		mikroEmployeeRecurringExpense: EntityRepository<EmployeeRecurringExpense>
 	) {
-		super(employeeRecurringExpense);
+		super(employeeRecurringExpense, mikroEmployeeRecurringExpense);
 	}
 }

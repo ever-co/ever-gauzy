@@ -8,7 +8,7 @@ import * as moment from 'moment';
 import { IDateRangePicker, IGetPaymentInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Payment } from './payment.entity';
-import { getDateRangeFormat, getDaysBetweenDates, } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from './../email-send/email.service';
@@ -21,9 +21,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
-		private readonly paymentRepository: Repository<Payment>,
+		paymentRepository: Repository<Payment>,
 		@MikroInjectRepository(Payment)
-		private readonly mikroPaymentRepository: EntityRepository<Payment>,
+		mikroPaymentRepository: EntityRepository<Payment>,
 
 		private readonly emailService: EmailService
 	) {
@@ -38,16 +38,16 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getPayments(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.paymentRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Set up the find options for the query
 		query.setFindOptions({
-			...(
-				(request && request.limit > 0) ? {
-					take: request.limit,
-					skip: (request.page || 0) * request.limit
-				} : {}
-			),
+			...(request && request.limit > 0
+				? {
+						take: request.limit,
+						skip: (request.page || 0) * request.limit
+				  }
+				: {}),
 			join: {
 				alias: `${this.alias}`,
 				leftJoin: {
@@ -93,16 +93,16 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getDailyReportCharts(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.paymentRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Set up the find options for the query
 		query.setFindOptions({
-			...(
-				(request.limit > 0) ? {
-					take: request.limit,
-					skip: (request.page || 0) * request.limit
-				} : {}
-			),
+			...(request.limit > 0
+				? {
+						take: request.limit,
+						skip: (request.page || 0) * request.limit
+				  }
+				: {}),
 			order: {
 				// Order results by the 'startedAt' field in ascending order
 				paymentDate: 'ASC'
@@ -134,7 +134,8 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 						payment: sum.toFixed(1)
 					}
 				};
-			}).value();
+			})
+			.value();
 		// Map dates to the required format
 		const dates = days.map((date) => byDate[date] || { date, value: { payment: 0 } });
 		return dates;
@@ -146,10 +147,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 * @param request
 	 * @returns
 	 */
-	private getFilterQuery(
-		query: SelectQueryBuilder<Payment>,
-		request: IGetPaymentInput
-	) {
+	private getFilterQuery(query: SelectQueryBuilder<Payment>, request: IGetPaymentInput) {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, startDate, endDate } = request;
 		let { projectIds = [], contactIds = [] } = request;
@@ -203,10 +201,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		origin: string
 	): Promise<boolean> {
 		try {
-			const {
-				primaryEmail: recipientEmail,
-				name: recipientName
-			} = invoice.toContact;
+			const { primaryEmail: recipientEmail, name: recipientName } = invoice.toContact;
 
 			await this.emailService.sendPaymentReceipt(
 				languageCode,
@@ -251,7 +246,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				const { tags } = where;
 				filter['where']['tags'] = {
 					id: In(tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

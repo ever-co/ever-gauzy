@@ -10,9 +10,9 @@ import { Warehouse } from './warehouse.entity';
 export class WarehouseService extends TenantAwareCrudService<Warehouse> {
 	constructor(
 		@InjectRepository(Warehouse)
-		private readonly warehouseRepository: Repository<Warehouse>,
+		warehouseRepository: Repository<Warehouse>,
 		@MikroInjectRepository(Warehouse)
-		private readonly mikroWarehouseRepository: EntityRepository<Warehouse>
+		mikroWarehouseRepository: EntityRepository<Warehouse>
 	) {
 		super(warehouseRepository, mikroWarehouseRepository);
 	}

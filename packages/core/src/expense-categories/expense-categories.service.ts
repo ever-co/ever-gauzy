@@ -10,9 +10,9 @@ import { ExpenseCategory } from './expense-category.entity';
 export class ExpenseCategoriesService extends TenantAwareCrudService<ExpenseCategory> {
 	constructor(
 		@InjectRepository(ExpenseCategory)
-		private readonly expenseCategoryRepository: Repository<ExpenseCategory>,
+		expenseCategoryRepository: Repository<ExpenseCategory>,
 		@MikroInjectRepository(ExpenseCategory)
-		private readonly mikroExpenseCategoryRepository: EntityRepository<ExpenseCategory>
+		mikroExpenseCategoryRepository: EntityRepository<ExpenseCategory>
 	) {
 		super(expenseCategoryRepository, mikroExpenseCategoryRepository);
 	}

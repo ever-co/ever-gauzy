@@ -1,10 +1,6 @@
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
-import {
-	Injectable,
-	BadRequestException,
-	NotFoundException
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -20,15 +16,12 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
 	constructor(
 		@InjectRepository(EquipmentSharing)
-		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+		equipmentSharingRepository: Repository<EquipmentSharing>,
 		@MikroInjectRepository(EquipmentSharing)
-		private readonly mikroEquipmentSharingRepository: EntityRepository<EquipmentSharing>,
+		mikroEquipmentSharingRepository: EntityRepository<EquipmentSharing>,
 
 		@InjectRepository(RequestApproval)
 		private readonly requestApprovalRepository: Repository<RequestApproval>,
-
-		@MikroInjectRepository(RequestApproval)
-		private readonly mikroRequestApprovalRepository: EntityRepository<RequestApproval>,
 
 		private readonly configService: ConfigService
 	) {
@@ -37,9 +30,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
 		try {
-			const query = this.equipmentSharingRepository.createQueryBuilder(
-				'equipment_sharing'
-			);
+			const query = this.repository.createQueryBuilder('equipment_sharing');
 			query
 				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
@@ -64,14 +55,13 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					);
 					break;
 				default:
-					throw Error(`cannot create query to find equipment sharings by orgId due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+					throw Error(
+						`cannot create query to find equipment sharings by orgId due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+					);
 			}
 
 			return await query
-				.leftJoinAndSelect(
-					'requestApproval.approvalPolicy',
-					'approvalPolicy'
-				)
+				.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy')
 				.where(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						const tenantId = RequestContext.currentTenantId();
@@ -87,7 +77,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async findRequestApprovalsByEmployeeId(id: string): Promise<any> {
 		try {
-			return await this.equipmentSharingRepository.find({
+			return await this.repository.find({
 				where: {
 					createdBy: id
 				},
@@ -99,25 +89,17 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
-		const [items, total] = await this.equipmentSharingRepository.findAndCount({
-			relations: [
-				'equipment',
-				'employees',
-				'teams'
-			]
+		const [items, total] = await this.repository.findAndCount({
+			relations: ['equipment', 'employees', 'teams']
 		});
-		return { items, total }
+		return { items, total };
 	}
 
-	async createEquipmentSharing(
-		equipmentSharing: EquipmentSharing
-	): Promise<EquipmentSharing> {
+	async createEquipmentSharing(equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
 		try {
 			equipmentSharing.createdBy = RequestContext.currentUser().id;
 			equipmentSharing.createdByName = RequestContext.currentUser().name;
-			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
-				equipmentSharing
-			);
+			const equipmentSharingSaved = await this.repository.save(equipmentSharing);
 			return equipmentSharingSaved;
 		} catch (err) {
 			console.log('err', err);
@@ -125,15 +107,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
-	async update(
-		id: string,
-		equipmentSharing: EquipmentSharing
-	): Promise<EquipmentSharing> {
+	async update(id: string, equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
 		try {
-			await this.equipmentSharingRepository.delete(id);
-			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
-				equipmentSharing
-			);
+			await this.repository.delete(id);
+			const equipmentSharingSaved = await this.repository.save(equipmentSharing);
 
 			return equipmentSharingSaved;
 		} catch (err) {
@@ -144,7 +121,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	async delete(id: string): Promise<any> {
 		try {
 			const [equipmentSharing] = await Promise.all([
-				await this.equipmentSharingRepository.delete(id),
+				await this.repository.delete(id),
 				await this.requestApprovalRepository.delete({
 					requestId: id
 				})
@@ -156,12 +133,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
-	async updateStatusEquipmentSharingByAdmin(
-		id: string,
-		status: number
-	): Promise<EquipmentSharing> {
+	async updateStatusEquipmentSharingByAdmin(id: string, status: number): Promise<EquipmentSharing> {
 		try {
-			const equipmentSharing = await this.equipmentSharingRepository.findOneBy({
+			const equipmentSharing = await this.repository.findOneBy({
 				id
 			});
 
@@ -170,7 +144,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			}
 			equipmentSharing.status = status;
 
-			return await this.equipmentSharingRepository.save(equipmentSharing);
+			return await this.repository.save(equipmentSharing);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -186,12 +160,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			 * Sets number of entities to skip.
 			 * Sets maximal number of entities to take.
 			 */
-			query.skip(filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0);
-			query.take(filter && filter.take ? (filter.take) : 10);
+			query.skip(filter && filter.skip ? filter.take * (filter.skip - 1) : 0);
+			query.take(filter && filter.take ? filter.take : 10);
 
 			query.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment');
 			query.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
-			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
+			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees');
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
 			switch (this.configService.dbConnectionOptions.type) {
@@ -218,7 +192,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					);
 					break;
 				default:
-					throw Error(`cannot paginate equipment sharings due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+					throw Error(
+						`cannot paginate equipment sharings due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+					);
 			}
 
 			query.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy');
@@ -242,17 +218,12 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			);
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (
-						isNotEmpty(filter.where) &&
-						isNotEmpty(filter.where.employeeIds)
-					) {
+					if (isNotEmpty(filter.where) && isNotEmpty(filter.where.employeeIds)) {
 						let { employeeIds = [], organizationId } = filter.where;
 						const user = RequestContext.currentUser();
 						if (
-							!RequestContext.hasPermission(
-								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-							)
-							&& user.employeeId
+							!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+							user.employeeId
 						) {
 							employeeIds = [user.employeeId];
 						}

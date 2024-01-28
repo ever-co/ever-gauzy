@@ -1,6 +1,5 @@
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
-
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
@@ -12,39 +11,33 @@ import { IntegrationSyncGithubRepositoryCommand } from '../commands';
 
 @Injectable()
 export class GithubRepositoryService extends TenantAwareCrudService<OrganizationGithubRepository> {
-    private readonly logger = new Logger('GithubRepositoryService');
+	private readonly logger = new Logger('GithubRepositoryService');
 
-    constructor(
-        private readonly _commandBus: CommandBus,
+	constructor(
+		private readonly _commandBus: CommandBus,
 
-        @InjectRepository(OrganizationGithubRepository)
-        private readonly organizationGithubRepository: Repository<OrganizationGithubRepository>,
+		@InjectRepository(OrganizationGithubRepository)
+		organizationGithubRepository: Repository<OrganizationGithubRepository>,
 
-        @MikroInjectRepository(OrganizationGithubRepository)
-        private readonly mikroOrganizationGithubRepository: EntityRepository<OrganizationGithubRepository>
-    ) {
-        super(organizationGithubRepository, mikroOrganizationGithubRepository);
-    }
+		@MikroInjectRepository(OrganizationGithubRepository)
+		mikroOrganizationGithubRepository: EntityRepository<OrganizationGithubRepository>
+	) {
+		super(organizationGithubRepository, mikroOrganizationGithubRepository);
+	}
 
-    /**
-     * Synchronize a GitHub repository with an integration.
-     *
-     * @param input - The input data for synchronization.
-     * @returns An object indicating success or failure of the synchronization.
-     */
-    async syncGithubRepository(
-        input: IIntegrationMapSyncRepository
-    ): Promise<IOrganizationGithubRepository> {
-        try {
-            return await this._commandBus.execute(
-                new IntegrationSyncGithubRepositoryCommand(
-                    input
-                )
-            );
-        } catch (error) {
-            // Handle errors and return an appropriate error response
-            this.logger.error('Error while sync github integration repository', error.message);
-            throw new HttpException(`Failed to sync GitHub repository: ${error.message}`, HttpStatus.BAD_REQUEST);
-        }
-    }
+	/**
+	 * Synchronize a GitHub repository with an integration.
+	 *
+	 * @param input - The input data for synchronization.
+	 * @returns An object indicating success or failure of the synchronization.
+	 */
+	async syncGithubRepository(input: IIntegrationMapSyncRepository): Promise<IOrganizationGithubRepository> {
+		try {
+			return await this._commandBus.execute(new IntegrationSyncGithubRepositoryCommand(input));
+		} catch (error) {
+			// Handle errors and return an appropriate error response
+			this.logger.error('Error while sync github integration repository', error.message);
+			throw new HttpException(`Failed to sync GitHub repository: ${error.message}`, HttpStatus.BAD_REQUEST);
+		}
+	}
 }

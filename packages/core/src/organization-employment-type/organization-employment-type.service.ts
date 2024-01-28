@@ -10,10 +10,10 @@ import { Repository } from 'typeorm';
 export class OrganizationEmploymentTypeService extends TenantAwareCrudService<OrganizationEmploymentType> {
 	constructor(
 		@InjectRepository(OrganizationEmploymentType)
-		private readonly employmentTypesRepo: Repository<OrganizationEmploymentType>,
+		employmentTypesRepo: Repository<OrganizationEmploymentType>,
 		@MikroInjectRepository(OrganizationEmploymentType)
-		private readonly mikroEmploymentTypesRepo: EntityRepository<OrganizationEmploymentType>
+		mikroEmploymentTypesRepo: EntityRepository<OrganizationEmploymentType>
 	) {
-		super(employmentTypesRepo);
+		super(employmentTypesRepo, mikroEmploymentTypesRepo);
 	}
 }

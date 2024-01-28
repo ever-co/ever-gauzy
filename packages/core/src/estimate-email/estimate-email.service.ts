@@ -16,9 +16,9 @@ import { EstimateEmail } from './estimate-email.entity';
 export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> {
 	constructor(
 		@InjectRepository(EstimateEmail)
-		private readonly estimateEmailRepository: Repository<EstimateEmail>,
+		estimateEmailRepository: Repository<EstimateEmail>,
 		@MikroInjectRepository(EstimateEmail)
-		private readonly mikroEstimateEmailRepository: EntityRepository<EstimateEmail>,
+		mikroEstimateEmailRepository: EntityRepository<EstimateEmail>,
 
 		@InjectRepository(Invoice)
 		private readonly invoiceRepository: Repository<Invoice>,
@@ -35,10 +35,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 		super(estimateEmailRepository, mikroEstimateEmailRepository);
 	}
 
-	async createEstimateEmail(
-		id: string,
-		email: string
-	): Promise<IEstimateEmail> {
+	async createEstimateEmail(id: string, email: string): Promise<IEstimateEmail> {
 		const invoice: IInvoice = await this.invoiceRepository.findOneByOrFail({
 			id
 		});
@@ -51,7 +48,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 				organizationId: invoice.organizationId,
 				tenantId: RequestContext.currentTenantId(),
 				email
-			}
+			};
 			const tokenExpiryPeriod = organization.inviteExpiryPeriod || 7;
 			const now = moment();
 			const expireDate = now.clone().add(tokenExpiryPeriod, 'days');
@@ -79,10 +76,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	 * @param relations
 	 * @returns
 	 */
-	async validate(
-		params: FindOptionsWhere<EstimateEmail>,
-		relations: string[] = []
-	): Promise<IEstimateEmail> {
+	async validate(params: FindOptionsWhere<EstimateEmail>, relations: string[] = []): Promise<IEstimateEmail> {
 		try {
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as IEstimateEmailFindInput;
 			const { organizationId, tenantId, email, token } = decoded;
@@ -97,7 +91,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 						name: true,
 						officialName: true,
 						brandColor: true
-					},
+					}
 				},
 				where: {
 					email,
@@ -106,11 +100,11 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 					tenantId,
 					expireDate: MoreThan(moment().toDate())
 				},
-				...(
-					(relations) ? {
-						relations: relations
-					} : {}
-				),
+				...(relations
+					? {
+							relations: relations
+					  }
+					: {})
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

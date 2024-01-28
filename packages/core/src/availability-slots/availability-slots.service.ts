@@ -11,16 +11,14 @@ import { EntityRepository } from '@mikro-orm/core';
 export class AvailabilitySlotsService extends TenantAwareCrudService<AvailabilitySlot> {
 	constructor(
 		@InjectRepository(AvailabilitySlot)
-		private readonly availabilitySlotsRepository: Repository<AvailabilitySlot>,
+		availabilitySlotsRepository: Repository<AvailabilitySlot>,
 		@MikroInjectRepository(AvailabilitySlot)
-		private readonly mikroAvailabilitySlotsRepository: EntityRepository<AvailabilitySlot>
+		mikroAvailabilitySlotsRepository: EntityRepository<AvailabilitySlot>
 	) {
 		super(availabilitySlotsRepository, mikroAvailabilitySlotsRepository);
 	}
 
-	public async createBulk(
-		availabilitySlots: IAvailabilitySlotsCreateInput[]
-	): Promise<IAvailabilitySlot[]> {
-		return await this.availabilitySlotsRepository.save(availabilitySlots);
+	public async createBulk(availabilitySlots: IAvailabilitySlotsCreateInput[]): Promise<IAvailabilitySlot[]> {
+		return await this.repository.save(availabilitySlots);
 	}
 }

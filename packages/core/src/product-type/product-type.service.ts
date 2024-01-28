@@ -3,11 +3,7 @@ import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-	IPagination,
-	IProductTypeTranslatable,
-	LanguagesEnum
-} from '@gauzy/contracts';
+import { IPagination, IProductTypeTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { ProductType } from './product-type.entity';
 
@@ -15,9 +11,9 @@ import { ProductType } from './product-type.entity';
 export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	constructor(
 		@InjectRepository(ProductType)
-		private readonly productTypeRepository: Repository<ProductType>,
+		productTypeRepository: Repository<ProductType>,
 		@MikroInjectRepository(ProductType)
-		private readonly mikroProductTypeRepository: EntityRepository<ProductType>
+		mikroProductTypeRepository: EntityRepository<ProductType>
 	) {
 		super(productTypeRepository, mikroProductTypeRepository);
 	}
@@ -29,10 +25,7 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 * @param language
 	 * @returns
 	 */
-	public async pagination(
-		options: PaginationParams<ProductType>,
-		language: LanguagesEnum
-	) {
+	public async pagination(options: PaginationParams<ProductType>, language: LanguagesEnum) {
 		const { items, total } = await super.paginate(options);
 		return await this.mapTranslatedProductTypes(items as any, language).then((items) => {
 			return { items, total };
@@ -46,13 +39,10 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 * @param entity
 	 * @returns
 	 */
-	async updateProductType(
-		id: string,
-		entity: ProductType
-	): Promise<ProductType> {
+	async updateProductType(id: string, entity: ProductType): Promise<ProductType> {
 		try {
-			await this.productTypeRepository.delete(id);
-			return this.productTypeRepository.save(entity);
+			await this.repository.delete(id);
+			return this.repository.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -86,19 +76,10 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 * @param languageCode
 	 * @returns
 	 */
-	async mapTranslatedProductTypes(
-		items: IProductTypeTranslatable[],
-		languageCode: LanguagesEnum
-	) {
+	async mapTranslatedProductTypes(items: IProductTypeTranslatable[], languageCode: LanguagesEnum) {
 		if (languageCode) {
 			return Promise.all(
-				items.map((type: IProductTypeTranslatable) =>
-					Object.assign(
-						{},
-						type,
-						type.translate(languageCode)
-					)
-				)
+				items.map((type: IProductTypeTranslatable) => Object.assign({}, type, type.translate(languageCode)))
 			);
 		} else {
 			return items;
@@ -112,17 +93,10 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	 * @param languageCode
 	 * @returns
 	 */
-	async mapTranslatedProductType(
-		type: IProductTypeTranslatable,
-		languageCode: LanguagesEnum
-	) {
+	async mapTranslatedProductType(type: IProductTypeTranslatable, languageCode: LanguagesEnum) {
 		try {
 			if (languageCode) {
-				return Object.assign(
-					{},
-					type,
-					type.translate(languageCode)
-				);
+				return Object.assign({}, type, type.translate(languageCode));
 			} else {
 				return type;
 			}

@@ -25,9 +25,9 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		timeSlotRepository: Repository<TimeSlot>,
 		@MikroInjectRepository(TimeSlot)
-		private readonly mikroTimeSlotRepository: EntityRepository<TimeSlot>,
+		mikroTimeSlotRepository: EntityRepository<TimeSlot>,
 		private readonly commandBus: CommandBus
 	) {
 		super(timeSlotRepository, mikroTimeSlotRepository);
@@ -66,7 +66,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		}
 
 		// Create a query builder for the TimeSlot entity
-		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		const query = this.repository.createQueryBuilder('time_slot');
 		query.leftJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
 
@@ -87,9 +87,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					}
 				}
 			},
-			relations: [
-				...(request.relations ? request.relations : [])
-			]
+			relations: [...(request.relations ? request.relations : [])]
 		});
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 			qb.andWhere(
@@ -144,14 +142,20 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					if (isNotEmpty(request.source)) {
 						const { source } = request;
 
-						const condition = source instanceof Array ? p(`"time_log"."source" IN (:...source)`) : p(`"time_log"."source" = :source`);
+						const condition =
+							source instanceof Array
+								? p(`"time_log"."source" IN (:...source)`)
+								: p(`"time_log"."source" = :source`);
 						web.andWhere(condition, { source });
 					}
 
 					// Filters records based on the logType column.
 					if (isNotEmpty(request.logType)) {
 						const { logType } = request;
-						const condition = logType instanceof Array ? p(`"time_log"."logType" IN (:...logType)`) : p(`"time_log"."logType" = :logType`);
+						const condition =
+							logType instanceof Array
+								? p(`"time_log"."logType" IN (:...logType)`)
+								: p(`"time_log"."logType" = :logType`);
 
 						web.andWhere(condition, { logType });
 					}
@@ -187,15 +191,9 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	async bulkCreateOrUpdate(
 		slots: ITimeSlot[],
 		employeeId: ITimeSlot['employeeId'],
-		organizationId: ITimeSlot['organizationId'],
+		organizationId: ITimeSlot['organizationId']
 	) {
-		return await this.commandBus.execute(
-			new TimeSlotBulkCreateOrUpdateCommand(
-				slots,
-				employeeId,
-				organizationId
-			)
-		);
+		return await this.commandBus.execute(new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId));
 	}
 
 	/**
@@ -208,15 +206,9 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	async bulkCreate(
 		slots: ITimeSlot[],
 		employeeId: ITimeSlot['employeeId'],
-		organizationId: ITimeSlot['organizationId'],
+		organizationId: ITimeSlot['organizationId']
 	) {
-		return await this.commandBus.execute(
-			new TimeSlotBulkCreateCommand(
-				slots,
-				employeeId,
-				organizationId
-			)
-		);
+		return await this.commandBus.execute(new TimeSlotBulkCreateCommand(slots, employeeId, organizationId));
 	}
 
 	/**
@@ -234,17 +226,13 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 */
 	async createTimeSlotMinute(request: TimeSlotMinute) {
 		// const { keyboard, mouse, datetime, timeSlot } = request;
-		return await this.commandBus.execute(
-			new CreateTimeSlotMinutesCommand(request)
-		);
+		return await this.commandBus.execute(new CreateTimeSlotMinutesCommand(request));
 	}
 
 	/*
 	 * Update TimeSlot minute activity for specific TimeSlot
 	 */
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
-		return await this.commandBus.execute(
-			new UpdateTimeSlotMinutesCommand(id, request)
-		);
+		return await this.commandBus.execute(new UpdateTimeSlotMinutesCommand(id, request));
 	}
 }

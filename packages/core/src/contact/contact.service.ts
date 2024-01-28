@@ -11,14 +11,14 @@ import { IContactCreateInput } from '@gauzy/contracts';
 export class ContactService extends TenantAwareCrudService<Contact> {
 	constructor(
 		@InjectRepository(Contact)
-		private readonly contactRepository: Repository<Contact>,
+		contactRepository: Repository<Contact>,
 		@MikroInjectRepository(Contact)
-		private readonly mikroContactRepository: EntityRepository<Contact>
+		mikroContactRepository: EntityRepository<Contact>
 	) {
 		super(contactRepository, mikroContactRepository);
 	}
 
 	async saveContact(contactRequest: IContactCreateInput): Promise<Contact> {
-		return this.contactRepository.save(contactRequest);
+		return this.repository.save(contactRequest);
 	}
 }

@@ -9,9 +9,9 @@ import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 export class IntegrationEntitySettingService extends TenantAwareCrudService<IntegrationEntitySetting> {
 	constructor(
 		@InjectRepository(IntegrationEntitySetting)
-		readonly repository: Repository<IntegrationEntitySetting>
+		integrationRepository: Repository<IntegrationEntitySetting>
 	) {
-		super(repository);
+		super(integrationRepository);
 	}
 
 	/**

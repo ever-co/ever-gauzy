@@ -1,12 +1,7 @@
 import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
 import { FindManyOptions, Repository } from 'typeorm';
-import {
-	BadRequestException,
-	HttpException,
-	HttpStatus,
-	Injectable
-} from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	IImageAsset,
@@ -34,29 +29,23 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		},
 		{
 			prop: 'productCategory',
-			propsTranslate: [
-				{ key: 'name', alias: 'productCategory' }
-			]
+			propsTranslate: [{ key: 'name', alias: 'productCategory' }]
 		},
 		{
 			prop: 'productType',
-			propsTranslate: [
-				{ key: 'name', alias: 'productType' }
-			]
+			propsTranslate: [{ key: 'name', alias: 'productType' }]
 		},
 		{
 			prop: 'description',
-			propsTranslate: [
-				{ key: 'description', alias: 'description' }
-			]
+			propsTranslate: [{ key: 'description', alias: 'description' }]
 		}
 	];
 
 	constructor(
 		@InjectRepository(Product)
-		private readonly productRepository: Repository<Product>,
+		productRepository: Repository<Product>,
 		@MikroInjectRepository(Product)
-		private readonly mikroProductRepository: EntityRepository<Product>,
+		mikroProductRepository: EntityRepository<Product>,
 
 		@InjectRepository(ProductTranslation)
 		private readonly productTranslationRepository: Repository<ProductTranslation>,
@@ -67,10 +56,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		super(productRepository, mikroProductRepository);
 	}
 
-	public async pagination(
-		filter: any,
-		language: LanguagesEnum
-	) {
+	public async pagination(filter: any, language: LanguagesEnum) {
 		if ('where' in filter) {
 			const { where } = filter;
 			if ('languageCode' in where) {
@@ -87,10 +73,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		});
 	}
 
-	public async findProducts(
-		input: any,
-		language: LanguagesEnum
-	): Promise<IPagination<Product | IProductTranslated>> {
+	public async findProducts(input: any, language: LanguagesEnum): Promise<IPagination<Product | IProductTranslated>> {
 		const { relations = [], findInput } = input;
 		const { items, total } = await this.findAll({
 			where: {
@@ -109,7 +92,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		findInput?: IProductFindInput,
 		options = { page: 1, limit: 10 }
 	): Promise<IPagination<Product | IProductTranslated>> {
-		const [items, total] = await this.productRepository.findAndCount({
+		const [items, total] = await this.repository.findAndCount({
 			// skip: (options.page - 1) * options.limit,
 			// take: options.limit,
 			relations: relations,
@@ -127,20 +110,15 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		id: string,
 		relations?: string[]
 	): Promise<Product | IProductTranslated> {
-		return await this
-			.findOneByOptions({
-				where: { id: id },
-				relations: relations
-			})
-			.then((result) => {
-				if (result) {
-					return result.translateNested(
-						langCode,
-						this.propsTranslate
-					);
-				}
-				return result;
-			});
+		return await this.findOneByOptions({
+			where: { id: id },
+			relations: relations
+		}).then((result) => {
+			if (result) {
+				return result.translateNested(langCode, this.propsTranslate);
+			}
+			return result;
+		});
 	}
 
 	async findById(id: string, options: any): Promise<Product> {
@@ -150,67 +128,44 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	async saveProduct(productRequest: IProductCreateInput): Promise<Product> {
 		let res = await this.create(<any>productRequest);
 		return await this.findOneByIdString(res.id, {
-			relations: [
-				'variants',
-				'optionGroups',
-				'productType',
-				'productCategory',
-				'tags',
-				'gallery'
-			]
+			relations: ['variants', 'optionGroups', 'productType', 'productCategory', 'tags', 'gallery']
 		});
 	}
 
-	async addGalleryImages(
-		productId: string,
-		images: IImageAsset[]
-	): Promise<Product> {
+	async addGalleryImages(productId: string, images: IImageAsset[]): Promise<Product> {
 		try {
 			let product = await this.findOneByIdString(productId, {
 				relations: ['gallery']
 			});
 			product.gallery = product.gallery.concat(images);
-			return await this.productRepository.save(product);
+			return await this.repository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
 	}
 
-	async setAsFeatured(
-		productId: string,
-		image: IImageAsset
-	): Promise<Product> {
+	async setAsFeatured(productId: string, image: IImageAsset): Promise<Product> {
 		try {
 			let product = await this.findOneByIdString(productId);
 			product.featuredImage = image;
-			return await this.productRepository.save(product);
+			return await this.repository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
 	}
 
-	async deleteGalleryImage(
-		productId: string,
-		imageId: string
-	): Promise<Product> {
+	async deleteGalleryImage(productId: string, imageId: string): Promise<Product> {
 		try {
 			let product = await this.findOneByIdString(productId, {
 				relations: ['gallery', 'variants']
-			})
+			});
 
-			if (
-				product.variants.find((variant) => variant.image.id == imageId)
-			) {
-				throw new HttpException(
-					'Image is used in product variants',
-					HttpStatus.BAD_REQUEST
-				);
+			if (product.variants.find((variant) => variant.image.id == imageId)) {
+				throw new HttpException('Image is used in product variants', HttpStatus.BAD_REQUEST);
 			}
 
-			product.gallery = product.gallery.filter(
-				(image) => image.id !== imageId
-			);
-			return await this.productRepository.save(product);
+			product.gallery = product.gallery.filter((image) => image.id !== imageId);
+			return await this.repository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -220,33 +175,21 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		try {
 			let product = await this.findOneByIdString(productId);
 			product.featuredImage = null;
-			return await this.productRepository.save(product);
+			return await this.repository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
 	}
 
-	async saveProductTranslation(
-		productTranslation: ProductTranslation
-	): Promise<ProductTranslation> {
+	async saveProductTranslation(productTranslation: ProductTranslation): Promise<ProductTranslation> {
 		return await this.productTranslationRepository.save(productTranslation);
 	}
 
-	async mapTranslatedProducts(
-		items: IProductTranslatable[],
-		languageCode: LanguagesEnum
-	) {
+	async mapTranslatedProducts(items: IProductTranslatable[], languageCode: LanguagesEnum) {
 		if (languageCode) {
 			return Promise.all(
 				items.map((product: IProductTranslatable) =>
-					Object.assign(
-						{},
-						product,
-						product.translateNested(
-							languageCode,
-							this.propsTranslate
-						)
-					)
+					Object.assign({}, product, product.translateNested(languageCode, this.propsTranslate))
 				)
 			);
 		} else {

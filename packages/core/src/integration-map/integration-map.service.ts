@@ -8,13 +8,12 @@ import { IntegrationMap } from './integration-map.entity';
 
 @Injectable()
 export class IntegrationMapService extends TenantAwareCrudService<IntegrationMap> {
-
 	constructor(
 		@InjectRepository(IntegrationMap)
-		private readonly integrationMap: Repository<IntegrationMap>,
+		integrationMap: Repository<IntegrationMap>,
 		@MikroInjectRepository(IntegrationMap)
-		private readonly mikroIntegrationMap: EntityRepository<IntegrationMap>,
+		mikroIntegrationMap: EntityRepository<IntegrationMap>
 	) {
-		super(integrationMap);
+		super(integrationMap, mikroIntegrationMap);
 	}
 }

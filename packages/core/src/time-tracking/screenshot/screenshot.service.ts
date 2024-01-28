@@ -15,9 +15,9 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	constructor(
 		@InjectRepository(Screenshot)
-		protected readonly screenshotRepository: Repository<Screenshot>,
+		screenshotRepository: Repository<Screenshot>,
 		@MikroInjectRepository(Screenshot)
-		protected readonly mikroScreenshotRepository: EntityRepository<Screenshot>,
+		mikroScreenshotRepository: EntityRepository<Screenshot>,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _gauzyAIService: GauzyAIService
 	) {

@@ -10,19 +10,16 @@ import { CandidateFeedback } from './candidate-feedbacks.entity';
 
 @Injectable()
 export class CandidateFeedbacksService extends TenantAwareCrudService<CandidateFeedback> {
-
 	constructor(
 		@InjectRepository(CandidateFeedback)
-		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>,
+		candidateFeedbackRepository: Repository<CandidateFeedback>,
 		@MikroInjectRepository(CandidateFeedback)
-		private readonly mikroCandidateFeedbackRepository: EntityRepository<CandidateFeedback>
+		mikroCandidateFeedbackRepository: EntityRepository<CandidateFeedback>
 	) {
 		super(candidateFeedbackRepository, mikroCandidateFeedbackRepository);
 	}
 
-	async getFeedbacksByInterviewId(
-		interviewId: ICandidateInterview['id']
-	): Promise<ICandidateFeedback[]> {
+	async getFeedbacksByInterviewId(interviewId: ICandidateInterview['id']): Promise<ICandidateFeedback[]> {
 		return await this.repository.find({
 			where: {
 				interviewId,

@@ -10,21 +10,19 @@ import { ProductVariantPrice } from './product-variant-price.entity';
 export class ProductVariantPriceService extends TenantAwareCrudService<ProductVariantPrice> {
 	constructor(
 		@InjectRepository(ProductVariantPrice)
-		private readonly productVariantPriceRepository: Repository<ProductVariantPrice>,
+		productVariantPriceRepository: Repository<ProductVariantPrice>,
 		@MikroInjectRepository(ProductVariantPrice)
-		private readonly mikroProductVariantPriceRepository: EntityRepository<ProductVariantPrice>
+		mikroProductVariantPriceRepository: EntityRepository<ProductVariantPrice>
 	) {
 		super(productVariantPriceRepository, mikroProductVariantPriceRepository);
 	}
 
 	async createDefaultProductVariantPrice(): Promise<ProductVariantPrice> {
 		const newProductVariantPrice = new ProductVariantPrice();
-		return this.productVariantPriceRepository.save(newProductVariantPrice);
+		return this.repository.save(newProductVariantPrice);
 	}
 
-	async deleteMany(
-		productVariantPrices: ProductVariantPrice[]
-	): Promise<ProductVariantPrice[]> {
-		return this.productVariantPriceRepository.remove(productVariantPrices);
+	async deleteMany(productVariantPrices: ProductVariantPrice[]): Promise<ProductVariantPrice[]> {
+		return this.repository.remove(productVariantPrices);
 	}
 }

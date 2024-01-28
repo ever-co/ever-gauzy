@@ -10,9 +10,9 @@ import { CandidateDocument } from './candidate-documents.entity';
 export class CandidateDocumentsService extends TenantAwareCrudService<CandidateDocument> {
 	constructor(
 		@InjectRepository(CandidateDocument)
-		private readonly candidateDocumentRepository: Repository<CandidateDocument>,
+		candidateDocumentRepository: Repository<CandidateDocument>,
 		@MikroInjectRepository(CandidateDocument)
-		private readonly mikroCandidateDocumentRepository: EntityRepository<CandidateDocument>
+		mikroCandidateDocumentRepository: EntityRepository<CandidateDocument>
 	) {
 		super(candidateDocumentRepository, mikroCandidateDocumentRepository);
 	}

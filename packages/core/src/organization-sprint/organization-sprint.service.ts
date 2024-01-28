@@ -10,9 +10,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 export class OrganizationSprintService extends TenantAwareCrudService<OrganizationSprint> {
 	constructor(
 		@InjectRepository(OrganizationSprint)
-		private readonly sprintRepository: Repository<OrganizationSprint>,
+		sprintRepository: Repository<OrganizationSprint>,
 		@MikroInjectRepository(OrganizationSprint)
-		private readonly mikroSprintRepository: EntityRepository<OrganizationSprint>
+		mikroSprintRepository: EntityRepository<OrganizationSprint>
 	) {
 		super(sprintRepository, mikroSprintRepository);
 	}

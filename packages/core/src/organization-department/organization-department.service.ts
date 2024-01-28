@@ -10,15 +10,15 @@ import { TenantAwareCrudService } from './../core/crud';
 export class OrganizationDepartmentService extends TenantAwareCrudService<OrganizationDepartment> {
 	constructor(
 		@InjectRepository(OrganizationDepartment)
-		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
+		organizationDepartmentRepository: Repository<OrganizationDepartment>,
 		@MikroInjectRepository(OrganizationDepartment)
-		private readonly mikroOrganizationDepartmentRepository: EntityRepository<OrganizationDepartment>
+		mikroOrganizationDepartmentRepository: EntityRepository<OrganizationDepartment>
 	) {
 		super(organizationDepartmentRepository, mikroOrganizationDepartmentRepository);
 	}
 
 	async findByEmployee(id: string): Promise<any> {
-		return await this.organizationDepartmentRepository
+		return await this.repository
 			.createQueryBuilder('organization_department')
 			.leftJoin('organization_department.members', 'member')
 			.where('member.id = :id', { id })
@@ -36,7 +36,7 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 				const { tags } = where;
 				filter.where.tags = {
 					id: In(tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

@@ -9,18 +9,18 @@ import { IntegrationEntitySettingTied } from './integration-entity-setting-tied.
 export class IntegrationEntitySettingTiedService extends TenantAwareCrudService<IntegrationEntitySettingTied> {
 	constructor(
 		@InjectRepository(IntegrationEntitySettingTied)
-		readonly repository: Repository<IntegrationEntitySettingTied>
+		integrationRepository: Repository<IntegrationEntitySettingTied>
 	) {
-		super(repository);
+		super(integrationRepository);
 	}
 
 	/**
 	 * CREATE | UPDATE bulk integration entity setting tied entities by integration
-	 * 
-	 * @param input 
-	 * @returns 
+	 *
+	 * @param input
+	 * @returns
 	 */
-	 async bulkUpdateOrCreate(
+	async bulkUpdateOrCreate(
 		input: IIntegrationEntitySettingTied | IIntegrationEntitySettingTied[]
 	): Promise<IIntegrationEntitySettingTied[]> {
 		const settings: IIntegrationEntitySettingTied[] = [];

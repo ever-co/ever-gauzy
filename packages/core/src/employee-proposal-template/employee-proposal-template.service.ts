@@ -11,21 +11,19 @@ import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
 		@InjectRepository(EmployeeProposalTemplate)
-		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
+		employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
 		@MikroInjectRepository(EmployeeProposalTemplate)
-		private readonly mikroEmployeeProposalTemplateRepository: EntityRepository<EmployeeProposalTemplate>
+		mikroEmployeeProposalTemplateRepository: EntityRepository<EmployeeProposalTemplate>
 	) {
 		super(employeeProposalTemplateRepository, mikroEmployeeProposalTemplateRepository);
 	}
 
-	async makeDefault(
-		id: IEmployeeProposalTemplate['id']
-	): Promise<IEmployeeProposalTemplate> {
+	async makeDefault(id: IEmployeeProposalTemplate['id']): Promise<IEmployeeProposalTemplate> {
 		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
 		proposalTemplate.isDefault = !proposalTemplate.isDefault;
 
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
-		await this.employeeProposalTemplateRepository.update(
+		await this.repository.update(
 			{
 				organizationId,
 				tenantId,
@@ -36,7 +34,7 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 			}
 		);
 
-		return await this.employeeProposalTemplateRepository.save(proposalTemplate);
+		return await this.repository.save(proposalTemplate);
 	}
 
 	/**

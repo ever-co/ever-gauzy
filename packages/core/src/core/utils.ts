@@ -16,25 +16,16 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 namespace Utils {
 	export function generatedLogoColor() {
-		return sample(['#269aff', '#ffaf26', '#8b72ff', '#0ecc9D']).replace(
-			'#',
-			''
-		);
+		return sample(['#269aff', '#ffaf26', '#8b72ff', '#0ecc9D']).replace('#', '');
 	}
 }
 
-export const getDummyImage = (
-	width: number,
-	height: number,
-	letter: string
-) => {
+export const getDummyImage = (width: number, height: number, letter: string) => {
 	return `https://dummyimage.com/${width}x${height}/${Utils.generatedLogoColor()}/ffffff.jpg&text=${letter}`;
 };
 
 export const getUserDummyImage = (user: IUser) => {
-	const firstNameLetter = user.firstName
-		? user.firstName.charAt(0).toUpperCase()
-		: '';
+	const firstNameLetter = user.firstName ? user.firstName.charAt(0).toUpperCase() : '';
 	if (firstNameLetter) {
 		return getDummyImage(330, 300, firstNameLetter);
 	} else {
@@ -62,7 +53,7 @@ export function arrayToObject(array, key, value) {
 	return array.reduce((prev, current) => {
 		return {
 			...prev,
-			[current[key]]: current[value],
+			[current[key]]: current[value]
 		};
 	}, {});
 }
@@ -70,10 +61,7 @@ export function arrayToObject(array, key, value) {
 /*
  * To convert unix timestamp to datetime using date format
  */
-export function unixTimestampToDate(
-	timestamps,
-	format = 'YYYY-MM-DD HH:mm:ss'
-) {
+export function unixTimestampToDate(timestamps, format = 'YYYY-MM-DD HH:mm:ss') {
 	const millisecond = 1000;
 	return moment.unix(timestamps / millisecond).format(format);
 }
@@ -123,11 +111,7 @@ export function getDateRange(
 		start = moment.utc(startDate).startOf(type);
 		end = moment.utc(endDate).endOf(type);
 	} else {
-		if (
-			(startDate && endDate === 'day') ||
-			endDate === 'week' ||
-			(startDate && !endDate)
-		) {
+		if ((startDate && endDate === 'day') || endDate === 'week' || (startDate && !endDate)) {
 			start = moment.utc(startDate).startOf(type);
 			end = moment.utc(startDate).endOf(type);
 		}
@@ -158,12 +142,14 @@ export function getDateRange(
 			}
 			break;
 		default:
-			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`)
+			throw Error(
+				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
+			);
 	}
 
 	return {
 		start,
-		end,
+		end
 	};
 }
 
@@ -244,16 +230,18 @@ export function getDateRangeFormat(
 		case databaseTypes.betterSqlite3:
 			return {
 				start: start.format('YYYY-MM-DD HH:mm:ss'),
-				end: end.format('YYYY-MM-DD HH:mm:ss'),
+				end: end.format('YYYY-MM-DD HH:mm:ss')
 			};
 		case databaseTypes.postgres:
 		case databaseTypes.mysql:
 			return {
 				start: start.toDate(),
-				end: end.toDate(),
+				end: end.toDate()
 			};
 		default:
-			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`)
+			throw Error(
+				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
+			);
 	}
 }
 
@@ -282,11 +270,7 @@ export function getDaysBetweenDates(
  * @param length
  */
 export function generateRandomInteger(length = 6) {
-	return Math.floor(
-		Math.pow(10, length - 1) +
-		Math.random() *
-		(Math.pow(10, length) - Math.pow(10, length - 1) - 1)
-	);
+	return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1));
 }
 
 /**
@@ -327,11 +311,7 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 		const start = moment(startedAt);
 		const end = moment(stoppedAt);
 
-		console.log(
-			'------ Stopped Timer ------',
-			start.toDate(),
-			end.toDate()
-		);
+		console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
 
 		if (!start.isValid() || !end.isValid()) {
 			throw 'Started and Stopped date must be valid date.';
@@ -366,7 +346,7 @@ export function findIntersection(arr1: any[], arr2: any[]) {
  * @returns {boolean} - Returns true if the database connection type is SQLite.
  */
 export function isSqliteDB(dbConnection?: IDBConnectionOptions): boolean {
-	return isDatabaseType([databaseTypes.sqlite, databaseTypes.betterSqlite3], dbConnection)
+	return isDatabaseType([databaseTypes.sqlite, databaseTypes.betterSqlite3], dbConnection);
 }
 
 /**
@@ -388,7 +368,16 @@ export type MultiORM = 'typeorm' | 'mikro-orm';
  * @returns The ORM type ('typeorm' or 'mikro-orm').
  */
 export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
-	return (process.env.DB_ORM as MultiORM) || defaultValue;
+	if (!process.env.DB_ORM) return defaultValue;
+
+	switch (process.env.DB_ORM) {
+		case MultiORMEnum.TypeORM:
+			return MultiORMEnum.TypeORM;
+		case MultiORMEnum.MikroORM:
+			return MultiORMEnum.MikroORM;
+		default:
+			return defaultValue;
+	}
 }
 
 /**
@@ -400,7 +389,7 @@ export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): Multi
 export function getDBType(dbConnection?: IDBConnectionOptions): any {
 	const dbORM = getORMType();
 	if (!dbConnection) {
-		dbConnection = getConfig().dbConnectionOptions
+		dbConnection = getConfig().dbConnectionOptions;
 	}
 
 	let dbType: any;
@@ -408,14 +397,11 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 		case MultiORMEnum.MikroORM:
 			if (dbConnection.driver instanceof SqliteDriver) {
 				dbType = databaseTypes.sqlite;
-			}
-			else if (dbConnection.driver instanceof BetterSqliteDriver) {
+			} else if (dbConnection.driver instanceof BetterSqliteDriver) {
 				dbType = databaseTypes.betterSqlite3;
-			}
-			else if (dbConnection.driver instanceof PostgreSqlDriver) {
+			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
 				dbType = databaseTypes.postgres;
-			}
-			else if (dbConnection.driver instanceof MySqlDriver) {
+			} else if (dbConnection.driver instanceof MySqlDriver) {
 				dbType = databaseTypes.mysql;
 			} else {
 				dbType = databaseTypes.postgres;
@@ -423,11 +409,11 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 			break;
 
 		default:
-			dbType = (dbConnection as TypeOrmModuleOptions).type
+			dbType = (dbConnection as TypeOrmModuleOptions).type;
 			break;
 	}
 
-	return dbType
+	return dbType;
 }
 
 /**
@@ -441,11 +427,11 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 export function isDatabaseType(types: databaseTypes | databaseTypes[], dbConnection?: IDBConnectionOptions): boolean {
 	// If no connection options are provided, use the default options from the configuration
 	if (!dbConnection) {
-		dbConnection = getConfig().dbConnectionOptions
+		dbConnection = getConfig().dbConnectionOptions;
 	}
 
 	// Get the database type from the connection options
-	let dbType = getDBType(dbConnection)
+	let dbType = getDBType(dbConnection);
 
 	// Check if the provided types match the database type
 	if (types instanceof Array) {

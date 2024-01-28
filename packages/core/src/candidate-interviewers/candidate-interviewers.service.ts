@@ -5,25 +5,20 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
-import {
-	ICandidateInterviewersDeleteInput,
-	ICandidateInterviewersCreateInput
-} from '@gauzy/contracts';
+import { ICandidateInterviewersDeleteInput, ICandidateInterviewersCreateInput } from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateInterviewersService extends TenantAwareCrudService<CandidateInterviewers> {
 	constructor(
 		@InjectRepository(CandidateInterviewers)
-		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>,
+		candidateInterviewersRepository: Repository<CandidateInterviewers>,
 		@MikroInjectRepository(CandidateInterviewers)
-		private readonly mikroCandidateInterviewersRepository: EntityRepository<CandidateInterviewers>
+		mikroCandidateInterviewersRepository: EntityRepository<CandidateInterviewers>
 	) {
 		super(candidateInterviewersRepository, mikroCandidateInterviewersRepository);
 	}
 
-	async getInterviewersByInterviewId(
-		interviewId: string
-	): Promise<CandidateInterviewers[]> {
+	async getInterviewersByInterviewId(interviewId: string): Promise<CandidateInterviewers[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.interviewId = :interviewId', {
@@ -32,9 +27,7 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 			.getMany();
 	}
 
-	async getInterviewersByEmployeeId(
-		employeeId: ICandidateInterviewersDeleteInput
-	): Promise<any> {
+	async getInterviewersByEmployeeId(employeeId: ICandidateInterviewersDeleteInput): Promise<any> {
 		return await this.repository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.employeeId = :employeeId', {

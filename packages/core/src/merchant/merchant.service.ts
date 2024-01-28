@@ -7,27 +7,20 @@ import { TenantAwareCrudService } from './../core/crud';
 import { Merchant } from './merchant.entity';
 
 export class MerchantService extends TenantAwareCrudService<Merchant> {
+	constructor(
+		@InjectRepository(Merchant)
+		merchantRepository: Repository<Merchant>,
+		@MikroInjectRepository(Merchant)
+		mikroMerchantRepository: EntityRepository<Merchant>
+	) {
+		super(merchantRepository, mikroMerchantRepository);
+	}
 
-    constructor(
-        @InjectRepository(Merchant)
-        private readonly merchantRepository: Repository<Merchant>,
-        @MikroInjectRepository(Merchant)
-        private readonly mikroMerchantRepository: EntityRepository<Merchant>
-    ) {
-        super(merchantRepository, mikroMerchantRepository);
-    }
+	async findById(id: IMerchant['id'], relations: string[] = []): Promise<IMerchant> {
+		return await this.findOneByIdString(id, { relations });
+	}
 
-    async findById(
-        id: IMerchant['id'],
-        relations: string[] = []
-    ): Promise<IMerchant> {
-        return await this.findOneByIdString(id, { relations });
-    }
-
-    async update(
-        id: IMerchant['id'],
-        merchant: Merchant
-    ): Promise<IMerchant> {
-        return await this.merchantRepository.save({ id, ...merchant });
-    }
+	async update(id: IMerchant['id'], merchant: Merchant): Promise<IMerchant> {
+		return await this.repository.save({ id, ...merchant });
+	}
 }

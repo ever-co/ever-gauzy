@@ -10,9 +10,9 @@ import { TenantAwareCrudService } from '../../core/crud';
 export class TaskLinkedIssueService extends TenantAwareCrudService<TaskLinkedIssue> {
 	constructor(
 		@InjectRepository(TaskLinkedIssue)
-		protected readonly taskLinkedIssueRepository: Repository<TaskLinkedIssue>,
+		taskLinkedIssueRepository: Repository<TaskLinkedIssue>,
 		@MikroInjectRepository(TaskLinkedIssue)
-		protected readonly mikroTaskLinkedIssueRepository: EntityRepository<TaskLinkedIssue>
+		mikroTaskLinkedIssueRepository: EntityRepository<TaskLinkedIssue>
 	) {
 		super(taskLinkedIssueRepository, mikroTaskLinkedIssueRepository);
 	}
