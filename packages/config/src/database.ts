@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as chalk from 'chalk';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
+import { EntityCaseNamingStrategy } from '@mikro-orm/core';
 import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
 import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
@@ -9,7 +10,7 @@ import { Options as MikroOrmMySqlOptions } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { databaseTypes, getTlsOptions } from './database-helpers';
+import { databaseTypes, getLoggingOptions, getTlsOptions } from './database-helpers';
 
 let dbType: string;
 const dbORM: 'typeorm' | 'mikro-orm' = process.env.DB_ORM as any || 'typeorm';
@@ -52,6 +53,7 @@ switch (dbType) {
 			driverOptions: {
 				connection: { ssl: getTlsOptions(process.env.DB_SSL_MODE) },
 			},
+			namingStrategy: EntityCaseNamingStrategy
 		};
 		mikroORMConnectionConfig = mikroOrmMySqlOptions;
 
@@ -76,14 +78,7 @@ switch (dbType) {
 			password: process.env.DB_PASS || 'root',
 			// forcing typeorm to use (mysql2) if both (mysql/mysql2) packages found, it prioritize to load (mysql)
 			connectorPackage: 'mysql2',
-			logging:
-				process.env.DB_LOGGING == 'false'
-					? false
-					: process.env.DB_LOGGING == 'all'
-						? 'all'
-						: process.env.DB_LOGGING == 'query'
-							? ['query', 'error']
-							: ['error'], // by default set to error only
+			logging: getLoggingOptions(process.env.DB_LOGGING), // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 10 sec as warnings
 			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
@@ -118,6 +113,7 @@ switch (dbType) {
 			driverOptions: {
 				connection: { ssl: getTlsOptions(process.env.DB_SSL_MODE) },
 			},
+			namingStrategy: EntityCaseNamingStrategy
 		};
 		mikroORMConnectionConfig = mikroOrmPostgresOptions;
 
@@ -142,14 +138,7 @@ switch (dbType) {
 			database: process.env.DB_NAME || 'postgres',
 			username: process.env.DB_USER || 'postgres',
 			password: process.env.DB_PASS || 'root',
-			logging:
-				process.env.DB_LOGGING == 'false'
-					? false
-					: process.env.DB_LOGGING == 'all'
-						? 'all'
-						: process.env.DB_LOGGING == 'query'
-							? ['query', 'error']
-							: ['error'], // by default set to error only
+			logging: getLoggingOptions(process.env.DB_LOGGING), // by default set to error only
 			logger: 'advanced-console',
 			// log queries that take more than 10 sec as warnings
 			maxQueryExecutionTime: dbSlowQueryLoggingTimeout,
@@ -174,7 +163,6 @@ switch (dbType) {
 		};
 
 		connectionConfig = postgresConnectionOptions;
-
 
 		break;
 

@@ -27,7 +27,7 @@ import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
-import { MultiORM, MultiORMEnum, getORMType } from './../../core/utils';
+import { MultiORM, MultiORMEnum, flatten, getORMType } from './../../core/utils';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -429,8 +429,8 @@ export abstract class CrudService<T extends BaseEntity>
 				const mikroOptions = options as any;
 				const mikroFilterQuery: MikroFilterQuery<T> = options.where as FilterQuery<T>;
 				const mikroFindOneOptions: MikroFindOneOptions<T> = {
-					populate: mikroOptions.relations,
-					orderBy: mikroOptions.order
+					...(mikroOptions.relations ? { populate: flatten(mikroOptions.relations) } : {}),
+					...(mikroOptions.order ? { orderBy: mikroOptions.order } : {}),
 				};
 				console.log({ mikroFilterQuery }, { mikroFindOneOptions })
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);

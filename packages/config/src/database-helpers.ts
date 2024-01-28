@@ -32,3 +32,26 @@ export const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
 		ca: sslCert
 	};
 }
+
+/**
+ * Get logging options based on the provided dbLogging value.
+ * @param {string} dbLogging - The value of process.env.DB_LOGGING
+ * @returns {false | 'all' | ['query', 'error'] | ['error']} - The logging options
+ */
+export const getLoggingOptions = (dbLogging: string): false | 'all' | ['query', 'error'] | ['error'] => {
+	let loggingOptions: false | 'all' | ['query', 'error'] | ['error'];
+	switch (dbLogging) {
+		case 'false':
+			loggingOptions = false;
+			break;
+		case 'all':
+			loggingOptions = 'all';
+			break;
+		case 'query':
+			loggingOptions = ['query', 'error'];
+			break;
+		default:
+			loggingOptions = ['error'];
+	}
+	return loggingOptions;
+};

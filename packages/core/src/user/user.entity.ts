@@ -30,6 +30,7 @@ import {
 	ICandidate,
 	IImageAsset
 } from '@gauzy/contracts';
+import { MikroManyToOne, TypeManyToOne } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,
@@ -186,7 +187,14 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Role
 	 */
-	@ManyToOne(() => Role, {
+	@MikroManyToOne(() => Role, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		deleteRule: 'set null'
+	})
+	@TypeManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -202,6 +210,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.role)
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	roleId?: string;
 
 	/**

@@ -362,7 +362,7 @@ export function findIntersection(arr1: any[], arr2: any[]) {
 /**
  * Check if the given database connection type is SQLite.
  *
- * @param {string} connectionType - The database connection type.
+ * @param {string} dbConnection - The database connection type.
  * @returns {boolean} - Returns true if the database connection type is SQLite.
  */
 export function isSqliteDB(dbConnection?: IDBConnectionOptions): boolean {
@@ -392,31 +392,33 @@ export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): Multi
 }
 
 /**
+ * Gets the database type based on the provided database connection options or default options.
  *
- * @param dbConnection
- * @returns
+ * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
+ * @returns {databaseTypes} - The detected database type.
  */
-export function getDBType(dbConnection?: IDBConnectionOptions) {
+export function getDBType(dbConnection?: IDBConnectionOptions): any {
 	const dbORM = getORMType();
 	if (!dbConnection) {
 		dbConnection = getConfig().dbConnectionOptions
 	}
-	let dbType;
+
+	let dbType: any;
 	switch (dbORM) {
-		case 'mikro-orm':
+		case MultiORMEnum.MikroORM:
 			if (dbConnection.driver instanceof SqliteDriver) {
-				dbType = databaseTypes.sqlite
+				dbType = databaseTypes.sqlite;
 			}
 			else if (dbConnection.driver instanceof BetterSqliteDriver) {
-				dbType = databaseTypes.betterSqlite3
+				dbType = databaseTypes.betterSqlite3;
 			}
 			else if (dbConnection.driver instanceof PostgreSqlDriver) {
-				dbType = databaseTypes.postgres
+				dbType = databaseTypes.postgres;
 			}
 			else if (dbConnection.driver instanceof MySqlDriver) {
-				dbType = databaseTypes.mysql
+				dbType = databaseTypes.mysql;
 			} else {
-				dbType = databaseTypes.postgres
+				dbType = databaseTypes.postgres;
 			}
 			break;
 
@@ -428,16 +430,53 @@ export function getDBType(dbConnection?: IDBConnectionOptions) {
 	return dbType
 }
 
-
-export function isDatabaseType(types: databaseTypes | databaseTypes[], dbConnection?: IDBConnectionOptions) {
+/**
+ * Checks whether the provided database type(s) match the database type of the given connection options.
+ * If no connection options are provided, it uses the default options from the configuration.
+ *
+ * @param {databaseTypes | databaseTypes[]} types - The expected database type(s) to check against.
+ * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
+ * @returns {boolean} - Returns true if the database type matches any of the provided types.
+ */
+export function isDatabaseType(types: databaseTypes | databaseTypes[], dbConnection?: IDBConnectionOptions): boolean {
+	// If no connection options are provided, use the default options from the configuration
 	if (!dbConnection) {
 		dbConnection = getConfig().dbConnectionOptions
 	}
+
+	// Get the database type from the connection options
 	let dbType = getDBType(dbConnection)
 
+	// Check if the provided types match the database type
 	if (types instanceof Array) {
 		return types.includes(dbType);
 	} else {
 		return types == dbType;
 	}
 }
+
+/**
+ * Recursively flattens nested objects into an array of dot-notated keys.
+ * If the input is already an array, returns it as is.
+ *
+ * @param {any} input - The input object or array to be flattened.
+ * @returns {string[]} - An array of dot-notated keys.
+ */
+export const flatten = (input: any): any => {
+	if (Array.isArray(input)) {
+		// If input is already an array, return it as is
+		return input;
+	}
+
+	if (typeof input === 'object' && input !== null) {
+		return Object.keys(input).reduce((acc, key) => {
+			const value = input[key];
+			const nestedKeys = flatten(value);
+			const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
+			return acc.concat(newKey);
+		}, []);
+	}
+
+	// If input is neither an array nor an object, return an empty array
+	return [];
+};
