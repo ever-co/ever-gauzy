@@ -45,7 +45,7 @@ import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settin
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -102,7 +102,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		TasksSprintSettingsViewModule,
 		HeaderTitleModule,
 		TableFiltersModule,
-		PaginationModule,
+		PaginationV2Module,
 		ProjectSelectModule,
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,

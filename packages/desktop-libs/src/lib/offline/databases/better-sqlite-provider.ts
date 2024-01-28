@@ -1,6 +1,6 @@
 import { IServerLessProvider } from '../../interfaces';
 import { Knex } from 'knex';
-import path from 'path';
+import * as path from 'path';
 import { app } from 'electron';
 
 export class BetterSqliteProvider implements IServerLessProvider {
@@ -27,18 +27,15 @@ export class BetterSqliteProvider implements IServerLessProvider {
 		return {
 			client: 'better-sqlite3',
 			connection: {
-				filename: path.resolve(
-					app?.getPath('userData') || __dirname,
-					'gauzy.sqlite3'
-				),
-				timezone: 'utc',
+				filename: path.resolve(app?.getPath('userData') || __dirname, 'gauzy.sqlite3'),
+				timezone: 'utc'
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			useNullAsDefault: true,
 			debug: false,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 }
