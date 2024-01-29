@@ -14,7 +14,7 @@ import {
 	OneToOne,
 	OneToMany
 } from 'typeorm';
-import { EntityRepositoryType, Property } from '@mikro-orm/core';
+import { Property } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -47,8 +47,6 @@ import { UserRepository } from './user.repository';
 
 @MultiORMEntity('user', { repository: () => UserRepository })
 export class User extends TenantBaseEntity implements IUser {
-
-	[EntityRepositoryType]?: UserRepository;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

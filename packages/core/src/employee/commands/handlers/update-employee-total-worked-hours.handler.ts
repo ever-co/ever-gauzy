@@ -7,7 +7,6 @@ import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-
 import { EmployeeService } from '../../employee.service';
 import { TimeLog } from './../../../core/entities/internal';
 import { RequestContext } from './../../../core';
-import { isSqliteDB } from './../../../core/utils';
 const config = getConfig();
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
