@@ -1,19 +1,21 @@
-import { Entity as MikroOrmEntity, EntityOptions as MikroEntityOptions } from "@mikro-orm/core";
+import { Entity as MikroOrmEntity } from "@mikro-orm/core";
 import { Entity as TypeOrmEntity, EntityOptions } from 'typeorm';
 import { isObject } from "@gauzy/common";
+import { MikroOrmEntityOptions } from "./mikro.types";
+import { parseMikroEntityOptions } from './mikro.helper';
 
 /**
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
  * @param options Options for the entity.
  */
-export function MultiORMEntity(options?: EntityOptions | MikroEntityOptions<any>): ClassDecorator;
+export function MultiORMEntity<T>(options?: EntityOptions | MikroOrmEntityOptions<T>): ClassDecorator;
 
 /**
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
  * @param name Name of the entity table.
  * @param options Options for the entity.
  */
-export function MultiORMEntity(name?: string, options?: EntityOptions | MikroEntityOptions<any>): ClassDecorator;
+export function MultiORMEntity<T>(name?: string, options?: EntityOptions | MikroOrmEntityOptions<T>): ClassDecorator;
 
 /**
  * Decorator for creating entities with both MikroORM and TypeORM decorators.
@@ -27,8 +29,8 @@ export function MultiORMEntity(name?: string, options?: EntityOptions | MikroEnt
  * @param maybeOptions Options for the entity (if nameOrOptions is a string).
  * @returns Class decorator.
  */
-export function MultiORMEntity(
-    nameOrOptions?: string | EntityOptions | MikroEntityOptions<any>,
+export function MultiORMEntity<T>(
+    nameOrOptions?: string | EntityOptions | MikroOrmEntityOptions<T>,
     maybeOptions?: EntityOptions
 ): ClassDecorator {
     // Extract MikroORM options based on the type of nameOrOptions
@@ -42,8 +44,10 @@ export function MultiORMEntity(
      * @param target The target class.
      */
     return (target: any) => {
+        console.log(parseMikroEntityOptions(mikroOrmOptions));
+
         // Apply MikroORM entity decorator to the target class prototype
-        MikroOrmEntity(mikroOrmOptions)(target);
+        MikroOrmEntity(parseMikroEntityOptions(mikroOrmOptions))(target);
 
         // Apply TypeORM entity decorator to the target class
         TypeOrmEntity(typeOrmOptions, maybeOptions)(target);

@@ -37,8 +37,8 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { TaskService } from './../tasks/task.service';
+import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { User } from './user.entity';
-import { UserRepository as MikroUserRepository } from './user.repository';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
@@ -49,11 +49,11 @@ export class UserService extends TenantAwareCrudService<User> {
 		private readonly _taskService: TaskService,
 
 		@InjectRepository(User)
-		public readonly userRepository: Repository<User>,
+		public readonly typeOrmUserRepository: Repository<User>,
 
-		public readonly mikroUserRepository: MikroUserRepository,
+		mikroOrmUserRepository: MikroOrmUserRepository,
 	) {
-		super(userRepository, mikroUserRepository);
+		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
 
 	/**
