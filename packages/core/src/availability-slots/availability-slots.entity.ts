@@ -17,11 +17,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
 
-@MultiORMEntity('availability_slot')
-export class AvailabilitySlot
-	extends TenantOrganizationBaseEntity
-	implements IAvailabilitySlot {
+@MultiORMEntity('availability_slot', { mikroOrmRepository: () => MikroOrmAvailabilitySlotRepository })
+export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IAvailabilitySlot {
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()

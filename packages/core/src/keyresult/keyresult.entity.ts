@@ -30,8 +30,7 @@ import {
 import { MultiORMEntity } from './../core/decorators/entity';
 
 @MultiORMEntity('key_result')
-export class KeyResult
-	extends TenantOrganizationBaseEntity
+export class KeyResult extends TenantOrganizationBaseEntity
 	implements IKeyResult {
 
 	@ApiProperty({ type: () => String })

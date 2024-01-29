@@ -13,9 +13,7 @@ import {
 import { MultiORMEntity } from './../core/decorators/entity';
 
 @MultiORMEntity('goal_kpi_template')
-export class GoalKPITemplate
-	extends TenantOrganizationBaseEntity
-	implements IGoalKPITemplate {
+export class GoalKPITemplate extends TenantOrganizationBaseEntity implements IGoalKPITemplate {
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;

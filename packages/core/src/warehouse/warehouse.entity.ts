@@ -30,8 +30,9 @@ import {
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
 
-@MultiORMEntity('warehouse')
+@MultiORMEntity('warehouse', { mikroOrmRepository: () => MikroOrmWarehouseRepository })
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => String })

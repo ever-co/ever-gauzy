@@ -4,8 +4,9 @@ import { AccountingTemplateTypeEnum, IAccountingTemplate } from '@gauzy/contract
 import { isMySQL } from '@gauzy/config';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
-@MultiORMEntity('accounting_template')
+@MultiORMEntity('accounting_template', { mikroOrmRepository: () => MikroOrmAccountingTemplateRepository })
 export class AccountingTemplate extends TenantOrganizationBaseEntity
 	implements IAccountingTemplate {
 

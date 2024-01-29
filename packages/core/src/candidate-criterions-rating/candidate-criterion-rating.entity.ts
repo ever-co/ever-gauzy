@@ -13,8 +13,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-orm-candidate-criterions-rating.repository';
 
-@MultiORMEntity('candidate_criterion_rating')
+@MultiORMEntity('candidate_criterion_rating', { mikroOrmRepository: () => MikroOrmCandidateCriterionsRatingRepository })
 export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
 

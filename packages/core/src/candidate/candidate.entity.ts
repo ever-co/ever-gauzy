@@ -48,8 +48,9 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 
-@MultiORMEntity('candidate')
+@MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
 	@ApiPropertyOptional({ type: () => Number })
 	@Column({

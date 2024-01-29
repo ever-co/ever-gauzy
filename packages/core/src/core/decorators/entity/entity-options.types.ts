@@ -11,7 +11,7 @@ export type MikroOrmEntityOptions<T> = MikroEntityOptions<T> & {
     /**
      * Optional function returning the repository constructor.
      */
-    microOrmRepository?: () => ConstructorType;
+    mikroOrmRepository?: () => ConstructorType;
 };
 
 /**

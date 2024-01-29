@@ -8,8 +8,9 @@ import { IApprovalPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmApprovalPolicyRepository } from './repository/mikro-orm-approval-policy.repository';
 
-@MultiORMEntity('approval_policy')
+@MultiORMEntity('approval_policy', { mikroOrmRepository: () => MikroOrmApprovalPolicyRepository })
 export class ApprovalPolicy extends TenantOrganizationBaseEntity
 	implements IApprovalPolicy {
 

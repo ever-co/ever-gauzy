@@ -8,8 +8,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmAppointmentEmployeeRepository } from './repository/mikro-orm-appointment-employee.repository';
 
-@MultiORMEntity('appointment_employee')
+@MultiORMEntity('appointment_employee', { mikroOrmRepository: () => MikroOrmAppointmentEmployeeRepository })
 export class AppointmentEmployee extends TenantOrganizationBaseEntity implements IAppointmentEmployee {
 
 	@ApiProperty({ type: () => String })

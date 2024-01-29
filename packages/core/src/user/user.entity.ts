@@ -45,7 +45,7 @@ import {
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
-@MultiORMEntity('user', { microOrmRepository: () => MikroOrmUserRepository })
+@MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
 
 	@ApiPropertyOptional({ type: () => String })

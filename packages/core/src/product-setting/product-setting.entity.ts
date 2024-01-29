@@ -1,6 +1,6 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, OneToOne, JoinColumn } from 'typeorm';
 import { IProductVariantSetting } from '@gauzy/contracts';
-import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
@@ -8,9 +8,8 @@ import {
 import { MultiORMEntity } from './../core/decorators/entity';
 
 @MultiORMEntity('product_variant_setting')
-export class ProductVariantSetting
-	extends TenantOrganizationBaseEntity
-	implements IProductVariantSetting {
+export class ProductVariantSetting extends TenantOrganizationBaseEntity implements IProductVariantSetting {
+
 	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ default: false })
 	isSubscription: boolean;

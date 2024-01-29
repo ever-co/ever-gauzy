@@ -1,14 +1,14 @@
 import { MikroOrmEntityOptions, TypeOrmEntityOptions } from "./entity-options.types";
 
 /**
- * Parse MikroORM entity options, renaming 'microOrmRepository' to 'repository'.
+ * Parse MikroORM entity options, renaming 'mikroOrmRepository' to 'repository'.
  *
  * @param {MikroOrmEntityOptions<any>} options - MikroORM entity options.
  * @returns {Record<string, any>} - Parsed options.
  */
-export const parseMikroOrmEntityOptions = ({ microOrmRepository, ...restOptions }: MikroOrmEntityOptions<any>): Record<string, any> => (
+export const parseMikroOrmEntityOptions = ({ mikroOrmRepository, ...restOptions }: MikroOrmEntityOptions<any>): Record<string, any> => (
     filterOptions({
-        repository: microOrmRepository,
+        repository: mikroOrmRepository,
         ...restOptions,
     })
 );

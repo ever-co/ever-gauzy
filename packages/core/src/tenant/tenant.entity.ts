@@ -18,8 +18,9 @@ import {
 	RolePermission
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 
-@MultiORMEntity('tenant')
+@MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
 
 	@ApiProperty({ type: () => String })
