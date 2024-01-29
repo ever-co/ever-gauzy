@@ -12,7 +12,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-	Repository,
 	InsertResult,
 	SelectQueryBuilder,
 	Brackets,
@@ -38,6 +37,7 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { TaskService } from './../tasks/task.service';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 import { User } from './user.entity';
 
 @Injectable()
@@ -49,7 +49,7 @@ export class UserService extends TenantAwareCrudService<User> {
 		private readonly _taskService: TaskService,
 
 		@InjectRepository(User)
-		public readonly typeOrmUserRepository: Repository<User>,
+		typeOrmUserRepository: TypeOrmUserRepository,
 
 		mikroOrmUserRepository: MikroOrmUserRepository,
 	) {
