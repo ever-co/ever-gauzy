@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
@@ -13,13 +14,24 @@ import { EmployeeModule } from './../employee/employee.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+
+const entities = [
+	Task,
+	TaskStatus,
+	IntegrationMap
+];
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/tasks', module: TaskModule }]),
-		TypeOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
-		MikroOrmModule.forFeature([Task, TaskStatus, IntegrationMap]),
+		RouterModule.register([
+			{ path: '/tasks', module: TaskModule }
+		]),
+		MikroOrmModule.forFeature([
+			...entities
+		]),
+		TypeOrmModule.forFeature([
+			...entities
+		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		RoleModule,

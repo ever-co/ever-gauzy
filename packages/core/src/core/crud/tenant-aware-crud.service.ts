@@ -9,25 +9,25 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { EntityRepository } from '@mikro-orm/core';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { User } from '../../user/user.entity';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { ICrudService } from './icrud.service';
 import { ITryRequest } from './try-request';
-import { isNotEmpty } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 
 /**
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
  */
-export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
-	extends CrudService<T>
-	implements ICrudService<T>
-{
-	protected constructor(repository: Repository<T>, mikroRepository?: EntityRepository<T>) {
+export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
+	protected constructor(
+		repository: Repository<T>,
+		mikroRepository?: EntityRepository<T>
+	) {
 		super(repository, mikroRepository);
 	}
 
@@ -40,13 +40,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			(
 				isNotEmpty(employeeId)
 					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					  this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+						this.repository.metadata.hasColumnWithPropertyPath('employeeId')
 						? {
-								employee: {
-									id: employeeId
-								},
-								employeeId: employeeId
-						  }
+							employee: {
+								id: employeeId
+							},
+							employeeId: employeeId
+						}
 						: {}
 					: {}
 			) as FindOptionsWhere<T>
@@ -57,11 +57,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return {
 			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
 				? {
-						tenant: {
-							id: user.tenantId
-						},
-						tenantId: user.tenantId
-				  }
+					tenant: {
+						id: user.tenantId
+					},
+					tenantId: user.tenantId
+				}
 				: {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
@@ -84,12 +84,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return (
 			where
 				? {
-						...where,
-						...this.findConditionsWithTenantByUser(user)
-				  }
+					...where,
+					...this.findConditionsWithTenantByUser(user)
+				}
 				: {
-						...this.findConditionsWithTenantByUser(user)
-				  }
+					...this.findConditionsWithTenantByUser(user)
+				}
 		) as FindOptionsWhere<T>;
 	}
 
@@ -305,24 +305,24 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			...entity,
 			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
 				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-				  }
+					tenant: {
+						id: tenantId
+					},
+					tenantId
+				}
 				: {}),
 			/**
 			 * If employee has login & create data for self
 			 */
 			...(isNotEmpty(employeeId)
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-				  this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+					this.repository.metadata.hasColumnWithPropertyPath('employeeId')
 					? {
-							employee: {
-								id: employeeId
-							},
-							employeeId: employeeId
-					  }
+						employee: {
+							id: employeeId
+						},
+						employeeId: employeeId
+					}
 					: {}
 				: {})
 		});
@@ -341,11 +341,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			...entity,
 			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
 				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-				  }
+					tenant: {
+						id: tenantId
+					},
+					tenantId
+				}
 				: {})
 		});
 	}

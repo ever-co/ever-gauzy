@@ -23,31 +23,35 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	ComponentLayoutStyleEnum,
+	IUser,
+	LanguagesEnum,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { User } from './user.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { TaskService } from './../tasks/task.service';
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
+import { User } from './user.entity';
+import { UserRepository as MikroUserRepository } from './user.repository';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
-		@InjectRepository(User)
-		userRepository: Repository<User>,
-
-		@MikroInjectRepository(User)
-		mikroUserRepository: EntityRepository<User>,
-
 		private readonly _configService: ConfigService,
 
 		@Inject(forwardRef(() => TaskService))
-		private readonly _taskService: TaskService
+		private readonly _taskService: TaskService,
+
+		@InjectRepository(User)
+		public readonly userRepository: Repository<User>,
+
+		public readonly mikroUserRepository: MikroUserRepository,
 	) {
 		super(userRepository, mikroUserRepository);
 	}
@@ -63,15 +67,12 @@ export class UserService extends TenantAwareCrudService<User> {
 			case MultiORMEnum.MikroORM:
 				throw new Error(`Not implemented for ${this.ormType}`);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.update(
-					{ id },
-					{
-						emailVerifiedAt: freshTimestamp(),
-						emailToken: null,
-						code: null,
-						codeExpireAt: null
-					}
-				);
+				return await this.repository.update({ id }, {
+					emailVerifiedAt: freshTimestamp(),
+					emailToken: null,
+					code: null,
+					codeExpireAt: null
+				});
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -84,9 +85,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
-		return await this.repository.findOneBy({
-			email
-		});
+		return await this.repository.findOneBy({ email });
 	}
 
 	/**
@@ -97,9 +96,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getOAuthLoginEmail(email: string): Promise<IUser> {
 		try {
-			return await this.repository.findOneByOrFail({
-				email
-			});
+			return await this.repository.findOneByOrFail({ email });
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -197,7 +194,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch {}
+			} catch { }
 		} catch (error) {
 			throw new ForbiddenException();
 		}

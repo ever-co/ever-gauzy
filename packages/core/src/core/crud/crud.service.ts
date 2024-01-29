@@ -41,13 +41,14 @@ import {
 } from './icrud.service';
 import { ITryRequest } from './try-request';
 
+//
 const ormType: MultiORM = getORMType();
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
 	protected constructor(
 		protected readonly repository: Repository<T>,
 		protected readonly mikroRepository?: EntityRepository<T>
-	) {}
+	) { }
 
 	/**
 	 * Alias (default we used table name) for pagination crud
@@ -113,15 +114,13 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				total = await this.mikroRepository.count(options as MikroFilterQuery<T>);
-				items = await this.mikroRepository.find(
+				[items, total] = await this.mikroRepository.findAndCount(
 					options?.where as MikroFilterQuery<T>,
 					options as MikroFindOptions<T>
 				);
 				break;
 			case MultiORMEnum.TypeORM:
-				total = await this.repository.count(options as FindManyOptions<T>);
-				items = await this.repository.find(options as FindManyOptions<T>);
+				[items, total] = await this.repository.findAndCount(options as FindManyOptions<T>);
 				break;
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
@@ -184,29 +183,13 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						 */
 						...(options && options.join
 							? {
-									join: options.join
-							  }
+								join: options.join
+							}
 							: {}),
-						...(options && options.select
-							? {
-									select: options.select
-							  }
-							: {}),
-						...(options && options.relations
-							? {
-									relations: options.relations
-							  }
-							: {}),
-						...(options && options.where
-							? {
-									where: options.where
-							  }
-							: {}),
-						...(options && options.order
-							? {
-									order: options.order
-							  }
-							: {})
+						...(options && options.select ? { select: options.select } : {}),
+						...(options && options.relations ? { relations: options.relations } : {}),
+						...(options && options.where ? { where: options.where } : {}),
+						...(options && options.order ? { order: options.order } : {})
 					});
 					break;
 				default:
@@ -259,23 +242,15 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					record = await this.repository.findOneOrFail({
 						...(options && options.select
 							? {
-									select: options.select
-							  }
+								select: options.select
+							}
 							: {}),
 						where: {
 							id,
 							...(options && options.where ? options.where : {})
 						},
-						...(options && options.relations
-							? {
-									relations: options.relations
-							  }
-							: []),
-						...(options && options.order
-							? {
-									order: options.order
-							  }
-							: {})
+						...(options && options.relations ? { relations: options.relations } : []),
+						...(options && options.order ? { order: options.order } : {})
 					} as FindOneOptions<T>);
 					break;
 				default:
@@ -396,25 +371,13 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			case MultiORMEnum.TypeORM:
 				options = options as FindOneOptions<T>;
 				record = await this.repository.findOne({
-					...(options && options.select
-						? {
-								select: options.select
-						  }
-						: {}),
+					...(options && options.select ? { select: options.select } : {}),
 					where: {
 						id,
 						...(options && options.where ? options.where : {})
 					},
-					...(options && options.relations
-						? {
-								relations: options.relations
-						  }
-						: []),
-					...(options && options.order
-						? {
-								order: options.order
-						  }
-						: {})
+					...(options && options.relations ? { relations: options.relations } : []),
+					...(options && options.order ? { order: options.order } : {})
 				} as FindOneOptions<T>);
 				break;
 			default:
@@ -439,6 +402,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
+				console.log(this.mikroRepository);
 				const mikroOptions = options as any;
 				const mikroFilterQuery: MikroFilterQuery<T> = options.where as FilterQuery<T>;
 				const mikroFindOneOptions: MikroFindOneOptions<T> = {
@@ -449,7 +413,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
 				break;
 			case MultiORMEnum.TypeORM:
-				console.log('Repository findOne', { options });
+				console.log(this.repository);
+				console.log(options);
 				record = await this.repository.findOne(options as FindOneOptions<T>);
 				break;
 			default:

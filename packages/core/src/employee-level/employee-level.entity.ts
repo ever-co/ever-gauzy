@@ -1,11 +1,11 @@
 import { Column, ManyToMany, JoinTable } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IEmployeeLevel, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 
-@MultiORMEntity({ name: 'employee_level' })
+@MultiORMEntity('employee_level')
 export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmployeeLevel {
 
 	@ApiProperty({ type: () => String })
@@ -23,8 +23,7 @@ export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmpl
 	/**
 	 * Tag
 	 */
-	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.employeeLevels, {
+	@ManyToMany(() => Tag, (it) => it.employeeLevels, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

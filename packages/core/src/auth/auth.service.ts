@@ -82,14 +82,13 @@ export class AuthService extends SocialAuthService {
 					isArchived: false
 				},
 				relations: {
-					// employee: true,
-					// role: true
+					employee: true,
+					role: true
 				},
 				order: {
 					createdAt: 'DESC'
 				}
 			});
-			console.log({ user });
 			// If employees are inactive
 			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
 				throw new UnauthorizedException();

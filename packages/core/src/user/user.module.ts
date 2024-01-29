@@ -20,8 +20,8 @@ import { TaskModule } from './../tasks/task.module';
 		RouterModule.register([
 			{ path: '/user', module: UserModule }
 		]),
-		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
+		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => TaskModule),
 		CqrsModule,
@@ -30,8 +30,8 @@ import { TaskModule } from './../tasks/task.module';
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],
 	exports: [
-		MikroOrmModule,
 		TypeOrmModule,
+		MikroOrmModule,
 		UserService
 	]
 })

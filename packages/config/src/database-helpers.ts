@@ -21,17 +21,31 @@ export const isBetterSqlite3 = (): boolean => isBetterSqlite3Value;
 export const isPostgres = (): boolean => isPostgresValue;
 export const isMongodb = (): boolean => isMongodbValue;
 
+/**
+ * Gets TLS options for a database connection based on the provided SSL mode.
+ *
+ * @param {string} dbSslMode - The SSL mode for the database connection.
+ * @returns {TlsOptions | undefined} - TLS options for the database connection or undefined if SSL is disabled.
+ */
 export const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
-	if (!parseToBoolean(dbSslMode)) return undefined;
+	// Check if SSL is enabled based on the provided SSL mode
+	if (!parseToBoolean(dbSslMode)) {
+		// If SSL is not enabled, return undefined
+		return undefined;
+	}
 
+	// Obtain the CA certificate from the environment variable and decode it
 	const base64data = process.env.DB_CA_CERT;
 	const buff = Buffer.from(base64data, 'base64');
 	const sslCert = buff.toString('ascii');
+
+	// Return TLS options with the decoded CA certificate
 	return {
 		rejectUnauthorized: true,
 		ca: sslCert
 	};
-}
+};
+
 
 /**
  * Get logging options based on the provided dbLogging value.
