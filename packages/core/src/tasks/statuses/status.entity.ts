@@ -8,8 +8,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 
-@MultiORMEntity('task_status')
+@MultiORMEntity('task_status', { mikroOrmRepository: () => MikroOrmTaskStatusRepository })
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {
 
 	@ApiProperty({ type: () => String })

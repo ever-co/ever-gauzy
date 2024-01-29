@@ -20,8 +20,9 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 
-@MultiORMEntity('activity')
+@MultiORMEntity('activity', { mikroOrmRepository: () => MikroOrmActivityRepository })
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
 
 	@ApiPropertyOptional({ type: () => String })

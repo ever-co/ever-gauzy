@@ -41,8 +41,9 @@ import {
 	TenantBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 
-@MultiORMEntity('organization')
+@MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
 	@Index()
 	@Column()

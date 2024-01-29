@@ -5,11 +5,10 @@ import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { TranslationBase } from '../core/entities/internal';
 import { Product } from './product.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
 
-@MultiORMEntity('product_translation')
-export class ProductTranslation
-	extends TranslationBase
-	implements IProductTranslation {
+@MultiORMEntity('product_translation', { mikroOrmRepository: () => MikroOrmProductTranslationRepository })
+export class ProductTranslation extends TranslationBase implements IProductTranslation {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()

@@ -36,6 +36,7 @@ import {
 	ProjectOwnerEnum,
 	TaskListTypeEnum,
 } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
 import {
 	Activity,
 	Employee,
@@ -50,7 +51,7 @@ import {
 	Tag,
 	Task,
 	TaskPriority,
-	TaskRelatedIssueTypes,
+	TaskRelatedIssueType,
 	TaskSize,
 	TaskStatus,
 	TaskVersion,
@@ -58,9 +59,9 @@ import {
 	TimeLog
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { isMySQL } from '@gauzy/config';
+import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 
-@MultiORMEntity('organization_project')
+@MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
 
 	@Index()
@@ -294,7 +295,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Project Related Issue Type Relationship
 	 */
-	@OneToMany(() => TaskRelatedIssueTypes, (it) => it.project)
+	@OneToMany(() => TaskRelatedIssueType, (it) => it.project)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**

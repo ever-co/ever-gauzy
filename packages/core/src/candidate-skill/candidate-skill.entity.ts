@@ -6,8 +6,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateSkillRepository } from './repository/mikro-orm-candidate-skill.repository';
 
-@MultiORMEntity('candidate_skill')
+@MultiORMEntity('candidate_skill', { mikroOrmRepository: () => MikroOrmCandidateSkillRepository })
 export class CandidateSkill extends TenantOrganizationBaseEntity implements ICandidateSkill {
 
 	@ApiProperty({ type: () => String })

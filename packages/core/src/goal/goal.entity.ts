@@ -9,8 +9,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmGoalRepository } from './repository/mikro-orm-goal.repository';
 
-@MultiORMEntity('goal')
+@MultiORMEntity('goal', { mikroOrmRepository: () => MikroOrmGoalRepository })
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 
 	@ApiProperty({ type: () => String })

@@ -60,8 +60,9 @@ import {
 	Warehouse
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
-@MultiORMEntity('tag')
+@MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	@ApiProperty({ type: () => String, required: true })

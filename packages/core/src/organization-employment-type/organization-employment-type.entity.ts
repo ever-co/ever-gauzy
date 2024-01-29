@@ -8,11 +8,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationEmploymentTypeRepository } from './repository/mikro-orm-organization-employment-type.repository';
 
-@MultiORMEntity('organization_employment_type')
-export class OrganizationEmploymentType
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationEmploymentType {
+@MultiORMEntity('organization_employment_type', { mikroOrmRepository: () => MikroOrmOrganizationEmploymentTypeRepository })
+export class OrganizationEmploymentType extends TenantOrganizationBaseEntity implements IOrganizationEmploymentType {
 
 	@Column()
 	name: string;

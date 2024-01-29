@@ -20,8 +20,9 @@ import {
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 
-@MultiORMEntity('issue_type')
+@MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
 
 	@ApiProperty({ type: () => String })

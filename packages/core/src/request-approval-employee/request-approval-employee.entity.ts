@@ -12,11 +12,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateInterviewRepository } from 'candidate-interview/repository/mikro-orm-candidate-interview.repository';
 
-@MultiORMEntity('request_approval_employee')
-export class RequestApprovalEmployee
-	extends TenantOrganizationBaseEntity
-	implements IRequestApprovalEmployee {
+@MultiORMEntity('request_approval_employee', { mikroOrmRepository: () => MikroOrmCandidateInterviewRepository })
+export class RequestApprovalEmployee extends TenantOrganizationBaseEntity implements IRequestApprovalEmployee {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()

@@ -33,11 +33,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 
-@MultiORMEntity('request_approval')
-export class RequestApproval
-	extends TenantOrganizationBaseEntity
-	implements IRequestApproval {
+@MultiORMEntity('request_approval', { mikroOrmRepository: () => MikroOrmRequestApprovalRepository })
+export class RequestApproval extends TenantOrganizationBaseEntity implements IRequestApproval {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

@@ -11,8 +11,9 @@ import {
 	Warehouse
 } from './../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
 
-@MultiORMEntity('image_asset')
+@MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
 
 	@ApiPropertyOptional({ type: () => String })

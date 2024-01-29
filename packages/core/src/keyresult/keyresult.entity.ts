@@ -28,8 +28,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
 
-@MultiORMEntity('key_result')
+@MultiORMEntity('key_result', { mikroOrmRepository: () => MikroOrmKeyResultRepository })
 export class KeyResult extends TenantOrganizationBaseEntity
 	implements IKeyResult {
 

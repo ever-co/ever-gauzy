@@ -29,8 +29,9 @@ import {
 	User
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 
-@MultiORMEntity('invite')
+@MultiORMEntity('invite', { mikroOrmRepository: () => MikroOrmInviteRepository })
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })

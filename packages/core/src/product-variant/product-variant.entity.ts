@@ -30,11 +30,10 @@ import {
 	WarehouseProductVariant
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
 
-@MultiORMEntity('product_variant')
-export class ProductVariant
-	extends TenantOrganizationBaseEntity
-	implements IProductVariant {
+@MultiORMEntity('product_variant', { mikroOrmRepository: () => MikroOrmProductVariantRepository })
+export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })

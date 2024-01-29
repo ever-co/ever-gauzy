@@ -13,8 +13,9 @@ import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 
-@MultiORMEntity('report')
+@MultiORMEntity('report', { mikroOrmRepository: () => MikroOrmReportRepository })
 export class Report extends BaseEntity implements IReport {
 
 	@ApiProperty({ type: () => String })

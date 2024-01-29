@@ -7,8 +7,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmSkillRepository } from './repository/mikro-orm-skill.repository';
 
-@MultiORMEntity('skill')
+@MultiORMEntity('skill', { mikroOrmRepository: () => MikroOrmSkillRepository })
 export class Skill extends TenantOrganizationBaseEntity
 	implements ISkill {
 

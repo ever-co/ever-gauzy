@@ -45,7 +45,7 @@ import {
 	Tag,
 	Task,
 	TaskPriority,
-	TaskRelatedIssueTypes,
+	TaskRelatedIssueType,
 	TaskSize,
 	TaskStatus,
 	TaskVersion,
@@ -53,8 +53,9 @@ import {
 	User,
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 
-@MultiORMEntity('organization_team')
+@MultiORMEntity('organization_team', { mikroOrmRepository: () => MikroOrmOrganizationTeamRepository })
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
 
 	/**
@@ -217,7 +218,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Team Related Status type
 	 */
-	@OneToMany(() => TaskRelatedIssueTypes, (it) => it.organizationTeam)
+	@OneToMany(() => TaskRelatedIssueType, (it) => it.organizationTeam)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**

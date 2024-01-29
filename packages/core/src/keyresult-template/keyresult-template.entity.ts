@@ -14,8 +14,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmKeyresultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
 
-@MultiORMEntity('key_result_template')
+@MultiORMEntity('key_result_template', { mikroOrmRepository: () => MikroOrmKeyresultTemplateRepository })
 export class KeyResultTemplate extends TenantOrganizationBaseEntity implements IKeyResultTemplate {
 
 	@ApiProperty({ type: () => String })

@@ -12,17 +12,17 @@ import {
 } from '@gauzy/contracts';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
-import { TaskRelatedIssueTypes } from './related-issue-type.entity';
+import { TaskRelatedIssueType } from './related-issue-type.entity';
 
 @Injectable()
-export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<TaskRelatedIssueTypes> {
+export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
 	constructor(
-		@InjectRepository(TaskRelatedIssueTypes)
-		protected readonly taskRelatedIssueTypesRepository: Repository<TaskRelatedIssueTypes>,
-		@MikroInjectRepository(TaskRelatedIssueTypes)
-		protected readonly mikroTaskRelatedIssueTypesRepository: EntityRepository<TaskRelatedIssueTypes>
+		@InjectRepository(TaskRelatedIssueType)
+		protected readonly TaskRelatedIssueTypeRepository: Repository<TaskRelatedIssueType>,
+		@MikroInjectRepository(TaskRelatedIssueType)
+		protected readonly mikroTaskRelatedIssueTypeRepository: EntityRepository<TaskRelatedIssueType>
 	) {
-		super(taskRelatedIssueTypesRepository, mikroTaskRelatedIssueTypesRepository);
+		super(TaskRelatedIssueTypeRepository, mikroTaskRelatedIssueTypeRepository);
 	}
 
 	/**
@@ -32,9 +32,9 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 	 * @param params
 	 * @returns
 	 */
-	async findTaskRelatedIssueTypes(
+	async findTaskRelatedIssueType(
 		params: ITaskRelatedIssueTypeFindInput
-	): Promise<IPagination<TaskRelatedIssueTypes>> {
+	): Promise<IPagination<TaskRelatedIssueType>> {
 		try {
 			return await this.findEntitiesByParams(params);
 		} catch (error) {
@@ -63,7 +63,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 	 */
 	async bulkCreateOrganizationRelatedIssueTypes(
 		organization: IOrganization
-	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueTypes[]> {
+	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueType[]> {
 		try {
 			const statuses: ITaskRelatedIssueType[] = [];
 
@@ -75,7 +75,7 @@ export class TaskRelatedIssueTypesService extends TaskStatusPrioritySizeService<
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } =
 					item;
-				const status = new TaskRelatedIssueTypes({
+				const status = new TaskRelatedIssueType({
 					tenantId,
 					name,
 					value,

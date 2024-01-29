@@ -22,8 +22,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 
-@MultiORMEntity('proposal')
+@MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
 export class Proposal extends TenantOrganizationBaseEntity
 	implements IProposal {
 

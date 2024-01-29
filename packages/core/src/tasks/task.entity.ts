@@ -37,6 +37,7 @@ import {
 	TaskSizeEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
+import { isMySQL } from "@gauzy/config";
 import {
 	Activity,
 	Employee,
@@ -56,9 +57,9 @@ import {
 	User,
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { isMySQL } from "@gauzy/config";
+import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
-@MultiORMEntity('task')
+@MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@Column({

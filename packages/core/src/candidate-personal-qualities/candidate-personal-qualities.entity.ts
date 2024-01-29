@@ -13,11 +13,11 @@ import {
 import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
 
-@MultiORMEntity('candidate_personal_quality')
-export class CandidatePersonalQualities
-	extends TenantOrganizationBaseEntity
-	implements ICandidatePersonalQualities {
+@MultiORMEntity('candidate_personal_quality', { mikroOrmRepository: () => MikroOrmCandidatePersonalQualitiesRepository })
+export class CandidatePersonalQualities extends TenantOrganizationBaseEntity implements ICandidatePersonalQualities {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;

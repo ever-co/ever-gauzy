@@ -12,11 +12,11 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
 
-@MultiORMEntity('job_preset_upwork_job_search_criterion')
-export class JobPresetUpworkJobSearchCriterion
-	extends TenantOrganizationBaseEntity
-	implements IJobPresetUpworkJobSearchCriterion {
+@MultiORMEntity('job_preset_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmJobPresetUpworkJobSearchCriterionRepository })
+export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEntity implements IJobPresetUpworkJobSearchCriterion {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

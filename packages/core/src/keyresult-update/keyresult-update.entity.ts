@@ -7,8 +7,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
 
-@MultiORMEntity('key_result_update')
+@MultiORMEntity('key_result_update', { mikroOrmRepository: () => MikroOrmKeyResultUpdateRepository })
 export class KeyResultUpdate extends TenantOrganizationBaseEntity
 	implements IKeyResultUpdate {
 	@ApiProperty({ type: () => Number })

@@ -7,11 +7,10 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
 
-@MultiORMEntity('feature_organization')
-export class FeatureOrganization
-	extends TenantOrganizationBaseEntity
-	implements IFeatureOrganization {
+@MultiORMEntity('feature_organization', { mikroOrmRepository: () => MikroOrmFeatureOrganizationRepository })
+export class FeatureOrganization extends TenantOrganizationBaseEntity implements IFeatureOrganization {
 
 	@Column({ default: true })
 	isEnabled: boolean;

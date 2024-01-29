@@ -4,8 +4,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { BaseEntity, OrganizationLanguage } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
 
-@MultiORMEntity('language')
+@MultiORMEntity('language', { mikroOrmRepository: () => MikroOrmLanguageRepository })
 @Unique(['code'])
 export class Language extends BaseEntity implements ILanguage {
 	@ApiProperty({ type: () => String })

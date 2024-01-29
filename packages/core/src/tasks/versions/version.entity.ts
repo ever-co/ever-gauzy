@@ -4,8 +4,9 @@ import { IOrganizationProject, IOrganizationTeam, ITaskVersion } from '@gauzy/co
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
 
-@MultiORMEntity('task_version')
+@MultiORMEntity('task_version', { mikroOrmRepository: () => MikroOrmTaskVersionRepository })
 export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
 
 	@ApiProperty({ type: () => String })

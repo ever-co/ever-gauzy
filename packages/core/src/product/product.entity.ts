@@ -30,8 +30,9 @@ import {
 	WarehouseProduct
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 
-@MultiORMEntity('product')
+@MultiORMEntity('product', { mikroOrmRepository: () => MikroOrmProductRepository })
 export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@ApiPropertyOptional({ type: () => Boolean })

@@ -14,8 +14,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmJobSearchOccupationRepository } from './repository/mikro-orm-job-search-occupation.repository';
 
-@MultiORMEntity('job_search_occupation')
+@MultiORMEntity('job_search_occupation', { mikroOrmRepository: () => MikroOrmJobSearchOccupationRepository })
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
 
 	@ApiProperty({ type: () => String })

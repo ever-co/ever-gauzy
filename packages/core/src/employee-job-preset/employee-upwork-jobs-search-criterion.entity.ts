@@ -19,9 +19,8 @@ import {
 import { MultiORMEntity } from './../core/decorators/entity';
 
 @MultiORMEntity('employee_upwork_job_search_criterion')
-export class EmployeeUpworkJobsSearchCriterion
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeUpworkJobsSearchCriterion {
+export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEntity implements IEmployeeUpworkJobsSearchCriterion {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

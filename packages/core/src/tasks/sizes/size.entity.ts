@@ -8,8 +8,9 @@ import {
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
-@MultiORMEntity('task_size')
+@MultiORMEntity('task_size', { mikroOrmRepository: () => MikroOrmTaskSizeRepository })
 export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {
 
 	@ApiProperty({ type: () => String })

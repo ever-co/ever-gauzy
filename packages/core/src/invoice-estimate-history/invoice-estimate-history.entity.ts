@@ -14,11 +14,11 @@ import {
 	User,
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmInvoiceEstimateHistoryRepository } from './repository/mikro-orm-invoice-estimate-history.repository';
 
-@MultiORMEntity('invoice_estimate_history')
-export class InvoiceEstimateHistory
-	extends TenantOrganizationBaseEntity
-	implements IInvoiceEstimateHistory {
+@MultiORMEntity('invoice_estimate_history', { mikroOrmRepository: () => MikroOrmInvoiceEstimateHistoryRepository })
+export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity implements IInvoiceEstimateHistory {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()

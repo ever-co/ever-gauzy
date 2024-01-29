@@ -6,8 +6,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeAwardRepository } from './repository/mikro-orm-employee-award.repository';
 
-@MultiORMEntity('employee_award')
+@MultiORMEntity('employee_award', { mikroOrmRepository: () => MikroOrmEmployeeAwardRepository })
 export class EmployeeAward extends TenantOrganizationBaseEntity
 	implements IEmployeeAward {
 

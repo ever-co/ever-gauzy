@@ -6,8 +6,9 @@ import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/i
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 
-@MultiORMEntity('warehouse_product_variant')
+@MultiORMEntity('warehouse_product_variant', { mikroOrmRepository: () => MikroOrmWarehouseProductVariantRepository })
 export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	implements IWarehouseProductVariant {
 

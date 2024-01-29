@@ -28,8 +28,9 @@ import {
 	User
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
 
-@MultiORMEntity('deal')
+@MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 
 	@ApiProperty({ type: () => String })

@@ -25,8 +25,9 @@ import {
 	Warehouse,
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
 
-@MultiORMEntity('merchant')
+@MultiORMEntity('merchant', { mikroOrmRepository: () => MikroOrmMerchantRepository })
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 	@ApiProperty({ type: () => String })

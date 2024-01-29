@@ -9,11 +9,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EquipmentSharing, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEquipmentSharingPolicyRepository } from './repository/mikro-orm-equipment-sharing-policy.repository';
 
-@MultiORMEntity('equipment_sharing_policy')
-export class EquipmentSharingPolicy
-	extends TenantOrganizationBaseEntity
-	implements IEquipmentSharingPolicy {
+@MultiORMEntity('equipment_sharing_policy', { mikroOrmRepository: () => MikroOrmEquipmentSharingPolicyRepository })
+export class EquipmentSharingPolicy extends TenantOrganizationBaseEntity implements IEquipmentSharingPolicy {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

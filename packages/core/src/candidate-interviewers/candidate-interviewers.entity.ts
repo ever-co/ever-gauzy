@@ -8,11 +8,10 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
 
-@MultiORMEntity('candidate_interviewer')
-export class CandidateInterviewers
-	extends TenantOrganizationBaseEntity
-	implements ICandidateInterviewers {
+@MultiORMEntity('candidate_interviewer', { mikroOrmRepository: () => MikroOrmCandidateInterviewersRepository })
+export class CandidateInterviewers extends TenantOrganizationBaseEntity implements ICandidateInterviewers {
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne

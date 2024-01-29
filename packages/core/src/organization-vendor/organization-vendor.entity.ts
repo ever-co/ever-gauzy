@@ -4,11 +4,10 @@ import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IExpense, IOrganizationVendor, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
 
-@MultiORMEntity('organization_vendor')
-export class OrganizationVendor
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationVendor {
+@MultiORMEntity('organization_vendor', { mikroOrmRepository: () => MikroOrmOrganizationVendorRepository })
+export class OrganizationVendor extends TenantOrganizationBaseEntity implements IOrganizationVendor {
 
 	@ApiProperty({ type: () => String })
 	@IsString()

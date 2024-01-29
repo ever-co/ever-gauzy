@@ -22,11 +22,10 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
 
-@MultiORMEntity('event_type')
-export class EventType
-	extends TenantOrganizationBaseEntity
-	implements IEventType {
+@MultiORMEntity('event_type', { mikroOrmRepository: () => MikroOrmEventTypeRepository })
+export class EventType extends TenantOrganizationBaseEntity implements IEventType {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()

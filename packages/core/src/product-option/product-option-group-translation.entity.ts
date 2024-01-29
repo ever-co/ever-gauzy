@@ -8,11 +8,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductOptionGroupTranslationRepository } from './repository/mikro-orm-product-option-group-translation.repository';
 
-@MultiORMEntity('product_option_group_translation')
-export class ProductOptionGroupTranslation
-	extends TenantOrganizationBaseEntity
-	implements IProductOptionGroupTranslation {
+@MultiORMEntity('product_option_group_translation', { mikroOrmRepository: () => MikroOrmProductOptionGroupTranslationRepository })
+export class ProductOptionGroupTranslation extends TenantOrganizationBaseEntity implements IProductOptionGroupTranslation {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()

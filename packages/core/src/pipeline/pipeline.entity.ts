@@ -14,11 +14,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
 
-@MultiORMEntity('pipeline')
-export class Pipeline
-	extends TenantOrganizationBaseEntity
-	implements IPipeline {
+@MultiORMEntity('pipeline', { mikroOrmRepository: () => MikroOrmPipelineRepository })
+export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline {
 
 	@ApiProperty({ type: () => PipelineStage })
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {

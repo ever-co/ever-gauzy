@@ -26,8 +26,9 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
-@MultiORMEntity('time_log')
+@MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => 'timestamptz' })

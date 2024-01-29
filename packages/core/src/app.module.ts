@@ -73,7 +73,7 @@ import { ImportModule } from './export-import/import/import.module';
 import { IssueTypeModule } from './tasks/issue-type/issue-type.module';
 import { TaskModule } from './tasks/task.module';
 import { TaskPriorityModule } from './tasks/priorities/priority.module';
-import { TaskRelatedIssueTypesModule } from './tasks/related-issue-type/related-issue-type.module';
+import { TaskRelatedIssueTypeModule } from './tasks/related-issue-type/related-issue-type.module';
 import { TaskSizeModule } from './tasks/sizes/size.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
@@ -529,7 +529,7 @@ if (environment.THROTTLE_ENABLED) {
 		EquipmentSharingModule,
 		TaskModule,
 		TaskPriorityModule,
-		TaskRelatedIssueTypesModule,
+		TaskRelatedIssueTypeModule,
 		TaskSizeModule,
 		TaskStatusModule,
 		TaskVersionModule,

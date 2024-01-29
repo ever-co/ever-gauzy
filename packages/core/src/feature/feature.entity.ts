@@ -14,8 +14,9 @@ import {
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
 
-@MultiORMEntity('feature')
+@MultiORMEntity('feature', { mikroOrmRepository: () => MikroOrmFeatureRepository })
 export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })

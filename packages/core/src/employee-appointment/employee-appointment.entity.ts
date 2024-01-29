@@ -20,11 +20,11 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
 
-@MultiORMEntity('employee_appointment')
-export class EmployeeAppointment
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeAppointment {
+@MultiORMEntity('employee_appointment', { mikroOrmRepository: () => MikroOrmEmployeeAppointmentRepository })
+export class EmployeeAppointment extends TenantOrganizationBaseEntity implements IEmployeeAppointment {
+
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()

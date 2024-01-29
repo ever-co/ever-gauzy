@@ -10,8 +10,9 @@ import {
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 
-@MultiORMEntity('organization_team_join_request')
+@MultiORMEntity('organization_team_join_request', { mikroOrmRepository: () => MikroOrmOrganizationTeamJoinRequestRepository })
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	implements IOrganizationTeamJoinRequest {
 

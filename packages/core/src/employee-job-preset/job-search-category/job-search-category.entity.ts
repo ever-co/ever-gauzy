@@ -14,8 +14,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 
-@MultiORMEntity('job_search_category')
+@MultiORMEntity('job_search_category', { mikroOrmRepository: () => MikroOrmJobSearchCategoryRepository })
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
 
 	@ApiProperty({ type: () => String })

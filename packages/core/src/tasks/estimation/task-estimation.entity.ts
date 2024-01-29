@@ -8,11 +8,10 @@ import {
 	Task,
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTaskEstimationRepository } from './repository/mikro-orm-estimation.repository';
 
-@MultiORMEntity('task_estimation')
-export class TaskEstimation
-	extends TenantOrganizationBaseEntity
-	implements ITaskEstimation {
+@MultiORMEntity('task_estimation', { mikroOrmRepository: () => MikroOrmTaskEstimationRepository })
+export class TaskEstimation extends TenantOrganizationBaseEntity implements ITaskEstimation {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column()

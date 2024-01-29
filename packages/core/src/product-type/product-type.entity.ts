@@ -7,8 +7,9 @@ import {
 	TranslatableBase
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
 
-@MultiORMEntity('product_type')
+@MultiORMEntity('product_type', { mikroOrmRepository: () => MikroOrmProductTypeRepository })
 export class ProductType extends TranslatableBase {
 
 	@ApiProperty({ type: () => String, enum: ProductTypesIconsEnum })

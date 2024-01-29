@@ -7,11 +7,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateDocumentsRepository } from './repository/mikro-orm-candidate-documents.repository';
 
-@MultiORMEntity('candidate_document')
-export class CandidateDocument
-	extends TenantOrganizationBaseEntity
-	implements ICandidateDocument {
+@MultiORMEntity('candidate_document', { mikroOrmRepository: () => MikroOrmCandidateDocumentsRepository })
+export class CandidateDocument extends TenantOrganizationBaseEntity implements ICandidateDocument {
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;

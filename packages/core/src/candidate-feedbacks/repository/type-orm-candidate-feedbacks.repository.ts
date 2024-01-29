@@ -1,4 +1,4 @@
 import { Repository } from 'typeorm';
 import { CandidateFeedback } from '../candidate-feedbacks.entity';
 
-export class TypeOrmCandidateFeedbacksRepository extends Repository<CandidateFeedback> { }
+export class TypeOrmCandidateFeedbackRepository extends Repository<CandidateFeedback> { }

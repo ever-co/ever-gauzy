@@ -30,11 +30,10 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
 
-@MultiORMEntity('equipment')
-export class Equipment
-	extends TenantOrganizationBaseEntity
-	implements IEquipment {
+@MultiORMEntity('equipment', { mikroOrmRepository: () => MikroOrmEquipmentRepository })
+export class Equipment extends TenantOrganizationBaseEntity implements IEquipment {
 
 	@ApiProperty({ type: () => String })
 	@IsString()

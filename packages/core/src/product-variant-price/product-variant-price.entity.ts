@@ -7,11 +7,11 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductVariantPriceRepository } from './repository/mikro-orm-product-variant-price.repository';
 
-@MultiORMEntity('product_variant_price')
-export class ProductVariantPrice
-	extends TenantOrganizationBaseEntity
-	implements IProductVariantPrice {
+@MultiORMEntity('product_variant_price', { mikroOrmRepository: () => MikroOrmProductVariantPriceRepository })
+export class ProductVariantPrice extends TenantOrganizationBaseEntity implements IProductVariantPrice {
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })

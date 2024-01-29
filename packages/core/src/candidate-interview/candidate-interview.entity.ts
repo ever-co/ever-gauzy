@@ -18,8 +18,9 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateInterviewRepository } from './repository/mikro-orm-candidate-interview.repository';
 
-@MultiORMEntity('candidate_interview')
+@MultiORMEntity('candidate_interview', { mikroOrmRepository: () => MikroOrmCandidateInterviewRepository })
 export class CandidateInterview extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
 

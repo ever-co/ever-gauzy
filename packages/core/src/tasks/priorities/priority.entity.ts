@@ -8,8 +8,9 @@ import {
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
 
-@MultiORMEntity('task_priority')
+@MultiORMEntity('task_priority', { mikroOrmRepository: () => MikroOrmTaskPriorityRepository })
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
 
 	@ApiProperty({ type: () => String })

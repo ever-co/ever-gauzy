@@ -29,8 +29,9 @@ import {
 	TimeOffPolicy
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 
-@MultiORMEntity('time_off_request')
+@MultiORMEntity('time_off_request', { mikroOrmRepository: () => MikroOrmTimeOffRequestRepository })
 export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {
 
 	@ApiPropertyOptional({ type: () => String })

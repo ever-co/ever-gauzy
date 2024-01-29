@@ -15,8 +15,9 @@ import {
 	User
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
 
-@MultiORMEntity('timesheet')
+@MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })

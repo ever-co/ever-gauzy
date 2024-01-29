@@ -7,11 +7,10 @@ import {
 import { IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductOptionTranslationRepository } from './repository/mikro-orm-product-option-translation.repository';
 
-@MultiORMEntity('product_option_translation')
-export class ProductOptionTranslation
-	extends TenantOrganizationBaseEntity
-	implements IProductOptionTranslation {
+@MultiORMEntity('product_option_translation', { mikroOrmRepository: () => MikroOrmProductOptionTranslationRepository })
+export class ProductOptionTranslation extends TenantOrganizationBaseEntity implements IProductOptionTranslation {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()

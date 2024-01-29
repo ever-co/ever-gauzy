@@ -3,9 +3,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { TenantModule } from '../../tenant/tenant.module';
-import { TaskRelatedIssueTypes } from './related-issue-type.entity';
-import { TaskRelatedIssueTypesController } from './related-issue-type.controller';
-import { TaskRelatedIssueTypesService } from './related-issue-type.service';
+import { TaskRelatedIssueType } from './related-issue-type.entity';
+import { TaskRelatedIssueTypeController } from './related-issue-type.controller';
+import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -15,16 +15,16 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		RouterModule.register([
 			{
 				path: '/task-related-issue-types',
-				module: TaskRelatedIssueTypesModule
+				module: TaskRelatedIssueTypeModule
 			}
 		]),
-		TypeOrmModule.forFeature([TaskRelatedIssueTypes]),
-		MikroOrmModule.forFeature([TaskRelatedIssueTypes]),
+		TypeOrmModule.forFeature([TaskRelatedIssueType]),
+		MikroOrmModule.forFeature([TaskRelatedIssueType]),
 		TenantModule,
 		CqrsModule
 	],
-	controllers: [TaskRelatedIssueTypesController],
-	providers: [TaskRelatedIssueTypesService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TaskRelatedIssueTypesService]
+	controllers: [TaskRelatedIssueTypeController],
+	providers: [TaskRelatedIssueTypeService, ...QueryHandlers, ...CommandHandlers],
+	exports: [TaskRelatedIssueTypeService]
 })
-export class TaskRelatedIssueTypesModule { }
+export class TaskRelatedIssueTypeModule { }

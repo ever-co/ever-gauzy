@@ -42,8 +42,9 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
+import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
-@MultiORMEntity('invoice')
+@MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 

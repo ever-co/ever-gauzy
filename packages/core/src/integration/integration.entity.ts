@@ -6,8 +6,9 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integration.repository';
 
-@MultiORMEntity('integration')
+@MultiORMEntity('integration', { mikroOrmRepository: () => MikroOrmIntegrationRepository })
 @Unique(['name'])
 export class Integration extends BaseEntity implements IIntegration {
 

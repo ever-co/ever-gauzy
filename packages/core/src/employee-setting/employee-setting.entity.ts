@@ -14,11 +14,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
 
-@MultiORMEntity('employee_setting')
-export class EmployeeSetting
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeSetting {
+@MultiORMEntity('employee_setting', { mikroOrmRepository: () => MikroOrmEmployeeSettingRepository })
+export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()

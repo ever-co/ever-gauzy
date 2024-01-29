@@ -9,8 +9,9 @@ import {
 	TranslatableBase
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
 
-@MultiORMEntity('product_category')
+@MultiORMEntity('product_category', { mikroOrmRepository: () => MikroOrmProductCategoryRepository })
 export class ProductCategory extends TranslatableBase
 	implements IProductCategoryTranslatable {
 

@@ -12,11 +12,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmRequestApprovalTeamRepository } from './repository/mikro-orm-request-approval-team.repository';
 
-@MultiORMEntity('request_approval_team')
-export class RequestApprovalTeam
-	extends TenantOrganizationBaseEntity
-	implements IRequestApprovalTeam {
+@MultiORMEntity('request_approval_team', { mikroOrmRepository: () => MikroOrmRequestApprovalTeamRepository })
+export class RequestApprovalTeam extends TenantOrganizationBaseEntity implements IRequestApprovalTeam {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()

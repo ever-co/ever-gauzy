@@ -21,11 +21,10 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 
-@MultiORMEntity('invoice_item')
-export class InvoiceItem
-	extends TenantOrganizationBaseEntity
-	implements IInvoiceItem {
+@MultiORMEntity('invoice_item', { mikroOrmRepository: () => MikroOrmInvoiceItemRepository })
+export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoiceItem {
 
 	@ApiProperty({ type: () => String })
 	@IsString()

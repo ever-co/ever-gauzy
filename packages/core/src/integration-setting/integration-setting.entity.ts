@@ -9,8 +9,9 @@ import {
 } from './../core/entities/internal';
 import { IsSecret } from './../core/decorators';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-integration-setting.repository';
 
-@MultiORMEntity('integration_setting')
+@MultiORMEntity('integration_setting', { mikroOrmRepository: () => MikroOrmIntegrationSettingRepository })
 export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {
 
 	@Exclude({ toPlainOnly: true })

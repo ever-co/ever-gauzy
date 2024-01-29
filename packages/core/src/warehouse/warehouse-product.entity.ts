@@ -21,8 +21,9 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
 
-@MultiORMEntity('warehouse_product')
+@MultiORMEntity('warehouse_product', { mikroOrmRepository: () => MikroOrmWarehouseProductRepository })
 export class WarehouseProduct extends TenantOrganizationBaseEntity
 	implements IWarehouseProduct {
 

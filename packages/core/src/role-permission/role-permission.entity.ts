@@ -6,8 +6,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { Role, TenantBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
 
-@MultiORMEntity('role_permission')
+@MultiORMEntity('role_permission', { mikroOrmRepository: () => MikroOrmRolePermissionRepository })
 export class RolePermission extends TenantBaseEntity
 	implements IRolePermission {
 

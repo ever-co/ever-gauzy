@@ -18,11 +18,10 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-orm-employee-recurring-expense.repository';
 
-@MultiORMEntity('employee_recurring_expense')
-export class EmployeeRecurringExpense
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeRecurringExpense {
+@MultiORMEntity('employee_recurring_expense', { mikroOrmRepository: () => MikroOrmEmployeeRecurringExpenseRepository })
+export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity implements IEmployeeRecurringExpense {
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()

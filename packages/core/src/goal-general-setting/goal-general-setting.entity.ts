@@ -4,11 +4,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmGoalGeneralSettingRepository } from './repository/mikro-orm-goal-general-setting.repository';
 
-@MultiORMEntity('goal_general_setting')
-export class GoalGeneralSetting
-	extends TenantOrganizationBaseEntity
-	implements IGoalGeneralSetting {
+@MultiORMEntity('goal_general_setting', { mikroOrmRepository: () => MikroOrmGoalGeneralSettingRepository })
+export class GoalGeneralSetting extends TenantOrganizationBaseEntity implements IGoalGeneralSetting {
+
 	@ApiProperty({ type: () => Number })
 	@Column()
 	maxObjectives: number;

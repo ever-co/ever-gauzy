@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { isMySQL } from '@gauzy/config';
 import { IEmailHistory, IEmailTemplate, IUser, EmailStatusEnum } from '@gauzy/contracts';
 import {
 	EmailTemplate,
@@ -8,9 +9,9 @@ import {
 	User,
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { isMySQL } from '@gauzy/config';
+import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
 
-@MultiORMEntity('email_sent')
+@MultiORMEntity('email_sent', { mikroOrmRepository: () => MikroOrmEmailHistoryRepository })
 export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {
 
 	@ApiPropertyOptional({ type: () => String })

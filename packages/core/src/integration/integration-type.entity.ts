@@ -4,8 +4,9 @@ import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { BaseEntity, Integration } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIntegrationTypeRepository } from './repository/mikro-orm-integration-type.repository';
 
-@MultiORMEntity('integration_type')
+@MultiORMEntity('integration_type', { mikroOrmRepository: () => MikroOrmIntegrationTypeRepository })
 @Unique(['name'])
 export class IntegrationType extends BaseEntity implements IIntegrationType {
 

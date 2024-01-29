@@ -4,8 +4,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { Column, Index } from 'typeorm';
 import { BaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCountryRepository } from './repository/mikro-orm-country.repository';
 
-@MultiORMEntity('country')
+@MultiORMEntity('country', { mikroOrmRepository: () => MikroOrmCountryRepository })
 export class Country extends BaseEntity implements ICountry {
 	@ApiProperty({ type: () => String })
 	@Index()

@@ -7,8 +7,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
 
-@MultiORMEntity('integration_map')
+@MultiORMEntity('integration_map', { mikroOrmRepository: () => MikroOrmIntegrationMapRepository })
 export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {
 
 	@ApiProperty({ type: () => String, enum: IntegrationEntity })

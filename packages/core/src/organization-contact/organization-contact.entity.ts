@@ -42,8 +42,9 @@ import {
 	TimeLog
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
 
-@MultiORMEntity('organization_contact')
+@MultiORMEntity('organization_contact', { mikroOrmRepository: () => MikroOrmOrganizationContactRepository })
 export class OrganizationContact extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
 

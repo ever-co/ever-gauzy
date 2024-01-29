@@ -7,11 +7,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmPipelineStageRepository } from './repository/mikro-orm-pipeline-stage.repository';
 
-@MultiORMEntity('pipeline_stage')
-export class PipelineStage
-	extends TenantOrganizationBaseEntity
-	implements IStage {
+@MultiORMEntity('pipeline_stage', { mikroOrmRepository: () => MikroOrmPipelineStageRepository })
+export class PipelineStage extends TenantOrganizationBaseEntity implements IStage {
 
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true, type: 'text' })

@@ -3,8 +3,9 @@ import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
 import { Column } from 'typeorm';
 import { IChangelog } from '@gauzy/contracts';
 import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { MikroOrmChangelogRepository } from './repository/mikro-orm-changelog.repository';
 
-@MultiORMEntity('changelog')
+@MultiORMEntity('changelog', { mikroOrmRepository: () => MikroOrmChangelogRepository })
 export class Changelog extends TenantOrganizationBaseEntity implements IChangelog {
 	@ApiProperty({ type: () => String })
 	@IsString()

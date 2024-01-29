@@ -4,8 +4,9 @@ import { IsOptional, IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
 import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
+import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';
 
-@MultiORMEntity('knowledge_base')
+@MultiORMEntity('knowledge_base', { mikroOrmRepository: () => MikroOrmHelpCenterRepository })
 export class HelpCenter extends TenantOrganizationBaseEntity
 	implements IHelpCenter {
 

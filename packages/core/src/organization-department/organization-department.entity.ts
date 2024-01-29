@@ -14,11 +14,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm-organization-department.repository';
 
-@MultiORMEntity('organization_department')
-export class OrganizationDepartment
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationDepartment {
+@MultiORMEntity('organization_department', { mikroOrmRepository: () => MikroOrmOrganizationDepartmentRepository })
+export class OrganizationDepartment extends TenantOrganizationBaseEntity implements IOrganizationDepartment {
 
 	@ApiProperty({ type: () => String })
 	@IsString()

@@ -7,11 +7,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationLanguageRepository } from './repository/mikro-orm-organization-language.repository';
 
-@MultiORMEntity('organization_language')
-export class OrganizationLanguage
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationLanguage {
+@MultiORMEntity('organization_language', { mikroOrmRepository: () => MikroOrmOrganizationLanguageRepository })
+export class OrganizationLanguage extends TenantOrganizationBaseEntity implements IOrganizationLanguage {
 
 	@ApiProperty({ type: () => Language })
 	@ManyToOne(() => Language, {

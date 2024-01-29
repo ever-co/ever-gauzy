@@ -5,8 +5,9 @@ import { IPasswordReset } from '@gauzy/contracts';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { TenantBaseEntity } from './../core/entities/tenant-base.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmPasswordResetRepository } from './repository/mikro-orm-password-reset.repository';
 
-@MultiORMEntity('password_reset')
+@MultiORMEntity('password_reset', { mikroOrmRepository: () => MikroOrmPasswordResetRepository })
 export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 
 	/** */

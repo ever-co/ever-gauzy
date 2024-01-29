@@ -18,11 +18,10 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { Column, Index } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationRecurringExpenseRepository } from './repository/mikro-orm-organization-recurring-expense.repository';
 
-@MultiORMEntity('organization_recurring_expense')
-export class OrganizationRecurringExpense
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationRecurringExpense {
+@MultiORMEntity('organization_recurring_expense', { mikroOrmRepository: () => MikroOrmOrganizationRecurringExpenseRepository })
+export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity implements IOrganizationRecurringExpense {
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()

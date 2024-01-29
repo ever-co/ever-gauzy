@@ -12,11 +12,11 @@ import {
 	TimeOffRequest
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
 
-@MultiORMEntity('time_off_policy')
-export class TimeOffPolicy
-	extends TenantOrganizationBaseEntity
-	implements ITimeOffPolicy {
+@MultiORMEntity('time_off_policy', { mikroOrmRepository: () => MikroOrmTimeOffPolicyRepository })
+export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITimeOffPolicy {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

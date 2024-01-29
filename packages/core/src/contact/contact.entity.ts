@@ -15,8 +15,9 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
 
-@MultiORMEntity('contact')
+@MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@ApiProperty({ type: () => String })
 	@IsString()

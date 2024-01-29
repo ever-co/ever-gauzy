@@ -13,10 +13,9 @@ import {
 } from '../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 
-@MultiORMEntity('task_related_issue_type')
-export class TaskRelatedIssueTypes
-	extends TenantOrganizationBaseEntity
-	implements ITaskRelatedIssueType {
+@MultiORMEntity('task_related_issue_type', { mikroOrmRepository: () => TaskRelatedIssueType })
+export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implements ITaskRelatedIssueType {
+
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -73,7 +72,7 @@ export class TaskRelatedIssueTypes
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskRelatedIssueTypes) => it.project)
+	@RelationId((it: TaskRelatedIssueType) => it.project)
 	@Index()
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
@@ -96,7 +95,7 @@ export class TaskRelatedIssueTypes
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: TaskRelatedIssueTypes) => it.organizationTeam)
+	@RelationId((it: TaskRelatedIssueType) => it.organizationTeam)
 	@Index()
 	@Column({ nullable: true })
 	organizationTeamId?: IOrganizationTeam['id'];

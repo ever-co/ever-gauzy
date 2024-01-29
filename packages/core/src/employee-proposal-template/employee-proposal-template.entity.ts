@@ -6,8 +6,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 
-@MultiORMEntity('employee_proposal_template')
+@MultiORMEntity('employee_proposal_template', { mikroOrmRepository: () => MikroOrmEmployeeProposalTemplateRepository })
 export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	implements IEmployeeProposalTemplate {
 

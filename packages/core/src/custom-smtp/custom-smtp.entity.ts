@@ -7,8 +7,9 @@ import { ISMTPConfig } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
 
-@MultiORMEntity('custom_smtp')
+@MultiORMEntity('custom_smtp', { mikroOrmRepository: () => MikroOrmCustomSmtpRepository })
 export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
 

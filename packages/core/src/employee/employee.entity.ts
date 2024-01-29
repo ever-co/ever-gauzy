@@ -75,8 +75,9 @@ import {
 	User,
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
-@MultiORMEntity('employee')
+@MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
 
 	@ApiPropertyOptional({ type: () => Date })

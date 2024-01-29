@@ -7,8 +7,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmGoalKPIRepository } from './repository/mikro-orm-goal-kpi.repository';
 
-@MultiORMEntity('goal_kpi')
+@MultiORMEntity('goal_kpi', { mikroOrmRepository: () => MikroOrmGoalKPIRepository })
 export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@ApiProperty({ type: () => String })
 	@Column()

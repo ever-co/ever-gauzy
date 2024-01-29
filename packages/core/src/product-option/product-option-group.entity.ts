@@ -11,11 +11,10 @@ import {
 	ProductOptionGroupTranslation
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductOptionGroupRepository } from './repository/mikro-orm-product-option-group.repository';
 
-@MultiORMEntity('product_option_group')
-export class ProductOptionGroup
-	extends TenantOrganizationBaseEntity
-	implements IProductOptionGroupTranslatable {
+@MultiORMEntity('product_option_group', { mikroOrmRepository: () => MikroOrmProductOptionGroupRepository })
+export class ProductOptionGroup extends TenantOrganizationBaseEntity implements IProductOptionGroupTranslatable {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()

@@ -6,8 +6,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateExperienceRepository } from './repository/mikro-orm-candidate-experience.repository';
 
-@MultiORMEntity('candidate_experience')
+@MultiORMEntity('candidate_experience', { mikroOrmRepository: () => MikroOrmCandidateExperienceRepository })
 export class CandidateExperience extends TenantOrganizationBaseEntity
 	implements ICandidateExperience {
 

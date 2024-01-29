@@ -10,8 +10,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 
-@MultiORMEntity('user_organization')
+@MultiORMEntity('user_organization', { mikroOrmRepository: () => MikroOrmUserOrganizationRepository })
 export class UserOrganization extends TenantOrganizationBaseEntity implements IUserOrganization {
 
 	@ApiProperty({ type: () => Boolean, default: true })

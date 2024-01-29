@@ -14,11 +14,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
 
-@MultiORMEntity('organization_sprint')
-export class OrganizationSprint
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationSprint {
+@MultiORMEntity('organization_sprint', { mikroOrmRepository: () => MikroOrmOrganizationSprintRepository })
+export class OrganizationSprint extends TenantOrganizationBaseEntity implements IOrganizationSprint {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

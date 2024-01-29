@@ -1,4 +1,4 @@
 import { Repository } from 'typeorm';
 import { EventType } from '../event-type.entity';
 
-export class TypeOrmEventTypesRepository extends Repository<EventType> { }
+export class TypeOrmEventTypeRepository extends Repository<EventType> { }

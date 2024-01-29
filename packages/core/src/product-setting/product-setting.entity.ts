@@ -6,8 +6,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductVariantSettingRepository } from './repository/mikro-orm-product-setting.repository';
 
-@MultiORMEntity('product_variant_setting')
+@MultiORMEntity('product_variant_setting', { mikroOrmRepository: () => MikroOrmProductVariantSettingRepository })
 export class ProductVariantSetting extends TenantOrganizationBaseEntity implements IProductVariantSetting {
 
 	@ApiPropertyOptional({ type: () => Boolean })

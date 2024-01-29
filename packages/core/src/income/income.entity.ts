@@ -32,8 +32,9 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 
-@MultiORMEntity('income')
+@MultiORMEntity('income', { mikroOrmRepository: () => MikroOrmIncomeRepository })
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	@ApiProperty({ type: () => Number })
