@@ -1,5 +1,5 @@
 import { IPluginConfig } from '@gauzy/common';
-import { environment as env, databaseTypes } from '@gauzy/config';
+import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import * as chalk from 'chalk';
 import { copyFileSync, mkdirSync } from 'fs';
@@ -148,15 +148,15 @@ async function cleanReport(dataSource: DataSource, config: Partial<IPluginConfig
 	const dbType = config.dbConnectionOptions.type as any;
 
 	switch (dbType) {
-		case databaseTypes.sqlite:
-		case databaseTypes.betterSqlite3:
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
 			await dataSource.query(`DELETE FROM ${reportCategory}`);
 			await dataSource.query(`DELETE FROM ${report}`);
 			break;
-		case databaseTypes.postgres:
+		case DatabaseTypeEnum.postgres:
 			await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
 			break;
-		case databaseTypes.mysql:
+		case DatabaseTypeEnum.mysql:
 			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
 			await dataSource.query('SET foreign_key_checks = 0;');
 			await dataSource.query(`DELETE FROM ${reportCategory}`);

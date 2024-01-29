@@ -17,7 +17,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 import { indexBy, pluck } from 'underscore';
 import { isNotEmpty } from '@gauzy/common';
-import { databaseTypes, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
 
@@ -56,14 +56,14 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.addSelect(p(`"${query.alias}"."date"`), `date`);
 
 		switch (config.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				query.addSelect(`time("${query.alias}"."time")`, `time`);
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				query.addSelect(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`, 'time');
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				query.addSelect(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`), 'time');
 				break;
 			default:
@@ -75,14 +75,14 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.groupBy(p(`"${query.alias}"."date"`));
 
 		switch (config.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				query.addGroupBy(`time("${query.alias}"."time")`);
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				query.addGroupBy(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`);
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				query.addGroupBy(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`));
 				break;
 			default:
@@ -222,12 +222,12 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					isSqlite() || isBetterSqlite3()
 						? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
 						: isPostgres()
-						? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
-						: isMySQL()
-						? p(
-								`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
-						  )
-						: '',
+							? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
+							: isMySQL()
+								? p(
+									`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
+								)
+								: '',
 					{
 						startDate,
 						endDate

@@ -9,12 +9,12 @@ import {
 	IPluginConfig
 } from '@gauzy/common';
 import * as path from 'path';
-import { dbConnectionConfig, dbMikroOrmConnectionConfig } from './database';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from './database';
 
 process.cwd();
 
-let assetPath;
-let assetPublicPath;
+let assetPath: string;
+let assetPublicPath: string;
 
 console.log('Default Config -> __dirname: ' + __dirname);
 console.log('Plugin Config -> process.cwd: ' + process.cwd());
@@ -56,7 +56,7 @@ export const defaultConfiguration: IPluginConfig = {
 		retryDelay: 3000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
-		...dbConnectionConfig
+		...dbTypeOrmConnectionConfig
 	},
 	dbMikroOrmConnectionOptions: {
 		...dbMikroOrmConnectionConfig,

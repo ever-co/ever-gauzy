@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { LanguageUtils } from '../../language/language-utils';
 import * as chalk from "chalk";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AddLanguage1696704276300 implements MigrationInterface {
-	name = 'AddLanguage1696704276300';
+    name = 'AddLanguage1696704276300';
 
     /**
      * Up Migration
@@ -15,12 +15,12 @@ export class AddLanguage1696704276300 implements MigrationInterface {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+            case DatabaseTypeEnum.postgres:
                 await this.sqlitePostgresUpAddLanguage(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlUpAddLanguage(queryRunner);
                 break;
             default:
@@ -34,22 +34,22 @@ export class AddLanguage1696704276300 implements MigrationInterface {
      */
     public async down(queryRunner: QueryRunner): Promise<void> { }
 
-	/**
-	 * Sqlite | better-sqlite3 | Postgres Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async sqlitePostgresUpAddLanguage(queryRunner: QueryRunner): Promise<any> {
-		console.log(chalk.yellow(this.name + ' start running!'));
+    /**
+     * Sqlite | better-sqlite3 | Postgres Up Migration
+     *
+     * @param queryRunner
+     */
+    public async sqlitePostgresUpAddLanguage(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(this.name + ' start running!'));
 
-		await LanguageUtils.migrateLanguages(queryRunner);
-	}
+        await LanguageUtils.migrateLanguages(queryRunner);
+    }
 
-	/**
-	 * MySQL Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async mysqlUpAddLanguage(queryRunner: QueryRunner): Promise<any> { }
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpAddLanguage(queryRunner: QueryRunner): Promise<any> { }
 
 }

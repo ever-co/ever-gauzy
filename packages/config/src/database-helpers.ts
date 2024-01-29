@@ -1,7 +1,7 @@
 import { TlsOptions } from "tls";
 import { parseToBoolean } from '@gauzy/common';
 
-export enum databaseTypes {
+export enum DatabaseTypeEnum {
 	mongodb = 'mongodb',
 	sqlite = 'sqlite',
 	betterSqlite3 = 'better-sqlite3',
@@ -9,11 +9,11 @@ export enum databaseTypes {
 	mysql = 'mysql'
 }
 
-const isMysqlValue = process.env.DB_TYPE === databaseTypes.mysql;
-const isSqliteValue = process.env.DB_TYPE === databaseTypes.sqlite;
-const isBetterSqlite3Value = process.env.DB_TYPE === databaseTypes.betterSqlite3;
-const isPostgresValue = process.env.DB_TYPE === databaseTypes.postgres;
-const isMongodbValue = process.env.DB_TYPE === databaseTypes.mongodb;
+const isMysqlValue = process.env.DB_TYPE === DatabaseTypeEnum.mysql;
+const isSqliteValue = process.env.DB_TYPE === DatabaseTypeEnum.sqlite;
+const isBetterSqlite3Value = process.env.DB_TYPE === DatabaseTypeEnum.betterSqlite3;
+const isPostgresValue = process.env.DB_TYPE === DatabaseTypeEnum.postgres;
+const isMongodbValue = process.env.DB_TYPE === DatabaseTypeEnum.mongodb;
 
 export const isMySQL = (): boolean => isMysqlValue;
 export const isSqlite = (): boolean => isSqliteValue;

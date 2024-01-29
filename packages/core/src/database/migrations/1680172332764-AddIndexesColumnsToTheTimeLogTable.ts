@@ -1,54 +1,54 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from "chalk";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AddIndexesColumnsToTheTimeLogTable1680172332764 implements MigrationInterface {
 	name = 'AddIndexesColumnsToTheTimeLogTable1680172332764';
 
-    /**
-     * Up Migration
-     *
-     * @param queryRunner
-     */
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log(chalk.yellow(this.name + ' start running!'));
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-                await this.sqliteUpQueryRunner(queryRunner);
-                break;
-            case databaseTypes.postgres:
-                await this.postgresUpQueryRunner(queryRunner);
-                break;
-            case databaseTypes.mysql:
-                await this.mysqlUpQueryRunner(queryRunner);
-                break;
-            default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
-        }
-    }
-    /**
-     * Down Migration
-     *
-     * @param queryRunner
-     */
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-                await this.sqliteDownQueryRunner(queryRunner);
-                break;
-            case databaseTypes.postgres:
-                await this.postgresDownQueryRunner(queryRunner);
-                break;
-            case databaseTypes.mysql:
-                await this.mysqlDownQueryRunner(queryRunner);
-                break;
-            default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
-        }
-    }
+		switch (queryRunner.connection.options.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteUpQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresUpQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlUpQueryRunner(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> {
+		switch (queryRunner.connection.options.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteDownQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresDownQueryRunner(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlDownQueryRunner(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
 
 	/**
 	 * PostgresDB Up Migration
@@ -114,17 +114,17 @@ export class AddIndexesColumnsToTheTimeLogTable1680172332764 implements Migratio
 		await queryRunner.query(`DROP INDEX "IDX_189b79acd611870aba62b3594e"`);
 	}
 
-    /**
-     * MySQL Up Migration
-     *
-     * @param queryRunner
-     */
-    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+	/**
+	 * MySQL Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 
-    /**
-     * MySQL Down Migration
-     *
-     * @param queryRunner
-     */
-    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+	/**
+	 * MySQL Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 }

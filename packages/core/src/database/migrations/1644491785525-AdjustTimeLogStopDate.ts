@@ -3,7 +3,7 @@ import * as chalk from "chalk";
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
 
@@ -18,14 +18,14 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlUpQueryRunner(queryRunner);
                 break;
             default:
@@ -39,14 +39,14 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlDownQueryRunner(queryRunner);
                 break;
             default:
@@ -115,7 +115,7 @@ export class AdjustTimeLogStopDate1644491785525 implements MigrationInterface {
                 logDifference > 10
             ) {
                 await queryRunner.connection.manager.query(
-                     `UPDATE "time_log" SET
+                    `UPDATE "time_log" SET
                         "stoppedAt" = ?
                     WHERE
                         "id" IN(?)`,

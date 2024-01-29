@@ -1,6 +1,6 @@
 import { QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { databaseTypes, getConfig } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
@@ -77,19 +77,19 @@ export class IntegrationsUtils {
 				let payload: any[];
 
 				switch (queryRunner.connection.options.type) {
-					case databaseTypes.sqlite:
-					case databaseTypes.betterSqlite3:
+					case DatabaseTypeEnum.sqlite:
+					case DatabaseTypeEnum.betterSqlite3:
 						payload = [name, filePath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
 						// For SQLite, manually generate a UUID using uuidv4()
 						const generatedId = uuidv4();
 						payload.push(generatedId);
 						upsertQuery = sqliteUpsertQuery;
 						break;
-					case databaseTypes.postgres:
+					case DatabaseTypeEnum.postgres:
 						payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
 						upsertQuery = postgresUpsertQuery;
 						break;
-					case databaseTypes.mysql:
+					case DatabaseTypeEnum.mysql:
 						payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
 						upsertQuery = mysqlUpsertQuery;
 						break;
@@ -190,17 +190,17 @@ export class IntegrationsUtils {
 			let upsertQuery = ``;
 
 			switch (queryRunner.connection.options.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					// For SQLite, manually generate a UUID using uuidv4()
 					const generatedId = uuidv4();
 					payload.push(generatedId);
 					upsertQuery = sqliteUpsertQuery;
 					break;
-				case databaseTypes.postgres:
+				case DatabaseTypeEnum.postgres:
 					upsertQuery = postgresUpsertQuery;
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					upsertQuery = mysqlUpsertQuery;
 					break;
 				default:
@@ -259,14 +259,14 @@ export class IntegrationsUtils {
 					);
 				`);
 				switch (queryRunner.connection.options.type) {
-					case databaseTypes.sqlite:
-					case databaseTypes.betterSqlite3:
+					case DatabaseTypeEnum.sqlite:
+					case DatabaseTypeEnum.betterSqlite3:
 						insertPivotQuery = sqliteUpsertQuery;
 						break;
-					case databaseTypes.postgres:
+					case DatabaseTypeEnum.postgres:
 						insertPivotQuery = postgresUpsertQuery;
 						break;
-					case databaseTypes.mysql:
+					case DatabaseTypeEnum.mysql:
 						insertPivotQuery = mysqlUpsertQuery;
 						break;
 					default:

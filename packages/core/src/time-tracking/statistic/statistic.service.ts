@@ -26,7 +26,7 @@ import {
 	ITimeLog
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
-import { ConfigService, databaseTypes, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
+import { ConfigService, DatabaseTypeEnum, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import {
@@ -122,14 +122,14 @@ export class StatisticService {
 
 		let weekQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				weekQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekQuery.alias}"."id")), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				weekQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				weekQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekQuery.alias}"."id")), 0)`);
 				break;
 			default:
@@ -241,14 +241,14 @@ export class StatisticService {
 
 		let todayQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				todayQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${todayQuery.alias}"."id")), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				todayQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${todayQuery.alias}"."id")), 0)`);
 				break;
 			default:
@@ -397,14 +397,14 @@ export class StatisticService {
 
 		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`);
 				break;
 			default:
@@ -475,14 +475,14 @@ export class StatisticService {
 
 			let weekTimeQueryString: string;
 			switch (this.configService.dbConnectionOptions.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					weekTimeQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${weekTimeQuery.alias}"."id")), 0)`;
 					break;
-				case databaseTypes.postgres:
+				case DatabaseTypeEnum.postgres:
 					weekTimeQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`;
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					weekTimeQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`);
 					break;
 				default:
@@ -573,14 +573,14 @@ export class StatisticService {
 
 			let dayTimeQueryString: string;
 			switch (this.configService.dbConnectionOptions.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					dayTimeQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400) / COUNT("${dayTimeQuery.alias}"."id")), 0)`;
 					break;
-				case databaseTypes.postgres:
+				case DatabaseTypeEnum.postgres:
 					dayTimeQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`;
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					dayTimeQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`);
 					break;
 				default:
@@ -685,14 +685,14 @@ export class StatisticService {
 
 				let weekHoursQueryString: string;
 				switch (this.configService.dbConnectionOptions.type) {
-					case databaseTypes.sqlite:
-					case databaseTypes.betterSqlite3:
+					case DatabaseTypeEnum.sqlite:
+					case DatabaseTypeEnum.betterSqlite3:
 						weekHoursQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("timeLogs"."stoppedAt", datetime('now'))) - julianday("timeLogs"."startedAt")) * 86400)), 0)`;
 						break;
-					case databaseTypes.postgres:
+					case DatabaseTypeEnum.postgres:
 						weekHoursQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`;
 						break;
-					case databaseTypes.mysql:
+					case DatabaseTypeEnum.mysql:
 						weekHoursQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`);
 						break;
 					default:
@@ -800,14 +800,14 @@ export class StatisticService {
 
 		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
 				break;
 			default:
@@ -886,14 +886,14 @@ export class StatisticService {
 
 		let totalDurationQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				totalDurationQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
 				break;
 			default:
@@ -1029,14 +1029,14 @@ export class StatisticService {
 
 		let todayQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				todayQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				todayQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${todayQuery.alias}"."startedAt", COALESCE("${todayQuery.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
 				break;
 			default:
@@ -1113,14 +1113,14 @@ export class StatisticService {
 
 		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
 				break;
 			default:
@@ -1230,14 +1230,14 @@ export class StatisticService {
 
 		let totalDurationQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				totalDurationQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
 				break;
 			default:
@@ -1439,14 +1439,14 @@ export class StatisticService {
 		let queryString;
 
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				queryString = `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				queryString = `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				queryString = p(`CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time") BETWEEN :start AND :end`);
 				break;
 			default:
@@ -1514,14 +1514,14 @@ export class StatisticService {
 		let totalDurationQueryString: string;
 
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				totalDurationQueryString = `datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				totalDurationQueryString = `concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				totalDurationQueryString = p(`CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time") BETWEEN :start AND :end`);
 				break;
 			default:

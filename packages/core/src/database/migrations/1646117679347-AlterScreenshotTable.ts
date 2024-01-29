@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AlterScreenshotTable1646117679347 implements MigrationInterface {
     name = 'AlterScreenshotTable1646117679347';
@@ -14,14 +14,14 @@ export class AlterScreenshotTable1646117679347 implements MigrationInterface {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlUpQueryRunner(queryRunner);
                 break;
             default:
@@ -35,14 +35,14 @@ export class AlterScreenshotTable1646117679347 implements MigrationInterface {
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlDownQueryRunner(queryRunner);
                 break;
             default:

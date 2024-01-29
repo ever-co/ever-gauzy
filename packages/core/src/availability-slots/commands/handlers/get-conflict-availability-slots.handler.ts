@@ -7,7 +7,7 @@ import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { RequestContext } from './../../../core/context';
-import { databaseTypes } from '@gauzy/config';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
@@ -40,18 +40,18 @@ export class GetConflictAvailabilitySlotsHandler
 		});
 
 		switch (this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				query.andWhere(`'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`);
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				query.andWhere(
 					`(
 						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'
 					)`
 				);
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				query.andWhere(
 					p(`(
 						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'

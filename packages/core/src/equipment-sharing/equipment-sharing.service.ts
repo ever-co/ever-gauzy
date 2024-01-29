@@ -4,7 +4,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { ConfigService, databaseTypes } from '@gauzy/config';
+import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { isNotEmpty } from '@gauzy/common';
 import { EquipmentSharing } from './equipment-sharing.entity';
@@ -38,16 +38,16 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
 			switch (this.configService.dbConnectionOptions.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					query.leftJoinAndSelect(
 						'request_approval',
 						'requestApproval',
 						'"equipment_sharing"."id" = "requestApproval"."requestId"'
 					);
 					break;
-				case databaseTypes.postgres:
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.postgres:
+				case DatabaseTypeEnum.mysql:
 					query.leftJoinAndSelect(
 						'request_approval',
 						'requestApproval',
@@ -169,22 +169,22 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
 			switch (this.configService.dbConnectionOptions.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					query.leftJoinAndSelect(
 						'request_approval',
 						'requestApproval',
 						'"equipment_sharing"."id" = "requestApproval"."requestId"'
 					);
 					break;
-				case databaseTypes.postgres:
+				case DatabaseTypeEnum.postgres:
 					query.leftJoinAndSelect(
 						'request_approval',
 						'requestApproval',
 						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
 					);
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					query.leftJoinAndSelect(
 						'request_approval',
 						'requestApproval',

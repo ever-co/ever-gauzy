@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { databaseTypes, getConfig } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { EmployeeService } from '../../employee.service';
@@ -29,14 +29,14 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 		} else {
 			let query: string = '';
 			switch (config.dbConnectionOptions.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					query = 'SUM((julianday("stoppedAt") - julianday("startedAt")) * 86400)';
 					break;
-				case databaseTypes.postgres:
+				case DatabaseTypeEnum.postgres:
 					query = 'SUM(extract(epoch from ("stoppedAt" - "startedAt")))';
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					query = p('SUM(TIMESTAMPDIFF(SECOND, "startedAt", "stoppedAt"))');
 					break;
 				default:

@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { IDBConnectionOptions } from '@gauzy/common';
-import { getConfig, databaseTypes } from '@gauzy/config';
+import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { SqliteDriver } from '@mikro-orm/sqlite';
@@ -72,11 +72,11 @@ export function unixTimestampToDate(timestamps, format = 'YYYY-MM-DD HH:mm:ss') 
 export function convertToDatetime(datetime): Date | string | null {
 	if (moment(new Date(datetime)).isValid()) {
 		switch (getConfig().dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
-			case databaseTypes.postgres:
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.postgres:
+			case DatabaseTypeEnum.mysql:
 				return moment(new Date(datetime)).toDate();
 			default:
 				throw Error('cannot convert to date time');
@@ -126,13 +126,13 @@ export function getDateRange(
 	}
 
 	switch (getConfig().dbConnectionOptions.type) {
-		case databaseTypes.sqlite:
-		case databaseTypes.betterSqlite3:
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
 			start = start.format('YYYY-MM-DD HH:mm:ss');
 			end = end.format('YYYY-MM-DD HH:mm:ss');
 			break;
-		case databaseTypes.postgres:
-		case databaseTypes.mysql:
+		case DatabaseTypeEnum.postgres:
+		case DatabaseTypeEnum.mysql:
 			if (!isFormat) {
 				start = start.toDate();
 				end = end.toDate();
@@ -226,14 +226,14 @@ export function getDateRangeFormat(
 	}
 
 	switch (getConfig().dbConnectionOptions.type) {
-		case databaseTypes.sqlite:
-		case databaseTypes.betterSqlite3:
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
 			return {
 				start: start.format('YYYY-MM-DD HH:mm:ss'),
 				end: end.format('YYYY-MM-DD HH:mm:ss')
 			};
-		case databaseTypes.postgres:
-		case databaseTypes.mysql:
+		case DatabaseTypeEnum.postgres:
+		case DatabaseTypeEnum.mysql:
 			return {
 				start: start.toDate(),
 				end: end.toDate()
@@ -346,7 +346,7 @@ export function findIntersection(arr1: any[], arr2: any[]) {
  * @returns {boolean} - Returns true if the database connection type is SQLite.
  */
 export function isSqliteDB(dbConnection?: IDBConnectionOptions): boolean {
-	return isDatabaseType([databaseTypes.sqlite, databaseTypes.betterSqlite3], dbConnection);
+	return isDatabaseType([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3], dbConnection);
 }
 
 /**
@@ -384,7 +384,7 @@ export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): Multi
  * Gets the database type based on the provided database connection options or default options.
  *
  * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
- * @returns {databaseTypes} - The detected database type.
+ * @returns {DatabaseTypeEnum} - The detected database type.
  */
 export function getDBType(dbConnection?: IDBConnectionOptions): any {
 	const dbORM = getORMType();
@@ -396,15 +396,15 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
 	switch (dbORM) {
 		case MultiORMEnum.MikroORM:
 			if (dbConnection.driver instanceof SqliteDriver) {
-				dbType = databaseTypes.sqlite;
+				dbType = DatabaseTypeEnum.sqlite;
 			} else if (dbConnection.driver instanceof BetterSqliteDriver) {
-				dbType = databaseTypes.betterSqlite3;
+				dbType = DatabaseTypeEnum.betterSqlite3;
 			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
-				dbType = databaseTypes.postgres;
+				dbType = DatabaseTypeEnum.postgres;
 			} else if (dbConnection.driver instanceof MySqlDriver) {
-				dbType = databaseTypes.mysql;
+				dbType = DatabaseTypeEnum.mysql;
 			} else {
-				dbType = databaseTypes.postgres;
+				dbType = DatabaseTypeEnum.postgres;
 			}
 			break;
 
@@ -420,11 +420,11 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
  * Checks whether the provided database type(s) match the database type of the given connection options.
  * If no connection options are provided, it uses the default options from the configuration.
  *
- * @param {databaseTypes | databaseTypes[]} types - The expected database type(s) to check against.
+ * @param {DatabaseTypeEnum | DatabaseTypeEnum[]} types - The expected database type(s) to check against.
  * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
  * @returns {boolean} - Returns true if the database type matches any of the provided types.
  */
-export function isDatabaseType(types: databaseTypes | databaseTypes[], dbConnection?: IDBConnectionOptions): boolean {
+export function isDatabaseType(types: DatabaseTypeEnum | DatabaseTypeEnum[], dbConnection?: IDBConnectionOptions): boolean {
 	// If no connection options are provided, use the default options from the configuration
 	if (!dbConnection) {
 		dbConnection = getConfig().dbConnectionOptions;

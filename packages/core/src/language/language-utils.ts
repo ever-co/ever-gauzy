@@ -4,7 +4,7 @@ import allLanguages from './all-languages';
 import { Language } from './language.entity';
 import { faker } from '@faker-js/faker';
 import { v4 as uuidV4 } from 'uuid';
-import { databaseTypes } from '@gauzy/config';
+import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class LanguageUtils {
 	private static async addLanguages(queryRunner: QueryRunner, languages: ILanguage[]): Promise<void> {
@@ -14,8 +14,8 @@ export class LanguageUtils {
 			let insertOrUpdateQuery = '';
 			let payload: any[];
 			switch (queryRunner.connection.options.type) {
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					payload = [name, code, is_system ? 1 : 0, description, color];
 					payload.push(uuidV4());
 					console.log('Inserting languages: ', JSON.stringify(payload));
@@ -30,7 +30,7 @@ export class LanguageUtils {
 							color = EXCLUDED.color;
 					`;
 					break;
-				case databaseTypes.postgres:
+				case DatabaseTypeEnum.postgres:
 					payload = [name, code, is_system, description, color];
 					insertOrUpdateQuery = `
 						INSERT INTO language (name, code, is_system, description, color)
@@ -43,7 +43,7 @@ export class LanguageUtils {
 							color = EXCLUDED.color;
 					`;
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					payload = [name, code, is_system, description, color];
 					insertOrUpdateQuery = `
 						INSERT INTO language (name, code, is_system, description, color)

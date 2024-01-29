@@ -10,24 +10,35 @@ import { Options as MikroOrmMySqlOptions, MySqlDriver } from '@mikro-orm/mysql';
 import { DataSourceOptions } from 'typeorm';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { databaseTypes, getLoggingOptions, getTlsOptions } from './database-helpers';
+import { DatabaseTypeEnum, getLoggingOptions, getTlsOptions } from './database-helpers';
 
+/**
+ * Type representing the ORM types.
+ */
 export type MultiORM = 'typeorm' | 'mikro-orm';
 
+/**
+ * Enum representing different ORM types.
+ */
 enum MultiORMEnum {
 	TypeORM = 'typeorm',
 	MikroORM = 'mikro-orm'
 }
 
+/**
+ * Gets the ORM type from the environment variable or returns the default value.
+ *
+ * @param {MultiORM} [defaultValue=MultiORMEnum.TypeORM] - The default ORM type if not specified in the environment variable.
+ * @returns {MultiORM} - The ORM type.
+ */
 function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
 	return (process.env.DB_ORM as MultiORM) || defaultValue;
 }
 
 const dbORM: MultiORM = getORMType();
-
 console.log('DB ORM: ' + dbORM);
 
-const dbType = process.env.DB_TYPE || databaseTypes.betterSqlite3;
+const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
@@ -35,8 +46,8 @@ console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 // `process` is a built-in global in Node.js, no need to `require()`
 console.log(chalk.magenta(`Currently running Node.js version %s`), process.version);
 
-let connectionConfig: TypeOrmModuleOptions;
-let mikroORMConnectionConfig: MikroOrmModuleOptions;
+let typeOrmConnectionConfig: TypeOrmModuleOptions;
+let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 
 // We set default pool size as 80. Usually PG has 100 connections max by default.
 const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
@@ -50,10 +61,11 @@ console.log('DB Idle Timeout: ' + idleTimeoutMillis);
 console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
 
 switch (dbType) {
-	case databaseTypes.mongodb:
+	case DatabaseTypeEnum.mongodb:
 		throw 'MongoDB not supported yet';
 
-	case databaseTypes.mysql:
+	case DatabaseTypeEnum.mysql:
+		// MikroORM DB Config
 		const mikroOrmMySqlOptions: MikroOrmMySqlOptions = {
 			driver: MySqlDriver,
 			host: process.env.DB_HOST || 'localhost',
@@ -74,9 +86,9 @@ switch (dbType) {
 			},
 			namingStrategy: EntityCaseNamingStrategy
 		};
+		mikroOrmConnectionConfig = mikroOrmMySqlOptions;
 
-		mikroORMConnectionConfig = mikroOrmMySqlOptions;
-
+		// TypeORM Config
 		const typeOrmMySqlOptions: MysqlConnectionOptions = {
 			type: dbType,
 			ssl: getTlsOptions(process.env.DB_SSL_MODE),
@@ -100,12 +112,12 @@ switch (dbType) {
 				maxIdle: dbPoolSize
 			}
 		};
-
-		connectionConfig = typeOrmMySqlOptions;
+		typeOrmConnectionConfig = typeOrmMySqlOptions;
 
 		break;
 
-	case databaseTypes.postgres:
+	case DatabaseTypeEnum.postgres:
+		// MikroORM DB Config
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 			driver: PostgreSqlDriver,
 			host: process.env.DB_HOST || 'localhost',
@@ -131,9 +143,9 @@ switch (dbType) {
 			},
 			namingStrategy: EntityCaseNamingStrategy
 		};
+		mikroOrmConnectionConfig = mikroOrmPostgresOptions;
 
-		mikroORMConnectionConfig = mikroOrmPostgresOptions;
-
+		// TypeORM DB Config
 		const typeOrmPostgresOptions: PostgresConnectionOptions = {
 			type: dbType,
 			ssl: getTlsOptions(process.env.DB_SSL_MODE),
@@ -165,24 +177,23 @@ switch (dbType) {
 				idleTimeoutMillis: idleTimeoutMillis
 			}
 		};
-
-		connectionConfig = typeOrmPostgresOptions;
+		typeOrmConnectionConfig = typeOrmPostgresOptions;
 
 		break;
 
-	case databaseTypes.sqlite:
+	case DatabaseTypeEnum.sqlite:
 		const dbPath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Sqlite DB Path: ' + dbPath);
 
-		// MikroORM Config
+		// MikroORM DB Config
 		const mikroORMSqliteConfig: MikroOrmSqliteOptions = {
 			driver: SqliteDriver,
-			dbName: dbPath
+			dbName: dbPath,
+			namingStrategy: EntityCaseNamingStrategy
 		};
+		mikroOrmConnectionConfig = mikroORMSqliteConfig;
 
-		mikroORMConnectionConfig = mikroORMSqliteConfig;
-
-		// TypeORM Config
+		// TypeORM DB Config
 		const sqliteConfig: DataSourceOptions = {
 			type: dbType,
 			database: dbPath,
@@ -190,26 +201,23 @@ switch (dbType) {
 			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
 			synchronize: process.env.DB_SYNCHRONIZE === 'true' // We are using migrations, synchronize should be set to false.
 		};
-
-		connectionConfig = sqliteConfig;
+		typeOrmConnectionConfig = sqliteConfig;
 
 		break;
 
-	case databaseTypes.betterSqlite3:
-		const betterSqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
-
+	case DatabaseTypeEnum.betterSqlite3:
+		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
-		// MikroORM Config
+		// MikroORM DB Config
 		const mikroORMBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
 			driver: BetterSqliteDriver,
-			dbName: betterSqlitePath
+			dbName: betterSqlitePath,
+			namingStrategy: EntityCaseNamingStrategy
 		};
+		mikroOrmConnectionConfig = mikroORMBetterSqliteConfig;
 
-		mikroORMConnectionConfig = mikroORMBetterSqliteConfig;
-
-		// TypeORM Config
+		// TypeORM DB Config
 		const betterSqliteConfig: DataSourceOptions = {
 			type: dbType,
 			database: betterSqlitePath,
@@ -223,11 +231,17 @@ switch (dbType) {
 				}
 			}
 		};
-
-		connectionConfig = betterSqliteConfig;
+		typeOrmConnectionConfig = betterSqliteConfig;
 
 		break;
 }
 
-export const dbConnectionConfig = connectionConfig;
-export const dbMikroOrmConnectionConfig = mikroORMConnectionConfig;
+/**
+ * TypeORM DB connection configuration.
+ */
+export const dbTypeOrmConnectionConfig = typeOrmConnectionConfig;
+
+/**
+ * MikroORM DB connection configuration.
+ */
+export const dbMikroOrmConnectionConfig = mikroOrmConnectionConfig;
