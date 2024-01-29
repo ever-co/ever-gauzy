@@ -12,20 +12,6 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 @Module({
 	imports: [
 		/**
-		 * Configuration for TypeORM database connection.
-		 *
-		 * @type {TypeOrmModuleOptions}
-		 */
-		TypeOrmModule.forRootAsync({
-			imports: [ConfigModule],
-			inject: [ConfigService],
-			// Use useFactory, useClass, or useExisting
-			useFactory: async (configService: ConfigService) => {
-				const { dbConnectionOptions } = configService.config;
-				return dbConnectionOptions;
-			}
-		}),
-		/**
 		 * Configuration for MikroORM database connection.
 		 *
 		 * @type {MikroORMModuleOptions}
@@ -37,6 +23,20 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 			useFactory: async (configService: ConfigService) => {
 				const { dbMikroOrmConnectionOptions } = configService.config;
 				return dbMikroOrmConnectionOptions;
+			}
+		}),
+		/**
+		 * Configuration for TypeORM database connection.
+		 *
+		 * @type {TypeOrmModuleOptions}
+		 */
+		TypeOrmModule.forRootAsync({
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			// Use useFactory, useClass, or useExisting
+			useFactory: async (configService: ConfigService) => {
+				const { dbConnectionOptions } = configService.config;
+				return dbConnectionOptions;
 			}
 		})
 	],
