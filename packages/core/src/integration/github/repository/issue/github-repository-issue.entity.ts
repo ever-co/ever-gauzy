@@ -5,8 +5,9 @@ import { IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue } fro
 import { TenantOrganizationBaseEntity } from '../../../../core/entities/internal';
 import { MultiORMEntity } from '../../../../core/decorators/entity';
 import { OrganizationGithubRepository } from './../github-repository.entity';
+import { MikroOrmOrganizationGithubRepositoryIssueRepository } from './repository/mikro-orm-github-repository-issue.repository';
 
-@MultiORMEntity('organization_github_repository_issue')
+@MultiORMEntity('organization_github_repository_issue', { mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryIssueRepository })
 export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEntity implements IOrganizationGithubRepositoryIssue {
 
     @ApiProperty({ type: () => Number })

@@ -1,28 +1,26 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository } from 'typeorm';
 import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
 import { TenantAwareCrudService } from 'core/crud';
 import { OrganizationGithubRepository } from './github-repository.entity';
 import { IntegrationSyncGithubRepositoryCommand } from '../commands';
+import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-candidate.repository';
+import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/type-orm-github-repository.repository';
 
 @Injectable()
 export class GithubRepositoryService extends TenantAwareCrudService<OrganizationGithubRepository> {
 	private readonly logger = new Logger('GithubRepositoryService');
 
 	constructor(
-		private readonly _commandBus: CommandBus,
-
 		@InjectRepository(OrganizationGithubRepository)
-		organizationGithubRepository: Repository<OrganizationGithubRepository>,
+		typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
 
-		@MikroInjectRepository(OrganizationGithubRepository)
-		mikroOrganizationGithubRepository: EntityRepository<OrganizationGithubRepository>
+		mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository,
+
+		private readonly _commandBus: CommandBus
 	) {
-		super(organizationGithubRepository, mikroOrganizationGithubRepository);
+		super(typeOrmOrganizationGithubRepositoryRepository, mikroOrmOrganizationGithubRepositoryRepository);
 	}
 
 	/**
@@ -33,7 +31,9 @@ export class GithubRepositoryService extends TenantAwareCrudService<Organization
 	 */
 	async syncGithubRepository(input: IIntegrationMapSyncRepository): Promise<IOrganizationGithubRepository> {
 		try {
-			return await this._commandBus.execute(new IntegrationSyncGithubRepositoryCommand(input));
+			return await this._commandBus.execute(
+				new IntegrationSyncGithubRepositoryCommand(input)
+			);
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			this.logger.error('Error while sync github integration repository', error.message);

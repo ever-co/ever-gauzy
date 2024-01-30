@@ -1,27 +1,35 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAwareCrudService } from '../core/crud';
-import { Repository } from 'typeorm';
 import { ProductVariantSetting } from './product-setting.entity';
+import { TypeOrmProductVariantSettingRepository } from './repository/type-orm-product-setting.repository';
+import { MikroOrmProductVariantSettingRepository } from './repository/mikro-orm-product-setting.repository';
 
 @Injectable()
 export class ProductVariantSettingService extends TenantAwareCrudService<ProductVariantSetting> {
 	constructor(
 		@InjectRepository(ProductVariantSetting)
-		productVariantSettingRepository: Repository<ProductVariantSetting>,
-		@MikroInjectRepository(ProductVariantSetting)
-		mikroProductVariantSettingRepository: EntityRepository<ProductVariantSetting>
+		typeOrmProductVariantSettingRepository: TypeOrmProductVariantSettingRepository,
+
+		mikroOrmProductVariantSettingRepository: MikroOrmProductVariantSettingRepository
 	) {
-		super(productVariantSettingRepository, mikroProductVariantSettingRepository);
+		super(typeOrmProductVariantSettingRepository, mikroOrmProductVariantSettingRepository);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	async createDefaultVariantSettings(): Promise<ProductVariantSetting> {
 		const newProductVariantSettings = new ProductVariantSetting();
 		return this.repository.save(newProductVariantSettings);
 	}
 
+	/**
+	 *
+	 * @param productVariantPrices
+	 * @returns
+	 */
 	async deleteMany(productVariantPrices: ProductVariantSetting[]): Promise<ProductVariantSetting[]> {
 		return this.repository.remove(productVariantPrices);
 	}

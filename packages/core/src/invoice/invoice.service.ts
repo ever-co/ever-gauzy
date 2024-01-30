@@ -1,9 +1,7 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository } from 'typeorm';
+import { Between, In } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
 import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
@@ -16,21 +14,24 @@ import { Readable } from 'stream';
 import { PdfmakerService } from './pdfmaker.service';
 import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } from './index';
 import { OrganizationService } from './../organization';
+import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
+import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(
 		@InjectRepository(Invoice)
-		invoiceRepository: Repository<Invoice>,
-		@MikroInjectRepository(Invoice)
-		mikroInvoiceRepository: EntityRepository<Invoice>,
+		typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
+
+		mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
+
 		private readonly emailService: EmailService,
 		private readonly estimateEmailService: EstimateEmailService,
 		private readonly pdfmakerService: PdfmakerService,
 		private readonly i18n: I18nService,
 		private readonly organizationService: OrganizationService
 	) {
-		super(invoiceRepository, mikroInvoiceRepository);
+		super(typeOrmInvoiceRepository, mikroOrmInvoiceRepository);
 	}
 
 	/**

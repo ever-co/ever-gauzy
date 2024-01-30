@@ -1,22 +1,22 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Raw } from 'typeorm';
+import { FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
 import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
+import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
-		proposalRepository: Repository<Proposal>,
-		@MikroInjectRepository(Proposal)
-		mikroProposalRepository: EntityRepository<Proposal>
+		typeOrmProposalRepository: TypeOrmProposalRepository,
+
+		mikroOrmProposalRepository: MikroOrmProposalRepository
 	) {
-		super(proposalRepository, mikroProposalRepository);
+		super(typeOrmProposalRepository, mikroOrmProposalRepository);
 	}
 
 	async getAllProposals(filter?: FindManyOptions<IProposal>, filterDate?: string): Promise<IPagination<IProposal>> {

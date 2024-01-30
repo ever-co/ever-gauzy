@@ -1,23 +1,28 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
-import { TenantAwareCrudService } from './../core/crud';
-import { InvoiceItem } from './invoice-item.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { IInvoiceItemCreateInput } from '@gauzy/contracts';
+import { TenantAwareCrudService } from './../core/crud';
+import { InvoiceItem } from './invoice-item.entity';
+import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
+import { TypeOrmInvoiceItemRepository } from './repository/type-orm-invoice-item.repository';
 
 @Injectable()
 export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	constructor(
 		@InjectRepository(InvoiceItem)
-		invoiceItemRepository: Repository<InvoiceItem>,
-		@MikroInjectRepository(InvoiceItem)
-		mikroInvoiceItemRepository: EntityRepository<InvoiceItem>
+		typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
+
+		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository
 	) {
-		super(invoiceItemRepository, mikroInvoiceItemRepository);
+		super(typeOrmInvoiceItemRepository, mikroOrmInvoiceItemRepository);
 	}
 
+	/**
+	 *
+	 * @param invoiceId
+	 * @param createInput
+	 * @returns
+	 */
 	async createBulk(invoiceId: string, createInput: IInvoiceItemCreateInput[]) {
 		await this.repository.delete({ invoiceId: invoiceId });
 		return await this.repository.save(createInput);

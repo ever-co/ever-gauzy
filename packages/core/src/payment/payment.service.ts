@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
+import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { IDateRangePicker, IGetPaymentInput } from '@gauzy/contracts';
@@ -16,18 +14,20 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { IPayment } from '@gauzy/contracts';
 import { IInvoice } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
+import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
-		paymentRepository: Repository<Payment>,
-		@MikroInjectRepository(Payment)
-		mikroPaymentRepository: EntityRepository<Payment>,
+		typeOrmPaymentRepository: TypeOrmPaymentRepository,
+
+		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
 
 		private readonly emailService: EmailService
 	) {
-		super(paymentRepository, mikroPaymentRepository);
+		super(typeOrmPaymentRepository, mikroOrmPaymentRepository);
 	}
 
 	/**
@@ -44,9 +44,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		query.setFindOptions({
 			...(request && request.limit > 0
 				? {
-						take: request.limit,
-						skip: (request.page || 0) * request.limit
-				  }
+					take: request.limit,
+					skip: (request.page || 0) * request.limit
+				}
 				: {}),
 			join: {
 				alias: `${this.alias}`,
@@ -99,9 +99,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		query.setFindOptions({
 			...(request.limit > 0
 				? {
-						take: request.limit,
-						skip: (request.page || 0) * request.limit
-				  }
+					take: request.limit,
+					skip: (request.page || 0) * request.limit
+				}
 				: {}),
 			order: {
 				// Order results by the 'startedAt' field in ascending order

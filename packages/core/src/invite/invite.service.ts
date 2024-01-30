@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { ConfigService, environment } from '@gauzy/config';
 import {
 	ICreateEmailInvitesInput,
@@ -51,27 +49,37 @@ import { Employee } from './../employee/employee.entity';
 import { OrganizationTeamEmployee } from './../organization-team-employee/organization-team-employee.entity';
 import { InviteAcceptCommand } from './commands';
 import { UserOrganizationService } from './../user-organization/user-organization.services';
+import { TypeOrmInviteRepository } from './repository/type-orm-invite.repository';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 
 @Injectable()
 export class InviteService extends TenantAwareCrudService<Invite> {
 	constructor(
 		@InjectRepository(Invite)
-		inviteRepository: Repository<Invite>,
-		@MikroInjectRepository(Invite)
-		mikroInviteRepository: EntityRepository<Invite>,
+		typeOrmInviteRepository: TypeOrmInviteRepository,
+
+		mikroOrmInviteRepository: MikroOrmInviteRepository,
 
 		@InjectRepository(User)
-		protected readonly userRepository: Repository<User>,
-		@MikroInjectRepository(User)
-		protected readonly mikroUserRepository: EntityRepository<User>,
+		private typeOrmUserRepository: TypeOrmUserRepository,
+
+		mikroOrmUserRepository: MikroOrmUserRepository,
+
 		@InjectRepository(Employee)
-		protected readonly employeeRepository: Repository<Employee>,
-		@MikroInjectRepository(Employee)
-		protected readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
+
 		@InjectRepository(OrganizationTeamEmployee)
-		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
-		@MikroInjectRepository(OrganizationTeamEmployee)
-		protected readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
+		private typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+
+		mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 
 		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
@@ -86,7 +94,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		private readonly commandBus: CommandBus,
 		private readonly userOrganizationService: UserOrganizationService
 	) {
-		super(inviteRepository, mikroInviteRepository);
+		super(typeOrmInviteRepository, mikroOrmInviteRepository);
 	}
 
 	/**
@@ -188,22 +196,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { items: existedInvites } = await this.findAll({
 			...(isNotEmpty(teamIds)
 				? {
-						relations: {
-							teams: true
-						}
-				  }
+					relations: {
+						teams: true
+					}
+				}
 				: {}),
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 				...(isNotEmpty(organizationId)
 					? {
-							organizationId
-					  }
+						organizationId
+					}
 					: {}),
 				...(isNotEmpty(emailIds)
 					? {
-							email: In(emailIds)
-					  }
+						email: In(emailIds)
+					}
 					: {})
 			}
 		});
@@ -211,7 +219,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		let ignoreInvites = 0;
 		const invites: Invite[] = [];
 		for await (const email of emailIds) {
-			const organizationTeamEmployees = await this.organizationTeamEmployeeRepository.find({
+			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.find({
 				where: {
 					employee: {
 						user: {
@@ -515,8 +523,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							status: InviteStatusEnum.INVITED,
 							...(payload['code']
 								? {
-										code: payload['code']
-								  }
+									code: payload['code']
+								}
 								: {})
 						});
 						qb.andWhere([
@@ -597,18 +605,18 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return await super.findAll({
 				...(options && options.skip
 					? {
-							skip: options.take * (options.skip - 1)
-					  }
+						skip: options.take * (options.skip - 1)
+					}
 					: {}),
 				...(options && options.take
 					? {
-							take: options.take
-					  }
+						take: options.take
+					}
 					: {}),
 				...(options && options.relations
 					? {
-							relations: options.relations
-					  }
+						relations: options.relations
+					}
 					: {}),
 				where: {
 					tenantId: RequestContext.currentTenantId(),
@@ -616,15 +624,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
-									role: {
-										...options.where.role
-									}
-							  }
+								role: {
+									...options.where.role
+								}
+							}
 							: {
-									role: {
-										name: Not(RolesEnum.EMPLOYEE)
-									}
-							  }
+								role: {
+									name: Not(RolesEnum.EMPLOYEE)
+								}
+							}
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
@@ -632,10 +640,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.projects)
 							? {
-									projects: {
-										id: In(options.where.projects.id)
-									}
-							  }
+								projects: {
+									id: In(options.where.projects.id)
+								}
+							}
 							: {}
 						: {}),
 					/**
@@ -644,10 +652,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.teams)
 							? {
-									teams: {
-										id: In(options.where.teams.id)
-									}
-							  }
+								teams: {
+									id: In(options.where.teams.id)
+								}
+							}
 							: {}
 						: {})
 				}
@@ -762,7 +770,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		} = invitation;
 		let invitedTenantUser: User;
 		if (user.tenantId !== tenantId) {
-			invitedTenantUser = await this.userRepository.findOne({
+			invitedTenantUser = await this.typeOrmUserRepository.findOne({
 				where: {
 					email,
 					tenantId
@@ -807,7 +815,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				 * Add employee to invited team
 				 */
 
-				await this.organizationTeamEmployeeRepository.save({
+				await this.typeOrmOrganizationTeamEmployeeRepository.save({
 					employeeId: invitedTenantUser.employeeId,
 					organizationTeamId: teams[0].id,
 					tenantId,
@@ -876,7 +884,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		if (input.createdById) {
-			const creatingUser = await this.userRepository.findOneOrFail({
+			const creatingUser = await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					id: input.createdById
 				},
@@ -891,32 +899,32 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		/**
 		 * Register new user
 		 */
-		const create = this.userRepository.create({
+		const create = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
 			...(input.password
 				? {
-						hash: await this.authService.getPasswordHash(input.password)
-				  }
+					hash: await this.authService.getPasswordHash(input.password)
+				}
 				: {})
 		});
-		const entity = await this.userRepository.save(create);
+		const entity = await this.typeOrmUserRepository.save(create);
 
 		/**
 		 * Email automatically verified after accept invitation
 		 */
-		await this.userRepository.update(entity.id, {
+		await this.typeOrmUserRepository.update(entity.id, {
 			...(input.inviteId
 				? {
-						emailVerifiedAt: freshTimestamp()
-				  }
+					emailVerifiedAt: freshTimestamp()
+				}
 				: {})
 		});
 
 		/**
 		 * Find latest register user with role
 		 */
-		const user = await this.userRepository.findOne({
+		const user = await this.typeOrmUserRepository.findOne({
 			where: {
 				id: entity.id
 			},
@@ -934,7 +942,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			/**
 			 * Create employee associated to invited organization and tenant
 			 */
-			const employee = await this.employeeRepository.save({
+			const employee = await this.typeOrmEmployeeRepository.save({
 				organizationId: input.organizationId,
 				tenantId: tenant.id,
 				userId: user.id,
@@ -944,7 +952,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			/**
 			 * Add employee to invited team
 			 */
-			await this.organizationTeamEmployeeRepository.save({
+			await this.typeOrmOrganizationTeamEmployeeRepository.save({
 				employeeId: employee.id,
 				organizationTeamId,
 				tenantId: user.tenantId,

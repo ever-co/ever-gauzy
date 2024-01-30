@@ -1,21 +1,20 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
-import { Repository } from 'typeorm';
 import { IPagination, IProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductVariant } from './product-variant.entity';
+import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
+import { TypeOrmProductVariantRepository } from './repository/type-orm-product-variant.repository';
 
 @Injectable()
 export class ProductVariantService extends TenantAwareCrudService<ProductVariant> {
 	constructor(
 		@InjectRepository(ProductVariant)
-		productVariantRepository: Repository<ProductVariant>,
-		@MikroInjectRepository(ProductVariant)
-		mikroProductVariantRepository: EntityRepository<ProductVariant>
+		typeOrmProductVariantRepository: TypeOrmProductVariantRepository,
+
+		mikroOrmProductVariantRepository: MikroOrmProductVariantRepository
 	) {
-		super(productVariantRepository, mikroProductVariantRepository);
+		super(typeOrmProductVariantRepository, mikroOrmProductVariantRepository);
 	}
 
 	async findAllProductVariants(): Promise<IPagination<IProductVariant>> {

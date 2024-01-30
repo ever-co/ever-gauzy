@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
+import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -24,24 +22,30 @@ import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { TaskService } from './../tasks/task.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
 		@InjectRepository(OrganizationTeam)
-		organizationTeamRepository: Repository<OrganizationTeam>,
-		@MikroInjectRepository(OrganizationTeam)
-		mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>,
+		typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+
+		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
+
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
+
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private readonly userService: UserService,
 		private readonly taskService: TaskService
 	) {
-		super(organizationTeamRepository, mikroOrganizationTeamRepository);
+		super(typeOrmOrganizationTeamRepository, mikroOrmOrganizationTeamRepository);
 	}
 
 	async create(entity: IOrganizationTeamCreateInput): Promise<IOrganizationTeam> {
@@ -64,9 +68,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				if (!managerIds.includes(employeeId)) {
 					managerIds.push(employeeId);
 				}
-			} catch (error) {}
+			} catch (error) { }
 
-			const employees = await this.employeeRepository.find({
+			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In([...memberIds, ...managerIds]),
 					organizationId,
@@ -161,7 +165,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					name: RolesEnum.MANAGER
 				});
 
-				const employees = await this.employeeRepository.find({
+				const employees = await this.typeOrmEmployeeRepository.find({
 					where: {
 						id: In([...memberIds, ...managerIds]),
 						organizationId,
@@ -328,13 +332,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationId,
 					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
-								members: {
-									employeeId: RequestContext.currentEmployeeId(),
-									role: {
-										name: RolesEnum.MANAGER
-									}
+							members: {
+								employeeId: RequestContext.currentEmployeeId(),
+								role: {
+									name: RolesEnum.MANAGER
 								}
-						  }
+							}
+						}
 						: {})
 				}
 			});

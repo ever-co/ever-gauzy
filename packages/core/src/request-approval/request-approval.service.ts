@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, FindManyOptions, In, Repository } from 'typeorm';
@@ -20,28 +18,32 @@ import { RequestContext } from '../core/context';
 import { Employee, OrganizationTeam, RequestApprovalEmployee, RequestApprovalTeam } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from './request-approval.entity';
+import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
+import { TypeOrmRequestApprovalRepository } from './repository/type-orm-request-approval.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmOrganizationTeamRepository } from '../organization-team/repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from '../organization-team/repository/mikro-orm-organization-team.repository';
 
 @Injectable()
 export class RequestApprovalService extends TenantAwareCrudService<RequestApproval> {
 	constructor(
 		@InjectRepository(RequestApproval)
-		requestApprovalRepository: Repository<RequestApproval>,
-		@MikroInjectRepository(RequestApproval)
-		mikroRequestApprovalRepository: EntityRepository<RequestApproval>,
+		typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+
+		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(OrganizationTeam)
-		private readonly organizationTeamRepository: Repository<OrganizationTeam>,
+		private typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 
-		@MikroInjectRepository(OrganizationTeam)
-		private readonly mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>
+		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository
 	) {
-		super(requestApprovalRepository, mikroRequestApprovalRepository);
+		super(typeOrmRequestApprovalRepository, mikroOrmRequestApprovalRepository);
 	}
 
 	async findAllRequestApprovals(
@@ -52,24 +54,24 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
 		const timeOffRequestCheckIdQuery = `${isSqlite() || isBetterSqlite3()
-				? '"time_off_request"."id" = "request_approval"."requestId"'
-				: isPostgres()
-					? '"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
-					: isMySQL()
-						? p(
-							`CAST("time_off_request"."id" AS CHAR) COLLATE utf8mb4_unicode_ci = "request_approval"."requestId" COLLATE utf8mb4_unicode_ci`
-						)
-						: '"time_off_request"."id" = "request_approval"."requestId"'
+			? '"time_off_request"."id" = "request_approval"."requestId"'
+			: isPostgres()
+				? '"time_off_request"."id"::"varchar" = "request_approval"."requestId"'
+				: isMySQL()
+					? p(
+						`CAST("time_off_request"."id" AS CHAR) COLLATE utf8mb4_unicode_ci = "request_approval"."requestId" COLLATE utf8mb4_unicode_ci`
+					)
+					: '"time_off_request"."id" = "request_approval"."requestId"'
 			}`;
 		const equipmentSharingCheckIdQuery = `${isSqlite() || isBetterSqlite3()
-				? '"equipment_sharing"."id" = "request_approval"."requestId"'
-				: isPostgres()
-					? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
-					: isMySQL()
-						? p(
-							`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`
-						)
-						: '"equipment_sharing"."id" = "request_approval"."requestId"'
+			? '"equipment_sharing"."id" = "request_approval"."requestId"'
+			: isPostgres()
+				? '"equipment_sharing"."id"::"varchar" = "request_approval"."requestId"'
+				: isMySQL()
+					? p(
+						`CAST(CONVERT("time_off_request"."id" USING utf8mb4) AS CHAR) = CAST(CONVERT("request_approval"."requestId" USING utf8mb4) AS CHAR)`
+					)
+					: '"equipment_sharing"."id" = "request_approval"."requestId"'
 			}`;
 
 		query.leftJoinAndSelect('time_off_request', 'time_off_request', timeOffRequestCheckIdQuery);
@@ -133,7 +135,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			}
 		});
 		let requestApproval = [];
-		const [employee] = await this.employeeRepository.find({
+		const [employee] = await this.typeOrmEmployeeRepository.find({
 			where: {
 				id
 			},
@@ -174,7 +176,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		requestApproval.organizationId = entity.organizationId;
 		requestApproval.tenantId = tenantId;
 		if (entity.employeeApprovals) {
-			const employees: IEmployee[] = await this.employeeRepository.find({
+			const employees: IEmployee[] = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In(entity.employeeApprovals)
 				}
@@ -191,7 +193,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.employeeApprovals = requestApprovalEmployees;
 		}
 		if (entity.teams) {
-			const teams: IOrganizationTeam[] = await this.organizationTeamRepository.find({
+			const teams: IOrganizationTeam[] = await this.typeOrmOrganizationTeamRepository.find({
 				where: {
 					id: In(entity.teams)
 				}
@@ -238,7 +240,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			.execute();
 
 		if (entity.employeeApprovals) {
-			const employees: IEmployee[] = await this.employeeRepository.find({
+			const employees: IEmployee[] = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In(entity.employeeApprovals)
 				}
@@ -257,7 +259,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 
 		if (entity.teams) {
-			const teams: IOrganizationTeam[] = await this.organizationTeamRepository.find({
+			const teams: IOrganizationTeam[] = await this.typeOrmOrganizationTeamRepository.find({
 				where: {
 					id: In(entity.teams)
 				}

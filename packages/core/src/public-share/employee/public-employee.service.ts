@@ -1,19 +1,19 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { Employee } from './../../core/entities/internal';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class PublicEmployeeService {
 
 	constructor(
 		@InjectRepository(Employee)
-		private readonly repository: Repository<Employee>,
-		@MikroInjectRepository(Employee)
-		private readonly mikroRepository: EntityRepository<Employee>
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) { }
 
 	/**
@@ -28,7 +28,7 @@ export class PublicEmployeeService {
 		relations: string[] = []
 	): Promise<IPagination<IEmployee>> {
 		try {
-			const [items = [], total = 0] = await this.repository.findAndCount({
+			const [items = [], total = 0] = await this.typeOrmEmployeeRepository.findAndCount({
 				where,
 				relations
 			});
@@ -50,7 +50,7 @@ export class PublicEmployeeService {
 		relations: string[]
 	): Promise<IEmployee> {
 		try {
-			return await this.repository.findOneOrFail({
+			return await this.typeOrmEmployeeRepository.findOneOrFail({
 				where,
 				relations
 			});

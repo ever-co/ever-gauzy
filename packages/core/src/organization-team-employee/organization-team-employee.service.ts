@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository, UpdateResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import {
 	IEmployee,
 	IOrganizationTeam,
@@ -19,17 +17,20 @@ import { RequestContext } from './../core/context';
 import { Role } from './../core/entities/internal';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { TaskService } from './../tasks/task.service';
+import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
 	constructor(
 		@InjectRepository(OrganizationTeamEmployee)
-		organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
-		@MikroInjectRepository(OrganizationTeamEmployee)
-		mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>,
+		typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+
+		mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
+
 		private readonly taskService: TaskService
 	) {
-		super(organizationTeamEmployeeRepository, mikroOrganizationTeamEmployeeRepository);
+		super(typeOrmOrganizationTeamEmployeeRepository, mikroOrmOrganizationTeamEmployeeRepository);
 	}
 
 	async updateOrganizationTeam(
@@ -70,8 +71,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					role: managerIds.includes(employeeId)
 						? role
 						: member.roleId !== role.id // Check if current member's role is not same as role(params)
-						? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
-						: null // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
+							? member.role // Keep old role as it is, to avoid setting null while updating team.(PUT /organization-team API)
+							: null // When the employeeId is not present in managerIds and the employee does not already have a MANAGER role.
 				});
 			});
 

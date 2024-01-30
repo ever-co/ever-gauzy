@@ -1,22 +1,27 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { In, Like } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmOrganizationDepartmentRepository } from './repository/type-orm-organization-department.repository';
+import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm-organization-department.repository';
 
 @Injectable()
 export class OrganizationDepartmentService extends TenantAwareCrudService<OrganizationDepartment> {
 	constructor(
 		@InjectRepository(OrganizationDepartment)
-		organizationDepartmentRepository: Repository<OrganizationDepartment>,
-		@MikroInjectRepository(OrganizationDepartment)
-		mikroOrganizationDepartmentRepository: EntityRepository<OrganizationDepartment>
+		typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
+
+		mikroOrmOrganizationDepartmentRepository: MikroOrmOrganizationDepartmentRepository
 	) {
-		super(organizationDepartmentRepository, mikroOrganizationDepartmentRepository);
+		super(typeOrmOrganizationDepartmentRepository, mikroOrmOrganizationDepartmentRepository);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
 	async findByEmployee(id: string): Promise<any> {
 		return await this.repository
 			.createQueryBuilder('organization_department')
@@ -25,6 +30,11 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 			.getMany();
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;

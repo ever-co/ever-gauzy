@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import {
 	IEmployee,
@@ -15,16 +13,18 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
 		@InjectRepository(OrganizationProject)
-		organizationProjectRepository: Repository<OrganizationProject>,
-		@MikroInjectRepository(OrganizationProject)
-		mikroOrganizationProjectRepository: EntityRepository<OrganizationProject>
+		typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository
 	) {
-		super(organizationProjectRepository, mikroOrganizationProjectRepository);
+		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
 
 	/**

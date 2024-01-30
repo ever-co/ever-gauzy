@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MikroOrmKeyResultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
+import { TypeOrmKeyResultTemplateRepository } from './repository/type-orm-keyresult-template.repository';
 
 @Injectable()
 export class KeyresultTemplateService extends TenantAwareCrudService<KeyResultTemplate> {
 	constructor(
 		@InjectRepository(KeyResultTemplate)
-		keyResultTemplateRepository: Repository<KeyResultTemplate>,
-		@MikroInjectRepository(KeyResultTemplate)
-		mikroKeyResultTemplateRepository: EntityRepository<KeyResultTemplate>
+		typeOrmKeyResultTemplateRepository: TypeOrmKeyResultTemplateRepository,
+
+		mikroOrmKeyResultTemplateRepository: MikroOrmKeyResultTemplateRepository
 	) {
-		super(keyResultTemplateRepository, mikroKeyResultTemplateRepository);
+		super(typeOrmKeyResultTemplateRepository, mikroOrmKeyResultTemplateRepository);
 	}
 }

@@ -1,22 +1,22 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
-import { FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { IOrganizationTaskSetting, IOrganizationTaskSettingFindInput } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
+import { TypeOrmOrganizationTaskSettingRepository } from './repository/type-orm-organization-task-setting.repository';
+import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
 
 @Injectable()
 export class OrganizationTaskSettingService extends TenantAwareCrudService<OrganizationTaskSetting> {
 	constructor(
 		@InjectRepository(OrganizationTaskSetting)
-		organizationTaskSettingRepository: Repository<OrganizationTaskSetting>,
-		@MikroInjectRepository(OrganizationTaskSetting)
-		mikroOrganizationTaskSettingRepository: EntityRepository<OrganizationTaskSetting>
+		typeOrmOrganizationTaskSettingRepository: TypeOrmOrganizationTaskSettingRepository,
+
+		mikroOrmOrganizationTaskSettingRepository: MikroOrmOrganizationTaskSettingRepository
 	) {
-		super(organizationTaskSettingRepository, mikroOrganizationTaskSettingRepository);
+		super(typeOrmOrganizationTaskSettingRepository, mikroOrmOrganizationTaskSettingRepository);
 	}
 
 	/**

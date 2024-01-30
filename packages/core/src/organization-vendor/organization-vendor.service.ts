@@ -1,21 +1,21 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In } from 'typeorm';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { Expense } from '../expense/expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmOrganizationVendorRepository } from './repository/type-orm-organization-vendor.repository';
+import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
 
 @Injectable()
 export class OrganizationVendorService extends TenantAwareCrudService<OrganizationVendor> {
 	constructor(
 		@InjectRepository(OrganizationVendor)
-		organizationVendorRepository: Repository<OrganizationVendor>,
-		@MikroInjectRepository(OrganizationVendor)
-		mikroOrganizationVendorRepository: EntityRepository<OrganizationVendor>
+		typeOrmOrganizationVendorRepository: TypeOrmOrganizationVendorRepository,
+
+		mikroOrmOrganizationVendorRepository: MikroOrmOrganizationVendorRepository
 	) {
-		super(organizationVendorRepository, mikroOrganizationVendorRepository);
+		super(typeOrmOrganizationVendorRepository, mikroOrmOrganizationVendorRepository);
 	}
 
 	async deleteVendor(vendorId) {

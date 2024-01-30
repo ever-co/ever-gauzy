@@ -1,6 +1,4 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions } from 'typeorm';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -16,6 +14,10 @@ import {
 import { TenantAwareCrudService } from './../core/crud';
 import { Product } from './product.entity';
 import { ProductTranslation } from './product-translation.entity';
+import { TypeOrmProductRepository } from './repository/type-orm-product.repository';
+import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
+import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
+import { TypeOrmProductTranslationRepository } from './repository/type-orm-product-translation.repository';
 
 @Injectable()
 export class ProductService extends TenantAwareCrudService<Product> {
@@ -43,17 +45,16 @@ export class ProductService extends TenantAwareCrudService<Product> {
 
 	constructor(
 		@InjectRepository(Product)
-		productRepository: Repository<Product>,
-		@MikroInjectRepository(Product)
-		mikroProductRepository: EntityRepository<Product>,
+		typeOrmProductRepository: TypeOrmProductRepository,
+
+		mikroOrmProductRepository: MikroOrmProductRepository,
 
 		@InjectRepository(ProductTranslation)
-		private readonly productTranslationRepository: Repository<ProductTranslation>,
+		private typeOrmProductTranslationRepository: TypeOrmProductTranslationRepository,
 
-		@MikroInjectRepository(ProductTranslation)
-		private readonly mikroProductTranslationRepository: EntityRepository<ProductTranslation>
+		mikroOrmProductTranslationRepository: MikroOrmProductTranslationRepository
 	) {
-		super(productRepository, mikroProductRepository);
+		super(typeOrmProductRepository, mikroOrmProductRepository);
 	}
 
 	public async pagination(filter: any, language: LanguagesEnum) {
@@ -182,7 +183,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 	}
 
 	async saveProductTranslation(productTranslation: ProductTranslation): Promise<ProductTranslation> {
-		return await this.productTranslationRepository.save(productTranslation);
+		return await this.typeOrmProductTranslationRepository.save(productTranslation);
 	}
 
 	async mapTranslatedProducts(items: IProductTranslatable[], languageCode: LanguagesEnum) {
