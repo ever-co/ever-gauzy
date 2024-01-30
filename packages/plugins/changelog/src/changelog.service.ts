@@ -1,21 +1,21 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
-import { IChangelog, IPagination } from '@gauzy/contracts';
-import { CrudService } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions } from 'typeorm';
+import { IChangelog, IPagination } from '@gauzy/contracts';
+import { CrudService } from '@gauzy/core';
 import { Changelog } from './changelog.entity';
+import { TypeOrmChangelogRepository } from './repository/type-orm-changelog.repository';
+import { MikroOrmChangelogRepository } from './repository/mikro-orm-changelog.repository';
 
 @Injectable()
 export class ChangelogService extends CrudService<Changelog> {
 	constructor(
 		@InjectRepository(Changelog)
-		protected readonly changelogRepository: Repository<Changelog>,
-		@MikroInjectRepository(Changelog)
-		protected readonly mikroChangelogRepository: EntityRepository<Changelog>
+		typeOrmChangelogRepository: TypeOrmChangelogRepository,
+
+		mikroOrmChangelogRepository: MikroOrmChangelogRepository
 	) {
-		super(changelogRepository, mikroChangelogRepository);
+		super(typeOrmChangelogRepository, mikroOrmChangelogRepository);
 	}
 
 	/**
