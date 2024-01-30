@@ -1,12 +1,11 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { In, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
 import { pick } from 'underscore';
-import { EntityRepository } from '@mikro-orm/core';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
@@ -29,7 +28,7 @@ import {
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
-import { IAppIntegrationConfig, MikroInjectRepository, deepMerge, isNotEmpty } from '@gauzy/common';
+import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
@@ -43,19 +42,16 @@ import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils'
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmUserRepository } from './../user/repository/type-orm-user.repository';
+import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
-
+		private typeOrmUserRepository: TypeOrmUserRepository,
 		@InjectRepository(OrganizationTeam)
-		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
-
-		@MikroInjectRepository(OrganizationTeam)
-		protected readonly mikroOrganizationTeamRepository: EntityRepository<OrganizationTeam>,
-
+		protected readonly organizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
@@ -157,7 +153,7 @@ export class AuthService extends SocialAuthService {
 		for await (const user of users) {
 			const id = user.id;
 			/** */
-			await this.userRepository.update({
+			await this.typeOrmUserRepository.update({
 				id,
 				email,
 				isActive: true,
@@ -298,7 +294,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
 	 */
 	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
-		return await this.userRepository.find({
+		return await this.typeOrmUserRepository.find({
 			where: {
 				email,
 				isActive: true,
@@ -379,22 +375,22 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// 2. Register new user
-		const userToCreate = this.userRepository.create({
+		const userToCreate = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
 			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
 		});
-		const createdUser = await this.userRepository.save(userToCreate);
+		const createdUser = await this.typeOrmUserRepository.save(userToCreate);
 
 		// 3. Email is automatically verified after accepting an invitation
 		if (input.inviteId) {
-			await this.userRepository.update(createdUser.id, {
+			await this.typeOrmUserRepository.update(createdUser.id, {
 				emailVerifiedAt: freshTimestamp()
 			});
 		}
 
 		// 4. Find the latest registered user with role
-		const user = await this.userRepository.findOne({
+		const user = await this.typeOrmUserRepository.findOne({
 			where: {
 				id: createdUser.id
 			},
@@ -414,7 +410,7 @@ export class AuthService extends SocialAuthService {
 			const { sourceId } = input;
 			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: this.userRepository.metadata.tableName,
+					entityType: this.typeOrmUserRepository.metadata.tableName,
 					sourceId,
 					destinationId: user.id
 				})
@@ -672,7 +668,7 @@ export class AuthService extends SocialAuthService {
 
 		try {
 			// Count the number of users with the given email
-			const count = await this.userRepository.countBy({
+			const count = await this.typeOrmUserRepository.countBy({
 				email
 			});
 
@@ -688,7 +684,7 @@ export class AuthService extends SocialAuthService {
 			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 			// Update the user record with the generated code and expiration time
-			await this.userRepository.update({ email }, { code: magicCode, codeExpireAt });
+			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
 
 			// Extract integration information
 			let appIntegration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName', 'appMagicSignUrl']);
@@ -734,7 +730,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Find users matching the criteria
-			let users = await this.userRepository.find({
+			let users = await this.typeOrmUserRepository.find({
 				where: {
 					email,
 					code,
@@ -824,7 +820,7 @@ export class AuthService extends SocialAuthService {
 			let payload: JwtPayload | string = this.verifyToken(token);
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
-				const user = await this.userRepository.findOneOrFail({
+				const user = await this.typeOrmUserRepository.findOneOrFail({
 					where: {
 						id: userId,
 						email,
@@ -840,7 +836,7 @@ export class AuthService extends SocialAuthService {
 					},
 				});
 
-				await this.userRepository.update({
+				await this.typeOrmUserRepository.update({
 					email,
 					id: userId,
 					tenantId,

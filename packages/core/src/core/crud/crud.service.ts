@@ -45,7 +45,7 @@ import { ITryRequest } from './try-request';
 const ormType: MultiORM = getORMType();
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
-	protected constructor(
+	constructor(
 		protected readonly repository: Repository<T>,
 		protected readonly mikroRepository?: EntityRepository<T>
 	) { }

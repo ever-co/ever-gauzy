@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Property } from '@mikro-orm/core';
 import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
-import { MikroManyToOne } from '@gauzy/common';
 import { BaseEntity, Tenant } from '../entities/internal';
-import { Property } from '@mikro-orm/core';
+import { MikroManyToOne } from '../../core/decorators/entity/relations/mikro-orm';
 
 export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
 
-	@ApiProperty({ type: () => Tenant, readOnly: true })
+	@ApiProperty({ type: () => Tenant })
 	@ManyToOne(() => Tenant, {
 		nullable: true,
 		onDelete: 'CASCADE'
@@ -22,7 +22,7 @@ export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTen
 	@IsOptional()
 	tenant?: ITenant;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((t: TenantBaseEntity) => t.tenant)
 	@IsString()
 	@IsOptional()

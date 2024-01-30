@@ -30,7 +30,6 @@ import {
 	ICandidate,
 	IImageAsset
 } from '@gauzy/contracts';
-import { MikroManyToOne, TypeManyToOne } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,
@@ -43,6 +42,8 @@ import {
 	UserOrganization
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroManyToOne } from './../core/decorators/entity/relations/mikro-orm';
+import { TypeManyToOne } from './../core/decorators/entity/relations/type-orm';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })

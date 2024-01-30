@@ -1,47 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import {
-	IPagination,
-	IWarehouseProduct,
-	IWarehouseProductCreateInput,
-	IWarehouseProductVariant
-} from '@gauzy/contracts';
+import { In } from 'typeorm';
+import { IPagination, IWarehouseProduct, IWarehouseProductCreateInput, IWarehouseProductVariant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { WarehouseProduct, WarehouseProductVariant, Product, Warehouse } from './../core/entities/internal';
-import { EntityRepository } from '@mikro-orm/core';
-import { MikroInjectRepository } from '@gauzy/common';
+import { TypeOrmWarehouseProductVariantRepository } from './repository/type-orm-warehouse-product-variant.repository';
+import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
+import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
+import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
+import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
+import { TypeOrmWarehouseProductRepository } from './repository/type-orm-warehouse-product.repository ';
+import { TypeOrmProductRepository } from './../product/repository/type-orm-product.repository';
+import { MikroOrmProductRepository } from './../product/repository/mikro-orm-product.repository';
 
 @Injectable()
 export class WarehouseProductService extends TenantAwareCrudService<WarehouseProduct> {
 	constructor(
 		@InjectRepository(WarehouseProduct)
-		warehouseProductRepository: Repository<WarehouseProduct>,
+		typeOrmWarehouseProductRepository: TypeOrmWarehouseProductRepository,
 
-		@MikroInjectRepository(WarehouseProduct)
-		mikroWarehouseProductRepository: EntityRepository<WarehouseProduct>,
+		mikroOrmWarehouseProductRepository: MikroOrmWarehouseProductRepository,
 
 		@InjectRepository(Warehouse)
-		private readonly warehouseRepository: Repository<Warehouse>,
-		@MikroInjectRepository(Warehouse)
-		private readonly mikroWarehouseRepository: EntityRepository<Warehouse>,
+		private typeOrmWarehouseRepository: TypeOrmWarehouseRepository,
+
+		mikroOrmWarehouseRepository: MikroOrmWarehouseRepository,
 
 		@InjectRepository(WarehouseProductVariant)
-		private readonly warehouseProductVariantRepository: Repository<WarehouseProductVariant>,
+		private typeOrmWarehouseProductVariantRepository: TypeOrmWarehouseProductVariantRepository,
 
-		@MikroInjectRepository(WarehouseProductVariant)
-		private readonly mikroWarehouseProductVariantRepository: EntityRepository<WarehouseProductVariant>,
-
-		@InjectRepository(Product)
-		private readonly productRepository: Repository<Product>,
+		mikroOrmWarehouseProductVariantRepository: MikroOrmWarehouseProductVariantRepository,
 
 		@InjectRepository(Product)
-		private readonly mikroProductRepository: EntityRepository<Product>
+		private typeOrmProductRepository: TypeOrmProductRepository,
+
+		mikroOrmProductRepository: MikroOrmProductRepository,
 	) {
-		super(warehouseProductRepository, mikroWarehouseProductRepository);
+		super(typeOrmWarehouseProductRepository, mikroOrmWarehouseProductRepository);
 	}
 
+	/**
+	 *
+	 * @param warehouseId
+	 * @returns
+	 */
 	async getAllWarehouseProducts(warehouseId: string): Promise<IWarehouseProduct[]> {
 		return await this.repository.find({
 			where: {
@@ -63,11 +66,11 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 	): Promise<IPagination<IWarehouseProduct[]>> {
 		let productIds = warehouseProductCreateInput.map((pr) => pr.productId);
 		const tenantId = RequestContext.currentTenantId();
-		let warehouse = await this.warehouseRepository.findOneBy({
+		let warehouse = await this.typeOrmWarehouseRepository.findOneBy({
 			id: warehouseId,
 			tenantId
 		});
-		let products = await this.productRepository.find({
+		let products = await this.typeOrmProductRepository.find({
 			where: {
 				id: In(productIds),
 				tenantId
@@ -92,7 +95,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 						warehouseVariant.organizationId = warehouse.organizationId;
 						warehouseVariant.tenantId = tenantId;
 
-						return this.warehouseProductVariantRepository.save(warehouseVariant);
+						return this.typeOrmWarehouseProductVariantRepository.save(warehouseVariant);
 					})
 				);
 
@@ -118,7 +121,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		warehouseProductVariantId: string,
 		quantity: number
 	): Promise<IWarehouseProductVariant> {
-		let warehouseProductVariant = await this.warehouseProductVariantRepository.findOne({
+		let warehouseProductVariant = await this.typeOrmWarehouseProductVariantRepository.findOne({
 			where: {
 				id: warehouseProductVariantId
 			},
@@ -128,7 +131,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 		});
 		warehouseProductVariant.quantity = quantity;
 
-		let updatedVariant = await this.warehouseProductVariantRepository.save(warehouseProductVariant);
+		let updatedVariant = await this.typeOrmWarehouseProductVariantRepository.save(warehouseProductVariant);
 
 		let warehouseProduct = await this.repository.findOne({
 			where: {

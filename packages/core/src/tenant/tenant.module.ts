@@ -15,9 +15,11 @@ import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/tenant', module: TenantModule }]),
-		MikroOrmModule.forFeature([Tenant]),
+		RouterModule.register([
+			{ path: '/tenant', module: TenantModule }
+		]),
 		TypeOrmModule.forFeature([Tenant]),
+		MikroOrmModule.forFeature([Tenant]),
 		AuthModule,
 		CqrsModule,
 		forwardRef(() => UserModule),
@@ -28,8 +30,8 @@ import { CommandHandlers } from './commands/handlers';
 	controllers: [TenantController],
 	providers: [TenantService, ...CommandHandlers],
 	exports: [
-		MikroOrmModule,
 		TypeOrmModule,
+		MikroOrmModule,
 		TenantService
 	]
 })

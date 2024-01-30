@@ -15,22 +15,20 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 
-const entities = [
-	Task,
-	TaskStatus,
-	IntegrationMap
-];
-
 @Module({
 	imports: [
 		RouterModule.register([
 			{ path: '/tasks', module: TaskModule }
 		]),
-		MikroOrmModule.forFeature([
-			...entities
-		]),
 		TypeOrmModule.forFeature([
-			...entities
+			Task,
+			TaskStatus,
+			IntegrationMap
+		]),
+		MikroOrmModule.forFeature([
+			Task,
+			TaskStatus,
+			IntegrationMap
 		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
@@ -41,6 +39,6 @@ const entities = [
 	],
 	controllers: [TaskController],
 	providers: [TaskService, ...CommandHandlers, ...EventHandlers],
-	exports: [TypeOrmModule, TaskService]
+	exports: [TypeOrmModule, MikroOrmModule, TaskService]
 })
 export class TaskModule { }

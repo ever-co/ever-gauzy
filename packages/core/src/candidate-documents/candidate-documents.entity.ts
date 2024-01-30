@@ -7,7 +7,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { MikroOrmCandidateDocumentsRepository } from './repository/mikro-orm-candidate-documents.repository';
+import { MikroOrmCandidateDocumentsRepository } from './repository/mikro-orm-candidate-document.repository';
 
 @MultiORMEntity('candidate_document', { mikroOrmRepository: () => MikroOrmCandidateDocumentsRepository })
 export class CandidateDocument extends TenantOrganizationBaseEntity implements ICandidateDocument {

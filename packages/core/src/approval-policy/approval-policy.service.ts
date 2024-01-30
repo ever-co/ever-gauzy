@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Not, In } from 'typeorm';
+import { Like, Not, In } from 'typeorm';
 import {
 	IApprovalPolicy,
 	ApprovalPolicyTypesStringEnum,
@@ -12,18 +12,18 @@ import {
 import { ApprovalPolicy } from './approval-policy.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { EntityRepository } from '@mikro-orm/core';
-import { MikroInjectRepository } from '@gauzy/common';
+import { TypeOrmApprovalPolicyRepository } from './repository/type-orm-approval-policy.repository';
+import { MikroOrmApprovalPolicyRepository } from './repository/mikro-orm-approval-policy.repository';
 
 @Injectable()
 export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy> {
 	constructor(
 		@InjectRepository(ApprovalPolicy)
-		approvalPolicyRepository: Repository<ApprovalPolicy>,
-		@MikroInjectRepository(ApprovalPolicy)
-		mikroApprovalPolicyRepository: EntityRepository<ApprovalPolicy>
+		typeOrmApprovalPolicyRepository: TypeOrmApprovalPolicyRepository,
+
+		mikroOrmApprovalPolicyRepository: MikroOrmApprovalPolicyRepository
 	) {
-		super(approvalPolicyRepository, mikroApprovalPolicyRepository);
+		super(typeOrmApprovalPolicyRepository, mikroOrmApprovalPolicyRepository);
 	}
 
 	/**
@@ -49,13 +49,13 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 		return await super.findAll({
 			...(options && options.where
 				? {
-						where: options.where
-				  }
+					where: options.where
+				}
 				: {}),
 			...(options && options.relations
 				? {
-						relations: options.relations
-				  }
+					relations: options.relations
+				}
 				: {})
 		});
 	}
@@ -76,8 +76,8 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			},
 			...(relations
 				? {
-						relations: relations
-				  }
+					relations: relations
+				}
 				: {})
 		};
 		return await super.findAll(query);
@@ -94,7 +94,7 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 			approvalPolicy.tenantId = RequestContext.currentTenantId();
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name ? entity.name.replace(/\s+/g, '_').toUpperCase() : null;
-			return this.repository.save(approvalPolicy);
+			return await this.save(approvalPolicy);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -105,15 +105,13 @@ export class ApprovalPolicyService extends TenantAwareCrudService<ApprovalPolicy
 	 */
 	async update(id: string, entity: IApprovalPolicyCreateInput): Promise<ApprovalPolicy> {
 		try {
-			const approvalPolicy = await this.repository.findOneBy({
-				id: id
-			});
+			const approvalPolicy = await this.findOneByIdString(id);
 			approvalPolicy.name = entity.name;
 			approvalPolicy.organizationId = entity.organizationId;
 			approvalPolicy.tenantId = RequestContext.currentTenantId();
 			approvalPolicy.description = entity.description;
 			approvalPolicy.approvalType = entity.name ? entity.name.replace(/\s+/g, '_').toUpperCase() : null;
-			return this.repository.save(approvalPolicy);
+			return await this.save(approvalPolicy);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

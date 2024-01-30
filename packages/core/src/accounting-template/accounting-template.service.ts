@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
 import {
@@ -11,22 +11,23 @@ import {
 	IPagination,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { MikroInjectRepository, isNotEmpty } from '@gauzy/common';
+import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { EntityRepository } from '@mikro-orm/core';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
+import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
-		accountingRepository: Repository<AccountingTemplate>,
-		@MikroInjectRepository(AccountingTemplate)
-		mikroAccountingRepository: EntityRepository<AccountingTemplate>
+		typeOrmAccountingTemplateRepository: TypeOrmAccountingTemplateRepository,
+
+		mikroOrmAccountingTemplateRepository: MikroOrmAccountingTemplateRepository
 	) {
-		super(accountingRepository, mikroAccountingRepository);
+		super(typeOrmAccountingTemplateRepository, mikroOrmAccountingTemplateRepository);
 	}
 
 	generatePreview(input) {
@@ -35,7 +36,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		try {
 			const mjmlTohtml = mjml2html(data);
 			textToHtml = mjmlTohtml.errors.length ? data : mjmlTohtml.html;
-		} catch (error) {}
+		} catch (error) { }
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 
@@ -247,13 +248,13 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			},
 			...(params && params.relations
 				? {
-						relations: params.relations
-				  }
+					relations: params.relations
+				}
 				: {}),
 			...(params && params.order
 				? {
-						order: params.order
-				  }
+					order: params.order
+				}
 				: {})
 		});
 		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {

@@ -1,7 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Feature } from './feature.entity';
 import { FeatureOrganization } from './feature-organization.entity';
 import { FeatureToggleController } from './feature-toggle.controller';
@@ -10,7 +11,6 @@ import { FeatureOrganizationService } from './feature-organization.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -23,6 +23,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [FeatureToggleController],
 	providers: [FeatureService, FeatureOrganizationService, ...CommandHandlers],
-	exports: [FeatureService, FeatureOrganizationService]
+	exports: [TypeOrmModule, MikroOrmModule, FeatureService, FeatureOrganizationService]
 })
 export class FeatureModule { }

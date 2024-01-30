@@ -24,7 +24,7 @@ import { ITryRequest } from './try-request';
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
  */
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
-	protected constructor(
+	constructor(
 		repository: Repository<T>,
 		mikroRepository?: EntityRepository<T>
 	) {

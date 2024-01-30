@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
@@ -102,6 +100,8 @@ import {
     User,
     UserOrganization
 } from '../../core/entities/internal';
+import { TypeOrmActivityRepository } from './../../time-tracking/activity/repository/type-orm-activity.repository';
+import { MikroOrmActivityRepository } from './../../time-tracking/activity/repository/mikro-orm-activity.repository';
 
 @Injectable()
 export class FactoryResetService {
@@ -110,9 +110,9 @@ export class FactoryResetService {
 
     constructor(
         @InjectRepository(Activity)
-        private readonly activityRepository: Repository<Activity>,
-        @MikroInjectRepository(Activity)
-        private readonly mikroActivityRepository: EntityRepository<Activity>,
+        private typeOrmActivityRepository: TypeOrmActivityRepository,
+
+        private mikroOrmActivityRepository: MikroOrmActivityRepository,
 
         @InjectRepository(AppointmentEmployee)
         private readonly appointmentEmployeesRepository: Repository<AppointmentEmployee>,
@@ -765,7 +765,7 @@ export class FactoryResetService {
     private registerCoreRepositories() {
         this.repositories = [
             this.tagRepository,
-            this.activityRepository,
+            this.typeOrmActivityRepository,
             this.approvalPolicyRepository,
             this.appointmentEmployeesRepository,
             this.availabilitySlotsRepository,

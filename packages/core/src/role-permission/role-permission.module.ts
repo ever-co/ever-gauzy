@@ -10,17 +10,13 @@ import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 
-const entities = [
-	RolePermission
-];
-
 @Module({
 	imports: [
 		RouterModule.register([
 			{ path: 'role-permissions', module: RolePermissionModule }
 		]),
-		forwardRef(() => MikroOrmModule.forFeature([...entities])),
-		forwardRef(() => TypeOrmModule.forFeature([...entities])),
+		forwardRef(() => TypeOrmModule.forFeature([RolePermission])),
+		forwardRef(() => MikroOrmModule.forFeature([RolePermission])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => RoleModule),
@@ -29,8 +25,8 @@ const entities = [
 	controllers: [RolePermissionController],
 	providers: [RolePermissionService],
 	exports: [
-		MikroOrmModule,
 		TypeOrmModule,
+		MikroOrmModule,
 		RolePermissionService
 	]
 })

@@ -1,19 +1,18 @@
-import { TenantAwareCrudService } from './../core/crud';
-import { AppointmentEmployee } from './appointment-employees.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TenantAwareCrudService } from './../core/crud/tenant-aware-crud.service';
+import { TypeOrmAppointmentEmployeeRepository } from './repository/type-orm-appointment-employee.repository';
+import { MikroOrmAppointmentEmployeeRepository } from './repository/mikro-orm-appointment-employee.repository';
+import { AppointmentEmployee } from './appointment-employees.entity';
 
 @Injectable()
 export class AppointmentEmployeesService extends TenantAwareCrudService<AppointmentEmployee> {
 	constructor(
 		@InjectRepository(AppointmentEmployee)
-		appointmentEmployeesRepository: Repository<AppointmentEmployee>,
-		@MikroInjectRepository(AppointmentEmployee)
-		mikroAppointmentEmployeesRepository: EntityRepository<AppointmentEmployee>
+		typeOrmAppointmentEmployeeRepository: TypeOrmAppointmentEmployeeRepository,
+
+		mikroOrmAppointmentEmployeeRepository: MikroOrmAppointmentEmployeeRepository
 	) {
-		super(appointmentEmployeesRepository, mikroAppointmentEmployeesRepository);
+		super(typeOrmAppointmentEmployeeRepository, mikroOrmAppointmentEmployeeRepository);
 	}
 }

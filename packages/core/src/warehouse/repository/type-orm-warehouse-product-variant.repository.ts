@@ -1,4 +1,4 @@
 import { Repository } from 'typeorm';
-import { WarehouseProduct } from '../warehouse-product.entity';
+import { WarehouseProductVariant } from '../warehouse-product-variant.entity';
 
-export class TypeOrmWarehouseProductRepository extends Repository<WarehouseProduct> { }
+export class TypeOrmWarehouseProductVariantRepository extends Repository<WarehouseProductVariant> { }
