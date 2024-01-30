@@ -1,26 +1,26 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
+import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
+import { isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
-import { isUUID } from 'class-validator';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
+import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
-		taskRepository: Repository<Task>,
-		@MikroInjectRepository(Task)
-		mikroTaskRepository: EntityRepository<Task>
+		typeOrmTaskRepository: TypeOrmTaskRepository,
+
+		mikroOrmTaskRepository: MikroOrmTaskRepository
 	) {
-		super(taskRepository, mikroTaskRepository);
+		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
 
 	/**
@@ -182,12 +182,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where
-					}),
+					where: options.where
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+					relations: options.relations
+				})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {

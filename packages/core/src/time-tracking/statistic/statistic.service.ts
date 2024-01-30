@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -36,32 +34,37 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 import { getDateRangeFormat } from './../../core/utils';
+import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/mikro-orm-time-slot.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
+import { MikroOrmActivityRepository } from '../activity/repository/mikro-orm-activity.repository';
+import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 
 @Injectable()
 export class StatisticService {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
-		@MikroInjectRepository(TimeSlot)
-		private readonly mikroTimeSlotRepository: EntityRepository<TimeSlot>,
+		private typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+
+		mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		mikroEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>,
+		private typeOrmActivityRepository: TypeOrmActivityRepository,
 
-		@MikroInjectRepository(Activity)
-		private readonly mikroActivityRepository: EntityRepository<Activity>,
+		mikroOrmActivityRepository: MikroOrmActivityRepository,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
-		@MikroInjectRepository(TimeLog)
-		private readonly mikroTimeLogRepository: EntityRepository<TimeLog>,
+		mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
 		private readonly configService: ConfigService
 	) { }
@@ -118,7 +121,7 @@ export class StatisticService {
 			overall: 0,
 			duration: 0
 		};
-		const weekQuery = this.timeSlotRepository.createQueryBuilder();
+		const weekQuery = this.typeOrmTimeSlotRepository.createQueryBuilder();
 
 		let weekQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -237,7 +240,7 @@ export class StatisticService {
 			moment.utc(todayEnd || moment().endOf('day'))
 		);
 
-		const todayQuery = this.timeSlotRepository.createQueryBuilder();
+		const todayQuery = this.typeOrmTimeSlotRepository.createQueryBuilder();
 
 		let todayQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -411,7 +414,7 @@ export class StatisticService {
 				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 		}
 
-		const query = this.employeeRepository.createQueryBuilder();
+		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
 		let employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
 			.addSelect(p(`CONCAT("user"."firstName", ' ', "user"."lastName")`), 'user_name')
@@ -471,7 +474,7 @@ export class StatisticService {
 			/**
 			 * Weekly Member Activity
 			 */
-			const weekTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
+			const weekTimeQuery = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 
 			let weekTimeQueryString: string;
 			switch (this.configService.dbConnectionOptions.type) {
@@ -569,7 +572,7 @@ export class StatisticService {
 			/**
 			 * Daily Member Activity
 			 */
-			let dayTimeQuery = this.timeSlotRepository.createQueryBuilder('time_slot');
+			let dayTimeQuery = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 
 			let dayTimeQueryString: string;
 			switch (this.configService.dbConnectionOptions.type) {
@@ -699,7 +702,7 @@ export class StatisticService {
 						throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
 				}
 
-				const weekHoursQuery = this.employeeRepository.createQueryBuilder();
+				const weekHoursQuery = this.typeOrmEmployeeRepository.createQueryBuilder();
 				weekHoursQuery
 					.innerJoin(`${weekHoursQuery.alias}.timeLogs`, 'timeLogs')
 					.innerJoin(`timeLogs.timeSlots`, 'time_slot')
@@ -796,7 +799,7 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 
 		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -882,7 +885,7 @@ export class StatisticService {
 			.value()
 			.splice(0, 5);
 
-		const totalDurationQuery = this.timeLogRepository.createQueryBuilder('time_log');
+		const totalDurationQuery = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 
 		let totalDurationQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -1025,7 +1028,7 @@ export class StatisticService {
 			}
 		}
 
-		const todayQuery = this.timeLogRepository.createQueryBuilder();
+		const todayQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
 		let todayQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -1109,7 +1112,7 @@ export class StatisticService {
 
 		const todayStatistics = await todayQuery.getRawMany();
 
-		const query = this.timeLogRepository.createQueryBuilder();
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
 
 		let queryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -1226,7 +1229,7 @@ export class StatisticService {
 			.value();
 		if (isNotEmpty(take)) { tasks = tasks.splice(0, take); }
 
-		const totalDurationQuery = this.timeLogRepository.createQueryBuilder();
+		const totalDurationQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
 		let totalDurationQueryString: string;
 		switch (this.configService.dbConnectionOptions.type) {
@@ -1329,7 +1332,7 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder("time_log");
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder("time_log");
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
 		query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
@@ -1435,7 +1438,7 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.activityRepository.createQueryBuilder();
+		const query = this.typeOrmActivityRepository.createQueryBuilder();
 		let queryString;
 
 		switch (this.configService.dbConnectionOptions.type) {
@@ -1510,7 +1513,7 @@ export class StatisticService {
 		/*
 		* Fetch total duration of the week for calculate duration percentage
 		*/
-		const totalDurationQuery = this.activityRepository.createQueryBuilder();
+		const totalDurationQuery = this.typeOrmActivityRepository.createQueryBuilder();
 		let totalDurationQueryString: string;
 
 		switch (this.configService.dbConnectionOptions.type) {
@@ -1619,7 +1622,7 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.timeLogRepository.createQueryBuilder();
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 		query.innerJoin(`employee.user`, "user");
@@ -1667,7 +1670,7 @@ export class StatisticService {
 			delete employee.user_image_url;
 			delete employee.user_name;
 
-			const query = this.timeSlotRepository.createQueryBuilder();
+			const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
 			query.innerJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
 			query.leftJoinAndSelect(`${query.alias}.screenshots`, 'screenshots');
@@ -1712,7 +1715,7 @@ export class StatisticService {
 	 * @returns
 	 */
 	private async getEmployeeWorkedCounts(request: IGetCountsStatistics) {
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 		query.select(p(`"${query.alias}"."employeeId"`), 'employeeId');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
@@ -1733,7 +1736,7 @@ export class StatisticService {
 	 * @returns
 	 */
 	private async getProjectWorkedCounts(request: IGetCountsStatistics) {
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 		query.select(p(`"${query.alias}"."projectId"`), 'projectId');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.project`, 'project');

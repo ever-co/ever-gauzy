@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Brackets, Like, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -19,22 +17,25 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { MikroOrmRequestApprovalRepository } from 'request-approval/repository/mikro-orm-request-approval.repository';
+import { TypeOrmRequestApprovalRepository } from 'request-approval/repository/type-orm-request-approval.repository';
+import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
+import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
-		timeOffRequestRepository: Repository<TimeOffRequest>,
-		@MikroInjectRepository(TimeOffRequest)
-		mikroTimeOffRequestRepository: EntityRepository<TimeOffRequest>,
+		typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
+
+		mikroOrmTimeOffRequestRepository: MikroOrmTimeOffRequestRepository,
 
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>,
+		private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
 
-		@MikroInjectRepository(RequestApproval)
-		private readonly mikroRequestApprovalRepository: EntityRepository<RequestApproval>
+		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository
 	) {
-		super(timeOffRequestRepository, mikroTimeOffRequestRepository);
+		super(typeOrmTimeOffRequestRepository, mikroOrmTimeOffRequestRepository);
 	}
 
 	async create(entity: ITimeOffCreateInput): Promise<TimeOffRequest> {
@@ -61,7 +62,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			requestApproval.organizationId = timeOffRequest.organizationId;
 			requestApproval.tenantId = tenantId;
 
-			await this.requestApprovalRepository.save(requestApproval);
+			await this.typeOrmRequestApprovalRepository.save(requestApproval);
 			return timeOffRequest;
 		} catch (err) {
 			throw new BadRequestException(err);

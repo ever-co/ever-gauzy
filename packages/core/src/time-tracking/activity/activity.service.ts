@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
@@ -20,6 +18,12 @@ import { isNotEmpty } from '@gauzy/common';
 import { DatabaseTypeEnum, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
+import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
+import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
 
 const config = getConfig();
 
@@ -27,25 +31,23 @@ const config = getConfig();
 export class ActivityService extends TenantAwareCrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
-		activityRepository: Repository<Activity>,
-		@MikroInjectRepository(Activity)
-		mikroActivityRepository: EntityRepository<Activity>,
+		typeOrmActivityRepository: TypeOrmActivityRepository,
+
+		mikroOrmActivityRepository: MikroOrmActivityRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 
-		@MikroInjectRepository(OrganizationProject)
-		private readonly mikroOrganizationProjectRepository: EntityRepository<OrganizationProject>,
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 
 		private readonly commandBus: CommandBus
 	) {
-		super(activityRepository, mikroActivityRepository);
+		super(typeOrmActivityRepository, mikroOrmActivityRepository);
 	}
 
 	async getDailyActivities(request: IGetActivitiesInput): Promise<IDailyActivity[]> {
@@ -123,7 +125,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let employeeById: any = {};
 		if (employeeIds.length > 0) {
-			const employees = await this.employeeRepository.find({
+			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In(employeeIds)
 				},
@@ -134,7 +136,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let projectById: any = {};
 		if (projectIds.length > 0) {
-			const projects = await this.organizationProjectRepository.find({
+			const projects = await this.typeOrmOrganizationProjectRepository.find({
 				where: {
 					id: In(projectIds)
 				}
@@ -153,11 +155,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		const query = this.filterQuery(request);
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
-			query.leftJoinAndSelect(
-				`activityEmployee.user`,
-				'activityUser',
-				p('"employee"."userId" = activityUser.id')
-			);
+			query.leftJoinAndSelect(`activityEmployee.user`, 'activityUser', p('"employee"."userId" = activityUser.id'));
 		}
 
 		query.orderBy(`${query.alias}.duration`, 'DESC');

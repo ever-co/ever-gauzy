@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import {
 	Injectable,
 	NotFoundException,
@@ -8,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, IsNull, Between, Not, In } from 'typeorm';
+import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,

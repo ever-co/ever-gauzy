@@ -3,8 +3,9 @@ import { IProductTypeTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductType, TranslationBase } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductTypeTranslationRepository } from './repository/mikro-orm-product-type-translation.repository';
 
-@MultiORMEntity('product_type_translation')
+@MultiORMEntity('product_type_translation', { mikroOrmRepository: () => MikroOrmProductTypeTranslationRepository })
 export class ProductTypeTranslation extends TranslationBase
 	implements IProductTypeTranslation {
 
