@@ -1,30 +1,41 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
-import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, In, Repository } from 'typeorm';
+import { FindManyOptions, In } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
+import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantAwareCrudService } from './../../core/crud';
+import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-setting.repository';
+import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
 
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
 	constructor(
 		@InjectRepository(TenantSetting)
-		tenantSettingRepository: Repository<TenantSetting>,
-		@MikroInjectRepository(TenantSetting)
-		mikroTenantSettingRepository: EntityRepository<TenantSetting>
+		typeOrmTenantSettingRepository: TypeOrmTenantSettingRepository,
+
+		mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository
 	) {
-		super(tenantSettingRepository, mikroTenantSettingRepository);
+		super(typeOrmTenantSettingRepository, mikroOrmTenantSettingRepository);
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async get(request?: FindManyOptions) {
 		const settings: TenantSetting[] = await this.repository.find(request);
 		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @param tenantId
+	 * @returns
+	 */
 	async saveSettings(input: ITenantSetting, tenantId: string): Promise<ITenantSetting> {
 		const settingsName = keys(input);
 		const settings: TenantSetting[] = await this.repository.find({

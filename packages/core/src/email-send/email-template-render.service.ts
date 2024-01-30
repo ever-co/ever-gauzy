@@ -1,28 +1,29 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull, Repository } from "typeorm";
+import { IsNull } from "typeorm";
 import * as Handlebars from 'handlebars';
 import { IEmailTemplate, IVerifySMTPTransport, LanguagesEnum } from "@gauzy/contracts";
 import { ISMTPConfig, isEmpty } from "@gauzy/common";
 import { CustomSmtp, EmailTemplate } from "../core/entities/internal";
 import { SMTPUtils } from "./utils";
+import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
+import { MikroOrmEmailTemplateRepository } from './../email-template/repository/mikro-orm-email-template.repository';
+import { TypeOrmCustomSmtpRepository } from './../custom-smtp/repository/type-orm-custom-smtp.repository';
+import { MikroOrmCustomSmtpRepository } from './../custom-smtp/repository/mikro-orm-custom-smtp.repository';
 
 @Injectable()
 export class EmailTemplateRenderService {
 
     constructor(
         @InjectRepository(EmailTemplate)
-        protected readonly emailTemplateRepository: Repository<EmailTemplate>,
-        @MikroInjectRepository(EmailTemplate)
-        protected readonly mikroEmailTemplateRepository: EntityRepository<EmailTemplate>,
+        private typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+
+        mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
 
         @InjectRepository(CustomSmtp)
-        protected readonly customSmtpRepository: Repository<CustomSmtp>,
+        private typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository,
 
-        @MikroInjectRepository(CustomSmtp)
-        protected readonly mikroCustomSmtpRepository: EntityRepository<CustomSmtp>,
+        mikroOrmCustomSmtpRepository: MikroOrmCustomSmtpRepository,
     ) { }
 
     /**
@@ -36,7 +37,7 @@ export class EmailTemplateRenderService {
         let isValidSmtp: boolean = false;
 
         try {
-            smtpTransporter = await this.customSmtpRepository.findOneOrFail({
+            smtpTransporter = await this.typeOrmCustomSmtpRepository.findOneOrFail({
                 where: {
                     organizationId: isEmpty(locals.organizationId) ? IsNull() : locals.organizationId,
                     tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
@@ -46,7 +47,7 @@ export class EmailTemplateRenderService {
                 }
             });
         } catch (error) {
-            smtpTransporter = await this.customSmtpRepository.findOne({
+            smtpTransporter = await this.typeOrmCustomSmtpRepository.findOne({
                 where: {
                     organizationId: IsNull(),
                     tenantId: isEmpty(locals.tenantId) ? IsNull() : locals.tenantId
@@ -84,7 +85,7 @@ export class EmailTemplateRenderService {
                 query['organizationId'] = locals.organizationId;
                 query['tenantId'] = locals.tenantId;
 
-                emailTemplate = await this.emailTemplateRepository.findOneBy(query);
+                emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
             }
 
             // If no email template found for the organization, use the default template
@@ -92,7 +93,7 @@ export class EmailTemplateRenderService {
                 query['organizationId'] = IsNull();
                 query['tenantId'] = IsNull();
 
-                emailTemplate = await this.emailTemplateRepository.findOneBy(query);
+                emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy(query);
             }
 
             if (!emailTemplate) {

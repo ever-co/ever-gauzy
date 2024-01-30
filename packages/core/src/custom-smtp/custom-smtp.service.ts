@@ -1,23 +1,23 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull } from 'typeorm';
 import { ICustomSmtp, ICustomSmtpFindInput, IVerifySMTPTransport } from '@gauzy/contracts';
 import { isEmpty, ISMTPConfig } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { SMTPUtils } from './../email-send/utils';
 import { CustomSmtp } from './custom-smtp.entity';
+import { TypeOrmCustomSmtpRepository } from './repository/type-orm-custom-smtp.repository';
+import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
 
 @Injectable()
 export class CustomSmtpService extends TenantAwareCrudService<CustomSmtp> {
 	constructor(
 		@InjectRepository(CustomSmtp)
-		customSmtpRepository: Repository<CustomSmtp>,
-		@MikroInjectRepository(CustomSmtp)
-		mikroCustomSmtpRepository: EntityRepository<CustomSmtp>
+		typeOrmCustomSmtpRepository: TypeOrmCustomSmtpRepository,
+
+		mikroOrmCustomSmtpRepository: MikroOrmCustomSmtpRepository
 	) {
-		super(customSmtpRepository, mikroCustomSmtpRepository);
+		super(typeOrmCustomSmtpRepository, mikroOrmCustomSmtpRepository);
 	}
 
 	/**

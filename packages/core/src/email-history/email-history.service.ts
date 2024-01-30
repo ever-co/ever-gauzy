@@ -1,21 +1,21 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions } from 'typeorm';
 import { IEmailHistory, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { EmailHistory } from './email-history.entity';
+import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-history.repository';
+import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
 
 @Injectable()
 export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 	constructor(
 		@InjectRepository(EmailHistory)
-		emailRepository: Repository<EmailHistory>,
-		@MikroInjectRepository(EmailHistory)
-		mikroEmailRepository: EntityRepository<EmailHistory>
+		typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
+
+		mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository
 	) {
-		super(emailRepository, mikroEmailRepository);
+		super(typeOrmEmailHistoryRepository, mikroOrmEmailHistoryRepository);
 	}
 
 	/**

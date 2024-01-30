@@ -1,9 +1,7 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { IsNull, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import { IEmailReset, IEmailResetFindInput, LanguagesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { UserService } from '../user/user.service';
@@ -19,14 +17,17 @@ import { EmailService } from './../email-send/email.service';
 import { EmployeeService } from './../employee/employee.service';
 import { AuthService } from './../auth/auth.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmEmailResetRepository } from './repository/type-orm-email-reset.repository';
+import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
 
 @Injectable()
 export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 	constructor(
 		@InjectRepository(EmailReset)
-		emailResetRepository: Repository<EmailReset>,
-		@MikroInjectRepository(EmailReset)
-		mikroEmailResetRepository: EntityRepository<EmailReset>,
+		typeOrmEmailResetRepository: TypeOrmEmailResetRepository,
+
+		mikroOrmEmailResetRepository: MikroOrmEmailResetRepository,
+
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus,
 		private readonly queryBus: QueryBus,
@@ -34,7 +35,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 		private readonly employeeService: EmployeeService,
 		private readonly authService: AuthService
 	) {
-		super(emailResetRepository, mikroEmailResetRepository);
+		super(typeOrmEmailResetRepository, mikroOrmEmailResetRepository);
 	}
 
 	async requestChangeEmail(request: UserEmailDTO, languageCode: LanguagesEnum) {

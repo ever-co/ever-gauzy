@@ -1,19 +1,18 @@
+import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { Deal } from './deal.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Injectable } from '@nestjs/common';
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
+import { TypeOrmDealRepository } from './repository/type-orm-deal.repository';
+import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
 
 @Injectable()
 export class DealService extends TenantAwareCrudService<Deal> {
-	public constructor(
+	constructor(
 		@InjectRepository(Deal)
-		dealRepository: Repository<Deal>,
-		@MikroInjectRepository(Deal)
-		mikroDealRepository: EntityRepository<Deal>
+		typeOrmDealRepository: TypeOrmDealRepository,
+
+		mikroOrmDealRepository: MikroOrmDealRepository
 	) {
-		super(dealRepository, mikroDealRepository);
+		super(typeOrmDealRepository, mikroOrmDealRepository);
 	}
 }

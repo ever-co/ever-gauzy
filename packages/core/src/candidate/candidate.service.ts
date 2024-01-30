@@ -1,26 +1,31 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import { ICandidateCreateInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Candidate } from './candidate.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmCandidateRepository } from './repository/type-orm-candidate.repository';
+import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 
 @Injectable()
 export class CandidateService extends TenantAwareCrudService<Candidate> {
 	constructor(
 		@InjectRepository(Candidate)
-		candidateRepository: Repository<Candidate>,
-		@MikroInjectRepository(Candidate)
-		mikroCandidateRepository: EntityRepository<Candidate>
+		typeOrmCandidateRepository: TypeOrmCandidateRepository,
+
+		mikroOrmCandidateRepository: MikroOrmCandidateRepository
 	) {
-		super(candidateRepository, mikroCandidateRepository);
+		super(typeOrmCandidateRepository, mikroOrmCandidateRepository);
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @returns
+	 */
 	async createBulk(input: ICandidateCreateInput[]) {
 		return Promise.all(
 			input.map((candidate) => {
@@ -46,13 +51,13 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 				take: options && options.take ? options.take : 10,
 				...(options && options.relations
 					? {
-							relations: options.relations
-					  }
+						relations: options.relations
+					}
 					: {}),
 				...(options && options.join
 					? {
-							join: options.join
-					  }
+						join: options.join
+					}
 					: {})
 			});
 			query.where((qb: SelectQueryBuilder<Candidate>) => {

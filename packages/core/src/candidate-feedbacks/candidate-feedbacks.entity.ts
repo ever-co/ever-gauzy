@@ -25,7 +25,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedbacks.repository';
+import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
 
 @MultiORMEntity('candidate_feedback', { mikroOrmRepository: () => MikroOrmCandidateFeedbackRepository })
 export class CandidateFeedback extends TenantOrganizationBaseEntity
