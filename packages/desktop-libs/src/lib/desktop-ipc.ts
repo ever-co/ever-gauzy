@@ -1066,7 +1066,10 @@ let isQueueThreadTimerLocked = false;
 async function sequentialSyncQueue(window: BrowserWindow) {
 	if (!window) return;
 	// Check Authenticated user
-	await checkAuthenticatedUser(window);
+	const isAuthenticated = await checkAuthenticatedUser(window);
+	if (!isAuthenticated) {
+		return;
+	}
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
@@ -1111,7 +1114,10 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 	if (!window) return;
 	// Check Authenticated user
-	await checkAuthenticatedUser(window);
+	const isAuthenticated = await checkAuthenticatedUser(window);
+	if (!isAuthenticated) {
+		return;
+	}
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
@@ -1154,7 +1160,7 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 
 	const handleLogout = async (errorMessage: string) => {
 		await logout();
-		throw new UIError('500', errorMessage, 'IPCINIT');
+		console.error(errorMessage);
 	};
 
 	try {

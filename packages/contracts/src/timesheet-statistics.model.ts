@@ -64,10 +64,9 @@ export interface IGetManualTimesStatistics
 	onlyMe?: boolean;
 }
 
-export interface IManualTimesStatistics
-	extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration'> {
+export interface IManualTimesStatistics extends Pick<ITimeLog, 'id' | 'startedAt' | 'duration' | 'employeeId'> {
 	user?: Pick<IUser, 'name' | 'imageUrl'>;
-	project?: Pick<IOrganizationProject, 'name'>;
+	project?: Pick<IOrganizationProject, 'name' | 'imageUrl'>;
 }
 
 export interface IGetMembersStatistics extends ITimeLogFilters, ITimeLogTodayFilters {

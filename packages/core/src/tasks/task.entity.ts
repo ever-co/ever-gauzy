@@ -56,11 +56,15 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
+import { isMySQL }  from "@gauzy/config";
 
 @Entity('task')
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'bigint' } : {})
+	})
 	number?: number;
 
 	@Column({ nullable: true })
@@ -75,7 +79,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'text' } : {})})
 	description?: string;
 
 	@ApiProperty({ type: () => String })

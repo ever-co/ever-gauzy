@@ -9,6 +9,7 @@ import { Expense } from './expense.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
@@ -52,7 +53,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 	async getExpense(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
-		query.orderBy(`"${query.alias}"."valueDate"`, 'ASC');
+		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
 
 		if (
 			RequestContext.hasPermission(
@@ -66,7 +67,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			query.leftJoinAndSelect(
 				`activityEmployee.user`,
 				'activityUser',
-				'"employee"."userId" = activityUser.id'
+				p('"employee"."userId" = activityUser.id')
 			);
 		}
 
@@ -77,7 +78,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 	async getDailyReportChartData(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
-		query.orderBy(`"${query.alias}"."valueDate"`, 'ASC');
+		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
 
 		const { startDate, endDate } = request;
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
@@ -123,6 +124,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 */
 	private filterQuery(request: IGetExpenseInput) {
 		const { organizationId, startDate, endDate, projectIds = [] } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const user = RequestContext.currentUser();
 
@@ -137,8 +140,13 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
 		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		const query = this.expenseRepository.createQueryBuilder();
 		if (request.limit > 0) {
@@ -148,8 +156,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		query.leftJoin(`${query.alias}.employee`, 'employee');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			})
 		)
 		query.andWhere(
@@ -162,12 +170,12 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}

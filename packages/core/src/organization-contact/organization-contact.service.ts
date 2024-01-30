@@ -6,6 +6,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
@@ -42,12 +43,12 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 					const tenantId = RequestContext.currentTenantId();
 					const { organizationId, contactType } = options;
 
-					qb.andWhere('member.id = :employeeId', { employeeId });
-					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(p("member.id = :employeeId"), { employeeId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 					if (isNotEmpty(contactType)) {
-						qb.andWhere(`${query.alias}.contactType = :contactType`, { contactType });
+						qb.andWhere(p(`${query.alias}.contactType = :contactType`), { contactType });
 					}
 				})
 			);

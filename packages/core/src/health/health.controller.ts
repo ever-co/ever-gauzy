@@ -46,13 +46,25 @@ export class HealthController {
 
 			checks.push(async () => {
 				console.log(`Checking ${uniqueLabel} Storage...`);
-				const resStorage = await this.disk.checkStorage('storage', {
-					path: path.resolve(__dirname),
-					// basically will fail if disk is full
-					thresholdPercent: 99.999999
-				});
-				console.log(`Storage check ${uniqueLabel} completed`);
-				return resStorage;
+				try {
+					const currentPath = path.resolve(__dirname);
+					console.log(`Checking ${uniqueLabel} Storage at path: ${currentPath}`);
+					const resStorage = await this.disk.checkStorage('storage', {
+						path: currentPath,
+						// basically will fail if disk is full
+						thresholdPercent: 99.999999
+					});
+					console.log(`Storage check ${uniqueLabel} completed`);
+					return resStorage;
+				} catch (err) {
+					console.error(`Storage check ${uniqueLabel} failed`, err);
+					return {
+						disk: {
+							status: 'down',
+							message: err.message
+						}
+					};
+				}
 			});
 
 			checks.push(async () => {

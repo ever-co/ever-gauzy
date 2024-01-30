@@ -96,7 +96,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbToggleModule } from '@nebular/theme';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 const COMPONENTS = [
@@ -194,7 +194,7 @@ const COMPONENTS = [
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NbToggleModule,
-		PaginationModule,
+		PaginationV2Module,
 		CardGridModule,
 		WorkInProgressModule
 	],

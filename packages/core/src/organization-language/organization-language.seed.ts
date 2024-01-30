@@ -4,6 +4,7 @@ import { faker } from '@faker-js/faker';
 import { IOrganization, IOrganizationLanguage, ITenant, LanguagesEnum } from '@gauzy/contracts';
 import { Language } from '../language/language.entity';
 import { DEFAULT_LANGUAGE_LEVEL, DEFAULT_ORGANIZATION_LANGUAGES } from './default-organization-languages';
+import { isMySQL } from '@gauzy/config';
 
 export const createDefaultOrganizationLanguage = async (
 	dataSource: DataSource,
@@ -45,7 +46,7 @@ export const createRandomOrganizationLanguage = async (
 
 	const mapOrganizationLanguage: IOrganizationLanguage[] = [];
 	const allLanguage = await dataSource.manager.createQueryBuilder(Language, "language")
-		.orderBy("random()")
+		.orderBy(`${isMySQL() ? 'rand()' : 'random()'}`)
 		.limit(4)
 		.getMany();
 

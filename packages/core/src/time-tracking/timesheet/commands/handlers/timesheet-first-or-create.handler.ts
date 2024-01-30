@@ -7,6 +7,7 @@ import { Employee, Timesheet } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { TimesheetFirstOrCreateCommand } from './../timesheet-first-or-create.command';
 import { TimesheetCreateCommand } from './../timesheet-create.command';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 
 @CommandHandler(TimesheetFirstOrCreateCommand)
 export class TimesheetFirstOrCreateHandler
@@ -70,9 +71,9 @@ export class TimesheetFirstOrCreateHandler
 				);
 				query.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
-						qb.andWhere(`"${query.alias}"."employeeId" = :employeeId`, { employeeId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+						qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 					})
 				);
 			});
