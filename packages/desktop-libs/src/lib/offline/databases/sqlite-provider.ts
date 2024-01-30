@@ -1,6 +1,6 @@
 import { IServerLessProvider } from '../../interfaces';
 import { Knex } from 'knex';
-import path from 'path';
+import * as path from 'path';
 import { app } from 'electron';
 
 export class SqliteProvider implements IServerLessProvider {
@@ -15,10 +15,7 @@ export class SqliteProvider implements IServerLessProvider {
 		return {
 			client: 'sqlite3',
 			connection: {
-				filename: path.resolve(
-					app?.getPath('userData') || __dirname,
-					'gauzy.sqlite3'
-				),
+				filename: path.resolve(app?.getPath('userData') || __dirname, 'gauzy.sqlite3'),
 				timezone: 'utc'
 			},
 			pool: {
@@ -28,14 +25,14 @@ export class SqliteProvider implements IServerLessProvider {
 				acquireTimeoutMillis: 60 * 1000 * 2,
 				idleTimeoutMillis: 30000,
 				reapIntervalMillis: 1000,
-				createRetryIntervalMillis: 100,
+				createRetryIntervalMillis: 100
 			},
 			migrations: {
-				directory: __dirname + '/migrations',
+				directory: __dirname + '/migrations'
 			},
 			useNullAsDefault: true,
 			debug: false,
-			asyncStackTraces: true,
+			asyncStackTraces: true
 		};
 	}
 

@@ -18,7 +18,6 @@ import {
 	IManualTimeInput,
 	IGetTimeLogInput,
 	PermissionsEnum,
-	IGetTimeLogConflictInput,
 	IDateRange,
 	IGetTimeLogReportInput,
 	ITimeLog,
@@ -33,7 +32,9 @@ import {
 	ReportGroupFilterEnum,
 	IOrganizationProject,
 	IDeleteTimeLog,
-	IOrganizationContact
+	IOrganizationContact,
+	IEmployee,
+	IOrganization
 } from '@gauzy/contracts';
 import { CommandBus } from '@nestjs/cqrs';
 import { chain, pluck } from 'underscore';
@@ -41,7 +42,6 @@ import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
 import {
 	Employee,
-	Organization,
 	OrganizationContact,
 	OrganizationProject
 } from '../../core/entities/internal';
@@ -59,6 +59,7 @@ import {
 import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
+import { prepareSQLQuery as p } from './../../database/database.helper';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -91,7 +92,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set up the find options for the query
 		query.setFindOptions({
@@ -114,7 +115,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				},
 				employee: {
 					id: true,
-					userId: true,
 					user: {
 						id: true,
 						firstName: true,
@@ -137,8 +137,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			this.getFilterTimeLogQuery(qb, request);
 		});
 
+		const timeLogs = await query.getMany();
+
 		// Set up the where clause using the provided filter function
-		return await query.getMany();
+		return timeLogs;
 	}
 
 	/**
@@ -152,7 +154,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set find options for the query
 		query.setFindOptions({
@@ -250,7 +252,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set find options for the query
 		query.setFindOptions({
@@ -323,7 +325,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set find options for the query
 		query.setFindOptions({
@@ -441,7 +443,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set up the find options for the query
 		query.setFindOptions({
@@ -516,7 +518,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set find options for the query
 		query.setFindOptions({
@@ -610,7 +612,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
-		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
+		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 
 		// Set find options for the query
 		query.setFindOptions({
@@ -733,24 +735,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, {
+				qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), {
 					organizationId
 				});
-				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, {
+				qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), {
 					tenantId
 				});
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"employee"."organizationId" =:organizationId`, {
+				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), {
 					organizationId
 				});
-				qb.andWhere(`"employee"."tenantId" =:tenantId`, {
+				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), {
 					tenantId
 				});
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
@@ -758,28 +760,28 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, {
+				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), {
 					organizationId
 				});
-				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
 
 				// Date range condition
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
-				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
 					startDate: start,
 					endDate: end
 				});
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}
@@ -857,42 +859,42 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"${query.alias}"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"employee"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"employee"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"employee"."organizationId" =:organizationId`), { organizationId });
+				qb.andWhere(p(`"employee"."tenantId" =:tenantId`), { tenantId });
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"employee"."id" IN (:...employeeIds)`, { employeeIds });
+					qb.andWhere(p(`"employee"."id" IN (:...employeeIds)`), { employeeIds });
 				}
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"timeLogs"."organizationId" =:organizationId`, { organizationId });
-				qb.andWhere(`"timeLogs"."tenantId" =:tenantId`, { tenantId });
+				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), { organizationId });
+				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
 
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate),
 					moment.utc(endDate)
 				);
-				qb.andWhere(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`, {
+				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
 					startDate: start,
 					endDate: end
 				});
 
 				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(`"timeLogs"."employeeId" IN (:...employeeIds)`, {
+					qb.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), {
 						employeeIds
 					});
 				}
 
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"timeLogs"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"timeLogs"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}
@@ -935,6 +937,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogInput) {
 		const { organizationId, projectIds = [], teamIds = [] } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 
@@ -943,46 +947,45 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
-		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
 
-		if (isNotEmpty(request.timesheetId)) {
-			query.andWhere(`"${query.alias}"."timesheetId" = :timesheetId`, {
-				timesheetId: request.timesheetId
-			});
+		// Set employeeIds based on permissions and request
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
 		}
 
-		//
+		// Filters records based on the timesheetId.
+		if (isNotEmpty(request.timesheetId)) {
+			const { timesheetId } = request;
+			query.andWhere(p(`"${query.alias}"."timesheetId" = :timesheetId`), { timesheetId });
+		}
+
+		// Filters records based on the date range.
 		if (isNotEmpty(request.startDate) && isNotEmpty(request.endDate)) {
 			const { start: startDate, end: endDate } = getDateRangeFormat(
 				moment.utc(request.startDate || moment().startOf('day')),
 				moment.utc(request.endDate || moment().endOf('day'))
 			);
-			query.andWhere(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`, {
+			query.andWhere(p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`), {
 				startDate,
 				endDate
 			});
 		}
 
-		//
+		// Filter by organization employee IDs if used in the request
 		if (isNotEmpty(employeeIds)) {
-			query.andWhere(`"${query.alias}"."employeeId" IN (:...employeeIds)`, {
-				employeeIds
-			});
+			query.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
 		}
 
-		//
+		// Filter by organization project IDs if used in the request
 		if (isNotEmpty(projectIds)) {
-			query.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
-				projectIds
-			});
+			query.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), { projectIds });
 		}
 
-		// Filter by organization team ID if used in the request
+		// Filter by organization team IDs if used in the request
 		if (isNotEmpty(teamIds)) {
-			query.andWhere(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`, {
-				teamIds
-			});
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`), { teamIds });
 		}
 
 		// Filters records based on the overall column, representing the activity level.
@@ -993,7 +996,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			 */
 			const { activityLevel } = request;
 
-			query.andWhere(`"time_slot"."overall" BETWEEN :start AND :end`, {
+			query.andWhere(p(`"timeSlots"."overall" BETWEEN :start AND :end`), {
 				start: activityLevel.start * 6,
 				end: activityLevel.end * 6
 			});
@@ -1002,7 +1005,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filters records based on the source column.
 		if (isNotEmpty(request.source)) {
 			const { source } = request;
-			const condition = source instanceof Array ? `"${query.alias}"."source" IN (:...source)` : `"${query.alias}"."source" = :source`;
+			const condition = source instanceof Array ? p(`"${query.alias}"."source" IN (:...source)`) : p(`"${query.alias}"."source" = :source`);
 
 			query.andWhere(condition, { source });
 		}
@@ -1010,7 +1013,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filters records based on the logType column.
 		if (isNotEmpty(request.logType)) {
 			const { logType } = request;
-			const condition = logType instanceof Array ? `"${query.alias}"."logType" IN (:...logType)` : `"${query.alias}"."logType" = :logType`;
+			const condition = logType instanceof Array ? p(`"${query.alias}"."logType" IN (:...logType)`) : p(`"${query.alias}"."logType" = :logType`);
 
 			query.andWhere(condition, { logType });
 		}
@@ -1018,12 +1021,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Additional conditions for filtering by tenantId and organizationId
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
-					tenantId
-				});
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
-					organizationId
-				});
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			})
+		);
+		query.andWhere(
+			new Brackets((qb: WhereExpressionBuilder) => {
+				qb.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
 			})
 		);
 
@@ -1047,27 +1052,31 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee = await this.employeeRepository.findOne({
+			const employee: IEmployee = await this.employeeRepository.findOne({
 				where: { id: employeeId },
 				relations: { organization: true }
 			});
 
-			// Check if the selected date and time range is allowed for the organization
-			const isDateAllow = this.allowDate(startedAt, stoppedAt, employee.organization);
+			//
+			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
+			// Check if the selected date and time range is allowed for the organization
+			const isDateAllow = this.allowDate(startedAt, stoppedAt, futureDateAllowed);
 			if (!isDateAllow) {
 				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
 
 			// Check for conflicts with existing time logs
-			const conflicts = await this.checkConflictTime({
-				startDate: startedAt,
-				endDate: stoppedAt,
-				employeeId,
-				organizationId,
-				tenantId,
-				...(request.id ? { ignoreId: request.id } : {})
-			});
+			const conflicts = await this.commandBus.execute(
+				new IGetConflictTimeLogCommand({
+					startDate: startedAt,
+					endDate: stoppedAt,
+					employeeId,
+					organizationId,
+					tenantId,
+					...(request.id ? { ignoreId: request.id } : {})
+				})
+			);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (conflicts && conflicts.length > 0) {
@@ -1116,16 +1125,18 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee = await this.employeeRepository.findOne({
+			const employee: IEmployee = await this.employeeRepository.findOne({
 				where: { id: employeeId },
 				relations: { organization: true }
 			});
 
-			// Check if the selected date and time range is allowed for the organization
-			const isDateAllow = this.allowDate(startedAt, stoppedAt, employee.organization);
+			//
+			const futureDateAllowed: IOrganization['futureDateAllowed'] = employee.organization.futureDateAllowed;
 
+			// Check if the selected date and time range is allowed for the organization
+			const isDateAllow = this.allowDate(startedAt, stoppedAt, futureDateAllowed);
 			if (!isDateAllow) {
-				throw new BadRequestException('Please select valid Date start and end time');
+				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
 
 			// Check for conflicts with existing time logs
@@ -1133,14 +1144,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				id: id
 			});
 
-			const conflicts = await this.checkConflictTime({
-				startDate: startedAt,
-				endDate: stoppedAt,
-				employeeId,
-				organizationId,
-				tenantId,
-				...(id ? { ignoreId: id } : {})
-			});
+			// Check for conflicts with existing time logs
+			const conflicts = await this.commandBus.execute(
+				new IGetConflictTimeLogCommand({
+					startDate: startedAt,
+					endDate: stoppedAt,
+					employeeId,
+					organizationId,
+					tenantId,
+					...(id ? { ignoreId: id } : {})
+				})
+			);
 
 			// Resolve conflicts by deleting conflicting time slots
 			if (isNotEmpty(conflicts)) {
@@ -1212,14 +1226,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			});
 			db.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${db.alias}"."tenantId" = :tenantId`, {
+					web.andWhere(p(`"${db.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
 					web.andWhere(
-						`"${db.alias}"."organizationId" = :organizationId`,
+						p(`"${db.alias}"."organizationId" = :organizationId`),
 						{ organizationId }
 					);
-					web.andWhere(`"${db.alias}"."id" IN (:...logIds)`, {
+					web.andWhere(p(`"${db.alias}"."id" IN (:...logIds)`), {
 						logIds
 					});
 				})
@@ -1232,21 +1246,24 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		);
 	}
 
-	async checkConflictTime(
-		request: IGetTimeLogConflictInput
-	): Promise<ITimeLog[]> {
-		return await this.commandBus.execute(
-			new IGetConflictTimeLogCommand(request)
-		);
-	}
-
-	private allowDate(start: Date, end: Date, organization: Organization) {
+	/**
+	 * Check if the provided date range is allowed.
+	 *
+	 * @param start - Start date
+	 * @param end - End date
+	 * @param organization - Organization object
+	 * @returns {boolean} - Returns true if the date range is allowed, otherwise false.
+	 */
+	private allowDate(start: Date, end: Date, futureDateAllowed: boolean): boolean {
+		// Check if the start date is before the end date
 		if (!moment.utc(start).isBefore(moment.utc(end))) {
 			return false;
 		}
-		if (organization.futureDateAllowed) {
+		// Check if future dates are allowed for the organization
+		if (futureDateAllowed) {
 			return true;
 		}
+		// Check if the end date is on or before the current date
 		return moment(end).isSameOrBefore(moment());
 	}
 }

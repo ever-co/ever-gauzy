@@ -41,12 +41,12 @@ export const enterNameInputData = (data) => {
 };
 
 export const descriptionInputVisible = () => {
-	verifyElementIsVisible(PipelinesPage.descriptioninputCss);
+	verifyElementIsVisible(PipelinesPage.descriptionInputCss);
 };
 
 export const enterDescriptionInputData = (data) => {
-	clearField(PipelinesPage.descriptioninputCss);
-	enterInput(PipelinesPage.descriptioninputCss, data);
+	clearField(PipelinesPage.descriptionInputCss);
+	enterInput(PipelinesPage.descriptionInputCss, data);
 };
 
 export const createPipelineButtonVisible = () => {
@@ -109,9 +109,9 @@ export const verifyPipelineExists = (text) => {
 	verifyText(PipelinesPage.verifyPipelineCss, text);
 };
 
-export const enterNameInputDataByIndex = (data:string, index: number) => {
+export const enterNameInputDataByIndex = (data: string, index: number) => {
 	clearFieldByIndex(PipelinesPage.pipelineNameInputCss, index);
-	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data ,index);
+	enterInputByIndex(PipelinesPage.pipelineNameInputCss, data, index);
 };
 
 export const verifyStageButton = () => {
@@ -119,19 +119,19 @@ export const verifyStageButton = () => {
 };
 
 export const clickOnStageButton = () => {
-	clickButton(PipelinesPage.stageButtonCss); 
+	clickButton(PipelinesPage.stageButtonCss);
 };
 
 export const verifyStageNameInput = (index: number) => {
 	verifyElementIsVisibleByIndex(PipelinesPage.pipelineNameInputCss, index);
 };
 
-export const enterDescriptionInputDataByIndex = (data:string, index: number) => {
-	clearFieldByIndex(PipelinesPage.descriptioninputCss, index);
-	enterInputByIndex(PipelinesPage.descriptioninputCss, data ,index);
+export const enterDescriptionInputDataByIndex = (data: string, index: number) => {
+	clearFieldByIndex(PipelinesPage.descriptionInputCss, index);
+	enterInputByIndex(PipelinesPage.descriptionInputCss, data, index);
 };
 
-export const verifySearchResult = (length: number) =>{
+export const verifySearchResult = (length: number) => {
 	vefiryByLength(PipelinesPage.selectTableRowCss, length);
 };
 

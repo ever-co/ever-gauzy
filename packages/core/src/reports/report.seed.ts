@@ -1,17 +1,17 @@
-import { DataSource } from 'typeorm';
-import { Report } from './report.entity';
-import { ReportCategory } from './report-category.entity';
-import { indexBy } from 'underscore';
-import * as path from 'path';
-import { copyFileSync, mkdirSync } from 'fs';
-import * as rimraf from 'rimraf';
-import * as chalk from 'chalk';
-import { environment as env } from '@gauzy/config';
 import { IPluginConfig } from '@gauzy/common';
-import { getDefaultOrganizations } from './../organization/organization.seed';
+import { environment as env, databaseTypes } from '@gauzy/config';
 import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
-import { ReportOrganization } from './report-organization.entity';
+import * as chalk from 'chalk';
+import { copyFileSync, mkdirSync } from 'fs';
+import * as path from 'path';
+import * as rimraf from 'rimraf';
+import { DataSource } from 'typeorm';
+import { indexBy } from 'underscore';
 import { Organization } from './../core/entities/internal';
+import { getDefaultOrganizations } from './../organization/organization.seed';
+import { ReportCategory } from './report-category.entity';
+import { ReportOrganization } from './report-organization.entity';
+import { Report } from './report.entity';
 
 export const createDefaultReport = async (
 	dataSource: DataSource,
@@ -51,8 +51,7 @@ export const createDefaultReport = async (
 			category: categoryByName['Time Tracking'],
 			showInMenu: true,
 			iconClass: 'far fa-clock',
-			description:
-				"See team members' time worked, activity levels, and amounts earned per project or task"
+			description: "See team members' time worked, activity levels, and amounts earned per project or task"
 		}),
 		new Report({
 			name: 'Weekly',
@@ -61,8 +60,7 @@ export const createDefaultReport = async (
 			category: categoryByName['Time Tracking'],
 			iconClass: 'fas fa-calendar-alt',
 			showInMenu: true,
-			description:
-				"See team members' time worked, activity levels, and amount earned per week"
+			description: "See team members' time worked, activity levels, and amount earned per week"
 		}),
 		new Report({
 			name: 'Apps & URLs',
@@ -70,8 +68,7 @@ export const createDefaultReport = async (
 			image: copyImage('apps-urls.png', config),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'far fa-window-maximize',
-			description:
-				"See team members' apps used and URLs visited while working"
+			description: "See team members' apps used and URLs visited while working"
 		}),
 		new Report({
 			name: 'Manual time edits',
@@ -79,8 +76,7 @@ export const createDefaultReport = async (
 			image: copyImage('manual-time-edits.png', config),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'far fa-window-maximize',
-			description:
-				"See team members' time worked, project, task, and reason for each manual time entry"
+			description: "See team members' time worked, project, task, and reason for each manual time entry"
 		}),
 		new Report({
 			name: 'Expense',
@@ -88,8 +84,7 @@ export const createDefaultReport = async (
 			image: copyImage('expense.png', config),
 			category: categoryByName['Time Tracking'],
 			iconClass: 'far fa-credit-card',
-			description:
-				'See how much has been spent on expenses by member and project.'
+			description: 'See how much has been spent on expenses by member and project.'
 		}),
 		new Report({
 			name: 'Amounts owed',
@@ -105,8 +100,7 @@ export const createDefaultReport = async (
 			image: copyImage('payments.png', config),
 			category: categoryByName['Payments'],
 			iconClass: 'far fa-credit-card',
-			description:
-				'See how much team members were paid over a given period'
+			description: 'See how much team members were paid over a given period'
 		}),
 		new Report({
 			name: 'Weekly limits',
@@ -130,8 +124,7 @@ export const createDefaultReport = async (
 			image: copyImage('blank.png', config),
 			category: categoryByName['Invoicing'],
 			iconClass: 'far fa-credit-card',
-			description:
-				"See how much of your projects' budgets have been spent"
+			description: "See how much of your projects' budgets have been spent"
 		}),
 		new Report({
 			name: 'Client budgets',
@@ -144,26 +137,33 @@ export const createDefaultReport = async (
 	];
 
 	await dataSource.manager.save(reports);
-	await createDefaultOrganizationsReport(
-		dataSource,
-		reports,
-		tenant
-	);
+	await createDefaultOrganizationsReport(dataSource, reports, tenant);
 	return reports;
 };
 
-async function cleanReport(
-	dataSource: DataSource,
-	config: Partial<IPluginConfig>
-) {
+async function cleanReport(dataSource: DataSource, config: Partial<IPluginConfig>) {
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
-	if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-		await dataSource.query(`DELETE FROM ${reportCategory}`);
-		await dataSource.query(`DELETE FROM ${report}`);
-	} else {
-		await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+	switch (config.dbConnectionOptions.type) {
+		case databaseTypes.sqlite:
+		case databaseTypes.betterSqlite3:
+			await dataSource.query(`DELETE FROM ${reportCategory}`);
+			await dataSource.query(`DELETE FROM ${report}`);
+			break;
+		case databaseTypes.postgres:
+			await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+			break;
+		case databaseTypes.mysql:
+			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
+			await dataSource.query('SET foreign_key_checks = 0;');
+			await dataSource.query(`DELETE FROM ${reportCategory}`);
+			await dataSource.query(`DELETE FROM ${report}`);
+			await dataSource.query('SET foreign_key_checks = 1;');
+			break;
+		default:
+			throw Error(`cannot clean report, report_category tables due to unsupported database type: ${config.dbConnectionOptions.type}`);
+
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
@@ -188,41 +188,23 @@ async function cleanReport(
 	});
 }
 
-function copyImage(
-	fileName: string,
-	config: Partial<IPluginConfig>
-) {
+function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 	try {
 		const destDir = 'reports';
 
 		const dir = env.isElectron
-			? path.resolve(
-					env.gauzyUserPath,
-					...['src', 'assets', 'seed', destDir]
-			  )
+			? path.resolve(env.gauzySeedPath, destDir)
 			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
-			  path.resolve(
-					__dirname,
-					'../../../',
-					...['apps', 'api', 'src', 'assets', 'seed', destDir]
-			  );
+			  path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
 
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
-			: config.assetOptions.assetPublicPath ||
-			  path.resolve(
-					__dirname,
-					'../../../',
-					...['apps', 'api', 'public']
-			  );
+			: config.assetOptions.assetPublicPath || path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
 
 		mkdirSync(path.join(baseDir, destDir), { recursive: true });
 
 		const destFilePath = path.join(destDir, fileName);
-		copyFileSync(
-			path.join(dir, fileName),
-			path.join(baseDir, destFilePath)
-		);
+		copyFileSync(path.join(dir, fileName), path.join(baseDir, destFilePath));
 
 		return destFilePath;
 	} catch (err) {
@@ -230,15 +212,8 @@ function copyImage(
 	}
 }
 
-async function createDefaultOrganizationsReport(
-	dataSource: DataSource,
-	reports: IReport[],
-	tenant: ITenant
-) {
-	const organizations = await getDefaultOrganizations(
-		dataSource,
-		tenant
-	);
+async function createDefaultOrganizationsReport(dataSource: DataSource, reports: IReport[], tenant: ITenant) {
+	const organizations = await getDefaultOrganizations(dataSource, tenant);
 	const reportOrganizations: IReportOrganization[] = [];
 	for (const organization of organizations) {
 		for (const report of reports) {
@@ -254,17 +229,14 @@ async function createDefaultOrganizationsReport(
 	return await dataSource.manager.save(reportOrganizations);
 }
 
-export async function createRandomTenantOrganizationsReport(
-	dataSource: DataSource,
-	tenants: ITenant[]
-) {
+export async function createRandomTenantOrganizationsReport(dataSource: DataSource, tenants: ITenant[]) {
 	try {
 		const reports = await dataSource.manager.find(Report);
 		for await (const tenant of tenants) {
 			const { id: tenantId } = tenant;
 			const organizations = await dataSource.getRepository(Organization).find({
 				where: {
-					tenantId,
+					tenantId
 				}
 			});
 			const reportOrganizations: IReportOrganization[] = [];
@@ -285,5 +257,3 @@ export async function createRandomTenantOrganizationsReport(
 		console.log(chalk.red(`SEEDING Random Reports`, error));
 	}
 }
-
-

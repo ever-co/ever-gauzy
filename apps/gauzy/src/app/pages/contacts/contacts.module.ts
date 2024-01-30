@@ -27,7 +27,7 @@ import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploa
 import { LeafletMapModule, LocationFormModule } from '../../@shared/forms';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -72,7 +72,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		LeafletMapModule,
 		LocationFormModule,
-		PaginationModule,
+		PaginationV2Module,
 		SharedModule,
 		TagsColorInputModule,
 		ThemeModule,

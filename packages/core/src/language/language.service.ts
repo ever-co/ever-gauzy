@@ -3,6 +3,7 @@ import { Language } from './language.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class LanguageService extends CrudService<Language> {
@@ -16,7 +17,7 @@ export class LanguageService extends CrudService<Language> {
 	async findOneByName(name: string): Promise<Language> {
 		const query = this.repository
 			.createQueryBuilder('language')
-			.where('"language"."name" = :name', {
+			.where(p(`"language"."name" = :name`), {
 				name
 			});
 		const item = await query.getOne();

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { IIntegration } from '@gauzy/contracts';
 import { IntegrationGetCommand } from './../integration.get.command';
 import { Integration } from '../../integration.entity';
+import { prepareSQLQuery as p } from './../../../database/database.helper';
 
 @CommandHandler(IntegrationGetCommand)
 export class IntegrationGetHandler
@@ -24,7 +25,7 @@ export class IntegrationGetHandler
 				'integration.integrationTypes',
 				'integrationTypes'
 			)
-			.where('"integrationTypes"."id" = :id', {
+			.where(p('"integrationTypes"."id" = :id'), {
 				id: integrationTypeId
 			})
 			.andWhere(`LOWER(${query.alias}.name) LIKE :name`, {

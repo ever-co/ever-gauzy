@@ -1,9 +1,11 @@
 import { QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { getConfig } from '@gauzy/config';
+import { databaseTypes, getConfig } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { IIntegration, IIntegrationType, IntegrationTypeEnum } from '@gauzy/contracts';
 import { copyAssets } from './../core/seeds/utils';
 import { DEFAULT_INTEGRATION_TYPES } from './default-integration-type';
+import * as path from 'path';
 
 export class IntegrationsUtils {
 	/**
@@ -25,71 +27,84 @@ export class IntegrationsUtils {
 			integrationTypesMap
 		} of integrations) {
 			try {
-				const filepath = `integrations/${imgSrc}`;
+				const filePath = copyAssets(path.join(destDir, imgSrc), getConfig(), '');
+
+				const sqliteUpsertQuery = `
+					INSERT INTO integration (
+						"name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider", "id"
+					)
+					VALUES (
+						?, ?, ?, ?, ?, ?, ?
+					)
+					ON CONFLICT("name")
+					DO UPDATE SET "imgSrc" = EXCLUDED."imgSrc",
+									"isComingSoon" = EXCLUDED."isComingSoon",
+									"order" = EXCLUDED."order",
+									"redirectUrl" = EXCLUDED."redirectUrl",
+									"provider" = EXCLUDED."provider"
+					RETURNING id;
+				`;
+				const postgresUpsertQuery = `
+					INSERT INTO "integration" (
+						"name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider"
+					)
+					VALUES (
+						$1, $2, $3, $4, $5, $6
+					)
+					ON CONFLICT(name) DO UPDATE
+					SET
+						"imgSrc" = $2,
+						"isComingSoon" = $3,
+						"order" = $4,
+						"redirectUrl" = $5,
+						"provider" = $6
+					RETURNING id;
+				`;
+				const mysqlUpsertQuery = p(`
+					INSERT INTO "integration" (
+						"name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider"
+					) VALUES (
+						?, ?, ?, ?, ?, ?
+					) ON DUPLICATE KEY UPDATE
+					"imgSrc" = VALUES("imgSrc"),
+					"isComingSoon" = VALUES("isComingSoon"),
+					"order" = VALUES("order"),
+					"redirectUrl" = VALUES("redirectUrl"),
+					"provider" = VALUES("provider");
+				`);
 
 				let upsertQuery = ``;
+				let payload: any[];
 
-				if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-					const payload = [name, filepath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
-
-					// For SQLite, manually generate a UUID using uuidv4()
-					const generatedId = uuidv4();
-					payload.push(generatedId);
-					upsertQuery = `
-                        INSERT INTO integration (
-                            "name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider", "id"
-                        )
-                        VALUES (
-                            ?, ?, ?, ?, ?, ?, ?
-                        )
-                        ON CONFLICT("name")
-                        DO UPDATE SET "imgSrc" = EXCLUDED."imgSrc",
-                         			  "isComingSoon" = EXCLUDED."isComingSoon",
-                            		  "order" = EXCLUDED."order",
-                            		  "redirectUrl" = EXCLUDED."redirectUrl",
-                            		  "provider" = EXCLUDED."provider"
-                        RETURNING id;
-                    `;
-
-					const [integration] = await queryRunner.query(upsertQuery, payload);
-
-					// Step 3: Insert entry in join table to associate Integration with IntegrationType
-					await IntegrationsUtils.syncIntegrationType(
-						queryRunner,
-						integration,
-						await this.getIntegrationTypeByName(queryRunner, integrationTypesMap)
-					);
-				} else {
-					const payload = [name, filepath, isComingSoon, order, redirectUrl, provider];
-
-					upsertQuery = `
-                        INSERT INTO "integration" (
-                            "name", "imgSrc", "isComingSoon", "order", "redirectUrl", "provider"
-                        )
-                        VALUES (
-                            $1, $2, $3, $4, $5, $6
-                        )
-                        ON CONFLICT(name) DO UPDATE
-                        SET
-                            "imgSrc" = $2,
-                            "isComingSoon" = $3,
-                            "order" = $4,
-                            "redirectUrl" = $5,
-                            "provider" = $6
-                        RETURNING id;
-                    `;
-
-					const [integration] = await queryRunner.query(upsertQuery, payload);
-
-					// Step 3: Insert entry in join table to associate Integration with IntegrationType
-					await IntegrationsUtils.syncIntegrationType(
-						queryRunner,
-						integration,
-						await this.getIntegrationTypeByName(queryRunner, integrationTypesMap)
-					);
+				switch(queryRunner.connection.options.type) {
+					case databaseTypes.sqlite:
+					case databaseTypes.betterSqlite3:
+						payload = [name, filePath, isComingSoon ? 1 : 0, order, redirectUrl, provider];
+						// For SQLite, manually generate a UUID using uuidv4()
+						const generatedId = uuidv4();
+						payload.push(generatedId);
+						upsertQuery = sqliteUpsertQuery;
+						break;
+					case databaseTypes.postgres:
+						payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
+						upsertQuery = postgresUpsertQuery;
+						break;
+					case databaseTypes.mysql:
+						payload = [name, filePath, isComingSoon, order, redirectUrl, provider];
+						upsertQuery = mysqlUpsertQuery;
+						break;
+					default:
+						throw Error(`cannot upsert integration and integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
 				}
 
-				copyAssets(imgSrc, getConfig(), destDir);
+				const [integration] = await queryRunner.query(upsertQuery, payload);
+
+				// Step 3: Insert entry in join table to associate Integration with IntegrationType
+				await IntegrationsUtils.syncIntegrationType(
+					queryRunner,
+					integration,
+					await this.getIntegrationTypeByName(queryRunner, integrationTypesMap)
+				);
 			} catch (error) {
 				// since we have errors let's rollback changes we made
 				console.log(`Error while updating integration: (${name}) in production server`, error);
@@ -109,9 +124,9 @@ export class IntegrationsUtils {
 	): Promise<IIntegrationType[]> {
 		try {
 			return await queryRunner.query(
-				`SELECT * FROM "integration_type" WHERE "integration_type"."name" IN ('${integrationTypeNames.join(
+				p(`SELECT * FROM "integration_type" WHERE "integration_type"."name" IN ('${integrationTypeNames.join(
 					"','"
-				)}')`
+				)}')`)
 			);
 		} catch (error) {
 			console.log('Error while querying integration types:', error);
@@ -130,42 +145,66 @@ export class IntegrationsUtils {
 				(type) => type.name === integrationTypeName
 			);
 			const payload = [name, description, icon, groupName, order];
+			const sqliteUpsertQuery = `
+				INSERT INTO "integration_type" (
+					"name", "description", "icon", "groupName", "order", "id"
+				)
+				VALUES (
+					?, ?, ?, ?, ?, ?
+				)
+				ON CONFLICT("name")
+				DO UPDATE SET "description" = EXCLUDED."description",
+								"icon" = EXCLUDED."icon",
+								"groupName" = EXCLUDED."groupName",
+								"order" = EXCLUDED."order"
+				RETURNING id;
+			`;
+			const postgresUpsertQuery = `
+				INSERT INTO "integration_type" (
+					"name", "description", "icon", "groupName", "order"
+				)
+				VALUES (
+					$1, $2, $3, $4, $5
+				)
+				ON CONFLICT(name) DO UPDATE
+				SET
+					"description" = $2,
+					"icon" = $3,
+					"groupName" = $4,
+					"order" = $5
+				RETURNING id;
+			`;
+			const mysqlUpsertQuery = p(`
+				INSERT INTO "integration_type" (
+					"name", "description", "icon", "groupName", "order"
+				) VALUES (
+					?, ?, ?, ?, ?
+				) ON DUPLICATE KEY UPDATE
+					"description" = VALUES("description"),
+					"icon" = VALUES("icon"),
+					"groupName" = VALUES("groupName"),
+					"order" = VALUES("order")
+				RETURNING id;
+			`);
 
 			let upsertQuery = ``;
-			if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-				// For SQLite, manually generate a UUID using uuidv4()
-				const generatedId = uuidv4();
-				payload.push(generatedId);
-				upsertQuery = `
-                    INSERT INTO "integration_type" (
-                        "name", "description", "icon", "groupName", "order", "id"
-                    )
-                    VALUES (
-                        ?, ?, ?, ?, ?, ?
-                    )
-                    ON CONFLICT("name")
-                    DO UPDATE SET "description" = EXCLUDED."description",
-                       			  "icon" = EXCLUDED."icon",
-                        		  "groupName" = EXCLUDED."groupName",
-                       			  "order" = EXCLUDED."order"
-                    RETURNING id;
-                `;
-			} else {
-				upsertQuery = `
-                    INSERT INTO "integration_type" (
-                        "name", "description", "icon", "groupName", "order"
-                    )
-                    VALUES (
-                        $1, $2, $3, $4, $5
-                    )
-                    ON CONFLICT(name) DO UPDATE
-                    SET
-                        "description" = $2,
-                        "icon" = $3,
-                        "groupName" = $4,
-                        "order" = $5
-                    RETURNING id;
-                `;
+
+			switch(queryRunner.connection.options.type) {
+				case databaseTypes.sqlite:
+				case databaseTypes.betterSqlite3:
+					// For SQLite, manually generate a UUID using uuidv4()
+					const generatedId = uuidv4();
+					payload.push(generatedId);
+					upsertQuery = sqliteUpsertQuery;
+					break;
+				case databaseTypes.postgres:
+					upsertQuery = postgresUpsertQuery;
+					break;
+				case databaseTypes.mysql:
+					upsertQuery = mysqlUpsertQuery;
+					break;
+				default:
+					throw Error(`cannot upsert integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
 			}
 			await queryRunner.query(upsertQuery, payload);
 		}
@@ -186,8 +225,12 @@ export class IntegrationsUtils {
 		if (integration) {
 			const integrationId = integration.id;
 			for await (const integrationType of integrationTypes) {
-				let insertPivotQuery = `
-                    INSERT INTO "integration_integration_type" (
+				let insertPivotQuery = ``;
+				const sqliteUpsertQuery = `
+					INSERT OR IGNORE INTO integration_integration_type (integrationId, integrationTypeId) VALUES (?, ?);
+				`;
+				const postgresUpsertQuery = `
+					INSERT INTO "integration_integration_type" (
                         "integrationId",
                         "integrationTypeId"
                     )
@@ -200,14 +243,35 @@ export class IntegrationsUtils {
                             "integrationId" = $1 AND
                             "integrationTypeId" = $2
                     )
-                `;
-				if (queryRunner.connection.options.type === 'better-sqlite3') {
-					insertPivotQuery = `
-						INSERT OR IGNORE INTO integration_integration_type (integrationId, integrationTypeId)
-						VALUES (?, ?);
-                `;
+				`;
+				const mysqlUpsertQuery = p(`
+					INSERT INTO integration_integration_type (integrationId, integrationTypeId)
+					SELECT
+						?, ?
+					FROM
+						DUAL
+					WHERE NOT EXISTS (
+						SELECT 1
+						FROM integration_integration_type
+						WHERE
+							integrationId = ? AND
+							integrationTypeId = ?
+					);
+				`);
+				switch(queryRunner.connection.options.type) {
+					case databaseTypes.sqlite:
+					case databaseTypes.betterSqlite3:
+						insertPivotQuery = sqliteUpsertQuery;
+						break;
+					case databaseTypes.postgres:
+						insertPivotQuery = postgresUpsertQuery;
+						break;
+					case databaseTypes.mysql:
+						insertPivotQuery = mysqlUpsertQuery;
+						break;
+					default:
+						throw Error(`cannot sync integration types due to unsupported database type: ${queryRunner.connection.options.type}`);
 				}
-
 				await queryRunner.query(insertPivotQuery, [integrationId, integrationType.id]);
 			}
 		}

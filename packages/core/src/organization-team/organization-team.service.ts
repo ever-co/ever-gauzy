@@ -36,6 +36,7 @@ import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { TaskService } from './../tasks/task.service';
+import { prepareSQLQuery as p } from './../database/database.helper';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
@@ -281,37 +282,37 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		if (employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			// Sub query to get only employee assigned teams
 			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				const subQuery = cb.subQuery().select('"team"."organizationTeamId"');
+				const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
 				subQuery.from('organization_team_employee', 'team');
 
 				// Apply the tenant filter
-				subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+				subQuery.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
 				if (options?.where.organizationId) {
 					const { organizationId } = options.where;
-					subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					subQuery.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 				}
 
-				subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId });
-				return `"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`;
+				subQuery.andWhere(p('"team"."employeeId" = :employeeId'), { employeeId });
+				return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
 			});
 		} else {
 			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
 				// Sub query to get only employee assigned teams
 				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-					const subQuery = cb.subQuery().select('"team"."organizationTeamId"');
+					const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
 					subQuery.from('organization_team_employee', 'team');
 
 					// Apply the tenant filter
-					subQuery.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+					subQuery.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
 					if (options?.where.organizationId) {
 						const { organizationId } = options.where;
-						subQuery.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						subQuery.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					}
 
-					subQuery.andWhere('"team"."employeeId" = :employeeId', { employeeId: members['employeeId'] });
-					return `"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`;
+					subQuery.andWhere(p('"team"."employeeId" = :employeeId'), { employeeId: members['employeeId'] });
+					return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
 				});
 			}
 		}
@@ -329,12 +330,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		// Apply the tenant filter
-		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
 		// Apply the organization filter
 		if (options?.where.organizationId) {
 			const { organizationId } = options.where;
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 		}
 
 		const [items, total] = await query.getManyAndCount();

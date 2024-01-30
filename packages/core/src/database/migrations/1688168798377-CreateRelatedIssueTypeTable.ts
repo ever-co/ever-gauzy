@@ -1,37 +1,55 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from "chalk";
+import { databaseTypes } from "@gauzy/config";
 
 export class CreateRelatedIssueTypeTable1688168798377 implements MigrationInterface {
 
 	name = 'CreateRelatedIssueTypeTable1688168798377';
 
-	/**
-	 * Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async up(queryRunner: QueryRunner): Promise<any> {
-		console.log(chalk.yellow(this.name + ' start running!'));
+    /**
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
 
-		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-			await this.sqliteUpQueryRunner(queryRunner);
-		} else {
-			await this.postgresUpQueryRunner(queryRunner);
-		}
-	}
-
-	/**
-	 * Down Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async down(queryRunner: QueryRunner): Promise<any> {
-		if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-			await this.sqliteDownQueryRunner(queryRunner);
-		} else {
-			await this.postgresDownQueryRunner(queryRunner);
-		}
-	}
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+                await this.sqliteUpQueryRunner(queryRunner);
+                break;
+            case databaseTypes.postgres:
+                await this.postgresUpQueryRunner(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlUpQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
+    /**
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        switch (queryRunner.connection.options.type) {
+            case databaseTypes.sqlite:
+            case databaseTypes.betterSqlite3:
+                await this.sqliteDownQueryRunner(queryRunner);
+                break;
+            case databaseTypes.postgres:
+                await this.postgresDownQueryRunner(queryRunner);
+                break;
+            case databaseTypes.mysql:
+                await this.mysqlDownQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
 
 	/**
 	 * PostgresDB Up Migration
@@ -228,4 +246,18 @@ export class CreateRelatedIssueTypeTable1688168798377 implements MigrationInterf
 		await queryRunner.query(`DROP INDEX "IDX_b7b0ea8ac2825fb981c1181d11"`);
 		await queryRunner.query(`DROP TABLE "task_related_issue_type"`);
 	}
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 }

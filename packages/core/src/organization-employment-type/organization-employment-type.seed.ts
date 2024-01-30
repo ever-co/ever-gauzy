@@ -14,7 +14,7 @@ export const seedDefaultEmploymentTypes = async (
 	const contractors = defaultTeams[1].defaultMembers;
 	const employmentTypes: OrganizationEmploymentType[] = Object.values(
 		GenericEmploymentTypes
-	).map((name) => {
+	).map((name: string) => {
 		const employmentType = new OrganizationEmploymentType();
 		employmentType.name = name;
 		employmentType.organizationId = defaultOrganization.id;
@@ -50,7 +50,7 @@ export const seedRandomEmploymentTypes = async (
 		for (const organization of organizations) {
 			const organizationEmploymentTypes: OrganizationEmploymentType[] = Object.values(
 				GenericEmploymentTypes
-			).map((name) => {
+			).map((name: string) => {
 				const employmentType = new OrganizationEmploymentType();
 				employmentType.name = name;
 				employmentType.organization = organization;

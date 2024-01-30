@@ -12,7 +12,7 @@ import {
 	verifyTextNotExisting,
 	verifyByLength,
 	wait
-	
+
 } from '../utils/util';
 import { AddTaskPage } from '../pageobjects/AddTasksPageObject';
 
@@ -41,7 +41,7 @@ export const clickSelectProjectDropdown = () => {
 };
 
 export const selectProjectOptionDropdown = (text) => {
-	clickElementByText(AddTaskPage.selectProjectDrodownOptionCss, text);
+	clickElementByText(AddTaskPage.selectProjectDropdownOptionCss, text);
 };
 
 export const selectEmployeeDropdownVisible = () => {

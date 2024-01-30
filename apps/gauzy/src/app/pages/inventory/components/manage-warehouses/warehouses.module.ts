@@ -19,7 +19,7 @@ import { CardGridModule } from "./../../../../@shared/card-grid/card-grid.module
 import { HeaderTitleModule } from "./../../../../@shared/components/header-title/header-title.module";
 import { LocationFormModule, LeafletMapModule } from "./../../../../@shared/forms";
 import { GauzyButtonActionModule } from "./../../../../@shared/gauzy-button-action/gauzy-button-action.module";
-import { PaginationModule } from "./../../../../@shared/pagination/pagination.module";
+import { PaginationV2Module } from "../../../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { TagsColorInputModule } from "./../../../../@shared/tags/tags-color-input/tags-color-input.module";
 import { ThemeModule } from "./../../../../@theme/theme.module";
 import { InventoryTableComponentsModule } from "../inventory-table-components";
@@ -74,7 +74,7 @@ const NB_MODULES = [
         LocationFormModule,
         LeafletMapModule,
         TagsColorInputModule,
-        PaginationModule,
+        PaginationV2Module,
         CardGridModule,
         GauzyButtonActionModule,
         CardGridModule,
