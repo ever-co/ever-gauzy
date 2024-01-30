@@ -18,7 +18,9 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/employee', module: EmployeeModule }]),
+		RouterModule.register([
+			{ path: '/employee', module: EmployeeModule }
+		]),
 		TypeOrmModule.forFeature([Employee, TimeLog]),
 		MikroOrmModule.forFeature([Employee, TimeLog]),
 		forwardRef(() => EmailSendModule),
@@ -32,6 +34,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, ...CommandHandlers],
-	exports: [TypeOrmModule, EmployeeService]
+	exports: [TypeOrmModule, MikroOrmModule, EmployeeService]
 })
 export class EmployeeModule { }

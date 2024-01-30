@@ -12,8 +12,9 @@ import {
 	TenantOrganizationBaseEntity,
 } from '../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
 
-@MultiORMEntity('task_related_issue_type', { mikroOrmRepository: () => TaskRelatedIssueType })
+@MultiORMEntity('task_related_issue_type', { mikroOrmRepository: () => MikroOrmTaskRelatedIssueTypeRepository })
 export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implements ITaskRelatedIssueType {
 
 	@ApiProperty({ type: () => String })

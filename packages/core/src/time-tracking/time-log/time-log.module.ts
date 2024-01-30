@@ -34,6 +34,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	exports: [
 		TypeOrmModule,
+		MikroOrmModule,
 		TimeLogService
 	]
 })

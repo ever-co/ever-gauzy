@@ -33,7 +33,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	exports: [
 		TimeSlotService,
-		TypeOrmModule
+		TypeOrmModule,
+		MikroOrmModule
 	]
 })
 export class TimeSlotModule { }

@@ -21,6 +21,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [TenantSettingController],
 	providers: [TenantSettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, TenantSettingService]
+	exports: [TypeOrmModule, MikroOrmModule, TenantSettingService]
 })
 export class TenantSettingModule { }

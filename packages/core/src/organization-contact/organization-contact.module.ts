@@ -30,6 +30,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [OrganizationContactController],
 	providers: [OrganizationContactService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationContactService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationContactService]
 })
 export class OrganizationContactModule { }

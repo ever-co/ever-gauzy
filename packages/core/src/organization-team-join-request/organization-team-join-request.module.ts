@@ -35,6 +35,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [OrganizationTeamJoinRequestController],
 	providers: [OrganizationTeamJoinRequestService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationTeamJoinRequestService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamJoinRequestService]
 })
 export class OrganizationTeamJoinRequestModule { }

@@ -26,6 +26,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [OrganizationDepartmentController],
 	providers: [OrganizationDepartmentService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationDepartmentService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationDepartmentService]
 })
 export class OrganizationDepartmentModule { }

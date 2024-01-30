@@ -21,6 +21,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [PaymentController],
 	providers: [PaymentService, PaymentMapService],
-	exports: [TypeOrmModule, PaymentService, PaymentMapService]
+	exports: [TypeOrmModule, MikroOrmModule, PaymentService, PaymentMapService]
 })
 export class PaymentModule { }

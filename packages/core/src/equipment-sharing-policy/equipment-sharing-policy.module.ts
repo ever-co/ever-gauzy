@@ -25,6 +25,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [EquipmentSharingPolicyController],
 	providers: [EquipmentSharingPolicyService, UserService],
-	exports: [TypeOrmModule, EquipmentSharingPolicyService]
+	exports: [TypeOrmModule, MikroOrmModule, EquipmentSharingPolicyService]
 })
 export class EquipmentSharingPolicyModule { }

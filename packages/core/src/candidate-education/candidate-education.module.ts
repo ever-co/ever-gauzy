@@ -18,6 +18,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [CandidateEducationController],
 	providers: [CandidateEducationService],
-	exports: [TypeOrmModule, CandidateEducationService]
+	exports: [TypeOrmModule, MikroOrmModule, CandidateEducationService]
 })
 export class CandidateEducationModule { }

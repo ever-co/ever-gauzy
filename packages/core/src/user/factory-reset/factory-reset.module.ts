@@ -24,6 +24,8 @@ import { coreEntities } from '../../core/entities';
 	providers: [
 		FactoryResetService,
 	],
-	exports: [FactoryResetService]
+	exports: [
+		FactoryResetService
+	]
 })
 export class FactoryResetModule { }

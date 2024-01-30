@@ -25,6 +25,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [UserOrganizationController],
 	providers: [UserOrganizationService, ...CommandHandlers],
-	exports: [TypeOrmModule, UserOrganizationService]
+	exports: [TypeOrmModule, MikroOrmModule, UserOrganizationService]
 })
 export class UserOrganizationModule { }

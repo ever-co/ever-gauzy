@@ -46,6 +46,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [InviteController],
 	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, InviteService]
+	exports: [TypeOrmModule, MikroOrmModule, InviteService]
 })
 export class InviteModule { }

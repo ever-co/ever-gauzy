@@ -48,6 +48,6 @@ import { MikroOrmModule } from "@mikro-orm/nestjs";
         IsExpenseCategoryAlreadyExistConstraint,
         IsOrganizationBelongsToUserConstraint
     ],
-    exports: [TypeOrmModule]
+    exports: [TypeOrmModule, MikroOrmModule]
 })
 export class ValidatorModule { }

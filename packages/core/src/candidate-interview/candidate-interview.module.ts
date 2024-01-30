@@ -18,6 +18,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	providers: [CandidateInterviewService],
 	controllers: [CandidateInterviewController],
-	exports: [TypeOrmModule, CandidateInterviewService]
+	exports: [TypeOrmModule, MikroOrmModule, CandidateInterviewService]
 })
 export class CandidateInterviewModule { }

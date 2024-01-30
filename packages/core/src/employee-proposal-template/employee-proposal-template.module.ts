@@ -20,6 +20,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [EmployeeProposalTemplateController],
 	providers: [EmployeeProposalTemplateService],
-	exports: [TypeOrmModule, EmployeeProposalTemplateService]
+	exports: [TypeOrmModule, MikroOrmModule, EmployeeProposalTemplateService]
 })
 export class EmployeeProposalTemplateModule { }

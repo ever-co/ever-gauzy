@@ -29,6 +29,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [EmployeeRecurringExpenseService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TypeOrmModule, EmployeeRecurringExpenseService]
+	exports: [TypeOrmModule, MikroOrmModule, EmployeeRecurringExpenseService]
 })
 export class EmployeeRecurringExpenseModule { }

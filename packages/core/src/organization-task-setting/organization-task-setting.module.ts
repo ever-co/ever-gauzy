@@ -26,6 +26,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [OrganizationTaskSettingController],
 	providers: [OrganizationTaskSettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationTaskSettingService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTaskSettingService]
 })
 export class OrganizationTaskSettingModule { }

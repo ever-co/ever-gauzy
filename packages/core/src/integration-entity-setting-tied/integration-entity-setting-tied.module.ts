@@ -25,6 +25,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [IntegrationEntitySettingTiedController],
 	providers: [IntegrationEntitySettingTiedService],
-	exports: [TypeOrmModule, IntegrationEntitySettingTiedService]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationEntitySettingTiedService]
 })
 export class IntegrationEntitySettingTiedModule { }

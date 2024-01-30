@@ -21,6 +21,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [ExpenseCategoriesController],
 	providers: [ExpenseCategoriesService, ...CommandHandlers],
-	exports: [TypeOrmModule, ExpenseCategoriesService]
+	exports: [TypeOrmModule, MikroOrmModule, ExpenseCategoriesService]
 })
 export class ExpenseCategoriesModule { }

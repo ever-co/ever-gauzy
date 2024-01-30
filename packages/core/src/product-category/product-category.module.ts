@@ -22,6 +22,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [ProductCategoryController],
 	providers: [ProductCategoryService, ...CommandHandlers],
-	exports: [TypeOrmModule, ProductCategoryService]
+	exports: [TypeOrmModule, MikroOrmModule, ProductCategoryService]
 })
 export class ProductCategoryModule { }

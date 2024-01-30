@@ -30,6 +30,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [IntegrationMapController],
 	providers: [IntegrationMapService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationMapService]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationMapService]
 })
 export class IntegrationMapModule { }

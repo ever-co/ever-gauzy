@@ -37,6 +37,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 			useValue: moment
 		}
 	],
-	exports: [TypeOrmModule, InvoiceService, PdfmakerService]
+	exports: [TypeOrmModule, MikroOrmModule, InvoiceService, PdfmakerService]
 })
 export class InvoiceModule { }

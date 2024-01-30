@@ -41,6 +41,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 	],
 	controllers: [IntegrationController],
 	providers: [IntegrationService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationService]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationService]
 })
 export class IntegrationModule { }

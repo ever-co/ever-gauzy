@@ -22,7 +22,16 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		CqrsModule
 	],
 	controllers: [EmailTemplateController],
-	providers: [EmailTemplateService, EmailTemplateReaderService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TypeOrmModule, EmailTemplateService]
+	providers: [
+		EmailTemplateService,
+		EmailTemplateReaderService,
+		...QueryHandlers,
+		...CommandHandlers
+	],
+	exports: [
+		TypeOrmModule,
+		MikroOrmModule,
+		EmailTemplateService
+	]
 })
 export class EmailTemplateModule { }

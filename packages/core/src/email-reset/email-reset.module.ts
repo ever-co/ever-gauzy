@@ -24,8 +24,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		EmployeeModule,
 		AuthModule
 	],
+	controllers: [EmailResetController],
 	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, EmailResetService],
-	controllers: [EmailResetController]
+	exports: [TypeOrmModule, MikroOrmModule, EmailResetService],
 })
 export class EmailResetModule { }
