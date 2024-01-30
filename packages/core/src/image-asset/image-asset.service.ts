@@ -1,22 +1,22 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial } from 'typeorm';
 import { IImageAsset } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
+import { TypeOrmImageAssetRepository } from './repository/type-orm-image-asset.repository';
 import { ImageAsset } from './image-asset.entity';
 
 @Injectable()
 export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	constructor(
 		@InjectRepository(ImageAsset)
-		imageAssetRepository: Repository<ImageAsset>,
-		@MikroInjectRepository(ImageAsset)
-		mikroImageAssetRepository: EntityRepository<ImageAsset>
+		typeOrmImageAssetRepository: TypeOrmImageAssetRepository,
+
+		mikroOrmImageAssetRepository: MikroOrmImageAssetRepository
 	) {
-		super(imageAssetRepository, mikroImageAssetRepository);
+		super(typeOrmImageAssetRepository, mikroOrmImageAssetRepository);
 	}
 
 	/**

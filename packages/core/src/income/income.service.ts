@@ -1,22 +1,22 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IDateRangePicker, IPagination } from '@gauzy/contracts';
-import { Repository, FindManyOptions, Between, In, Raw } from 'typeorm';
+import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
+import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(
 		@InjectRepository(Income)
-		incomeRepository: Repository<Income>,
-		@MikroInjectRepository(Income)
-		mikroIncomeRepository: EntityRepository<Income>
+		typeOrmIncomeRepository: TypeOrmIncomeRepository,
+
+		mikroOrmIncomeRepository: MikroOrmIncomeRepository
 	) {
-		super(incomeRepository, mikroIncomeRepository);
+		super(typeOrmIncomeRepository, mikroOrmIncomeRepository);
 	}
 
 	public async findAllIncomes(filter?: FindManyOptions<Income>, filterDate?: string): Promise<IPagination<Income>> {
@@ -25,17 +25,17 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-						where: {
-							valueDate: Between<Date>(startOfMonth, endOfMonth),
-							...(filter.where as Object)
-						},
-						relations: filter.relations
-				  })
+					where: {
+						valueDate: Between<Date>(startOfMonth, endOfMonth),
+						...(filter.where as Object)
+					},
+					relations: filter.relations
+				})
 				: await this.findAll({
-						where: {
-							valueDate: Between(startOfMonth, endOfMonth)
-						}
-				  });
+					where: {
+						valueDate: Between(startOfMonth, endOfMonth)
+					}
+				});
 		}
 		return await this.findAll(filter || {});
 	}

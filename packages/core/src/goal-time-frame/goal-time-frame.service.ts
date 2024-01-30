@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmGoalTimeFrameRepository } from './repository/mikro-orm-goal-time-frame.repository';
+import { TypeOrmGoalTimeFrameRepository } from './repository/type-orm-goal-time-frame.repository';
 
 @Injectable()
 export class GoalTimeFrameService extends TenantAwareCrudService<GoalTimeFrame> {
 	constructor(
 		@InjectRepository(GoalTimeFrame)
-		goalTimeFrameRepository: Repository<GoalTimeFrame>,
-		@MikroInjectRepository(GoalTimeFrame)
-		mikroGoalTimeFrameRepository: EntityRepository<GoalTimeFrame>
+		typeOrmGoalTimeFrameRepository: TypeOrmGoalTimeFrameRepository,
+
+		mikroOrmGoalTimeFrameRepository: MikroOrmGoalTimeFrameRepository
 	) {
-		super(goalTimeFrameRepository, mikroGoalTimeFrameRepository);
+		super(typeOrmGoalTimeFrameRepository, mikroOrmGoalTimeFrameRepository);
 	}
 }

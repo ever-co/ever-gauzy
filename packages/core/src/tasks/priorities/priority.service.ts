@@ -1,24 +1,24 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult } from 'typeorm';
 import { IOrganization, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskPriority } from './priority.entity';
 import { DEFAULT_GLOBAL_PRIORITIES } from './default-global-priorities';
+import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
+import { TypeOrmTaskPriorityRepository } from './repository/type-orm-task-priority.repository';
 
 @Injectable()
 export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPriority> {
 
 	constructor(
 		@InjectRepository(TaskPriority)
-		protected readonly taskPriorityRepository: Repository<TaskPriority>,
-		@MikroInjectRepository(TaskPriority)
-		protected readonly mikroTaskPriorityRepository: EntityRepository<TaskPriority>
+		typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
+
+		mikroOrmTaskPriorityRepository: MikroOrmTaskPriorityRepository
 	) {
-		super(taskPriorityRepository, mikroTaskPriorityRepository);
+		super(typeOrmTaskPriorityRepository, mikroOrmTaskPriorityRepository);
 	}
 
 	/**

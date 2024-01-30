@@ -1,27 +1,26 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IFeature, IFeatureOrganization, IFeatureOrganizationUpdateInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { FeatureOrganization } from './feature-organization.entity';
 import { FeatureService } from './feature.service';
+import { TypeOrmFeatureOrganizationRepository } from './repository/type-orm-feature-organization.repository';
+import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
 
 @Injectable()
 export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOrganization> {
 	constructor(
 		@InjectRepository(FeatureOrganization)
-		featureOrganizationRepository: Repository<FeatureOrganization>,
-		@MikroInjectRepository(FeatureOrganization)
-		mikroFeatureOrganizationRepository: EntityRepository<FeatureOrganization>,
+		typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
+
+		mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
 
 		@Inject(forwardRef(() => FeatureService))
 		private readonly _featureService: FeatureService
 	) {
-		super(featureOrganizationRepository, mikroFeatureOrganizationRepository);
+		super(typeOrmFeatureOrganizationRepository, mikroOrmFeatureOrganizationRepository);
 	}
 
 	/**

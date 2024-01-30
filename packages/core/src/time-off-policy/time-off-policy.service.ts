@@ -1,28 +1,29 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In } from 'typeorm';
 import { ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from '../employee/employee.entity';
+import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-policy.repository';
+import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {
 	constructor(
 		@InjectRepository(TimeOffPolicy)
-		policyRepository: Repository<TimeOffPolicy>,
-		@MikroInjectRepository(TimeOffPolicy)
-		mikroPolicyRepository: EntityRepository<TimeOffPolicy>,
+		typeOrmTimeOffPolicyRepository: TypeOrmTimeOffPolicyRepository,
+
+		mikroOrmTimeOffPolicyRepository: MikroOrmTimeOffPolicyRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
-		super(policyRepository, mikroPolicyRepository);
+		super(typeOrmTimeOffPolicyRepository, mikroOrmTimeOffPolicyRepository);
 	}
 
 	async create(entity: ITimeOffPolicyCreateInput): Promise<TimeOffPolicy> {
@@ -34,7 +35,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 		policy.requiresApproval = entity.requiresApproval;
 		policy.paid = entity.paid;
 
-		const employees = await this.employeeRepository.find({
+		const employees = await this.typeOrmEmployeeRepository.find({
 			where: {
 				id: In(entity.employees)
 			},
@@ -57,7 +58,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
 
-			const employees = await this.employeeRepository.find({
+			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In(entity.employees)
 				},

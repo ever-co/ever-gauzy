@@ -225,7 +225,7 @@ import { TypeOrmExpenseRepository } from '../../expense/repository/type-orm-expe
 import { MikroOrmFeatureOrganizationRepository } from '../../feature/repository/mikro-orm-feature-organization.repository';
 import { MikroOrmFeatureRepository } from '../../feature/repository/mikro-orm-feature.repository';
 import { TypeOrmFeatureRepository } from '../../feature/repository/type-orm-feature.repository';
-import { TypeOrmFeatureOrganizationRepository } from '../../feature/repository/type-orm-feature.repository - Copy';
+import { TypeOrmFeatureOrganizationRepository } from '../../feature/repository/type-orm-feature-organization.repository';
 import { MikroOrmGoalGeneralSettingRepository } from '../../goal-general-setting/repository/mikro-orm-goal-general-setting.repository';
 import { TypeOrmGoalGeneralSettingRepository } from '../../goal-general-setting/repository/type-orm-goal-general-setting.repository';
 import { MikroOrmGoalKPITemplateRepository } from '../../goal-kpi-template/repository/mikro-orm-goal-kpi-template.repository';

@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindManyOptions, IsNull, Not, Repository } from 'typeorm';
+import { FindManyOptions, IsNull, Not } from 'typeorm';
 import {
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
@@ -15,16 +13,18 @@ import {
 import { RequestContext } from 'core/context';
 import { TenantAwareCrudService } from 'core/crud';
 import { IntegrationTenant } from './integration-tenant.entity';
+import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-integration-tenant.repository';
+import { TypeOrmIntegrationTenantRepository } from './repository/type-orm-integration-tenant.repository';
 
 @Injectable()
 export class IntegrationTenantService extends TenantAwareCrudService<IntegrationTenant> {
 	constructor(
 		@InjectRepository(IntegrationTenant)
-		typeOrmIntegrationRepository: Repository<IntegrationTenant>,
-		@MikroInjectRepository(IntegrationTenant)
-		mikroOrmIntegrationRepository: EntityRepository<IntegrationTenant>
+		typeOrmIntegrationTenantRepository: TypeOrmIntegrationTenantRepository,
+
+		mikroOrmIntegrationTenantRepository: MikroOrmIntegrationTenantRepository
 	) {
-		super(typeOrmIntegrationRepository, mikroOrmIntegrationRepository);
+		super(typeOrmIntegrationTenantRepository, mikroOrmIntegrationTenantRepository);
 	}
 
 	/**

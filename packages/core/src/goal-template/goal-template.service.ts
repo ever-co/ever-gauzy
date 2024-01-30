@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { GoalTemplate } from './goal-template.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MikroOrmGoalTemplateRepository } from './repository/mikro-orm-goal-template.repository';
+import { TypeOrmGoalTemplateRepository } from './repository/type-orm-goal-template.repository';
 
 @Injectable()
 export class GoalTemplateService extends TenantAwareCrudService<GoalTemplate> {
 	constructor(
 		@InjectRepository(GoalTemplate)
-		goalTemplateRepository: Repository<GoalTemplate>,
-		@MikroInjectRepository(GoalTemplate)
-		mikroGoalTemplateRepository: EntityRepository<GoalTemplate>
+		typeOrmGoalTemplateRepository: TypeOrmGoalTemplateRepository,
+
+		mikroOrmGoalTemplateRepository: MikroOrmGoalTemplateRepository
 	) {
-		super(goalTemplateRepository, mikroGoalTemplateRepository);
+		super(typeOrmGoalTemplateRepository, mikroOrmGoalTemplateRepository);
 	}
 }

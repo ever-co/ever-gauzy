@@ -1,9 +1,8 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, UpdateResult, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
+import { UpdateResult, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
+import { pluck } from 'underscore';
 import {
 	RolesEnum,
 	ITenant,
@@ -15,7 +14,6 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
-import { pluck } from 'underscore';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
@@ -23,18 +21,21 @@ import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
 import { RoleService } from './../role/role.service';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
+import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
+import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-permission.repository';
 
 @Injectable()
 export class RolePermissionService extends TenantAwareCrudService<RolePermission> {
 	constructor(
 		@InjectRepository(RolePermission)
-		rolePermissionRepository: Repository<RolePermission>,
-		@MikroInjectRepository(RolePermission)
-		mikroRolePermissionRepository: EntityRepository<RolePermission>,
+		typeOrmRolePermissionRepository: TypeOrmRolePermissionRepository,
+
+		mikroOrmRolePermissionRepository: MikroOrmRolePermissionRepository,
+
 		private readonly roleService: RoleService,
 		private readonly _commandBus: CommandBus
 	) {
-		super(rolePermissionRepository, mikroRolePermissionRepository);
+		super(typeOrmRolePermissionRepository, mikroOrmRolePermissionRepository);
 	}
 
 	/**

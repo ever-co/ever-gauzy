@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import {
 	Brackets,
 	FindOptionsRelations,
@@ -17,16 +15,18 @@ import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
+import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
 	constructor(
 		@InjectRepository(Tag)
-		tagRepository: Repository<Tag>,
-		@MikroInjectRepository(Tag)
-		mikroTagRepository: EntityRepository<Tag>
+		typeOrmTagRepository: TypeOrmTagRepository,
+
+		mikroOrmTagRepository: MikroOrmTagRepository
 	) {
-		super(tagRepository, mikroTagRepository);
+		super(typeOrmTagRepository, mikroOrmTagRepository);
 	}
 
 	/**
@@ -44,8 +44,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		query.setFindOptions({
 			...(relations
 				? {
-						relations: relations
-				  }
+					relations: relations
+				}
 				: {})
 		});
 		/**
@@ -77,8 +77,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.setFindOptions({
 				...(relations
 					? {
-							relations: relations
-					  }
+						relations: relations
+					}
 					: {})
 			});
 			/**

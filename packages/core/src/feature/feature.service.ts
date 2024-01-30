@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull } from 'typeorm';
 import {
 	FeatureEnum,
 	IFeature,
@@ -11,16 +9,18 @@ import {
 import { gauzyToggleFeatures } from '@gauzy/config';
 import { Feature } from './feature.entity';
 import { CrudService } from '../core/crud/crud.service';
+import { TypeOrmFeatureRepository } from './repository/type-orm-feature.repository';
+import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
 
 @Injectable()
 export class FeatureService extends CrudService<Feature> {
 	constructor(
 		@InjectRepository(Feature)
-		public readonly featureRepository: Repository<Feature>,
-		@MikroInjectRepository(Feature)
-		public readonly mikroFeatureRepository: EntityRepository<Feature>
+		typeOrmFeatureRepository: TypeOrmFeatureRepository,
+
+		mikroOrmFeatureRepository: MikroOrmFeatureRepository
 	) {
-		super(featureRepository, mikroFeatureRepository);
+		super(typeOrmFeatureRepository, mikroOrmFeatureRepository);
 	}
 
 	async getParentFeatures(relations: string[] = []): Promise<IPagination<IFeature>> {

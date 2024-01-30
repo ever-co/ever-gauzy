@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from 'core/crud';
 import { IntegrationMap } from './integration-map.entity';
+import { TypeOrmIntegrationMapRepository } from './repository/type-orm-integration-map.repository';
+import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
 
 @Injectable()
 export class IntegrationMapService extends TenantAwareCrudService<IntegrationMap> {
 	constructor(
 		@InjectRepository(IntegrationMap)
-		integrationMap: Repository<IntegrationMap>,
-		@MikroInjectRepository(IntegrationMap)
-		mikroIntegrationMap: EntityRepository<IntegrationMap>
+		typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
+
+		mikroOrmIntegrationMapRepository: MikroOrmIntegrationMapRepository
 	) {
-		super(integrationMap, mikroIntegrationMap);
+		super(typeOrmIntegrationMapRepository, mikroOrmIntegrationMapRepository);
 	}
 }

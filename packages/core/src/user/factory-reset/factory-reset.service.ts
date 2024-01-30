@@ -169,7 +169,7 @@ import { TypeOrmExpenseCategoryRepository } from '../../expense-categories/repos
 import { MikroOrmExpenseRepository } from '../../expense/repository/mikro-orm-expense.repository';
 import { TypeOrmExpenseRepository } from '../../expense/repository/type-orm-expense.repository';
 import { MikroOrmFeatureOrganizationRepository } from '../../feature/repository/mikro-orm-feature-organization.repository';
-import { TypeOrmFeatureOrganizationRepository } from '../../feature/repository/type-orm-feature.repository - Copy';
+import { TypeOrmFeatureOrganizationRepository } from '../../feature/repository/type-orm-feature-organization.repository';
 import { MikroOrmGoalKPITemplateRepository } from '../../goal-kpi-template/repository/mikro-orm-goal-kpi-template.repository';
 import { TypeOrmGoalKPITemplateRepository } from '../../goal-kpi-template/repository/type-orm-goal-kpi-template.repository';
 import { MikroOrmGoalKPIRepository } from '../../goal-kpi/repository/mikro-orm-goal-kpi.repository';

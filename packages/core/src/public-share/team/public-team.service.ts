@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import {
 	IDateRangePicker,
 	IOrganizationTeam,
@@ -10,18 +8,20 @@ import {
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { parseToBoolean } from '@gauzy/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { OrganizationTeam } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
 import { TimerService } from './../../time-tracking/timer/timer.service';
+import { MikroOrmOrganizationTeamRepository } from '../../organization-team/repository/mikro-orm-organization-team.repository';
+import { TypeOrmOrganizationTeamRepository } from '../../organization-team/repository/type-orm-organization-team.repository';
 
 @Injectable()
 export class PublicTeamService {
 	constructor(
 		@InjectRepository(OrganizationTeam)
-		private readonly repository: Repository<OrganizationTeam>,
-		@MikroInjectRepository(OrganizationTeam)
-		private readonly mikroRepository: EntityRepository<OrganizationTeam>,
+		private typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+
+		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
 
 		private readonly _statisticService: StatisticService,
 		private readonly _timerService: TimerService
@@ -39,7 +39,7 @@ export class PublicTeamService {
 		options: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeam> {
 		try {
-			const team = await this.repository.findOneOrFail({
+			const team = await this.typeOrmOrganizationTeamRepository.findOneOrFail({
 				select: {
 					organization: {
 						id: true,

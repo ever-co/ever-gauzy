@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { TenantAwareCrudService } from './../core/crud';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MikroOrmGoalGeneralSettingRepository } from './repository/mikro-orm-goal-general-setting.repository';
+import { TypeOrmGoalGeneralSettingRepository } from './repository/type-orm-goal-general-setting.repository';
 
 @Injectable()
 export class GoalGeneralSettingService extends TenantAwareCrudService<GoalGeneralSetting> {
 	constructor(
 		@InjectRepository(GoalGeneralSetting)
-		goalGeneralSettingRepository: Repository<GoalGeneralSetting>,
-		@MikroInjectRepository(GoalGeneralSetting)
-		mikroGoalGeneralSettingRepository: EntityRepository<GoalGeneralSetting>
+		typeOrmGoalGeneralSettingRepository: TypeOrmGoalGeneralSettingRepository,
+
+		mikroOrmGoalGeneralSettingRepository: MikroOrmGoalGeneralSettingRepository
 	) {
-		super(goalGeneralSettingRepository, mikroGoalGeneralSettingRepository);
+		super(typeOrmGoalGeneralSettingRepository, mikroOrmGoalGeneralSettingRepository);
 	}
 }
