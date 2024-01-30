@@ -1,9 +1,7 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
+import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -47,6 +45,14 @@ import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
+import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
+import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -54,30 +60,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		private readonly commandBus: CommandBus,
 
 		@InjectRepository(TimeLog)
-		timeLogRepository: Repository<TimeLog>,
+		typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
-		@MikroInjectRepository(TimeLog)
-		mikroTimeLogRepository: EntityRepository<TimeLog>,
+		mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		@MikroInjectRepository(Employee)
-		private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 
-		@MikroInjectRepository(OrganizationProject)
-		private readonly mikroOrganizationProjectRepository: EntityRepository<OrganizationProject>,
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>,
+		private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 
-		@MikroInjectRepository(OrganizationContact)
-		private readonly mikroOrganizationContactRepository: EntityRepository<OrganizationContact>
+		mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository
 	) {
-		super(timeLogRepository, mikroTimeLogRepository);
+		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
 	}
 
 	/**
@@ -716,7 +718,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		// Step 1: Create a query builder for the OrganizationProject entity
-		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
+		const query = this.typeOrmOrganizationProjectRepository.createQueryBuilder('organization_project');
 
 		// Inner join with related entities (employee, timeLogs)
 		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -844,7 +846,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId();
 
 		// Step 1: Create a query builder for the OrganizationClient entity
-		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
+		const query = this.typeOrmOrganizationContactRepository.createQueryBuilder('organization_contact');
 
 		// Inner join with related entities (employee, timeLogs)
 		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -1017,10 +1019,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filters records based on the source column.
 		if (isNotEmpty(request.source)) {
 			const { source } = request;
-			const condition =
-				source instanceof Array
-					? p(`"${query.alias}"."source" IN (:...source)`)
-					: p(`"${query.alias}"."source" = :source`);
+			const condition = source instanceof Array ? p(`"${query.alias}"."source" IN (:...source)`) : p(`"${query.alias}"."source" = :source`);
 
 			query.andWhere(condition, { source });
 		}
@@ -1028,10 +1027,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Filters records based on the logType column.
 		if (isNotEmpty(request.logType)) {
 			const { logType } = request;
-			const condition =
-				logType instanceof Array
-					? p(`"${query.alias}"."logType" IN (:...logType)`)
-					: p(`"${query.alias}"."logType" = :logType`);
+			const condition = logType instanceof Array ? p(`"${query.alias}"."logType" IN (:...logType)`) : p(`"${query.alias}"."logType" = :logType`);
 
 			query.andWhere(condition, { logType });
 		}
@@ -1070,7 +1066,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.employeeRepository.findOne({
+			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
 				where: { id: employeeId },
 				relations: { organization: true }
 			});
@@ -1136,7 +1132,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.employeeRepository.findOne({
+			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
 				where: { id: employeeId },
 				relations: { organization: true }
 			});
@@ -1176,7 +1172,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				for await (const timeLog of conflicts) {
 					const { timeSlots = [] } = timeLog;
 					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+						await this.commandBus.execute(
+							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
+						);
 					}
 				}
 			}
@@ -1224,8 +1222,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 					? {}
 					: {
-							employeeId: user.employeeId
-					  })
+						employeeId: user.employeeId
+					})
 			});
 			db.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {

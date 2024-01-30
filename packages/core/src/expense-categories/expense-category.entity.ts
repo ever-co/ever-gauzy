@@ -4,7 +4,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { IExpense, IExpenseCategory, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-categories.repository';
+import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-category.repository';
 
 @MultiORMEntity('expense_category', { mikroOrmRepository: () => MikroOrmExpenseCategoryRepository })
 export class ExpenseCategory extends TenantOrganizationBaseEntity implements IExpenseCategory {

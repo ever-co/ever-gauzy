@@ -1,4 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
 import { EntityRepository } from '@mikro-orm/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
@@ -11,35 +10,39 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invoice, Organization } from './../core/entities/internal';
 import { EstimateEmail } from './estimate-email.entity';
+import { TypeOrmEstimateEmailRepository } from './repository/type-orm-estimate-email.repository';
+import { MikroOrmEstimateEmailRepository } from './repository/mikro-orm-estimate-email.repository';
+import { TypeOrmInvoiceRepository } from './../invoice/repository/type-orm-invoice.repository';
+import { MikroOrmInvoiceRepository } from './../invoice/repository/mikro-orm-invoice.repository';
+import { TypeOrmOrganizationRepository } from './../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from './../organization/repository/mikro-orm-organization.repository';
 
 @Injectable()
 export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> {
 	constructor(
 		@InjectRepository(EstimateEmail)
-		estimateEmailRepository: Repository<EstimateEmail>,
-		@MikroInjectRepository(EstimateEmail)
-		mikroEstimateEmailRepository: EntityRepository<EstimateEmail>,
+		typeOrmEstimateEmailRepository: TypeOrmEstimateEmailRepository,
+
+		mikroOrmEstimateEmailRepository: MikroOrmEstimateEmailRepository,
 
 		@InjectRepository(Invoice)
-		private readonly invoiceRepository: Repository<Invoice>,
+		private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
 
-		@MikroInjectRepository(Invoice)
-		private readonly mikroInvoiceRepository: EntityRepository<Invoice>,
+		mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
 
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>,
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 
-		@MikroInjectRepository(Organization)
-		private readonly mikroOrganizationRepository: EntityRepository<Organization>
+		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository
 	) {
-		super(estimateEmailRepository, mikroEstimateEmailRepository);
+		super(typeOrmEstimateEmailRepository, mikroOrmEstimateEmailRepository);
 	}
 
 	async createEstimateEmail(id: string, email: string): Promise<IEstimateEmail> {
-		const invoice: IInvoice = await this.invoiceRepository.findOneByOrFail({
+		const invoice: IInvoice = await this.typeOrmInvoiceRepository.findOneByOrFail({
 			id
 		});
-		const organization: IOrganization = await this.organizationRepository.findOneBy({
+		const organization: IOrganization = await this.typeOrmOrganizationRepository.findOneBy({
 			id: invoice.organizationId
 		});
 		try {
@@ -102,8 +105,8 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 				},
 				...(relations
 					? {
-							relations: relations
-					  }
+						relations: relations
+					}
 					: {})
 			});
 		} catch (error) {

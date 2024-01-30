@@ -1,9 +1,7 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -20,17 +18,20 @@ import {
 	UpdateTimeSlotMinutesCommand
 } from './commands';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from './repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @Injectable()
 export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		timeSlotRepository: Repository<TimeSlot>,
-		@MikroInjectRepository(TimeSlot)
-		mikroTimeSlotRepository: EntityRepository<TimeSlot>,
+		typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+
+		mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
+
 		private readonly commandBus: CommandBus
 	) {
-		super(timeSlotRepository, mikroTimeSlotRepository);
+		super(typeOrmTimeSlotRepository, mikroOrmTimeSlotRepository);
 	}
 
 	/**
@@ -142,20 +143,14 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					if (isNotEmpty(request.source)) {
 						const { source } = request;
 
-						const condition =
-							source instanceof Array
-								? p(`"time_log"."source" IN (:...source)`)
-								: p(`"time_log"."source" = :source`);
+						const condition = source instanceof Array ? p(`"time_log"."source" IN (:...source)`) : p(`"time_log"."source" = :source`);
 						web.andWhere(condition, { source });
 					}
 
 					// Filters records based on the logType column.
 					if (isNotEmpty(request.logType)) {
 						const { logType } = request;
-						const condition =
-							logType instanceof Array
-								? p(`"time_log"."logType" IN (:...logType)`)
-								: p(`"time_log"."logType" = :logType`);
+						const condition = logType instanceof Array ? p(`"time_log"."logType" IN (:...logType)`) : p(`"time_log"."logType" = :logType`);
 
 						web.andWhere(condition, { logType });
 					}
@@ -193,7 +188,9 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		employeeId: ITimeSlot['employeeId'],
 		organizationId: ITimeSlot['organizationId']
 	) {
-		return await this.commandBus.execute(new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId));
+		return await this.commandBus.execute(
+			new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId)
+		);
 	}
 
 	/**
@@ -208,7 +205,9 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		employeeId: ITimeSlot['employeeId'],
 		organizationId: ITimeSlot['organizationId']
 	) {
-		return await this.commandBus.execute(new TimeSlotBulkCreateCommand(slots, employeeId, organizationId));
+		return await this.commandBus.execute(
+			new TimeSlotBulkCreateCommand(slots, employeeId, organizationId)
+		);
 	}
 
 	/**
@@ -226,13 +225,17 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 */
 	async createTimeSlotMinute(request: TimeSlotMinute) {
 		// const { keyboard, mouse, datetime, timeSlot } = request;
-		return await this.commandBus.execute(new CreateTimeSlotMinutesCommand(request));
+		return await this.commandBus.execute(
+			new CreateTimeSlotMinutesCommand(request)
+		);
 	}
 
 	/*
 	 * Update TimeSlot minute activity for specific TimeSlot
 	 */
 	async updateTimeSlotMinute(id: string, request: TimeSlotMinute) {
-		return await this.commandBus.execute(new UpdateTimeSlotMinutesCommand(id, request));
+		return await this.commandBus.execute(
+			new UpdateTimeSlotMinutesCommand(id, request)
+		);
 	}
 }

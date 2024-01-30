@@ -23,25 +23,29 @@ import {
 	IEmployee,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { Employee, TimeLog } from './../../core/entities/internal';
+import { Employee, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
-import { getDateRangeFormat, validateDateRange } from './../../core/utils';
+import { getDateRangeFormat, validateDateRange } from '../../core/utils';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
 	ScheduleTimeLogEntriesCommand,
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand,
-} from './../time-log/commands';
-import { prepareSQLQuery as p } from './../../database/database.helper';
+} from '../time-log/commands';
+import { prepareSQLQuery as p } from '../../database/database.helper';
+import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 
 @Injectable()
 export class TimerService {
 	constructor(
-		@InjectRepository(TimeLog) private readonly timeLogRepository: Repository<TimeLog>,
-		@MikroInjectRepository(TimeLog) private readonly mikroTimeLogRepository: EntityRepository<TimeLog>,
-		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
-		@MikroInjectRepository(Employee) private readonly mikroEmployeeRepository: EntityRepository<Employee>,
+		@InjectRepository(TimeLog)
+		private typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+
+		@InjectRepository(Employee)
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
 		private readonly commandBus: CommandBus
 	) { }
 
@@ -64,7 +68,7 @@ export class TimerService {
 		if (!!permission && isNotEmpty(request.employeeId)) {
 			const { employeeId } = request;
 			/** Get specific employee */
-			employee = await this.employeeRepository.findOneBy({
+			employee = await this.typeOrmEmployeeRepository.findOneBy({
 				id: employeeId,
 				tenantId,
 				organizationId,
@@ -72,7 +76,7 @@ export class TimerService {
 		} else {
 			const userId = RequestContext.currentUserId();
 			/** EMPLOYEE have ability to see only own timer status */
-			employee = await this.employeeRepository.findOneBy({
+			employee = await this.typeOrmEmployeeRepository.findOneBy({
 				userId,
 				tenantId,
 				organizationId,
@@ -92,7 +96,7 @@ export class TimerService {
 		);
 
 		// Get today's completed timelogs
-		const logs = await this.timeLogRepository.find({
+		const logs = await this.typeOrmTimeLogRepository.find({
 			join: {
 				alias: 'time_log',
 				innerJoin: {
@@ -117,7 +121,7 @@ export class TimerService {
 		});
 
 		// Get today's last log (running or completed)
-		const lastLog = await this.timeLogRepository.findOne({
+		const lastLog = await this.typeOrmTimeLogRepository.findOne({
 			where: {
 				...(source ? { source } : {}),
 				startedAt: Between<Date>(start as Date, end as Date),
@@ -181,7 +185,7 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
-		const employee = await this.employeeRepository.findOneBy({
+		const employee = await this.typeOrmEmployeeRepository.findOneBy({
 			userId,
 			tenantId,
 		});
@@ -207,13 +211,10 @@ export class TimerService {
 			);
 		}
 
-		await this.employeeRepository.update(
-			{ id: employeeId },
-			{
-				isOnline: true, // Employee status (Online/Offline)
-				isTrackingTime: true, // Employee time tracking status
-			}
-		);
+		await this.typeOrmEmployeeRepository.update({ id: employeeId }, {
+			isOnline: true, // Employee status (Online/Offline)
+			isTrackingTime: true, // Employee time tracking status
+		});
 
 		const {
 			projectId,
@@ -226,9 +227,7 @@ export class TimerService {
 		} = request;
 
 		const now = moment.utc().toDate();
-		const startedAt = request.startedAt
-			? moment.utc(request.startedAt).toDate()
-			: now;
+		const startedAt = request.startedAt ? moment.utc(request.startedAt).toDate() : now;
 
 		return await this.commandBus.execute(
 			new TimeLogCreateCommand({
@@ -268,7 +267,7 @@ export class TimerService {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const userId = RequestContext.currentUserId();
 
-		const employee = await this.employeeRepository.findOneBy({
+		const employee = await this.typeOrmEmployeeRepository.findOneBy({
 			userId,
 			tenantId,
 		});
@@ -277,7 +276,7 @@ export class TimerService {
 		}
 
 		const { id: employeeId } = employee;
-		await this.employeeRepository.update({ id: employeeId }, {
+		await this.typeOrmEmployeeRepository.update({ id: employeeId }, {
 			isOnline: false, // Employee status (Online/Offline)
 			isTrackingTime: false, // Employee time tracking status
 		});
@@ -392,7 +391,7 @@ export class TimerService {
 		const userId = RequestContext.currentUserId();
 		const tenantId = RequestContext.currentTenantId();
 
-		const employee = await this.employeeRepository.findOne({
+		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: {
 				userId,
 				tenantId,
@@ -412,7 +411,7 @@ export class TimerService {
 			);
 		}
 		const { id: employeeId } = employee;
-		return await this.timeLogRepository.findOne({
+		return await this.typeOrmTimeLogRepository.findOne({
 			where: {
 				stoppedAt: Not(IsNull()),
 				employeeId,
@@ -460,7 +459,7 @@ export class TimerService {
 		/**
 		 * Get last logs (running or completed)
 		 */
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 		// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 		query.setFindOptions({
 			...(request['relations'] ? { relations: request['relations'] } : {}),

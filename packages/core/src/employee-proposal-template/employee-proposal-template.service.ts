@@ -1,40 +1,38 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IEmployeeProposalTemplate } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
+import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
+import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 
 @Injectable()
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
 		@InjectRepository(EmployeeProposalTemplate)
-		employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>,
-		@MikroInjectRepository(EmployeeProposalTemplate)
-		mikroEmployeeProposalTemplateRepository: EntityRepository<EmployeeProposalTemplate>
+		typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
+
+		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository
 	) {
-		super(employeeProposalTemplateRepository, mikroEmployeeProposalTemplateRepository);
+		super(typeOrmEmployeeProposalTemplateRepository, mikroOrmEmployeeProposalTemplateRepository);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
 	async makeDefault(id: IEmployeeProposalTemplate['id']): Promise<IEmployeeProposalTemplate> {
 		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
 		proposalTemplate.isDefault = !proposalTemplate.isDefault;
 
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
-		await this.repository.update(
-			{
-				organizationId,
-				tenantId,
-				employeeId
-			},
-			{
-				isDefault: false
-			}
-		);
 
-		return await this.repository.save(proposalTemplate);
+		await super.update({ organizationId, tenantId, employeeId }, {
+			isDefault: false
+		});
+
+		return await super.save(proposalTemplate);
 	}
 
 	/**

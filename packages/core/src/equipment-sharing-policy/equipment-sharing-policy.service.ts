@@ -1,23 +1,27 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
+import { TypeOrmEquipmentSharingPolicyRepository } from './repository/type-orm-equipment-sharing-policy.repository';
+import { MikroOrmEquipmentSharingPolicyRepository } from './repository/mikro-orm-equipment-sharing-policy.repository';
 
 @Injectable()
 export class EquipmentSharingPolicyService extends TenantAwareCrudService<EquipmentSharingPolicy> {
 	constructor(
 		@InjectRepository(EquipmentSharingPolicy)
-		equipmentSharingRepository: Repository<EquipmentSharingPolicy>,
-		@MikroInjectRepository(EquipmentSharingPolicy)
-		mikroEquipmentSharingRepository: EntityRepository<EquipmentSharingPolicy>
+		typeOrmEquipmentSharingPolicyRepository: TypeOrmEquipmentSharingPolicyRepository,
+
+		mikroOrmEquipmentSharingPolicyRepository: MikroOrmEquipmentSharingPolicyRepository
 	) {
-		super(equipmentSharingRepository, mikroEquipmentSharingRepository);
+		super(typeOrmEquipmentSharingPolicyRepository, mikroOrmEquipmentSharingPolicyRepository);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	async create(entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
 			const policy = new EquipmentSharingPolicy();
@@ -31,6 +35,12 @@ export class EquipmentSharingPolicyService extends TenantAwareCrudService<Equipm
 		}
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	async update(id: string, entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
 			const policy = await this.repository.findOneBy({ id });

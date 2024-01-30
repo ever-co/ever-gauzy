@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
+import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -12,18 +10,26 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
+import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		expenseRepository: Repository<Expense>,
-		@MikroInjectRepository(Expense)
-		mikroExpenseRepository: EntityRepository<Expense>
+		typeOrmExpenseRepository: TypeOrmExpenseRepository,
+
+		mikroOrmExpenseRepository: MikroOrmExpenseRepository
 	) {
-		super(expenseRepository, mikroExpenseRepository);
+		super(typeOrmExpenseRepository, mikroOrmExpenseRepository);
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @param filterDate
+	 * @returns
+	 */
 	public async findAllExpenses(
 		filter?: FindManyOptions<Expense>,
 		filterDate?: string
@@ -33,27 +39,37 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			return filter
 				? await this.findAll({
-						where: {
-							valueDate: Between<Date>(startOfMonth, endOfMonth),
-							...(filter.where as Object)
-						},
-						relations: filter.relations
-				  })
+					where: {
+						valueDate: Between<Date>(startOfMonth, endOfMonth),
+						...(filter.where as Object)
+					},
+					relations: filter.relations
+				})
 				: await this.findAll({
-						where: {
-							valueDate: Between(startOfMonth, endOfMonth)
-						}
-				  });
+					where: {
+						valueDate: Between(startOfMonth, endOfMonth)
+					}
+				});
 		}
 		return await this.findAll(filter || {});
 	}
 
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	public countStatistic(data: number[]) {
 		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
 			? data.filter(Number).reduce((a, b) => a + b, 0) / data.filter(Number).length
 			: 0;
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async getExpense(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
 		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
@@ -72,6 +88,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return await query.getMany();
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async getDailyReportChartData(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
 		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
@@ -179,6 +200,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return query;
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;

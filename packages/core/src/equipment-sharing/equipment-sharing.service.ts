@@ -1,31 +1,35 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
-import { prepareSQLQuery as p } from './../database/database.helper';
 import { isNotEmpty } from '@gauzy/common';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
+import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
+import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
+import { MikroOrmRequestApprovalRepository } from './../request-approval/repository/mikro-orm-request-approval.repository';
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
 	constructor(
 		@InjectRepository(EquipmentSharing)
-		equipmentSharingRepository: Repository<EquipmentSharing>,
-		@MikroInjectRepository(EquipmentSharing)
-		mikroEquipmentSharingRepository: EntityRepository<EquipmentSharing>,
+		typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
+
+		mikroOrmEquipmentSharingRepository: MikroOrmEquipmentSharingRepository,
 
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>,
+		private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+
+		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
 
 		private readonly configService: ConfigService
 	) {
-		super(equipmentSharingRepository, mikroEquipmentSharingRepository);
+		super(typeOrmEquipmentSharingRepository, mikroOrmEquipmentSharingRepository);
 	}
 
 	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
@@ -122,7 +126,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		try {
 			const [equipmentSharing] = await Promise.all([
 				await this.repository.delete(id),
-				await this.requestApprovalRepository.delete({
+				await this.typeOrmRequestApprovalRepository.delete({
 					requestId: id
 				})
 			]);

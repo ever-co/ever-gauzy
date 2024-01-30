@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
+import { TypeOrmEmployeeRecurringExpenseRepository } from './repository/type-orm-employee-recurring-expense.repository';
+import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-orm-employee-recurring-expense.repository';
 
 @Injectable()
 export class EmployeeRecurringExpenseService extends TenantAwareCrudService<EmployeeRecurringExpense> {
 	constructor(
 		@InjectRepository(EmployeeRecurringExpense)
-		employeeRecurringExpense: Repository<EmployeeRecurringExpense>,
-		@MikroInjectRepository(EmployeeRecurringExpense)
-		mikroEmployeeRecurringExpense: EntityRepository<EmployeeRecurringExpense>
+		typeOrmEmployeeRecurringExpenseRepository: TypeOrmEmployeeRecurringExpenseRepository,
+
+		mikroOrmEmployeeRecurringExpenseRepository: MikroOrmEmployeeRecurringExpenseRepository
 	) {
-		super(employeeRecurringExpense, mikroEmployeeRecurringExpense);
+		super(typeOrmEmployeeRecurringExpenseRepository, mikroOrmEmployeeRecurringExpenseRepository);
 	}
 }

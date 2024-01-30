@@ -1,5 +1,3 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
@@ -11,22 +9,24 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, Repository, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		employeeRepository: Repository<Employee>,
-		@MikroInjectRepository(Employee)
-		mikroEmployeeRepository: EntityRepository<Employee>
+		typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
-		super(employeeRepository, mikroEmployeeRepository);
+		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}
 
 	public async findAllActive(): Promise<Employee[]> {

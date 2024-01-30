@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
+import { Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { IGetTimesheetInput, PermissionsEnum, ITimesheet } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
@@ -10,16 +8,18 @@ import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
 import { Timesheet } from './timesheet.entity';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
+import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
 
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		@InjectRepository(Timesheet)
-		timeSheetRepository: Repository<Timesheet>,
-		@MikroInjectRepository(Timesheet)
-		mikroTimeSheetRepository: EntityRepository<Timesheet>
+		typeOrmTimesheetRepository: TypeOrmTimesheetRepository,
+
+		mikroOrmTimesheetRepository: MikroOrmTimesheetRepository
 	) {
-		super(timeSheetRepository, mikroTimeSheetRepository);
+		super(typeOrmTimesheetRepository, mikroOrmTimesheetRepository);
 	}
 
 	/**
@@ -63,8 +63,8 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 			},
 			...(request && request.relations
 				? {
-						relations: request.relations
-				  }
+					relations: request.relations
+				}
 				: {})
 		});
 		query.where((query: SelectQueryBuilder<Timesheet>) => {

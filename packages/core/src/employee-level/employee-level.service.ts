@@ -1,19 +1,18 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
-import { TenantAwareCrudService } from './../core/crud';
-import { EmployeeLevel } from './employee-level.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmEmployeeLevelRepository } from './repository/type-orm-employee-level.repository';
+import { MikroOrmEmployeeLevelRepository } from './repository/mikro-orm-employee-level.repository';
+import { EmployeeLevel } from './employee-level.entity';
 
 @Injectable()
 export class EmployeeLevelService extends TenantAwareCrudService<EmployeeLevel> {
 	constructor(
 		@InjectRepository(EmployeeLevel)
-		employeeLevelRepository: Repository<EmployeeLevel>,
-		@MikroInjectRepository(EmployeeLevel)
-		mikroEmployeeLevelRepository: EntityRepository<EmployeeLevel>
+		typeOrmEmployeeLevelRepository: TypeOrmEmployeeLevelRepository,
+
+		mikroOrmEmployeeLevelRepository: MikroOrmEmployeeLevelRepository
 	) {
-		super(employeeLevelRepository, mikroEmployeeLevelRepository);
+		super(typeOrmEmployeeLevelRepository, mikroOrmEmployeeLevelRepository);
 	}
 }
