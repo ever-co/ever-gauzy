@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindManyOptions, In, Repository } from 'typeorm';
+import { Brackets, FindManyOptions, In } from 'typeorm';
 import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum,

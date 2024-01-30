@@ -26,7 +26,7 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
-import { FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, Repository, SelectQueryBuilder } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import { addDays } from 'date-fns';
 import { pick } from 'underscore';
 import { IAppIntegrationConfig, isNotEmpty } from '@gauzy/common';
