@@ -1,28 +1,28 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { ProductOptionGroupTranslation } from './../core/entities/internal';
 import { TenantAwareCrudService } from './../core/crud';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IProductOptionGroupTranslation, IProductOptionGroupTranslatable } from '@gauzy/contracts';
 import { ProductOptionGroup } from './product-option-group.entity';
+import { MikroOrmProductOptionGroupRepository } from './repository/mikro-orm-product-option-group.repository';
+import { TypeOrmProductOptionGroupRepository } from './repository/type-orm-product-option-group.repository';
+import { MikroOrmProductOptionGroupTranslationRepository } from './repository/mikro-orm-product-option-group-translation.repository';
+import { TypeOrmProductOptionGroupTranslationRepository } from './repository/type-orm-product-option-group-translation.repository';
 
 @Injectable()
 export class ProductOptionGroupService extends TenantAwareCrudService<ProductOptionGroup> {
 	constructor(
 		@InjectRepository(ProductOptionGroup)
-		productOptionGroupRepository: Repository<ProductOptionGroup>,
-		@MikroInjectRepository(ProductOptionGroup)
-		mikroProductOptionGroupRepository: EntityRepository<ProductOptionGroup>,
+		typeOrmProductOptionGroupRepository: TypeOrmProductOptionGroupRepository,
+
+		mikroOrmProductOptionGroupRepository: MikroOrmProductOptionGroupRepository,
 
 		@InjectRepository(ProductOptionGroupTranslation)
-		private readonly productOptionGroupTranslationRepository: Repository<ProductOptionGroupTranslation>,
+		private typeOrmProductOptionGroupTranslationRepository: TypeOrmProductOptionGroupTranslationRepository,
 
-		@MikroInjectRepository(ProductOptionGroupTranslation)
-		private readonly mikroProductOptionGroupTranslationRepository: EntityRepository<ProductOptionGroupTranslation>
+		mikroOrmProductOptionGroupTranslationRepository: MikroOrmProductOptionGroupTranslationRepository
 	) {
-		super(productOptionGroupRepository, mikroProductOptionGroupRepository);
+		super(typeOrmProductOptionGroupRepository, mikroOrmProductOptionGroupRepository);
 	}
 
 	async create(productOptionsGroupInput: ProductOptionGroup): Promise<ProductOptionGroup> {
@@ -44,16 +44,16 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 	async createTranslations(
 		optionGroupTranslations: ProductOptionGroupTranslation[]
 	): Promise<ProductOptionGroupTranslation[]> {
-		return this.productOptionGroupTranslationRepository.save(optionGroupTranslations);
+		return this.typeOrmProductOptionGroupTranslationRepository.save(optionGroupTranslations);
 	}
 
 	async createTranslation(
 		optionGroupTranslation: ProductOptionGroupTranslation
 	): Promise<ProductOptionGroupTranslation> {
-		return this.productOptionGroupTranslationRepository.save(optionGroupTranslation);
+		return this.typeOrmProductOptionGroupTranslationRepository.save(optionGroupTranslation);
 	}
 
 	async deleteGroupTranslationsBulk(productOptionGroupTranslationsInput: IProductOptionGroupTranslation[]) {
-		return this.productOptionGroupTranslationRepository.remove(productOptionGroupTranslationsInput as any);
+		return this.typeOrmProductOptionGroupTranslationRepository.remove(productOptionGroupTranslationsInput as any);
 	}
 }

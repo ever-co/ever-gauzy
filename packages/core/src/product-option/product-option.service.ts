@@ -1,38 +1,38 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductOptionTranslation } from './../core/entities/internal';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
+import { TypeOrmProductOptionRepository } from './repository/type-orm-product-option.repository';
+import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
+import { MikroOrmProductOptionTranslationRepository } from './repository/mikro-orm-product-option-translation.repository';
+import { TypeOrmProductOptionTranslationRepository } from './repository/type-orm-product-option-translation.repository';
 
 @Injectable()
 export class ProductOptionService extends TenantAwareCrudService<ProductOption> {
 	constructor(
 		@InjectRepository(ProductOption)
-		productOptionRepository: Repository<ProductOption>,
-		@MikroInjectRepository(ProductOption)
-		mikroProductOptionRepository: EntityRepository<ProductOption>,
+		typeOrmProductOptionRepository: TypeOrmProductOptionRepository,
+
+		mikroOrmProductOptionRepository: MikroOrmProductOptionRepository,
 
 		@InjectRepository(ProductOptionTranslation)
-		private readonly productOptionTranslationRepository: Repository<ProductOptionTranslation>,
+		private typeOrmProductOptionTranslationRepository: TypeOrmProductOptionTranslationRepository,
 
-		@MikroInjectRepository(ProductOptionTranslation)
-		private readonly mikroProductOptionTranslationRepository: EntityRepository<ProductOptionTranslation>
+		mikroOrmProductOptionTranslationRepository: MikroOrmProductOptionTranslationRepository
 	) {
-		super(productOptionRepository, mikroProductOptionRepository);
+		super(typeOrmProductOptionRepository, mikroOrmProductOptionRepository);
 	}
 
 	async saveProductOptionTranslations(
 		translationsInput: ProductOptionTranslation[]
 	): Promise<ProductOptionTranslation[]> {
-		return this.productOptionTranslationRepository.save(translationsInput);
+		return this.typeOrmProductOptionTranslationRepository.save(translationsInput);
 	}
 
 	async saveProductOptionTranslation(translationInput: ProductOptionTranslation): Promise<ProductOptionTranslation> {
-		return this.productOptionTranslationRepository.save(translationInput);
+		return this.typeOrmProductOptionTranslationRepository.save(translationInput);
 	}
 
 	async save(productOptionInput: IProductOptionTranslatable): Promise<ProductOption> {
@@ -48,6 +48,6 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	}
 
 	async deleteOptionTranslationsBulk(productOptionTranslationsInput: IProductOptionTranslation[]) {
-		return this.productOptionTranslationRepository.remove(productOptionTranslationsInput as any);
+		return this.typeOrmProductOptionTranslationRepository.remove(productOptionTranslationsInput as any);
 	}
 }

@@ -1,9 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { Tenant } from './tenant.entity';
 import {
@@ -23,31 +20,35 @@ import { TenantSettingSaveCommand } from './tenant-setting/commands';
 import { TenantTaskSizeBulkCreateCommand } from './../tasks/sizes/commands';
 import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/commands';
 import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
+import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
+import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
+import { MikroOrmRoleRepository } from '../role/repository/mikro-orm-role.repository';
+import { TypeOrmRoleRepository } from '../role/repository/type-orm-role.repository';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
 	constructor(
 		@InjectRepository(Tenant)
-		private readonly tenantRepository: Repository<Tenant>,
-		@MikroInjectRepository(Tenant)
-		private readonly mikroTenantRepository: EntityRepository<Tenant>,
+		private typeOrmTenantRepository: TypeOrmTenantRepository,
+
+		MikroOrmTenantRepository: MikroOrmTenantRepository,
 
 		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		private typeOrmUserRepository: TypeOrmUserRepository,
 
-		@MikroInjectRepository(User)
-		private readonly mikroUserRepository: EntityRepository<User>,
+		mikroOrmUserRepository: MikroOrmUserRepository,
 
 		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>,
+		private typeOrmRoleRepository: TypeOrmRoleRepository,
 
-		@MikroInjectRepository(Role)
-		private readonly mikroRoleRepository: EntityRepository<Role>,
+		mikroOrmRoleRepository: MikroOrmRoleRepository,
 
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {
-		super(tenantRepository, mikroTenantRepository);
+		super(typeOrmTenantRepository, MikroOrmTenantRepository);
 	}
 
 	public async onboardTenant(
@@ -106,13 +107,13 @@ export class TenantService extends CrudService<Tenant> {
 		);
 
 		// Find SUPER_ADMIN role to relative tenant.
-		const role = await this.roleRepository.findOneBy({
+		const role = await this.typeOrmRoleRepository.findOneBy({
 			tenantId,
 			name: RolesEnum.SUPER_ADMIN,
 		});
 
 		// Assign tenant and role to user.
-		await this.userRepository.update(user.id, {
+		await this.typeOrmUserRepository.update(user.id, {
 			tenant: {
 				id: tenant.id,
 			},
@@ -126,7 +127,7 @@ export class TenantService extends CrudService<Tenant> {
 			const { sourceId, userSourceId } = entity;
 			await this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: this.tenantRepository.metadata.tableName,
+					entityType: this.typeOrmTenantRepository.metadata.tableName,
 					sourceId,
 					destinationId: tenant.id,
 					tenantId: tenant.id,
@@ -134,16 +135,13 @@ export class TenantService extends CrudService<Tenant> {
 			);
 			if (userSourceId) {
 				await this.commandBus.execute(
-					new ImportRecordUpdateOrCreateCommand(
-						{
-							entityType: this.userRepository.metadata.tableName,
-							sourceId: userSourceId,
-							destinationId: user.id,
-						},
-						{
-							tenantId: tenant.id,
-						}
-					)
+					new ImportRecordUpdateOrCreateCommand({
+						entityType: this.typeOrmUserRepository.metadata.tableName,
+						sourceId: userSourceId,
+						destinationId: user.id
+					}, {
+						tenantId: tenant.id
+					})
 				);
 			}
 		}

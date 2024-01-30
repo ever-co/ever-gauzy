@@ -1,8 +1,6 @@
-import { MikroInjectRepository } from '@gauzy/common';
-import { EntityRepository } from '@mikro-orm/core';
 import { BadRequestException, ConflictException, Injectable, HttpStatus, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThanOrEqual, Repository, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
+import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { JwtPayload, sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { IAppIntegrationConfig } from '@gauzy/common';
@@ -27,33 +25,37 @@ import { OrganizationTeamJoinRequest } from './organization-team-join-request.en
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
 import { InviteService } from './../invite/invite.service';
 import { RoleService } from './../role/role.service';
+import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-orm-organization-team-join-request.repository';
+import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from 'organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from 'organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
 	constructor(
 		@InjectRepository(OrganizationTeamJoinRequest)
-		organizationTeamJoinRequestRepository: Repository<OrganizationTeamJoinRequest>,
-		@MikroInjectRepository(OrganizationTeamJoinRequest)
-		mikro_organizationTeamJoinRequestRepository: EntityRepository<OrganizationTeamJoinRequest>,
+		typeOrmOrganizationTeamJoinRequestRepository: TypeOrmOrganizationTeamJoinRequestRepository,
+
+		mikroOrmOrganizationTeamJoinRequestRepository: MikroOrmOrganizationTeamJoinRequestRepository,
+
+		@InjectRepository(User)
+		private typeOrmUserRepository: TypeOrmUserRepository,
+
+		mikroOrmUserRepository: MikroOrmUserRepository,
+
+		@InjectRepository(OrganizationTeamEmployee)
+		protected readonly typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+
+		mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 
 		private readonly _organizationTeamService: OrganizationTeamService,
 		private readonly _emailService: EmailService,
 		private readonly _inviteService: InviteService,
 		private readonly _roleService: RoleService,
-
-		@InjectRepository(User)
-		protected readonly userRepository: Repository<User>,
-
-		@MikroInjectRepository(User)
-		protected readonly mikroUserRepository: EntityRepository<User>,
-
-		@InjectRepository(OrganizationTeamEmployee)
-		protected readonly organizationTeamEmployeeRepository: Repository<OrganizationTeamEmployee>,
-
-		@MikroInjectRepository(OrganizationTeamEmployee)
-		protected readonly mikroOrganizationTeamEmployeeRepository: EntityRepository<OrganizationTeamEmployee>
 	) {
-		super(organizationTeamJoinRequestRepository, mikro_organizationTeamJoinRequestRepository);
+		super(typeOrmOrganizationTeamJoinRequestRepository, mikroOrmOrganizationTeamJoinRequestRepository);
 	}
 
 	/**
@@ -293,7 +295,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			/**
 			 * Fetch user if already present in current tenant
 			 */
-			let currentTenantUser: User = await this.userRepository.findOne({
+			let currentTenantUser: User = await this.typeOrmUserRepository.findOne({
 				where: {
 					email: request.email,
 					tenantId
@@ -321,13 +323,13 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 						},
 						id: request.organizationTeamId
 					});
-				} catch (error) {}
+				} catch (error) { }
 
 				/**
 				 * Add employee to team
 				 */
 				if (!employeePresentInTeam) {
-					await this.organizationTeamEmployeeRepository.save({
+					await this.typeOrmOrganizationTeamEmployeeRepository.save({
 						employeeId: currentTenantUser.employeeId,
 						organizationTeamId: request.organizationTeamId,
 						tenantId,
