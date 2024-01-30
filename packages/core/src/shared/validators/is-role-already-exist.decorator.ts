@@ -2,19 +2,19 @@ import { registerDecorator, ValidationOptions } from "class-validator";
 import { IsRoleAlreadyExistConstraint } from "./constraints";
 
 /**
- * Role already existed validation decorator
+ * Decorator Factory: Checks if a role already exists.
  *
- * @param validationOptions
- * @returns
+ * @param validationOptions - Validation options for the decorator.
+ * @returns Decorator function.
  */
 export const IsRoleAlreadyExist = (validationOptions?: ValidationOptions) => {
 	return (object: Object, propertyName: string) => {
-        registerDecorator({
+		registerDecorator({
 			target: object.constructor,
-			propertyName: propertyName,
+			propertyName,
 			options: validationOptions,
 			constraints: [],
 			validator: IsRoleAlreadyExistConstraint,
 		});
-    };
-}
+	};
+};

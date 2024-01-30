@@ -16,8 +16,12 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.register([
 			{ path: '/roles', module: RoleModule }
 		]),
-		forwardRef(() => TypeOrmModule.forFeature([Role])),
-		forwardRef(() => MikroOrmModule.forFeature([Role])),
+		forwardRef(() => TypeOrmModule.forFeature([
+			Role
+		])),
+		forwardRef(() => MikroOrmModule.forFeature([
+			Role
+		])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),

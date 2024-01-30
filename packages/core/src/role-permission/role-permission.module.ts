@@ -15,8 +15,12 @@ import { RoleModule } from './../role/role.module';
 		RouterModule.register([
 			{ path: 'role-permissions', module: RolePermissionModule }
 		]),
-		forwardRef(() => TypeOrmModule.forFeature([RolePermission])),
-		forwardRef(() => MikroOrmModule.forFeature([RolePermission])),
+		forwardRef(() => TypeOrmModule.forFeature([
+			RolePermission
+		])),
+		forwardRef(() => MikroOrmModule.forFeature([
+			RolePermission
+		])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => RoleModule),

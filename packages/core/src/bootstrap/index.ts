@@ -48,10 +48,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	/**
 	 * Dependency injection with class-validator
 	 */
-	useContainer(app.select(AppModule).get(SharedModule), {
-		fallback: true,
-		fallbackOnErrors: true
-	});
+	useContainer(app.select(AppModule).get(SharedModule), { fallback: true });
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
 	app.set('trust proxy', true);

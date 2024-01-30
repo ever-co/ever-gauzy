@@ -1,23 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IOrganization, ITenant, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Organization } from './../core/entities/internal';
 import { UserOrganization } from './user-organization.entity';
+import { TypeOrmUserOrganizationRepository } from './repository/type-orm-user-organization.repository';
+import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
+import { TypeOrmOrganizationRepository } from '../organization/repository/type-orm-organization.repository';
 
 @Injectable()
 export class UserOrganizationService extends TenantAwareCrudService<UserOrganization> {
+
 	constructor(
 		@InjectRepository(UserOrganization)
-		userOrganizationRepository: Repository<UserOrganization>,
+		typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
+
+		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository
 	) {
-		super(userOrganizationRepository);
+		super(typeOrmUserOrganizationRepository, mikroOrmUserOrganizationRepository);
 	}
 
+	/**
+	 *
+	 * @param user
+	 * @param organizationId
+	 * @returns
+	 */
 	async addUserToOrganization(
 		user: IUser,
 		organizationId: IOrganization['id']
@@ -34,12 +45,18 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		return await this.repository.save(entity);
 	}
 
+	/**
+	 *
+	 * @param userId
+	 * @param tenantId
+	 * @returns
+	 */
 	private async _addUserToAllOrganizations(
 		userId: IUser['id'],
 		tenantId: ITenant['id']
 	): Promise<IUserOrganization[]> {
 		/** Add user to all organizations in the tenant */
-		const organizations = await this.organizationRepository.find({
+		const organizations = await this.typeOrmOrganizationRepository.find({
 			where: {
 				tenantId
 			}

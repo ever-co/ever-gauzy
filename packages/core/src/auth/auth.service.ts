@@ -50,8 +50,10 @@ export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
 		private typeOrmUserRepository: TypeOrmUserRepository,
+
 		@InjectRepository(OrganizationTeam)
-		protected readonly organizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		protected readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService,
@@ -903,7 +905,7 @@ export class AuthService extends SocialAuthService {
 		userId: string,
 		employeeId: string | null
 	): Promise<IOrganizationTeam[]> {
-		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
+		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder("organization_team");
 		query.innerJoin('organization_team_employee',
 			p("team_member"),
 			p('"team_member"."organizationTeamId" = "organization_team"."id"')
