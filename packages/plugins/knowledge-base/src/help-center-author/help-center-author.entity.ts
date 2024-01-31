@@ -1,20 +1,19 @@
-import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IEmployee, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
-import { Employee, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { MultiORMEntity, Employee, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
+import { MikroOrmHelpCenterAuthorRepository } from './repository/mikro-orm-help-center-author.repository';
 
-@Entity('knowledge_base_author')
-export class HelpCenterAuthor
-	extends TenantOrganizationBaseEntity
-	implements IHelpCenterAuthor {
+@MultiORMEntity('knowledge_base_author', { mikroOrmRepository: () => MikroOrmHelpCenterAuthorRepository })
+export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IHelpCenterAuthor {
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'

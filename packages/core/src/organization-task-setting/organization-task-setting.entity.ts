@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, Index, RelationId } from 'typeorm';
+import { Column, ManyToOne, Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTaskSetting,
@@ -18,8 +18,10 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
 
-@Entity('organization_task_setting')
+@MultiORMEntity('organization_task_setting', { mikroOrmRepository: () => MikroOrmOrganizationTaskSettingRepository })
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
 
 	/**

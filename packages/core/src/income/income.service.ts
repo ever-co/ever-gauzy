@@ -1,24 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IDateRangePicker, IPagination } from '@gauzy/contracts';
-import { Repository, FindManyOptions, Between, In, Raw } from 'typeorm';
+import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
+import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(
 		@InjectRepository(Income)
-		private readonly incomeRepository: Repository<Income>
+		typeOrmIncomeRepository: TypeOrmIncomeRepository,
+
+		mikroOrmIncomeRepository: MikroOrmIncomeRepository
 	) {
-		super(incomeRepository);
+		super(typeOrmIncomeRepository, mikroOrmIncomeRepository);
 	}
 
-	public async findAllIncomes(
-		filter?: FindManyOptions<Income>,
-		filterDate?: string
-	): Promise<IPagination<Income>> {
+	public async findAllIncomes(filter?: FindManyOptions<Income>, filterDate?: string): Promise<IPagination<Income>> {
 		if (filterDate) {
 			const startOfMonth = moment(moment(filterDate).startOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
 			const endOfMonth = moment(moment(filterDate).endOf('month').format('YYYY-MM-DD hh:mm:ss')).toDate();
@@ -41,8 +42,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 
 	public countStatistic(data: number[]) {
 		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
-			? data.filter(Number).reduce((a, b) => a + b, 0) /
-			data.filter(Number).length
+			? data.filter(Number).reduce((a, b) => a + b, 0) / data.filter(Number).length
 			: 0;
 	}
 
@@ -71,7 +71,7 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 				const { tags } = where;
 				filter['where']['tags'] = {
 					id: In(tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

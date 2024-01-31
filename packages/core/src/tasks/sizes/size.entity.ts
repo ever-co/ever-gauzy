@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskSize } from '@gauzy/contracts';
 import {
@@ -7,8 +7,10 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
-@Entity('task_size')
+@MultiORMEntity('task_size', { mikroOrmRepository: () => MikroOrmTaskSizeRepository })
 export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {
 
 	@ApiProperty({ type: () => String })

@@ -1,44 +1,53 @@
 import { TenantAwareCrudService } from './../core/crud';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
+import { TypeOrmEquipmentSharingPolicyRepository } from './repository/type-orm-equipment-sharing-policy.repository';
+import { MikroOrmEquipmentSharingPolicyRepository } from './repository/mikro-orm-equipment-sharing-policy.repository';
 
 @Injectable()
 export class EquipmentSharingPolicyService extends TenantAwareCrudService<EquipmentSharingPolicy> {
 	constructor(
 		@InjectRepository(EquipmentSharingPolicy)
-		private readonly equipmentSharingRepository: Repository<EquipmentSharingPolicy>
+		typeOrmEquipmentSharingPolicyRepository: TypeOrmEquipmentSharingPolicyRepository,
+
+		mikroOrmEquipmentSharingPolicyRepository: MikroOrmEquipmentSharingPolicyRepository
 	) {
-		super(equipmentSharingRepository);
+		super(typeOrmEquipmentSharingPolicyRepository, mikroOrmEquipmentSharingPolicyRepository);
 	}
 
-	async create(
-		entity: IEquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	async create(entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
 			const policy = new EquipmentSharingPolicy();
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.tenantId = entity.tenantId;
 			policy.description = entity.description;
-			return this.equipmentSharingRepository.save(policy);
+			return this.repository.save(policy);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
 	}
 
-	async update(
-		id: string,
-		entity: IEquipmentSharingPolicy
-	): Promise<EquipmentSharingPolicy> {
+	/**
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
+	async update(id: string, entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
-			const policy = await this.equipmentSharingRepository.findOneBy({ id });
+			const policy = await this.repository.findOneBy({ id });
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.description = entity.description;
-			return this.equipmentSharingRepository.save(policy);
+			return this.repository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

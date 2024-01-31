@@ -13,6 +13,7 @@ import {
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
+import { PrimaryKey, Property } from '@mikro-orm/core';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -25,6 +26,7 @@ export abstract class Model {
 }
 export abstract class BaseEntity extends Model implements IBaseEntityModel {
 
+	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
 	@ApiPropertyOptional({ type: () => String })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
@@ -36,7 +38,8 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@CreateDateColumn()
-	createdAt?: Date;
+	@Property()
+	createdAt?: Date = new Date();
 
 	// Date when the record was last updated
 	@ApiPropertyOptional({
@@ -45,7 +48,8 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@UpdateDateColumn()
-	updatedAt?: Date;
+	@Property({ onUpdate: () => new Date() })
+	updatedAt?: Date = new Date();;
 
 	// Soft Delete
 	@ApiPropertyOptional({
@@ -56,6 +60,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsOptional()
 	@IsDateString()
 	@DeleteDateColumn()
+	@Property({ nullable: true })
 	deletedAt?: Date;
 
 	// Indicates if record is active now
@@ -64,6 +69,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsBoolean()
 	@Index()
 	@Column({ nullable: true, default: true })
+	@Property({ nullable: true, default: true })
 	isActive?: boolean;
 
 	// Indicate if record is archived
@@ -72,5 +78,6 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsBoolean()
 	@Index()
 	@Column({ nullable: true, default: false })
+	@Property({ nullable: true, default: false })
 	isArchived?: boolean;
 }

@@ -1,4 +1,4 @@
-import { DeleteResult, Repository } from 'typeorm';
+import { DeleteResult } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -13,14 +13,18 @@ import { TaskStatusPrioritySizeService } from '../task-status-priority-size.serv
 import { RequestContext } from '../../core/context';
 import { TaskVersion } from './version.entity';
 import { DEFAULT_GLOBAL_VERSIONS } from './default-global-versions';
+import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
+import { TypeOrmTaskVersionRepository } from './repository/type-orm-task-version.repository';
 
 @Injectable()
 export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersion> {
 	constructor(
 		@InjectRepository(TaskVersion)
-		protected readonly taskVersionsRepository: Repository<TaskVersion>
+		typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
+
+		mikroOrmTaskVersionRepository: MikroOrmTaskVersionRepository
 	) {
-		super(taskVersionsRepository);
+		super(typeOrmTaskVersionRepository, mikroOrmTaskVersionRepository);
 	}
 
 	/**

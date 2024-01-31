@@ -9,20 +9,24 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, Repository, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		protected readonly employeeRepository: Repository<Employee>
+		typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
-		super(employeeRepository);
+		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}
 
 	public async findAllActive(): Promise<Employee[]> {
@@ -236,24 +240,32 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					);
 
 					// Apply conditions related to the user property in the 'where' object
-					qb.andWhere(new Brackets((web: WhereExpressionBuilder) => {
-						const { user } = where;
-						if (isNotEmpty(user)) {
-							if (isNotEmpty(user.name)) {
-								const keywords: string[] = user.name.split(' ');
-								keywords.forEach((keyword: string, index: number) => {
-									web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), { [`first_name_${index}`]: `%${keyword}%` });
-									web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), { [`last_name_${index}`]: `%${keyword}%` });
-								});
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const { user } = where;
+							if (isNotEmpty(user)) {
+								if (isNotEmpty(user.name)) {
+									const keywords: string[] = user.name.split(' ');
+									keywords.forEach((keyword: string, index: number) => {
+										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), {
+											[`first_name_${index}`]: `%${keyword}%`
+										});
+										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), {
+											[`last_name_${index}`]: `%${keyword}%`
+										});
+									});
+								}
+								if (isNotEmpty(user.email)) {
+									const keywords: string[] = user.email.split(' ');
+									keywords.forEach((keyword: string, index: number) => {
+										web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
+											[`email_${index}`]: `%${keyword}%`
+										});
+									});
+								}
 							}
-							if (isNotEmpty(user.email)) {
-								const keywords: string[] = user.email.split(' ');
-								keywords.forEach((keyword: string, index: number) => {
-									web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), { [`email_${index}`]: `%${keyword}%` });
-								});
-							}
-						}
-					}));
+						})
+					);
 				}
 			});
 

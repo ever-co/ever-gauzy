@@ -1,29 +1,38 @@
-import { EmployeeAppointment } from './employee-appointment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
+import { sign, decode } from 'jsonwebtoken';
 import { IEmployeeAppointmentCreateInput } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
-import { sign, decode } from 'jsonwebtoken';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmEmployeeAppointmentRepository } from './repository/type-orm-employee-appointment.repository';
+import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
+import { EmployeeAppointment } from './employee-appointment.entity';
 
 @Injectable()
 export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeAppointment> {
 	constructor(
 		@InjectRepository(EmployeeAppointment)
-		private readonly employeeAppointmentRepository: Repository<EmployeeAppointment>
+		typeOrmEmployeeAppointmentRepository: TypeOrmEmployeeAppointmentRepository,
+
+		mikroOrmEmployeeAppointmentRepository: MikroOrmEmployeeAppointmentRepository
 	) {
-		super(employeeAppointmentRepository);
+		super(typeOrmEmployeeAppointmentRepository, mikroOrmEmployeeAppointmentRepository);
 	}
 
-	async saveAppointment(
-		employeeAppointmentRequest: IEmployeeAppointmentCreateInput
-	): Promise<EmployeeAppointment> {
-		return await this.employeeAppointmentRepository.save(
-			employeeAppointmentRequest
-		);
+	/**
+	 *
+	 * @param employeeAppointmentRequest
+	 * @returns
+	 */
+	async saveAppointment(employeeAppointmentRequest: IEmployeeAppointmentCreateInput): Promise<EmployeeAppointment> {
+		return await this.repository.save(employeeAppointmentRequest);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
 	signAppointmentId(id: string) {
 		return sign(
 			{
@@ -34,6 +43,11 @@ export class EmployeeAppointmentService extends TenantAwareCrudService<EmployeeA
 		);
 	}
 
+	/**
+	 *
+	 * @param token
+	 * @returns
+	 */
 	decode(token: string) {
 		return decode(token);
 	}

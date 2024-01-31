@@ -1,18 +1,21 @@
 import { IHelpCenterAuthor } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/common';
 import { HelpCenterAuthor } from './help-center-author.entity';
+import { TypeOrmHelpCenterAuthorRepository } from './repository/type-orm-help-center-author.repository';
+import { MikroOrmHelpCenterAuthorRepository } from './repository/mikro-orm-help-center-author.repository';
 
 @Injectable()
 export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAuthor> {
 	constructor(
 		@InjectRepository(HelpCenterAuthor)
-		private readonly helpCenterAuthorRepository: Repository<HelpCenterAuthor>
+		typeOrmHelpCenterAuthorRepository: TypeOrmHelpCenterAuthorRepository,
+
+		mikroOrmHelpCenterAuthorRepository: MikroOrmHelpCenterAuthorRepository
 	) {
-		super(helpCenterAuthorRepository);
+		super(typeOrmHelpCenterAuthorRepository, mikroOrmHelpCenterAuthorRepository);
 	}
 
 	async findByArticleId(articleId: string): Promise<HelpCenterAuthor[]> {
@@ -24,19 +27,31 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 			.getMany();
 	}
 
+	/**
+	 *
+	 * @param createInput
+	 * @returns
+	 */
 	async createBulk(createInput: IHelpCenterAuthor[]) {
 		return await this.repository.save(createInput);
 	}
 
+	/**
+	 *
+	 * @param ids
+	 * @returns
+	 */
 	async deleteBulkByArticleId(ids: string[]) {
 		if (isNotEmpty(ids)) {
 			return await this.repository.delete(ids);
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	async getAll(): Promise<IHelpCenterAuthor[]> {
-		return await this.repository
-			.createQueryBuilder('knowledge_base_author')
-			.getMany();
+		return await this.repository.createQueryBuilder('knowledge_base_author').getMany();
 	}
 }

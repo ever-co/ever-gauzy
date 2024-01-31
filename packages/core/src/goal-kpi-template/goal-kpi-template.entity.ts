@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, ManyToOne, JoinColumn } from 'typeorm';
 import {
 	IGoalKPITemplate,
 	KpiMetricEnum,
@@ -10,11 +10,11 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmGoalKPITemplateRepository } from './repository/mikro-orm-goal-kpi-template.repository';
 
-@Entity('goal_kpi_template')
-export class GoalKPITemplate
-	extends TenantOrganizationBaseEntity
-	implements IGoalKPITemplate {
+@MultiORMEntity('goal_kpi_template', { mikroOrmRepository: () => MikroOrmGoalKPITemplateRepository })
+export class GoalKPITemplate extends TenantOrganizationBaseEntity implements IGoalKPITemplate {
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;

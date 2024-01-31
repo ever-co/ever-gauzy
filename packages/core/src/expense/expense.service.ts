@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
+import { FindManyOptions, Between, Brackets, WhereExpressionBuilder, In, ILike } from 'typeorm';
 import * as moment from 'moment';
 import { chain } from 'underscore';
 import { IDateRangePicker, IExpense, IGetExpenseInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -10,16 +10,26 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
+import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {
 	constructor(
 		@InjectRepository(Expense)
-		private readonly expenseRepository: Repository<Expense>
+		typeOrmExpenseRepository: TypeOrmExpenseRepository,
+
+		mikroOrmExpenseRepository: MikroOrmExpenseRepository
 	) {
-		super(expenseRepository);
+		super(typeOrmExpenseRepository, mikroOrmExpenseRepository);
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @param filterDate
+	 * @returns
+	 */
 	public async findAllExpenses(
 		filter?: FindManyOptions<Expense>,
 		filterDate?: string
@@ -44,26 +54,28 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return await this.findAll(filter || {});
 	}
 
+	/**
+	 *
+	 * @param data
+	 * @returns
+	 */
 	public countStatistic(data: number[]) {
 		return data.filter(Number).reduce((a, b) => a + b, 0) !== 0
-			? data.filter(Number).reduce((a, b) => a + b, 0) /
-			data.filter(Number).length
+			? data.filter(Number).reduce((a, b) => a + b, 0) / data.filter(Number).length
 			: 0;
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async getExpense(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
 		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
 
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			query.leftJoinAndSelect(
-				`${query.alias}.employee`,
-				'activityEmployee'
-			);
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
 			query.leftJoinAndSelect(
 				`activityEmployee.user`,
 				'activityUser',
@@ -76,6 +88,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		return await query.getMany();
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async getDailyReportChartData(request: IGetExpenseInput) {
 		const query = this.filterQuery(request);
 		query.orderBy(p(`"${query.alias}"."valueDate"`), 'ASC');
@@ -85,9 +102,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 
 		const expenses = await query.getMany();
 		const byDate = chain(expenses)
-			.groupBy((expense) =>
-				moment(expense.valueDate).format('YYYY-MM-DD')
-			)
+			.groupBy((expense) => moment(expense.valueDate).format('YYYY-MM-DD'))
 			.mapObject((expenses: IExpense[], date) => {
 				const sum = expenses.reduce((iteratee: any, expense: any) => {
 					return iteratee + parseFloat(expense.amount);
@@ -148,7 +163,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.expenseRepository.createQueryBuilder();
+		const query = this.repository.createQueryBuilder();
 		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
@@ -159,7 +174,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			})
-		)
+		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.where({
@@ -181,9 +196,15 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				}
 			})
 		);
+
 		return query;
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
@@ -211,7 +232,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 			if ('tags' in where) {
 				filter['where']['tags'] = {
 					id: In(where.tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

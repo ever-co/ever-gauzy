@@ -2,40 +2,40 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { v4 as uuidV4 } from 'uuid';
 import { DEFAULT_GLOBAL_STATUSES } from '../../tasks/statuses/default-global-statuses';
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterface {
 	name = 'SeedDefaultGlobalTaskStatus1674044473393';
 
-    /**
-     * Up Migration
-     *
-     * @param queryRunner
-     */
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log(chalk.yellow(this.name + ' start running!'));
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-                await this.sqliteSeedDefaultTaskStatus(queryRunner);
-                break;
-            case databaseTypes.postgres:
-                await this.postgresSeedDefaultTaskStatus(queryRunner);
-                break;
-            case databaseTypes.mysql:
-                await this.mysqlSeedDefaultTaskStatus(queryRunner);
-                break;
-            default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
-        }
-    }
-    /**
-     * Down Migration
-     *
-     * @param queryRunner
-     */
-    public async down(queryRunner: QueryRunner): Promise<void> { }
+		switch (queryRunner.connection.options.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteSeedDefaultTaskStatus(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresSeedDefaultTaskStatus(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlSeedDefaultTaskStatus(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> { }
 
 	/**
 	 * Sqlite Seed Default task status
@@ -103,11 +103,11 @@ export class SeedDefaultGlobalTaskStatus1674044473393 implements MigrationInterf
 		}
 	}
 
-    /**
-     * MySQL Seed default task status
-     *
-     * @param queryRunner
-     */
-    public async mysqlSeedDefaultTaskStatus(queryRunner: QueryRunner): Promise<any> { }
+	/**
+	 * MySQL Seed default task status
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlSeedDefaultTaskStatus(queryRunner: QueryRunner): Promise<any> { }
 
 }

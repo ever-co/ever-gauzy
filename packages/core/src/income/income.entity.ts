@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -32,8 +31,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 
-@Entity('income')
+@MultiORMEntity('income', { mikroOrmRepository: () => MikroOrmIncomeRepository })
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
 
 	@ApiProperty({ type: () => Number })
@@ -77,10 +78,10 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	reference?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	/**
 	 * Employee
 	 */
@@ -116,14 +117,14 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	clientId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	* Tag
-    */
+	*/
 	@ApiProperty({ type: () => () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.incomes, {
 		onUpdate: 'CASCADE',

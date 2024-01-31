@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { ITenant } from '@gauzy/contracts';
 import { TenantBaseEntity } from '../../core/entities/internal';
+import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
 
-@Entity('tenant_setting')
+@MultiORMEntity('tenant_setting', { mikroOrmRepository: () => MikroOrmTenantSettingRepository })
 export class TenantSetting extends TenantBaseEntity implements ITenant {
+
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: false })
 	name?: string;

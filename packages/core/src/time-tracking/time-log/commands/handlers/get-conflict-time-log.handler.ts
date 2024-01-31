@@ -2,15 +2,15 @@ import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
-import { ConfigService, databaseTypes } from '@gauzy/config';
+import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(IGetConflictTimeLogCommand)
-export class GetConflictTimeLogHandler
-	implements ICommandHandler<IGetConflictTimeLogCommand> {
+export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTimeLogCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>,
@@ -30,16 +30,16 @@ export class GetConflictTimeLogHandler
 
 		let conflictQuery = this.timeLogRepository.createQueryBuilder();
 
-		let query:string = ``;
-		switch(this.configService.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+		let query: string = ``;
+		switch (this.configService.dbConnectionOptions.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				query = `'${startedAt}' >= "${conflictQuery.alias}"."startedAt" and '${startedAt}' <= "${conflictQuery.alias}"."stoppedAt"`;
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				query = `("${conflictQuery.alias}"."startedAt", "${conflictQuery.alias}"."stoppedAt") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`;
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				query = p(`"${conflictQuery.alias}"."startedAt" BETWEEN '${startedAt}' AND '${stoppedAt}' AND "${conflictQuery.alias}"."stoppedAt" BETWEEN '${startedAt}' AND '${stoppedAt}'`);
 				break;
 			default:

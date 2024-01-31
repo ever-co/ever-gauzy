@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Entity, Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
@@ -17,8 +17,10 @@ import {
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 
-@Entity('tenant')
+@MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
 
 	@ApiProperty({ type: () => String })

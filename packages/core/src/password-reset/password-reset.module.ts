@@ -3,10 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommandHandlers } from './commands/handlers';
 import { PasswordReset } from './password-reset.entity';
 import { PasswordResetService } from './password-reset.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([ PasswordReset ])
+		TypeOrmModule.forFeature([PasswordReset]),
+		MikroOrmModule.forFeature([PasswordReset])
 	],
 	providers: [
 		PasswordResetService,
@@ -17,4 +19,4 @@ import { PasswordResetService } from './password-reset.service';
 		PasswordResetService
 	]
 })
-export class PasswordResetModule {}
+export class PasswordResetModule { }

@@ -1,6 +1,22 @@
 // Modified code from https://github.com/xmlking/ngx-starter-kit.
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
+
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	Column,
+	Index,
+	JoinColumn,
+	ManyToOne,
+	RelationId,
+	ManyToMany,
+	JoinTable,
+	OneToOne,
+	OneToMany
+} from 'typeorm';
+import { Property } from '@mikro-orm/core';
+import { Exclude } from 'class-transformer';
+import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IUser,
 	IRole,
@@ -14,21 +30,6 @@ import {
 	ICandidate,
 	IImageAsset
 } from '@gauzy/contracts';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude } from 'class-transformer';
-import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	Column,
-	Entity,
-	Index,
-	JoinColumn,
-	ManyToOne,
-	RelationId,
-	ManyToMany,
-	JoinTable,
-	OneToOne,
-	OneToMany
-} from 'typeorm';
 import {
 	Candidate,
 	Employee,
@@ -40,8 +41,12 @@ import {
 	TenantBaseEntity,
 	UserOrganization
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroManyToOne } from './../core/decorators/entity/relations/mikro-orm';
+import { TypeManyToOne } from './../core/decorators/entity/relations/type-orm';
+import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
-@Entity('user')
+@MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
 
 	@ApiPropertyOptional({ type: () => String })
@@ -49,6 +54,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -56,6 +62,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -63,6 +70,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	lastName?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
@@ -70,6 +78,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsEmail()
 	@Index({ unique: false })
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	email?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 4, maxLength: 12 })
@@ -77,6 +86,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
@@ -84,12 +94,14 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Index({ unique: false })
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	username?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	timeZone?: string;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -97,6 +109,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	hash?: string;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -104,18 +117,21 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
+	@Property({ nullable: true })
 	public refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@IsString()
 	@Column({ length: 500, nullable: true })
+	@Property({ nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: LanguagesEnum })
 	@IsOptional()
 	@IsEnum(LanguagesEnum)
 	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
+	@Property({ nullable: true })
 	preferredLanguage?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: ComponentLayoutStyleEnum })
@@ -127,6 +143,7 @@ export class User extends TenantBaseEntity implements IUser {
 		default: ComponentLayoutStyleEnum.TABLE,
 		enum: ComponentLayoutStyleEnum
 	})
+	@Property({ nullable: true })
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
 
@@ -135,24 +152,28 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
+	@Property({ default: false, nullable: true })
 	public code?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
+	@Property({ default: false, nullable: true })
 	public codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
+	@Property({ default: false, nullable: true })
 	public emailVerifiedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@Column({ insert: false, nullable: true })
+	@Property({ default: false, nullable: true })
 	public emailToken?: string;
 
 	name?: string;
@@ -168,7 +189,14 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Role
 	 */
-	@ManyToOne(() => Role, {
+	@MikroManyToOne(() => Role, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		deleteRule: 'set null'
+	})
+	@TypeManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -184,6 +212,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.role)
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	roleId?: string;
 
 	/**
@@ -205,6 +234,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.image)
 	@Index()
 	@Column({ nullable: true })
+	@Property({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

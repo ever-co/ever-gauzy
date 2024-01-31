@@ -1,22 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IAvailabilitySlot, IAvailabilitySlotsCreateInput } from '@gauzy/contracts';
-import { AvailabilitySlot } from './availability-slots.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmAvailabilitySlotRepository } from './repository/type-orm-availability-slot.repository';
+import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
+import { AvailabilitySlot } from './availability-slots.entity';
 
 @Injectable()
 export class AvailabilitySlotsService extends TenantAwareCrudService<AvailabilitySlot> {
 	constructor(
 		@InjectRepository(AvailabilitySlot)
-		private readonly availabilitySlotsRepository: Repository<AvailabilitySlot>
+		typeOrmAvailabilitySlotRepository: TypeOrmAvailabilitySlotRepository,
+
+		mikroOrmAvailabilitySlotRepository: MikroOrmAvailabilitySlotRepository
 	) {
-		super(availabilitySlotsRepository);
+		super(typeOrmAvailabilitySlotRepository, mikroOrmAvailabilitySlotRepository);
 	}
 
-	public async createBulk(
-		availabilitySlots: IAvailabilitySlotsCreateInput[]
-	): Promise<IAvailabilitySlot[]> {
-		return await this.availabilitySlotsRepository.save(availabilitySlots);
+	/**
+	 *
+	 * @param availabilitySlots
+	 * @returns
+	 */
+	public async createBulk(availabilitySlots: IAvailabilitySlotsCreateInput[]): Promise<IAvailabilitySlot[]> {
+		return await this.repository.save(availabilitySlots);
 	}
 }

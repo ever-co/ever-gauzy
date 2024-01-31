@@ -7,7 +7,6 @@ import {
 	IContact
 } from '@gauzy/contracts';
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	JoinColumn,
@@ -25,8 +24,10 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
 
-@Entity('merchant')
+@MultiORMEntity('merchant', { mikroOrmRepository: () => MikroOrmMerchantRepository })
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 	@ApiProperty({ type: () => String })
@@ -58,10 +59,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	currency: CurrenciesEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Contact
@@ -81,10 +82,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	contactId?: IContact['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ImageAsset
@@ -101,19 +102,19 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	logoId?: IImageAsset['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.merchants, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
+	})
 	@JoinTable({
 		name: 'tag_merchant'
 	})

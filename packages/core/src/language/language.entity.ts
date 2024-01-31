@@ -1,10 +1,12 @@
-import { Entity, Column, Unique, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Unique, OneToMany, JoinColumn } from 'typeorm';
 import { ILanguage, IOrganizationLanguage } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 import { BaseEntity, OrganizationLanguage } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
 
-@Entity('language')
+@MultiORMEntity('language', { mikroOrmRepository: () => MikroOrmLanguageRepository })
 @Unique(['code'])
 export class Language extends BaseEntity implements ILanguage {
 	@ApiProperty({ type: () => String })
@@ -29,8 +31,8 @@ export class Language extends BaseEntity implements ILanguage {
 	@Column()
 	color?: string;
 
-	@OneToMany(() => OrganizationLanguage, (organizationLanguage) => organizationLanguage.language, { 
-		cascade: true 
+	@OneToMany(() => OrganizationLanguage, (organizationLanguage) => organizationLanguage.language, {
+		cascade: true
 	})
 	@JoinColumn()
 	organizationLanguages?: IOrganizationLanguage[]

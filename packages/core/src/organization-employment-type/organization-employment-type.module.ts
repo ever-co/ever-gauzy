@@ -5,6 +5,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationEmploymentTypeController } from './organization-employment-type.controller';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
 import { OrganizationEmploymentTypeService } from './organization-employment-type.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -15,10 +16,11 @@ import { OrganizationEmploymentTypeService } from './organization-employment-typ
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationEmploymentType]),
+		MikroOrmModule.forFeature([OrganizationEmploymentType]),
 		TenantModule
 	],
 	controllers: [OrganizationEmploymentTypeController],
 	providers: [OrganizationEmploymentTypeService],
 	exports: [OrganizationEmploymentTypeService]
 })
-export class OrganizationEmploymentTypeModule {}
+export class OrganizationEmploymentTypeModule { }

@@ -4,18 +4,19 @@ import {
 	GoalTemplateCategoriesEnum,
 	IKeyResultTemplate
 } from '@gauzy/contracts';
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import {
 	KeyResultTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmGoalTemplateRepository } from './repository/mikro-orm-goal-template.repository';
 
-@Entity('goal_template')
-export class GoalTemplate
-	extends TenantOrganizationBaseEntity
-	implements IGoalTemplate {
+@MultiORMEntity('goal_template', { mikroOrmRepository: () => MikroOrmGoalTemplateRepository })
+export class GoalTemplate extends TenantOrganizationBaseEntity implements IGoalTemplate {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;

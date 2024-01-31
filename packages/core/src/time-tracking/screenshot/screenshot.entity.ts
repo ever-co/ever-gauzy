@@ -1,12 +1,14 @@
-import { Entity, Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
-import { isBetterSqlite3, isSqlite } from '@gauzy/config';
+import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
+import { isBetterSqlite3, isSqlite } from '@gauzy/config';
+import { MultiORMEntity } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
+import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 
-@Entity('screenshot')
+@MultiORMEntity('screenshot', { mikroOrmRepository: () => MikroOrmScreenshotRepository })
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

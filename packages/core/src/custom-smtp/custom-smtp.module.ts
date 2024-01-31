@@ -1,7 +1,8 @@
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
 import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
-import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpController } from './custom-smtp.controller';
 import { CustomSmtpService } from './custom-smtp.service';
@@ -11,14 +12,25 @@ import { CommandHandlers } from './commands';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/smtp', module: CustomSmtpModule }]),
-		TypeOrmModule.forFeature([CustomSmtp]),
+		RouterModule.register([
+			{ path: '/smtp', module: CustomSmtpModule }
+		]),
+		TypeOrmModule.forFeature([
+			CustomSmtp
+		]),
+		MikroOrmModule.forFeature([
+			CustomSmtp
+		]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [CustomSmtpController],
 	providers: [CustomSmtpService, ...CommandHandlers],
-	exports: [TypeOrmModule, CustomSmtpService]
+	exports: [
+		TypeOrmModule,
+		MikroOrmModule,
+		CustomSmtpService
+	]
 })
-export class CustomSmtpModule {}
+export class CustomSmtpModule { }

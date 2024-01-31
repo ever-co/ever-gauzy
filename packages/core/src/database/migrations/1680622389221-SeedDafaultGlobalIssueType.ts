@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import * as fs from 'fs';
 import { imageSize } from 'image-size';
-import { getConfig, environment as env, databaseTypes } from '@gauzy/config';
+import { getConfig, environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-global-issue-types';
@@ -12,35 +12,35 @@ import { DEFAULT_GLOBAL_ISSUE_TYPES } from './../../tasks/issue-type/default-glo
 export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterface {
 	name = 'SeedDafaultGlobalIssueType1680622389221';
 
-    /**
-     * Up Migration
-     *
-     * @param queryRunner
-     */
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log(chalk.yellow(this.name + ' start running!'));
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-                await this.sqliteSeedDefaultIssueTypes(queryRunner);
-                break;
-            case databaseTypes.postgres:
-                await this.postgresSeedDefaultIssueTypes(queryRunner);
-                break;
-            case databaseTypes.mysql:
-                await this.mysqlSeedDefaultIssueTypes(queryRunner);
-                break;
-            default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
-        }
-    }
-    /**
-     * Down Migration
-     *
-     * @param queryRunner
-     */
-    public async down(queryRunner: QueryRunner): Promise<void> { }
+		switch (queryRunner.connection.options.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteSeedDefaultIssueTypes(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresSeedDefaultIssueTypes(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlSeedDefaultIssueTypes(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> { }
 
 	/**
 	 * Sqlite default global issue types
@@ -87,9 +87,9 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				const destDirName = 'ever-icons';
 				const filePath = copyAssets(icon, getConfig(), destDirName);
 				const baseDir = env.isElectron
-						? path.resolve(env.gauzyUserPath, ...['public'])
-						: getConfig().assetOptions.assetPublicPath ||
-						path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+					? path.resolve(env.gauzyUserPath, ...['public'])
+					: getConfig().assetOptions.assetPublicPath ||
+					path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
 				const absoluteFilePath = path.join(baseDir, filePath);
 				const { height = 0, width = 0 } = imageSize(absoluteFilePath);
 				const { size } = fs.statSync(absoluteFilePath);
@@ -141,9 +141,9 @@ export class SeedDafaultGlobalIssueType1680622389221 implements MigrationInterfa
 				const filePath = copyAssets(icon, getConfig(), destDirName);
 				const payload = [name, value, description, filePath, color, isSystem];
 				const baseDir = env.isElectron
-						? path.resolve(env.gauzyUserPath, ...['public'])
-						: getConfig().assetOptions.assetPublicPath ||
-						path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+					? path.resolve(env.gauzyUserPath, ...['public'])
+					: getConfig().assetOptions.assetPublicPath ||
+					path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
 				const absoluteFilePath = path.join(baseDir, filePath);
 
 				const { height = 0, width = 0 } = imageSize(absoluteFilePath);

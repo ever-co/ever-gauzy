@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IHelpCenter } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { isNotEmpty } from '@gauzy/common';
 import { HelpCenter } from './help-center.entity';
+import { TypeOrmHelpCenterRepository } from './repository/type-orm-help-center.repository';
+import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';
 
 @Injectable()
 export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	constructor(
 		@InjectRepository(HelpCenter)
-		private readonly helpCenterRepository: Repository<HelpCenter>
+		typeOrmHelpCenterRepository: TypeOrmHelpCenterRepository,
+
+		mikroOrmHelpCenterRepository: MikroOrmHelpCenterRepository
 	) {
-		super(helpCenterRepository);
+		super(typeOrmHelpCenterRepository, mikroOrmHelpCenterRepository);
 	}
 
 	async updateBulk(updateInput: IHelpCenter[]) {
@@ -35,8 +38,6 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.repository
-			.createQueryBuilder('knowledge_base')
-			.getMany();
+		return await this.repository.createQueryBuilder('knowledge_base').getMany();
 	}
 }

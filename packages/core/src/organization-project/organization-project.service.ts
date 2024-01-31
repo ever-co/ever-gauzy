@@ -1,20 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import { IEmployee, IOrganizationGithubRepository, IOrganizationProject, IOrganizationProjectsFindInput, IPagination } from '@gauzy/contracts';
+import {
+	IEmployee,
+	IOrganizationGithubRepository,
+	IOrganizationProject,
+	IOrganizationProjectsFindInput,
+	IPagination
+} from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>
+		typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository
 	) {
-		super(organizationProjectRepository);
+		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
 	}
 
 	/**
@@ -28,7 +38,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		employeeId: IEmployee['id'],
 		options: IOrganizationProjectsFindInput
 	): Promise<IOrganizationProject[]> {
-		const query = this.organizationProjectRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -48,7 +58,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const tenantId = RequestContext.currentTenantId();
 				const { organizationId, organizationContactId, organizationTeamId } = options;
 
-				qb.andWhere(p("member.id = :employeeId"), { employeeId });
+				qb.andWhere(p('member.id = :employeeId'), { employeeId });
 				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
@@ -74,9 +84,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param filter
 	 * @returns
 	 */
-	public async findAll(
-		options?: PaginationParams<OrganizationProject>
-	): Promise<IPagination<OrganizationProject>> {
+	public async findAll(options?: PaginationParams<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
 		if ('where' in options) {
 			const { where } = options;
 			if (where.organizationContactId === 'null') {
@@ -100,7 +108,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			if (where.tags) {
 				options.where.tags = {
 					id: In(where.tags as string[])
-				}
+				};
 			}
 		}
 		return await super.paginate(options);
@@ -127,7 +135,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			const { organizationId, projectId, integrationId } = options;
 
 			// Attempt to retrieve the organization projects by the provided parameters.
-			const projects = await this.organizationProjectRepository.find({
+			const projects = await this.repository.find({
 				where: {
 					...(projectId ? { id: projectId } : {}),
 					organizationId,
@@ -164,8 +172,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Set find options (skip, take, and relations)
-		query.skip((options && options.skip) ? (options.take * (options.skip - 1)) : 0);
-		query.take((options && options.take) ? (options.take) : 10);
+		query.skip(options && options.skip ? options.take * (options.skip - 1) : 0);
+		query.take(options && options.take ? options.take : 10);
 
 		// Join with the `Repository` entity and left join with `Issue` entity
 		query.innerJoinAndSelect(`${query.alias}.repository`, 'repository');

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { databaseTypes, getConfig } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
@@ -17,7 +17,7 @@ export class ScheduleTimeLogEntriesHandler
 	constructor(
 		@InjectRepository(TimeLog)
 		private readonly timeLogRepository: Repository<TimeLog>
-	) {}
+	) { }
 
 	public async execute(command: ScheduleTimeLogEntriesCommand) {
 		const { timeLog } = command;
@@ -104,14 +104,14 @@ export class ScheduleTimeLogEntriesHandler
 				/**
 				 * Adjust stopped date as per database selection
 				 */
-				switch(getConfig().dbConnectionOptions.type) {
-					case databaseTypes.sqlite:
-					case databaseTypes.betterSqlite3:
+				switch (getConfig().dbConnectionOptions.type) {
+					case DatabaseTypeEnum.sqlite:
+					case DatabaseTypeEnum.betterSqlite3:
 						stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
 						slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
 						break;
-					case databaseTypes.postgres:
-					case databaseTypes.mysql:
+					case DatabaseTypeEnum.postgres:
+					case DatabaseTypeEnum.mysql:
 						stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
 						slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
 						break;

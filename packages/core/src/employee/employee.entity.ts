@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
-	Entity,
 	JoinColumn,
 	JoinTable,
 	ManyToMany,
@@ -12,6 +11,7 @@ import {
 	Index,
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
+import { MultiORMEntity } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -75,8 +75,9 @@ import {
 	User,
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
-@Entity('employee')
+@MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
 
 	@ApiPropertyOptional({ type: () => Date })

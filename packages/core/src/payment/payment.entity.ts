@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	JoinColumn,
@@ -31,8 +30,10 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { IsOptional, IsUUID } from 'class-validator';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 
-@Entity('payment')
+@MultiORMEntity('payment', { mikroOrmRepository: () => MikroOrmPaymentRepository })
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiPropertyOptional({ type: () => Date })

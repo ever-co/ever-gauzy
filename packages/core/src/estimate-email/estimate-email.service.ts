@@ -1,5 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, MoreThan, Repository } from 'typeorm';
+import { FindOptionsWhere, MoreThan } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import { sign, verify } from 'jsonwebtoken';
@@ -9,30 +9,39 @@ import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Invoice, Organization } from './../core/entities/internal';
 import { EstimateEmail } from './estimate-email.entity';
+import { TypeOrmEstimateEmailRepository } from './repository/type-orm-estimate-email.repository';
+import { MikroOrmEstimateEmailRepository } from './repository/mikro-orm-estimate-email.repository';
+import { TypeOrmInvoiceRepository } from './../invoice/repository/type-orm-invoice.repository';
+import { MikroOrmInvoiceRepository } from './../invoice/repository/mikro-orm-invoice.repository';
+import { TypeOrmOrganizationRepository } from './../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from './../organization/repository/mikro-orm-organization.repository';
 
 @Injectable()
 export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> {
 	constructor(
 		@InjectRepository(EstimateEmail)
-		private readonly estimateEmailRepository: Repository<EstimateEmail>,
+		typeOrmEstimateEmailRepository: TypeOrmEstimateEmailRepository,
+
+		mikroOrmEstimateEmailRepository: MikroOrmEstimateEmailRepository,
 
 		@InjectRepository(Invoice)
-		private readonly invoiceRepository: Repository<Invoice>,
+		private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
+
+		mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
 
 		@InjectRepository(Organization)
-		private readonly organizationRepository: Repository<Organization>
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+
+		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository
 	) {
-		super(estimateEmailRepository);
+		super(typeOrmEstimateEmailRepository, mikroOrmEstimateEmailRepository);
 	}
 
-	async createEstimateEmail(
-		id: string,
-		email: string
-	): Promise<IEstimateEmail> {
-		const invoice: IInvoice = await this.invoiceRepository.findOneByOrFail({
+	async createEstimateEmail(id: string, email: string): Promise<IEstimateEmail> {
+		const invoice: IInvoice = await this.typeOrmInvoiceRepository.findOneByOrFail({
 			id
 		});
-		const organization: IOrganization = await this.organizationRepository.findOneBy({
+		const organization: IOrganization = await this.typeOrmOrganizationRepository.findOneBy({
 			id: invoice.organizationId
 		});
 		try {
@@ -41,7 +50,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 				organizationId: invoice.organizationId,
 				tenantId: RequestContext.currentTenantId(),
 				email
-			}
+			};
 			const tokenExpiryPeriod = organization.inviteExpiryPeriod || 7;
 			const now = moment();
 			const expireDate = now.clone().add(tokenExpiryPeriod, 'days');
@@ -69,10 +78,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 	 * @param relations
 	 * @returns
 	 */
-	async validate(
-		params: FindOptionsWhere<EstimateEmail>,
-		relations: string[] = []
-	): Promise<IEstimateEmail> {
+	async validate(params: FindOptionsWhere<EstimateEmail>, relations: string[] = []): Promise<IEstimateEmail> {
 		try {
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as IEstimateEmailFindInput;
 			const { organizationId, tenantId, email, token } = decoded;
@@ -87,7 +93,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 						name: true,
 						officialName: true,
 						brandColor: true
-					},
+					}
 				},
 				where: {
 					email,
@@ -96,11 +102,11 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 					tenantId,
 					expireDate: MoreThan(moment().toDate())
 				},
-				...(
-					(relations) ? {
+				...(relations
+					? {
 						relations: relations
-					} : {}
-				),
+					}
+					: {})
 			});
 		} catch (error) {
 			throw new BadRequestException(error);

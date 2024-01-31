@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Column, ManyToMany, JoinTable } from 'typeorm';
 import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -6,8 +6,10 @@ import {
 	Organization,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmSkillRepository } from './repository/mikro-orm-skill.repository';
 
-@Entity('skill')
+@MultiORMEntity('skill', { mikroOrmRepository: () => MikroOrmSkillRepository })
 export class Skill extends TenantOrganizationBaseEntity
 	implements ISkill {
 
@@ -24,14 +26,14 @@ export class Skill extends TenantOrganizationBaseEntity
 	color?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
-   /**
-	* employees skills
-    */
+	/**
+	 * employees skills
+	 */
 	@ManyToMany(() => Employee, (employee) => employee.skills, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
@@ -39,7 +41,7 @@ export class Skill extends TenantOrganizationBaseEntity
 	@JoinTable({
 		name: 'skill_employee'
 	})
-    employees?: IEmployee[];
+	employees?: IEmployee[];
 
 	/**
 	 * organizations skills
@@ -51,5 +53,5 @@ export class Skill extends TenantOrganizationBaseEntity
 	@JoinTable({
 		name: 'skill_organization'
 	})
-    organizations?: IOrganization[];
+	organizations?: IOrganization[];
 }

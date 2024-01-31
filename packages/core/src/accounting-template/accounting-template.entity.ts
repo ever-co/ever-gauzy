@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Index } from 'typeorm';
 import { AccountingTemplateTypeEnum, IAccountingTemplate } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { isMySQL } from '@gauzy/config';
+import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
-@Entity('accounting_template')
+@MultiORMEntity('accounting_template', { mikroOrmRepository: () => MikroOrmAccountingTemplateRepository })
 export class AccountingTemplate extends TenantOrganizationBaseEntity
 	implements IAccountingTemplate {
 
@@ -23,7 +25,7 @@ export class AccountingTemplate extends TenantOrganizationBaseEntity
 	mjml?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({...(isMySQL() ? { type: "longtext" } : {})})
+	@Column({ ...(isMySQL() ? { type: "longtext" } : {}) })
 	hbs?: string;
 
 	@ApiProperty({ type: () => String, enum: AccountingTemplateTypeEnum })

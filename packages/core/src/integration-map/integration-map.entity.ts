@@ -1,13 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
 import { IIntegrationMap, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
 
-@Entity('integration_map')
+@MultiORMEntity('integration_map', { mikroOrmRepository: () => MikroOrmIntegrationMapRepository })
 export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {
 
 	@ApiProperty({ type: () => String, enum: IntegrationEntity })

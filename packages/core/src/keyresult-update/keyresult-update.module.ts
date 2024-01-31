@@ -7,11 +7,13 @@ import { KeyResultUpdateController } from './keyresult-update.controller';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/key-result-updates', module: KeyResultUpdateModule }]),
 		TypeOrmModule.forFeature([KeyResultUpdate]),
+		MikroOrmModule.forFeature([KeyResultUpdate]),
 		CqrsModule,
 		TenantModule
 	],
@@ -19,4 +21,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	providers: [KeyResultUpdateService, ...CommandHandlers],
 	exports: [KeyResultUpdateService]
 })
-export class KeyResultUpdateModule {}
+export class KeyResultUpdateModule { }

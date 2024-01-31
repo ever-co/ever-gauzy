@@ -7,11 +7,13 @@ import { TaskSize } from './size.entity';
 import { TaskSizeService } from './size.service';
 import { TaskSizeController } from './size.controller';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-sizes', module: TaskSizeModule }]),
 		TypeOrmModule.forFeature([TaskSize]),
+		MikroOrmModule.forFeature([TaskSize]),
 		CqrsModule,
 		TenantModule
 	],
@@ -19,4 +21,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [TaskSizeService, ...CommandHandlers],
 	exports: [TaskSizeService]
 })
-export class TaskSizeModule {}
+export class TaskSizeModule { }

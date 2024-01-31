@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinTable,
 	ManyToMany,
@@ -19,8 +18,10 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
 
-@Entity('job_preset')
+@MultiORMEntity('job_preset', { mikroOrmRepository: () => MikroOrmJobPresetRepository })
 export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {
 
 	@ApiProperty({ type: () => String })

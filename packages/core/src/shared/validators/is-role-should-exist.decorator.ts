@@ -1,20 +1,20 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
-import { IsRoleShouldExistConstraint } from "./constraints";
+import { RoleShouldExistConstraint } from "./constraints";
 
 /**
- * Role should existed validation decorator
+ * Custom validation decorator factory for checking if a role should exist.
  *
- * @param validationOptions
- * @returns
+ * @param validationOptions - Validation options.
+ * @returns {PropertyDecorator} - Decorator function.
  */
-export const IsRoleShouldExist = (validationOptions?: ValidationOptions) => {
+export const IsRoleShouldExist = (validationOptions?: ValidationOptions): PropertyDecorator => {
 	return (object: Object, propertyName: string) => {
-        registerDecorator({
+		registerDecorator({
 			target: object.constructor,
-			propertyName: propertyName,
+			propertyName,
 			options: validationOptions,
 			constraints: [],
-			validator: IsRoleShouldExistConstraint,
+			validator: RoleShouldExistConstraint,
 		});
-    };
-}
+	};
+};
