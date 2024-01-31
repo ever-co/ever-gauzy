@@ -25,6 +25,7 @@ import {
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
 import { ConfigService, DatabaseTypeEnum, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
+import { concateUserNameExpression } from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import {
@@ -47,24 +48,24 @@ import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time
 export class StatisticService {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
-		mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
+		readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 
 		@InjectRepository(Employee)
-		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		mikroEmployeeRepository: MikroOrmEmployeeRepository,
+		readonly mikroEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(Activity)
-		private typeOrmActivityRepository: TypeOrmActivityRepository,
+		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
 
-		mikroOrmActivityRepository: MikroOrmActivityRepository,
+		readonly mikroOrmActivityRepository: MikroOrmActivityRepository,
 
 		@InjectRepository(TimeLog)
-		private typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
-		mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
 		private readonly configService: ConfigService
 	) { }
@@ -417,7 +418,8 @@ export class StatisticService {
 		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
 		let employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
-			.addSelect(p(`CONCAT("user"."firstName", ' ', "user"."lastName")`), 'user_name')
+			// Builds a SELECT statement for the "user_name" column based on the database type.
+			.addSelect(p(`${concateUserNameExpression(this.configService.dbConnectionOptions.type)}`), "user_name")
 			.addSelect(p(`"user"."imageUrl"`), 'user_image_url')
 			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.user`, 'user')
@@ -1447,7 +1449,7 @@ export class StatisticService {
 				queryString = `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :start AND :end`;
 				break;
 			case DatabaseTypeEnum.postgres:
-				queryString = `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`;
+				queryString = `CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`;
 				break;
 			case DatabaseTypeEnum.mysql:
 				queryString = p(`CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time") BETWEEN :start AND :end`);
@@ -1522,7 +1524,7 @@ export class StatisticService {
 				totalDurationQueryString = `datetime("${totalDurationQuery.alias}"."date" || ' ' || "${totalDurationQuery.alias}"."time") Between :start AND :end`;
 				break;
 			case DatabaseTypeEnum.postgres:
-				totalDurationQueryString = `concat("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`;
+				totalDurationQueryString = `CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`;
 				break;
 			case DatabaseTypeEnum.mysql:
 				totalDurationQueryString = p(`CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time") BETWEEN :start AND :end`);
@@ -1629,7 +1631,8 @@ export class StatisticService {
 		query.select(p(`"${query.alias}"."employeeId"`), "id");
 		query.addSelect(p(`MAX("${query.alias}"."startedAt")`), "startedAt");
 		query.addSelect(p(`"user"."imageUrl"`), "user_image_url");
-		query.addSelect(p(`CONCAT("user"."firstName", ' ', "user"."lastName")`), 'user_name');
+		// Builds a SELECT statement for the "user_name" column based on the database type.
+		query.addSelect(p(`${concateUserNameExpression(this.configService.dbConnectionOptions.type)}`), "user_name");
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
