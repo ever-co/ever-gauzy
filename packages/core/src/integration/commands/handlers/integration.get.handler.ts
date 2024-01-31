@@ -1,47 +1,37 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IIntegration } from '@gauzy/contracts';
 import { IntegrationGetCommand } from './../integration.get.command';
 import { Integration } from '../../integration.entity';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
+import { TypeOrmIntegrationRepository } from '../../repository/type-orm-integration.repository';
 
 @CommandHandler(IntegrationGetCommand)
-export class IntegrationGetHandler
-	implements ICommandHandler<IntegrationGetCommand> {
+export class IntegrationGetHandler implements ICommandHandler<IntegrationGetCommand> {
+
 	constructor(
 		@InjectRepository(Integration)
-		private readonly repository: Repository<Integration>
-	) {}
+		private readonly typeOrmIntegrationRepository: TypeOrmIntegrationRepository
+	) { }
 
-	public async execute(
-		command: IntegrationGetCommand
-	): Promise<IIntegration[]> {
+	/**
+	 *
+	 * @param command
+	 * @returns
+	 */
+	public async execute(command: IntegrationGetCommand): Promise<IIntegration[]> {
 		const { input } = command;
 		const { integrationTypeId, searchQuery, filter } = input;
-		const query = this.repository.createQueryBuilder('integration');
-		query
-			.leftJoinAndSelect(
-				'integration.integrationTypes',
-				'integrationTypes'
-			)
-			.where(p('"integrationTypes"."id" = :id'), {
-				id: integrationTypeId
-			})
-			.andWhere(`LOWER(${query.alias}.name) LIKE :name`, {
-				name: `${searchQuery.toLowerCase()}%`
-			});
 
-		if (filter === 'true') {
-			query.andWhere(`${query.alias}.isPaid = :isPaid`, {
-				isPaid: true
-			});
+		const query = this.typeOrmIntegrationRepository.createQueryBuilder('integration');
+		query.leftJoinAndSelect('integration.integrationTypes', 'integrationTypes');
+		query.where(p('"integrationTypes"."id" = :id'), { id: integrationTypeId })
+		query.andWhere(`LOWER(${query.alias}.name) LIKE :name`, { name: `${searchQuery.toLowerCase()}%` });
+
+		if (filter === 'true' || filter === 'false') {
+			query.andWhere(`${query.alias}.isPaid = :isPaid`, { isPaid: filter === 'true' });
 		}
-		if (filter === 'false') {
-			query.andWhere(`${query.alias}.isPaid = :isPaid`, {
-				isPaid: false
-			});
-		}
+
 		return await query.orderBy(`${query.alias}.order`, 'ASC').getMany();
 	}
 }

@@ -1,7 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
@@ -17,7 +16,9 @@ import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/c
 import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
-import { OrganizationTaskSettingCreateCommand } from 'organization-task-setting/commands';
+import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
+import { TypeOrmOrganizationRepository } from '../../repository/type-orm-organization.repository';
+import { TypeOrmUserOrganizationRepository } from '../../../user-organization/repository/type-orm-user-organization.repository';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
@@ -27,8 +28,12 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
-		@InjectRepository(UserOrganization) private readonly userOrganizationRepository: Repository<UserOrganization>
+
+		@InjectRepository(Organization)
+		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+
+		@InjectRepository(UserOrganization)
+		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository
 	) { }
 
 	public async execute(
@@ -107,9 +112,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType:
-									this.userOrganizationRepository.metadata
-										.tableName,
+								entityType: this.typeOrmUserOrganizationRepository.metadata.tableName,
 								sourceId: userOrganizationSourceId,
 								destinationId: userOrganization.id,
 								tenantId,
@@ -170,8 +173,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				const { sourceId } = input;
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand({
-						entityType:
-							this.organizationRepository.metadata.tableName,
+						entityType: this.typeOrmOrganizationRepository.metadata.tableName,
 						sourceId,
 						destinationId: organization.id,
 						tenantId,
