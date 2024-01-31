@@ -4,16 +4,24 @@ import {
 	ValidatorConstraint,
 	ValidatorConstraintInterface
 } from "class-validator";
-import { ITenant } from "@gauzy/contracts";
 import { isEmpty } from "underscore";
-import { RequestContext } from "./../../../core/context";
+import { ITenant } from "@gauzy/contracts";
+import { RequestContext } from "../../../core/context";
 
+/**
+ * Validates whether the specified tenant belongs to the current user.
+ *
+ */
 @ValidatorConstraint({ name: "IsTenantBelongsToUser", async: true })
 @Injectable()
-export class IsTenantBelongsToUserConstraint implements ValidatorConstraintInterface {
+export class TenantBelongsToUserConstraint implements ValidatorConstraintInterface {
 
 	/**
-	 * Method to be called to perform custom validation over given value.
+	 * Validates whether the specified tenant belongs to the current user.
+	 *
+	 * @param value - The tenant ID or tenant object to be validated.
+	 * @param args - Validation arguments.
+	 * @returns A boolean indicating whether the specified tenant belongs to the current user.
 	 */
 	async validate(value: ITenant['id'] | ITenant, args: ValidationArguments) {
 		if (isEmpty(value)) return true;
@@ -30,7 +38,10 @@ export class IsTenantBelongsToUserConstraint implements ValidatorConstraintInter
 	}
 
 	/**
-	 * Gets default message when validation for this constraint fail.
+	 * Gets the default message when validation for the "IsTenantBelongsToUser" constraint fails.
+	 *
+	 * @param validationArguments - Validation arguments.
+	 * @returns The default error message.
 	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;

@@ -13,10 +13,10 @@ import { Integrations } from '@sentry/node';
 // import { ProfilingIntegration } from '@sentry/profiling-node';
 import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { ConfigService, environment } from '@gauzy/config';
 import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
@@ -40,7 +40,6 @@ import { EmployeeSettingModule } from './employee-setting/employee-setting.modul
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 import { EmployeeAppointmentModule } from './employee-appointment/employee-appointment.module';
 import { CoreModule } from './core/core.module';
-import { SharedModule } from './shared/shared.module';
 import { AuthModule } from './auth/auth.module';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
@@ -444,7 +443,6 @@ if (environment.THROTTLE_ENABLED) {
 			]
 			: []),
 		CoreModule,
-		SharedModule,
 		AuthModule,
 		UserModule,
 		EmployeeModule,

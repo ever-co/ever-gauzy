@@ -10,10 +10,9 @@ import { TypeOrmOrganizationRepository } from '../organization/repository/type-o
 
 @Injectable()
 export class UserOrganizationService extends TenantAwareCrudService<UserOrganization> {
-
 	constructor(
 		@InjectRepository(UserOrganization)
-		typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
+		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
@@ -42,7 +41,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		entity.organizationId = organizationId;
 		entity.tenantId = user.tenantId;
 		entity.userId = user.id;
-		return await this.repository.save(entity);
+		return await this.typeOrmUserOrganizationRepository.save(entity);
 	}
 
 	/**
@@ -70,6 +69,6 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 			entity.userId = userId;
 			entities.push(entity);
 		}
-		return await this.repository.save(entities);
+		return await this.typeOrmUserOrganizationRepository.save(entities);
 	}
 }

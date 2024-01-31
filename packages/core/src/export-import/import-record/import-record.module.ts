@@ -8,19 +8,11 @@ import { ImportRecordService } from './import-record.service';
 
 @Module({
 	imports: [
-		forwardRef(() => TypeOrmModule.forFeature([
-			ImportRecord
-		])),
-		forwardRef(() => MikroOrmModule.forFeature([
-			ImportRecord
-		])),
+		forwardRef(() => TypeOrmModule.forFeature([ImportRecord])),
+		forwardRef(() => MikroOrmModule.forFeature([ImportRecord])),
 		CqrsModule
 	],
 	providers: [ImportRecordService, ...CommandHandlers],
-	exports: [
-		ImportRecordService,
-		TypeOrmModule,
-		MikroOrmModule
-	]
+	exports: [ImportRecordService]
 })
 export class ImportRecordModule { }

@@ -9,9 +9,9 @@ import { TypeOrmImportRecordRepository } from './repository/type-orm-import-reco
 export class ImportRecordService extends TenantAwareCrudService<ImportRecord> {
 	constructor(
 		@InjectRepository(ImportRecord)
-		typeOrmImportRecordRepository: TypeOrmImportRecordRepository,
+		readonly typeOrmImportRecordRepository: TypeOrmImportRecordRepository,
 
-		mikroOrmImportRecordRepository: MikroOrmImportRecordRepository
+		readonly mikroOrmImportRecordRepository: MikroOrmImportRecordRepository
 	) {
 		super(typeOrmImportRecordRepository, mikroOrmImportRecordRepository);
 	}

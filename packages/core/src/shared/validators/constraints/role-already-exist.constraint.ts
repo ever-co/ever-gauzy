@@ -1,6 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Injectable } from "@nestjs/common";
-import { Repository } from "typeorm";
 import {
 	ValidationArguments,
 	ValidatorConstraint,
@@ -9,6 +8,8 @@ import {
 import { isEmpty } from "@gauzy/common";
 import { Role } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
+import { TypeOrmRoleRepository } from "../../../role/repository/type-orm-role.repository";
+import { MikroOrmRoleRepository } from "../../../role/repository/mikro-orm-role.repository";
 
 /**
  * Role already existed validation constraint
@@ -18,11 +19,13 @@ import { RequestContext } from "../../../core/context";
  */
 @ValidatorConstraint({ name: "IsRoleAlreadyExist", async: true })
 @Injectable()
-export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterface {
+export class RoleAlreadyExistConstraint implements ValidatorConstraintInterface {
 
 	constructor(
 		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>
+		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+
+		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 	) { }
 
 	/**
@@ -31,14 +34,14 @@ export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterfac
 	async validate(name: any, args: ValidationArguments): Promise<boolean> {
 		if (isEmpty(name)) return true;
 
-		return !(
-			await this.roleRepository.findOne({
-				where: {
-					name,
-					tenantId: RequestContext.currentTenantId()
-				}
-			})
-		);
+		const tenantId = RequestContext.currentTenantId();
+
+		try {
+			await this.typeOrmRoleRepository.findOneByOrFail({ name, tenantId });
+			return false; // Role exists
+		} catch {
+			return true; // Role does not exist
+		}
 	}
 
 	/**
@@ -46,6 +49,6 @@ export class IsRoleAlreadyExistConstraint implements ValidatorConstraintInterfac
 	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
-		return `Role ${value} already exists.`;
+		return `The role "${value}" already exists. Please choose a different role name.`;
 	}
 }

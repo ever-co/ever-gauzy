@@ -52,7 +52,7 @@ export class AuthService extends SocialAuthService {
 		private typeOrmUserRepository: TypeOrmUserRepository,
 
 		@InjectRepository(OrganizationTeam)
-		protected readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,

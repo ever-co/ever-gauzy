@@ -1,6 +1,5 @@
 import { InjectRepository } from "@nestjs/typeorm";
 import { Injectable } from "@nestjs/common";
-import { Repository } from "typeorm";
 import {
 	ValidationArguments,
 	ValidatorConstraint,
@@ -9,6 +8,8 @@ import {
 import { IRole } from "@gauzy/contracts";
 import { Role } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
+import { TypeOrmRoleRepository } from "../../../role/repository/type-orm-role.repository";
+import { MikroOrmRoleRepository } from "../../../role/repository/mikro-orm-role.repository";
 
 /**
  * Role should existed validation constraint
@@ -18,11 +19,13 @@ import { RequestContext } from "../../../core/context";
  */
 @ValidatorConstraint({ name: "IsRoleShouldExist", async: true })
 @Injectable()
-export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface {
+export class RoleShouldExistConstraint implements ValidatorConstraintInterface {
 
 	constructor(
 		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>
+		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+
+		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 	) { }
 
 	/**
@@ -44,10 +47,13 @@ export class IsRoleShouldExistConstraint implements ValidatorConstraintInterface
 		}
 
 		try {
-			return !!await this.roleRepository.findOneByOrFail({
+			const tenantId = RequestContext.currentTenantId();
+
+			await this.typeOrmRoleRepository.findOneByOrFail({
 				id: roleId,
-				tenantId: RequestContext.currentTenantId()
+				tenantId
 			});
+			return true; // Role exists
 		} catch (error) {
 			return false;
 		}

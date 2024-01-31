@@ -1,5 +1,6 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import {
     Role,
     Employee,
@@ -8,45 +9,36 @@ import {
     UserOrganization
 } from "./../../core/entities/internal";
 import {
-    IsTenantBelongsToUserConstraint,
-    IsRoleAlreadyExistConstraint,
-    IsRoleShouldExistConstraint,
-    IsEmployeeBelongsToOrganizationConstraint,
-    IsTeamAlreadyExistConstraint,
-    IsExpenseCategoryAlreadyExistConstraint,
-    IsOrganizationBelongsToUserConstraint
+    TenantBelongsToUserConstraint,
+    RoleAlreadyExistConstraint,
+    RoleShouldExistConstraint,
+    EmployeeBelongsToOrganizationConstraint,
+    TeamAlreadyExistConstraint,
+    ExpenseCategoryAlreadyExistConstraint,
+    OrganizationBelongsToUserConstraint
 } from "./constraints";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
+
+const entities = [
+    Role,
+    Employee,
+    OrganizationTeam,
+    ExpenseCategory,
+    UserOrganization
+];
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([
-            Role,
-            Employee,
-            OrganizationTeam,
-            ExpenseCategory
-        ]),
-        MikroOrmModule.forFeature([
-            Role,
-            Employee,
-            OrganizationTeam,
-            ExpenseCategory
-        ]),
-        forwardRef(() => TypeOrmModule.forFeature([
-            UserOrganization
-        ])),
-        forwardRef(() => MikroOrmModule.forFeature([
-            UserOrganization
-        ]))
+        TypeOrmModule.forFeature(entities),
+        MikroOrmModule.forFeature(entities)
     ],
     providers: [
-        IsTenantBelongsToUserConstraint,
-        IsRoleAlreadyExistConstraint,
-        IsRoleShouldExistConstraint,
-        IsEmployeeBelongsToOrganizationConstraint,
-        IsTeamAlreadyExistConstraint,
-        IsExpenseCategoryAlreadyExistConstraint,
-        IsOrganizationBelongsToUserConstraint
+        TenantBelongsToUserConstraint,
+        RoleAlreadyExistConstraint,
+        RoleShouldExistConstraint,
+        EmployeeBelongsToOrganizationConstraint,
+        TeamAlreadyExistConstraint,
+        ExpenseCategoryAlreadyExistConstraint,
+        OrganizationBelongsToUserConstraint
     ],
     exports: [TypeOrmModule, MikroOrmModule]
 })

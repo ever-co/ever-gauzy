@@ -1,9 +1,7 @@
 // import * as csurf from 'csurf';
-import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SentryService } from '../core/sentry/ntegral';
 import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -18,11 +16,13 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import tracer from './tracer';
+import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
-import { coreSubscribers } from './../core/entities/subscribers';
+import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
-import { AuthGuard } from './../shared/guards';
+import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
@@ -44,11 +44,6 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'],
 		bufferLogs: true
 	});
-
-	/**
-	 * Dependency injection with class-validator
-	 */
-	useContainer(app.select(AppModule).get(SharedModule), { fallback: true });
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
 	app.set('trust proxy', true);
@@ -249,6 +244,11 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
+
+	/**
+	 * Dependency injection with class-validator
+	 */
+	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	// Configure Atlassian Connect Express
 	// const addon = ac(express());
