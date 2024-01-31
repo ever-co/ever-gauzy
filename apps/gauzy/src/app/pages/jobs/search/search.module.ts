@@ -24,7 +24,7 @@ import { DialogsModule } from '../../../@shared/dialogs';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule } from '@nebular/theme';
-import { PaginationModule } from '../../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -51,7 +51,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		StatusBadgeModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule
+		PaginationV2Module
 	]
 })
 export class SearchModule { }

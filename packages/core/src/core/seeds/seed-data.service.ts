@@ -9,7 +9,7 @@ import { ModuleRef } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as chalk from 'chalk';
 import * as moment from 'moment';
-import { environment as env, ConfigService, databaseTypes } from '@gauzy/config';
+import { environment as env, ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import {
 	IEmployee,
 	IOrganization,
@@ -311,6 +311,7 @@ import { createDefaultStatuses } from './../../tasks/statuses/status.seed';
 import { createDefaultPriorities } from './../../tasks/priorities/priority.seed';
 import { createDefaultSizes } from './../../tasks/sizes/size.seed';
 import { createDefaultIssueTypes } from './../../tasks/issue-type/issue-type.seed';
+import { getDBType } from './../../core/utils';
 
 export enum SeederTypeEnum {
 	ALL = 'all',
@@ -2252,10 +2253,10 @@ export class SeedDataService {
 	private async cleanAll(entities: Array<any>) {
 		try {
 			const manager = this.dataSource.manager;
-			const database = this.configService.dbConnectionOptions;
+			const databaseType = getDBType(this.configService.dbConnectionOptions);
 
-			switch (database.type) {
-				case databaseTypes.postgres:
+			switch (databaseType) {
+				case DatabaseTypeEnum.postgres:
 					const tables = entities.map(
 						(entity) => '"' + entity.tableName + '"'
 					);
@@ -2264,7 +2265,7 @@ export class SeedDataService {
 					)} RESTART IDENTITY CASCADE;`;
 					await manager.query(truncateSql);
 					break;
-				case databaseTypes.mysql:
+				case DatabaseTypeEnum.mysql:
 					// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
 					await manager.query(`SET foreign_key_checks = 0;`);
 					for (const entity of entities) {
@@ -2274,8 +2275,8 @@ export class SeedDataService {
 					}
 					await manager.query(`SET foreign_key_checks = 1;`);
 					break;
-				case databaseTypes.sqlite:
-				case databaseTypes.betterSqlite3:
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
 					await manager.query(`PRAGMA foreign_keys = OFF;`);
 					for (const entity of entities) {
 						await manager.query(
@@ -2284,7 +2285,7 @@ export class SeedDataService {
 					};
 					break;
 				default:
-					throw Error(`Unsupported database type: ${database.type}`);
+					throw Error(`Unsupported database type: ${databaseType}`);
 			}
 		} catch (error) {
 			this.handleError(error, 'Unable to clean database');

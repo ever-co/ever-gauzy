@@ -11,15 +11,15 @@ import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { UserModule } from './../../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	controllers: [
 		TimeLogController
 	],
 	imports: [
-		TypeOrmModule.forFeature([
-			TimeLog
-		]),
+		TypeOrmModule.forFeature([TimeLog]),
+		MikroOrmModule.forFeature([TimeLog]),
 		TenantModule,
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
@@ -34,6 +34,7 @@ import { UserModule } from './../../user/user.module';
 	],
 	exports: [
 		TypeOrmModule,
+		MikroOrmModule,
 		TimeLogService
 	]
 })

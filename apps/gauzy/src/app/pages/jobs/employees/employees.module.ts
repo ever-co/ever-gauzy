@@ -18,7 +18,7 @@ import { SharedModule } from '../../../@shared/shared.module';
 import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationModule } from '../../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 
 @NgModule({
@@ -40,7 +40,7 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		SmartTableToggleModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule,
+		PaginationV2Module,
 		WorkInProgressModule
 	]
 })

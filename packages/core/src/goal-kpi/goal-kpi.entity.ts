@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, Index, RelationId } from 'typeorm';
+import { Column, ManyToOne, Index, RelationId } from 'typeorm';
 import { IEmployee, IKPI, KpiMetricEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
@@ -6,8 +6,10 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmGoalKPIRepository } from './repository/mikro-orm-goal-kpi.repository';
 
-@Entity('goal_kpi')
+@MultiORMEntity('goal_kpi', { mikroOrmRepository: () => MikroOrmGoalKPIRepository })
 export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@ApiProperty({ type: () => String })
 	@Column()
@@ -40,10 +42,10 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	targetValue: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

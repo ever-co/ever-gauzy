@@ -12,6 +12,7 @@ import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from
 import { TenantBaseEntity } from '../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { EntityRepository } from '@mikro-orm/core';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
 export type IFindEntityByParams =
@@ -25,8 +26,11 @@ export type IFindEntityByParams =
 export class TaskStatusPrioritySizeService<
 	BaseEntity extends TenantBaseEntity
 > extends TenantAwareCrudService<BaseEntity> {
-	constructor(protected readonly repository: Repository<BaseEntity>) {
-		super(repository);
+	constructor(
+		typeOrmTaskStatusRepository: Repository<BaseEntity>,
+		mikroOrmTaskStatusRepository?: EntityRepository<BaseEntity>
+	) {
+		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository);
 	}
 
 	async findEntitiesByParams(params: IFindEntityByParams): Promise<IPagination<BaseEntity>> {

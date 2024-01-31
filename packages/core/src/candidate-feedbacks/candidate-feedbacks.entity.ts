@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	OneToOne,
 	JoinColumn,
 	OneToMany,
@@ -25,8 +24,10 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
 
-@Entity('candidate_feedback')
+@MultiORMEntity('candidate_feedback', { mikroOrmRepository: () => MikroOrmCandidateFeedbackRepository })
 export class CandidateFeedback extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
 
@@ -51,10 +52,10 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	status?: CandidateStatusEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate
@@ -86,10 +87,10 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@Column({ nullable: true })
 	interviewId?: ICandidateInterview['id'];
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate Criterions Rating
@@ -101,10 +102,10 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	criterionsRating?: ICandidateCriterionsRating[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate Interviewers

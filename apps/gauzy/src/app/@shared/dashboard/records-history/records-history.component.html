@@ -18,15 +18,12 @@
 				[source]="smartTableSource"
 			></angular2-smart-table>
 		</div>
-		<div *ngIf="pagination.totalItems > minItemPerPage" class="pagination-container">
-			<ga-pagination
-				(selectedOption)="onUpdateOption($event)"
-				(selectedPage)="onPageChange($event)"
-				[doEmit]="false"
-				[totalItems]="pagination?.totalItems"
-				[itemsPerPage]="pagination?.itemsPerPage"
-				[activePage]="pagination?.activePage"
-			></ga-pagination>
+		<div class="pagination-container">
+			<ng-container *ngIf="smartTableSource">
+				<ngx-pagination
+					[source]="smartTableSource"
+				></ngx-pagination>
+			</ng-container>
 		</div>
 	</nb-card-body>
 </nb-card>

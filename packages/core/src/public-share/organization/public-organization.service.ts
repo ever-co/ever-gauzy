@@ -1,22 +1,25 @@
 import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
+import { TypeOrmOrganizationRepository } from 'organization/repository/type-orm-organization.repository';
+import { TypeOrmOrganizationContactRepository } from 'organization-contact/repository/type-orm-organization-contact.repository';
+import { TypeOrmOrganizationProjectRepository } from 'organization-project/repository/type-orm-organization-project.repository';
 
 @Injectable()
 export class PublicOrganizationService {
 
 	constructor(
 		@InjectRepository(Organization)
-		private readonly repository: Repository<Organization>,
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContact: Repository<OrganizationContact>,
+		private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProject: Repository<OrganizationProject>
-	) {}
+		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+	) { }
 
 	/**
 	 * GET organization by profile link
@@ -30,7 +33,7 @@ export class PublicOrganizationService {
 		relations: string[]
 	): Promise<IOrganization> {
 		try {
-			return await this.repository.findOneOrFail({
+			return await this.typeOrmOrganizationRepository.findOneOrFail({
 				where,
 				relations
 			});
@@ -49,7 +52,7 @@ export class PublicOrganizationService {
 		options: FindOptionsWhere<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
 		try {
-			const [items = [], total = 0] = await this.organizationContact.findAndCountBy(options);
+			const [items = [], total = 0] = await this.typeOrmOrganizationContactRepository.findAndCountBy(options);
 			return { items, total };
 		} catch (error) {
 			throw new NotFoundException(`The requested public clients was not found`);
@@ -66,7 +69,7 @@ export class PublicOrganizationService {
 		options: FindOptionsWhere<OrganizationContact>
 	): Promise<Number> {
 		try {
-			return await this.organizationContact.countBy(options);
+			return await this.typeOrmOrganizationContactRepository.countBy(options);
 		} catch (error) {
 			throw new NotFoundException(`The requested client counts was not found`);
 		}
@@ -82,7 +85,7 @@ export class PublicOrganizationService {
 		options: FindOptionsWhere<OrganizationProject>
 	): Promise<Number> {
 		try {
-			return await this.organizationProject.countBy(options);
+			return await this.typeOrmOrganizationProjectRepository.countBy(options);
 		} catch (error) {
 			throw new NotFoundException(`The requested project counts was not found`);
 		}

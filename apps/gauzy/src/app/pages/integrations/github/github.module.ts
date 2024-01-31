@@ -23,7 +23,7 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { DirectivesModule } from '../../../@shared/directives/directives.module';
 import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
-import { PaginationModule } from '../../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
 
 @NgModule({
 	declarations: [
@@ -49,7 +49,7 @@ import { PaginationModule } from '../../../@shared/pagination/pagination.module'
 		TranslateModule,
 		DirectivesModule,
 		BackNavigationModule,
-		PaginationModule,
+		PaginationV2Module,
 		RepositorySelectorModule,
 		ProjectSelectModule
 	]

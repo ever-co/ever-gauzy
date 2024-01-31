@@ -1,9 +1,11 @@
-import { Entity, Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductTypeTranslation as IProductCategoryTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductCategory, TranslationBase } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductCategoryTranslationRepository } from './repository/mikro-orm-product-category-translation.repository';
 
-@Entity('product_category_translation')
+@MultiORMEntity('product_category_translation', { mikroOrmRepository: () => MikroOrmProductCategoryTranslationRepository })
 export class ProductCategoryTranslation extends TranslationBase
 	implements IProductCategoryTranslation {
 
@@ -20,10 +22,10 @@ export class ProductCategoryTranslation extends TranslationBase
 	languageCode: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductCategory

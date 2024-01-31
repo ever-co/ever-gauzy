@@ -12,7 +12,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -29,8 +28,10 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 
-@Entity('invite')
+@MultiORMEntity('invite', { mikroOrmRepository: () => MikroOrmInviteRepository })
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })

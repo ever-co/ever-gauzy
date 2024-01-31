@@ -1,16 +1,16 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITaskRelatedIssueType } from '@gauzy/contracts';
 import { OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand } from '../organization-team-task-related-issue-type-bulk-create.command';
-import { TaskRelatedIssueTypesService } from '../../related-issue-type.service';
+import { TaskRelatedIssueTypeService } from '../../related-issue-type.service';
 
 @CommandHandler(OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand)
 export class OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler
 	implements
-		ICommandHandler<OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand>
+	ICommandHandler<OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand>
 {
 	constructor(
-		private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypesService
-	) {}
+		private readonly TaskRelatedIssueTypeervice: TaskRelatedIssueTypeService
+	) { }
 
 	public async execute(
 		command: OrganizationTeamTaskRelatedIssueTypeBulkCreateCommand
@@ -21,7 +21,7 @@ export class OrganizationTeamTaskRelatedIssueTypeBulkCreateHandler
 		/**
 		 * Create bulk task statuses for specific organization team
 		 */
-		return this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesByEntity(
+		return this.TaskRelatedIssueTypeervice.createBulkRelatedIssueTypesByEntity(
 			{
 				organizationId,
 				organizationTeamId,

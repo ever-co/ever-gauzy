@@ -1,6 +1,12 @@
-import { Brackets, FindOptionsRelations, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+	Brackets,
+	FindOptionsRelations,
+	IsNull,
+	SelectQueryBuilder,
+	WhereExpressionBuilder
+} from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
@@ -8,15 +14,18 @@ import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
 import { FileStorage } from './../core/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
+import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
-
 	constructor(
 		@InjectRepository(Tag)
-		private readonly tagRepository: Repository<Tag>
+		typeOrmTagRepository: TypeOrmTagRepository,
+
+		mikroOrmTagRepository: MikroOrmTagRepository
 	) {
-		super(tagRepository);
+		super(typeOrmTagRepository, mikroOrmTagRepository);
 	}
 
 	/**
@@ -26,20 +35,17 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @param relations
 	 * @returns
 	 */
-	async findTagsByLevel(
-		input: ITagFindInput,
-		relations: string[] = []
-	): Promise<IPagination<ITag>> {
-		const query = this.tagRepository.createQueryBuilder(this.alias);
+	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
+		const query = this.repository.createQueryBuilder(this.alias);
 		/**
 		 * Defines a special criteria to find specific relations.
 		 */
 		query.setFindOptions({
-			...(
-				(relations) ? {
+			...(relations
+				? {
 					relations: relations
-				} : {}
-			),
+				}
+				: {})
 		});
 		/**
 		 * Additionally you can add parameters used in where expression.
@@ -63,16 +69,16 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		relations: string[] | FindOptionsRelations<Tag> = []
 	): Promise<IPagination<ITag>> {
 		try {
-			const query = this.tagRepository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 			/**
 			 * Defines a special criteria to find specific relations.
 			 */
 			query.setFindOptions({
-				...(
-					(relations) ? {
+				...(relations
+					? {
 						relations: relations
-					} : {}
-				),
+					}
+					: {})
 			});
 			/**
 			 * Left join all relational tables with tag table
@@ -104,8 +110,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.leftJoin(`${query.alias}.users`, 'user');
 			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
 			/**
-			* Adds new selection to the SELECT query.
-			*/
+			 * Adds new selection to the SELECT query.
+			 */
 			query.select(`${query.alias}.*`);
 			query.addSelect(p(`COUNT("candidate"."id")`), `candidate_counter`);
 			query.addSelect(p(`COUNT("employee"."id")`), `employee_counter`);
@@ -134,8 +140,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.addSelect(p(`COUNT("user"."id")`), `user_counter`);
 			query.addSelect(p(`COUNT("warehouse"."id")`), `warehouse_counter`);
 			/**
-			* Adds GROUP BY condition in the query builder.
-			*/
+			 * Adds GROUP BY condition in the query builder.
+			 */
 			query.addGroupBy(`${query.alias}.id`);
 			/**
 			 * Additionally you can add parameters used in where expression.
@@ -145,14 +151,10 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			});
 			let items = await query.getRawMany();
 			const store = new FileStorage();
-			store.setProvider(
-				FileStorageProviderEnum.LOCAL
-			);
+			store.setProvider(FileStorageProviderEnum.LOCAL);
 			items = items.map((item) => {
 				if (item.icon) {
-					item.fullIconUrl = store
-						.getProviderInstance()
-						.url(item.icon);
+					item.fullIconUrl = store.getProviderInstance().url(item.icon);
 				}
 
 				return item;
@@ -171,66 +173,54 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @param request
 	 * @returns
 	 */
-	getFilterTagQuery(
-		query: SelectQueryBuilder<Tag>,
-		request: ITagFindInput
-	): SelectQueryBuilder<Tag> {
+	getFilterTagQuery(query: SelectQueryBuilder<Tag>, request: ITagFindInput): SelectQueryBuilder<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
 
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(
-					p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
-				);
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.where(
-					[
-						{
-							organizationId: IsNull()
-						},
-						{
-							organizationId
-						}
-					]
-				);
+				qb.where([
+					{
+						organizationId: IsNull()
+					},
+					{
+						organizationId
+					}
+				]);
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(organizationTeamId)) {
-					qb.andWhere(
-						p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+					qb.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
 						organizationTeamId
 					});
 				}
 			})
 		);
-		query.andWhere(
-			p(`"${query.alias}"."isSystem" = :isSystem`), {
+		query.andWhere(p(`"${query.alias}"."isSystem" = :isSystem`), {
 			isSystem: false
 		});
 		/**
 		 * Additionally you can add parameters used in where expression.
 		 */
 		if (isNotEmpty(name)) {
-			query.andWhere(
-				p(`"${query.alias}"."name" ILIKE :name`), {
+			query.andWhere(p(`"${query.alias}"."name" ILIKE :name`), {
 				name: `%${name}%`
 			});
 		}
 		if (isNotEmpty(color)) {
-			query.andWhere(
-				p(`"${query.alias}"."color" ILIKE :color`), {
+			query.andWhere(p(`"${query.alias}"."color" ILIKE :color`), {
 				color: `%${color}%`
 			});
 		}
 		if (isNotEmpty(description)) {
-			query.andWhere(
-				p(`"${query.alias}"."description" ILIKE :description`), {
+			query.andWhere(p(`"${query.alias}"."description" ILIKE :description`), {
 				description: `%${description}%`
 			});
 		}

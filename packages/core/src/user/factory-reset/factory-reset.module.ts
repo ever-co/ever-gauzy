@@ -4,6 +4,7 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { getConfig } from '@gauzy/config';
 import { FactoryResetService } from './factory-reset.service';
@@ -15,10 +16,16 @@ import { coreEntities } from '../../core/entities';
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
+		MikroOrmModule.forFeature([
+			...coreEntities,
+			...getEntitiesFromPlugins(getConfig().plugins)
+		]),
 	],
 	providers: [
 		FactoryResetService,
 	],
-	exports: [FactoryResetService]
+	exports: [
+		FactoryResetService
+	]
 })
 export class FactoryResetModule { }

@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { GauzyAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
 import { IScreenshot, IntegrationEntity, IntegrationEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
@@ -8,16 +8,21 @@ import { TenantAwareCrudService } from './../../core/crud';
 import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 import { Screenshot } from './screenshot.entity';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import { TypeOrmScreenshotRepository } from './repository/type-orm-screenshot.repository';
+import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	constructor(
 		@InjectRepository(Screenshot)
-		protected readonly screenshotRepository: Repository<Screenshot>,
+		typeOrmScreenshotRepository: TypeOrmScreenshotRepository,
+
+		mikroOrmScreenshotRepository: MikroOrmScreenshotRepository,
+
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _gauzyAIService: GauzyAIService
 	) {
-		super(screenshotRepository);
+		super(typeOrmScreenshotRepository, mikroOrmScreenshotRepository);
 	}
 
 	/**

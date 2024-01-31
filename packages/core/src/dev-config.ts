@@ -3,9 +3,9 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_PORT,
 	DEFAULT_GRAPHQL_API_PATH,
-	IPluginConfig
+	IPluginConfig,
 } from '@gauzy/common';
-import { dbConnectionConfig } from '@gauzy/config';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from '@gauzy/config';
 
 // Define the dev configuration
 export const devConfig: IPluginConfig = {
@@ -26,7 +26,10 @@ export const devConfig: IPluginConfig = {
 		retryDelay: 3000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
-		...dbConnectionConfig
+		...dbTypeOrmConnectionConfig
+	},
+	dbMikroOrmConnectionOptions: {
+		...dbMikroOrmConnectionConfig
 	},
 	plugins: []
 };

@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Column, OneToMany } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -6,8 +6,10 @@ import {
 	ProductTypeTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
 
-@Entity('product_type')
+@MultiORMEntity('product_type', { mikroOrmRepository: () => MikroOrmProductTypeRepository })
 export class ProductType extends TranslatableBase {
 
 	@ApiProperty({ type: () => String, enum: ProductTypesIconsEnum })

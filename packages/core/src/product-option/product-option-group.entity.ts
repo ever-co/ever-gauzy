@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
 import {
 	Product,
 	TenantOrganizationBaseEntity
@@ -10,11 +10,11 @@ import {
 	ProductOption,
 	ProductOptionGroupTranslation
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductOptionGroupRepository } from './repository/mikro-orm-product-option-group.repository';
 
-@Entity('product_option_group')
-export class ProductOptionGroup
-	extends TenantOrganizationBaseEntity
-	implements IProductOptionGroupTranslatable {
+@MultiORMEntity('product_option_group', { mikroOrmRepository: () => MikroOrmProductOptionGroupRepository })
+export class ProductOptionGroup extends TenantOrganizationBaseEntity implements IProductOptionGroupTranslatable {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Column()

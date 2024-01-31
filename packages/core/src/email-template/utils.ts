@@ -7,7 +7,7 @@ import * as chalk from 'chalk';
 import * as moment from 'moment';
 import { EmailTemplateEnum } from '@gauzy/contracts';
 import { isNotEmpty } from "@gauzy/common";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 import { prepareSQLQuery as p } from './../database/database.helper';
 
 /**
@@ -164,21 +164,21 @@ export class EmailTemplateUtils {
                 mjml
             ];
 
-            let query, update, insert : string;
-            switch(queryRunner.connection.options.type) {
-                case databaseTypes.sqlite:
-                case databaseTypes.betterSqlite3:
+            let query, update, insert: string;
+            switch (queryRunner.connection.options.type) {
+                case DatabaseTypeEnum.sqlite:
+                case DatabaseTypeEnum.betterSqlite3:
                     query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                     update = `UPDATE "email_template" SET "hbs" = ?, "mjml" = ? WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                     payload.push(uuidV4());
                     insert = `INSERT INTO "email_template" ("name", "languageCode", "hbs", "mjml", "id") VALUES(?, ?, ?, ?, ?)`;
                     break;
-                case databaseTypes.postgres:
+                case DatabaseTypeEnum.postgres:
                     query = `SELECT COUNT(*) FROM "email_template" WHERE ("name" = $1 AND "languageCode" = $2) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                     update = `UPDATE "email_template" SET "hbs" = $1, "mjml" = $2 WHERE ("name" = $3 AND "languageCode" = $4) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`;
                     insert = `INSERT INTO "email_template" ("name", "languageCode", "hbs", mjml) VALUES($1, $2, $3, $4)`;
                     break;
-                case databaseTypes.mysql:
+                case DatabaseTypeEnum.mysql:
                     query = p(`SELECT COUNT(*) FROM "email_template" WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`);
                     update = p(`UPDATE "email_template" SET "hbs" = ?, "mjml" = ? WHERE ("name" = ? AND "languageCode" = ?) AND ("tenantId" IS NULL AND "organizationId" IS NULL)`);
                     insert = p(`INSERT INTO "email_template" ("name", "languageCode", "hbs", mjml) VALUES(?, ?, ?, ?)`);
@@ -188,7 +188,7 @@ export class EmailTemplateUtils {
 
             }
 
-			const [template] = await queryRunner.connection.manager.query(query, [name, languageCode]);
+            const [template] = await queryRunner.connection.manager.query(query, [name, languageCode]);
 
             if (parseInt(template.count, 10) > 0) {
                 await queryRunner.connection.manager.query(update, [hbs, mjml, name, languageCode]);

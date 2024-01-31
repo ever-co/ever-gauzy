@@ -1,14 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import {
-	Connection,
-	DeepPartial,
-	FindManyOptions,
-	FindOptionsWhere,
-	Raw,
-	Repository,
-	UpdateResult
-} from 'typeorm';
+import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPipelineStage } from '@gauzy/contracts';
 import { Pipeline } from './pipeline.entity';
@@ -24,7 +16,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		protected dealRepository: Repository<Deal>,
 
 		@InjectRepository(Pipeline)
-		protected pipelineRepository: Repository<Pipeline>,
+		pipelineRepository: Repository<Pipeline>,
 
 		@InjectRepository(User)
 		protected userRepository: Repository<User>,
@@ -40,13 +32,13 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		const items: Deal[] = await this.dealRepository
 			.createQueryBuilder('deal')
 			.leftJoin('deal.stage', 'pipeline_stage')
-			.where(p("pipeline_stage.pipelineId = :pipelineId"), { pipelineId })
-			.andWhere(p("pipeline_stage.tenantId = :tenantId"), { tenantId })
-			.groupBy(p("pipeline_stage.id"))
+			.where(p('pipeline_stage.pipelineId = :pipelineId'), { pipelineId })
+			.andWhere(p('pipeline_stage.tenantId = :tenantId'), { tenantId })
+			.groupBy(p('pipeline_stage.id'))
 			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
-			.addGroupBy(p("deal.id"))
+			.addGroupBy(p('deal.id'))
 			// END_FIX
-			.orderBy(p("pipeline_stage.index"), "ASC")
+			.orderBy(p('pipeline_stage.index'), 'ASC')
 			.getMany();
 
 		const { length: total } = items;
@@ -65,34 +57,32 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		entity: QueryDeepPartialEntity<Pipeline>
 	): Promise<UpdateResult | Pipeline> {
 		const queryRunner = this.connection.createQueryRunner();
-		/**
-		 * Query runner connect & start transaction
-		 */
-		await queryRunner.connect();
-        await queryRunner.startTransaction();
 
 		try {
+			/**
+			 * Query runner connect & start transaction
+			 */
+			await queryRunner.connect();
+			await queryRunner.startTransaction();
+
 			await queryRunner.manager.findOneByOrFail(Pipeline, {
 				id: id as any
 			});
 
-			const pipeline: Pipeline = await queryRunner.manager.create(Pipeline, { id: id as any, ...entity, } as any);
+			const pipeline: Pipeline = await queryRunner.manager.create(Pipeline, { id: id as any, ...entity } as any);
 			const updatedStages: IPipelineStage[] = pipeline.stages?.filter((stage: IPipelineStage) => stage.id) || [];
 
-			const deletedStages = await queryRunner.manager.findBy(PipelineStage, {
-				pipelineId: id as any
-			}).then((stages: IPipelineStage[]) => {
-				const requestStageIds = updatedStages.map(
-					(updatedStage: IPipelineStage) => updatedStage.id
-				);
-				return stages.filter(
-					(stage: IPipelineStage) => !requestStageIds.includes(stage.id)
-				);
-			});
+			const deletedStages = await queryRunner.manager
+				.findBy(PipelineStage, {
+					pipelineId: id as any
+				})
+				.then((stages: IPipelineStage[]) => {
+					const requestStageIds = updatedStages.map((updatedStage: IPipelineStage) => updatedStage.id);
+					return stages.filter((stage: IPipelineStage) => !requestStageIds.includes(stage.id));
+				});
 
-			const createdStages = pipeline.stages?.filter(
-				(stage: IPipelineStage) => !updatedStages.includes(stage)
-			) || [];
+			const createdStages =
+				pipeline.stages?.filter((stage: IPipelineStage) => !updatedStages.includes(stage)) || [];
 
 			pipeline.__before_persist();
 			delete pipeline.stages;
@@ -100,10 +90,9 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			await queryRunner.manager.remove(deletedStages);
 
 			for await (const stage of createdStages) {
-				await queryRunner.manager.save(queryRunner.manager.create(
-					PipelineStage,
-					stage as DeepPartial<PipelineStage>
-				));
+				await queryRunner.manager.save(
+					queryRunner.manager.create(PipelineStage, stage as DeepPartial<PipelineStage>)
+				);
 			}
 			for await (const stage of updatedStages) {
 				await queryRunner.manager.update(PipelineStage, stage.id, stage);
@@ -117,7 +106,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			await queryRunner.rollbackTransaction();
 		} finally {
 			await queryRunner.release();
-        }
+		}
 	}
 
 	public pagination(filter: FindManyOptions) {
@@ -144,7 +133,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				const { stages } = where;
 				filter['where']['stages'] = {
 					name: Raw((alias) => `${alias} ILIKE '%${stages}%'`)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

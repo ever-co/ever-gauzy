@@ -1,25 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ICandidateInterviewersDeleteInput, ICandidateInterviewersCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmCandidateInterviewersRepository } from './repository/type-orm-candidate-interviewers.repository';
+import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
-import {
-	ICandidateInterviewersDeleteInput,
-	ICandidateInterviewersCreateInput
-} from '@gauzy/contracts';
 
 @Injectable()
 export class CandidateInterviewersService extends TenantAwareCrudService<CandidateInterviewers> {
 	constructor(
 		@InjectRepository(CandidateInterviewers)
-		private readonly candidateInterviewersRepository: Repository<CandidateInterviewers>
+		typeOrmCandidateInterviewersRepository: TypeOrmCandidateInterviewersRepository,
+
+		mikroOrmCandidateInterviewersRepository: MikroOrmCandidateInterviewersRepository
 	) {
-		super(candidateInterviewersRepository);
+		super(typeOrmCandidateInterviewersRepository, mikroOrmCandidateInterviewersRepository);
 	}
 
-	async getInterviewersByInterviewId(
-		interviewId: string
-	): Promise<CandidateInterviewers[]> {
+	/**
+	 *
+	 * @param interviewId
+	 * @returns
+	 */
+	async getInterviewersByInterviewId(interviewId: string): Promise<CandidateInterviewers[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.interviewId = :interviewId', {
@@ -28,9 +31,12 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 			.getMany();
 	}
 
-	async getInterviewersByEmployeeId(
-		employeeId: ICandidateInterviewersDeleteInput
-	): Promise<any> {
+	/**
+	 *
+	 * @param employeeId
+	 * @returns
+	 */
+	async getInterviewersByEmployeeId(employeeId: ICandidateInterviewersDeleteInput): Promise<any> {
 		return await this.repository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.employeeId = :employeeId', {
@@ -39,9 +45,20 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 			.getMany();
 	}
 
+	/**
+	 *
+	 * @param ids
+	 * @returns
+	 */
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
 	}
+
+	/**
+	 *
+	 * @param createInput
+	 * @returns
+	 */
 	async createBulk(createInput: ICandidateInterviewersCreateInput[]) {
 		return await this.repository.save(createInput);
 	}

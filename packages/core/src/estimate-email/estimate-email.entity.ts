@@ -1,9 +1,11 @@
 import { IEstimateEmail } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { Column } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEstimateEmailRepository } from './repository/mikro-orm-estimate-email.repository';
 
-@Entity('estimate_email')
+@MultiORMEntity('estimate_email', { mikroOrmRepository: () => MikroOrmEstimateEmailRepository })
 export class EstimateEmail extends TenantOrganizationBaseEntity
 	implements IEstimateEmail {
 

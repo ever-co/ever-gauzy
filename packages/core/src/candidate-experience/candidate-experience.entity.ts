@@ -1,12 +1,14 @@
-import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
+import { Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateExperience, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateExperienceRepository } from './repository/mikro-orm-candidate-experience.repository';
 
-@Entity('candidate_experience')
+@MultiORMEntity('candidate_experience', { mikroOrmRepository: () => MikroOrmCandidateExperienceRepository })
 export class CandidateExperience extends TenantOrganizationBaseEntity
 	implements ICandidateExperience {
 
@@ -23,10 +25,10 @@ export class CandidateExperience extends TenantOrganizationBaseEntity
 	description?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.experience, {
 		onDelete: 'CASCADE'

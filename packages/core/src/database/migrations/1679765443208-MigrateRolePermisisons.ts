@@ -1,12 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from "chalk";
 import { RolePermissionUtils } from '../../role-permission/utils';
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
-	name = 'MigrateRolePermisisons1679765443208';
+    name = 'MigrateRolePermisisons1679765443208';
 
-	/**
+    /**
      * Up Migration
      *
      * @param queryRunner
@@ -15,12 +15,12 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+            case DatabaseTypeEnum.postgres:
                 await this.sqlitePostgresMigrateRolePermissions(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlMigrateRolePermissions(queryRunner);
                 break;
             default:
@@ -34,26 +34,26 @@ export class MigrateRolePermisisons1679765443208 implements MigrationInterface {
      */
     public async down(queryRunner: QueryRunner): Promise<void> { }
 
-	/**
-	 * Sqlite | better-sqlite3 | postgres Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async sqlitePostgresMigrateRolePermissions(queryRunner: QueryRunner): Promise<any> {
-		console.log(chalk.yellow(this.name + ' start running!'));
+    /**
+     * Sqlite | better-sqlite3 | postgres Up Migration
+     *
+     * @param queryRunner
+     */
+    public async sqlitePostgresMigrateRolePermissions(queryRunner: QueryRunner): Promise<any> {
+        console.log(chalk.yellow(this.name + ' start running!'));
 
-		try {
-			await RolePermissionUtils.migrateRolePermissions(queryRunner);
-		} catch (error) {
-			console.log(`Error while migrating missing role permisions`, error);
-		}
-	}
+        try {
+            await RolePermissionUtils.migrateRolePermissions(queryRunner);
+        } catch (error) {
+            console.log(`Error while migrating missing role permisions`, error);
+        }
+    }
 
-	/**
-	 * MySQL Up Migration
-	 *
-	 * @param queryRunner
-	 */
-	public async mysqlMigrateRolePermissions(queryRunner: QueryRunner): Promise<any> { }
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlMigrateRolePermissions(queryRunner: QueryRunner): Promise<any> { }
 
 }

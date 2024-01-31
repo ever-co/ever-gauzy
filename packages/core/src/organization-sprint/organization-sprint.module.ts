@@ -9,11 +9,13 @@ import { Task } from '../tasks/task.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from '../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/organization-sprint', module: OrganizationSprintModule }]),
 		TypeOrmModule.forFeature([OrganizationSprint, Task]),
+		MikroOrmModule.forFeature([OrganizationSprint, Task]),
 		CqrsModule,
 		TenantModule,
 		UserModule
@@ -22,4 +24,4 @@ import { UserModule } from '../user/user.module';
 	providers: [OrganizationSprintService, ...CommandHandlers],
 	exports: [OrganizationSprintService]
 })
-export class OrganizationSprintModule {}
+export class OrganizationSprintModule { }

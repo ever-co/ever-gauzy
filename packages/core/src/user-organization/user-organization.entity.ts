@@ -1,17 +1,18 @@
 import {
-	Entity,
 	Index,
 	Column,
 	JoinColumn,
 	RelationId,
 	ManyToOne
 } from 'typeorm';
-import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
+import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 
-@Entity('user_organization')
+@MultiORMEntity('user_organization', { mikroOrmRepository: () => MikroOrmUserOrganizationRepository })
 export class UserOrganization extends TenantOrganizationBaseEntity implements IUserOrganization {
 
 	@ApiProperty({ type: () => Boolean, default: true })
@@ -29,8 +30,7 @@ export class UserOrganization extends TenantOrganizationBaseEntity implements IU
 	/**
 	 * User
 	 */
-	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, (user) => user.organizations, {
+	@ManyToOne(() => User, (it) => it.organizations, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
