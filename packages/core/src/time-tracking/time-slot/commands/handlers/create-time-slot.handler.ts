@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
 import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
@@ -15,19 +15,22 @@ import { CreateTimeSlotCommand } from '../create-time-slot.command';
 import { BulkActivitiesSaveCommand } from '../../../activity/commands';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
+import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 
 @CommandHandler(CreateTimeSlotCommand)
-export class CreateTimeSlotHandler
-	implements ICommandHandler<CreateTimeSlotCommand> {
+export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
+
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		private readonly commandBus: CommandBus
 	) { }
@@ -54,7 +57,7 @@ export class CreateTimeSlotHandler
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		)) {
 			try {
-				let employee = await this.employeeRepository.findOneByOrFail({
+				let employee = await this.typeOrmEmployeeRepository.findOneByOrFail({
 					userId: user.id,
 					tenantId
 				});
@@ -76,7 +79,7 @@ export class CreateTimeSlotHandler
 		 * If organization not found in request then assign current logged user organization
 		 */
 		if (isEmpty(organizationId)) {
-			let employee = await this.employeeRepository.findOneBy({
+			let employee = await this.typeOrmEmployeeRepository.findOneBy({
 				id: employeeId
 			});
 			organizationId = employee ? employee.organizationId : null;
@@ -93,7 +96,7 @@ export class CreateTimeSlotHandler
 		console.log({ organizationId, employeeId });
 		let timeSlot: ITimeSlot;
 		try {
-			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+			const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 			query.setFindOptions({
 				relations: {
 					timeLogs: true
@@ -121,7 +124,7 @@ export class CreateTimeSlotHandler
 			/**
 			 * Find TimeLog for TimeSlot Range
 			 */
-			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				console.log({ input });
 				qb.andWhere(
@@ -152,7 +155,7 @@ export class CreateTimeSlotHandler
 				/**
 				 * Find TimeLog for TimeSlot Range
 				 */
-				const query = this.timeLogRepository.createQueryBuilder('time_log');
+				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 				query.where((qb: SelectQueryBuilder<TimeLog>) => {
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
@@ -181,7 +184,7 @@ export class CreateTimeSlotHandler
 		 */
 		for await (const timeLog of timeSlot.timeLogs) {
 			if (timeLog.isRunning) {
-				await this.timeLogRepository.update(timeLog.id, {
+				await this.typeOrmTimeLogRepository.update(timeLog.id, {
 					stoppedAt: moment.utc().toDate()
 				});
 			}
@@ -204,7 +207,7 @@ export class CreateTimeSlotHandler
 		);
 
 		console.log(`Timeslot save first time before bulk activities save for employee (${user.name})`, { timeSlot });
-		await this.timeSlotRepository.save(timeSlot);
+		await this.typeOrmTimeSlotRepository.save(timeSlot);
 		/*
 		* Merge timeSlots into 10 minutes slots
 		*/
@@ -221,7 +224,7 @@ export class CreateTimeSlotHandler
 		}
 
 		console.log(`Final merged timeSlot for employee (${user.name})`, { timeSlot });
-		return await this.timeSlotRepository.findOne({
+		return await this.typeOrmTimeSlotRepository.findOne({
 			where: {
 				id: timeSlot.id
 			},

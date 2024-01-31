@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, Repository, UpdateResult } from 'typeorm';
+import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPipelineStage } from '@gauzy/contracts';
 import { Pipeline } from './pipeline.entity';
@@ -8,28 +8,34 @@ import { Deal, PipelineStage, User } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
+import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public constructor(
-		@InjectRepository(Deal)
-		protected dealRepository: Repository<Deal>,
-
 		@InjectRepository(Pipeline)
-		pipelineRepository: Repository<Pipeline>,
+		readonly typeOrmPipelineRepository: TypeOrmPipelineRepository,
+
+		readonly mikroOrmPipelineRepository: MikroOrmPipelineRepository,
+
+		@InjectRepository(Deal)
+		readonly typeOrmDealRepository: TypeOrmDealRepository,
 
 		@InjectRepository(User)
-		protected userRepository: Repository<User>,
+		readonly typeOrmUserRepository: TypeOrmUserRepository,
 
 		@InjectConnection()
 		private readonly connection: Connection
 	) {
-		super(pipelineRepository);
+		super(typeOrmPipelineRepository, mikroOrmPipelineRepository);
 	}
 
 	public async findDeals(pipelineId: string) {
 		const tenantId = RequestContext.currentTenantId();
-		const items: Deal[] = await this.dealRepository
+		const items: Deal[] = await this.typeOrmDealRepository
 			.createQueryBuilder('deal')
 			.leftJoin('deal.stage', 'pipeline_stage')
 			.where(p('pipeline_stage.pipelineId = :pipelineId'), { pipelineId })
@@ -44,7 +50,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		const { length: total } = items;
 
 		for (const deal of items) {
-			deal.createdBy = await this.userRepository.findOneBy({
+			deal.createdBy = await this.typeOrmUserRepository.findOneBy({
 				id: deal.createdByUserId
 			});
 		}
@@ -109,6 +115,11 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		}
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;

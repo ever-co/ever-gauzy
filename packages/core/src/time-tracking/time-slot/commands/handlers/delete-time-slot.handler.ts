@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from './../../time-slot.entity';
@@ -9,15 +9,17 @@ import { DeleteTimeSpanCommand } from '../../../time-log/commands/delete-time-sp
 import { DeleteTimeSlotCommand } from '../delete-time-slot.command';
 import { RequestContext } from './../../../../core/context';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 
 @CommandHandler(DeleteTimeSlotCommand)
-export class DeleteTimeSlotHandler
-	implements ICommandHandler<DeleteTimeSlotCommand> {
+export class DeleteTimeSlotHandler implements ICommandHandler<DeleteTimeSlotCommand> {
+
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(command: DeleteTimeSlotCommand): Promise<boolean> {
 		const { query } = command;
@@ -40,7 +42,7 @@ export class DeleteTimeSlotHandler
 		const { organizationId } = query;
 
 		for await (const id of Object.values(ids)) {
-			const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+			const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 			query.setFindOptions({
 				relations: {
 					timeLogs: true,
