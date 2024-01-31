@@ -148,6 +148,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
+import { SharedModule } from './shared/shared.module';
 
 const { unleashConfig, github, jitsu, jira } = environment;
 
@@ -443,6 +444,7 @@ if (environment.THROTTLE_ENABLED) {
 			]
 			: []),
 		CoreModule,
+		SharedModule,
 		AuthModule,
 		UserModule,
 		EmployeeModule,
