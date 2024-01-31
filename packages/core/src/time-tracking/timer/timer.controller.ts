@@ -11,7 +11,9 @@ import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
-	constructor(private readonly timerService: TimerService) { }
+	constructor(
+		private readonly timerService: TimerService
+	) { }
 
 	/**
 	 * GET timer today's status

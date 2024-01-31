@@ -39,10 +39,10 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 export class TimerService {
 	constructor(
 		@InjectRepository(TimeLog)
-		private typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
 		@InjectRepository(Employee)
-		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		private readonly commandBus: CommandBus
 	) { }

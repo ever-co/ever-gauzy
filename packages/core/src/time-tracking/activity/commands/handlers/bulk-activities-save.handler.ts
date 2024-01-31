@@ -1,12 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IActivity, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { Activity } from '../../activity.entity';
 import { BulkActivitiesSaveCommand } from '../bulk-activities-save.command';
 import { RequestContext } from '../../../../core/context';
 import { Employee } from './../../../../core/entities/internal';
+import { TypeOrmActivityRepository } from '../../repository/type-orm-activity.repository';
+import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 
 @CommandHandler(BulkActivitiesSaveCommand)
 export class BulkActivitiesSaveHandler
@@ -14,10 +15,10 @@ export class BulkActivitiesSaveHandler
 
 	constructor(
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>,
+		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
 	) { }
 
 	public async execute(command: BulkActivitiesSaveCommand): Promise<IActivity[]> {
@@ -34,7 +35,7 @@ export class BulkActivitiesSaveHandler
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		)) {
 			try {
-				let employee = await this.employeeRepository.findOneByOrFail({
+				let employee = await this.typeOrmEmployeeRepository.findOneByOrFail({
 					userId: user.id,
 					tenantId
 				});
@@ -56,7 +57,7 @@ export class BulkActivitiesSaveHandler
 		 * If organization not found in request then assign current logged user organization
 		 */
 		if (isEmpty(organizationId)) {
-			let employee = await this.employeeRepository.findOneBy({
+			let employee = await this.typeOrmEmployeeRepository.findOneBy({
 				id: employeeId
 			});
 			organizationId = employee ? employee.organizationId : null;
@@ -81,7 +82,7 @@ export class BulkActivitiesSaveHandler
 
 		console.log(`Activities should be insert into database for employee (${user.name})`, { activities });
 		if (isNotEmpty(activities)) {
-			return await this.activityRepository.save(activities);
+			return await this.typeOrmActivityRepository.save(activities);
 		} else {
 			return [];
 		}
