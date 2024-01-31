@@ -1,22 +1,25 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../update-employee-total-worked-hours.command';
 import { EmployeeService } from '../../employee.service';
 import { TimeLog } from './../../../core/entities/internal';
-import { RequestContext } from './../../../core';
+import { RequestContext } from './../../../core/context';
+import { TypeOrmTimeLogRepository } from '../../../time-tracking/time-log/repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../../../time-tracking/time-log/repository/mikro-orm-time-log.repository';
+
 const config = getConfig();
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
-export class UpdateEmployeeTotalWorkedHoursHandler
-	implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
+export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
 	constructor(
 		private readonly employeeService: EmployeeService,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 	) { }
 
 	public async execute(command: UpdateEmployeeTotalWorkedHoursCommand) {
@@ -43,7 +46,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler
 					throw Error(`cannot update employee total worked hours due to unsupported database type: ${config.dbConnectionOptions.type}`);
 
 			}
-			const logs = await this.timeLogRepository
+			const logs = await this.typeOrmTimeLogRepository
 				.createQueryBuilder()
 				.select(
 					query,
