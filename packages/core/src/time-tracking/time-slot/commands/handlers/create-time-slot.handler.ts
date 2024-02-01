@@ -186,7 +186,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			})
 		);
 
-		this.log(`Timeslot save first time before bulk activities save for employee (${user.name}): ${timeSlot}`);
+		this.log(`Timeslot save first time before bulk activities save for employee (${user.name}): ${JSON.stringify(timeSlot)}`);
 		await this.typeOrmTimeSlotRepository.save(timeSlot);
 		/*
 		* Merge timeSlots into 10 minutes slots
