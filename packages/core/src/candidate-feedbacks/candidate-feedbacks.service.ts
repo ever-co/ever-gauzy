@@ -1,25 +1,30 @@
-import { ICandidateFeedback, ICandidateInterview } from '@gauzy/contracts';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ICandidateFeedback, ICandidateInterview } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
+import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
+import { TypeOrmCandidateFeedbackRepository } from './repository/type-orm-candidate-feedback.repository';
 
 @Injectable()
 export class CandidateFeedbacksService extends TenantAwareCrudService<CandidateFeedback> {
-
 	constructor(
 		@InjectRepository(CandidateFeedback)
-		private readonly candidateFeedbackRepository: Repository<CandidateFeedback>
+		typeOrmCandidateFeedbackRepository: TypeOrmCandidateFeedbackRepository,
+
+		mikroOrmCandidateFeedbackRepository: MikroOrmCandidateFeedbackRepository
 	) {
-		super(candidateFeedbackRepository);
+		super(typeOrmCandidateFeedbackRepository, mikroOrmCandidateFeedbackRepository);
 	}
 
-	async getFeedbacksByInterviewId(
-		interviewId: ICandidateInterview['id']
-	): Promise<ICandidateFeedback[]> {
-		return await this.repository.find({
+	/**
+	 *
+	 * @param interviewId
+	 * @returns
+	 */
+	async getFeedbacksByInterviewId(interviewId: ICandidateInterview['id']): Promise<ICandidateFeedback[]> {
+		return await super.find({
 			where: {
 				interviewId,
 				tenantId: RequestContext.currentTenantId()
@@ -27,6 +32,11 @@ export class CandidateFeedbacksService extends TenantAwareCrudService<CandidateF
 		});
 	}
 
+	/**
+	 *
+	 * @param feedbacks
+	 * @returns
+	 */
 	calcRating(feedbacks: ICandidateFeedback[]) {
 		const rate: number[] = [];
 		feedbacks.forEach((fb) => {

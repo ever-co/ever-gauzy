@@ -1,21 +1,20 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../time-slot-create.command';
 import { RequestContext } from './../../../../core/context';
 import { TimeSlot } from './../../../../core/entities/internal';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 
 @CommandHandler(TimeSlotCreateCommand)
-export class TimeSlotCreateHandler
-	implements ICommandHandler<TimeSlotCreateCommand> {
+export class TimeSlotCreateHandler implements ICommandHandler<TimeSlotCreateCommand> {
 
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
-	) {}
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+	) { }
 
 	public async execute(command: TimeSlotCreateCommand): Promise<ITimeSlot> {
 		const { input } = command;
@@ -32,19 +31,17 @@ export class TimeSlotCreateHandler
 		}: ITimeSlot = input;
 
 		try {
-			const entity = this.timeSlotRepository.create({
+			const entity = this.typeOrmTimeSlotRepository.create({
 				employeeId,
 				duration,
 				keyboard,
 				mouse,
 				overall,
-				startedAt: new Date(
-					moment(time_slot).format('YYYY-MM-DD HH:mm:ss')
-				),
+				startedAt: new Date(moment(time_slot).format('YYYY-MM-DD HH:mm:ss')),
 				organizationId,
 				tenantId
 			});
-			return await this.timeSlotRepository.save(entity as TimeSlot);
+			return await this.typeOrmTimeSlotRepository.save(entity as TimeSlot);
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t create ${IntegrationEntity.TIME_SLOT}`);
 		}

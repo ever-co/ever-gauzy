@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, PrimaryGeneratedColumn } from 'typeorm';
+import { MultiORMEntity } from '@gauzy/core';
+import { MikroOrmProductReviewRepository } from './repository/mikro-orm-product-review.repository';
 
-@Entity()
+@MultiORMEntity('product_review', { mikroOrmRepository: () => MikroOrmProductReviewRepository })
 export class ProductReview {
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;

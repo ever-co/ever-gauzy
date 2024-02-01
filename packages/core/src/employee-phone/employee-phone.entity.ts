@@ -1,9 +1,11 @@
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeePhone } from '@gauzy/contracts';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeePhoneRepository } from './repository/mikro-orm-employee-phone.repository';
 
-@Entity('employee_phone')
+@MultiORMEntity('employee_phone', { mikroOrmRepository: () => MikroOrmEmployeePhoneRepository })
 export class EmployeePhone extends TenantOrganizationBaseEntity implements IEmployeePhone {
 	@ApiProperty({ type: () => String })
 	@Column({ nullable: true })

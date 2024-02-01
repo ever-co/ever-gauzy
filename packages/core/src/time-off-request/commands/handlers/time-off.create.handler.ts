@@ -1,26 +1,23 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import {
-	StatusTypesMapRequestApprovalEnum,
-	ApprovalPolicyTypesStringEnum,
-	RequestApprovalStatusTypesEnum
-} from '@gauzy/contracts';
 import { BadRequestException } from '@nestjs/common';
-import { TimeOffRequest } from '../../time-off-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { StatusTypesMapRequestApprovalEnum, ApprovalPolicyTypesStringEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import { TimeOffRequest } from '../../time-off-request.entity';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
-import { Repository } from 'typeorm';
 import { TimeOffCreateCommand } from '../time-off.create.command';
 import { RequestContext } from '../../../core/context';
+import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
+import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
 
 @CommandHandler(TimeOffCreateCommand)
-export class TimeOffCreateHandler
-	implements ICommandHandler<TimeOffCreateCommand> {
+export class TimeOffCreateHandler implements ICommandHandler<TimeOffCreateCommand> {
 	constructor(
 		@InjectRepository(TimeOffRequest)
-		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		private readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
+
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>
-	) {}
+		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+	) { }
 
 	public async execute(
 		command?: TimeOffCreateCommand
@@ -30,24 +27,18 @@ export class TimeOffCreateHandler
 			const request = new TimeOffRequest();
 			Object.assign(request, timeOff);
 
-			const timeOffRequestSaved = await this.timeOffRequestRepository.save(
-				request
-			);
+			const timeOffRequestSaved = await this.typeOrmTimeOffRequestRepository.save(request);
 
 			const requestApproval = new RequestApproval();
 			requestApproval.requestId = timeOffRequestSaved.id;
-			requestApproval.requestType =
-				ApprovalPolicyTypesStringEnum.TIME_OFF;
-			requestApproval.status = timeOffRequestSaved.status
-				? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status]
-				: RequestApprovalStatusTypesEnum.REQUESTED;
-
+			requestApproval.requestType = ApprovalPolicyTypesStringEnum.TIME_OFF;
+			requestApproval.status = timeOffRequestSaved.status ? StatusTypesMapRequestApprovalEnum[timeOffRequestSaved.status] : RequestApprovalStatusTypesEnum.REQUESTED;
 			requestApproval.createdBy = RequestContext.currentUser().id;
 			requestApproval.createdByName = RequestContext.currentUser().name;
 			requestApproval.name = 'Request time off';
 			requestApproval.min_count = 1;
 
-			await this.requestApprovalRepository.save(requestApproval);
+			await this.typeOrmRequestApprovalRepository.save(requestApproval);
 			return timeOffRequestSaved;
 		} catch (err) {
 			throw new BadRequestException(err);

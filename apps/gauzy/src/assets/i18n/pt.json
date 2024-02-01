@@ -3989,7 +3989,8 @@
 			"OPEN_TIMER": "Abrir Rastreador de Tempo",
 			"WINDOW": "Janela",
 			"HELP": "Ajuda",
-			"LEARN_MORE": "Saiba mais"
+			"LEARN_MORE": "Saiba mais",
+			"OPEN_MAIN_WINDOW": "Abrir janela principal"
 		}
 	},
 	"SERVER": "Servidor",

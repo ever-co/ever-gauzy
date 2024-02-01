@@ -1,20 +1,20 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
-import { IsTenantBelongsToUserConstraint } from "./constraints";
+import { TenantBelongsToUserConstraint } from "./constraints";
 
 /**
  * Tenant should belongs to user validation decorator
  *
  * @param validationOptions
- * @returns
+ * @returns {PropertyDecorator} - Decorator function.
  */
-export const IsTenantBelongsToUser = (validationOptions?: ValidationOptions) => {
+export const IsTenantBelongsToUser = (validationOptions?: ValidationOptions): PropertyDecorator => {
 	return (object: Object, propertyName: string) => {
-        registerDecorator({
+		registerDecorator({
 			target: object.constructor,
 			propertyName: propertyName,
 			options: validationOptions,
 			constraints: [],
-			validator: IsTenantBelongsToUserConstraint,
+			validator: TenantBelongsToUserConstraint,
 		});
-    };
+	};
 }

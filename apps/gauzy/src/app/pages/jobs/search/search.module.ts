@@ -24,34 +24,34 @@ import { DialogsModule } from '../../../@shared/dialogs';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule } from '@nebular/theme';
-import { PaginationModule } from '../../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
 
 @NgModule({
 	declarations: [SearchComponent],
 	imports: [
 		CommonModule,
-		SearchRoutingModule,
-		DialogsModule,
-		TranslateModule,
-		SharedModule,
-		NbIconModule,
-		NbSpinnerModule,
-		MomentModule,
-		NbPopoverModule,
-		NbCardModule,
-		NbInputModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbSelectModule,
+		MomentModule,
 		NbButtonModule,
-		EmployeeMultiSelectModule,
-		Angular2SmartTableModule,
-		StatusBadgeModule,
+		NbCardModule,
+		NbIconModule,
+		NbInputModule,
+		NbPopoverModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbTabsetModule,
 		NbToggleModule,
+		Angular2SmartTableModule,
+		SearchRoutingModule,
+		TranslateModule,
+		SharedModule,
+		DialogsModule,
+		EmployeeMultiSelectModule,
+		StatusBadgeModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		NbTabsetModule,
-		PaginationModule
+		PaginationV2Module
 	]
 })
 export class SearchModule { }

@@ -1,9 +1,7 @@
 // import * as csurf from 'csurf';
-import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SentryService } from '../core/sentry/ntegral';
 import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -18,17 +16,21 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import tracer from './tracer';
+import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
-import { coreSubscribers } from './../core/entities/subscribers';
+import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
-import { AuthGuard } from './../shared/guards';
+import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+	console.time('Application Bootstrap Time');
+
 	if (process.env.OTEL_ENABLED === 'true') {
 		// Start tracing using Signoz first
-		await tracer.start();
+		tracer.start();
 		console.log('OTEL/Signoz Tracing started');
 	} else {
 		console.log('OTEL/Signoz Tracing not enabled');
@@ -265,6 +267,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		}
 	});
 
+	console.timeEnd('Application Bootstrap Time');
 	return app;
 }
 
@@ -295,6 +298,9 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 		dbConnectionOptions: {
 			entities,
 			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>
+		},
+		dbMikroOrmConnectionOptions: {
+			entities,
 		}
 	});
 
@@ -327,7 +333,7 @@ export async function registerAllEntities(pluginConfig: Partial<IPluginConfig>) 
  * @returns
  */
 export function getMigrationsSetting() {
-	console.log(`Reporting __dirname: ${__dirname}`);
+	console.log(`Reporting __dirname: ${__dirname} `);
 
 	//TODO: We need to define some dynamic path here
 	return {

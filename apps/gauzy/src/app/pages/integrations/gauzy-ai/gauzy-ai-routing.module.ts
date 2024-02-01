@@ -6,6 +6,7 @@ import { GauzyAIAuthorizationComponent } from './components/authorization/author
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
 import { IntegrationSettingResolver } from '../integration-setting.resolver';
+import { IntegrationEntitySettingResolver } from '../integration-entity-setting.resolver';
 
 const routes: Routes = [
 	{
@@ -48,6 +49,7 @@ const routes: Routes = [
 				component: GauzyAIViewComponent, // Component for the route with an id parameter
 				resolve: {
 					settings: IntegrationSettingResolver, // Resolver to fetch data before activating the route
+					entitySettings: IntegrationEntitySettingResolver // Resolver to fetch entity settings before activating the route
 				},
 				data: {
 					selectors: {

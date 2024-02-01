@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { WarehouseService } from './warehouse.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { WarehouseController } from './warehouse.controller';
@@ -11,10 +12,20 @@ import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
 
+const entities = [
+	Warehouse,
+	Product,
+	WarehouseProduct,
+	WarehouseProductVariant
+];
+
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/warehouses', module: WarehouseModule }]),
-		TypeOrmModule.forFeature([Warehouse, Product, WarehouseProduct, WarehouseProductVariant]),
+		RouterModule.register([
+			{ path: '/warehouses', module: WarehouseModule }
+		]),
+		TypeOrmModule.forFeature(entities),
+		MikroOrmModule.forFeature(entities),
 		TenantModule,
 		UserModule
 	],
@@ -22,4 +33,4 @@ import { WarehouseProductService } from './warehouse-product-service';
 	providers: [WarehouseService, WarehouseProductService],
 	exports: [WarehouseService, WarehouseProductService]
 })
-export class WarehouseModule {}
+export class WarehouseModule { }

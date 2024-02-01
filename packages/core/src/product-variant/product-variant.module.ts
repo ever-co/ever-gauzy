@@ -10,11 +10,13 @@ import { ProductVariantSettingModule } from './../product-setting/product-settin
 import { ProductModule } from './../product/product.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/product-variants', module: ProductVariantModule }]),
 		TypeOrmModule.forFeature([ProductVariant]),
+		MikroOrmModule.forFeature([ProductVariant]),
 		CqrsModule,
 		TenantModule,
 		ProductVariantPriceModule,
@@ -25,4 +27,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [ProductVariantService, ...CommandHandlers],
 	exports: [ProductVariantService]
 })
-export class ProductVariantModule {}
+export class ProductVariantModule { }

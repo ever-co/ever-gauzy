@@ -1,12 +1,14 @@
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, ManyToMany, JoinTable } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IEmployeeLevel, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeLevelRepository } from './repository/mikro-orm-employee-level.repository';
 
-@Entity({ name: 'employee_level' })
+@MultiORMEntity('employee_level', { mikroOrmRepository: () => MikroOrmEmployeeLevelRepository })
 export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmployeeLevel {
-	
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -14,16 +16,15 @@ export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmpl
 	level: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
 	 */
-	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.employeeLevels, {
+	@ManyToMany(() => Tag, (it) => it.employeeLevels, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

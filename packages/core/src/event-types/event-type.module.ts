@@ -12,12 +12,14 @@ import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/event-type', module: EventTypeModule }]),
 		UserModule,
 		TypeOrmModule.forFeature([EventType, Employee, Organization]),
+		MikroOrmModule.forFeature([EventType, Employee, Organization]),
 		CqrsModule,
 		TenantModule
 	],
@@ -25,4 +27,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	providers: [EventTypeService, EmployeeService, OrganizationService, ...CommandHandlers],
 	exports: [EventTypeService]
 })
-export class EventTypeModule {}
+export class EventTypeModule { }

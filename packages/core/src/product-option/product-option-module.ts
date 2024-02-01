@@ -9,11 +9,18 @@ import { ProductOptionGroupService } from './product-option-group.service';
 import { ProductOptionTranslation } from './product-option-translation.entity';
 import { ProductOptionGroup } from './product-option-group.entity';
 import { ProductOptionGroupTranslation } from './product-option-group-translation.entity';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/product-options', module: ProductOptionModule }]),
 		TypeOrmModule.forFeature([
+			ProductOption,
+			ProductOptionTranslation,
+			ProductOptionGroup,
+			ProductOptionGroupTranslation
+		]),
+		MikroOrmModule.forFeature([
 			ProductOption,
 			ProductOptionTranslation,
 			ProductOptionGroup,
@@ -25,4 +32,4 @@ import { ProductOptionGroupTranslation } from './product-option-group-translatio
 	providers: [ProductOptionService, ProductOptionGroupService],
 	exports: [ProductOptionService, ProductOptionGroupService]
 })
-export class ProductOptionModule {}
+export class ProductOptionModule { }

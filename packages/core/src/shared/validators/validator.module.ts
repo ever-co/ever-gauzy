@@ -1,40 +1,45 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { MikroOrmModule } from "@mikro-orm/nestjs";
 import {
-    Employee,
-    ExpenseCategory,
-    OrganizationTeam,
     Role,
+    Employee,
+    OrganizationTeam,
+    ExpenseCategory,
     UserOrganization
 } from "./../../core/entities/internal";
 import {
-    IsEmployeeBelongsToOrganizationConstraint,
-    IsExpenseCategoryAlreadyExistConstraint,
-    IsOrganizationBelongsToUserConstraint,
-    IsRoleAlreadyExistConstraint,
-    IsRoleShouldExistConstraint,
-    IsTeamAlreadyExistConstraint,
-    IsTenantBelongsToUserConstraint
+    TenantBelongsToUserConstraint,
+    RoleAlreadyExistConstraint,
+    RoleShouldExistConstraint,
+    EmployeeBelongsToOrganizationConstraint,
+    TeamAlreadyExistConstraint,
+    ExpenseCategoryAlreadyExistConstraint,
+    OrganizationBelongsToUserConstraint
 } from "./constraints";
+
+const entities = [
+    Role,
+    Employee,
+    OrganizationTeam,
+    ExpenseCategory,
+    UserOrganization
+];
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([
-            ExpenseCategory,
-            Role,
-            UserOrganization,
-            Employee,
-            OrganizationTeam,
-        ])
+        TypeOrmModule.forFeature(entities),
+        MikroOrmModule.forFeature(entities)
     ],
     providers: [
-        IsEmployeeBelongsToOrganizationConstraint,
-        IsExpenseCategoryAlreadyExistConstraint,
-        IsOrganizationBelongsToUserConstraint,
-        IsRoleAlreadyExistConstraint,
-        IsRoleShouldExistConstraint,
-        IsTeamAlreadyExistConstraint,
-        IsTenantBelongsToUserConstraint,
-    ]
+        TenantBelongsToUserConstraint,
+        RoleAlreadyExistConstraint,
+        RoleShouldExistConstraint,
+        EmployeeBelongsToOrganizationConstraint,
+        TeamAlreadyExistConstraint,
+        ExpenseCategoryAlreadyExistConstraint,
+        OrganizationBelongsToUserConstraint
+    ],
+    exports: [TypeOrmModule, MikroOrmModule]
 })
-export class ValidatorModule {}
+export class ValidatorModule { }

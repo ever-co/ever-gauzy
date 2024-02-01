@@ -1,4 +1,4 @@
-import { Entity, Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import {
 	IEmployee,
 	IExpense,
@@ -20,11 +20,11 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 
-@Entity('invoice_item')
-export class InvoiceItem
-	extends TenantOrganizationBaseEntity
-	implements IInvoiceItem {
+@MultiORMEntity('invoice_item', { mikroOrmRepository: () => MikroOrmInvoiceItemRepository })
+export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoiceItem {
 
 	@ApiProperty({ type: () => String })
 	@IsString()

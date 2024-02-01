@@ -1,18 +1,47 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { EmailTemplateEnum } from '@gauzy/contracts';
-import { EmailTemplateUtils } from './../../email-template/utils';
+import { EmailTemplateUtils } from '../../email-template/utils';
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class EmailTemplateReader1678876700413 implements MigrationInterface {
 
     name = 'EmailTemplateReader1678876700413';
 
     /**
-    * Up Migration
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        console.log(chalk.yellow(this.name + ' start running!'));
+
+        switch (queryRunner.connection.options.type) {
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+            case DatabaseTypeEnum.postgres:
+                await this.sqlitePostgresMigrateEmailTemplate(queryRunner);
+                break;
+            case DatabaseTypeEnum.mysql:
+                await this.mysqlMigrateEmailTemplate(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+        }
+    }
+    /**
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> { }
+
+    /**
+    * Sqlite | better-sqlite3 | MySQL Up Migration
     *
     * @param queryRunner
     */
-    public async up(queryRunner: QueryRunner): Promise<any> {
+    public async sqlitePostgresMigrateEmailTemplate(queryRunner: QueryRunner): Promise<any> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         try {
@@ -28,9 +57,9 @@ export class EmailTemplateReader1678876700413 implements MigrationInterface {
     }
 
     /**
-    * Down Migration
+    * MySQL Up Migration
     *
     * @param queryRunner
     */
-    public async down(queryRunner: QueryRunner): Promise<any> { }
+    public async mysqlMigrateEmailTemplate(queryRunner: QueryRunner): Promise<any> { }
 }

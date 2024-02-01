@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In } from 'typeorm';
 import * as moment from 'moment';
 import { chain, pluck, where } from 'underscore';
 import { TimeSlot } from './../../time-slot.entity';
@@ -9,19 +9,21 @@ import { TimeSlotBulkCreateCommand } from './../time-slot-bulk-create.command';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { RequestContext } from '../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
 
 @CommandHandler(TimeSlotBulkCreateCommand)
-export class TimeSlotBulkCreateHandler
-	implements ICommandHandler<TimeSlotBulkCreateCommand> {
+export class TimeSlotBulkCreateHandler implements ICommandHandler<TimeSlotBulkCreateCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(
 		command: TimeSlotBulkCreateCommand
@@ -41,7 +43,7 @@ export class TimeSlotBulkCreateHandler
 		});
 
 		const tenantId = RequestContext.currentTenantId();
-		const insertedSlots = await this.timeSlotRepository.find({
+		const insertedSlots = await this.typeOrmTimeSlotRepository.find({
 			where: {
 				startedAt: In(pluck(slots, 'startedAt')),
 				tenantId,
@@ -61,7 +63,7 @@ export class TimeSlotBulkCreateHandler
 			return [];
 		}
 
-		const timeLogs = await this.timeLogRepository.find({
+		const timeLogs = await this.typeOrmTimeLogRepository.find({
 			where: {
 				id: In(chain(slots).pluck('timeLogId').flatten().value().filter(Boolean)),
 				organizationId,
@@ -86,12 +88,10 @@ export class TimeSlotBulkCreateHandler
 			return slot;
 		});
 
-		console.log('Time Slots Bulk Create Handler Request', {
-			slots
-		});
+		console.log('Time Slots Bulk Create Handler Request', { slots });
 
 		if (slots.length > 0) {
-			await this.timeSlotRepository.save(slots);
+			await this.typeOrmTimeSlotRepository.save(slots);
 		}
 		slots = insertedSlots.concat(slots);
 

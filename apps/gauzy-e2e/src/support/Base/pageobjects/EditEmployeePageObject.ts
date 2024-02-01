@@ -16,7 +16,7 @@ export const EditEmployeePage = {
 	acceptDateInputCss: '#acceptDateInput',
 	countryDropdownCss: 'ga-country > div.form-group > nb-select.d-block',
 	cityInputCss: '#cityInput',
-	postcodeInputCss: '#postcodeInput',
+	postCodeInputCss: '#postcodeInput',
 	addressInputCss: '#addressInput',
 	payPeriodDropdownCss: '#payPeriodsSelect',
 	weeklyLimitInputCss: '#reWeeklyLimitInput',

@@ -1,5 +1,4 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { Entity, Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import { Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -8,11 +7,11 @@ import {
 	IEmployee,
 	ITask,
 	ITimeSlot,
-	IOrganizationProject
+	IOrganizationProject,
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsOptional, IsNumber, IsDateString, IsUUID } from 'class-validator';
-import { getConfig } from '@gauzy/config';
+import { isBetterSqlite3, isMySQL, isSqlite } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -20,16 +19,12 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
+import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 
-let options: TypeOrmModuleOptions;
-try {
-	options = getConfig().dbConnectionOptions;
-} catch (error) {
-	console.error('Cannot load DB connection options', error);
-}
-
-@Entity('activity')
+@MultiORMEntity('activity', { mikroOrmRepository: () => MikroOrmActivityRepository })
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -40,30 +35,33 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'longtext' } : {})
+	})
 	description?: string;
 
 	@ApiPropertyOptional({
-		type: () => (['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json')
+		type: () => (isSqlite() || isBetterSqlite3() ? 'text' : 'json')
 	})
 	@IsOptional()
 	@IsString()
 	@Column({
 		nullable: true,
-		type: ['sqlite', 'better-sqlite3'].includes(options.type) ? 'text' : 'json'
+		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 
 	@ApiProperty({ type: () => 'date' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn({ type: 'date' })
+	@CreateDateColumn(isMySQL() ? { type: 'datetime' } : { type: 'date' })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
 	@IsDateString()
 	@Index()
-	@CreateDateColumn({ type: 'time' })
+	@CreateDateColumn({ type: 'time', default: '0' })
 	time: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })

@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, OneToMany, JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateInterview,
@@ -17,8 +17,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateInterviewRepository } from './repository/mikro-orm-candidate-interview.repository';
 
-@Entity('candidate_interview')
+@MultiORMEntity('candidate_interview', { mikroOrmRepository: () => MikroOrmCandidateInterviewRepository })
 export class CandidateInterview extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
 

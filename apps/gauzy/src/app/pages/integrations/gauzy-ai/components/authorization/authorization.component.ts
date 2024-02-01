@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective, FormControl } from '@angular/forms';
 import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -31,9 +31,10 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 	 */
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			client_id: [null, Validators.required],
-			client_secret: [null, Validators.required],
-			openai_api_secret_key: [null]
+			apiKey: [null, Validators.required],
+			apiSecret: [null, Validators.required],
+			openAiSecretKey: [null],
+			openAiOrganizationId: [null]
 		});
 	}
 
@@ -51,9 +52,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		private readonly _replacePipe: ReplacePipe
 	) { }
 
-	/**
-	 *
-	 */
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
@@ -65,12 +63,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				untilDestroyed(this) // Ensure that subscriptions are automatically unsubscribed on component destruction.
 			)
 			.subscribe();
-	}
-
-	/**
-	 *
-	 */
-	ngAfterViewInit(): void {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -78,6 +70,29 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit(): void {
+		/**
+		 * Get references to the 'openAiSecretKey' and 'openAiOrganizationId' form controls.
+		 */
+		const openAiSecretKey = <FormControl>this.form.get('openAiSecretKey');
+		const openAiOrganizationId = <FormControl>this.form.get('openAiOrganizationId');
+
+		// Subscribe to changes in the 'openAiSecretKey' form control value.
+		openAiSecretKey.valueChanges.subscribe((value) => {
+			// Check if 'openAiSecretKey' has a value.
+			if (value) {
+				// If 'openAiSecretKey' has a value, set 'Validators.required' on 'openAiOrganizationId'.
+				openAiOrganizationId.setValidators([Validators.required]);
+			} else {
+				// If 'openAiSecretKey' does not have a value, remove validators from 'openAiOrganizationId'.
+				openAiOrganizationId.setValidators(null);
+			}
+
+			// Update the validation status of 'openAiOrganizationId'.
+			openAiOrganizationId.updateValueAndValidity();
+		});
 	}
 
 	ngOnDestroy(): void { }
@@ -101,16 +116,17 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 			}
 
 			// Extract values from the form
-			const { client_id, client_secret, openai_api_secret_key } = this.form.value;
+			const { apiKey, apiSecret, openAiSecretKey, openAiOrganizationId } = this.form.value;
 
 			// Extract values from the organization
 			const { id: organizationId, tenantId, name: organizationName } = this.organization;
 
 			// Create a new integration using the provided values
 			this._gauzyAIService.create({
-				client_id,
-				client_secret,
-				openai_api_secret_key,
+				apiKey,
+				apiSecret,
+				openAiSecretKey,
+				openAiOrganizationId,
 				organizationId,
 				tenantId
 			}).pipe(
@@ -135,7 +151,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				// Redirect to the Gauzy AI integration after creation
 				tap((integration: IIntegrationTenant) => {
 					this._redirectToGauzyAIIntegration(integration.id);
-					// this.formDirective.reset();
 				}),
 				// Catch and handle errors
 				catchError((error) => {

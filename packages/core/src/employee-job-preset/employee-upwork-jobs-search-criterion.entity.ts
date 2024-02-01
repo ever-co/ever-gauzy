@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, ManyToOne } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -16,11 +16,12 @@ import {
 	JobSearchOccupation,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
 
-@Entity('employee_upwork_job_search_criterion')
-export class EmployeeUpworkJobsSearchCriterion
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeUpworkJobsSearchCriterion {
+@MultiORMEntity('employee_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmEmployeeUpworkJobsSearchCriterionRepository })
+export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEntity implements IEmployeeUpworkJobsSearchCriterion {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

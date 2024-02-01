@@ -1,6 +1,6 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimeLog, ITimesheet, TimeLogSourceEnum } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
@@ -13,20 +13,23 @@ import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from './../../../../core/context';
 import { TimeSlot } from './../../../../core/entities/internal';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 
 @CommandHandler(TimeLogUpdateCommand)
-export class TimeLogUpdateHandler
-	implements ICommandHandler<TimeLogUpdateCommand> {
+export class TimeLogUpdateHandler implements ICommandHandler<TimeLogUpdateCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
-	) {}
+	) { }
 
 	public async execute(command: TimeLogUpdateCommand): Promise<TimeLog> {
 		const { id, input, manualTimeSlot } = command;
@@ -35,7 +38,7 @@ export class TimeLogUpdateHandler
 		if (id instanceof TimeLog) {
 			timeLog = id;
 		} else {
-			timeLog = await this.timeLogRepository.findOneBy({ id });
+			timeLog = await this.typeOrmTimeLogRepository.findOneBy({ id });
 		}
 
 		const tenantId = RequestContext.currentTenantId();
@@ -68,7 +71,7 @@ export class TimeLogUpdateHandler
 			input
 		});
 
-		await this.timeLogRepository.update(timeLog.id, {
+		await this.typeOrmTimeLogRepository.update(timeLog.id, {
 			...input,
 			...(timesheet ? { timesheetId: timesheet.id } : {})
 		});
@@ -78,7 +81,7 @@ export class TimeLogUpdateHandler
 			timeLog.stoppedAt
 		);
 
-		timeLog = await this.timeLogRepository.findOneBy({
+		timeLog = await this.typeOrmTimeLogRepository.findOneBy({
 			id: timeLog.id
 		});
 		const { timesheetId } = timeLog;
@@ -100,28 +103,28 @@ export class TimeLogUpdateHandler
 				/**
 				 * Removed Deleted TimeSlots
 				 */
-				const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+				const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 				query.setFindOptions({
 					relations: {
 						screenshots: true
 					}
 				});
 				query.where((qb: SelectQueryBuilder<TimeSlot>) => {
-					qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+					qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 						organizationId
 					});
-					qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
-					qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), {
 						employeeId
 					});
-					qb.andWhere(`"${qb.alias}"."startedAt" IN (:...startTimes)`, {
+					qb.andWhere(p(`"${qb.alias}"."startedAt" IN (:...startTimes)`), {
 						startTimes
 					});
 				});
 				const timeSlots = await query.getMany();
-				await this.timeSlotRepository.remove(timeSlots);
+				await this.typeOrmTimeSlotRepository.remove(timeSlots);
 			}
 
 			if (!manualTimeSlot && timeLog.source === TimeLogSourceEnum.WEB_TIMER) {
@@ -147,15 +150,13 @@ export class TimeLogUpdateHandler
 				);
 			}
 
-			console.log('Last Updated Timer Time Log', {
-				timeLog
-			});
+			console.log('Last Updated Timer Time Log', { timeLog });
 
 			/**
 			 * Update TimeLog Entry
 			 */
 			try {
-				await this.timeLogRepository.save(timeLog);
+				await this.typeOrmTimeLogRepository.save(timeLog);
 			} catch (error) {
 				console.error('Error while updating TimeLog', error);
 			}
@@ -177,7 +178,7 @@ export class TimeLogUpdateHandler
 			}
 		}
 
-		return await this.timeLogRepository.findOneBy({
+		return await this.typeOrmTimeLogRepository.findOneBy({
 			id: timeLog.id
 		});
 	}

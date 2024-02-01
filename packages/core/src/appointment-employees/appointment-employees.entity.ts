@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, Index } from 'typeorm';
 import { IAppointmentEmployee, IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { IsString, IsNotEmpty } from 'class-validator';
 import {
@@ -7,11 +7,12 @@ import {
 	EmployeeAppointment,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmAppointmentEmployeeRepository } from './repository/mikro-orm-appointment-employee.repository';
 
-@Entity('appointment_employee')
-export class AppointmentEmployee
-	extends TenantOrganizationBaseEntity
-	implements IAppointmentEmployee {
+@MultiORMEntity('appointment_employee', { mikroOrmRepository: () => MikroOrmAppointmentEmployeeRepository })
+export class AppointmentEmployee extends TenantOrganizationBaseEntity implements IAppointmentEmployee {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -19,10 +20,10 @@ export class AppointmentEmployee
 	public appointmentId!: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

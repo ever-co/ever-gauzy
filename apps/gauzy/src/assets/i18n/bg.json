@@ -623,6 +623,10 @@
 			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
+			"GAUZY_API_KEY": "Ключ Gauzy AI",
+			"GAUZY_API_SECRET": "Gauzy AI Secret",
+			"OPEN_AI_API_SECRET_KEY": "Отворете тайния ключ на AI",
+			"OPEN_AI_ORGANIZATION_ID": "Отворете ID на AI организация",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -1213,21 +1217,24 @@
 			"HOURLY": "Hourly"
 		},
 		"GAUZY_AI_PAGE": {
-			"TITLE": "Gauzy AI Integration",
-			"API_KEY": "Gauzy AI key",
+			"TITLE": "Интеграция на Gauzy AI",
+			"API_KEY": "Gauzy AI ключ",
 			"API_SECRET": "Gauzy AI Secret",
-			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
-			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
-			"CONSUMER_KEYS": "Consumer Keys",
-			"GENERATED": "Generated",
+			"OPEN_AI_API_SECRET_KEY": "Отворете тайния ключ на AI",
+			"OPEN_AI_ORGANIZATION_ID": "Отворете ID на AI организация",
+			"DESCRIPTION": "Активирайте Gauzy AI интеграция за по-интелигентно търсене на работа.",
+			"CONSUMER_KEYS": "Потребителски ключове",
+			"OPEN_AI_API_KEYS": "Open AI API ключове",
+			"GENERATED": "Генерирани",
 			"TAB": {
-				"KEYS": "Keys",
-				"SETTINGS": "Settings"
+				"KEYS": "Ключове",
+				"SETTINGS": "Настройки"
 			},
 			"TOOLTIP": {
 				"API_KEY": "API ключът служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
 				"API_SECRET": "API тайният ключ служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
 				"OPEN_AI_API_SECRET_KEY": "Тайният API ключ на OpenAI служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
+				"OPEN_AI_ORGANIZATION_ID": "Незадължителен идентификатор за организационни цели при взаимодействие с OpenAI API. Помага за организирането и разграничаването на различни обекти или проекти във вашата организация.",
 				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Активира разширен анализ на търсенето на работа и съвпадение за по-голяма точност. При изключване скрива пунктовете 'Преглед' и 'Съвпадение' за по-лесен интерфейс.",
 				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Управлява предаването на метрики за работата на служителите, включително клавишни въвеждания, движения на мишката и снимки на екрана, за анализ от Gauzy AI. Включването позволява изчерпателен анализ на производителността. При изключване Gauzy AI няма да получава и анализира снимки или други подробни данни, за да гарантира строга конфиденциалност и контрол върху споделянето на данни."
 			}
@@ -3993,7 +4000,8 @@
 			"OPEN_TIMER": "Отвори времевият проследяващ",
 			"WINDOW": "Прозорец",
 			"HELP": "Помощ",
-			"LEARN_MORE": "Научете повече"
+			"LEARN_MORE": "Научете повече",
+			"OPEN_MAIN_WINDOW": "Отвори главния прозорец"
 		}
 	},
 	"SERVER": "Сървър",

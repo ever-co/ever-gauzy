@@ -1,19 +1,24 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, DeleteResult, UpdateResult } from 'typeorm';
+import { In, DeleteResult, UpdateResult } from 'typeorm';
 import { chain, pluck } from 'underscore';
 import { TimeLog } from './../../time-log.entity';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands/timesheet-recalculate.command';
 import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../..//repository/mikro-orm-time-log.repository';
 
 @CommandHandler(TimeLogDeleteCommand)
-export class TimeLogDeleteHandler
-	implements ICommandHandler<TimeLogDeleteCommand> {
+export class TimeLogDeleteHandler implements ICommandHandler<TimeLogDeleteCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
+
 		private readonly commandBus: CommandBus
 	) { }
 
@@ -24,9 +29,9 @@ export class TimeLogDeleteHandler
 
 		let timeLogs: TimeLog[];
 		if (typeof ids === 'string') {
-			timeLogs = await this.timeLogRepository.findBy({ id: ids });
+			timeLogs = await this.typeOrmTimeLogRepository.findBy({ id: ids });
 		} else if (ids instanceof Array && typeof ids[0] === 'string') {
-			timeLogs = await this.timeLogRepository.findBy({
+			timeLogs = await this.typeOrmTimeLogRepository.findBy({
 				id: In(ids as string[])
 			});
 		} else if (ids instanceof TimeLog) {
@@ -51,11 +56,11 @@ export class TimeLogDeleteHandler
 
 		let deleteResult: DeleteResult | UpdateResult;
 		if (forceDelete) {
-			deleteResult = await this.timeLogRepository.delete({
+			deleteResult = await this.typeOrmTimeLogRepository.delete({
 				id: In(pluck(timeLogs, 'id'))
 			});
 		} else {
-			deleteResult = await this.timeLogRepository.softDelete({
+			deleteResult = await this.typeOrmTimeLogRepository.softDelete({
 				id: In(pluck(timeLogs, 'id'))
 			});
 		}

@@ -13,11 +13,13 @@ import { UserModule } from './../user/user.module';
 import { ProductTranslation } from './product-translation.entity';
 import { ProductOptionModule } from './../product-option/product-option-module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/products', module: ProductModule }]),
 		TypeOrmModule.forFeature([Product, ProductTranslation]),
+		MikroOrmModule.forFeature([Product, ProductTranslation]),
 		CqrsModule,
 		TenantModule,
 		UserModule,
@@ -30,4 +32,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [ProductService, ...CommandHandlers],
 	exports: [ProductService]
 })
-export class ProductModule {}
+export class ProductModule { }

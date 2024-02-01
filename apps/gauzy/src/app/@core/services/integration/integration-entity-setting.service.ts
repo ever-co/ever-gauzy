@@ -29,7 +29,10 @@ export class IntegrationEntitySettingService {
      * @param settings - The entity settings to update.
      * @returns An observable of updated entity settings.
      */
-    updateEntitySettings(integrationId: IIntegrationTenant['id'], settings: IIntegrationEntitySetting[]): Observable<IIntegrationEntitySetting[]> {
+    updateEntitySettings(
+        integrationId: IIntegrationTenant['id'],
+        settings: IIntegrationEntitySetting | IIntegrationEntitySetting[]
+    ): Observable<IIntegrationEntitySetting[]> {
         const url = `${API_PREFIX}/integration-entity-setting/integration/${integrationId}`;
         return this._http.put<IIntegrationEntitySetting[]>(url, settings);
     }

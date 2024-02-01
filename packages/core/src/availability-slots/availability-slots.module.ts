@@ -10,12 +10,14 @@ import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from './../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/availability-slots', module: AvailabilitySlotsModule }]),
 		UserModule,
 		TypeOrmModule.forFeature([AvailabilitySlot]),
+		MikroOrmModule.forFeature([AvailabilitySlot]),
 		CqrsModule,
 		TenantModule,
 		EmployeeModule,
@@ -25,4 +27,4 @@ import { TenantModule } from './../tenant/tenant.module';
 	providers: [AvailabilitySlotsService, ...CommandHandlers],
 	exports: [AvailabilitySlotsService]
 })
-export class AvailabilitySlotsModule {}
+export class AvailabilitySlotsModule { }

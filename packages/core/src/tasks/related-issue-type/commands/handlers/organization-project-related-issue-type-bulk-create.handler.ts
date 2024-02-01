@@ -1,28 +1,28 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ITaskRelatedIssueType } from '@gauzy/contracts';
 import { OrganizationProjectRelatedIssueTypeBulkCreateCommand } from '../organization-project-related-issue-type-bulk-create.command';
-import { TaskRelatedIssueTypesService } from '../../related-issue-type.service';
-import { TaskRelatedIssueTypes } from '../../related-issue-type.entity';
+import { TaskRelatedIssueTypeService } from '../../related-issue-type.service';
+import { TaskRelatedIssueType } from '../../related-issue-type.entity';
 
 @CommandHandler(OrganizationProjectRelatedIssueTypeBulkCreateCommand)
 export class OrganizationProjectRelatedIssueTypeBulkCreateHandler
 	implements
-		ICommandHandler<OrganizationProjectRelatedIssueTypeBulkCreateCommand>
+	ICommandHandler<OrganizationProjectRelatedIssueTypeBulkCreateCommand>
 {
 	constructor(
-		private readonly taskRelatedIssueTypeService: TaskRelatedIssueTypesService
-	) {}
+		private readonly TaskRelatedIssueTypeervice: TaskRelatedIssueTypeService
+	) { }
 
 	public async execute(
 		command: OrganizationProjectRelatedIssueTypeBulkCreateCommand
-	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueTypes[]> {
+	): Promise<ITaskRelatedIssueType[] & TaskRelatedIssueType[]> {
 		const { input } = command;
 		const { id: projectId, organizationId } = input;
 
 		/**
 		 * Create bulk task Related Issue Type for specific organization project
 		 */
-		return await this.taskRelatedIssueTypeService.createBulkRelatedIssueTypesByEntity(
+		return await this.TaskRelatedIssueTypeervice.createBulkRelatedIssueTypesByEntity(
 			{
 				organizationId,
 				projectId,

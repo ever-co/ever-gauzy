@@ -1,18 +1,20 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlot } from '../../time-slot.entity';
 import { TimeSlotBulkDeleteCommand } from '../time-slot-bulk-delete.command';
 import { RequestContext } from '../../../../core/context';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 
 @CommandHandler(TimeSlotBulkDeleteCommand)
-export class TimeSlotBulkDeleteHandler
-	implements ICommandHandler<TimeSlotBulkDeleteCommand> {
+export class TimeSlotBulkDeleteHandler implements ICommandHandler<TimeSlotBulkDeleteCommand> {
+
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
-	) {}
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+	) { }
 
 	public async execute(
 		command: TimeSlotBulkDeleteCommand
@@ -22,7 +24,7 @@ export class TimeSlotBulkDeleteHandler
 		const { input, forceDirectDelete } = command;
 		const { organizationId, employeeId, timeLog, timeSlotsIds = [] } = input;
 
-		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 		query.setFindOptions({
 			relations: {
 				timeLogs: true,
@@ -31,17 +33,17 @@ export class TimeSlotBulkDeleteHandler
 		});
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 			if (isNotEmpty(timeSlotsIds)) {
-				qb.andWhere(`"${qb.alias}"."id" IN (:...timeSlotsIds)`, {
+				qb.andWhere(p(`"${qb.alias}"."id" IN (:...timeSlotsIds)`), {
 					timeSlotsIds
 				});
 			}
-			qb.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, {
+			qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), {
 				employeeId
 			});
-			qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+			qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 				organizationId
 			});
-			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 				tenantId
 			});
 			console.log('Time Slots Delete Range Query', qb.getQueryAndParameters());
@@ -51,15 +53,15 @@ export class TimeSlotBulkDeleteHandler
 
 		if (isNotEmpty(timeSlots)) {
 			if (forceDirectDelete) {
-				await this.timeSlotRepository.remove(timeSlots);
+				await this.typeOrmTimeSlotRepository.remove(timeSlots);
 				return true;
 			} else {
 				for await (const timeSlot of timeSlots) {
 					const { timeLogs } = timeSlot;
 					if (timeLogs.length === 1) {
-						const [ firstTimeLog ] = timeLogs;
+						const [firstTimeLog] = timeLogs;
 						if (firstTimeLog.id === timeLog.id) {
-							await this.timeSlotRepository.remove(timeSlot);
+							await this.typeOrmTimeSlotRepository.remove(timeSlot);
 						}
 					}
 				}

@@ -1,5 +1,4 @@
 import {
-	Entity,
 	RelationId,
 	Column,
 	ManyToMany,
@@ -23,8 +22,10 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 
-@Entity('equipment_sharing')
+@MultiORMEntity('equipment_sharing', { mikroOrmRepository: () => MikroOrmEquipmentSharingRepository })
 export class EquipmentSharing extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
 
@@ -56,10 +57,10 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	createdByName: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Equipment
@@ -94,10 +95,10 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

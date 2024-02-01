@@ -713,9 +713,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					type: 'custom',
 					renderComponent: TaskProgressComponent,
 					width: '192px',
-					onComponentInitFunction: (
-						instance: TaskProgressComponent
-					) => {
+					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updated.subscribe({
 							next: async (estimate: number) => {
 								const { tenantId, organizationId } =
@@ -746,17 +745,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							},
 						});
 					},
-					componentInitFunction: (instance: TaskProgressComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-					},
 				},
 				taskStatus: {
 					title: this._translateService.instant('SM_TABLE.STATUS'),
 					type: 'custom',
 					renderComponent: TaskStatusComponent,
-					onComponentInitFunction: (
-						instance: TaskStatusComponent
-					) => {
+					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updated.subscribe({
 							next: async (taskStatus: ITaskStatus) => {
 								const { tenantId, organizationId } =
@@ -787,9 +782,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								console.warn(err);
 							},
 						});
-					},
-					componentInitFunction: (instance: TaskStatusComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
 					},
 				},
 			},
@@ -1037,8 +1029,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
-				if (arg && arg.quitApp) this.quitApp = true;
-				if (this.start) await this.toggleStart(false);
+				// Check if quitApp flag is already set, and if so, force stop the timer and return
+				if (this.quitApp) {
+					await this.stopTimer(true, true);
+					return;
+				}
+
+				// Check if arg is defined and has the quitApp property set to true
+				if (arg?.quitApp) {
+					// Set the quitApp flag to true
+					this.quitApp = true;
+				}
+
+				// Check if the start flag is set, and if so, toggle the start state to false
+				if (this.start) {
+					await this.toggleStart(false);
+				}
+
 			})
 		);
 

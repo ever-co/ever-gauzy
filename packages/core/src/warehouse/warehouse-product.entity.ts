@@ -1,5 +1,4 @@
 import {
-	Entity,
 	ManyToOne,
 	JoinColumn,
 	Column,
@@ -21,8 +20,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
 
-@Entity('warehouse_product')
+@MultiORMEntity('warehouse_product', { mikroOrmRepository: () => MikroOrmWarehouseProductRepository })
 export class WarehouseProduct extends TenantOrganizationBaseEntity
 	implements IWarehouseProduct {
 
@@ -36,10 +37,10 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	quantity: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Warehouse
@@ -74,10 +75,10 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	productId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })
 	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.warehouseProduct, {
 		cascade: true

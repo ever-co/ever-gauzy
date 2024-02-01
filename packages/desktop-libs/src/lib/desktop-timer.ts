@@ -5,10 +5,10 @@ import { LocalStore } from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
 import log from 'electron-log';
-import { ActivityType, TimeLogSourceEnum } from '@gauzy/contracts';
+import { ActivityType, ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 import { DesktopEventCounter } from './desktop-event-counter';
 import { DesktopActiveWindow } from './desktop-active-window';
-import { DesktopOfflineModeHandler, Timer, TimerService } from './offline';
+import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 import { IOfflineMode } from './interfaces';
 import { IActivityWatchCollectEventData } from '@gauzy/contracts';
 import {
@@ -50,6 +50,7 @@ export default class TimerHandler {
 	private _timerService = new TimerService();
 	private _randomSyncPeriod: number = 1;
 	private readonly _activityWatchService: ActivityWatchService;
+	private readonly _userService: UserService;
 
 	constructor() {
 		/**
@@ -63,6 +64,7 @@ export default class TimerHandler {
 			}
 		});
 		this._activityWatchService = new ActivityWatchService();
+		this._userService = new UserService();
 	}
 
 	async startTimer(setupWindow, knex, timeTrackerWindow, timeLog) {
@@ -87,7 +89,8 @@ export default class TimerHandler {
 
 		this.timeStart = moment();
 
-		await this.createTimer(knex, timeLog);
+		await this.createTimer(timeLog);
+
 		await this.collectActivities(setupWindow, knex, timeTrackerWindow);
 
 		/*
@@ -100,7 +103,7 @@ export default class TimerHandler {
 		const lastTimer = await this._timerService.findLastOne();
 		return {
 			isStarted: true,
-			lastTimer: lastTimer
+			lastTimer
 		};
 	}
 
@@ -473,15 +476,15 @@ export default class TimerHandler {
 		};
 	}
 
-	async createTimer(knex, timeLog) {
+	public async createTimer(timeLog: ITimeLog): Promise<void> {
 		try {
 			const project = LocalStore.getStore('project');
-			const params = LocalStore.beforeRequestParams();
+			const user = await this._userService.retrieve();
 			const payload = {
 				projectId: project?.projectId,
-				employeeId: params.employeeId,
-				timesheetId: timeLog ? timeLog.timesheetId : null,
-				timelogId: timeLog ? timeLog.id : null,
+				employeeId: user.employeeId,
+				timesheetId: timeLog?.timesheetId ?? null,
+				timelogId: timeLog?.id ?? null,
 				organizationTeamId: project?.organizationTeamId,
 				taskId: project?.taskId,
 				description: project?.note

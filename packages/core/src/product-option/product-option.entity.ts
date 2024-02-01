@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
@@ -7,11 +7,11 @@ import {
 	ProductOptionTranslation
 } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
 
-@Entity('product_option')
-export class ProductOption
-	extends TenantOrganizationBaseEntity
-	implements IProductOptionTranslatable {
+@MultiORMEntity('product_option', { mikroOrmRepository: () => MikroOrmProductOptionRepository })
+export class ProductOption extends TenantOrganizationBaseEntity implements IProductOptionTranslatable {
 
 	@ApiProperty({ type: () => String })
 	@IsString()

@@ -13,7 +13,7 @@ import { DesktopPowerManager } from './desktop-power-manager';
 import { PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity } from './decorators';
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
 import { DesktopOfflineModeHandler, IntervalTO } from './offline';
-import { Interval, IntervalService, Timer, TimerService, TimerTO, User, UserService } from './offline';
+import { Interval, IntervalService, Timer, TimerService, TimerTO, UserService } from './offline';
 import { DialogStopTimerLogoutConfirmation } from './decorators';
 import { DesktopDialog } from './desktop-dialog';
 import { TranslateService } from './translation';
@@ -124,46 +124,15 @@ export function ipcMainHandler(
 	});
 
 	ipcMain.on('time_tracker_ready', async (event, arg) => {
-		const auth = LocalStore.getStore('auth');
-		const logout = async () => {
-			try {
-				await userService.remove();
-				timeTrackerWindow.webContents.send('__logout__');
-				LocalStore.updateAuthSetting({ isLogout: true });
-			} catch (error) {
-				throw new UIError('500', error, 'IPCRMUSER');
-			}
-		};
-		if (auth && auth.userId) {
-			try {
-				const user = await userService.retrieve();
-				console.log('Current User', user);
-				if (user) {
-					if (auth.userId !== user.remoteId) {
-						await logout();
-					}
-				} else {
-					const user = new User({ ...auth });
-					user.remoteId = auth.userId;
-					user.organizationId = auth.organizationId;
-					if (user.employee) {
-						await userService.save(user.toObject());
-					}
-					LocalStore.updateAuthSetting({ isLogout: false });
-				}
-			} catch (error) {
-				await logout();
-				throw new UIError('500', error, 'IPCINIT');
-			}
-		} else {
-			await logout();
-		}
+		// Update preferred language
+		timeTrackerWindow.webContents.send(
+			'preferred_language_change',
+			TranslateService.preferredLanguage
+		);
+		// Check Authenticated user
+		await checkAuthenticatedUser(timeTrackerWindow);
 
 		try {
-			timeTrackerWindow.webContents.send(
-				'preferred_language_change',
-				TranslateService.preferredLanguage
-			);
 
 			const lastTime = await timerService.findLastOne();
 
@@ -400,6 +369,9 @@ export function ipcTimer(
 	offlineMode.trigger();
 
 	ipcMain.handle('START_TIMER', async (event, arg) => {
+		// Check Authenticated user
+		await checkAuthenticatedUser(timeTrackerWindow);
+
 		try {
 			powerManager = new DesktopPowerManager(timeTrackerWindow);
 
@@ -419,12 +391,12 @@ export function ipcTimer(
 
 			store.set({
 				project: {
-					projectId: arg.projectId,
-					taskId: arg.taskId,
-					note: arg.note,
-					aw: arg.aw,
-					organizationContactId: arg.organizationContactId,
-					organizationTeamId: arg.organizationTeamId
+					projectId: arg?.projectId,
+					taskId: arg?.taskId,
+					note: arg?.note,
+					aw: arg?.aw,
+					organizationContactId: arg?.organizationContactId,
+					organizationTeamId: arg?.organizationTeamId
 				},
 			});
 
@@ -436,8 +408,9 @@ export function ipcTimer(
 				setupWindow,
 				knex,
 				timeTrackerWindow,
-				arg.timeLog
+				arg?.timeLog
 			);
+
 			settingWindow.webContents.send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting'),
 			});
@@ -446,7 +419,7 @@ export function ipcTimer(
 				powerManagerPreventSleep.start();
 			}
 
-			if (arg.isRemoteTimer) {
+			if (arg?.isRemoteTimer) {
 				powerManager.sleepTracking = new SleepInactivityTracking(
 					new RemoteSleepTracking(timeTrackerWindow)
 				);
@@ -708,7 +681,7 @@ export function ipcTimer(
 				timeLogs = _.sortBy(timeLogs, 'recordedAt').reverse();
 
 				const [timeLog] = timeLogs;
-				await timerHandler.createTimer(knex, timeLog);
+				await timerHandler.createTimer(timeLog);
 			}
 		} catch (error) {
 			throw new UIError('500', error, 'IPCRTNSLOT');
@@ -1092,6 +1065,11 @@ let isQueueThreadTimerLocked = false;
 
 async function sequentialSyncQueue(window: BrowserWindow) {
 	if (!window) return;
+	// Check Authenticated user
+	const isAuthenticated = await checkAuthenticatedUser(window);
+	if (!isAuthenticated) {
+		return;
+	}
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
@@ -1135,6 +1113,11 @@ async function latestScreenshots(window: BrowserWindow): Promise<void> {
 
 async function sequentialSyncInterruptionsQueue(window: BrowserWindow) {
 	if (!window) return;
+	// Check Authenticated user
+	const isAuthenticated = await checkAuthenticatedUser(window);
+	if (!isAuthenticated) {
+		return;
+	}
 	try {
 		await offlineMode.connectivity();
 		if (offlineMode.enabled) return;
@@ -1164,3 +1147,46 @@ export async function handleLogoutDialog(
 	const button = await dialog.show();
 	return button.response === 0;
 }
+
+
+export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): Promise<boolean> {
+	const auth = LocalStore.getStore('auth');
+
+	const logout = async () => {
+		await userService.remove();
+		timeTrackerWindow.webContents.send('__logout__');
+		LocalStore.updateAuthSetting({ isLogout: true });
+	};
+
+	const handleLogout = async (errorMessage: string) => {
+		await logout();
+		console.error(errorMessage);
+	};
+
+	try {
+		if (!auth || !auth.userId) {
+			await handleLogout('Authentication failed');
+			return false;
+		}
+
+		const user = await userService.retrieve();
+		console.log('Current User', user);
+
+		if (!user || auth.userId !== user.remoteId) {
+			await handleLogout('Authentication failed');
+			return false;
+		}
+
+		if (user.employee) {
+			LocalStore.updateAuthSetting({ isLogout: false });
+			return true;
+		}
+	} catch (error) {
+		await handleLogout('An error occurred during authentication check.');
+	}
+
+	return false;
+}
+
+
+

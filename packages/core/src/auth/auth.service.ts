@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, Repository, SelectQueryBuilder } from 'typeorm';
+import { In, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -41,15 +41,18 @@ import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
 import { OrganizationTeam, Tenant } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmUserRepository } from './../user/repository/type-orm-user.repository';
+import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
-		private readonly userRepository: Repository<User>,
+		private typeOrmUserRepository: TypeOrmUserRepository,
 
 		@InjectRepository(OrganizationTeam)
-		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
+		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
@@ -74,7 +77,7 @@ export class AuthService extends SocialAuthService {
 				where: {
 					email,
 					isActive: true,
-					isArchived: false,
+					isArchived: false
 				},
 				relations: {
 					employee: true,
@@ -104,6 +107,7 @@ export class AuthService extends SocialAuthService {
 				refresh_token: refresh_token
 			};
 		} catch (error) {
+			console.log(error);
 			throw new UnauthorizedException();
 		}
 	}
@@ -151,7 +155,7 @@ export class AuthService extends SocialAuthService {
 		for await (const user of users) {
 			const id = user.id;
 			/** */
-			await this.userRepository.update({
+			await this.typeOrmUserRepository.update({
 				id,
 				email,
 				isActive: true,
@@ -292,7 +296,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns {Promise<User[]>} A Promise that resolves to an array of User objects.
 	 */
 	async fetchUsers(email: IUserEmailInput['email']): Promise<IUser[]> {
-		return await this.userRepository.find({
+		return await this.typeOrmUserRepository.find({
 			where: {
 				email,
 				isActive: true,
@@ -373,22 +377,22 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// 2. Register new user
-		const userToCreate = this.userRepository.create({
+		const userToCreate = this.typeOrmUserRepository.create({
 			...input.user,
 			tenant,
 			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
 		});
-		const createdUser = await this.userRepository.save(userToCreate);
+		const createdUser = await this.typeOrmUserRepository.save(userToCreate);
 
 		// 3. Email is automatically verified after accepting an invitation
 		if (input.inviteId) {
-			await this.userRepository.update(createdUser.id, {
+			await this.typeOrmUserRepository.update(createdUser.id, {
 				emailVerifiedAt: freshTimestamp()
 			});
 		}
 
 		// 4. Find the latest registered user with role
-		const user = await this.userRepository.findOne({
+		const user = await this.typeOrmUserRepository.findOne({
 			where: {
 				id: createdUser.id
 			},
@@ -408,7 +412,7 @@ export class AuthService extends SocialAuthService {
 			const { sourceId } = input;
 			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
-					entityType: this.userRepository.metadata.tableName,
+					entityType: this.typeOrmUserRepository.metadata.tableName,
 					sourceId,
 					destinationId: user.id
 				})
@@ -666,7 +670,7 @@ export class AuthService extends SocialAuthService {
 
 		try {
 			// Count the number of users with the given email
-			const count = await this.userRepository.countBy({
+			const count = await this.typeOrmUserRepository.countBy({
 				email
 			});
 
@@ -682,7 +686,7 @@ export class AuthService extends SocialAuthService {
 			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
 			// Update the user record with the generated code and expiration time
-			await this.userRepository.update({ email }, { code: magicCode, codeExpireAt });
+			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
 
 			// Extract integration information
 			let appIntegration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName', 'appMagicSignUrl']);
@@ -728,7 +732,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Find users matching the criteria
-			let users = await this.userRepository.find({
+			let users = await this.typeOrmUserRepository.find({
 				where: {
 					email,
 					code,
@@ -818,7 +822,7 @@ export class AuthService extends SocialAuthService {
 			let payload: JwtPayload | string = this.verifyToken(token);
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
-				const user = await this.userRepository.findOneOrFail({
+				const user = await this.typeOrmUserRepository.findOneOrFail({
 					where: {
 						id: userId,
 						email,
@@ -834,7 +838,7 @@ export class AuthService extends SocialAuthService {
 					},
 				});
 
-				await this.userRepository.update({
+				await this.typeOrmUserRepository.update({
 					email,
 					id: userId,
 					tenantId,
@@ -901,50 +905,84 @@ export class AuthService extends SocialAuthService {
 		userId: string,
 		employeeId: string | null
 	): Promise<IOrganizationTeam[]> {
-		const query = this.organizationTeamRepository.createQueryBuilder("organization_team");
-		query.innerJoin('organization_team_employee', "team_member", '"team_member"."organizationTeamId" = "organization_team"."id"');
+		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder("organization_team");
+		query.innerJoin('organization_team_employee',
+			p("team_member"),
+			p('"team_member"."organizationTeamId" = "organization_team"."id"')
+		);
 
 		query.select([
-			`"${query.alias}"."id" AS "team_id"`,
-			`"${query.alias}"."name" AS "team_name"`,
-			`"${query.alias}"."logo" AS "team_logo"`,
-			`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`,
-			`"${query.alias}"."profile_link" AS "profile_link"`,
-			`"${query.alias}"."prefix" AS "prefix"`
+			p(`"${query.alias}"."id" AS "team_id"`),
+			p(`"${query.alias}"."name" AS "team_name"`),
+			p(`"${query.alias}"."logo" AS "team_logo"`),
+			p(`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`),
+			p(`"${query.alias}"."profile_link" AS "profile_link"`),
+			p(`"${query.alias}"."prefix" AS "prefix")`)
 		]);
 
-		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+		query.andWhere(
+			p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
+		);
 
 		// Sub Query to get only assigned teams for specific organizations
 		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
-			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from("user_organization", "user_organization");
-			subQuery.andWhere(`"${subQuery.alias}"."isActive" = true`);
-			subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
-			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+			const subQuery = cb.subQuery()
+				.select(
+					p('"user_organization"."organizationId"')
+				).from(
+					p("user_organization"),
+					p("user_organization")
+				);
+			subQuery.andWhere(
+				p(`"${subQuery.alias}"."isActive" = true`)
+			);
+			subQuery.andWhere(
+				p(`"${subQuery.alias}"."userId" = :userId`), { userId }
+			);
+			subQuery.andWhere(
+				p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
+			);
 			return subQuery.distinct(true).getQuery();
 		};
 
 		// Sub Query to get only assigned teams for specific organizations
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			return (`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
+			return (p(`"${query.alias}"."organizationId" IN `) + orgSubQuery(cb));
 		});
 
 		// Sub Query to get only assigned teams for a specific employee for specific tenant
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from("organization_team_employee", "organization_team_employee");
-			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+			const subQuery = cb.subQuery()
+				.select(
+					p('"organization_team_employee"."organizationTeamId"')
+				)
+				.from(
+					p("organization_team_employee"),
+					p("organization_team_employee")
+				);
+			subQuery.andWhere(
+				p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
+			);
 
-			if (isNotEmpty(employeeId)) { subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId }); }
+			if (isNotEmpty(employeeId)) {
+				subQuery.andWhere(
+					p(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId }
+				);
+			}
 
 			// Sub Query to get only assigned teams for specific organizations
 			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				return (`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb));
+				return (p(`"${subQuery.alias}"."organizationId" IN `) + orgSubQuery(cb));
 			});
-			return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
+			return (p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery());
 		});
 
-		query.addGroupBy(`"${query.alias}"."id"`);
-		query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
+		query.addGroupBy(
+			p(`"${query.alias}"."id"`)
+		);
+		query.orderBy(
+			p(`"${query.alias}"."createdAt"`), 'DESC'
+		);
 
 		return await query.getRawMany();
 	}

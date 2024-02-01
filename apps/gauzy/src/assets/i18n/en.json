@@ -649,6 +649,7 @@
 			"GAUZY_API_KEY": "Gauzy AI Key",
 			"GAUZY_API_SECRET": "Gauzy AI Secret",
 			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"OPEN_AI_ORGANIZATION_ID": "Open AI Organization ID",
 			"SELECT_COMPANY": "Select Company",
 			"TYPE_SEARCH_REQUEST": "Type your search request here...",
 			"SELECT_ICON": "Select Icon",
@@ -1253,8 +1254,10 @@
 			"API_KEY": "Gauzy AI key",
 			"API_SECRET": "Gauzy AI Secret",
 			"OPEN_AI_API_SECRET_KEY": "Open AI Secret Key",
+			"OPEN_AI_ORGANIZATION_ID": "Open AI Organization ID",
 			"DESCRIPTION": "Activate Gauzy AI integration for smarter job hunting.",
 			"CONSUMER_KEYS": "Consumer Keys",
+			"OPEN_AI_API_KEYS": "Open AI API Keys",
 			"GENERATED": "Generated",
 			"TAB": {
 				"KEYS": "Keys",
@@ -1264,8 +1267,15 @@
 				"API_KEY": "The API Key serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
 				"API_SECRET": "The API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
 				"OPEN_AI_API_SECRET_KEY": "The OpenAI API Secret serves as your App identifier for API requests, remaining permanently hidden, with some characters visible.",
+				"OPEN_AI_ORGANIZATION_ID": "An optional identifier for organizational purposes when interacting with the OpenAI API. It helps organize and distinguish between different entities or projects within your organization.",
 				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Enables advanced job search and matching analyses for enhanced accuracy. Disabling hides 'Browse' and 'Matching' menu items for a streamlined interface.",
 				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Manages the transmission of employee work metrics, including keyboard inputs, mouse movements, and screenshots, for analysis by Gauzy AI. Enable for comprehensive performance analysis; disable for strict user privacy and data control."
+			},
+			"MESSAGE": {
+				"JOBS_SEARCH_MATCHING_ENABLED": "Jobs Search & Matching Analysis has been successfully enabled.",
+				"JOBS_SEARCH_MATCHING_DISABLED": "Jobs Search & Matching Analysis has been successfully disabled.",
+				"EMPLOYEE_PERFORMANCE_ENABLED": "Employee Performance Analysis has been successfully enabled.",
+				"EMPLOYEE_PERFORMANCE_DISABLED": "Employee Performance Analysis has been successfully disabled."
 			}
 		},
 		"GITHUB_PAGE": {
@@ -4091,7 +4101,8 @@
 			"OPEN_TIMER": "Open Time Tracker",
 			"WINDOW": "Window",
 			"HELP": "Help",
-			"LEARN_MORE": "Learn More"
+			"LEARN_MORE": "Learn More",
+			"OPEN_MAIN_WINDOW": "Open Main Window"
 		}
 	},
 	"SERVER": "Server",
@@ -4520,7 +4531,7 @@
 			"FULL_NAME": "Full name:",
 			"EMAIL": "Email address:",
 			"PASSWORD": "Password",
-			"CONFIRM_PASSWORD":"Confirm Password:"
+			"CONFIRM_PASSWORD": "Confirm Password:"
 		},
 		"PLACEHOLDERS": {
 			"FULL_NAME": "Full name",
@@ -4532,15 +4543,15 @@
 			"FULL_NAME_REQUIRED": "Full name is required!",
 			"FULL_NAME_SHOULD_CONTAIN": "Full name should contain from {{ minLength }} to {{ maxLength }} characters",
 			"EMAIL_REQUIRED": "Email is required!",
-			"EMAIL_SHOULD_BE_REAL":"Email should be a real one!",
+			"EMAIL_SHOULD_BE_REAL": "Email should be a real one!",
 			"PASSWORD_NO_SPACE_EDGES": "Passwords must not begin or end with spaces!",
 			"PASSWORD_REQUIRED": "Password is required!",
 			"PASSWORD_SHOULD_CONTAIN": "Password should contain from {{ minLength }} to {{ maxLength }} characters!",
 			"CONFIRM_PASSWORD_REQUIRED": "Password confirmation is required!",
 			"PASSWORDS_NOT_MATCH": "Password does not match the confirm password!",
 			"CHECK_BOX_TEXTS": {
-				"AGREE_TO":"Agree to",
-				"TERMS_AND_CONDITIONS":"Terms & Conditions",
+				"AGREE_TO": "Agree to",
+				"TERMS_AND_CONDITIONS": "Terms & Conditions",
 				"AND": " and ",
 				"PRIVACY_POLICY": "Privacy Policy"
 			}
@@ -4591,7 +4602,7 @@
 			"DEMO_TITLE": "Demo",
 			"CREDENTIALS_TITLE": "Credentials",
 			"LABELS": {
-				"EMAIL":"Email: ",
+				"EMAIL": "Email: ",
 				"PASSWORD": "Password: "
 			}
 		}

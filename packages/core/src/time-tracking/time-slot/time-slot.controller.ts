@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
 import { ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { DeleteTimeSlotCommand } from './commands';
+import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } from './commands';
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
@@ -27,11 +27,7 @@ import { TimeSlotQueryDTO } from './dto/query';
 
 @ApiTags('TimeSlot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(
-	PermissionsEnum.TIME_TRACKER,
-	PermissionsEnum.ALL_ORG_EDIT,
-	PermissionsEnum.ALL_ORG_VIEW
-)
+@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeSlotController {
 	constructor(
@@ -39,6 +35,11 @@ export class TimeSlotController {
 		private readonly commandBus: CommandBus
 	) { }
 
+	/**
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Get Time Slots' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -52,6 +53,12 @@ export class TimeSlotController {
 		return await this.timeSlotService.getTimeSlots(options);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Get Time Slot By Id' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -66,6 +73,11 @@ export class TimeSlotController {
 		return await this.timeSlotService.findOneByIdString(id, options);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create Time Slot' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -74,11 +86,19 @@ export class TimeSlotController {
 	})
 	@Post()
 	async create(
-		@Body() entity: ITimeSlot
+		@Body() requst: ITimeSlot
 	): Promise<ITimeSlot> {
-		return await this.timeSlotService.create(entity);
+		return await this.commandBus.execute(
+			new CreateTimeSlotCommand(requst)
+		);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Update Time Slot' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -90,11 +110,18 @@ export class TimeSlotController {
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: ITimeSlot['id'],
-		@Body() entity: TimeSlot
+		@Body() request: TimeSlot
 	): Promise<ITimeSlot> {
-		return await this.timeSlotService.update(id, entity);
+		return await this.commandBus.execute(
+			new UpdateTimeSlotCommand(id, request)
+		);
 	}
 
+	/**
+	 *
+	 * @param query
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Delete TimeSlot' })
 	@ApiResponse({
 		status: HttpStatus.OK,

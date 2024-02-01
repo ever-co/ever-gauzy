@@ -9,111 +9,111 @@ import {
 	verifyText,
 	clickKeyboardBtnByKeycode
 } from '../utils/util';
-import { GoalstimeFramePage } from '../pageobjects/GoalsTimeFramePageObject';
+import { GoalsTimeFramePage } from '../pageobjects/GoalsTimeFramePageObject';
 
 export const gridBtnExists = () => {
-	verifyElementIsVisible(GoalstimeFramePage.gridButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.gridButtonCss);
 };
 
 export const gridBtnClick = (index) => {
-	clickButtonByIndex(GoalstimeFramePage.gridButtonCss, index);
+	clickButtonByIndex(GoalsTimeFramePage.gridButtonCss, index);
 };
 
 export const tabButtonVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.tabButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.tabButtonCss);
 };
 
 export const clickTabButton = (index) => {
-	clickButtonByIndex(GoalstimeFramePage.tabButtonCss, index);
+	clickButtonByIndex(GoalsTimeFramePage.tabButtonCss, index);
 };
 
 export const addTimeFrameButtonVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.addTimeFrameButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.addTimeFrameButtonCss);
 };
 
 export const clickAddTimeFrameButton = () => {
-	clickButton(GoalstimeFramePage.addTimeFrameButtonCss);
+	clickButton(GoalsTimeFramePage.addTimeFrameButtonCss);
 };
 
 export const nameInputVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.titleInputCss);
+	verifyElementIsVisible(GoalsTimeFramePage.titleInputCss);
 };
 
 export const enterNameInputData = (data) => {
-	clearField(GoalstimeFramePage.titleInputCss);
-	enterInput(GoalstimeFramePage.titleInputCss, data);
+	clearField(GoalsTimeFramePage.titleInputCss);
+	enterInput(GoalsTimeFramePage.titleInputCss, data);
 };
 
 export const startDateInputVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.startDateInputCss);
+	verifyElementIsVisible(GoalsTimeFramePage.startDateInputCss);
 };
 
 export const enterStartDateData = () => {
-	clearField(GoalstimeFramePage.startDateInputCss);
+	clearField(GoalsTimeFramePage.startDateInputCss);
 	const date = dayjs().add(1, 'd').format('MMM D, YYYY');
-	enterInput(GoalstimeFramePage.startDateInputCss, date);
+	enterInput(GoalsTimeFramePage.startDateInputCss, date);
 };
 
 export const endDateInputVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.startDateInputCss);
+	verifyElementIsVisible(GoalsTimeFramePage.startDateInputCss);
 };
 
 export const enterEndDateData = () => {
-	clearField(GoalstimeFramePage.endDateInputCss);
+	clearField(GoalsTimeFramePage.endDateInputCss);
 	const date = dayjs().add(5, 'd').format('MMM D, YYYY');
-	enterInput(GoalstimeFramePage.endDateInputCss, date);
+	enterInput(GoalsTimeFramePage.endDateInputCss, date);
 };
 
 export const saveTimeFrameButtonVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.saveTimeFrameButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.saveTimeFrameButtonCss);
 };
 
 export const clickSaveTimeFrameButton = () => {
-	clickButton(GoalstimeFramePage.saveTimeFrameButtonCss);
+	clickButton(GoalsTimeFramePage.saveTimeFrameButtonCss);
 };
 
 export const tableRowVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.selectTableRowCss);
+	verifyElementIsVisible(GoalsTimeFramePage.selectTableRowCss);
 };
 
 export const selectTableRow = (index) => {
-	clickButtonByIndex(GoalstimeFramePage.selectTableRowCss, index);
+	clickButtonByIndex(GoalsTimeFramePage.selectTableRowCss, index);
 };
 
 export const editTimeFrameButtonVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.editButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.editButtonCss);
 };
 
 export const clickEditTimeFrameButton = () => {
-	clickButton(GoalstimeFramePage.editButtonCss);
+	clickButton(GoalsTimeFramePage.editButtonCss);
 };
 
 export const deleteTimeFrameButtonVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.deleteButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.deleteButtonCss);
 };
 
 export const clickDeleteTimeFrameButton = () => {
-	clickButton(GoalstimeFramePage.deleteButtonCss);
+	clickButton(GoalsTimeFramePage.deleteButtonCss);
 };
 
 export const confirmDeleteButtonVisible = () => {
-	verifyElementIsVisible(GoalstimeFramePage.confirmDeleteButtonCss);
+	verifyElementIsVisible(GoalsTimeFramePage.confirmDeleteButtonCss);
 };
 
 export const clickConfirmDeleteButton = () => {
-	clickButton(GoalstimeFramePage.confirmDeleteButtonCss);
+	clickButton(GoalsTimeFramePage.confirmDeleteButtonCss);
 };
 
 export const waitMessageToHide = () => {
-	waitElementToHide(GoalstimeFramePage.toastrMessageCss);
+	waitElementToHide(GoalsTimeFramePage.toastrMessageCss);
 };
 
 export const verifyElementDeleted = (text) => {
-	verifyText(GoalstimeFramePage.verifyEmpytTableCss, text);
+	verifyText(GoalsTimeFramePage.verifyEmptyTableCss, text);
 };
 
 export const verifyTimeFrameExists = (text) => {
-	verifyText(GoalstimeFramePage.verifyEmpytTableCss, text);
+	verifyText(GoalsTimeFramePage.verifyEmptyTableCss, text);
 };
 
 export const clickKeyboardButtonByKeyCode = (keycode) => {

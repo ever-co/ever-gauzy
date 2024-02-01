@@ -8,11 +8,13 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { WarehouseModule } from './../warehouse/warehouse.module';
 import { ImageAssetModule } from './../image-asset/image-asset.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/merchants', module: MerchantModule }]),
 		TypeOrmModule.forFeature([Merchant]),
+		MikroOrmModule.forFeature([Merchant]),
 		TenantModule,
 		UserModule,
 		WarehouseModule,
@@ -22,4 +24,4 @@ import { ImageAssetModule } from './../image-asset/image-asset.module';
 	providers: [MerchantService],
 	exports: [MerchantService]
 })
-export class MerchantModule {}
+export class MerchantModule { }

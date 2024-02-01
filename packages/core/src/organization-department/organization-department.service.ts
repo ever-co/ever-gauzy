@@ -1,26 +1,40 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Like, Repository } from 'typeorm';
+import { In, Like } from 'typeorm';
 import { OrganizationDepartment } from './organization-department.entity';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmOrganizationDepartmentRepository } from './repository/type-orm-organization-department.repository';
+import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm-organization-department.repository';
 
 @Injectable()
 export class OrganizationDepartmentService extends TenantAwareCrudService<OrganizationDepartment> {
 	constructor(
 		@InjectRepository(OrganizationDepartment)
-		private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>
+		typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
+
+		mikroOrmOrganizationDepartmentRepository: MikroOrmOrganizationDepartmentRepository
 	) {
-		super(organizationDepartmentRepository);
+		super(typeOrmOrganizationDepartmentRepository, mikroOrmOrganizationDepartmentRepository);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
 	async findByEmployee(id: string): Promise<any> {
-		return await this.organizationDepartmentRepository
+		return await this.repository
 			.createQueryBuilder('organization_department')
 			.leftJoin('organization_department.members', 'member')
 			.where('member.id = :id', { id })
 			.getMany();
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	public pagination(filter?: any) {
 		if ('where' in filter) {
 			const { where } = filter;
@@ -29,12 +43,12 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 				filter.where.name = Like(`%${name}%`);
 			}
 			if ('tags' in where) {
-				const { tags } = where; 
+				const { tags } = where;
 				filter.where.tags = {
 					id: In(tags)
-				}
+				};
 			}
-		}		
+		}
 		return super.paginate(filter);
 	}
 }

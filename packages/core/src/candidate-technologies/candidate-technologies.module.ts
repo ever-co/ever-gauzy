@@ -7,6 +7,7 @@ import { CandidateTechnologiesController } from './candidate-technologies.contro
 import { CandidateTechnologiesService } from './candidate-technologies.service';
 import { CommandHandlers } from './commands/handlers';
 import { CandidateTechnologies } from './../core/entities/internal';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -17,6 +18,7 @@ import { CandidateTechnologies } from './../core/entities/internal';
 			}
 		]),
 		TypeOrmModule.forFeature([CandidateTechnologies]),
+		MikroOrmModule.forFeature([CandidateTechnologies]),
 		TenantModule,
 		CqrsModule
 	],
@@ -24,4 +26,4 @@ import { CandidateTechnologies } from './../core/entities/internal';
 	controllers: [CandidateTechnologiesController],
 	exports: [CandidateTechnologiesService]
 })
-export class CandidateTechnologiesModule {}
+export class CandidateTechnologiesModule { }

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as nodemailer from 'nodemailer';
-import { Repository, IsNull } from 'typeorm';
+import { IsNull } from 'typeorm';
 import {
 	IInviteEmployeeModel,
 	IInviteUserModel,
@@ -26,6 +26,12 @@ import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
 import { EmailTemplate, Organization, EmailHistory } from './../core/entities/internal';
+import { TypeOrmEmailHistoryRepository } from './../email-history/repository/type-orm-email-history.repository';
+import { MikroOrmEmailHistoryRepository } from './../email-history/repository/mikro-orm-email-history.repository';
+import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
+import { MikroOrmEmailTemplateRepository } from './../email-template/repository/mikro-orm-email-template.repository';
+import { TypeOrmOrganizationRepository } from './../organization/repository/type-orm-organization.repository';
+import { MikroOrmOrganizationRepository } from './../organization/repository/mikro-orm-organization.repository';
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
@@ -33,9 +39,21 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 export class EmailService {
 
 	constructor(
-		@InjectRepository(EmailHistory) private readonly emailHistoryRepository: Repository<EmailHistory>,
-		@InjectRepository(EmailTemplate) private readonly emailTemplateRepository: Repository<EmailTemplate>,
-		@InjectRepository(Organization) private readonly organizationRepository: Repository<Organization>,
+		@InjectRepository(EmailHistory)
+		private typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
+
+		mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
+
+		@InjectRepository(EmailTemplate)
+		private typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+
+		mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
+
+		@InjectRepository(Organization)
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+
+		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
+
 		private readonly _emailSendService: EmailSendService
 	) { }
 
@@ -449,7 +467,7 @@ export class EmailService {
 	) {
 		let organization: Organization;
 		if (organizationId) {
-			organization = await this.organizationRepository.findOneBy({
+			organization = await this.typeOrmOrganizationRepository.findOneBy({
 				id: organizationId
 			});
 		}
@@ -690,7 +708,7 @@ export class EmailService {
 	) {
 		let organization: Organization;
 		if (organizationId) {
-			organization = await this.organizationRepository.findOneBy({
+			organization = await this.typeOrmOrganizationRepository.findOneBy({
 				id: organizationId
 			});
 		}
@@ -738,7 +756,7 @@ export class EmailService {
 	async setTimesheetAction(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
-		const organization = await this.organizationRepository.findOneBy({
+		const organization = await this.typeOrmOrganizationRepository.findOneBy({
 			id: timesheet.employee.organizationId
 		});
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
@@ -788,7 +806,7 @@ export class EmailService {
 	async timesheetSubmit(email: string, timesheet: ITimesheet) {
 		const languageCode = RequestContext.getLanguageCode();
 		const organizationId = timesheet.employee.organizationId;
-		const organization = await this.organizationRepository.findOneBy({
+		const organization = await this.typeOrmOrganizationRepository.findOneBy({
 			id: timesheet.employee.organizationId
 		});
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
@@ -1011,7 +1029,7 @@ export class EmailService {
 	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
 
 		const { id } = input;
-		const emailHistory: IEmailHistory = await this.emailHistoryRepository.findOne({
+		const emailHistory: IEmailHistory = await this.typeOrmEmailHistoryRepository.findOne({
 			where: {
 				id
 			},
@@ -1044,12 +1062,12 @@ export class EmailService {
 				await instance.send(sendOptions);
 				emailHistory.status = EmailStatusEnum.SENT;
 
-				return await this.emailHistoryRepository.save(emailHistory);
+				return await this.typeOrmEmailHistoryRepository.save(emailHistory);
 			} catch (error) {
 				console.log(`Error while re-sending mail: %s`, error?.message);
 
 				emailHistory.status = EmailStatusEnum.FAILED;
-				await this.emailHistoryRepository.save(emailHistory);
+				await this.typeOrmEmailHistoryRepository.save(emailHistory);
 				throw new BadRequestException(`Error while re-sending mail: ${error?.message}`);
 			}
 		}
@@ -1073,7 +1091,7 @@ export class EmailService {
 			user
 		} = createEmailOptions;
 		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
-		const emailTemplate = await this.emailTemplateRepository.findOneBy({
+		const emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy({
 			name: template + '/html',
 			languageCode
 		});
@@ -1086,7 +1104,7 @@ export class EmailService {
 		if (user) {
 			emailEntity.user = user;
 		}
-		return await this.emailHistoryRepository.save(emailEntity);
+		return await this.typeOrmEmailHistoryRepository.save(emailEntity);
 	}
 
 	// tested e-mail send functionality

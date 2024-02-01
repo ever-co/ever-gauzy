@@ -333,12 +333,12 @@ export const addBtnClick = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(OrganizationPublicPage.organisationNameFieldCss);
+	verifyElementIsVisible(OrganizationPublicPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	clearField(OrganizationPublicPage.organisationNameFieldCss);
-	enterInput(OrganizationPublicPage.organisationNameFieldCss, data);
+	clearField(OrganizationPublicPage.organizationNameFieldCss);
+	enterInput(OrganizationPublicPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {
@@ -384,12 +384,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(OrganizationPublicPage.postcodeInputCss);
+	verifyElementIsVisible(OrganizationPublicPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(OrganizationPublicPage.postcodeInputCss);
-	enterInput(OrganizationPublicPage.postcodeInputCss, data);
+	clearField(OrganizationPublicPage.postCodeInputCss);
+	enterInput(OrganizationPublicPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {

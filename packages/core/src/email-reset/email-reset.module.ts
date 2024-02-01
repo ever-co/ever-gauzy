@@ -11,10 +11,12 @@ import { TenantModule } from '../tenant/tenant.module';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { AuthModule } from './../auth/auth.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([EmailReset]),
+		MikroOrmModule.forFeature([EmailReset]),
 		forwardRef(() => TenantModule),
 		CqrsModule,
 		UserModule,
@@ -22,8 +24,8 @@ import { AuthModule } from './../auth/auth.module';
 		EmployeeModule,
 		AuthModule
 	],
+	controllers: [EmailResetController],
 	providers: [EmailResetService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, EmailResetService],
-	controllers: [EmailResetController]
+	exports: [TypeOrmModule, MikroOrmModule, EmailResetService],
 })
 export class EmailResetModule { }

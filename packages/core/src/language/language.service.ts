@@ -1,25 +1,31 @@
-import { Repository } from 'typeorm';
 import { Language } from './language.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
+import { TypeOrmLanguageRepository } from './repository/type-orm-language.repository';
 
 @Injectable()
 export class LanguageService extends CrudService<Language> {
 	constructor(
 		@InjectRepository(Language)
-		private readonly tagRepository: Repository<Language>
+		typeOrmLanguageRepository: TypeOrmLanguageRepository,
+
+		mikroOrmLanguageRepository: MikroOrmLanguageRepository
 	) {
-		super(tagRepository);
+		super(typeOrmLanguageRepository, mikroOrmLanguageRepository);
 	}
 
+	/**
+	 *
+	 * @param name
+	 * @returns
+	 */
 	async findOneByName(name: string): Promise<Language> {
-		const query = this.repository
-			.createQueryBuilder('language')
-			.where('"language"."name" = :name', {
+		return await super.findOneByOptions({
+			where: {
 				name
-			});
-		const item = await query.getOne();
-		return item;
+			}
+		});
 	}
 }

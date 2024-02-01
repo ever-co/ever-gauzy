@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	ManyToOne,
 	JoinColumn,
@@ -30,8 +29,10 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
 
-@Entity('warehouse')
+@MultiORMEntity('warehouse', { mikroOrmRepository: () => MikroOrmWarehouseRepository })
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => String })
@@ -55,10 +56,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	active: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ImageAsset
@@ -77,10 +78,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	logoId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Contact
@@ -100,10 +101,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	contactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * WarehouseProduct
@@ -116,19 +117,19 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	products?: IWarehouseProduct[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.warehouses, {
-        onUpdate: 'CASCADE',
+		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
-    })
+	})
 	@JoinTable({
 		name: 'tag_warehouse'
 	})

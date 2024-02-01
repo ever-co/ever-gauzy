@@ -1,12 +1,14 @@
-import { Entity, ManyToOne, JoinColumn, Column, RelationId, Index } from 'typeorm';
+import { ManyToOne, JoinColumn, Column, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
 import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 
-@Entity('warehouse_product_variant')
+@MultiORMEntity('warehouse_product_variant', { mikroOrmRepository: () => MikroOrmWarehouseProductVariantRepository })
 export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	implements IWarehouseProductVariant {
 
@@ -20,10 +22,10 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	quantity: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductVariant

@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -13,11 +13,11 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
 
-@Entity('organization_sprint')
-export class OrganizationSprint
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationSprint {
+@MultiORMEntity('organization_sprint', { mikroOrmRepository: () => MikroOrmOrganizationSprintRepository })
+export class OrganizationSprint extends TenantOrganizationBaseEntity implements IOrganizationSprint {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

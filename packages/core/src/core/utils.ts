@@ -4,31 +4,28 @@ import { IDateRange, IUser } from '@gauzy/contracts';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { getConfig } from '@gauzy/config';
+import { IDBConnectionOptions } from '@gauzy/common';
+import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
+import { SqliteDriver } from '@mikro-orm/sqlite';
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { MySqlDriver } from '@mikro-orm/mysql';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 namespace Utils {
 	export function generatedLogoColor() {
-		return sample(['#269aff', '#ffaf26', '#8b72ff', '#0ecc9D']).replace(
-			'#',
-			''
-		);
+		return sample(['#269aff', '#ffaf26', '#8b72ff', '#0ecc9D']).replace('#', '');
 	}
 }
 
-export const getDummyImage = (
-	width: number,
-	height: number,
-	letter: string
-) => {
+export const getDummyImage = (width: number, height: number, letter: string) => {
 	return `https://dummyimage.com/${width}x${height}/${Utils.generatedLogoColor()}/ffffff.jpg&text=${letter}`;
 };
 
 export const getUserDummyImage = (user: IUser) => {
-	const firstNameLetter = user.firstName
-		? user.firstName.charAt(0).toUpperCase()
-		: '';
+	const firstNameLetter = user.firstName ? user.firstName.charAt(0).toUpperCase() : '';
 	if (firstNameLetter) {
 		return getDummyImage(330, 300, firstNameLetter);
 	} else {
@@ -56,7 +53,7 @@ export function arrayToObject(array, key, value) {
 	return array.reduce((prev, current) => {
 		return {
 			...prev,
-			[current[key]]: current[value],
+			[current[key]]: current[value]
 		};
 	}, {});
 }
@@ -64,10 +61,7 @@ export function arrayToObject(array, key, value) {
 /*
  * To convert unix timestamp to datetime using date format
  */
-export function unixTimestampToDate(
-	timestamps,
-	format = 'YYYY-MM-DD HH:mm:ss'
-) {
+export function unixTimestampToDate(timestamps, format = 'YYYY-MM-DD HH:mm:ss') {
 	const millisecond = 1000;
 	return moment.unix(timestamps / millisecond).format(format);
 }
@@ -75,14 +69,17 @@ export function unixTimestampToDate(
 /*
  * To convert any datetime to any datetime format
  */
-export function convertToDatetime(datetime) {
+export function convertToDatetime(datetime): Date | string | null {
 	if (moment(new Date(datetime)).isValid()) {
-		const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-		const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-		if (allowedDbTypes.includes(dbType)) {
-			return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
-		} else {
-			return moment(new Date(datetime)).toDate();
+		switch (getConfig().dbConnectionOptions.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				return moment(new Date(datetime)).format('YYYY-MM-DD HH:mm:ss');
+			case DatabaseTypeEnum.postgres:
+			case DatabaseTypeEnum.mysql:
+				return moment(new Date(datetime)).toDate();
+			default:
+				throw Error('cannot convert to date time');
 		}
 	}
 	return null;
@@ -114,11 +111,7 @@ export function getDateRange(
 		start = moment.utc(startDate).startOf(type);
 		end = moment.utc(endDate).endOf(type);
 	} else {
-		if (
-			(startDate && endDate === 'day') ||
-			endDate === 'week' ||
-			(startDate && !endDate)
-		) {
+		if ((startDate && endDate === 'day') || endDate === 'week' || (startDate && !endDate)) {
 			start = moment.utc(startDate).startOf(type);
 			end = moment.utc(startDate).endOf(type);
 		}
@@ -132,23 +125,31 @@ export function getDateRange(
 		throw 'End date must be greater than start date.';
 	}
 
-	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-	if (['sqlite', 'better-sqlite3'].includes(dbType)) {
-		start = start.format('YYYY-MM-DD HH:mm:ss');
-		end = end.format('YYYY-MM-DD HH:mm:ss');
-	} else {
-		if (!isFormat) {
-			start = start.toDate();
-			end = end.toDate();
-		} else {
-			start = start.format();
-			end = end.format();
-		}
+	switch (getConfig().dbConnectionOptions.type) {
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
+			start = start.format('YYYY-MM-DD HH:mm:ss');
+			end = end.format('YYYY-MM-DD HH:mm:ss');
+			break;
+		case DatabaseTypeEnum.postgres:
+		case DatabaseTypeEnum.mysql:
+			if (!isFormat) {
+				start = start.toDate();
+				end = end.toDate();
+			} else {
+				start = start.format();
+				end = end.format();
+			}
+			break;
+		default:
+			throw Error(
+				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
+			);
 	}
 
 	return {
 		start,
-		end,
+		end
 	};
 }
 
@@ -224,18 +225,23 @@ export function getDateRangeFormat(
 		throw 'End date must be greater than start date.';
 	}
 
-	const dbType = getConfig().dbConnectionOptions.type || 'sqlite';
-	const allowedDbTypes = ['sqlite', 'better-sqlite3'];
-	if (allowedDbTypes.includes(dbType)) {
-		return {
-			start: start.format('YYYY-MM-DD HH:mm:ss'),
-			end: end.format('YYYY-MM-DD HH:mm:ss'),
-		};
-	} else {
-		return {
-			start: start.toDate(),
-			end: end.toDate(),
-		};
+	switch (getConfig().dbConnectionOptions.type) {
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
+			return {
+				start: start.format('YYYY-MM-DD HH:mm:ss'),
+				end: end.format('YYYY-MM-DD HH:mm:ss')
+			};
+		case DatabaseTypeEnum.postgres:
+		case DatabaseTypeEnum.mysql:
+			return {
+				start: start.toDate(),
+				end: end.toDate()
+			};
+		default:
+			throw Error(
+				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
+			);
 	}
 }
 
@@ -264,11 +270,7 @@ export function getDaysBetweenDates(
  * @param length
  */
 export function generateRandomInteger(length = 6) {
-	return Math.floor(
-		Math.pow(10, length - 1) +
-		Math.random() *
-		(Math.pow(10, length) - Math.pow(10, length - 1) - 1)
-	);
+	return Math.floor(Math.pow(10, length - 1) + Math.random() * (Math.pow(10, length) - Math.pow(10, length - 1) - 1));
 }
 
 /**
@@ -309,11 +311,7 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 		const start = moment(startedAt);
 		const end = moment(stoppedAt);
 
-		console.log(
-			'------ Stopped Timer ------',
-			start.toDate(),
-			end.toDate()
-		);
+		console.log('------ Stopped Timer ------', start.toDate(), end.toDate());
 
 		if (!start.isValid() || !end.isValid()) {
 			throw 'Started and Stopped date must be valid date.';
@@ -344,9 +342,127 @@ export function findIntersection(arr1: any[], arr2: any[]) {
 /**
  * Check if the given database connection type is SQLite.
  *
- * @param {string} connectionType - The database connection type.
+ * @param {string} dbConnection - The database connection type.
  * @returns {boolean} - Returns true if the database connection type is SQLite.
  */
-export function isSqliteDB(connectionType: string): boolean {
-	return ['sqlite', 'better-sqlite3'].includes(connectionType);
+export function isSqliteDB(dbConnection?: IDBConnectionOptions): boolean {
+	return isDatabaseType([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3], dbConnection);
 }
+
+/**
+ * Enum representing different ORM types.
+ */
+export enum MultiORMEnum {
+	TypeORM = 'typeorm',
+	MikroORM = 'mikro-orm'
+}
+
+/**
+ * Type representing the ORM types.
+ */
+export type MultiORM = 'typeorm' | 'mikro-orm';
+
+/**
+ * Gets the ORM type based on the environment variable or a default value.
+ * @param defaultValue The default ORM type.
+ * @returns The ORM type ('typeorm' or 'mikro-orm').
+ */
+export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
+	if (!process.env.DB_ORM) return defaultValue;
+
+	switch (process.env.DB_ORM) {
+		case MultiORMEnum.TypeORM:
+			return MultiORMEnum.TypeORM;
+		case MultiORMEnum.MikroORM:
+			return MultiORMEnum.MikroORM;
+		default:
+			return defaultValue;
+	}
+}
+
+/**
+ * Gets the database type based on the provided database connection options or default options.
+ *
+ * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
+ * @returns {DatabaseTypeEnum} - The detected database type.
+ */
+export function getDBType(dbConnection?: IDBConnectionOptions): any {
+	const dbORM = getORMType();
+	if (!dbConnection) {
+		dbConnection = getConfig().dbConnectionOptions;
+	}
+
+	let dbType: any;
+	switch (dbORM) {
+		case MultiORMEnum.MikroORM:
+			if (dbConnection.driver instanceof SqliteDriver) {
+				dbType = DatabaseTypeEnum.sqlite;
+			} else if (dbConnection.driver instanceof BetterSqliteDriver) {
+				dbType = DatabaseTypeEnum.betterSqlite3;
+			} else if (dbConnection.driver instanceof PostgreSqlDriver) {
+				dbType = DatabaseTypeEnum.postgres;
+			} else if (dbConnection.driver instanceof MySqlDriver) {
+				dbType = DatabaseTypeEnum.mysql;
+			} else {
+				dbType = DatabaseTypeEnum.postgres;
+			}
+			break;
+
+		default:
+			dbType = (dbConnection as TypeOrmModuleOptions).type;
+			break;
+	}
+
+	return dbType;
+}
+
+/**
+ * Checks whether the provided database type(s) match the database type of the given connection options.
+ * If no connection options are provided, it uses the default options from the configuration.
+ *
+ * @param {DatabaseTypeEnum | DatabaseTypeEnum[]} types - The expected database type(s) to check against.
+ * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
+ * @returns {boolean} - Returns true if the database type matches any of the provided types.
+ */
+export function isDatabaseType(types: DatabaseTypeEnum | DatabaseTypeEnum[], dbConnection?: IDBConnectionOptions): boolean {
+	// If no connection options are provided, use the default options from the configuration
+	if (!dbConnection) {
+		dbConnection = getConfig().dbConnectionOptions;
+	}
+
+	// Get the database type from the connection options
+	let dbType = getDBType(dbConnection);
+
+	// Check if the provided types match the database type
+	if (types instanceof Array) {
+		return types.includes(dbType);
+	} else {
+		return types == dbType;
+	}
+}
+
+/**
+ * Recursively flattens nested objects into an array of dot-notated keys.
+ * If the input is already an array, returns it as is.
+ *
+ * @param {any} input - The input object or array to be flattened.
+ * @returns {string[]} - An array of dot-notated keys.
+ */
+export const flatten = (input: any): any => {
+	if (Array.isArray(input)) {
+		// If input is already an array, return it as is
+		return input;
+	}
+
+	if (typeof input === 'object' && input !== null) {
+		return Object.keys(input).reduce((acc, key) => {
+			const value = input[key];
+			const nestedKeys = flatten(value);
+			const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
+			return acc.concat(newKey);
+		}, []);
+	}
+
+	// If input is neither an array nor an object, return an empty array
+	return [];
+};

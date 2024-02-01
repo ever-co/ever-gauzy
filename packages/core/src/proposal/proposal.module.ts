@@ -8,11 +8,13 @@ import { Employee } from '../employee/employee.entity';
 import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/proposal', module: ProposalModule }]),
 		TypeOrmModule.forFeature([Proposal, Employee]),
+		MikroOrmModule.forFeature([Proposal, Employee]),
 		TenantModule,
 		UserModule
 	],
@@ -20,4 +22,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	providers: [ProposalService, ...CommandHandlers],
 	exports: [ProposalService]
 })
-export class ProposalModule {}
+export class ProposalModule { }

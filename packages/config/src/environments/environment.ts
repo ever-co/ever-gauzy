@@ -180,6 +180,7 @@ export const environment: IEnvironment = {
 
 	isElectron: process.env.IS_ELECTRON === 'true' ? true : false,
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
+	gauzySeedPath: process.env.GAUZY_SEED_PATH,
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
