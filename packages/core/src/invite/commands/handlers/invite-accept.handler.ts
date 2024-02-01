@@ -1,6 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
@@ -12,19 +11,20 @@ import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { InviteAcceptCommand } from '../invite-accept.command';
 import { User } from './../../../core/entities/internal';
+import { TypeOrmUserRepository } from './../../../user/repository/type-orm-user.repository';
 
 @CommandHandler(InviteAcceptCommand)
 export class InviteAcceptHandler
 	implements ICommandHandler<InviteAcceptCommand> {
 
 	constructor(
-		@InjectRepository(User) private readonly userRepository: Repository<User>,
+		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
 
 		private readonly commandBus: CommandBus,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
-	) {}
+	) { }
 
 	public async execute(command: InviteAcceptCommand) {
 		try {
@@ -93,7 +93,7 @@ export class InviteAcceptHandler
 	private async _authorizeUser(user: IUser): Promise<Object> {
 		try {
 			const { id, email } = user;
-			await this.userRepository.findOneOrFail({
+			await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					id,
 					email

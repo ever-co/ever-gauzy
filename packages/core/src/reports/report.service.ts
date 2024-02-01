@@ -3,7 +3,6 @@ import {
 	IOrganization,
 	IPagination,
 	IReport,
-	IReportOrganization,
 	UpdateReportMenuInput,
 } from '@gauzy/contracts';
 import {
@@ -12,26 +11,31 @@ import {
 	Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { indexBy } from 'underscore';
 import { CrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
 import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
+import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
+import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
+import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
 
 @Injectable()
 export class ReportService extends CrudService<Report> {
-	constructor(
-		@InjectRepository(Report)
-		protected reportRepository: Repository<Report>,
-
-		@InjectRepository(ReportOrganization)
-		private reportOrganizationRepository: Repository<ReportOrganization>
-	) {
-		super(reportRepository);
-	}
 
 	private readonly logger = new Logger(ReportService.name);
+
+	constructor(
+		@InjectRepository(Report)
+		typeOrmReportRepository: TypeOrmReportRepository,
+
+		mikroOrmReportRepository: MikroOrmReportRepository,
+
+		@InjectRepository(ReportOrganization)
+		readonly typeOrmReportOrganizationRepository: TypeOrmReportOrganizationRepository
+	) {
+		super(typeOrmReportRepository, mikroOrmReportRepository);
+	}
 
 	public async findAll(filter?: any): Promise<IPagination<Report>> {
 		const start = new Date();
@@ -92,7 +96,7 @@ export class ReportService extends CrudService<Report> {
 		input: UpdateReportMenuInput
 	): Promise<ReportOrganization> {
 		let reportOrganization =
-			await this.reportOrganizationRepository.findOne({
+			await this.typeOrmReportOrganizationRepository.findOne({
 				where: {
 					reportId: input.reportId,
 				},
@@ -106,32 +110,39 @@ export class ReportService extends CrudService<Report> {
 			);
 		}
 
-		this.reportOrganizationRepository.save(reportOrganization);
+		this.typeOrmReportOrganizationRepository.save(reportOrganization);
 		return reportOrganization;
 	}
 
-	/*
-	 * Bulk Create Organization Default Reports Menu
+	/**
+	 * Bulk create organization default reports menu.
+	 *
+	 * @param input - The organization input data.
+	 * @returns A promise that resolves to an array of created ReportOrganization instances.
 	 */
-	async bulkCreateOrganizationReport(input: IOrganization) {
+	async bulkCreateOrganizationReport(input: IOrganization): Promise<ReportOrganization[]> {
 		try {
 			const { id: organizationId, tenantId } = input;
-			const { items } = await super.findAll();
 
-			const reportOrganizations: IReportOrganization[] = [];
-			items.forEach((report: IReport) => {
-				reportOrganizations.push(
-					new ReportOrganization({
-						report,
-						organizationId,
-						tenantId
-					})
-				);
-			});
+			// Fetch reports from the database
+			const reports: IReport[] = await super.find(); // Replace 'super' with your appropriate superclass or service
 
-			this.reportOrganizationRepository.save(reportOrganizations);
+			// Create ReportOrganization instances based on fetched reports
+			const reportOrganizations: ReportOrganization[] = reports.map((report: IReport) =>
+				new ReportOrganization({
+					report,
+					organizationId,
+					tenantId
+				})
+			);
+
+			// Save the created ReportOrganization instances to the database
+			await this.typeOrmReportOrganizationRepository.save(reportOrganizations);
+
+			// Return the array of created ReportOrganization instances
 			return reportOrganizations;
 		} catch (error) {
+			// Throw InternalServerErrorException if an error occurs
 			throw new InternalServerErrorException(error);
 		}
 	}

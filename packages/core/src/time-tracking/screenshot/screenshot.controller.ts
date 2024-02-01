@@ -12,6 +12,7 @@ import {
 	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { isUUID } from 'class-validator';
 import * as path from 'path';
 import * as moment from 'moment';
 import * as fs from 'fs';
@@ -148,9 +149,11 @@ export class ScreenshotController {
 				file: file.key,
 				thumb: thumb.key,
 				storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
-				timeSlotId: input.timeSlotId,
+				timeSlotId: isUUID(input.timeSlotId) ? input.timeSlotId : null,
 				recordedAt: input.recordedAt ? input.recordedAt : new Date()
 			});
+
+			console.log(`Screenshot entity for employee (${user.name})`, { entity });
 
 			// Create the screenshot entity in the database
 			const screenshot = await this._screenshotService.create(entity);

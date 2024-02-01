@@ -5,6 +5,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
+import { GITHUB_API_URL } from '@gauzy/integration-github';
 import {
 	IGetTaskOptions,
 	IOrganization,
@@ -21,8 +22,6 @@ import {
 	Employee,
 } from './../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
-
-const GITHUB_API_URL = 'https://api.github.com';
 
 export const createDefaultTask = async (
 	dataSource: DataSource,
@@ -247,20 +246,15 @@ export async function getMaxTaskNumberByProject(
 	 * GET maximum task number by project
 	 */
 	const query = dataSource.createQueryBuilder(Task, 'task');
-	query.select(
-		`COALESCE(MAX(\`${query.alias}\`.\`number\`), 0)`,
-		'maxTaskNumber'
-	);
+	// Build the query to get the maximum task number
+	query.select(p(`COALESCE(MAX("${query.alias}"."number"), 0)`), 'maxTaskNumber');
 	query.andWhere(
 		new Brackets((qb: WhereExpressionBuilder) => {
-			qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), {
-				organizationId,
-			});
+			qb.andWhere(p(`"${query.alias}"."organizationId" =:organizationId`), { organizationId });
 			qb.andWhere(p(`"${query.alias}"."tenantId" =:tenantId`), { tenantId });
+
 			if (isNotEmpty(projectId)) {
-				qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), {
-					projectId,
-				});
+				qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 			} else {
 				qb.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 			}

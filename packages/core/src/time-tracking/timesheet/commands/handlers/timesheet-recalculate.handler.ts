@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { ITimesheet } from '@gauzy/contracts';
 import { TimeSheetService } from '../../timesheet.service';
@@ -10,20 +10,27 @@ import { TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 
 @CommandHandler(TimesheetRecalculateCommand)
-export class TimesheetRecalculateHandler
-	implements ICommandHandler<TimesheetRecalculateCommand> {
+export class TimesheetRecalculateHandler implements ICommandHandler<TimesheetRecalculateCommand> {
+
 	constructor(
 		private readonly timesheetService: TimeSheetService,
 
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>
-	) {}
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository
+	) { }
 
+	/**
+	 *
+	 * @param command
+	 * @returns
+	 */
 	public async execute(
 		command: TimesheetRecalculateCommand
 	): Promise<ITimesheet> {
+
 		const { id } = command;
 		const timesheet = await this.timesheetService.findOneByIdString(id);
 
@@ -35,7 +42,7 @@ export class TimesheetRecalculateHandler
 			moment.utc(timesheet.stoppedAt)
 		);
 
-		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
 		const timeSlot = await query
 			.select('SUM(duration)', 'duration')
 			.addSelect('AVG(keyboard)', 'keyboard')
@@ -59,6 +66,7 @@ export class TimesheetRecalculateHandler
 				})
 			)
 			.getRawOne();
+
 		try {
 			await this.timesheetService.update(id, {
 				duration: Math.round(timeSlot.duration),
@@ -69,6 +77,7 @@ export class TimesheetRecalculateHandler
 		} catch (error) {
 			throw new BadRequestException(`Can\'t update timesheet for employee-${employeeId} of organization-${organizationId}`);
 		}
+
 		return await this.timesheetService.findOneByIdString(id);
 	}
 }

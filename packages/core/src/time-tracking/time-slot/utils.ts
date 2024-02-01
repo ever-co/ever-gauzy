@@ -50,10 +50,10 @@ export function generateTimeSlots(start: Date, end: Date) {
 
 /**
  * GET start and end point of 10 minutes interval
- * 
- * @param start 
- * @param end 
- * @returns 
+ *
+ * @param start
+ * @param end
+ * @returns
  */
 export function getStartEndIntervals(
 	start: moment.Moment,

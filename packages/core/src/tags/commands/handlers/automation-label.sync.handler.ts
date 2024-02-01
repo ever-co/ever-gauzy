@@ -1,19 +1,24 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IOrganization, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
 import { IntegrationMap } from 'core/entities/internal';
 import { RequestContext } from 'core/context';
 import { Tag } from './../../tag.entity';
 import { TagService } from './../../tag.service';
 import { AutomationLabelSyncCommand } from './../automation-label.sync.command';
+import { TypeOrmTagRepository } from '../../repository/type-orm-tag.repository';
+import { TypeOrmIntegrationMapRepository } from '../../../integration-map/repository/type-orm-integration-map.repository';
 
 @CommandHandler(AutomationLabelSyncCommand)
 export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLabelSyncCommand> {
 
 	constructor(
-		@InjectRepository(Tag) private readonly repository: Repository<Tag>,
-		@InjectRepository(IntegrationMap) private readonly integrationMapRepository: Repository<IntegrationMap>,
+		@InjectRepository(Tag)
+		private readonly typeOrmTagRepository: TypeOrmTagRepository,
+
+		@InjectRepository(IntegrationMap)
+		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
+
 		private readonly _tagService: TagService
 	) { }
 
@@ -25,7 +30,7 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 
 			try {
 				// Check if an integration map already exists for the tag
-				const integrationMap = await this.integrationMapRepository.findOneByOrFail({
+				const integrationMap = await this.typeOrmIntegrationMapRepository.findOneByOrFail({
 					entity: command.entity,
 					sourceId,
 					integrationId,
@@ -58,8 +63,8 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 				// Create a tag tag with the provided entity data
 				const tag = await this.createTag({ organizationId, tenantId }, entity);
 				// Create a new integration map for the tag
-				await this.integrationMapRepository.save(
-					this.integrationMapRepository.create({
+				await this.typeOrmIntegrationMapRepository.save(
+					this.typeOrmIntegrationMapRepository.create({
 						gauzyId: tag.id,
 						entity: command.entity,
 						integrationId,
@@ -88,14 +93,14 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 	}, entity: ITagCreateInput | ITagUpdateInput): Promise<ITag> {
 		try {
 			// Create a new tag with the provided entity data
-			const newTag = this.repository.create({
+			const newTag = this.typeOrmTagRepository.create({
 				...entity,
 				organizationId: options.organizationId,
 				tenantId: options.tenantId
 			});
 
 			// Save the new tag
-			const createdTag = await this.repository.save(newTag);
+			const createdTag = await this.typeOrmTagRepository.save(newTag);
 			return createdTag;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
@@ -122,10 +127,10 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 			}
 
 			// Update the existing tag with the new entity data
-			this.repository.merge(existingTag, entity);
+			this.typeOrmTagRepository.merge(existingTag, entity);
 
 			// Save the updated tag
-			const updatedTag = await this.repository.save(existingTag);
+			const updatedTag = await this.typeOrmTagRepository.save(existingTag);
 			return updatedTag;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
