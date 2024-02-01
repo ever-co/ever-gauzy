@@ -39,3 +39,5 @@ export * from './i-path-window';
 export * from './i-activity';
 export * from './i-desktop-event';
 export * from './i-desktop-save-dialog';
+export * from './i-server-config';
+export * from './i-ssl-factory';
