@@ -1,12 +1,12 @@
 import { InviteStatusEnum, IUser } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptUserCommand } from '../invite.accept-user.command';
 import { OrganizationService } from '../../../organization/organization.service';
 import { User } from './../../../core/entities/internal';
+import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 
 /**
  * Use this command for registering all non-employee users.
@@ -17,7 +17,8 @@ import { User } from './../../../core/entities/internal';
 export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUserCommand> {
 
 	constructor(
-		@InjectRepository(User) private readonly userRepository: Repository<User>,
+		@InjectRepository(User)
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly organizationService: OrganizationService
@@ -42,7 +43,7 @@ export class InviteAcceptUserHandler implements ICommandHandler<InviteAcceptUser
 		let user: IUser;
 		try {
 			const { tenantId, email } = invite;
-			user = await this.userRepository.findOneOrFail({
+			user = await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					email,
 					tenantId
