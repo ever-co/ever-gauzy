@@ -216,15 +216,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				);
 				// Additional conditions based on the provided 'where' object
 				if (isNotEmpty(where)) {
-					const parseBool = (value: any) => Boolean(JSON.parse(value));
-
 					// Apply conditions for specific fields in the Employee entity
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
 							const fields = ['isActive', 'isArchived', 'isTrackingEnabled', 'allowScreenshotCapture'];
 							fields.forEach((key: string) => {
 								if (key in where) {
-									web.andWhere(p(`${qb.alias}.${key} = :${key}`), { [key]: parseBool(where[key]) });
+									web.andWhere(p(`${qb.alias}.${key} = :${key}`), { [key]: where[key] });
 								}
 							});
 						})
