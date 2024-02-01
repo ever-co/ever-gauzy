@@ -2,14 +2,13 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { chain, omit, uniq } from 'underscore';
+import { chain, omit, pluck, uniq } from 'underscore';
 import { IActivity, IScreenshot, ITimeLog, ITimeSlot } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TimeSlotMergeCommand } from '../time-slot-merge.command';
 import { Activity, Screenshot, TimeSlot } from './../../../../core/entities/internal';
 import { RequestContext } from './../../../../core/context';
 import { getDateRangeFormat } from './../../../../core/utils';
-import { roundDownToNearest10Minutes } from '../../utils';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
@@ -34,9 +33,27 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		let { organizationId, employeeId, start, end } = command;
 		const tenantId = RequestContext.currentTenantId();
 
+		let startMinute = moment(start).utc().get('minute');
+		startMinute = startMinute - (startMinute % 10);
+
+		let startDate: any = moment(start)
+			.utc()
+			.set('minute', startMinute)
+			.set('second', 0)
+			.set('millisecond', 0);
+
+		let endMinute = moment(end).utc().get('minute');
+		endMinute = endMinute - (endMinute % 10);
+
+		let endDate: any = moment(end)
+			.utc()
+			.set('minute', endMinute + 10)
+			.set('second', 0)
+			.set('millisecond', 0);
+
 		const { start: startedAt, end: stoppedAt } = getDateRangeFormat(
-			roundDownToNearest10Minutes(moment.utc(start)),
-			roundDownToNearest10Minutes(moment.utc(end)).add(10, 'minutes')
+			startDate,
+			endDate
 		);
 		console.log({ startedAt, stoppedAt }, 'Time Slot Merging Dates');
 
@@ -52,11 +69,17 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		const createdTimeSlots: ITimeSlot[] = [];
 
 		if (isNotEmpty(timeSlots)) {
-			const groupByTimeSlots = chain(timeSlots).groupBy((timeSlot: ITimeSlot) =>
-				moment(timeSlot.startedAt).startOf('minute').subtract(moment().minute() % 10, 'minutes').format('YYYY-MM-DD HH:mm:ss')
-			);
-			const savePromises = groupByTimeSlots.mapObject(async (slots, slotStart) => {
-				const [slot] = slots;
+			const groupByTimeSlots = chain(timeSlots).groupBy((timeSlot) => {
+				let date = moment(timeSlot.startedAt);
+				const minutes = date.get('minute');
+				date = date
+					.set('minute', minutes - (minutes % 10))
+					.set('second', 0)
+					.set('millisecond', 0);
+				return date.format('YYYY-MM-DD HH:mm:ss');
+			});
+			const savePromises = groupByTimeSlots.mapObject(async (timeSlots, slotStart) => {
+				const [timeSlot] = timeSlots;
 
 				let timeLogs: ITimeLog[] = [];
 				let screenshots: IScreenshot[] = [];
@@ -67,18 +90,18 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 				let mouse = 0;
 				let overall = 0;
 
-				for (const slot of slots) {
-					duration += parseInt(slot.duration as any, 10) || 0;
-					keyboard += parseInt(slot.keyboard as any, 10) || 0;
-					mouse += parseInt(slot.mouse as any, 10) || 0;
-					overall += parseInt(slot.overall as any, 10) || 0;
+				const calculateValue = (value: number | undefined): number => parseInt(value as any, 10) || 0;
 
-					screenshots = screenshots.concat(slot.screenshots || []);
-					timeLogs = timeLogs.concat(slot.timeLogs || []);
-					activities = activities.concat(slot.activities || []);
-				}
+				duration += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.duration), 0);
+				keyboard += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.keyboard), 0);
+				mouse += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.mouse), 0);
+				overall += timeSlots.reduce((acc, slot) => acc + calculateValue(slot.overall), 0);
 
-				const nonZeroKeyboardSlots = slots.filter((item: ITimeSlot) => item.keyboard !== 0);
+				screenshots = screenshots.concat(...timeSlots.map(slot => slot.screenshots || []));
+				timeLogs = timeLogs.concat(...timeSlots.map(slot => slot.timeLogs || []));
+				activities = activities.concat(...timeSlots.map(slot => slot.activities || []));
+
+				const nonZeroKeyboardSlots = timeSlots.filter((item: ITimeSlot) => item.keyboard !== 0);
 				const timeSlotsLength = nonZeroKeyboardSlots.length;
 
 				keyboard = Math.round(keyboard / timeSlotsLength || 0);
@@ -93,20 +116,16 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 				/*
 				* Map old screenshots newly created TimeSlot
 				*/
-				screenshots = screenshots.map(
-					(item) => new Screenshot(omit(item, ['timeSlotId']))
-				);
+				screenshots = screenshots.map((item) => new Screenshot(omit(item, ['timeSlotId'])));
 				/*
 				* Map old activities newly created TimeSlot
 				*/
-				activities = activities.map(
-					(item) => new Activity(omit(item, ['timeSlotId']))
-				);
+				activities = activities.map((item) => new Activity(omit(item, ['timeSlotId'])));
 
 				timeLogs = uniq(timeLogs, (log: ITimeLog) => log.id);
 
 				const newTimeSlot = new TimeSlot({
-					...omit(slot),
+					...omit(timeSlot),
 					...activity,
 					screenshots,
 					activities,
@@ -123,11 +142,14 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 				await this.typeOrmTimeSlotRepository.save(newTimeSlot);
 				createdTimeSlots.push(newTimeSlot);
 
-				const ids = slots.map((slot: ITimeSlot) => slot.id).slice(1);
+				const ids = pluck(timeSlots, 'id');
+				ids.splice(0, 1);
 				console.log('TimeSlots Ids Will Be Deleted:', ids);
 
-				if (isNotEmpty(ids)) {
-					await this.typeOrmTimeSlotRepository.delete({ id: In(ids) });
+				if (ids.length > 0) {
+					await this.typeOrmTimeSlotRepository.delete({
+						id: In(ids)
+					});
 				}
 			}).values().value();
 			await Promise.all(savePromises);

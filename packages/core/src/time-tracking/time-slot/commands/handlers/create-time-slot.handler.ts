@@ -23,7 +23,7 @@ import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-
 @CommandHandler(CreateTimeSlotCommand)
 export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotCommand> {
 
-	private logging: boolean = false;
+	private logging: boolean = true;
 
 	constructor(
 		@InjectRepository(TimeSlot)
