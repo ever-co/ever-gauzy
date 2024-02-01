@@ -14,3 +14,4 @@ export * from './concretes/dialog-stop-server-exit-confirmation';
 export * from './concretes/dialog-error-handler';
 export * from './concretes/dialog-open-file';
 export * from './abstracts/base-reverse-proxy';
+export * from './methods/timeout.decorator';
