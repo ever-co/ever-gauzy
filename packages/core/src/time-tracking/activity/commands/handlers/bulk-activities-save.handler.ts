@@ -10,8 +10,7 @@ import { TypeOrmActivityRepository } from '../../repository/type-orm-activity.re
 import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 
 @CommandHandler(BulkActivitiesSaveCommand)
-export class BulkActivitiesSaveHandler
-	implements ICommandHandler<BulkActivitiesSaveCommand> {
+export class BulkActivitiesSaveHandler implements ICommandHandler<BulkActivitiesSaveCommand> {
 
 	constructor(
 		@InjectRepository(Activity)
@@ -21,6 +20,11 @@ export class BulkActivitiesSaveHandler
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
 	) { }
 
+	/**
+	 *
+	 * @param command
+	 * @returns
+	 */
 	public async execute(command: BulkActivitiesSaveCommand): Promise<IActivity[]> {
 		const { input } = command;
 		let { employeeId, organizationId, activities = [] } = input;
@@ -31,9 +35,7 @@ export class BulkActivitiesSaveHandler
 		/**
 		 * Check logged user does not have employee selection permission
 		 */
-		if (!RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				let employee = await this.typeOrmEmployeeRepository.findOneByOrFail({
 					userId: user.id,
@@ -44,13 +46,8 @@ export class BulkActivitiesSaveHandler
 			} catch (error) {
 				console.log(`Error while finding logged in employee for (${user.name}) create bulk activities`, error);
 			}
-		} else {
-			/*
-			* If employeeId not send from desktop timer request payload
-			*/
-			if (isEmpty(employeeId) && RequestContext.currentEmployeeId()) {
-				employeeId = RequestContext.currentEmployeeId();
-			}
+		} else if (isEmpty(employeeId) && RequestContext.currentEmployeeId()) {
+			employeeId = RequestContext.currentEmployeeId();
 		}
 
 		/*
@@ -63,24 +60,22 @@ export class BulkActivitiesSaveHandler
 			organizationId = employee ? employee.organizationId : null;
 		}
 
-		console.log(`Empty bulk App & URL's activities for employee (${user.name}) : ${employeeId}`, activities.filter(
+		console.log(`Empty bulk App & URL's activities for employee (${user.name}): ${employeeId}`, activities.filter(
 			(activity: IActivity) => Object.keys(activity).length === 0
-		))
+		));
 
 		activities = activities.filter(
 			(activity: IActivity) => Object.keys(activity).length !== 0
-		).map((activity: IActivity) => {
-			activity = new Activity({
-				...activity,
-				...(input.projectId ? { projectId: input.projectId } : {}),
-				employeeId,
-				organizationId,
-				tenantId,
-			});
-			return activity;
-		});
+		).map((activity: IActivity) => new Activity({
+			...activity,
+			...(input.projectId ? { projectId: input.projectId } : {}),
+			employeeId,
+			organizationId,
+			tenantId,
+		}));
 
 		console.log(`Activities should be insert into database for employee (${user.name})`, { activities });
+
 		if (isNotEmpty(activities)) {
 			return await this.typeOrmActivityRepository.save(activities);
 		} else {
