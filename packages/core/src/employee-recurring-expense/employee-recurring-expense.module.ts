@@ -10,6 +10,7 @@ import { QueryHandlers } from './queries/handlers';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { TaskModule } from '../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -20,6 +21,7 @@ import { TaskModule } from '../tasks/task.module';
 			}
 		]),
 		TypeOrmModule.forFeature([EmployeeRecurringExpense]),
+		MikroOrmModule.forFeature([EmployeeRecurringExpense]),
 		CqrsModule,
 		TenantModule,
 		UserModule,
@@ -27,6 +29,6 @@ import { TaskModule } from '../tasks/task.module';
 	],
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [EmployeeRecurringExpenseService, ...QueryHandlers, ...CommandHandlers],
-	exports: [TypeOrmModule, EmployeeRecurringExpenseService]
+	exports: [TypeOrmModule, MikroOrmModule, EmployeeRecurringExpenseService]
 })
-export class EmployeeRecurringExpenseModule {}
+export class EmployeeRecurringExpenseModule { }

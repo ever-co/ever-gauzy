@@ -211,9 +211,9 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async pagination(
-		@Query() options: PaginationParams<Employee>
+		@Query() params: PaginationParams<Employee>
 	): Promise<IPagination<IEmployee>> {
-		return await this.employeeService.pagination(options);
+		return await this.employeeService.pagination(params);
 	}
 
 	/**

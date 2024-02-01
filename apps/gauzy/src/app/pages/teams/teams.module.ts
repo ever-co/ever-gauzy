@@ -27,7 +27,7 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
@@ -56,7 +56,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		HeaderTitleModule,
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,
-		PaginationModule,
+		PaginationV2Module,
 		GauzyButtonActionModule,
 		CommonModule,
 		ImageUploaderModule

@@ -8,11 +8,13 @@ import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateController } from './accounting-template.controller';
 import { AccountingTemplateService } from './accounting-template.service';
 import { QueryHandlers } from './queries/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/accounting-template', module: AccountingTemplateModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([AccountingTemplate])),
+		forwardRef(() => MikroOrmModule.forFeature([AccountingTemplate])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
@@ -21,4 +23,4 @@ import { QueryHandlers } from './queries/handlers';
 	providers: [AccountingTemplateService, ...QueryHandlers],
 	exports: [AccountingTemplateService]
 })
-export class AccountingTemplateModule {}
+export class AccountingTemplateModule { }

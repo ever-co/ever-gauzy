@@ -12,6 +12,7 @@ import { ImportRecordModule } from '../import-record';
 import { ImportHistoryModule } from '../import-history';
 import { TenantModule } from '../../tenant/tenant.module';
 import { UserModule } from '../../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -23,6 +24,7 @@ import { UserModule } from '../../user/user.module';
 			}
 		]),
 		TypeOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
+		MikroOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
 		TenantModule,
 		UserModule,
 		ImportRecordModule,
@@ -33,4 +35,4 @@ import { UserModule } from '../../user/user.module';
 	providers: [ImportService, ...CommandHandlers],
 	exports: []
 })
-export class ImportModule {}
+export class ImportModule { }

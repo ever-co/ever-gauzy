@@ -3,12 +3,12 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import { verify } from 'jsonwebtoken';
-import { Repository } from 'typeorm';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import * as camelCase from 'camelcase';
 import { RequestContext } from './../../core/context';
 import { Employee } from './../../core/entities/internal';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 
 @Injectable()
 export class OrganizationPermissionGuard implements CanActivate {
@@ -16,8 +16,8 @@ export class OrganizationPermissionGuard implements CanActivate {
 		private readonly _reflector: Reflector,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
-	) {}
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
+	) { }
 
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		let isAuthorized = false;
@@ -50,8 +50,8 @@ export class OrganizationPermissionGuard implements CanActivate {
 			}
 
 			let organizationId: string;
-			if  (role === RolesEnum.EMPLOYEE) {
-				const employee = await this.employeeRepository.findOne({
+			if (role === RolesEnum.EMPLOYEE) {
+				const employee = await this.typeOrmEmployeeRepository.findOne({
 					where: {
 						id: employeeId
 					},
@@ -68,12 +68,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 				isAuthorized = true;
 			}
 			if (!isAuthorized) {
-				console.log(
-					'Unauthorized access blocked. OrganizationId:',
-					organizationId,
-					' Permissions Checked:',
-					permissions
-				);
+				console.log('Unauthorized access blocked. OrganizationId:', organizationId, ' Permissions Checked:', permissions);
 			}
 		}
 		return isAuthorized;

@@ -1,19 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Raw, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, Raw, WhereExpressionBuilder } from 'typeorm';
 import { IEmployee, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
+import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
 
 @Injectable()
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>
+		typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+
+		mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository
 	) {
-		super(organizationContactRepository);
+		super(typeOrmOrganizationContactRepository, mikroOrmOrganizationContactRepository);
 	}
 
 	/**
@@ -42,12 +47,12 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 					const tenantId = RequestContext.currentTenantId();
 					const { organizationId, contactType } = options;
 
-					qb.andWhere('member.id = :employeeId', { employeeId });
-					qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-					qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+					qb.andWhere(p('member.id = :employeeId'), { employeeId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 					if (isNotEmpty(contactType)) {
-						qb.andWhere(`${query.alias}.contactType = :contactType`, { contactType });
+						qb.andWhere(p(`${query.alias}.contactType = :contactType`), { contactType });
 					}
 				})
 			);
@@ -80,9 +85,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		const { employeeId, organizationId, contactType } = findInput;
 		const { tenantId, id: createdBy } = RequestContext.currentUser();
 
-		const query = this.organizationContactRepository.createQueryBuilder(
-			'organization_contact'
-		);
+		const query = this.repository.createQueryBuilder('organization_contact');
 		if (relations.length > 0) {
 			relations.forEach((relation: string) => {
 				if (relation.indexOf('.') !== -1) {
@@ -90,10 +93,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 					query.leftJoinAndSelect(`${relation}`, alias);
 				} else {
 					const alias = relation;
-					query.leftJoinAndSelect(
-						`${query.alias}.${relation}`,
-						alias
-					);
+					query.leftJoinAndSelect(`${query.alias}.${relation}`, alias);
 				}
 			});
 		}
@@ -122,10 +122,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		return { items, total };
 	}
 
-	async findById(
-		id: string,
-		relations: string[]
-	): Promise<IOrganizationContact> {
+	async findById(id: string, relations: string[]): Promise<IOrganizationContact> {
 		return await this.findOneByIdString(id, { relations });
 	}
 
@@ -135,9 +132,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	 * @param params
 	 * @returns
 	 */
-	public async pagination(
-		params?: PaginationParams<any>
-	): Promise<IPagination<IOrganizationContact>> {
+	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
 		// Custom Filters
 		if ('where' in params) {
 			const { where } = params;
@@ -157,7 +152,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 				const { members } = where;
 				params['where']['members'] = {
 					id: In(members)
-				}
+				};
 			}
 		}
 		return await super.paginate(params);

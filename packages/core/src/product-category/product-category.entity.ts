@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, OneToMany, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset, IProductCategoryTranslatable } from '@gauzy/contracts';
@@ -8,8 +8,10 @@ import {
 	ProductCategoryTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
 
-@Entity('product_category')
+@MultiORMEntity('product_category', { mikroOrmRepository: () => MikroOrmProductCategoryRepository })
 export class ProductCategory extends TranslatableBase
 	implements IProductCategoryTranslatable {
 

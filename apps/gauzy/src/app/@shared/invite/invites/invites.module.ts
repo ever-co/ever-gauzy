@@ -29,7 +29,7 @@ import { CardGridModule } from '../../card-grid/card-grid.module';
 import { TranslateModule } from '../../translate/translate.module';
 import { HeaderTitleModule } from '../../components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
-import { PaginationModule } from '../../pagination/pagination.module';
+import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
 
 const COMPONENTS = [
 	InvitesComponent,
@@ -65,7 +65,7 @@ const COMPONENTS = [
 		CardGridModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationModule,
+		PaginationV2Module
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS],

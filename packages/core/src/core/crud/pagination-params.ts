@@ -4,10 +4,11 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { FindOptionsOrder, FindOptionsRelations, FindOptionsSelect, FindOptionsWhere } from 'typeorm';
-import { Transform, TransformFnParams, Type } from 'class-transformer';
+import { Transform, TransformFnParams, Type, plainToClass } from 'class-transformer';
 import { IsNotEmpty, IsOptional, Max, Min, ValidateNested } from 'class-validator';
-import { isClassInstance, isObject, parseToBoolean } from '@gauzy/common';
+import { parseToBoolean } from '@gauzy/common';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { SimpleObjectLiteral, convertNativeParameters, parseObject } from './pagination.helper';
 
 /**
  * Specifies what columns should be retrieved.
@@ -45,6 +46,7 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	@IsNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
+	@Transform(({ value }: TransformFnParams) => value ? escapeQueryWithParameters(value) : {})
 	readonly where: FindOptionsWhere<T>;
 
 	/**
@@ -81,22 +83,14 @@ export class PaginationParams<T = any> extends OptionParams<T> {
 }
 
 /**
- * Parse object to specific type
- *
- * @param source
- * @returns
+ * Function to escape query parameters and convert to DTO class.
+ * @param nativeParameters - The original query parameters.
+ * @returns {TenantOrganizationBaseDTO} - The escaped and converted query parameters as a DTO instance.
  */
-export function parseObject(source: Object, callback: Function) {
-	if (isObject(source)) {
-		for (const key in source) {
-			if (isObject(source[key])) {
-				if (!isClassInstance(source[key])) {
-					parseObject(source[key], callback);
-				}
-			} else {
-				Object.assign(source, { [key]: callback(source[key]) })
-			}
-		}
-	}
-	return source;
+export function escapeQueryWithParameters(nativeParameters: SimpleObjectLiteral): TenantOrganizationBaseDTO {
+	// Convert native parameters based on the database connection type
+	const builtParameters: SimpleObjectLiteral = convertNativeParameters(nativeParameters);
+
+	// Convert to DTO class using class-transformer's plainToClass
+	return plainToClass(TenantOrganizationBaseDTO, builtParameters, { enableImplicitConversion: true });
 }

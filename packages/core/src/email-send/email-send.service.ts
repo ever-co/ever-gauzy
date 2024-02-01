@@ -1,23 +1,18 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { IsNull, Repository } from "typeorm";
+import { IsNull } from "typeorm";
 import * as Email from 'email-templates';
 import { ISMTPConfig, isEmpty } from "@gauzy/common";
 import { IBasePerTenantAndOrganizationEntityModel, IVerifySMTPTransport } from "@gauzy/contracts";
-import { CustomSmtp, EmailTemplate } from "./../core/entities/internal";
+import { CustomSmtp } from "./../core/entities/internal";
 import { RequestContext } from "./../core/context";
 import { CustomSmtpService } from "./../custom-smtp/custom-smtp.service";
 import { SMTPUtils } from "./utils";
 import { EmailTemplateRenderService } from "./email-template-render.service";
-// import { environment } from '@gauzy/config';
 
 @Injectable()
 export class EmailSendService {
 
     constructor(
-        @InjectRepository(EmailTemplate)
-        protected readonly emailTemplateRepository: Repository<EmailTemplate>,
-
         private readonly customSmtpService: CustomSmtpService,
         private readonly emailTemplateRenderService: EmailTemplateRenderService,
     ) { }

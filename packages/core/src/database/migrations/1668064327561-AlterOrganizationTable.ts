@@ -1,35 +1,53 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AlterOrganizationTable1668064327561 implements MigrationInterface {
 
     name = 'AlterOrganizationTable1668064327561';
 
     /**
-    * Up Migration
-    *
-    * @param queryRunner
-    */
-    public async up(queryRunner: QueryRunner): Promise<any> {
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
-        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            await this.sqliteUpQueryRunner(queryRunner);
-        } else {
-            await this.postgresUpQueryRunner(queryRunner);
+        switch (queryRunner.connection.options.type) {
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+                await this.sqliteUpQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.postgres:
+                await this.postgresUpQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.mysql:
+                await this.mysqlUpQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
         }
     }
-
     /**
-    * Down Migration
-    *
-    * @param queryRunner
-    */
-    public async down(queryRunner: QueryRunner): Promise<any> {
-        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            await this.sqliteDownQueryRunner(queryRunner);
-        } else {
-            await this.postgresDownQueryRunner(queryRunner);
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        switch (queryRunner.connection.options.type) {
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+                await this.sqliteDownQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.postgres:
+                await this.postgresDownQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.mysql:
+                await this.mysqlDownQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
         }
     }
 
@@ -121,5 +139,21 @@ export class AlterOrganizationTable1668064327561 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_15458cef74076623c270500053" ON "organization" ("currency") `);
         await queryRunner.query(`CREATE INDEX "IDX_2360aa7a4b5ab99e026584f305" ON "organization" ("defaultValueDateType") `);
         await queryRunner.query(`CREATE INDEX "IDX_7965db2b12872551b586f76dd7" ON "organization" ("contactId") `);
+    }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+    }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
     }
 }

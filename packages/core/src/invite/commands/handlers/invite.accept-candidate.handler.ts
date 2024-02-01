@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { BadRequestException } from '@nestjs/common';
 import {
 	IInvite,
 	InviteStatusEnum,
@@ -11,7 +11,8 @@ import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
 import { Candidate, User } from './../../../core/entities/internal'
-import { BadRequestException } from '@nestjs/common';
+import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
+import { TypeOrmCandidateRepository } from '../../../candidate/repository/type-orm-candidate.repository';
 
 /**
  * Use this command for registering candidates.
@@ -24,8 +25,8 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
-		@InjectRepository(User) private readonly userRepository: Repository<User>,
-		@InjectRepository(Candidate) private readonly candidateRepository: Repository<Candidate>
+		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		@InjectRepository(Candidate) private readonly typeOrmCandidateRepository: TypeOrmCandidateRepository,
 	) { }
 
 	public async execute(
@@ -54,7 +55,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 		let user: IUser;
 		try {
 			const { tenantId, email } = invite;
-			user = await this.userRepository.findOneOrFail({
+			user = await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					email,
 					tenantId,
@@ -92,14 +93,14 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 				/**
 				 * Create candidate after create user
 				 */
-				const create = this.candidateRepository.create({
+				const create = this.typeOrmCandidateRepository.create({
 					user,
 					organization,
 					tenantId,
 					appliedDate: invite.actionDate || null,
 					organizationDepartments: invite.departments || []
 				});
-				await this.candidateRepository.save(create);
+				await this.typeOrmCandidateRepository.save(create);
 			} catch (error) {
 				throw new BadRequestException(error);
 			}

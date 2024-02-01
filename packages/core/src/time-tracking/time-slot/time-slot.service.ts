@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { PermissionsEnum, IGetTimeSlotInput, ITimeSlot } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -12,23 +12,26 @@ import { generateTimeSlots } from './utils';
 import { TimeSlot } from './time-slot.entity';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import {
-	CreateTimeSlotCommand,
 	CreateTimeSlotMinutesCommand,
 	TimeSlotBulkCreateCommand,
 	TimeSlotBulkCreateOrUpdateCommand,
-	UpdateTimeSlotCommand,
 	UpdateTimeSlotMinutesCommand
 } from './commands';
+import { prepareSQLQuery as p } from './../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from './repository/type-orm-time-slot.repository';
+import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @Injectable()
 export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+
+		mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 
 		private readonly commandBus: CommandBus
 	) {
-		super(timeSlotRepository);
+		super(typeOrmTimeSlotRepository, mikroOrmTimeSlotRepository);
 	}
 
 	/**
@@ -37,9 +40,10 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 	 * @returns A list of time slots matching the specified criteria.
 	 */
 	async getTimeSlots(request: IGetTimeSlotInput) {
-
 		// Extract parameters from the request object
 		const { organizationId, startDate, endDate, syncSlots = false } = request;
+		let { employeeIds = [] } = request;
+
 		const tenantId = RequestContext.currentTenantId();
 		const user = RequestContext.currentUser();
 
@@ -54,11 +58,16 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		);
 
+		// Determine if the request specifies to retrieve data for the current user only
+		const isOnlyMeSelected: boolean = request.onlyMe;
+
 		// Set employeeIds based on permissions and request
-		const employeeIds: string[] = hasChangeSelectedEmployeePermission && isNotEmpty(request.employeeIds) ? request.employeeIds : [user.employeeId];
+		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+			employeeIds = [user.employeeId];
+		}
 
 		// Create a query builder for the TimeSlot entity
-		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		const query = this.repository.createQueryBuilder('time_slot');
 		query.leftJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
 
@@ -79,19 +88,17 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					}
 				}
 			},
-			relations: [
-				...(request.relations ? request.relations : [])
-			]
+			relations: [...(request.relations ? request.relations : [])]
 		});
 		query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`, {
+					web.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
 						startDate: start,
 						endDate: end
 					});
 					if (isEmpty(syncSlots)) {
-						web.andWhere(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`, {
+						web.andWhere(p(`"time_log"."startedAt" BETWEEN :startDate AND :endDate`), {
 							startDate: start,
 							endDate: end
 						});
@@ -101,16 +108,16 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
 					if (isNotEmpty(employeeIds)) {
-						web.andWhere(`"${qb.alias}"."employeeId" IN (:...employeeIds)`, {
+						web.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), {
 							employeeIds
 						});
-						web.andWhere(`"time_log"."employeeId" IN (:...employeeIds)`, {
+						web.andWhere(p(`"time_log"."employeeId" IN (:...employeeIds)`), {
 							employeeIds
 						});
 					}
 					if (isNotEmpty(request.projectIds)) {
 						const { projectIds } = request;
-						web.andWhere('"time_log"."projectId" IN (:...projectIds)', {
+						web.andWhere(p('"time_log"."projectId" IN (:...projectIds)'), {
 							projectIds
 						});
 					}
@@ -126,7 +133,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 						 */
 						const { activityLevel } = request;
 
-						web.andWhere(`"${qb.alias}"."overall" BETWEEN :start AND :end`, {
+						web.andWhere(p(`"${qb.alias}"."overall" BETWEEN :start AND :end`), {
 							start: activityLevel.start * 6,
 							end: activityLevel.end * 6
 						});
@@ -136,14 +143,14 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 					if (isNotEmpty(request.source)) {
 						const { source } = request;
 
-						const condition = source instanceof Array ? `"time_log"."source" IN (:...source)` : `"time_log"."source" = :source`;
+						const condition = source instanceof Array ? p(`"time_log"."source" IN (:...source)`) : p(`"time_log"."source" = :source`);
 						web.andWhere(condition, { source });
 					}
 
 					// Filters records based on the logType column.
 					if (isNotEmpty(request.logType)) {
 						const { logType } = request;
-						const condition = logType instanceof Array ? `"time_log"."logType" IN (:...logType)` : `"time_log"."logType" = :logType`;
+						const condition = logType instanceof Array ? p(`"time_log"."logType" IN (:...logType)`) : p(`"time_log"."logType" = :logType`);
 
 						web.andWhere(condition, { logType });
 					}
@@ -152,65 +159,65 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 			// Additional conditions for filtering by tenantId and organizationId
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"time_log"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"time_log"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(p(`"time_log"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"time_log"."organizationId" = :organizationId`), { organizationId });
 				})
 			);
 			// Additional conditions for filtering by tenantId and organizationId
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
+					web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 				})
 			);
-			qb.addOrderBy(`"${qb.alias}"."createdAt"`, 'ASC');
+			qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'ASC');
 		});
 		const slots = await query.getMany();
 		return slots;
 	}
 
+	/**
+	 *
+	 * @param slots
+	 * @param employeeId
+	 * @param organizationId
+	 * @returns
+	 */
 	async bulkCreateOrUpdate(
 		slots: ITimeSlot[],
 		employeeId: ITimeSlot['employeeId'],
-		organizationId: ITimeSlot['organizationId'],
+		organizationId: ITimeSlot['organizationId']
 	) {
 		return await this.commandBus.execute(
-			new TimeSlotBulkCreateOrUpdateCommand(
-				slots,
-				employeeId,
-				organizationId
-			)
+			new TimeSlotBulkCreateOrUpdateCommand(slots, employeeId, organizationId)
 		);
 	}
 
+	/**
+	 *
+	 * @param slots
+	 * @param employeeId
+	 * @param organizationId
+	 * @returns
+	 */
 	async bulkCreate(
 		slots: ITimeSlot[],
 		employeeId: ITimeSlot['employeeId'],
-		organizationId: ITimeSlot['organizationId'],
+		organizationId: ITimeSlot['organizationId']
 	) {
 		return await this.commandBus.execute(
-			new TimeSlotBulkCreateCommand(
-				slots,
-				employeeId,
-				organizationId
-			)
+			new TimeSlotBulkCreateCommand(slots, employeeId, organizationId)
 		);
 	}
 
+	/**
+	 *
+	 * @param start
+	 * @param end
+	 * @returns
+	 */
 	generateTimeSlots(start: Date, end: Date) {
 		return generateTimeSlots(start, end);
-	}
-
-	async create(request: TimeSlot) {
-		return await this.commandBus.execute(
-			new CreateTimeSlotCommand(request)
-		);
-	}
-
-	async update(id: TimeSlot['id'], request: TimeSlot) {
-		return await this.commandBus.execute(
-			new UpdateTimeSlotCommand(id, request)
-		);
 	}
 
 	/*

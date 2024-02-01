@@ -2,8 +2,6 @@ import { IPagination } from '@gauzy/contracts';
 import { DeepPartial, DeleteResult, FindManyOptions, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
-export type ConstructorType<T = {}> = new (...args: any[]) => T;
-
 export interface ICrudController<T> {
 	/**
 	 * Counts entities that match given options.

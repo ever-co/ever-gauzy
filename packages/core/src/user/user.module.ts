@@ -2,10 +2,11 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CommandHandlers } from './commands/handlers';
 import { User } from './user.entity';
 import { UserService } from './user.service';
@@ -16,8 +17,11 @@ import { TaskModule } from './../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/user', module: UserModule }]),
+		RouterModule.register([
+			{ path: '/user', module: UserModule }
+		]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
+		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => TaskModule),
 		CqrsModule,
@@ -25,6 +29,10 @@ import { TaskModule } from './../tasks/task.module';
 	],
 	controllers: [UserController],
 	providers: [UserService, ...CommandHandlers],
-	exports: [TypeOrmModule, UserService]
+	exports: [
+		TypeOrmModule,
+		MikroOrmModule,
+		UserService
+	]
 })
-export class UserModule {}
+export class UserModule { }

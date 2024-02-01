@@ -30,11 +30,11 @@ export const manageBtnClick = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(ManageOrganizationPage.organisationNameFieldCss);
+	verifyElementIsVisible(ManageOrganizationPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	enterInput(ManageOrganizationPage.organisationNameFieldCss, data);
+	enterInput(ManageOrganizationPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {
@@ -92,12 +92,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(ManageOrganizationPage.postcodeInputCss);
+	verifyElementIsVisible(ManageOrganizationPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(ManageOrganizationPage.postcodeInputCss);
-	enterInput(ManageOrganizationPage.postcodeInputCss, data);
+	clearField(ManageOrganizationPage.postCodeInputCss);
+	enterInput(ManageOrganizationPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {

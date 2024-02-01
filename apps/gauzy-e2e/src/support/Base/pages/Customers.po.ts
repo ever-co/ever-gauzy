@@ -68,21 +68,21 @@ export const selectCountryFromDropdown = (text) => {
 };
 
 export const cityInputVisible = () => {
-	verifyElementIsVisible(CustomersPage.cityInpuCss);
+	verifyElementIsVisible(CustomersPage.cityInputCss);
 };
 
 export const enterCityInputData = (data) => {
-	clearField(CustomersPage.cityInpuCss);
-	enterInput(CustomersPage.cityInpuCss, data);
+	clearField(CustomersPage.cityInputCss);
+	enterInput(CustomersPage.cityInputCss, data);
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(CustomersPage.postcodeinputCss);
+	verifyElementIsVisible(CustomersPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(CustomersPage.postcodeinputCss);
-	enterInput(CustomersPage.postcodeinputCss, data);
+	clearField(CustomersPage.postCodeInputCss);
+	enterInput(CustomersPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {
@@ -267,10 +267,10 @@ export const clickLastStepBtn = () => {
 }
 
 export const budgetInputVisible = () => {
-	verifyElementIsVisible(CustomersPage.budgetInpuCss);
+	verifyElementIsVisible(CustomersPage.budgetInputCss);
 };
 
 export const enterBudgetData = (data) => {
-	clearField(CustomersPage.budgetInpuCss);
-	enterInput(CustomersPage.budgetInpuCss, data);
+	clearField(CustomersPage.budgetInputCss);
+	enterInput(CustomersPage.budgetInputCss, data);
 };

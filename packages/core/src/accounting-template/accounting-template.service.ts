@@ -1,21 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import * as Handlebars from 'handlebars';
-import { AccountingTemplateTypeEnum, IAccountingTemplate, IAccountingTemplateFindInput, IAccountingTemplateUpdateInput, IPagination, LanguagesEnum } from '@gauzy/contracts';
+import {
+	AccountingTemplateTypeEnum,
+	IAccountingTemplate,
+	IAccountingTemplateFindInput,
+	IAccountingTemplateUpdateInput,
+	IPagination,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { AccountingTemplate } from './accounting-template.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmAccountingTemplateRepository } from './repository/type-orm-accounting-template.repository';
+import { MikroOrmAccountingTemplateRepository } from './repository/mikro-orm-accounting-template.repository';
 
 @Injectable()
 export class AccountingTemplateService extends TenantAwareCrudService<AccountingTemplate> {
 	constructor(
 		@InjectRepository(AccountingTemplate)
-		private readonly accountingRepository: Repository<AccountingTemplate>
+		typeOrmAccountingTemplateRepository: TypeOrmAccountingTemplateRepository,
+
+		mikroOrmAccountingTemplateRepository: MikroOrmAccountingTemplateRepository
 	) {
-		super(accountingRepository);
+		super(typeOrmAccountingTemplateRepository, mikroOrmAccountingTemplateRepository);
 	}
 
 	generatePreview(input) {
@@ -24,7 +36,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		try {
 			const mjmlTohtml = mjml2html(data);
 			textToHtml = mjmlTohtml.errors.length ? data : mjmlTohtml.html;
-		} catch (error) {}
+		} catch (error) { }
 
 		const handlebarsTemplate = Handlebars.compile(textToHtml);
 
@@ -154,7 +166,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 				...record,
 				hbs: mjml2html(record.mjml).html,
 				mjml: input.mjml
-			}
+			};
 			return await this.update(record.id, entity);
 		} catch (error) {
 			const entity = new AccountingTemplate();
@@ -176,10 +188,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 * @param themeLanguage
 	 * @returns
 	 */
-	async getAccountTemplate(
-		options: IAccountingTemplateFindInput,
-		themeLanguage: LanguagesEnum
-	) {
+	async getAccountTemplate(options: IAccountingTemplateFindInput, themeLanguage: LanguagesEnum) {
 		const tenantId = RequestContext.currentTenantId();
 		const {
 			templateType = AccountingTemplateTypeEnum.INVOICE,
@@ -221,17 +230,14 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 		}
 	}
 
-
 	/**
 	 * Get Accounting Templates using pagination params
 	 *
 	 * @param params
 	 * @returns
 	 */
-	async findAll(
-		params: PaginationParams<AccountingTemplate>
-	): Promise<IPagination<IAccountingTemplate>> {
-		const query = this.accountingRepository.createQueryBuilder('accounting_template');
+	async findAll(params: PaginationParams<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
+		const query = this.repository.createQueryBuilder('accounting_template');
 		query.setFindOptions({
 			select: {
 				organization: {
@@ -240,42 +246,42 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 					brandColor: true
 				}
 			},
-			...(
-				(params && params.relations) ? {
+			...(params && params.relations
+				? {
 					relations: params.relations
-				} : {}
-			),
-			...(
-				(params && params.order) ? {
+				}
+				: {}),
+			...(params && params.order
+				? {
 					order: params.order
-				} : {}
-			)
+				}
+				: {})
 		});
 		query.where((qb: SelectQueryBuilder<AccountingTemplate>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
 					const { organizationId, languageCode } = params.where;
 					if (isNotEmpty(organizationId)) {
-						bck.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+						bck.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 							organizationId
 						});
 					}
 					if (isNotEmpty(languageCode)) {
-						bck.andWhere(`"${qb.alias}"."languageCode" = :languageCode`, {
+						bck.andWhere(p(`"${qb.alias}"."languageCode" = :languageCode`), {
 							languageCode
 						});
 					}
-					bck.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
+					bck.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
 						tenantId: RequestContext.currentTenantId()
 					});
 				})
 			);
 			qb.orWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(`"${qb.alias}"."organizationId" IS NULL`);
-					bck.andWhere(`"${qb.alias}"."tenantId" IS NULL`);
+					bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
+					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
 				})
-			)
+			);
 		});
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };

@@ -10,6 +10,7 @@ import { ReportCategoryController } from './report-category.controller';
 import { ReportCategoryService } from './report-category.service';
 import { ReportOrganization } from './report-organization.entity';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -20,9 +21,10 @@ import { CommandHandlers } from './commands/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
+		MikroOrmModule.forFeature([Report, ReportCategory, ReportOrganization]),
 		TenantModule
 	],
 	controllers: [ReportCategoryController, ReportController],
 	providers: [ReportService, ReportCategoryService, ...CommandHandlers]
 })
-export class ReportModule {}
+export class ReportModule { }

@@ -8,15 +8,15 @@ import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from '../../core/file-storage';
-import { TaskRelatedIssueTypes } from './related-issue-type.entity';
+import { TaskRelatedIssueType } from './related-issue-type.entity';
 
 @EventSubscriber()
-export class TaskRelatedIssueTypesSubscriber implements EntitySubscriberInterface<TaskRelatedIssueTypes> {
+export class TaskRelatedIssueTypeSubscriber implements EntitySubscriberInterface<TaskRelatedIssueType> {
 	/**
-	 * Indicates that this subscriber only listen to TaskRelatedIssueTypes events.
+	 * Indicates that this subscriber only listen to TaskRelatedIssueType events.
 	 */
 	listenTo() {
-		return TaskRelatedIssueTypes;
+		return TaskRelatedIssueType;
 	}
 
 	/**
@@ -26,8 +26,8 @@ export class TaskRelatedIssueTypesSubscriber implements EntitySubscriberInterfac
 	 * @param event
 	 */
 	async afterLoad(
-		entity: TaskRelatedIssueTypes | Partial<TaskRelatedIssueTypes>,
-		event?: LoadEvent<TaskRelatedIssueTypes>
+		entity: TaskRelatedIssueType | Partial<TaskRelatedIssueType>,
+		event?: LoadEvent<TaskRelatedIssueType>
 	): Promise<any | void> {
 		try {
 			if (entity.icon) {
@@ -44,7 +44,7 @@ export class TaskRelatedIssueTypesSubscriber implements EntitySubscriberInterfac
 	 *
 	 * @param event
 	 */
-	beforeInsert(event: InsertEvent<TaskRelatedIssueTypes>) {
+	beforeInsert(event: InsertEvent<TaskRelatedIssueType>) {
 		try {
 			if (event) {
 				const { entity } = event;

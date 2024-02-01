@@ -13,11 +13,13 @@ import { UserModule } from './../user/user.module';
 import { ExpenseModule } from './../expense/expense.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/income', module: IncomeModule }]),
 		TypeOrmModule.forFeature([Income]),
+		MikroOrmModule.forFeature([Income]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
@@ -31,4 +33,4 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 	providers: [IncomeService, ...CommandHandlers],
 	exports: [IncomeService]
 })
-export class IncomeModule {}
+export class IncomeModule { }

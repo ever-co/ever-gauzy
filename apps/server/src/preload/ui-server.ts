@@ -7,7 +7,6 @@ class App {
 			const serverManager = new ServerManager();
 
 			serverManager.runServer(portUi);
-
 		} catch (error) {
 			console.error('[CRITICAL::ERROR]: Starting server:', error);
 		}

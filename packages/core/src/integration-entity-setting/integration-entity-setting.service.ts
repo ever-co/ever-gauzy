@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IIntegrationEntitySetting, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
+import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';
+import { TypeOrmIntegrationEntitySettingRepository } from './repository/type-orm-integration-entity-setting.repository';
 
 @Injectable()
 export class IntegrationEntitySettingService extends TenantAwareCrudService<IntegrationEntitySetting> {
 	constructor(
 		@InjectRepository(IntegrationEntitySetting)
-		readonly repository: Repository<IntegrationEntitySetting>
+		readonly typeOrmIntegrationEntitySettingRepository: TypeOrmIntegrationEntitySettingRepository,
+
+		mikroOrmIntegrationEntitySettingRepository: MikroOrmIntegrationEntitySettingRepository
 	) {
-		super(repository);
+		super(typeOrmIntegrationEntitySettingRepository, mikroOrmIntegrationEntitySettingRepository);
 	}
 
 	/**
@@ -23,7 +26,7 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	async getIntegrationEntitySettings(
 		integrationId: IIntegrationTenant['id']
 	): Promise<IPagination<IntegrationEntitySetting>> {
-		return await this.findAll({
+		return await super.findAll({
 			where: {
 				integrationId
 			},
@@ -44,6 +47,6 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 		input: IIntegrationEntitySetting | IIntegrationEntitySetting[]
 	): Promise<IIntegrationEntitySetting[]> {
 		const settings = Array.isArray(input) ? input : [input];
-		return await this.repository.save(settings);
+		return await this.typeOrmIntegrationEntitySettingRepository.save(settings);
 	}
 }

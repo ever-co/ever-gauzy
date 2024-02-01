@@ -1,4 +1,4 @@
-import { Column, Entity, OneToOne } from 'typeorm';
+import { Column, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
@@ -14,8 +14,10 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
 
-@Entity('contact')
+@MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -110,10 +112,10 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	website?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

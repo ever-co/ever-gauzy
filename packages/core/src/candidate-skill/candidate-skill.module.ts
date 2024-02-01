@@ -6,11 +6,13 @@ import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { CandidateSkillController } from './candidate-skill.controller';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/candidate-skills', module: CandidateSkillModule }]),
 		TypeOrmModule.forFeature([CandidateSkill]),
+		MikroOrmModule.forFeature([CandidateSkill]),
 		TenantModule,
 		UserModule
 	],
@@ -18,4 +20,4 @@ import { UserModule } from './../user/user.module';
 	controllers: [CandidateSkillController],
 	exports: [CandidateSkillService]
 })
-export class CandidateSkillModule {}
+export class CandidateSkillModule { }

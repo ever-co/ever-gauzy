@@ -1,11 +1,14 @@
-import { Entity, Index, Column, OneToMany } from 'typeorm';
+import { Index, Column, OneToMany } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IReport, IReportCategory } from '@gauzy/contracts';
 import { BaseEntity, Report } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmReportCategoryRepository } from './repository/mikro-orm-report-category.repository';
 
-@Entity('report_category')
+@MultiORMEntity('report_category', { mikroOrmRepository: () => MikroOrmReportCategoryRepository })
 export class ReportCategory extends BaseEntity implements IReportCategory {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()

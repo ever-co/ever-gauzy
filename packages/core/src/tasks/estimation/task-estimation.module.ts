@@ -10,11 +10,13 @@ import { TaskEstimationService } from './task-estimation.service';
 import { UserModule } from '../../user/user.module';
 import { TaskModule } from '../task.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-estimation', module: TaskEstimationModule }]),
 		TypeOrmModule.forFeature([TaskEstimation]),
+		MikroOrmModule.forFeature([TaskEstimation]),
 		TenantModule,
 		CqrsModule,
 		UserModule,
@@ -24,4 +26,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [TaskEstimationService, ...CommandHandlers],
 	exports: [TaskEstimationService]
 })
-export class TaskEstimationModule {}
+export class TaskEstimationModule { }

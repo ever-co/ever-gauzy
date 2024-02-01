@@ -7,11 +7,13 @@ import { IssueTypeController } from './issue-type.controller';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/issue-types', module: IssueTypeModule }]),
 		TypeOrmModule.forFeature([IssueType]),
+		MikroOrmModule.forFeature([IssueType]),
 		CqrsModule,
 		TenantModule
 	],
@@ -19,4 +21,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [IssueTypeService, ...CommandHandlers],
 	exports: []
 })
-export class IssueTypeModule {}
+export class IssueTypeModule { }

@@ -1,29 +1,25 @@
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IMerchant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Merchant } from './merchant.entity';
+import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
+import { TypeOrmMerchantRepository } from './repository/type-orm-merchant.repository';
 
 export class MerchantService extends TenantAwareCrudService<Merchant> {
+	constructor(
+		@InjectRepository(Merchant)
+		typeOrmMerchantRepository: TypeOrmMerchantRepository,
 
-    constructor(
-        @InjectRepository(Merchant)
-        private readonly merchantRepository: Repository<Merchant>
-    ) {
-        super(merchantRepository);
-    }
+		mikroOrmMerchantRepository: MikroOrmMerchantRepository
+	) {
+		super(typeOrmMerchantRepository, mikroOrmMerchantRepository);
+	}
 
-    async findById(
-		id: IMerchant['id'],
-		relations: string[] = []
-	): Promise<IMerchant> {
-        return await this.findOneByIdString(id, { relations });
-    }
+	async findById(id: IMerchant['id'], relations: string[] = []): Promise<IMerchant> {
+		return await this.findOneByIdString(id, { relations });
+	}
 
-    async update(
-		id: IMerchant['id'],
-		merchant: Merchant
-	): Promise<IMerchant> {
-		return await this.merchantRepository.save({ id, ...merchant });
+	async update(id: IMerchant['id'], merchant: Merchant): Promise<IMerchant> {
+		return await this.repository.save({ id, ...merchant });
 	}
 }

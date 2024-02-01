@@ -1,12 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, ManyToMany, JoinTable, Unique } from 'typeorm';
+import { Column, ManyToMany, JoinTable, Unique } from 'typeorm';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integration.repository';
 
-@Entity('integration')
+@MultiORMEntity('integration', { mikroOrmRepository: () => MikroOrmIntegrationRepository })
 @Unique(['name'])
 export class Integration extends BaseEntity implements IIntegration {
 

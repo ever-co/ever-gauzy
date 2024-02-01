@@ -1,12 +1,14 @@
-import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
+import { Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateSkill, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateSkillRepository } from './repository/mikro-orm-candidate-skill.repository';
 
-@Entity('candidate_skill')
+@MultiORMEntity('candidate_skill', { mikroOrmRepository: () => MikroOrmCandidateSkillRepository })
 export class CandidateSkill extends TenantOrganizationBaseEntity implements ICandidateSkill {
 
 	@ApiProperty({ type: () => String })
@@ -14,10 +16,10 @@ export class CandidateSkill extends TenantOrganizationBaseEntity implements ICan
 	name: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.skills, {
 		onDelete: 'CASCADE'

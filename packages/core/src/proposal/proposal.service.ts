@@ -1,24 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindManyOptions, Between, Raw } from 'typeorm';
+import { FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
 import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
+import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(
 		@InjectRepository(Proposal)
-		private readonly proposalRepository: Repository<Proposal>
+		typeOrmProposalRepository: TypeOrmProposalRepository,
+
+		mikroOrmProposalRepository: MikroOrmProposalRepository
 	) {
-		super(proposalRepository);
+		super(typeOrmProposalRepository, mikroOrmProposalRepository);
 	}
 
-	async getAllProposals(
-		filter?: FindManyOptions<IProposal>,
-		filterDate?: string
-	): Promise<IPagination<IProposal>> {
+	async getAllProposals(filter?: FindManyOptions<IProposal>, filterDate?: string): Promise<IPagination<IProposal>> {
 		const total = await this.repository.count(filter);
 		let items = await this.repository.find(filter);
 
@@ -45,7 +46,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		proposal.jobPostContent = entity.jobPostContent;
 		proposal.proposalContent = entity.proposalContent;
 		proposal.employeeId = entity.employeeId;
-		return this.proposalRepository.save(proposal);
+		return this.repository.save(proposal);
 	}
 
 	public pagination(filter: FindManyOptions) {

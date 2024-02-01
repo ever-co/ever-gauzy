@@ -1,5 +1,5 @@
 import { IPluginConfig } from '@gauzy/common';
-import { environment as env } from '@gauzy/config';
+import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import * as chalk from 'chalk';
 import { copyFileSync, mkdirSync } from 'fs';
@@ -145,11 +145,27 @@ async function cleanReport(dataSource: DataSource, config: Partial<IPluginConfig
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
-	if (['sqlite', 'better-sqlite3'].includes(config.dbConnectionOptions.type)) {
-		await dataSource.query(`DELETE FROM ${reportCategory}`);
-		await dataSource.query(`DELETE FROM ${report}`);
-	} else {
-		await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+	const dbType = config.dbConnectionOptions.type as any;
+
+	switch (dbType) {
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
+			await dataSource.query(`DELETE FROM ${reportCategory}`);
+			await dataSource.query(`DELETE FROM ${report}`);
+			break;
+		case DatabaseTypeEnum.postgres:
+			await dataSource.query(`TRUNCATE TABLE ${report}, ${reportCategory} RESTART IDENTITY CASCADE`);
+			break;
+		case DatabaseTypeEnum.mysql:
+			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
+			await dataSource.query('SET foreign_key_checks = 0;');
+			await dataSource.query(`DELETE FROM ${reportCategory}`);
+			await dataSource.query(`DELETE FROM ${report}`);
+			await dataSource.query('SET foreign_key_checks = 1;');
+			break;
+		default:
+			throw Error(`cannot clean report, report_category tables due to unsupported database type: ${dbType}`);
+
 	}
 
 	console.log(chalk.green(`CLEANING UP REPORT IMAGES...`));
@@ -181,7 +197,7 @@ function copyImage(fileName: string, config: Partial<IPluginConfig>) {
 		const dir = env.isElectron
 			? path.resolve(env.gauzySeedPath, destDir)
 			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
-			  path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
+			path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
 
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])

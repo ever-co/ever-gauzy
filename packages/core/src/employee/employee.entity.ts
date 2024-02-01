@@ -1,3 +1,17 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	Column,
+	JoinColumn,
+	JoinTable,
+	ManyToMany,
+	ManyToOne,
+	OneToOne,
+	RelationId,
+	OneToMany,
+	Index,
+} from 'typeorm';
+import { IsOptional, IsString } from 'class-validator';
+import { MultiORMEntity } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -29,20 +43,6 @@ import {
 	IEquipmentSharing,
 	IEmployeePhone,
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import {
-	Column,
-	Entity,
-	JoinColumn,
-	JoinTable,
-	ManyToMany,
-	ManyToOne,
-	OneToOne,
-	RelationId,
-	OneToMany,
-	Index,
-} from 'typeorm';
 import {
 	Candidate,
 	Contact,
@@ -74,9 +74,10 @@ import {
 	TimeSlot,
 	User,
 } from '../core/entities/internal';
-import { IsOptional, IsString } from 'class-validator';
+import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
-@Entity('employee')
+@MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
 
 	@ApiPropertyOptional({ type: () => Date })

@@ -9,19 +9,24 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
-import { Brackets, Repository, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		protected readonly employeeRepository: Repository<Employee>
+		typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
-		super(employeeRepository);
+		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}
 
 	public async findAllActive(): Promise<Employee[]> {
@@ -29,7 +34,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 		if (user && user.tenantId) {
 			return await this.repository.find({
-				where: { isActive: true, tenantId: user.tenantId },
+				where: {
+					isActive: true,
+					tenantId: user.tenantId
+				},
 				relations: {
 					user: true,
 					organization: true
@@ -89,10 +97,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 			qb.andWhere(
 				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
-					web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-					web.andWhere(`"${qb.alias}"."isActive" = :isActive`, { isActive: true });
-					web.andWhere(`"user"."isArchived" = :isArchived`, { isArchived: false });
+					web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+					web.andWhere(p(`"${qb.alias}"."isActive" = :isActive`), { isActive: true });
+					web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
 				})
 			);
 			if (isNotEmpty(forRange)) {
@@ -103,15 +111,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					);
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							web.andWhere(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`, {
+							web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
 								startedWorkOn: endDate
 							});
 						})
 					);
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							web.where(`"${qb.alias}"."endWork" IS NULL`);
-							web.orWhere(`"${qb.alias}"."endWork" >= :endWork`, {
+							web.where(p(`"${qb.alias}"."endWork" IS NULL`));
+							web.orWhere(p(`"${qb.alias}"."endWork" >= :endWork`), {
 								endWork: startDate
 							});
 						})
@@ -120,7 +128,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			}
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 				const employeeId = RequestContext.currentEmployeeId();
-				qb.andWhere(`"${qb.alias}"."id" = :employeeId`, { employeeId });
+				qb.andWhere(p(`"${qb.alias}"."id" = :employeeId`), { employeeId });
 			}
 		});
 		const [items, total] = await query.getManyAndCount();
@@ -151,31 +159,29 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	/**
 	 * Get all employees using pagination
 	 *
-	 * @param options
-	 * @returns
+	 * @param options Pagination options
+	 * @returns Promise containing paginated employees and total count
 	 */
 	public async pagination(options: PaginationParams<any>): Promise<IPagination<IEmployee>> {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
-			/**
-			 * Tables joins with relations
-			 */
-			query.innerJoin(`${query.alias}.user`, 'user');
-			query.leftJoin(`${query.alias}.tags`, 'tags');
-			query.innerJoin(`user.organizations`, 'organizations');
+			// Retrieve the current tenant ID from the RequestContext
+			const tenantId = RequestContext.currentTenantId();
 
+			// Create a query builder for the Employee entity
+			const query = this.repository.createQueryBuilder(this.alias);
+
+			// Tables joins with relations
+			query.innerJoin(`${query.alias}.user`, 'user');
+			query.innerJoin(`user.organizations`, 'organizations');
+			query.leftJoin(`${query.alias}.tags`, 'tags');
+
+			// Set pagination options and selected table properties/fields
 			query.setFindOptions({
-				/**
-				 * Set skip/take options for pagination
-				 */
 				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 				take: options && options.take ? options.take : 10,
-				/**
-				 * Load selected table properties/fields for self & relational select.
-				 */
 				select: {
+					// Selected fields for the Employee entity
 					id: true,
-					isActive: true,
 					short_description: true,
 					description: true,
 					averageIncome: true,
@@ -186,114 +192,73 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					isTrackingEnabled: true,
 					deletedAt: true,
 					allowScreenshotCapture: true,
-					user: {
-						id: true,
-						firstName: true,
-						lastName: true,
-						email: true,
-						imageUrl: true
-					}
+					isActive: true,
+					isArchived: true
 				},
-				/**
-				 * Load tables relations.
-				 */
-				...(options && options.relations
-					? {
-						relations: options.relations
-					}
-					: {}),
-				/**
-				 * Indicates if soft-deleted rows should be included in entity result.
-				 */
-				...(options && 'withDeleted' in options
-					? {
-						withDeleted: options.withDeleted
-					}
-					: {})
+				...(options && options.relations ? { relations: options.relations } : {}),
+				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {})
 			});
+
+			// Build WHERE clause using QueryBuilder
 			query.where((qb: SelectQueryBuilder<Employee>) => {
+				const { where } = options;
+				// Apply conditions related to the current tenant and organization ID
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, {
-							tenantId: RequestContext.currentTenantId()
-						});
-						if (isNotEmpty(options.where)) {
-							const { where } = options;
-							if (isNotEmpty(where.organizationId)) {
-								const { organizationId } = where;
-								web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
-									organizationId
-								});
-							}
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+
+						if (isNotEmpty(where?.organizationId)) {
+							const organizationId = where.organizationId;
+							web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+							web.andWhere(p(`"organizations"."organizationId" = :organizationId`), { organizationId });
 						}
 					})
 				);
-				if (isNotEmpty(options.where)) {
-					const { where } = options;
-					if ('isActive' in where) {
-						qb.andWhere(
-							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"${qb.alias}"."isActive" = :isActive`, {
-									isActive: Boolean(JSON.parse(where.isActive))
-								});
-							})
-						);
-					}
-					if ('isArchived' in where) {
-						qb.andWhere(
-							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"user"."isArchived" = :isArchived`, {
-									isArchived: Boolean(JSON.parse(where.isArchived))
-								});
-							})
-						);
-					}
-					if ('isTrackingEnabled' in where) {
-						qb.andWhere(
-							new Brackets((web: WhereExpressionBuilder) => {
-								const { isTrackingEnabled } = where;
-								web.andWhere(`"${qb.alias}"."isTrackingEnabled" = :isTrackingEnabled`, {
-									isTrackingEnabled: Boolean(JSON.parse(isTrackingEnabled))
-								});
-							})
-						);
-					}
-					if ('allowScreenshotCapture' in where) {
-						qb.andWhere(
-							new Brackets((web: WhereExpressionBuilder) => {
-								const { allowScreenshotCapture } = where;
-								web.andWhere(`"${qb.alias}"."allowScreenshotCapture" = :allowScreenshotCapture`, {
-									allowScreenshotCapture: Boolean(JSON.parse(allowScreenshotCapture))
-								});
-							})
-						);
-					}
+				// Additional conditions based on the provided 'where' object
+				if (isNotEmpty(where)) {
+					// Apply conditions for specific fields in the Employee entity
+					qb.andWhere(
+						new Brackets((web: WhereExpressionBuilder) => {
+							const fields = ['isActive', 'isArchived', 'isTrackingEnabled', 'allowScreenshotCapture'];
+							fields.forEach((key: string) => {
+								if (key in where) {
+									web.andWhere(p(`${qb.alias}.${key} = :${key}`), { [key]: where[key] });
+								}
+							});
+						})
+					);
+
+					// Apply conditions related to tags
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
 							if (isNotEmpty(where.tags)) {
-								const { tags } = where;
-								web.andWhere(`"tags"."id" IN (:...tags)`, { tags });
+								web.andWhere(p('tags.id IN (:...tags)'), { tags: where.tags });
 							}
 						})
 					);
+
+					// Apply conditions related to the user property in the 'where' object
 					qb.andWhere(
 						new Brackets((web: WhereExpressionBuilder) => {
-							if (isNotEmpty(where.user)) {
-								if (isNotEmpty(where.user.name)) {
-									const keywords: string[] = where.user.name.split(' ');
+							const { user } = where;
+							if (isNotEmpty(user)) {
+								if (isNotEmpty(user.name)) {
+									const keywords: string[] = user.name.split(' ');
 									keywords.forEach((keyword: string, index: number) => {
-										web.orWhere(`LOWER("user"."firstName") like LOWER(:keyword_${index})`, {
-											[`keyword_${index}`]: `%${keyword}%`
+										web.orWhere(p(`LOWER("user"."firstName") like LOWER(:first_name_${index})`), {
+											[`first_name_${index}`]: `%${keyword}%`
 										});
-										web.orWhere(`LOWER("user"."lastName") like LOWER(:${index}_keyword)`, {
-											[`${index}_keyword`]: `%${keyword}%`
+										web.orWhere(p(`LOWER("user"."lastName") like LOWER(:last_name_${index})`), {
+											[`last_name_${index}`]: `%${keyword}%`
 										});
 									});
 								}
-								if (isNotEmpty(where.user.email)) {
-									const { email } = where.user;
-									web.orWhere(`LOWER("user"."email") like LOWER(:email)`, {
-										email: `%${email}%`
+								if (isNotEmpty(user.email)) {
+									const keywords: string[] = user.email.split(' ');
+									keywords.forEach((keyword: string, index: number) => {
+										web.orWhere(p(`LOWER("user"."email") like LOWER(:email_${index})`), {
+											[`email_${index}`]: `%${keyword}%`
+										});
 									});
 								}
 							}
@@ -301,6 +266,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					);
 				}
 			});
+
+			// Execute the query and retrieve paginated items and total count
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {

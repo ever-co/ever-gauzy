@@ -2,7 +2,7 @@ export const PipelinesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addPipelineButtonCss: 'div.mb-3 > button[status="success"]',
 	pipelineNameInputCss: '[formcontrolname="name"]',
-	descriptioninputCss: '[formcontrolname="description"]',
+	descriptionInputCss: '[formcontrolname="description"]',
 	createPipelineButtonCss: 'nb-card-footer > button[status="primary"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	editPipelineButtonCss: 'div.mb-3 > button[status="info"]',

@@ -7,15 +7,15 @@ import { CommandHandlers } from './commands/handlers'
 import { ImportHistory } from './import-history.entity';
 import { ImportHistoryService } from './import-history.service';
 import { ImportHistoryController } from './import-history.controller';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	controllers: [
 		ImportHistoryController
 	],
 	imports: [
-		TypeOrmModule.forFeature([
-			ImportHistory
-		]),
+		TypeOrmModule.forFeature([ImportHistory]),
+		MikroOrmModule.forFeature([ImportHistory]),
 		TenantModule,
 		UserModule,
 		CqrsModule

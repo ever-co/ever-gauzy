@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidateCriterionsRating,
@@ -12,8 +12,10 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-orm-candidate-criterions-rating.repository';
 
-@Entity('candidate_criterion_rating')
+@MultiORMEntity('candidate_criterion_rating', { mikroOrmRepository: () => MikroOrmCandidateCriterionsRatingRepository })
 export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
 
@@ -22,10 +24,10 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	rating: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Candidate Technologies

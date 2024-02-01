@@ -18,11 +18,20 @@ import { QueryHandlers } from './queries/handlers';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/employee-statistics', module: EmployeeStatisticsModule }]),
 		TypeOrmModule.forFeature([
+			Income,
+			Expense,
+			Employee,
+			Organization,
+			EmployeeRecurringExpense,
+			OrganizationRecurringExpense
+		]),
+		MikroOrmModule.forFeature([
 			Income,
 			Expense,
 			Employee,
@@ -46,4 +55,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	],
 	exports: [EmployeeStatisticsService]
 })
-export class EmployeeStatisticsModule {}
+export class EmployeeStatisticsModule { }

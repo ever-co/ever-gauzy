@@ -48,7 +48,7 @@ import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { TranslateModule } from '../../@shared/translate/translate.module';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
+import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
@@ -128,7 +128,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		HeaderTitleModule,
-		PaginationModule,
+		PaginationV2Module,
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,

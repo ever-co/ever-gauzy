@@ -1,5 +1,4 @@
 import {
-    DataSourceOptions,
     EntitySubscriberInterface,
     EventSubscriber,
     InsertEvent,
@@ -9,7 +8,7 @@ import {
 } from "typeorm";
 import { IScreenshot } from "@gauzy/contracts";
 import { getConfig } from "@gauzy/config";
-import { isJsObject } from "@gauzy/common";
+import { isJsObject, IDBConnectionOptions } from "@gauzy/common";
 import { Screenshot } from "./screenshot.entity";
 import { FileStorage } from "./../../core/file-storage";
 import { isSqliteDB } from "./../../core/utils";
@@ -31,11 +30,11 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     beforeInsert(event: InsertEvent<Screenshot>): void | Promise<any> {
         try {
             if (event) {
-                const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+                const options: Partial<IDBConnectionOptions> = event.connection.options || getConfig().dbConnectionOptions;
                 const { entity } = event;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (entity && isSqliteDB(options.type)) {
+                if (entity && isSqliteDB(options)) {
                     try {
                         if (isJsObject(entity.apps)) {
                             entity.apps = JSON.stringify(entity.apps);
@@ -59,11 +58,11 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
     beforeUpdate(event: UpdateEvent<Screenshot>): void | Promise<any> {
         try {
             if (event) {
-                const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+                const options: Partial<IDBConnectionOptions> = event.connection.options || getConfig().dbConnectionOptions;
                 const { entity } = event;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (entity && isSqliteDB(options.type)) {
+                if (entity && isSqliteDB(options)) {
                     try {
                         if (isJsObject(entity.apps)) {
                             entity.apps = JSON.stringify(entity.apps);
@@ -87,7 +86,7 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
      */
     async afterLoad(entity: Screenshot | Partial<Screenshot>, event?: LoadEvent<Screenshot>): Promise<any | void> {
         try {
-            const options: Partial<DataSourceOptions> = event.connection.options || getConfig().dbConnectionOptions;
+            const options: Partial<IDBConnectionOptions> = event.connection.options || getConfig().dbConnectionOptions;
 
             // Check if the entity is an instance of Screenshot
             if (entity instanceof Screenshot) {
@@ -106,7 +105,7 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 entity.thumbUrl = thumbUrl;
 
                 // Check if the database type is SQLite or better-sqlite3
-                if (isSqliteDB(options.type)) {
+                if (isSqliteDB(options)) {
                     // Check if 'apps' is a string and parse it as JSON
                     if (typeof apps === 'string') {
                         try {

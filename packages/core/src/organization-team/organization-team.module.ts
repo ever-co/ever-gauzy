@@ -16,11 +16,13 @@ import { CommandHandlers } from './commands/handlers';
 import { TimerModule } from './../time-tracking/timer/timer.module';
 import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 import { TaskModule } from './../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/organization-team', module: OrganizationTeamModule }]),
 		TypeOrmModule.forFeature([OrganizationTeam]),
+		MikroOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
 		TenantModule,
 		RoleModule,
@@ -34,6 +36,6 @@ import { TaskModule } from './../tasks/task.module';
 	],
 	controllers: [OrganizationTeamController],
 	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
-	exports: [TypeOrmModule, OrganizationTeamService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService]
 })
-export class OrganizationTeamModule {}
+export class OrganizationTeamModule { }

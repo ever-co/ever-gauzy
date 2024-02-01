@@ -8,11 +8,13 @@ import { CommandHandlers } from './commands/handlers';
 import { ImageAssetController } from './image-asset.controller';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/image-assets', module: ImageAssetModule }]),
 		TypeOrmModule.forFeature([ImageAsset]),
+		MikroOrmModule.forFeature([ImageAsset]),
 		CqrsModule,
 		TenantModule,
 		UserModule
@@ -21,4 +23,4 @@ import { ImageAssetService } from './image-asset.service';
 	providers: [ImageAssetService, ...CommandHandlers],
 	exports: [ImageAssetService]
 })
-export class ImageAssetModule {}
+export class ImageAssetModule { }

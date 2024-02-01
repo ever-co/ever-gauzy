@@ -1,35 +1,53 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AddLogoToOrganizationTeamTable1676630369336 implements MigrationInterface {
 
     name = 'AddLogoToOrganizationTeamTable1676630369336';
 
     /**
-    * Up Migration
-    *
-    * @param queryRunner
-    */
-    public async up(queryRunner: QueryRunner): Promise<any> {
+     * Up Migration
+     *
+     * @param queryRunner
+     */
+    public async up(queryRunner: QueryRunner): Promise<void> {
         console.log(chalk.yellow(this.name + ' start running!'));
 
-        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            await this.sqliteUpQueryRunner(queryRunner);
-        } else {
-            await this.postgresUpQueryRunner(queryRunner);
+        switch (queryRunner.connection.options.type) {
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+                await this.sqliteUpQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.postgres:
+                await this.postgresUpQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.mysql:
+                await this.mysqlUpQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
         }
     }
-
     /**
-    * Down Migration
-    *
-    * @param queryRunner
-    */
-    public async down(queryRunner: QueryRunner): Promise<any> {
-        if (['sqlite', 'better-sqlite3'].includes(queryRunner.connection.options.type)) {
-            await this.sqliteDownQueryRunner(queryRunner);
-        } else {
-            await this.postgresDownQueryRunner(queryRunner);
+     * Down Migration
+     *
+     * @param queryRunner
+     */
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        switch (queryRunner.connection.options.type) {
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+                await this.sqliteDownQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.postgres:
+                await this.postgresDownQueryRunner(queryRunner);
+                break;
+            case DatabaseTypeEnum.mysql:
+                await this.mysqlDownQueryRunner(queryRunner);
+                break;
+            default:
+                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
         }
     }
 
@@ -94,4 +112,18 @@ export class AddLogoToOrganizationTeamTable1676630369336 implements MigrationInt
         await queryRunner.query(`CREATE INDEX "IDX_176f5ed3c4534f3110d423d569" ON "organization_team" ("tenantId") `);
         await queryRunner.query(`CREATE INDEX "IDX_e22ab0f1236b1a07785b641727" ON "organization_team" ("profile_link") `);
     }
+
+    /**
+     * MySQL Up Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+
+    /**
+     * MySQL Down Migration
+     *
+     * @param queryRunner
+     */
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 }

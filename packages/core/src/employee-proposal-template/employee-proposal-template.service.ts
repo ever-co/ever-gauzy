@@ -1,38 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IEmployeeProposalTemplate } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
+import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
+import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 
 @Injectable()
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
 		@InjectRepository(EmployeeProposalTemplate)
-		private readonly employeeProposalTemplateRepository: Repository<EmployeeProposalTemplate>
+		typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
+
+		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository
 	) {
-		super(employeeProposalTemplateRepository);
+		super(typeOrmEmployeeProposalTemplateRepository, mikroOrmEmployeeProposalTemplateRepository);
 	}
 
-	async makeDefault(
-		id: IEmployeeProposalTemplate['id']
-	): Promise<IEmployeeProposalTemplate> {
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
+	async makeDefault(id: IEmployeeProposalTemplate['id']): Promise<IEmployeeProposalTemplate> {
 		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
 		proposalTemplate.isDefault = !proposalTemplate.isDefault;
 
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
-		await this.employeeProposalTemplateRepository.update(
-			{
-				organizationId,
-				tenantId,
-				employeeId
-			},
-			{
-				isDefault: false
-			}
-		);
 
-		return await this.employeeProposalTemplateRepository.save(proposalTemplate);
+		await super.update({ organizationId, tenantId, employeeId }, {
+			isDefault: false
+		});
+
+		return await super.save(proposalTemplate);
 	}
 
 	/**

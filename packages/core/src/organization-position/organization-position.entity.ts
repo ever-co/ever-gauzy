@@ -1,13 +1,13 @@
-import { Column, Entity, Index, ManyToMany, JoinTable } from 'typeorm';
+import { Column, Index, ManyToMany, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationPosition, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationPositionRepository } from './repository/mikro-orm-organization-position.repository';
 
-@Entity('organization_position')
-export class OrganizationPosition
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationPosition {
+@MultiORMEntity('organization_position', { mikroOrmRepository: () => MikroOrmOrganizationPositionRepository })
+export class OrganizationPosition extends TenantOrganizationBaseEntity implements IOrganizationPosition {
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -17,10 +17,10 @@ export class OrganizationPosition
 	name: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.organizationPositions, {
 		onUpdate: 'CASCADE',

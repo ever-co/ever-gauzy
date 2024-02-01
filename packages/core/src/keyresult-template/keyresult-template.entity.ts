@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
@@ -13,12 +13,12 @@ import {
 	GoalTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmKeyResultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
 
-@Entity('key_result_template')
-export class KeyResultTemplate
-	extends TenantOrganizationBaseEntity
-	implements IKeyResultTemplate {
-		
+@MultiORMEntity('key_result_template', { mikroOrmRepository: () => MikroOrmKeyResultTemplateRepository })
+export class KeyResultTemplate extends TenantOrganizationBaseEntity implements IKeyResultTemplate {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -49,10 +49,10 @@ export class KeyResultTemplate
 	deadline: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => GoalKPITemplate })
 	@ManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })

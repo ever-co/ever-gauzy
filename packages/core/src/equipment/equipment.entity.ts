@@ -6,7 +6,6 @@ import {
 	IImageAsset
 } from '@gauzy/contracts';
 import {
-	Entity,
 	Column,
 	OneToMany,
 	ManyToMany,
@@ -30,12 +29,12 @@ import {
 	ImageAsset
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
 
-@Entity('equipment')
-export class Equipment
-	extends TenantOrganizationBaseEntity
-	implements IEquipment {
-	
+@MultiORMEntity('equipment', { mikroOrmRepository: () => MikroOrmEquipmentRepository })
+export class Equipment extends TenantOrganizationBaseEntity implements IEquipment {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -96,10 +95,10 @@ export class Equipment
 	autoApproveShare: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ImageAsset
@@ -112,10 +111,10 @@ export class Equipment
 	image: IImageAsset;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * EquipmentSharing
@@ -127,10 +126,10 @@ export class Equipment
 	equipmentSharings: IEquipmentSharing[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => Tag, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.equipments, {

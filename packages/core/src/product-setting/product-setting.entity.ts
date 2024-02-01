@@ -1,15 +1,16 @@
-import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
-import { IProductVariantSetting } from '@gauzy/contracts';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, OneToOne, JoinColumn } from 'typeorm';
+import { IProductVariantSetting } from '@gauzy/contracts';
 import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductVariantSettingRepository } from './repository/mikro-orm-product-setting.repository';
 
-@Entity('product_variant_setting')
-export class ProductVariantSetting
-	extends TenantOrganizationBaseEntity
-	implements IProductVariantSetting {
+@MultiORMEntity('product_variant_setting', { mikroOrmRepository: () => MikroOrmProductVariantSettingRepository })
+export class ProductVariantSetting extends TenantOrganizationBaseEntity implements IProductVariantSetting {
+
 	@ApiPropertyOptional({ type: () => Boolean })
 	@Column({ default: false })
 	isSubscription: boolean;
@@ -43,16 +44,16 @@ export class ProductVariantSetting
 	trackInventory: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductVariant
 	 */
 	@OneToOne(() => ProductVariant, (productVariant) => productVariant.setting, {
-		onDelete: 'CASCADE' 
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	productVariant: ProductVariant;
