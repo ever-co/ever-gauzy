@@ -50,10 +50,10 @@ export function generateTimeSlots(start: Date, end: Date) {
 
 /**
  * GET start and end point of 10 minutes interval
- * 
- * @param start 
- * @param end 
- * @returns 
+ *
+ * @param start
+ * @param end
+ * @returns
  */
 export function getStartEndIntervals(
 	start: moment.Moment,
@@ -84,4 +84,14 @@ export function getStartEndIntervals(
 		start: startDate,
 		end: endDate
 	}
+}
+
+/**
+ * Rounds down a given moment to the nearest 10 minutes.
+ *
+ * @param date - The moment object to be rounded down.
+ * @returns A new moment object rounded down to the nearest 10 minutes.
+ */
+export const roundDownToNearest10Minutes = (date: moment.Moment): moment.Moment => {
+	return date.startOf('minute').subtract(date.minute() % 10, 'minutes');
 }
