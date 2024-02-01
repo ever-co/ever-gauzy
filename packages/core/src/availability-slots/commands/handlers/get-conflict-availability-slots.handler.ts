@@ -1,6 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { IAvailabilitySlot } from '@gauzy/contracts';
@@ -9,13 +8,17 @@ import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availabilit
 import { RequestContext } from './../../../core/context';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../database/database.helper';
+import { TypeOrmAvailabilitySlotRepository } from '../../repository/type-orm-availability-slot.repository';
+import { MikroOrmAvailabilitySlotRepository } from '../../repository/mikro-orm-availability-slot.repository';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
-export class GetConflictAvailabilitySlotsHandler
-	implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
+export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
+
 	constructor(
 		@InjectRepository(AvailabilitySlot)
-		private readonly availabilitySlotRepository: Repository<AvailabilitySlot>,
+		readonly typeOrmAvailabilitySlotRepository: TypeOrmAvailabilitySlotRepository,
+
+		readonly mikroOrmAvailabilitySlotRepository: MikroOrmAvailabilitySlotRepository,
 
 		private readonly configService: ConfigService
 	) { }
@@ -31,7 +34,7 @@ export class GetConflictAvailabilitySlotsHandler
 		const startedAt = moment(startTime).toISOString();
 		const stoppedAt = moment(endTime).toISOString();
 
-		const query = this.availabilitySlotRepository.createQueryBuilder();
+		const query = this.typeOrmAvailabilitySlotRepository.createQueryBuilder();
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 			tenantId
 		});

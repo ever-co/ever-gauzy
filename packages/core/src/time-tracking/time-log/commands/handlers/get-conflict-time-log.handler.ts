@@ -1,19 +1,20 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { IGetConflictTimeLogCommand } from '../get-conflict-time-log.command';
 import { RequestContext } from './../../../../core/context';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
 @CommandHandler(IGetConflictTimeLogCommand)
 export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTimeLogCommand> {
 
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+
 		private readonly configService: ConfigService
 	) { }
 
@@ -28,7 +29,7 @@ export class GetConflictTimeLogHandler implements ICommandHandler<IGetConflictTi
 		const startedAt = moment.utc(input.startDate).toISOString();
 		const stoppedAt = moment.utc(input.endDate).toISOString();
 
-		let conflictQuery = this.timeLogRepository.createQueryBuilder();
+		let conflictQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
 		let query: string = ``;
 		switch (this.configService.dbConnectionOptions.type) {

@@ -1,23 +1,23 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import {
-	StatusTypesMapRequestApprovalEnum
-} from '@gauzy/contracts';
-import { TimeOffStatusCommand } from '../time-off.status.command';
 import { NotFoundException } from '@nestjs/common';
-import { TimeOffRequest } from '../../time-off-request.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
+import { TimeOffStatusCommand } from '../time-off.status.command';
+import { TimeOffRequest } from '../../time-off-request.entity';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
-import { Repository } from 'typeorm';
+import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
+import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
 
 @CommandHandler(TimeOffStatusCommand)
-export class TimeOffStatusHandler
-	implements ICommandHandler<TimeOffStatusCommand> {
+export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusCommand> {
+
 	constructor(
 		@InjectRepository(TimeOffRequest)
-		private readonly timeOffRequestRepository: Repository<TimeOffRequest>,
+		private readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
+
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>
-	) {}
+		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+	) { }
 
 	public async execute(
 		command?: TimeOffStatusCommand
@@ -25,8 +25,8 @@ export class TimeOffStatusHandler
 		const { id, status } = command;
 
 		const [timeOffRequest, requestApproval] = await Promise.all([
-			await this.timeOffRequestRepository.findOneBy({ id }),
-			await this.requestApprovalRepository.findOneBy({
+			await this.typeOrmTimeOffRequestRepository.findOneBy({ id }),
+			await this.typeOrmRequestApprovalRepository.findOneBy({
 				requestId: id
 			})
 		]);
@@ -38,9 +38,9 @@ export class TimeOffStatusHandler
 		timeOffRequest.status = status;
 		if (requestApproval) {
 			requestApproval.status = StatusTypesMapRequestApprovalEnum[status];
-			await this.requestApprovalRepository.save(requestApproval);
+			await this.typeOrmRequestApprovalRepository.save(requestApproval);
 		}
 
-		return await this.timeOffRequestRepository.save(timeOffRequest);
+		return await this.typeOrmTimeOffRequestRepository.save(timeOffRequest);
 	}
 }

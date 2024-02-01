@@ -1,19 +1,21 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { NotFoundException } from '@nestjs/common';
 import { EquipmentSharingStatusCommand } from '../equipment-sharing.status.command';
 import { EquipmentSharing } from '../../equipment-sharing.entity';
-import { NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { RequestApproval } from '../../../request-approval/request-approval.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { TypeOrmEquipmentSharingRepository } from '../../repository/type-orm-equipment-sharing.repository';
+import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
 
 @CommandHandler(EquipmentSharingStatusCommand)
-export class EquipmentSharingStatusHandler
-	implements ICommandHandler<EquipmentSharingStatusCommand> {
+export class EquipmentSharingStatusHandler implements ICommandHandler<EquipmentSharingStatusCommand> {
+
 	constructor(
 		@InjectRepository(EquipmentSharing)
-		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+		private readonly typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
+
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>
+		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
 	) { }
 
 	public async execute(
@@ -22,10 +24,8 @@ export class EquipmentSharingStatusHandler
 		const { id, status } = command;
 
 		const [equipmentSharing, requestApproval] = await Promise.all([
-			await this.equipmentSharingRepository.findOneBy({id}),
-			await this.requestApprovalRepository.findOneBy({
-				requestId: id
-			})
+			await this.typeOrmEquipmentSharingRepository.findOneBy({ id }),
+			await this.typeOrmRequestApprovalRepository.findOneBy({ requestId: id })
 		]);
 
 		if (!equipmentSharing) {
@@ -36,9 +36,9 @@ export class EquipmentSharingStatusHandler
 
 		if (requestApproval) {
 			requestApproval.status = status;
-			await this.requestApprovalRepository.save(requestApproval);
+			await this.typeOrmRequestApprovalRepository.save(requestApproval);
 		}
 
-		return await this.equipmentSharingRepository.save(equipmentSharing);
+		return await this.typeOrmEquipmentSharingRepository.save(equipmentSharing);
 	}
 }

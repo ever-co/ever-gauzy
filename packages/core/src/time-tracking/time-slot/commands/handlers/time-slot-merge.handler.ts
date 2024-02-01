@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, SelectQueryBuilder } from 'typeorm';
+import { In, SelectQueryBuilder } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { IActivity, IScreenshot, ITimeLog } from '@gauzy/contracts';
@@ -11,12 +11,15 @@ import { getDateRangeFormat } from './../../../../core/utils';
 import { TimesheetRecalculateCommand } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from './../../../../employee/commands';
 import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeCommand> {
+
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+
 		private readonly commandBus: CommandBus
 	) { }
 
@@ -51,7 +54,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		/**
 		 * GET Time Slots for given date range slot
 		 */
-		const query = this.timeSlotRepository.createQueryBuilder('time_slot');
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
 		query.setFindOptions({
 			relations: {
 				timeLogs: true,
@@ -173,7 +176,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 						);
 					}
 
-					await this.timeSlotRepository.save(newTimeSlot);
+					await this.typeOrmTimeSlotRepository.save(newTimeSlot);
 					createdTimeSlots.push(newTimeSlot);
 
 					const ids = _.pluck(oldTimeSlots, 'id');
@@ -181,7 +184,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 					console.log('TimeSlots Ids Will Be Deleted:', ids);
 
 					if (ids.length > 0) {
-						await this.timeSlotRepository.delete({
+						await this.typeOrmTimeSlotRepository.delete({
 							id: In(ids)
 						});
 					}

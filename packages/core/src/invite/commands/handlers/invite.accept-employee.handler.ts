@@ -1,6 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
 	IEmployee,
 	IInvite,
@@ -24,6 +23,12 @@ import {
 	OrganizationTeamEmployee,
 	User
 } from './../../../core/entities/internal';
+import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
+import { TypeOrmOrganizationContactRepository } from '../../../organization-contact/repository/type-orm-organization-contact.repository';
+import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-department/repository/type-orm-organization-department.repository';
+import { TypeOrmOrganizationProjectRepository } from '../../../organization-project/repository/type-orm-organization-project.repository';
+import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
+import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 
 /**
  * Use this command for registering employees.
@@ -36,12 +41,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
-		@InjectRepository(User) private readonly userRepository: Repository<User>,
-		@InjectRepository(Employee) private readonly employeeRepository: Repository<Employee>,
-		@InjectRepository(OrganizationProject) private readonly organizationProjectRepository: Repository<OrganizationProject>,
-		@InjectRepository(OrganizationContact) private readonly organizationContactRepository: Repository<OrganizationContact>,
-		@InjectRepository(OrganizationDepartment) private readonly organizationDepartmentRepository: Repository<OrganizationDepartment>,
-		@InjectRepository(OrganizationTeam) private readonly organizationTeamRepository: Repository<OrganizationTeam>
+		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		@InjectRepository(Employee) private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		@InjectRepository(OrganizationProject) private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+		@InjectRepository(OrganizationContact) private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+		@InjectRepository(OrganizationDepartment) private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
+		@InjectRepository(OrganizationTeam) private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
 	) { }
 
 	public async execute(
@@ -79,7 +84,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		let user: IUser;
 		try {
 			const { tenantId, email } = invite;
-			user = await this.userRepository.findOneOrFail({
+			user = await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					email,
 					tenantId,
@@ -117,14 +122,14 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 			/**
 			 * Create employee after create user
 			 */
-			const create = this.employeeRepository.create({
+			const create = this.typeOrmEmployeeRepository.create({
 				user,
 				organization,
 				tenantId,
 				startedWorkOn: invite.actionDate || null,
 				isActive: true
 			});
-			const employee = await this.employeeRepository.save(create);
+			const employee = await this.typeOrmEmployeeRepository.save(create);
 			await this.updateEmployeeMemberships(invite, employee);
 		}
 
@@ -156,12 +161,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				/**
 				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 				 */
-				const create = this.organizationProjectRepository.create({
+				const create = this.typeOrmOrganizationProjectRepository.create({
 					...project,
 					members
 				});
 				//This will call save() on the project (and not really create a new organization project)
-				await this.organizationProjectRepository.save(create);
+				await this.typeOrmOrganizationProjectRepository.save(create);
 			});
 		}
 
@@ -173,12 +178,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				/**
 				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 				 */
-				const create = this.organizationContactRepository.create({
+				const create = this.typeOrmOrganizationContactRepository.create({
 					...organizationContact,
 					members
 				});
 				//This will call save() on the project (and not really create a new organization contact)
-				await this.organizationContactRepository.save(create);
+				await this.typeOrmOrganizationContactRepository.save(create);
 			});
 		}
 
@@ -190,12 +195,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				/**
 				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 				 */
-				const create = this.organizationDepartmentRepository.create({
+				const create = this.typeOrmOrganizationDepartmentRepository.create({
 					...department,
 					members
 				});
 				//This will call save() on the department (and not really create a new organization department)
-				await this.organizationDepartmentRepository.save(create);
+				await this.typeOrmOrganizationDepartmentRepository.save(create);
 			});
 		}
 
@@ -213,12 +218,12 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				/**
 				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 				 */
-				const create = this.organizationTeamRepository.create({
+				const create = this.typeOrmOrganizationTeamRepository.create({
 					...team,
 					members
 				});
 				//This will call save() on the department (and not really create a new organization department)
-				await this.organizationTeamRepository.save(create);
+				await this.typeOrmOrganizationTeamRepository.save(create);
 			});
 		}
 	}
