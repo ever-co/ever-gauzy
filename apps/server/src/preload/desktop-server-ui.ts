@@ -1,38 +1,59 @@
-import { spawn } from 'child_process';
-import * as path from 'path';
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import path from 'path';
 import { app } from 'electron';
 import os from 'os';
-const appPath = app.getPath('userData');
 
-const runServerUI = () => {
-	try {
-		const { uiPath } = prepareServerUi();
-		console.log('ui path', uiPath);
-		const uiService = spawn(uiPath, { detached: true });
+class ServerProcessFactory {
+	public static createUiServerProcess(): ChildProcessWithoutNullStreams {
+		const appPath = app.getPath('userData');
+		const uiPath = this.prepareServerUi(appPath);
+		console.log('UI Path:', uiPath);
+
+		const uiService = spawn(uiPath, { detached: true, stdio: 'pipe' });
+
 		uiService.stdout.on('data', (data) => {
 			console.log('SERVER UI STATE LOGS -> ', data.toString());
 		});
-	} catch (error) {
-		console.log('Error in runServerUI', error);
-	}
-};
 
-const prepareServerUi = (): {
-	uiPath: string;
-} => {
-	let appName: string = '';
-	switch (os.platform()) {
-		case 'win32':
-			appName = `${process.env.NAME}.exe`;
-			break;
-		case 'darwin':
-			appName = process.env.NAME;
-			break;
-		default:
-			break;
+		uiService.stderr.on('data', (data) => {
+			console.error('SERVER UI ERROR LOGS -> ', data.toString());
+		});
+
+		uiService.on('error', (error) => {
+			console.error('Failed to start UI server:', error);
+		});
+
+		uiService.on('exit', (code, signal) => {
+			console.log(`UI server exited with code ${code} and signal ${signal}`);
+		});
+
+		return uiService;
 	}
-	return {
-		uiPath: path.join(appPath, appName)
-	};
-};
-runServerUI();
+
+	private static prepareServerUi(appPath: string): string {
+		let appName = '';
+		switch (os.platform()) {
+			case 'win32':
+				appName = `${process.env.NAME}.exe`;
+				break;
+			case 'darwin':
+				appName = process.env.NAME || '';
+				break;
+			default:
+				break;
+		}
+		return path.join(appPath, appName);
+	}
+}
+
+class App {
+	public static main(): void {
+		try {
+			ServerProcessFactory.createUiServerProcess();
+		} catch (error) {
+			console.error('[CRITICAL::ERROR]: Starting server:', error);
+		}
+	}
+}
+
+App.main();
