@@ -6,6 +6,6 @@ export class GetEmployeeJobStatisticsCommand implements ICommand {
 	static readonly type = '[EmployeeJobStatistics] Get';
 
 	constructor(
-		public readonly request: PaginationParams<Employee>
-	) {}
+		public readonly options: PaginationParams<Employee>
+	) { }
 }

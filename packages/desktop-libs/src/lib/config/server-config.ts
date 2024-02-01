@@ -27,9 +27,7 @@ export class ServerConfig implements IServerConfig {
 		const regex = /api:\s*['"]((https?:\/\/[^'"]+))['"]/g;
 		const match = regex.exec(fileContent);
 		// Replace all occurrences of the URL with the new one
-		return match
-			? fileContent.replace(regex, `api: '${newUrl}'`)
-			: this._initialConfig(newUrl, fileContent);
+		return match ? fileContent.replace(regex, `api: '${newUrl}'`) : this._initialConfig(newUrl, fileContent);
 	}
 
 	private _removeDuplicates(text: string): string {
@@ -37,13 +35,10 @@ export class ServerConfig implements IServerConfig {
 		const scriptRegex = /(<script>[\s\S]*?<\/script>)/g;
 
 		// Find the duplicates and remove them
-		const deduplicatedText = text.replace(
-			scriptRegex,
-			(match, p1, offset) => {
-				// Keep the match if it's the first occurrence, remove duplicates
-				return offset === text.indexOf(match) ? match : '';
-			}
-		);
+		const deduplicatedText = text.replace(scriptRegex, (match, p1, offset) => {
+			// Keep the match if it's the first occurrence, remove duplicates
+			return offset === text.indexOf(match) ? match : '';
+		});
 
 		return deduplicatedText;
 	}
@@ -57,10 +52,7 @@ export class ServerConfig implements IServerConfig {
 
 		const elementToReplace = '</body>';
 
-		return fileContent.replace(
-			elementToReplace,
-			configStr.concat('\n').concat(elementToReplace)
-		);
+		return fileContent.replace(elementToReplace, configStr.concat('\n').concat(elementToReplace));
 	}
 
 	public get apiPort(): number {
@@ -72,13 +64,18 @@ export class ServerConfig implements IServerConfig {
 	}
 
 	public get uiHostName(): string {
-		let host = 'http://0.0.0.0';
-		if (!!this.setting?.host) {
-			host =
-				this.setting.host.indexOf('http') === 0
-					? this.setting.host
-					: `http://${this.setting.host}`;
+		const defaultHost = 'http://0.0.0.0';
+
+		if (!this.setting?.host) {
+			return defaultHost;
 		}
+
+		let host = this.setting.host.startsWith('http') ? this.setting.host : `http://${this.setting.host}`;
+
+		if (process.platform === 'win32' && host === defaultHost) {
+			return 'http://127.0.0.1';
+		}
+
 		return host;
 	}
 
