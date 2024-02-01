@@ -765,8 +765,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			where: {
 				organizationId,
 				tenantId,
-				isEstimate: this.isEstimate === true ? 1 : 0,
-				isArchived: this.includeArchived === true ? 1 : 0,
+				isEstimate: this.isEstimate,
+				isArchived: this.includeArchived,
 				invoiceDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
