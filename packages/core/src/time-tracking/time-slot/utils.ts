@@ -85,13 +85,3 @@ export function getStartEndIntervals(
 		end: endDate
 	}
 }
-
-/**
- * Rounds down a given moment to the nearest 10 minutes.
- *
- * @param date - The moment object to be rounded down.
- * @returns A new moment object rounded down to the nearest 10 minutes.
- */
-export const roundDownToNearest10Minutes = (date: moment.Moment): moment.Moment => {
-	return date.startOf('minute').subtract(date.minute() % 10, 'minutes');
-}
