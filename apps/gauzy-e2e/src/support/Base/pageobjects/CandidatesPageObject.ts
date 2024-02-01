@@ -31,7 +31,7 @@ export const CandidatesPage = {
 	selectDropdownOptionCss: '.option-list nb-option',
 	cityInputCss: '#cityInput',
 	addressOneInputCss: 'addressInput',
-	postcodeInputCss: '#postcodeInput',
+	postCodeInputCss: '#postcodeInput',
 	saveActionButtonCss: 'ga-edit-candidate-main div.actions > button[status="success"]',
 	ratesButtonCss: '.route-tab:nth-child(5) > .tab-text',
 	payPeriodDropdownCss: '#payPeriodsSelect',

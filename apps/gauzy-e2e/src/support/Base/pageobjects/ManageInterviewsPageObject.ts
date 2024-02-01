@@ -35,5 +35,5 @@ export const ManageInterviewsPage = {
 	archiveInterviewOkButtonCss: 'nb-card-footer > button[status="danger"]',
 	archiveBadgeCss: 'ga-interview-actions div.badges > div.badge',
 	deleteButtonCss: 'ga-delete-interview button[status="danger"]',
-	fututeCheckBoxCss: 'nb-checkbox[status="warning"] > span.custom-checkbox'
+	customCheckBoxCss: 'nb-checkbox[status="warning"] > span.custom-checkbox'
 };

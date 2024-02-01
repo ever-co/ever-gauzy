@@ -5,6 +5,7 @@ import { OrganizationPosition } from './organization-position.entity';
 import { OrganizationPositionController } from './organization-position.controller';
 import { OrganizationPositionService } from './organization-position.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -15,10 +16,11 @@ import { TenantModule } from '../tenant/tenant.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationPosition]),
+		MikroOrmModule.forFeature([OrganizationPosition]),
 		TenantModule
 	],
 	controllers: [OrganizationPositionController],
 	providers: [OrganizationPositionService],
 	exports: [OrganizationPositionService]
 })
-export class OrganizationPositionModule {}
+export class OrganizationPositionModule { }

@@ -21,8 +21,8 @@ import {
 import { TenantPermissionGuard } from '../../shared/guards';
 import { CountQueryDTO } from '../../shared/dto';
 import { CrudFactory, PaginationParams } from '../../core/crud';
-import { TaskRelatedIssueTypesService } from './related-issue-type.service';
-import { TaskRelatedIssueTypes } from './related-issue-type.entity';
+import { TaskRelatedIssueTypeService } from './related-issue-type.service';
+import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { FindRelatedIssueTypesQuery } from './queries';
 import {
 	CreateRelatedIssueTypeDTO,
@@ -33,8 +33,8 @@ import {
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task RelatedIssueTypes')
 @Controller()
-export class TaskRelatedIssueTypesController extends CrudFactory<
-	TaskRelatedIssueTypes,
+export class TaskRelatedIssueTypeController extends CrudFactory<
+	TaskRelatedIssueType,
 	IPaginationParam,
 	ITaskRelatedIssueTypeCreateInput,
 	ITaskRelatedIssueTypeUpdateInput,
@@ -47,9 +47,9 @@ export class TaskRelatedIssueTypesController extends CrudFactory<
 ) {
 	constructor(
 		private readonly queryBus: QueryBus,
-		protected readonly taskRelatedIssueTypesService: TaskRelatedIssueTypesService
+		protected readonly TaskRelatedIssueTypeService: TaskRelatedIssueTypeService
 	) {
-		super(taskRelatedIssueTypesService);
+		super(TaskRelatedIssueTypeService);
 	}
 
 	/**
@@ -67,7 +67,7 @@ export class TaskRelatedIssueTypesController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskRelatedIssueTypes(
+	async findTaskRelatedIssueType(
 		@Query() params: RelatedIssueTypeQueryDTO
 	): Promise<IPagination<ITaskRelatedIssueType>> {
 		return await this.queryBus.execute(

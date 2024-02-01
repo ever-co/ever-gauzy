@@ -13,6 +13,7 @@ import { CommandHandlers } from './commands/handlers';
 import { IntegrationTenantModule } from '../integration-tenant/integration-tenant.module';
 import { GithubModule } from './github/github.module';
 import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -29,6 +30,7 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 			}
 		]),
 		TypeOrmModule.forFeature([Integration, IntegrationType]),
+		MikroOrmModule.forFeature([Integration, IntegrationType]),
 		IntegrationTenantModule,
 		TenantModule,
 		UserModule,
@@ -39,6 +41,6 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 	],
 	controllers: [IntegrationController],
 	providers: [IntegrationService, ...CommandHandlers],
-	exports: [TypeOrmModule, IntegrationService]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationService]
 })
-export class IntegrationModule {}
+export class IntegrationModule { }

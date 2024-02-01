@@ -1,22 +1,23 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
 import { Activity } from '../../../activity/activity.entity';
 import { UpdateTimeSlotCommand } from '../update-time-slot.command';
 import { TimeSlot } from './../../time-slot.entity';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { TypeOrmActivityRepository } from '../../../activity/repository/type-orm-activity.repository';
 
 @CommandHandler(UpdateTimeSlotCommand)
-export class UpdateTimeSlotHandler
-	implements ICommandHandler<UpdateTimeSlotCommand> {
+export class UpdateTimeSlotHandler implements ICommandHandler<UpdateTimeSlotCommand> {
+
 	constructor(
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>
+		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
 	) { }
 
 	public async execute(command: UpdateTimeSlotCommand): Promise<TimeSlot> {
@@ -32,7 +33,7 @@ export class UpdateTimeSlotHandler
 			employeeId = user.employeeId;
 		}
 
-		let timeSlot = await this.timeSlotRepository.findOne({
+		let timeSlot = await this.typeOrmTimeSlotRepository.findOne({
 			where: {
 				...(employeeId ? { employeeId: employeeId } : {}),
 				id: id
@@ -55,14 +56,14 @@ export class UpdateTimeSlotHandler
 					activity.tenantId = RequestContext.currentTenantId();
 					return activity;
 				});
-				await this.activityRepository.save(newActivities);
+				await this.typeOrmActivityRepository.save(newActivities);
 				input.activities = (timeSlot.activities || []).concat(
 					newActivities
 				);
 			}
-			await this.timeSlotRepository.update(id, input);
+			await this.typeOrmTimeSlotRepository.update(id, input);
 
-			timeSlot = await this.timeSlotRepository.findOne({
+			timeSlot = await this.typeOrmTimeSlotRepository.findOne({
 				where: {
 					...(employeeId ? { employeeId } : {}),
 					id

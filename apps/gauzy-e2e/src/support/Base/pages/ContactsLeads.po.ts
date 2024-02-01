@@ -72,21 +72,21 @@ export const selectCountryFromDropdown = (text) => {
 };
 
 export const cityInputVisible = () => {
-	verifyElementIsVisible(ContactsLeadsPage.cityInpuCss);
+	verifyElementIsVisible(ContactsLeadsPage.cityInputCss);
 };
 
 export const enterCityInputData = (data) => {
-	clearField(ContactsLeadsPage.cityInpuCss);
-	enterInput(ContactsLeadsPage.cityInpuCss, data);
+	clearField(ContactsLeadsPage.cityInputCss);
+	enterInput(ContactsLeadsPage.cityInputCss, data);
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(ContactsLeadsPage.postcodeinputCss);
+	verifyElementIsVisible(ContactsLeadsPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(ContactsLeadsPage.postcodeinputCss);
-	enterInput(ContactsLeadsPage.postcodeinputCss, data);
+	clearField(ContactsLeadsPage.postCodeInputCss);
+	enterInput(ContactsLeadsPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {
@@ -271,12 +271,12 @@ export const clickLastStepBtn = () => {
 }
 
 export const budgetInputVisible = () => {
-	verifyElementIsVisible(ContactsLeadsPage.budgetInpuCss);
+	verifyElementIsVisible(ContactsLeadsPage.budgetInputCss);
 };
 
 export const enterBudgetData = (data) => {
-	clearField(ContactsLeadsPage.budgetInpuCss);
-	enterInput(ContactsLeadsPage.budgetInpuCss, data);
+	clearField(ContactsLeadsPage.budgetInputCss);
+	enterInput(ContactsLeadsPage.budgetInputCss, data);
 };
 
 export const verifyNameInput = () => {

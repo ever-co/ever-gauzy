@@ -1,11 +1,12 @@
-import { Entity, Column, ManyToOne, OneToMany, RelationId, Index } from 'typeorm';
+import { Column, ManyToOne, OneToMany, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
-import { TenantOrganizationBaseEntity } from '@gauzy/core';
+import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
+import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';
 
-@Entity('knowledge_base')
+@MultiORMEntity('knowledge_base', { mikroOrmRepository: () => MikroOrmHelpCenterRepository })
 export class HelpCenter extends TenantOrganizationBaseEntity
 	implements IHelpCenter {
 

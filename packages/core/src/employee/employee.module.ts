@@ -14,11 +14,15 @@ import { EmailSendModule } from './../email-send/email-send.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/employee', module: EmployeeModule }]),
+		RouterModule.register([
+			{ path: '/employee', module: EmployeeModule }
+		]),
 		TypeOrmModule.forFeature([Employee, TimeLog]),
+		MikroOrmModule.forFeature([Employee, TimeLog]),
 		forwardRef(() => EmailSendModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => TenantModule),
@@ -30,6 +34,6 @@ import { RoleModule } from './../role/role.module';
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, ...CommandHandlers],
-	exports: [TypeOrmModule, EmployeeService]
+	exports: [TypeOrmModule, MikroOrmModule, EmployeeService]
 })
-export class EmployeeModule {}
+export class EmployeeModule { }

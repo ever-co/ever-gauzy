@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { SelectQueryBuilder } from 'typeorm';
 import {
 	IEmployeePresetInput,
 	IGetJobPresetCriterionInput,
@@ -23,6 +23,12 @@ import {
 	SavePresetCriterionCommand
 } from './commands';
 import { isNotEmpty } from 'class-validator';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmJobPresetRepository } from './repository/type-orm-job-preset.repository';
+import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
+import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/type-orm-job-preset-upwork-job-search-criterion.repository';
+import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
+import { TypeOrmEmployeeRepository } from './../employee/repository/type-orm-employee.repository';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
@@ -30,25 +36,32 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		private readonly commandBus: CommandBus,
 
 		@InjectRepository(JobPreset)
-		private readonly jobPresetRepository: Repository<JobPreset>,
+		typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
+
+		mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
 
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>,
+		private typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
 
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
+		private typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository
 	) {
-		super(jobPresetRepository);
+		super(typeOrmJobPresetRepository, mikroOrmJobPresetRepository);
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	public async getAll(request?: IGetJobPresetInput) {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, search, employeeId } = request;
 
-		const query = this.jobPresetRepository.createQueryBuilder('job_preset');
+		const query = this.repository.createQueryBuilder('job_preset');
 		query.setFindOptions({
 			join: {
 				alias: 'job_preset',
@@ -61,23 +74,23 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			},
 			order: {
 				name: 'ASC'
-			},
+			}
 		});
 		query.where((qb: SelectQueryBuilder<JobPreset>) => {
-			qb.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 
 			if (isNotEmpty(organizationId)) {
-				qb.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, {
+				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), {
 					organizationId
 				});
 			}
 			if (isNotEmpty(search)) {
-				qb.andWhere(`"${query.alias}"."name" ILIKE :search`, {
+				qb.andWhere(p(`"${query.alias}"."name" ILIKE :search`), {
 					search: `%${search}%`
 				});
 			}
 			if (isNotEmpty(employeeId)) {
-				qb.andWhere(`"employees"."id" = :employeeId`, {
+				qb.andWhere(p(`"employees"."id" = :employeeId`), {
 					employeeId
 				});
 			}
@@ -86,11 +99,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async get(id: string, request?: IGetJobPresetCriterionInput) {
-		const query = this.jobPresetRepository.createQueryBuilder();
-		query.leftJoinAndSelect(
-			`${query.alias}.jobPresetCriterions`,
-			'jobPresetCriterions'
-		);
+		const query = this.repository.createQueryBuilder();
+		query.leftJoinAndSelect(`${query.alias}.jobPresetCriterions`, 'jobPresetCriterions');
 		if (request.employeeId) {
 			query.leftJoinAndSelect(
 				`${query.alias}.employeeCriterions`,
@@ -104,39 +114,69 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		return query.getOne();
 	}
 
+	/**
+	 *
+	 * @param presetId
+	 * @returns
+	 */
 	public getJobPresetCriterion(presetId: string) {
-		return this.jobPresetUpworkJobSearchCriterionRepository.findBy({
+		return this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findBy({
 			jobPresetId: presetId
 		});
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @returns
+	 */
 	public getEmployeeCriterion(input: IGetMatchingCriterions) {
-		return this.employeeUpworkJobsSearchCriterionRepository.findBy({
+		return this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({
 			...(input.jobPresetId ? { jobPresetId: input.jobPresetId } : {}),
 			employeeId: input.employeeId
 		});
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	public async createJobPreset(request?: IJobPreset) {
 		return this.commandBus.execute(
 			new CreateJobPresetCommand(request)
 		);
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async saveJobPresetCriterion(request: IMatchingCriterions) {
 		return this.commandBus.execute(
 			new SavePresetCriterionCommand(request)
 		);
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async saveEmployeeCriterion(request: IMatchingCriterions) {
 		return this.commandBus.execute(
 			new SaveEmployeeCriterionCommand(request)
 		);
 	}
 
+	/**
+	 *
+	 * @param employeeId
+	 * @returns
+	 */
 	async getEmployeePreset(employeeId: string) {
-		const employee = await this.employeeRepository.findOne({
+		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: {
 				id: employeeId
 			},
@@ -147,20 +187,36 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		return employee.jobPresets;
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	async saveEmployeePreset(request: IEmployeePresetInput) {
-		return this.commandBus.execute(new SaveEmployeePresetCommand(request));
+		return this.commandBus.execute(
+			new SaveEmployeePresetCommand(request)
+		);
 	}
 
+	/**
+	 *
+	 * @param creationId
+	 * @param employeeId
+	 * @returns
+	 */
 	deleteEmployeeCriterion(creationId: string, employeeId: string) {
-		return this.employeeUpworkJobsSearchCriterionRepository.delete({
+		return this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({
 			id: creationId,
 			employeeId: employeeId
 		});
 	}
 
+	/**
+	 *
+	 * @param creationId
+	 * @returns
+	 */
 	deleteJobPresetCriterion(creationId: string) {
-		return this.jobPresetUpworkJobSearchCriterionRepository.delete(
-			creationId
-		);
+		return this.typeOrmJobPresetUpworkJobSearchCriterionRepository.delete(creationId);
 	}
 }

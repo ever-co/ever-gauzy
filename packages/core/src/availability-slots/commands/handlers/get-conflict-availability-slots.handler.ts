@@ -1,22 +1,27 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { ConfigService } from '@gauzy/config';
 import { IAvailabilitySlot } from '@gauzy/contracts';
 import { AvailabilitySlot } from '../../availability-slots.entity';
 import { GetConflictAvailabilitySlotsCommand } from '../get-conflict-availability-slots.command';
 import { RequestContext } from './../../../core/context';
+import { DatabaseTypeEnum } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../database/database.helper';
+import { TypeOrmAvailabilitySlotRepository } from '../../repository/type-orm-availability-slot.repository';
+import { MikroOrmAvailabilitySlotRepository } from '../../repository/mikro-orm-availability-slot.repository';
 
 @CommandHandler(GetConflictAvailabilitySlotsCommand)
-export class GetConflictAvailabilitySlotsHandler
-	implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
+export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetConflictAvailabilitySlotsCommand> {
+
 	constructor(
 		@InjectRepository(AvailabilitySlot)
-		private readonly availabilitySlotRepository: Repository<AvailabilitySlot>,
+		readonly typeOrmAvailabilitySlotRepository: TypeOrmAvailabilitySlotRepository,
+
+		readonly mikroOrmAvailabilitySlotRepository: MikroOrmAvailabilitySlotRepository,
 
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	public async execute(
 		command: GetConflictAvailabilitySlotsCommand
@@ -29,23 +34,42 @@ export class GetConflictAvailabilitySlotsHandler
 		const startedAt = moment(startTime).toISOString();
 		const stoppedAt = moment(endTime).toISOString();
 
-		const query = this.availabilitySlotRepository.createQueryBuilder();
-		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, {
+		const query = this.typeOrmAvailabilitySlotRepository.createQueryBuilder();
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
 			tenantId
 		});
-		query.andWhere(`"${query.alias}"."employeeId" = :employeeId`, {
+		query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), {
 			employeeId
 		});
 
-		query.andWhere(
-			['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)
-				? `'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`
-				: `("${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}')`
-		);
+		switch (this.configService.dbConnectionOptions.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				query.andWhere(`'${startedAt}' >= "${query.alias}"."startTime" AND '${startedAt}' <= "${query.alias}"."endTime"`);
+				break;
+			case DatabaseTypeEnum.postgres:
+				query.andWhere(
+					`(
+						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'
+					)`
+				);
+				break;
+			case DatabaseTypeEnum.mysql:
+				query.andWhere(
+					p(`(
+						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'
+					)`)
+				);
+				break;
+			default:
+				throw Error(
+					`cannot compare startTime/endTime due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
+		}
 
 		// organization and tenant for availability slots conflicts
 		if (organizationId) {
-			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, {
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
 				organizationId
 			});
 		}

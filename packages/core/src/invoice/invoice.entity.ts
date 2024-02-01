@@ -20,7 +20,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import {
-	Entity,
 	Column,
 	JoinColumn,
 	OneToMany,
@@ -41,8 +40,11 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { isMySQL } from '@gauzy/config';
+import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 
-@Entity('invoice')
+@MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
 export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
@@ -55,8 +57,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@IsNumber()
 	@Column({
 		nullable: true,
-		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe()
+		transformer: new ColumnNumericTransformerPipe(),
+		...(isMySQL() ? { type: 'bigint' } : { type: 'numeric' })
 	})
 	invoiceNumber: number;
 
@@ -200,7 +202,10 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: "text" } : {})
+	})
 	token?: string;
 
 

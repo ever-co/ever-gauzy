@@ -1,66 +1,76 @@
-import {
-	Injectable,
-	BadRequestException,
-	NotFoundException
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { IEquipmentSharing, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { ConfigService } from '@gauzy/config';
+import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestApproval } from '../request-approval/request-approval.entity';
+import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
+import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
+import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
+import { MikroOrmRequestApprovalRepository } from './../request-approval/repository/mikro-orm-request-approval.repository';
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
 	constructor(
 		@InjectRepository(EquipmentSharing)
-		private readonly equipmentSharingRepository: Repository<EquipmentSharing>,
+		typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
+
+		mikroOrmEquipmentSharingRepository: MikroOrmEquipmentSharingRepository,
 
 		@InjectRepository(RequestApproval)
-		private readonly requestApprovalRepository: Repository<RequestApproval>,
+		private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+
+		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
 
 		private readonly configService: ConfigService
 	) {
-		super(equipmentSharingRepository);
+		super(typeOrmEquipmentSharingRepository, mikroOrmEquipmentSharingRepository);
 	}
 
 	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
 		try {
-			const query = this.equipmentSharingRepository.createQueryBuilder(
-				'equipment_sharing'
-			);
+			const query = this.repository.createQueryBuilder('equipment_sharing');
 			query
 				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
 				.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment')
-				.leftJoinAndSelect( `${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
+				.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
 
-			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'"equipment_sharing"."id" = "requestApproval"."requestId"'
-				);
-			} else {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
-				);
+			switch (this.configService.dbConnectionOptions.type) {
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'"equipment_sharing"."id" = "requestApproval"."requestId"'
+					);
+					break;
+				case DatabaseTypeEnum.postgres:
+				case DatabaseTypeEnum.mysql:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+					);
+					break;
+				default:
+					throw Error(
+						`cannot create query to find equipment sharings by orgId due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+					);
 			}
+
 			return await query
-				.leftJoinAndSelect(
-					'requestApproval.approvalPolicy',
-					'approvalPolicy'
-				)
+				.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy')
 				.where(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						const tenantId = RequestContext.currentTenantId();
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					})
 				)
 				.getMany();
@@ -71,7 +81,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async findRequestApprovalsByEmployeeId(id: string): Promise<any> {
 		try {
-			return await this.equipmentSharingRepository.find({
+			return await this.repository.find({
 				where: {
 					createdBy: id
 				},
@@ -83,25 +93,17 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
-		const [ items, total ] = await this.equipmentSharingRepository.findAndCount({
-			relations: [
-				'equipment',
-				'employees',
-				'teams'
-			]
+		const [items, total] = await this.repository.findAndCount({
+			relations: ['equipment', 'employees', 'teams']
 		});
-		return { items, total }
+		return { items, total };
 	}
 
-	async createEquipmentSharing(
-		equipmentSharing: EquipmentSharing
-	): Promise<EquipmentSharing> {
+	async createEquipmentSharing(equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
 		try {
 			equipmentSharing.createdBy = RequestContext.currentUser().id;
 			equipmentSharing.createdByName = RequestContext.currentUser().name;
-			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
-				equipmentSharing
-			);
+			const equipmentSharingSaved = await this.repository.save(equipmentSharing);
 			return equipmentSharingSaved;
 		} catch (err) {
 			console.log('err', err);
@@ -109,15 +111,10 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
-	async update(
-		id: string,
-		equipmentSharing: EquipmentSharing
-	): Promise<EquipmentSharing> {
+	async update(id: string, equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
 		try {
-			await this.equipmentSharingRepository.delete(id);
-			const equipmentSharingSaved = await this.equipmentSharingRepository.save(
-				equipmentSharing
-			);
+			await this.repository.delete(id);
+			const equipmentSharingSaved = await this.repository.save(equipmentSharing);
 
 			return equipmentSharingSaved;
 		} catch (err) {
@@ -128,8 +125,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	async delete(id: string): Promise<any> {
 		try {
 			const [equipmentSharing] = await Promise.all([
-				await this.equipmentSharingRepository.delete(id),
-				await this.requestApprovalRepository.delete({
+				await this.repository.delete(id),
+				await this.typeOrmRequestApprovalRepository.delete({
 					requestId: id
 				})
 			]);
@@ -140,12 +137,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		}
 	}
 
-	async updateStatusEquipmentSharingByAdmin(
-		id: string,
-		status: number
-	): Promise<EquipmentSharing> {
+	async updateStatusEquipmentSharingByAdmin(id: string, status: number): Promise<EquipmentSharing> {
 		try {
-			const equipmentSharing = await this.equipmentSharingRepository.findOneBy({
+			const equipmentSharing = await this.repository.findOneBy({
 				id
 			});
 
@@ -154,7 +148,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			}
 			equipmentSharing.status = status;
 
-			return await this.equipmentSharingRepository.save(equipmentSharing);
+			return await this.repository.save(equipmentSharing);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -170,26 +164,41 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			 * Sets number of entities to skip.
 			 * Sets maximal number of entities to take.
 			 */
-			query.skip(filter && filter.skip ? (filter.take * (filter.skip - 1)) : 0);
-			query.take(filter && filter.take ? (filter.take) : 10);
+			query.skip(filter && filter.skip ? filter.take * (filter.skip - 1) : 0);
+			query.take(filter && filter.take ? filter.take : 10);
 
 			query.innerJoinAndSelect(`${query.alias}.equipment`, 'equipment');
 			query.leftJoinAndSelect(`${query.alias}.equipmentSharingPolicy`, 'equipmentSharingPolicy');
-			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
+			query.leftJoinAndSelect(`${query.alias}.employees`, 'employees');
 			query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 
-			if (['sqlite', 'better-sqlite3'].includes(this.configService.dbConnectionOptions.type)) {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'"equipment_sharing"."id" = "requestApproval"."requestId"'
-				);
-			} else {
-				query.leftJoinAndSelect(
-					'request_approval',
-					'requestApproval',
-					'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
-				);
+			switch (this.configService.dbConnectionOptions.type) {
+				case DatabaseTypeEnum.sqlite:
+				case DatabaseTypeEnum.betterSqlite3:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'"equipment_sharing"."id" = "requestApproval"."requestId"'
+					);
+					break;
+				case DatabaseTypeEnum.postgres:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+					);
+					break;
+				case DatabaseTypeEnum.mysql:
+					query.leftJoinAndSelect(
+						'request_approval',
+						'requestApproval',
+						p(`"equipment_sharing"."id" = "requestApproval"."requestId"`)
+					);
+					break;
+				default:
+					throw Error(
+						`cannot paginate equipment sharings due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+					);
 			}
 
 			query.leftJoinAndSelect('requestApproval.approvalPolicy', 'approvalPolicy');
@@ -198,47 +207,42 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			 * Adds new AND WHERE condition in the query builder.
 			 * Additionally you can add parameters used in where expression.
 			 */
-			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (filter.where) {
 						const { tenantId, organizationId } = filter.where;
-						qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-						qb.andWhere(`"equipment"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"equipment"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"equipment"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"equipment"."organizationId" = :organizationId`), { organizationId });
 					}
 				})
 			);
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (
-						isNotEmpty(filter.where) &&
-						isNotEmpty(filter.where.employeeIds)
-					) {
+					if (isNotEmpty(filter.where) && isNotEmpty(filter.where.employeeIds)) {
 						let { employeeIds = [], organizationId } = filter.where;
 						const user = RequestContext.currentUser();
 						if (
-							!RequestContext.hasPermission(
-								PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-							)
-							&& user.employeeId
+							!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
+							user.employeeId
 						) {
 							employeeIds = [user.employeeId];
 						}
 						qb.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => {
-								qb.andWhere(`"employees"."id" IN (:...employeeIds)`, {
+								qb.andWhere(p(`"employees"."id" IN (:...employeeIds)`), {
 									employeeIds
 								});
-								qb.orWhere(`"${query.alias}"."createdBy" IN (:...employeeIds)`, {
+								qb.orWhere(p(`"${query.alias}"."createdBy" IN (:...employeeIds)`), {
 									employeeIds
 								});
 							})
 						);
-						qb.andWhere(`"employees"."tenantId" = :tenantId`, { tenantId });
-						qb.andWhere(`"employees"."organizationId" = :organizationId`, { organizationId });
+						qb.andWhere(p(`"employees"."tenantId" = :tenantId`), { tenantId });
+						qb.andWhere(p(`"employees"."organizationId" = :organizationId`), { organizationId });
 					}
 				})
 			);

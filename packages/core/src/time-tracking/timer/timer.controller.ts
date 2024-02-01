@@ -11,7 +11,9 @@ import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
-	constructor(private readonly timerService: TimerService) { }
+	constructor(
+		private readonly timerService: TimerService
+	) { }
 
 	/**
 	 * GET timer today's status
@@ -43,6 +45,11 @@ export class TimerController {
 		return await this.timerService.getTimerWorkedStatus(query);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Toggle timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -58,6 +65,11 @@ export class TimerController {
 		return await this.timerService.toggleTimeLog(entity);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Start timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -74,6 +86,11 @@ export class TimerController {
 		return await this.timerService.startTimer(entity);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Stop timer' })
 	@ApiResponse({
 		status: HttpStatus.OK,

@@ -80,21 +80,21 @@ export const clickNextButton = () => {
 };
 
 export const cityInputVisible = () => {
-	verifyElementIsVisible(ClientsPage.cityInpuCss);
+	verifyElementIsVisible(ClientsPage.cityInputCss);
 };
 
 export const enterCityInputData = (data) => {
-	clearField(ClientsPage.cityInpuCss);
-	enterInput(ClientsPage.cityInpuCss, data);
+	clearField(ClientsPage.cityInputCss);
+	enterInput(ClientsPage.cityInputCss, data);
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(ClientsPage.postcodeinputCss);
+	verifyElementIsVisible(ClientsPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(ClientsPage.postcodeinputCss);
-	enterInput(ClientsPage.postcodeinputCss, data);
+	clearField(ClientsPage.postCodeInputCss);
+	enterInput(ClientsPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {
@@ -274,12 +274,12 @@ export const clickLastStepBtn = () => {
 }
 
 export const budgetInputVisible = () => {
-	verifyElementIsVisible(ClientsPage.budgetInpuCss);
+	verifyElementIsVisible(ClientsPage.budgetInputCss);
 };
 
 export const enterBudgetData = (data) => {
-	clearField(ClientsPage.budgetInpuCss);
-	enterInput(ClientsPage.budgetInpuCss, data);
+	clearField(ClientsPage.budgetInputCss);
+	enterInput(ClientsPage.budgetInputCss, data);
 };
 
 export const verifyNameInput = () => {

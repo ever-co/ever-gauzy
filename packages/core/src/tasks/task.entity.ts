@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -38,6 +37,7 @@ import {
 	TaskSizeEnum,
 	TaskStatusEnum,
 } from '@gauzy/contracts';
+import { isMySQL } from "@gauzy/config";
 import {
 	Activity,
 	Employee,
@@ -56,11 +56,16 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
-@Entity('task')
+@MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'bigint' } : {})
+	})
 	number?: number;
 
 	@Column({ nullable: true })
@@ -75,7 +80,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@Column({
+		nullable: true,
+		...(isMySQL() ? { type: 'text' } : {})
+	})
 	description?: string;
 
 	@ApiProperty({ type: () => String })

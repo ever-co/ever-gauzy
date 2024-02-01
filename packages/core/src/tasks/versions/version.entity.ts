@@ -1,10 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskVersion } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
 
-@Entity('task_version')
+@MultiORMEntity('task_version', { mikroOrmRepository: () => MikroOrmTaskVersionRepository })
 export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
 
 	@ApiProperty({ type: () => String })

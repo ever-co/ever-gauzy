@@ -3,7 +3,7 @@ import { RecordsHistoryComponent } from './records-history.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { IncomeModule } from '../../../pages/income/income.module';
 import { NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
-import { PaginationModule } from '../../pagination/pagination.module';
+import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
 import { CommonModule } from '@angular/common';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		PaginationModule
+		PaginationV2Module
 	],
 	exports: [RecordsHistoryComponent],
 	declarations: [RecordsHistoryComponent],

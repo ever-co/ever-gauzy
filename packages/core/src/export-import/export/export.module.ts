@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { getConfig } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
@@ -12,8 +13,17 @@ import { ExportService } from './export.service';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/export', module: ExportModule }]),
-		TypeOrmModule.forFeature([...coreEntities, ...getEntitiesFromPlugins(getConfig().plugins)]),
+		RouterModule.register([
+			{ path: '/export', module: ExportModule }
+		]),
+		TypeOrmModule.forFeature([
+			...coreEntities,
+			...getEntitiesFromPlugins(getConfig().plugins)
+		]),
+		MikroOrmModule.forFeature([
+			...coreEntities,
+			...getEntitiesFromPlugins(getConfig().plugins)
+		]),
 		TenantModule,
 		UserModule,
 		CqrsModule
@@ -22,4 +32,4 @@ import { ExportService } from './export.service';
 	providers: [ExportService],
 	exports: []
 })
-export class ExportModule {}
+export class ExportModule { }

@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	RelationId,
 	ManyToOne,
@@ -26,8 +25,10 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
-@Entity('time_slot')
+@MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
 
@@ -78,12 +79,12 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * Employee
 	 */
-	@ManyToOne(() => Employee, (employee) => employee.timeSlots, {
+	@ManyToOne(() => Employee, (it) => it.timeSlots, {
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;
 
-	@ApiProperty({ type: () => String, required: true })
+	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
@@ -100,17 +101,13 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * Screenshot
 	 */
-	@ApiPropertyOptional({ type: () => Screenshot, isArray: true })
-	@IsOptional()
-	@OneToMany(() => Screenshot, (screenshot) => screenshot.timeSlot)
+	@OneToMany(() => Screenshot, (it) => it.timeSlot)
 	screenshots?: IScreenshot[];
 
 	/**
 	 * Activity
 	 */
-	@ApiPropertyOptional({ type: () => Activity, isArray: true })
-	@IsOptional()
-	@OneToMany(() => Activity, (activity) => activity.timeSlot, {
+	@OneToMany(() => Activity, (it) => it.timeSlot, {
 		cascade: true
 	})
 	activities?: IActivity[];
@@ -118,9 +115,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * TimeSlotMinute
 	 */
-	@ApiPropertyOptional({ type: () => TimeSlotMinute, isArray: true })
-	@IsOptional()
-	@OneToMany(() => TimeSlotMinute, (timeSlotMinute) => timeSlotMinute.timeSlot, {
+	@OneToMany(() => TimeSlotMinute, (it) => it.timeSlot, {
 		cascade: true
 	})
 	timeSlotMinutes?: ITimeSlotMinute[];
@@ -134,7 +129,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * TimeLog
 	 */
-	@ManyToMany(() => TimeLog, (timeLogs) => timeLogs.timeSlots, {
+	@ManyToMany(() => TimeLog, (it) => it.timeSlots, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

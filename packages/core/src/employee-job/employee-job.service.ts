@@ -16,7 +16,12 @@ import {
 	JobPostSourceEnum,
 	JobPostStatusEnum,
 	JobPostTypeEnum,
+	IGetEmployeeJobPostFilters,
+	IntegrationEnum,
+	IntegrationEntity
 } from '@gauzy/contracts';
+import { RequestContext } from './../core/context';
+import { IntegrationTenantService } from './../integration-tenant/integration-tenant.service';
 import { EmployeeService } from '../employee/employee.service';
 import { CountryService } from './../country/country.service';
 import { EmployeeJobPost } from './employee-job.entity';
@@ -27,7 +32,8 @@ export class EmployeeJobPostService {
 	constructor(
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService,
-		private readonly countryService: CountryService
+		private readonly countryService: CountryService,
+		private readonly _integrationTenantService: IntegrationTenantService,
 	) { }
 
 	/**
@@ -80,32 +86,59 @@ export class EmployeeJobPostService {
 
 		try {
 			if (env.gauzyAIGraphQLEndpoint) {
-				const result = await this.gauzyAIService.getEmployeesJobPosts(data);
-				if (result === null) {
-					if (env.production) {
-						// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
-						jobs = {
-							items: [],
-							total: 0
-						};
-					} else {
-						// In development, even if connection failed, we want to show fake jobs in UI
-						jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
-					}
-				} else {
-					const jobsConverted = result.items.map((jo) => {
-						if (jo.employeeId) {
-							const employee = employees.find((emp) => emp.id === jo.employeeId);
-							jo.employee = employee;
-						}
+				const filters: IGetEmployeeJobPostFilters = data.filters;
 
-						return jo;
+				const { organizationId } = data.filters
+				const tenantId = RequestContext.currentTenantId() || filters.tenantId;
+
+				// Retrieve integration
+				const integration = await this._integrationTenantService.getIntegrationByOptions({
+					organizationId,
+					tenantId,
+					name: IntegrationEnum.GAUZY_AI
+				});
+
+				// Check if integration exists
+				if (!!integration) {
+					const integrationId = integration['id'];
+
+					// Check if job matching entity sync is enabled
+					await this._integrationTenantService.findIntegrationTenantByEntity({
+						integrationId,
+						organizationId,
+						entityType: IntegrationEntity.JOB_MATCHING
 					});
 
-					jobs = {
-						items: jobsConverted,
-						total: result.total
-					};
+					const result = await this.gauzyAIService.getEmployeesJobPosts(data);
+					if (result === null) {
+						if (env.production) {
+							// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+							jobs = {
+								items: [],
+								total: 0
+							};
+						} else {
+							// In development, even if connection failed, we want to show fake jobs in UI
+							jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+						}
+					} else {
+						const jobsConverted = result.items.map((jo) => {
+							if (jo.employeeId) {
+								const employee = employees.find((emp) => emp.id === jo.employeeId);
+								jo.employee = employee;
+							}
+
+							return jo;
+						});
+
+						jobs = {
+							items: jobsConverted,
+							total: result.total
+						};
+					}
+				} else {
+					// If integration not enabled, we want to show fake jobs in UI
+					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
 				}
 			} else {
 				// If it's production, we should return empty here because we don't want fake jobs in production

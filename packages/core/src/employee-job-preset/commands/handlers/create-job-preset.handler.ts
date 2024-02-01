@@ -1,32 +1,34 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { RequestContext } from '../../../core/context';
 import { Employee } from '../../../employee/employee.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
 import { CreateJobPresetCommand } from '../create-job-preset.command';
+import { TypeOrmJobPresetRepository } from '../../repository/type-orm-job-preset.repository';
+import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../repository/type-orm-job-preset-upwork-job-search-criterion.repository';
+import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
 
 @CommandHandler(CreateJobPresetCommand)
-export class CreateJobPresetHandler
-	implements ICommandHandler<CreateJobPresetCommand> {
+export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCommand> {
+
 	constructor(
 		@InjectRepository(JobPreset)
-		private readonly jobPresetRepository: Repository<JobPreset>,
+		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private readonly jobPresetUpworkJobSearchCriterionRepository: Repository<JobPresetUpworkJobSearchCriterion>
-	) {}
+		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository
+	) { }
 
 	public async execute(command: CreateJobPresetCommand): Promise<JobPreset> {
 		const { input } = command;
 
 		if (!input.organizationId) {
 			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOneBy({
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({
 				id: user.employeeId
 			});
 			input.organizationId = employee.organizationId;
@@ -36,7 +38,7 @@ export class CreateJobPresetHandler
 		const jobPreset = new JobPreset(input);
 
 		delete jobPreset.jobPresetCriterions;
-		await this.jobPresetRepository.save(jobPreset);
+		await this.typeOrmJobPresetRepository.save(jobPreset);
 
 		let jobPresetCriterion: JobPresetUpworkJobSearchCriterion[] = [];
 
@@ -49,11 +51,11 @@ export class CreateJobPresetHandler
 					})
 			);
 
-			await this.jobPresetUpworkJobSearchCriterionRepository.delete({
+			await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.delete({
 				jobPresetId: jobPreset.id
 			});
 
-			await this.jobPresetUpworkJobSearchCriterionRepository.save(
+			await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.save(
 				jobPresetCriterion
 			);
 

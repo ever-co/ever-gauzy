@@ -1,22 +1,23 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { getConfig } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { ITimeLog } from '@gauzy/contracts';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { RequestContext } from './../../../../core/context';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
-export class ScheduleTimeLogEntriesHandler
-	implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
+export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
 
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>
-	) {}
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+	) { }
 
 	public async execute(command: ScheduleTimeLogEntriesCommand) {
 		const { timeLog } = command;
@@ -25,7 +26,7 @@ export class ScheduleTimeLogEntriesHandler
 			const { organizationId, employeeId } = timeLog;
 			const tenantId = RequestContext.currentTenantId();
 
-			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 			query.setFindOptions({
 				relations: {
 					timeSlots: true
@@ -34,22 +35,22 @@ export class ScheduleTimeLogEntriesHandler
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."employeeId" = :employeeId`, { employeeId });
-						web.andWhere(`"${qb.alias}"."organizationId" = :organizationId`, { organizationId });
-						web.andWhere(`"${qb.alias}"."tenantId" = :tenantId`, { tenantId });
+						web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
+						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 					})
 				);
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
-								web.andWhere(`"${qb.alias}"."isRunning" = :isRunning`, { isRunning: true });
+								web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
+								web.andWhere(p(`"${qb.alias}"."isRunning" = :isRunning`), { isRunning: true });
 							})
 						);
 						web.orWhere(
 							new Brackets((web: WhereExpressionBuilder) => {
-								web.andWhere(`"${qb.alias}"."stoppedAt" IS NULL`);
+								web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NULL`));
 							})
 						);
 					})
@@ -58,7 +59,7 @@ export class ScheduleTimeLogEntriesHandler
 			});
 			timeLogs = await query.getMany();
 		} else {
-			const query = this.timeLogRepository.createQueryBuilder('time_log');
+			const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 			query.setFindOptions({
 				relations: {
 					timeSlots: true
@@ -67,13 +68,13 @@ export class ScheduleTimeLogEntriesHandler
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."stoppedAt" IS NOT NULL`);
-						web.andWhere(`"${qb.alias}"."isRunning" = :isRunning`, { isRunning: true });
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
+						web.andWhere(p(`"${qb.alias}"."isRunning" = :isRunning`), { isRunning: true });
 					})
 				);
 				qb.orWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(`"${qb.alias}"."stoppedAt" IS NULL`);
+						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NULL`));
 					})
 				);
 				console.log('Schedule Time Log Query For All Entries', query.getQueryAndParameters());
@@ -89,7 +90,7 @@ export class ScheduleTimeLogEntriesHandler
 				logDifference > 10
 			) {
 				console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
-				await this.timeLogRepository.save({
+				await this.typeOrmTimeLogRepository.save({
 					id: timeLog.id,
 					stoppedAt: moment(timeLog.startedAt).add(10, 'seconds').toDate()
 				});
@@ -103,17 +104,24 @@ export class ScheduleTimeLogEntriesHandler
 				/**
 				 * Adjust stopped date as per database selection
 				 */
-				if (['sqlite', 'better-sqlite3'].includes(getConfig().dbConnectionOptions.type)) {
-					stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
-					slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
-				} else {
-					stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
-					slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
+				switch (getConfig().dbConnectionOptions.type) {
+					case DatabaseTypeEnum.sqlite:
+					case DatabaseTypeEnum.betterSqlite3:
+						stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
+						slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
+						break;
+					case DatabaseTypeEnum.postgres:
+					case DatabaseTypeEnum.mysql:
+						stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
+						slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
+						break;
+					default:
+						throw Error(`cannot format startedAt, slotDifference due to unsupported database type: ${getConfig().dbConnectionOptions.type}`);
 				}
 
 				console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
 				if (slotDifference > 10) {
-					await this.timeLogRepository.save({
+					await this.typeOrmTimeLogRepository.save({
 						id: timeLog.id,
 						stoppedAt: stoppedAt
 					});
@@ -123,7 +131,7 @@ export class ScheduleTimeLogEntriesHandler
 			 * Stop previous pending timer anyway.
 			 * If we have any pending TimeLog entry
 			 */
-			await this.timeLogRepository.save({
+			await this.typeOrmTimeLogRepository.save({
 				id: timeLog.id,
 				isRunning: false
 			});

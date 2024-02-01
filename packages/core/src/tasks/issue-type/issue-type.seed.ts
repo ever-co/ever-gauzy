@@ -8,8 +8,7 @@ import { ImageAsset } from './../../core/entities/internal';
 import { cleanAssets, copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_GLOBAL_ISSUE_TYPES } from './default-global-issue-types';
 import { IssueType } from './issue-type.entity';
-
-const config = getConfig();
+import { environment as env } from '@gauzy/config';
 
 /**
  * Default global system issue types
@@ -17,22 +16,23 @@ const config = getConfig();
  * @param dataSource
  * @returns
  */
-export const createDefaultIssueTypes = async (
-	dataSource: DataSource
-): Promise<IIssueType[]> => {
-	await cleanAssets(config, 'ever-icons/task-issue-types');
+export const createDefaultIssueTypes = async (dataSource: DataSource): Promise<IIssueType[]> => {
+	await cleanAssets(getConfig(), path.join('ever-icons', 'task-issue-types'));
 
 	let issueTypes: IIssueType[] = [];
 	try {
 		for await (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
-
-			const iconPath = path.join(config.assetOptions.assetPath, ...['seed', 'ever-icons', issueType.icon]);
-			const { height, width } = imageSize(iconPath);
-			const { size } = fs.statSync(iconPath);
-
+			const iconPath = copyAssets(issueType.icon, getConfig());
+			const baseDir = env.isElectron
+				? path.resolve(env.gauzyUserPath, ...['public'])
+				: getConfig().assetOptions.assetPublicPath ||
+				path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+			const absoluteFilePath = path.join(baseDir, iconPath)
+			const { height = 0, width = 0 } = imageSize(absoluteFilePath);
+			const { size } = fs.statSync(absoluteFilePath);
 			const icon = new ImageAsset();
 			icon.name = issueType.name;
-			icon.url = path.join('ever-icons', issueType.icon);
+			icon.url = iconPath;
 			icon.storageProvider = FileStorageProviderEnum.LOCAL;
 			icon.height = height;
 			icon.width = width;
@@ -42,7 +42,7 @@ export const createDefaultIssueTypes = async (
 			issueTypes.push(
 				new IssueType({
 					...issueType,
-					icon: copyAssets(issueType.icon, config),
+					icon: iconPath,
 					image
 				})
 			);

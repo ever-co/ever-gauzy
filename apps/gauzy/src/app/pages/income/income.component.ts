@@ -18,8 +18,7 @@ import {
 	IDateRangePicker,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { Subject } from 'rxjs';
-import { combineLatest } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
 import {
 	distinctUntilChange,
 	employeeMapper,

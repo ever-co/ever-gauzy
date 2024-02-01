@@ -1,14 +1,14 @@
-import { Column, Entity, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IExpense, IExpenseCategory, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-category.repository';
 
-@Entity('expense_category')
-export class ExpenseCategory
-	extends TenantOrganizationBaseEntity
-	implements IExpenseCategory {
-	
+@MultiORMEntity('expense_category', { mikroOrmRepository: () => MikroOrmExpenseCategoryRepository })
+export class ExpenseCategory extends TenantOrganizationBaseEntity implements IExpenseCategory {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -16,10 +16,10 @@ export class ExpenseCategory
 	name: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Expense
@@ -31,11 +31,11 @@ export class ExpenseCategory
 	expenses?: IExpense[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
-		
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
+
 	/**
 	 * Tag
 	 */

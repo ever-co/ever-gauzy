@@ -45,6 +45,7 @@ export type AutomationTask = {
 	providerCode: Scalars['String']['output'];
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status: Scalars['String']['output'];
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -68,6 +69,7 @@ export type AutomationTaskAggregateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -90,6 +92,7 @@ export type AutomationTaskAggregateGroupBy = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -150,6 +153,7 @@ export type AutomationTaskCountAggregate = {
 	providerCode?: Maybe<Scalars['Int']['output']>;
 	providerJobId?: Maybe<Scalars['Int']['output']>;
 	status?: Maybe<Scalars['Int']['output']>;
+	tenantId?: Maybe<Scalars['Int']['output']>;
 	updatedAt?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -173,6 +177,7 @@ export type AutomationTaskDeleteFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -198,6 +203,7 @@ export type AutomationTaskDeleteResponse = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -233,6 +239,7 @@ export type AutomationTaskFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -275,6 +282,7 @@ export type AutomationTaskFilterEmployeeJobPostFilter = {
 	or?: InputMaybe<Array<AutomationTaskFilterEmployeeJobPostFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -318,6 +326,7 @@ export type AutomationTaskMaxAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -337,6 +346,7 @@ export type AutomationTaskMinAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	status?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -364,6 +374,7 @@ export enum AutomationTaskSortFields {
 	ProviderCode = 'providerCode',
 	ProviderJobId = 'providerJobId',
 	Status = 'status',
+	TenantId = 'tenantId',
 	UpdatedAt = 'updatedAt'
 }
 
@@ -387,6 +398,7 @@ export type AutomationTaskSubscriptionFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -410,6 +422,7 @@ export type AutomationTaskUpdateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
 	status?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -439,6 +452,7 @@ export type CreateAutomationTask = {
 	providerCode: Scalars['String']['input'];
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	status: Scalars['String']['input'];
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -491,6 +505,7 @@ export type CreateEmployeeJobApplication = {
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	qa?: InputMaybe<Scalars['String']['input']>;
 	rate?: InputMaybe<Scalars['Float']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	terms?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
@@ -515,6 +530,7 @@ export type CreateEmployeeJobPost = {
 	jobType?: InputMaybe<Scalars['String']['input']>;
 	providerCode: Scalars['String']['input'];
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -1066,6 +1082,7 @@ export type EmployeeJobApplication = {
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	qa?: Maybe<Scalars['String']['output']>;
 	rate?: Maybe<Scalars['Float']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	terms?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
@@ -1089,6 +1106,7 @@ export type EmployeeJobApplicationAggregateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1110,6 +1128,7 @@ export type EmployeeJobApplicationAggregateGroupBy = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1169,6 +1188,7 @@ export type EmployeeJobApplicationCountAggregate = {
 	providerCode?: Maybe<Scalars['Int']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['Int']['output']>;
 	providerJobId?: Maybe<Scalars['Int']['output']>;
+	tenantId?: Maybe<Scalars['Int']['output']>;
 	updatedAt?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -1191,6 +1211,7 @@ export type EmployeeJobApplicationDeleteFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1218,6 +1239,7 @@ export type EmployeeJobApplicationDeleteResponse = {
 	providerJobId?: Maybe<Scalars['String']['output']>;
 	qa?: Maybe<Scalars['String']['output']>;
 	rate?: Maybe<Scalars['Float']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	terms?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
@@ -1252,6 +1274,7 @@ export type EmployeeJobApplicationFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1294,6 +1317,7 @@ export type EmployeeJobApplicationFilterEmployeeJobPostFilter = {
 	or?: InputMaybe<Array<EmployeeJobApplicationFilterEmployeeJobPostFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1336,6 +1360,7 @@ export type EmployeeJobApplicationMaxAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1354,6 +1379,7 @@ export type EmployeeJobApplicationMinAggregate = {
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobApplicationId?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1380,6 +1406,7 @@ export enum EmployeeJobApplicationSortFields {
 	ProviderCode = 'providerCode',
 	ProviderJobApplicationId = 'providerJobApplicationId',
 	ProviderJobId = 'providerJobId',
+	TenantId = 'tenantId',
 	UpdatedAt = 'updatedAt'
 }
 
@@ -1402,6 +1429,7 @@ export type EmployeeJobApplicationSubscriptionFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1424,6 +1452,7 @@ export type EmployeeJobApplicationUpdateFilter = {
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobApplicationId?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1445,6 +1474,7 @@ export type EmployeeJobPost = {
 	jobType?: Maybe<Scalars['String']['output']>;
 	providerCode: Scalars['String']['output'];
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1465,6 +1495,7 @@ export type EmployeeJobPostAggregateFilter = {
 	or?: InputMaybe<Array<EmployeeJobPostAggregateFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1484,6 +1515,7 @@ export type EmployeeJobPostAggregateGroupBy = {
 	jobType?: Maybe<Scalars['String']['output']>;
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1541,6 +1573,7 @@ export type EmployeeJobPostCountAggregate = {
 	jobType?: Maybe<Scalars['Int']['output']>;
 	providerCode?: Maybe<Scalars['Int']['output']>;
 	providerJobId?: Maybe<Scalars['Int']['output']>;
+	tenantId?: Maybe<Scalars['Int']['output']>;
 	updatedAt?: Maybe<Scalars['Int']['output']>;
 };
 
@@ -1561,6 +1594,7 @@ export type EmployeeJobPostDeleteFilter = {
 	or?: InputMaybe<Array<EmployeeJobPostDeleteFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1580,6 +1614,7 @@ export type EmployeeJobPostDeleteResponse = {
 	jobType?: Maybe<Scalars['String']['output']>;
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1610,6 +1645,7 @@ export type EmployeeJobPostFilter = {
 	or?: InputMaybe<Array<EmployeeJobPostFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1674,6 +1710,7 @@ export type EmployeeJobPostInput = {
 	jobType?: InputMaybe<Scalars['String']['input']>;
 	providerCode: Scalars['String']['input'];
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -1690,6 +1727,7 @@ export type EmployeeJobPostMaxAggregate = {
 	jobType?: Maybe<Scalars['String']['output']>;
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1706,6 +1744,7 @@ export type EmployeeJobPostMinAggregate = {
 	jobType?: Maybe<Scalars['String']['output']>;
 	providerCode?: Maybe<Scalars['String']['output']>;
 	providerJobId?: Maybe<Scalars['String']['output']>;
+	tenantId?: Maybe<Scalars['String']['output']>;
 	updatedAt?: Maybe<Scalars['DateTime']['output']>;
 };
 
@@ -1730,6 +1769,7 @@ export enum EmployeeJobPostSortFields {
 	JobType = 'jobType',
 	ProviderCode = 'providerCode',
 	ProviderJobId = 'providerJobId',
+	TenantId = 'tenantId',
 	UpdatedAt = 'updatedAt'
 }
 
@@ -1750,6 +1790,7 @@ export type EmployeeJobPostSubscriptionFilter = {
 	or?: InputMaybe<Array<EmployeeJobPostSubscriptionFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -1770,6 +1811,7 @@ export type EmployeeJobPostUpdateFilter = {
 	or?: InputMaybe<Array<EmployeeJobPostUpdateFilter>>;
 	providerCode?: InputMaybe<StringFieldComparison>;
 	providerJobId?: InputMaybe<StringFieldComparison>;
+	tenantId?: InputMaybe<StringFieldComparison>;
 	updatedAt?: InputMaybe<DateFieldComparison>;
 };
 
@@ -2341,6 +2383,7 @@ export type Mutation = {
 	updateManyEmployeeJobPosts: UpdateManyResponse;
 	updateManyEmployees: UpdateManyResponse;
 	updateManyJobPosts: UpdateManyResponse;
+	updateManyTenantApiKeys: UpdateManyResponse;
 	updateManyUpworkJobsSearchCriteria: UpdateManyResponse;
 	updateManyUsers: UpdateManyResponse;
 	updateOneAutomationTask: AutomationTask;
@@ -2348,6 +2391,7 @@ export type Mutation = {
 	updateOneEmployeeJobApplication: EmployeeJobApplication;
 	updateOneEmployeeJobPost: EmployeeJobPost;
 	updateOneJobPost: JobPost;
+	updateOneTenantApiKey: TenantApiKey;
 	updateOneUpworkJobsSearchCriterion: UpworkJobsSearchCriterion;
 	updateOneUser: User;
 };
@@ -2518,6 +2562,11 @@ export type MutationUpdateManyJobPostsArgs = {
 };
 
 
+export type MutationUpdateManyTenantApiKeysArgs = {
+	input: UpdateManyTenantApiKeysInput;
+};
+
+
 export type MutationUpdateManyUpworkJobsSearchCriteriaArgs = {
 	input: UpdateManyUpworkJobsSearchCriteriaInput;
 };
@@ -2550,6 +2599,11 @@ export type MutationUpdateOneEmployeeJobPostArgs = {
 
 export type MutationUpdateOneJobPostArgs = {
 	input: UpdateOneJobPostInput;
+};
+
+
+export type MutationUpdateOneTenantApiKeyArgs = {
+	input: UpdateOneTenantApiKeyInput;
 };
 
 
@@ -2593,6 +2647,8 @@ export type Query = {
 	jobPosts: JobPostConnection;
 	tenant: Tenant;
 	tenantAggregate: Array<TenantAggregateResponse>;
+	tenantApiKey: TenantApiKey;
+	tenantApiKeys: TenantApiKeyConnection;
 	tenants: TenantConnection;
 	upworkJobsSearchCriteria: UpworkJobsSearchCriterionConnection;
 	upworkJobsSearchCriterion: UpworkJobsSearchCriterion;
@@ -2695,6 +2751,18 @@ export type QueryTenantArgs = {
 
 export type QueryTenantAggregateArgs = {
 	filter?: InputMaybe<TenantAggregateFilter>;
+};
+
+
+export type QueryTenantApiKeyArgs = {
+	id: Scalars['ID']['input'];
+};
+
+
+export type QueryTenantApiKeysArgs = {
+	filter?: TenantApiKeyFilter;
+	paging?: CursorPaging;
+	sorting?: Array<TenantApiKeySort>;
 };
 
 
@@ -2966,6 +3034,93 @@ export type TenantAggregateResponse = {
 	min?: Maybe<TenantMinAggregate>;
 };
 
+export type TenantApiKey = {
+	__typename?: 'TenantApiKey';
+	apiKey: Scalars['String']['output'];
+	apiSecret: Scalars['String']['output'];
+	createdAt?: Maybe<Scalars['DateTime']['output']>;
+	id?: Maybe<Scalars['ID']['output']>;
+	isActive: Scalars['Boolean']['output'];
+	isArchived: Scalars['Boolean']['output'];
+	openAiOrganizationId?: Maybe<Scalars['String']['output']>;
+	openAiSecretKey?: Maybe<Scalars['String']['output']>;
+	updatedAt?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type TenantApiKeyConnection = {
+	__typename?: 'TenantApiKeyConnection';
+	/** Array of edges. */
+	edges: Array<TenantApiKeyEdge>;
+	/** Paging information */
+	pageInfo: PageInfo;
+};
+
+export type TenantApiKeyEdge = {
+	__typename?: 'TenantApiKeyEdge';
+	/** Cursor for this node. */
+	cursor: Scalars['ConnectionCursor']['output'];
+	/** The node containing the TenantApiKey */
+	node: TenantApiKey;
+};
+
+export type TenantApiKeyFilter = {
+	and?: InputMaybe<Array<TenantApiKeyFilter>>;
+	apiKey?: InputMaybe<StringFieldComparison>;
+	apiSecret?: InputMaybe<StringFieldComparison>;
+	createdAt?: InputMaybe<DateFieldComparison>;
+	id?: InputMaybe<IdFilterComparison>;
+	isActive?: InputMaybe<BooleanFieldComparison>;
+	isArchived?: InputMaybe<BooleanFieldComparison>;
+	openAiOrganizationId?: InputMaybe<StringFieldComparison>;
+	openAiSecretKey?: InputMaybe<StringFieldComparison>;
+	or?: InputMaybe<Array<TenantApiKeyFilter>>;
+	updatedAt?: InputMaybe<DateFieldComparison>;
+};
+
+export type TenantApiKeyInput = {
+	apiKey: Scalars['String']['input'];
+	apiSecret: Scalars['String']['input'];
+	createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+	id?: InputMaybe<Scalars['ID']['input']>;
+	isActive: Scalars['Boolean']['input'];
+	isArchived: Scalars['Boolean']['input'];
+	openAiOrganizationId?: InputMaybe<Scalars['String']['input']>;
+	openAiSecretKey?: InputMaybe<Scalars['String']['input']>;
+	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
+};
+
+export type TenantApiKeySort = {
+	direction: SortDirection;
+	field: TenantApiKeySortFields;
+	nulls?: InputMaybe<SortNulls>;
+};
+
+export enum TenantApiKeySortFields {
+	ApiKey = 'apiKey',
+	ApiSecret = 'apiSecret',
+	CreatedAt = 'createdAt',
+	Id = 'id',
+	IsActive = 'isActive',
+	IsArchived = 'isArchived',
+	OpenAiOrganizationId = 'openAiOrganizationId',
+	OpenAiSecretKey = 'openAiSecretKey',
+	UpdatedAt = 'updatedAt'
+}
+
+export type TenantApiKeyUpdateFilter = {
+	and?: InputMaybe<Array<TenantApiKeyUpdateFilter>>;
+	apiKey?: InputMaybe<StringFieldComparison>;
+	apiSecret?: InputMaybe<StringFieldComparison>;
+	createdAt?: InputMaybe<DateFieldComparison>;
+	id?: InputMaybe<IdFilterComparison>;
+	isActive?: InputMaybe<BooleanFieldComparison>;
+	isArchived?: InputMaybe<BooleanFieldComparison>;
+	openAiOrganizationId?: InputMaybe<StringFieldComparison>;
+	openAiSecretKey?: InputMaybe<StringFieldComparison>;
+	or?: InputMaybe<Array<TenantApiKeyUpdateFilter>>;
+	updatedAt?: InputMaybe<DateFieldComparison>;
+};
+
 export type TenantConnection = {
 	__typename?: 'TenantConnection';
 	/** Array of edges. */
@@ -3078,6 +3233,7 @@ export type UpdateAutomationTask = {
 	providerCode?: InputMaybe<Scalars['String']['input']>;
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	status?: InputMaybe<Scalars['String']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -3125,6 +3281,7 @@ export type UpdateEmployeeJobApplication = {
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
 	qa?: InputMaybe<Scalars['String']['input']>;
 	rate?: InputMaybe<Scalars['Float']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	terms?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
@@ -3144,6 +3301,7 @@ export type UpdateEmployeeJobPost = {
 	jobType?: InputMaybe<Scalars['String']['input']>;
 	providerCode?: InputMaybe<Scalars['String']['input']>;
 	providerJobId?: InputMaybe<Scalars['String']['input']>;
+	tenantId?: InputMaybe<Scalars['String']['input']>;
 	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
@@ -3229,6 +3387,13 @@ export type UpdateManyResponse = {
 	updatedCount: Scalars['Int']['output'];
 };
 
+export type UpdateManyTenantApiKeysInput = {
+	/** Filter used to find fields to update */
+	filter: TenantApiKeyUpdateFilter;
+	/** The update to apply to all records found using the filter */
+	update: UpdateTenantApiKey;
+};
+
 export type UpdateManyUpworkJobsSearchCriteriaInput = {
 	/** Filter used to find fields to update */
 	filter: UpworkJobsSearchCriterionUpdateFilter;
@@ -3303,6 +3468,13 @@ export type UpdateOneJobPostSubscriptionFilterInput = {
 	filter: JobPostSubscriptionFilter;
 };
 
+export type UpdateOneTenantApiKeyInput = {
+	/** The id of the record to update */
+	id: Scalars['ID']['input'];
+	/** The update to apply. */
+	update: UpdateTenantApiKey;
+};
+
 export type UpdateOneUpworkJobsSearchCriterionInput = {
 	/** The id of the record to update */
 	id: Scalars['ID']['input'];
@@ -3325,6 +3497,18 @@ export type UpdateOneUserInput = {
 export type UpdateOneUserSubscriptionFilterInput = {
 	/** Specify to filter the records returned. */
 	filter: UserSubscriptionFilter;
+};
+
+export type UpdateTenantApiKey = {
+	apiKey?: InputMaybe<Scalars['String']['input']>;
+	apiSecret?: InputMaybe<Scalars['String']['input']>;
+	createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+	id?: InputMaybe<Scalars['ID']['input']>;
+	isActive?: InputMaybe<Scalars['Boolean']['input']>;
+	isArchived?: InputMaybe<Scalars['Boolean']['input']>;
+	openAiOrganizationId?: InputMaybe<Scalars['String']['input']>;
+	openAiSecretKey?: InputMaybe<Scalars['String']['input']>;
+	updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type UpdateUpworkJobsSearchCriterion = {

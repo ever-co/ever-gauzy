@@ -6,11 +6,13 @@ import { CommandHandlers } from './commands/handlers';
 import { Invoice } from './../../core/entities/internal';
 import { PublicInvoiceController } from './public-invoice.controller';
 import { PublicInvoiceService } from './public-invoice.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		CqrsModule,
-		TypeOrmModule.forFeature([ Invoice ]),
+		TypeOrmModule.forFeature([Invoice]),
+		MikroOrmModule.forFeature([Invoice]),
 	],
 	controllers: [
 		PublicInvoiceController
@@ -22,4 +24,4 @@ import { PublicInvoiceService } from './public-invoice.service';
 	],
 	exports: []
 })
-export class PublicInvoiceModule {}
+export class PublicInvoiceModule { }

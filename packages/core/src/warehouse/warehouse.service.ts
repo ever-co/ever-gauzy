@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
+import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
 import { Warehouse } from './warehouse.entity';
 
 @Injectable()
 export class WarehouseService extends TenantAwareCrudService<Warehouse> {
 	constructor(
 		@InjectRepository(Warehouse)
-		private readonly warehouseRepository: Repository<Warehouse>
+		typeOrmWarehouseRepository: TypeOrmWarehouseRepository,
+
+		mikroOrmWarehouseRepository: MikroOrmWarehouseRepository,
 	) {
-		super(warehouseRepository);
+		super(typeOrmWarehouseRepository, mikroOrmWarehouseRepository);
 	}
 }

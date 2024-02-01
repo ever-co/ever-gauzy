@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RequestApprovalEmployee } from './request-approval-employee.entity';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([RequestApprovalEmployee])]
+	imports: [
+		TypeOrmModule.forFeature([RequestApprovalEmployee]),
+		MikroOrmModule.forFeature([RequestApprovalEmployee]),
+	]
 })
-export class RequestApprovalEmployeeModule {}
+export class RequestApprovalEmployeeModule { }

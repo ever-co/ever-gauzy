@@ -45,11 +45,11 @@ export const clickRegisterButton = () => {
 };
 
 export const verifyOrganisationNameField = () => {
-	verifyElementIsVisible(RegisterPage.organisationNameFieldCss);
+	verifyElementIsVisible(RegisterPage.organizationNameFieldCss);
 };
 
 export const enterOrganizationName = (data) => {
-	enterInput(RegisterPage.organisationNameFieldCss, data);
+	enterInput(RegisterPage.organizationNameFieldCss, data);
 };
 
 export const selectCurrency = (data) => {
@@ -99,12 +99,12 @@ export const enterCityInputData = (data) => {
 };
 
 export const postcodeInputVisible = () => {
-	verifyElementIsVisible(RegisterPage.postcodeInputCss);
+	verifyElementIsVisible(RegisterPage.postCodeInputCss);
 };
 
 export const enterPostcodeInputData = (data) => {
-	clearField(RegisterPage.postcodeInputCss);
-	enterInput(RegisterPage.postcodeInputCss, data);
+	clearField(RegisterPage.postCodeInputCss);
+	enterInput(RegisterPage.postCodeInputCss, data);
 };
 
 export const streetInputVisible = () => {

@@ -13,7 +13,7 @@ export const GoalsKPIPage = {
 	deleteButtonCss: 'nb-tab[tabid="kpi"] > div.mb-3 > button[status="danger"]',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="success"]',
 	verifyKPICss: 'div.ng-star-inserted',
-	verifyEmpytTableCss: 'tr.ng-star-inserted > td',
+	verifyEmptyTableCss: 'tr.ng-star-inserted > td',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	searchNameInputCss: 'input-filter > input[placeholder="Name"]'
 };

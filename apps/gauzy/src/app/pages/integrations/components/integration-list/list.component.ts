@@ -7,8 +7,8 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { HttpStatus, IIntegration, IIntegrationTenant, IOrganization, IPagination } from '@gauzy/contracts';
-import { ErrorHandlingService, IntegrationTenantService, Store } from './../../../../@core/services';
+import { HttpStatus, IIntegration, IIntegrationTenant, IOrganization, IPagination, IntegrationEnum } from '@gauzy/contracts';
+import { ErrorHandlingService, IntegrationEntitySettingServiceStoreService, IntegrationTenantService, IntegrationsService, Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from './../../../../@shared/language-base';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
 
@@ -52,6 +52,8 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		private readonly _store: Store,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _integrationsService: IntegrationsService,
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
 	) {
 		super(_translateService);
 	}
@@ -137,7 +139,6 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		if (!integration) {
 			return; // If integration is missing, exit the function.
 		}
-
 		const { organizationId, tenantId } = integration;
 
 		// Update the integration using the _integrationTenantService.
@@ -171,9 +172,41 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 			}),
 			// Update the subject with a value of true
 			tap(() => this.subject$.next(true)),
+			//
+			tap((integration: IIntegrationTenant) => {
+				if (integration.name === IntegrationEnum.GAUZY_AI) {
+					this.updateAIJobMatchingEntity();
+				}
+			}),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		).subscribe();
+	}
+
+	/**
+	 * Updates integration settings, specifically the job matching entity setting.
+	 * If the organization is not available, the function exits early.
+	 * The function fetches integration data based on specified options, then updates the job matching entity setting.
+	 */
+	updateAIJobMatchingEntity(): void {
+		// Check if the organization is available
+		if (!this.organization) {
+			return;
+		}
+
+		// Extract necessary properties from the organization
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Fetch integration data from the service based on specified options
+		const integration$ = this._integrationsService.getIntegrationByOptions({
+			organizationId,
+			tenantId,
+			name: IntegrationEnum.GAUZY_AI,
+			relations: ['entitySettings']
+		});
+
+		// Update job matching entity setting using the integration$ observable
+		this._integrationEntitySettingServiceStoreService.updateAIJobMatchingEntity(integration$).subscribe();
 	}
 
 	/**

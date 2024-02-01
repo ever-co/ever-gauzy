@@ -1,4 +1,4 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidatePersonalQualities,
@@ -12,11 +12,12 @@ import {
 } from '../core/entities/internal';
 import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
 
-@Entity('candidate_personal_quality')
-export class CandidatePersonalQualities
-	extends TenantOrganizationBaseEntity
-	implements ICandidatePersonalQualities {
+@MultiORMEntity('candidate_personal_quality', { mikroOrmRepository: () => MikroOrmCandidatePersonalQualitiesRepository })
+export class CandidatePersonalQualities extends TenantOrganizationBaseEntity implements ICandidatePersonalQualities {
+
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -30,14 +31,14 @@ export class CandidatePersonalQualities
 	rating?: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (interview) => interview.personalQualities, { 
-		onDelete: 'CASCADE' 
+	@ManyToOne(() => CandidateInterview, (interview) => interview.personalQualities, {
+		onDelete: 'CASCADE'
 	})
 	interview?: ICandidateInterview;
 
@@ -50,13 +51,13 @@ export class CandidatePersonalQualities
 	interviewId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.personalQuality, { 
-		cascade: true 
+	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.personalQuality, {
+		cascade: true
 	})
 	@JoinColumn()
 	criterionsRatings?: ICandidateCriterionsRating[];

@@ -10,11 +10,13 @@ import { EmailSendModule } from 'email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/employee-appointment', module: EmployeeAppointmentModule }]),
 		TypeOrmModule.forFeature([EmployeeAppointment]),
+		MikroOrmModule.forFeature([EmployeeAppointment]),
 		EmailSendModule,
 		EmployeeModule,
 		OrganizationModule,
@@ -25,4 +27,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	providers: [EmployeeAppointmentService, ...CommandHandlers],
 	exports: [EmployeeAppointmentService]
 })
-export class EmployeeAppointmentModule {}
+export class EmployeeAppointmentModule { }

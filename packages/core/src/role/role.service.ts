@@ -1,22 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { DeleteResult, In, Not, Repository } from 'typeorm';
+import { DeleteResult, In, Not } from 'typeorm';
 import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord, SYSTEM_DEFAULT_ROLES } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
+import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
+import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 
 @Injectable()
 export class RoleService extends TenantAwareCrudService<Role> {
 	constructor(
 		@InjectRepository(Role)
-		private readonly roleRepository: Repository<Role>,
+		typeOrmRoleRepository: TypeOrmRoleRepository,
+
+		mikroOrmRoleRepository: MikroOrmRoleRepository,
 
 		private readonly _commandBus: CommandBus
 	) {
-		super(roleRepository);
+		super(typeOrmRoleRepository, mikroOrmRoleRepository);
 	}
 
 	async createBulk(tenants: ITenant[]): Promise<IRole[] & Role[]> {
@@ -32,7 +36,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 				roles.push(role);
 			}
 		}
-		return await this.roleRepository.save(roles);
+		return await this.repository.save(roles);
 	}
 
 	async migrateRoles(): Promise<IRoleMigrateInput[]> {
@@ -71,7 +75,7 @@ export class RoleService extends TenantAwareCrudService<Role> {
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.roleRepository.metadata.tableName,
+								entityType: this.repository.metadata.tableName,
 								sourceId,
 								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()

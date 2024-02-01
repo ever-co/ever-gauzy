@@ -1,28 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Repository, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
+import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { IDateRangePicker, IGetPaymentInput } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { Payment } from './payment.entity';
-import { getDateRangeFormat, getDaysBetweenDates, } from '../core/utils';
+import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from './../email-send/email.service';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { IPayment } from '@gauzy/contracts';
 import { IInvoice } from '@gauzy/contracts';
+import { prepareSQLQuery as p } from './../database/database.helper';
+import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
+import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
 		@InjectRepository(Payment)
-		private readonly paymentRepository: Repository<Payment>,
+		typeOrmPaymentRepository: TypeOrmPaymentRepository,
+
+		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
 
 		private readonly emailService: EmailService
 	) {
-		super(paymentRepository);
+		super(typeOrmPaymentRepository, mikroOrmPaymentRepository);
 	}
 
 	/**
@@ -33,16 +38,16 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getPayments(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.paymentRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Set up the find options for the query
 		query.setFindOptions({
-			...(
-				(request && request.limit > 0) ? {
+			...(request && request.limit > 0
+				? {
 					take: request.limit,
 					skip: (request.page || 0) * request.limit
-				} : {}
-			),
+				}
+				: {}),
 			join: {
 				alias: `${this.alias}`,
 				leftJoin: {
@@ -88,16 +93,16 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getDailyReportCharts(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.paymentRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Set up the find options for the query
 		query.setFindOptions({
-			...(
-				(request.limit > 0) ? {
+			...(request.limit > 0
+				? {
 					take: request.limit,
 					skip: (request.page || 0) * request.limit
-				} : {}
-			),
+				}
+				: {}),
 			order: {
 				// Order results by the 'startedAt' field in ascending order
 				paymentDate: 'ASC'
@@ -129,7 +134,8 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 						payment: sum.toFixed(1)
 					}
 				};
-			}).value();
+			})
+			.value();
 		// Map dates to the required format
 		const dates = days.map((date) => byDate[date] || { date, value: { payment: 0 } });
 		return dates;
@@ -141,10 +147,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 * @param request
 	 * @returns
 	 */
-	private getFilterQuery(
-		query: SelectQueryBuilder<Payment>,
-		request: IGetPaymentInput
-	) {
+	private getFilterQuery(query: SelectQueryBuilder<Payment>, request: IGetPaymentInput) {
 		const tenantId = RequestContext.currentTenantId();
 		const { organizationId, startDate, endDate } = request;
 		let { projectIds = [], contactIds = [] } = request;
@@ -164,19 +167,19 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-				qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			})
 		);
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				if (isNotEmpty(projectIds)) {
-					qb.andWhere(`"${query.alias}"."projectId" IN (:...projectIds)`, {
+					qb.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), {
 						projectIds
 					});
 				}
 				if (isNotEmpty(contactIds)) {
-					qb.andWhere(`"${query.alias}"."organizationContactId" IN (:...contactIds)`, {
+					qb.andWhere(p(`"${query.alias}"."organizationContactId" IN (:...contactIds)`), {
 						contactIds
 					});
 				}
@@ -198,10 +201,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		origin: string
 	): Promise<boolean> {
 		try {
-			const {
-				primaryEmail: recipientEmail,
-				name: recipientName
-			} = invoice.toContact;
+			const { primaryEmail: recipientEmail, name: recipientName } = invoice.toContact;
 
 			await this.emailService.sendPaymentReceipt(
 				languageCode,
@@ -246,7 +246,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				const { tags } = where;
 				filter['where']['tags'] = {
 					id: In(tags)
-				}
+				};
 			}
 		}
 		return super.paginate(filter);

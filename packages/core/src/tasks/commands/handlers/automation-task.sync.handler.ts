@@ -1,6 +1,5 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
 	IIntegrationMap,
 	IOrganization,
@@ -14,14 +13,23 @@ import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { AutomationTaskSyncCommand } from './../automation-task.sync.command';
 import { TaskService } from './../../task.service';
 import { Task } from './../../task.entity';
+import { TypeOrmIntegrationMapRepository } from '../../../integration-map/repository/type-orm-integration-map.repository';
+import { TypeOrmTaskStatusRepository } from 'tasks/statuses/repository/type-orm-task-status.repository';
+import { TypeOrmTaskRepository } from 'tasks/repository/type-orm-task.repository';
 
 @CommandHandler(AutomationTaskSyncCommand)
 export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTaskSyncCommand> {
 
 	constructor(
-		@InjectRepository(Task) private readonly taskRepository: Repository<Task>,
-		@InjectRepository(TaskStatus) private readonly taskStatusRepository: Repository<TaskStatus>,
-		@InjectRepository(IntegrationMap) private readonly integrationMapRepository: Repository<IntegrationMap>,
+		@InjectRepository(Task)
+		private readonly typeOrmTaskRepository: TypeOrmTaskRepository,
+
+		@InjectRepository(TaskStatus)
+		private readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+
+		@InjectRepository(IntegrationMap)
+		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
+
 		private readonly _taskService: TaskService
 	) { }
 
@@ -32,7 +40,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { projectId } = entity;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			const taskStatus = await this.taskStatusRepository.findOneBy({
+			const taskStatus = await this.typeOrmTaskStatusRepository.findOneBy({
 				tenantId,
 				organizationId,
 				projectId,
@@ -42,7 +50,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 
 			try {
 				// Check if an integration map already exists for the issue
-				const integrationMap = await this.integrationMapRepository.findOneByOrFail({
+				const integrationMap = await this.typeOrmIntegrationMapRepository.findOneByOrFail({
 					entity: command.entity,
 					sourceId,
 					integrationId,
@@ -83,8 +91,8 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 					tenantId
 				}, entity);
 				// Create a new integration map for the issue
-				return await this.integrationMapRepository.save(
-					this.integrationMapRepository.create({
+				return await this.typeOrmIntegrationMapRepository.save(
+					this.typeOrmIntegrationMapRepository.create({
 						gauzyId: task.id,
 						entity: command.entity,
 						integrationId,
@@ -115,7 +123,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options);
 
 			// Create a new task with the provided entity data
-			const newTask = this.taskRepository.create({
+			const newTask = this.typeOrmTaskRepository.create({
 				...entity,
 				number: maxNumber + 1,
 				organizationId: options.organizationId,
@@ -123,7 +131,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			});
 
 			// Save the new task
-			const createdTask = await this.taskRepository.save(newTask);
+			const createdTask = await this.typeOrmTaskRepository.save(newTask);
 			return createdTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
@@ -150,10 +158,10 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			}
 
 			// Update the existing task with the new entity data
-			this.taskRepository.merge(existingTask, entity);
+			this.typeOrmTaskRepository.merge(existingTask, entity);
 
 			// Save the updated task
-			const updatedTask = await this.taskRepository.save(existingTask);
+			const updatedTask = await this.typeOrmTaskRepository.save(existingTask);
 			return updatedTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.

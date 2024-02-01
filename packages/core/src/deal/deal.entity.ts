@@ -6,7 +6,6 @@ import {
 } from '@gauzy/contracts';
 import {
 	Column,
-	Entity,
 	JoinColumn,
 	ManyToOne,
 	RelationId,
@@ -28,10 +27,12 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
 
-@Entity('deal')
+@MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
-	
+
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -47,11 +48,11 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	public probability?: number;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
-	
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
 	/**
 	 * User
 	 */
@@ -85,15 +86,15 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	public stageId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * OrganizationContact
 	 */
-  	@ApiProperty({ type: () => OrganizationContact })
+	@ApiProperty({ type: () => OrganizationContact })
 	@OneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	public client: IOrganizationContact;

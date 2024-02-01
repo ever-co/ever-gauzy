@@ -8,11 +8,13 @@ import { TaskStatusController } from './status.controller';
 import { TaskStatusService } from './status.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-statuses', module: TaskStatusModule }]),
 		TypeOrmModule.forFeature([TaskStatus]),
+		MikroOrmModule.forFeature([TaskStatus]),
 		TenantModule,
 		CqrsModule
 	],
@@ -20,4 +22,4 @@ import { QueryHandlers } from './queries/handlers';
 	providers: [TaskStatusService, ...QueryHandlers, ...CommandHandlers],
 	exports: [TaskStatusService]
 })
-export class TaskStatusModule {}
+export class TaskStatusModule { }

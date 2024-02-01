@@ -8,6 +8,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -18,12 +19,13 @@ import { CommandHandlers } from './commands/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationTaskSetting]),
+		MikroOrmModule.forFeature([OrganizationTaskSetting]),
 		TenantModule,
 		UserModule,
 		CqrsModule
 	],
 	controllers: [OrganizationTaskSettingController],
 	providers: [OrganizationTaskSettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, OrganizationTaskSettingService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTaskSettingService]
 })
-export class OrganizationTaskSettingModule {}
+export class OrganizationTaskSettingModule { }

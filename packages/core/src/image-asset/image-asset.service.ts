@@ -1,18 +1,22 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial } from 'typeorm';
 import { IImageAsset } from '@gauzy/contracts';
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
+import { TypeOrmImageAssetRepository } from './repository/type-orm-image-asset.repository';
 import { ImageAsset } from './image-asset.entity';
 
 @Injectable()
 export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	constructor(
 		@InjectRepository(ImageAsset)
-		private readonly imageAssetRepository: Repository<ImageAsset>
+		typeOrmImageAssetRepository: TypeOrmImageAssetRepository,
+
+		mikroOrmImageAssetRepository: MikroOrmImageAssetRepository
 	) {
-		super(imageAssetRepository);
+		super(typeOrmImageAssetRepository, mikroOrmImageAssetRepository);
 	}
 
 	/**
@@ -32,21 +36,15 @@ export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	}
 
 	async deleteAsset(imageId: string): Promise<ImageAsset> {
-		let result = await this.imageAssetRepository.findOne({
+		let result = await this.repository.findOne({
 			where: { id: imageId },
 			relations: ['productGallery', 'productFeaturedImage']
 		});
 
-		if (
-			result &&
-			(result.productGallery.length || result.productFeaturedImage.length)
-		) {
-			throw new HttpException(
-				'Image is under use',
-				HttpStatus.BAD_REQUEST
-			);
+		if (result && (result.productGallery.length || result.productFeaturedImage.length)) {
+			throw new HttpException('Image is under use', HttpStatus.BAD_REQUEST);
 		}
 
-		return this.imageAssetRepository.remove(result);
+		return this.repository.remove(result);
 	}
 }
