@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import { omit } from 'underscore';
+import * as chalk from 'chalk';
 import { ITimeSlot, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/common';
 import { RequestContext } from '../../../../core/context';
@@ -46,7 +47,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 		const source = input.source || TimeLogSourceEnum.DESKTOP;
 		const logType = input.logType || TimeLogType.TRACKED;
 
-		this.log(`Time Slot Interval Request: ${{ input }}`);
+		this.log(`Time Slot Interval Request: ${JSON.stringify(input)}`);
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId();
@@ -89,19 +90,15 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 
 		let timeSlot: ITimeSlot;
 		try {
-			const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
-			query.setFindOptions({
-				relations: {
-					timeLogs: true
-				}
-			});
+			const query = this.typeOrmTimeSlotRepository.createQueryBuilder();
+			query.leftJoinAndSelect(`${query.alias}.timeLogs`, 'timeLogs');
 			query.where((qb: SelectQueryBuilder<TimeSlot>) => {
 				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
 				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 				qb.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
 				qb.andWhere(p(`"${qb.alias}"."startedAt" = :startedAt`), { startedAt: input.startedAt });
-				this.log(`Get Time Slot Query & Parameters For employee (${user.name}): ${qb.getQueryAndParameters()}`);
 			});
+			this.log(`Get Time Slot Query & Parameters For employee (${user.name}): ${query.getQueryAndParameters()}`);
 			timeSlot = await query.getOneOrFail();
 		} catch (error) {
 			if (!timeSlot) {
@@ -113,33 +110,28 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			}
 		}
 
-		this.log(`Find Time Slot For Time: ${input.startedAt} for employee (${user.name}): ${{ timeSlot }}`);
+		this.log(`Find Time Slot For Time: ${input.startedAt} for employee (${user.name}): ${JSON.stringify(timeSlot)}`);
 
 		try {
 			/**
 			 * Find TimeLog for TimeSlot Range
 			 */
 			const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-			query.where((qb: SelectQueryBuilder<TimeLog>) => {
-				qb.andWhere(
-					new Brackets((web: WhereExpressionBuilder) => {
-						web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-						web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
-						web.andWhere(p(`"${qb.alias}"."employeeId" = :employeeId`), { employeeId });
-						web.andWhere(p(`"${qb.alias}"."source" = :source`), { source });
-						web.andWhere(p(`"${qb.alias}"."logType" = :logType`), { logType });
-						web.andWhere(p(`"${qb.alias}"."stoppedAt" IS NOT NULL`));
-					})
-				);
-				qb.addOrderBy(p(`"${qb.alias}"."createdAt"`), 'DESC');
-			});
-
-			this.log(`Find timelog for specific timeslot range query: ${query.getQueryAndParameters()}`);
-
+			query.andWhere(
+				new Brackets((web: WhereExpressionBuilder) => {
+					web.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					web.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					web.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+					web.andWhere(p(`"${query.alias}"."source" = :source`), { source });
+					web.andWhere(p(`"${query.alias}"."logType" = :logType`), { logType });
+					web.andWhere(p(`"${query.alias}"."stoppedAt" IS NOT NULL`));
+				})
+			);
+			query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+			this.log(`Find timelog for specific query: ${query.getQueryAndParameters()}`);
 			const timeLog = await query.getOneOrFail();
+			this.log(`Found timelog for specific timeLog: ${JSON.stringify(timeLog)}`);
 			timeSlot.timeLogs.push(timeLog);
-
-			this.log(`${timeLog}: Found latest worked timelog for employee (${user.name})!`);
 		} catch (error) {
 			if (input.timeLogId) {
 				let timeLogIds: string[] = Array.isArray(input.timeLogId) ? input.timeLogId : [input.timeLogId];
@@ -162,7 +154,7 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 				});
 				this.log(`Timelog query for timeLog IDs for employee (${user.name}): ${query.getQueryAndParameters()}`);
 				const timeLogs = await query.getMany();
-				this.log(`Found recent time logs using timelog ids for employee (${user.name}): ${timeLogs}`);
+				this.log(`Found recent time logs using timelog ids for employee (${user.name}): ${JSON.stringify(timeLogs)}`);
 				timeSlot.timeLogs.push(...timeLogs);
 			}
 		}
@@ -178,19 +170,19 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			}
 		}
 
-		this.log(`Bulk activities save parameters employee (${user.name}): ${{
+		this.log(`Bulk activities save parameters employee (${user.name}): ${JSON.stringify({
 			organizationId,
 			employeeId,
+			activities,
 			projectId: input.projectId,
-			activities: activities
-		}}`);
+		})}`);
 
 		timeSlot.activities = await this.commandBus.execute(
 			new BulkActivitiesSaveCommand({
 				organizationId,
 				employeeId,
+				activities,
 				projectId: input.projectId,
-				activities: activities
 			})
 		);
 
@@ -211,7 +203,8 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 			timeSlot = mergedTimeSlot;
 		}
 
-		console.log(`Final merged timeSlot for employee (${user.name})`, { timeSlot });
+		this.log(`Final merged timeSlot for employee (${user.name}): ${JSON.stringify(timeSlot)}`);
+
 		return await this.typeOrmTimeSlotRepository.findOne({
 			where: {
 				id: timeSlot.id
@@ -229,7 +222,10 @@ export class CreateTimeSlotHandler implements ICommandHandler<CreateTimeSlotComm
 	 */
 	private log(message: string): void {
 		if (this.logging) {
-			console.log(message);
+			console.log(chalk.green(`${moment().format('DD.MM.YYYY HH:mm:ss')}`));
+			console.log(chalk.green(message));
+			console.log(chalk.white('--------------------------------------------------------'));
+			console.log(); // Add an empty line as a divider
 		}
 	}
 }
