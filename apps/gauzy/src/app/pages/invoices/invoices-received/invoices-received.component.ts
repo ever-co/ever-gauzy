@@ -201,7 +201,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			where: {
 				sentTo: organizationId,
 				tenantId,
-				isEstimate: this.isEstimate === true ? 1 : 0,
+				isEstimate: this.isEstimate,
 				invoiceDate: {
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
