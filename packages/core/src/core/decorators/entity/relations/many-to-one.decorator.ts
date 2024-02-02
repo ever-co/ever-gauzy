@@ -13,21 +13,27 @@ type TypeORMRelationOptions = RelationOptions;
 type MikroORMRelationOptions<T, O> = Partial<ManyToOneOptions<T, O>>;
 
 
+
+type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
+type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
+type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
+
+
 export function MultiORMManyToOne<T>(
-    targetEntity: TypeORMTarget<T> | MikroORMTarget<T, any>,
-    inverseSide?: TypeORMInverseSide<T> | MikroORMInverseSide<T>,
-    options?: TypeORMRelationOptions | MikroORMRelationOptions<T, any>
+    targetEntity: TargetEntity<T>,
+    inverseSide?: InverseSide<T> | Options<T>,
+    options?: Options<T>
 ): PropertyDecorator {
     return (target: any, propertyKey: string) => {
-        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ targetEntity, inverseSide, options }))(target, propertyKey);
+        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options }))(target, propertyKey);
         TypeOrmManyToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
     };
 }
 
 export interface MapManyToOneArgsForMikroORMOptions<T, O> {
-    targetEntity: TypeORMTarget<T> | MikroORMTarget<T, any>,
-    inverseSide?: TypeORMInverseSide<T> | MikroORMInverseSide<T>,
-    options?: TypeORMRelationOptions | MikroORMRelationOptions<T, any>
+    targetEntity: TargetEntity<T>,
+    inverseSide?: InverseSide<T>,
+    options?: Options<T>
 }
 
 export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options }: MapManyToOneArgsForMikroORMOptions<T, O>) {
