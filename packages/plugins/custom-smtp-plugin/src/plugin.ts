@@ -1,5 +1,6 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { TenantModule, UserModule } from '@gauzy/core';
 import { CommandHandlers } from './commands';
@@ -22,7 +23,8 @@ import { CustomSmtpSubscriber } from './custom-smtp.subscriber';
 	],
 	exports: [
 		CustomSmtpService,
-		TypeOrmModule
+		TypeOrmModule,
+		MikroOrmModule
 	],
 	controllers: [
 		CustomSmtpController

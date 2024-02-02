@@ -63,7 +63,7 @@ export const pluginConfig: IPluginConfig = {
 	plugins: [
 		CustomSmtpPlugin,
 		KnowledgeBasePlugin,
-		EmailTemplatePlugin,
-		ChangelogPlugin
+		ChangelogPlugin,
+		EmailTemplatePlugin
 	]
 };
