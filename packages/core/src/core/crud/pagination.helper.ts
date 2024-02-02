@@ -24,7 +24,11 @@ export const parseBool = (value: any): boolean => Boolean(JSON.parse(value));
 export const convertNativeParameters = (parameters: any): any => {
     try {
         // Mapping boolean values to their numeric representation
-        if (typeof parameters === "object" && parameters !== null) {
+        if (Array.isArray(parameters)) {
+            // If it's an array, process each element
+            return parameters.map((item: any) => convertNativeParameters(item));
+            // Mapping boolean values to their numeric representation
+        } else if (typeof parameters === "object" && parameters !== null) {
             // Recursively convert nested objects
             return Object.keys(parameters).reduce((acc, key) => {
                 acc[key] = convertNativeParameters(parameters[key]);

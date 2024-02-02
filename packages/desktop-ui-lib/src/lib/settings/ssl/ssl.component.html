@@ -73,7 +73,7 @@
 					</button>
 				</div>
 			</div>
-			<div class="row">
+			<div class="row mb-3">
 				<div class="col">
 					<nb-toggle [(ngModel)]="config.secure" (ngModelChange)="onUpdate()" status="basic">
 						<div class="ga-flex">
@@ -84,6 +84,26 @@
 							></nb-icon>
 						</div>
 					</nb-toggle>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-5">
+					<button nbButton status="basic" class="check-db" (click)="checkSsl()">
+						<nb-icon
+							*gauzySpinnerButton="isCheckSsl$ | async"
+							[status]="(isValid$ | async)?.status ? 'success' : 'danger'"
+							[icon]="(isValid$ | async)?.status ? 'checkmark-circle-2-outline' : 'close-circle-outline'"
+						></nb-icon>
+						{{ 'BUTTONS.CHECK' | translate }}
+					</button>
+				</div>
+				<div *ngIf="!(isHidden$ | async)" class="col-7 warn-container">
+					<button nbButton (click)="onHide()" status="basic" size="tiny" class="close-warn">
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
+					<div class="message-db-connection">
+						{{ (isValid$ | async)?.message }}
+					</div>
 				</div>
 			</div>
 		</ng-container>

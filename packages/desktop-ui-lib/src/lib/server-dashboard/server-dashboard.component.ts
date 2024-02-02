@@ -1,22 +1,22 @@
 import {
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
 	Component,
+	ElementRef,
+	Inject,
+	NgZone,
 	OnInit,
 	ViewChild,
-	ElementRef,
-	ChangeDetectorRef,
-	ChangeDetectionStrategy,
-	NgZone,
-	AfterViewInit,
-	Inject,
 } from '@angular/core';
-import { from, tap } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { LanguagesEnum } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { from, tap } from 'rxjs';
+import { GAUZY_ENV } from '../constants';
 import { ElectronService } from '../electron/services';
 import { LanguageSelectorService } from '../language/language-selector.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { GAUZY_ENV } from '../constants';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 export enum ServerStatus {
 	START = 'BUTTONS.START',
@@ -37,6 +37,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	gauzyIcon: SafeResourceUrl = './assets/images/logos/logo_Gauzy.svg';
 	running = false;
 	loading = false;
+	restart = false;
 	btn: any = {
 		name: ServerStatus.START,
 		icon: 'arrow-right-outline',
@@ -67,6 +68,9 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			};
 			this.running = arg;
 			event.sender.send('running_state', arg);
+			if(this.running) {
+				this.restart = false;
+			}
 			this._cdr.detectChanges();
 		});
 
@@ -83,7 +87,9 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		});
 
 		this.electronService.ipcRenderer.on('resp_msg', (event, arg) => {
+			this.restart = arg?.type === 'restart';
 			event.sender.send('resp_msg_server', arg);
+			this._cdr.detectChanges();
 		});
 
 		this.electronService.ipcRenderer.on('loading_state', (event, arg) => {
