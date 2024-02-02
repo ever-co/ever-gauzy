@@ -1,6 +1,5 @@
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -22,8 +21,10 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 
-@Entity('proposal')
+@MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
 export class Proposal extends TenantOrganizationBaseEntity
 	implements IProposal {
 
@@ -49,10 +50,10 @@ export class Proposal extends TenantOrganizationBaseEntity
 	status?: ProposalStatusEnum;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
@@ -78,10 +79,10 @@ export class Proposal extends TenantOrganizationBaseEntity
 	organizationContactId?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	// Tags
 	@ApiProperty({ type: () => Tag })
 	@ManyToMany(() => Tag, (tag) => tag.proposals, {

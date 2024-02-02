@@ -7,11 +7,13 @@ import { TaskPriorityController } from './priority.controller';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-priorities', module: TaskPriorityModule }]),
 		TypeOrmModule.forFeature([TaskPriority]),
+		MikroOrmModule.forFeature([TaskPriority]),
 		CqrsModule,
 		TenantModule
 	],
@@ -19,4 +21,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [TaskPriorityService, ...CommandHandlers],
 	exports: [TaskPriorityService]
 })
-export class TaskPriorityModule {}
+export class TaskPriorityModule { }

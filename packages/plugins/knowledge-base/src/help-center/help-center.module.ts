@@ -2,6 +2,7 @@ import { forwardRef, Module, OnModuleInit } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TenantModule, UserModule } from '@gauzy/core';
 import { HelpCenterController } from './help-center.controller';
 import { HelpCenter } from './help-center.entity';
@@ -12,6 +13,7 @@ import { CommandHandlers } from './commands/handlers';
 	imports: [
 		RouterModule.register([{ path: '/help-center', module: HelpCenterModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([HelpCenter])),
+		forwardRef(() => MikroOrmModule.forFeature([HelpCenter])),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
 		CqrsModule
@@ -21,7 +23,7 @@ import { CommandHandlers } from './commands/handlers';
 	exports: [HelpCenterService]
 })
 export class HelpCenterModule implements OnModuleInit {
-	constructor() {}
+	constructor() { }
 
-	onModuleInit() {}
+	onModuleInit() { }
 }

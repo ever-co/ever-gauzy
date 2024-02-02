@@ -1,4 +1,4 @@
-import { Entity, Column, RelationId, ManyToOne, JoinColumn, ManyToMany, Index, AfterLoad } from 'typeorm';
+import { Column, RelationId, ManyToOne, JoinColumn, ManyToMany, Index, AfterLoad } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -14,6 +14,7 @@ import {
 	ITimeSlot,
 	IOrganizationTeam
 } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationContact,
@@ -24,9 +25,10 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { isMySQL } from '@gauzy/config';
+import { MultiORMEntity } from '../../core/decorators/entity';
+import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
-@Entity('time_log')
+@MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => 'timestamptz' })

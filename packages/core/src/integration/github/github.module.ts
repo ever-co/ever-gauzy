@@ -24,13 +24,12 @@ import { GithubRepositoryService } from './repository/github-repository.service'
 import { OrganizationGithubRepository } from './repository/github-repository.entity';
 import { OrganizationGithubRepositoryIssue } from './repository/issue/github-repository-issue.entity';
 import { GithubRepositoryIssueService } from './repository/issue/github-repository-issue.service';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			OrganizationGithubRepository,
-			OrganizationGithubRepositoryIssue
-		]),
+		TypeOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
+		MikroOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
 		HttpModule,
 		TenantModule,
 		UserModule,

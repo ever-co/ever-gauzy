@@ -8,11 +8,13 @@ import { TaskLinkedIssue } from './task-linked-issue.entity';
 import { TaskLinkedIssueController } from './task-linked-issue.controller';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { UserModule } from '../../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-linked-issue', module: TaskLinkedIssueModule }]),
 		TypeOrmModule.forFeature([TaskLinkedIssue]),
+		MikroOrmModule.forFeature([TaskLinkedIssue]),
 		TenantModule,
 		CqrsModule,
 		UserModule
@@ -21,4 +23,4 @@ import { UserModule } from '../../user/user.module';
 	providers: [TaskLinkedIssueService],
 	exports: [TaskLinkedIssueService]
 })
-export class TaskLinkedIssueModule {}
+export class TaskLinkedIssueModule { }

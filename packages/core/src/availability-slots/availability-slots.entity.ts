@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -16,12 +16,12 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
 
-@Entity('availability_slot')
-export class AvailabilitySlot
-	extends TenantOrganizationBaseEntity
-	implements IAvailabilitySlot {
-	
+@MultiORMEntity('availability_slot', { mikroOrmRepository: () => MikroOrmAvailabilitySlotRepository })
+export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IAvailabilitySlot {
+
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@Column()
@@ -44,10 +44,10 @@ export class AvailabilitySlot
 	type: AvailabilitySlotType;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Employee

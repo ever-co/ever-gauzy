@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { getConfig, databaseTypes } from '@gauzy/config';
+import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import * as chalk from 'chalk';
 import { copyAssets } from './../../core/seeds/utils';
 import { DEFAULT_AI_INTEGRATIONS } from './../../integration/default-integration';
@@ -10,35 +10,35 @@ import * as path from 'path';
 export class SeedIntegrationTable1692171665427 implements MigrationInterface {
 	name = 'SeedIntegrationTable1692171665427';
 
-    /**
-     * Up Migration
-     *
-     * @param queryRunner
-     */
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log(chalk.yellow(this.name + ' start running!'));
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-                await this.sqliteUpsertIntegrationsAndIntegrationTypes(queryRunner);
-                break;
-            case databaseTypes.postgres:
-                await this.postgresUpsertIntegrationsAndIntegrationTypes(queryRunner);
-                break;
-            case databaseTypes.mysql:
-                await this.mysqlUpsertIntegrationsAndIntegrationTypes(queryRunner);
-                break;
-            default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
-        }
-    }
-    /**
-     * Down Migration
-     *
-     * @param queryRunner
-     */
-    public async down(queryRunner: QueryRunner): Promise<void> { }
+		switch (queryRunner.connection.options.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteUpsertIntegrationsAndIntegrationTypes(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresUpsertIntegrationsAndIntegrationTypes(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlUpsertIntegrationsAndIntegrationTypes(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> { }
 
 	/**
 	 * Sqlite integrations and integration types

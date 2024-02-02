@@ -1,21 +1,22 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganizationGithubRepository, IOrganizationGithubRepositoryFindInput, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
-import { Repository } from 'typeorm';
-import { RequestContext } from 'core/context';
+import { RequestContext } from '../../../../../../core/context';
 import { IntegrationSyncGithubRepositoryIssueCommand } from '../integration-sync-github-repository-issue.command';
 import { OrganizationGithubRepositoryIssue } from './../../github-repository-issue.entity';
 import { OrganizationGithubRepository } from './../../../github-repository.entity';
+import { TypeOrmOrganizationGithubRepositoryRepository } from '../../../../repository/repository/type-orm-github-repository.repository';
+import { TypeOrmOrganizationGithubRepositoryIssueRepository } from '../../repository/type-orm-github-repository-issue.repository';
 
 @CommandHandler(IntegrationSyncGithubRepositoryIssueCommand)
 export class IntegrationSyncGithubRepositoryIssueCommandHandler implements ICommandHandler<IntegrationSyncGithubRepositoryIssueCommand> {
 
 	constructor(
 		@InjectRepository(OrganizationGithubRepository)
-		private readonly organizationGithubRepositoryRepository: Repository<OrganizationGithubRepository>,
+		private readonly typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
 
 		@InjectRepository(OrganizationGithubRepositoryIssue)
-		private readonly organizationGithubRepositoryIssueRepository: Repository<OrganizationGithubRepositoryIssue>,
+		private readonly typeOrmOrganizationGithubRepositoryIssueRepository: TypeOrmOrganizationGithubRepositoryIssueRepository,
 	) { }
 
 	/**
@@ -45,7 +46,7 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 			const { id, number } = issue;
 			/** */
 			try {
-				return await this.organizationGithubRepositoryIssueRepository.findOneByOrFail({
+				return await this.typeOrmOrganizationGithubRepositoryIssueRepository.findOneByOrFail({
 					issueId: id,
 					issueNumber: number,
 					organizationId,
@@ -54,14 +55,14 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 				});
 			} catch (error) {
 				// Create a new integration repository issue if it doesn't exist
-				const createEntity = this.organizationGithubRepositoryIssueRepository.create({
+				const createEntity = this.typeOrmOrganizationGithubRepositoryIssueRepository.create({
 					issueId: id,
 					issueNumber: number,
 					organizationId,
 					tenantId,
 					repositoryId: syncedRepository ? syncedRepository.id : null
 				});
-				return await this.organizationGithubRepositoryIssueRepository.save(createEntity);
+				return await this.typeOrmOrganizationGithubRepositoryIssueRepository.save(createEntity);
 			}
 		} catch (error) {
 			console.log('Error while syncing GitHub repository issue:', error.message);
@@ -84,7 +85,7 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 		integrationId,
 		repositoryId
 	}: IOrganizationGithubRepositoryFindInput): Promise<IOrganizationGithubRepository | null> {
-		return this.organizationGithubRepositoryRepository.findOneBy({
+		return await this.typeOrmOrganizationGithubRepositoryRepository.findOneBy({
 			organizationId,
 			tenantId,
 			integrationId,

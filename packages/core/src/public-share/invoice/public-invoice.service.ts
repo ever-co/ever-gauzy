@@ -1,18 +1,19 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository, UpdateResult } from 'typeorm';
+import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import { verify } from 'jsonwebtoken';
 import { IInvoice, IInvoiceUpdateInput } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { Invoice } from './../../core/entities/internal';
+import { TypeOrmInvoiceRepository } from '../../invoice/repository/type-orm-invoice.repository';
 
 @Injectable()
 export class PublicInvoiceService {
 
 	constructor(
 		@InjectRepository(Invoice)
-		private readonly repository: Repository<Invoice>
-	) {}
+		private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
+	) { }
 
 	/**
 	 * Find public invoice by token
@@ -33,7 +34,7 @@ export class PublicInvoiceService {
 			if (id !== params.id) {
 				throw new ForbiddenException();
 			}
-			return await this.repository.findOneOrFail({
+			return await this.typeOrmInvoiceRepository.findOneOrFail({
 				select: {
 					tenant: {
 						name: true,
@@ -115,12 +116,12 @@ export class PublicInvoiceService {
 	): Promise<IInvoice | UpdateResult> {
 		try {
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as any;
-			const invoice = await this.repository.findOneByOrFail({
+			const invoice = await this.typeOrmInvoiceRepository.findOneByOrFail({
 				id: decoded.invoiceId,
 				organizationId: decoded.organizationId,
 				tenantId: decoded.tenantId,
 			});
-			return await this.repository.update(invoice.id, entity);
+			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

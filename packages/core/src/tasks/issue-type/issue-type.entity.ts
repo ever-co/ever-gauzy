@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
-	Entity,
 	Index,
 	JoinColumn,
 	ManyToOne,
@@ -20,8 +19,10 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 
-@Entity('issue_type')
+@MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
 
 	@ApiProperty({ type: () => String })

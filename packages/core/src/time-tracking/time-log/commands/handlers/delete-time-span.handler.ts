@@ -1,6 +1,5 @@
 import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as _ from 'underscore';
 import { ITimeLog } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
@@ -14,27 +13,29 @@ import { TimeLogDeleteCommand } from '../time-log-delete.command';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
 import { TimeSlotBulkDeleteCommand } from './../../../time-slot/commands';
 import { getStartEndIntervals } from './../../../time-slot/utils';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { TypeOrmTimeSlotRepository } from '../../../time-slot/repository/type-orm-time-slot.repository';
 
 @CommandHandler(DeleteTimeSpanCommand)
-export class DeleteTimeSpanHandler
-	implements ICommandHandler<DeleteTimeSpanCommand> {
+export class DeleteTimeSpanHandler implements ICommandHandler<DeleteTimeSpanCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
-	) {}
+	) { }
 
 	public async execute(command: DeleteTimeSpanCommand) {
 		const { newTime, timeLog, timeSlot } = command;
 		const { id } = timeLog;
 		const { start, end } = newTime;
 
-		const refreshTimeLog = await this.timeLogRepository.findOne({
+		const refreshTimeLog = await this.typeOrmTimeLogRepository.findOne({
 			where: {
 				id: id
 			},
@@ -141,7 +142,7 @@ export class DeleteTimeSpanHandler
 						/*
 						* Delete TimeLog if remaining timeSlots are 0
 						*/
-						updatedTimeLog = await this.timeLogRepository.findOne({
+						updatedTimeLog = await this.typeOrmTimeLogRepository.findOne({
 							where: {
 								id: updatedTimeLog.id
 							},
@@ -216,7 +217,7 @@ export class DeleteTimeSpanHandler
 						/*
 						* Delete TimeLog if remaining timeSlots are 0
 						*/
-						updatedTimeLog = await this.timeLogRepository.findOne({
+						updatedTimeLog = await this.typeOrmTimeLogRepository.findOne({
 							where: {
 								id: updatedTimeLog.id
 							},
@@ -267,7 +268,7 @@ export class DeleteTimeSpanHandler
 					if (remainingDuration > 0) {
 						try {
 							timeLog.stoppedAt = start;
-							await this.timeLogRepository.save(timeLog);
+							await this.typeOrmTimeLogRepository.save(timeLog);
 						} catch (error) {
 							console.error(`Error while updating old timelog`, error);
 						}
@@ -308,7 +309,7 @@ export class DeleteTimeSpanHandler
 				 */
 				if (newLogRemainingDuration > 0) {
 					try {
-						await this.timeLogRepository.save(newLog);
+						await this.typeOrmTimeLogRepository.save(newLog);
 					} catch (error) {
 						console.log('Error while creating new log', error, newLog);
 					}
@@ -325,7 +326,7 @@ export class DeleteTimeSpanHandler
 							}
 
 							try {
-								await this.timeSlotRepository.save(timeSlots);
+								await this.typeOrmTimeSlotRepository.save(timeSlots);
 							} catch (error) {
 								console.log('Error while creating new TimeSlot & TimeLog entires', error, timeSlots)
 							}

@@ -1,19 +1,20 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CreateTimeSlotMinutesCommand } from '../create-time-slot-minutes.command';
 import { TimeSlotMinute } from './../../time-slot-minute.entity';
 import { UpdateTimeSlotMinutesCommand } from '../update-time-slot-minutes.command';
 import { RequestContext } from '../../../../core/context';
+import { TypeOrmTimeSlotMinuteRepository } from '../../repository/type-orm-time-slot-minute.repository';
 
 @CommandHandler(CreateTimeSlotMinutesCommand)
-export class CreateTimeSlotMinutesHandler
-	implements ICommandHandler<CreateTimeSlotMinutesCommand> {
+export class CreateTimeSlotMinutesHandler implements ICommandHandler<CreateTimeSlotMinutesCommand> {
+
 	constructor(
 		@InjectRepository(TimeSlotMinute)
-		private readonly timeSlotMinuteRepository: Repository<TimeSlotMinute>,
+		private readonly typeOrmTimeSlotMinuteRepository: TypeOrmTimeSlotMinuteRepository,
+
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(
 		command: CreateTimeSlotMinutesCommand
@@ -21,7 +22,7 @@ export class CreateTimeSlotMinutesHandler
 		const { input } = command;
 		const { id: timeSlotId } = input.timeSlot;
 
-		const timeMinute = await this.timeSlotMinuteRepository.findOneBy({
+		const timeMinute = await this.typeOrmTimeSlotMinuteRepository.findOneBy({
 			timeSlotId: timeSlotId,
 			datetime: input.datetime
 		});
@@ -35,7 +36,7 @@ export class CreateTimeSlotMinutesHandler
 			);
 		} else {
 			input.tenantId = RequestContext.currentTenantId();
-			return this.timeSlotMinuteRepository.save(input);
+			return this.typeOrmTimeSlotMinuteRepository.save(input);
 		}
 	}
 }

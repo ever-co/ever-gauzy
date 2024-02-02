@@ -3,43 +3,43 @@ import * as chalk from 'chalk';
 import { v4 as uuidV4 } from 'uuid';
 import { DEFAULT_GLOBAL_PRIORITIES } from '../../tasks/priorities/default-global-priorities';
 import { DEFAULT_GLOBAL_SIZES } from '../../tasks/sizes/default-global-sizes';
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements MigrationInterface {
 	name = 'SeedDefaultGlobalTaskPriorityAndSize1674638501088';
 
-    /**
-     * Up Migration
-     *
-     * @param queryRunner
-     */
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        console.log(chalk.yellow(this.name + ' start running!'));
+	/**
+	 * Up Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async up(queryRunner: QueryRunner): Promise<void> {
+		console.log(chalk.yellow(this.name + ' start running!'));
 
-        switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-                await this.sqliteSeedDefaultTaskPriorities(queryRunner);
-                await this.sqliteSeedDefaultTaskSizes(queryRunner);
-                break;
-            case databaseTypes.postgres:
-                await this.postgresSeedDefaultTaskPriorities(queryRunner);
-                await this.postgresSeedDefaultTaskSizes(queryRunner);
-                break;
-            case databaseTypes.mysql:
-                await this.mysqlSeedDefaultTastPriorities(queryRunner);
-                await this.mysqlSeedDefaultTaskSizes(queryRunner);
-                break;
-            default:
-                throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
-        }
-    }
-    /**
-     * Down Migration
-     *
-     * @param queryRunner
-     */
-    public async down(queryRunner: QueryRunner): Promise<void> { }
+		switch (queryRunner.connection.options.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
+				await this.sqliteSeedDefaultTaskPriorities(queryRunner);
+				await this.sqliteSeedDefaultTaskSizes(queryRunner);
+				break;
+			case DatabaseTypeEnum.postgres:
+				await this.postgresSeedDefaultTaskPriorities(queryRunner);
+				await this.postgresSeedDefaultTaskSizes(queryRunner);
+				break;
+			case DatabaseTypeEnum.mysql:
+				await this.mysqlSeedDefaultTastPriorities(queryRunner);
+				await this.mysqlSeedDefaultTaskSizes(queryRunner);
+				break;
+			default:
+				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
+		}
+	}
+	/**
+	 * Down Migration
+	 *
+	 * @param queryRunner
+	 */
+	public async down(queryRunner: QueryRunner): Promise<void> { }
 
 	/**
 	 * Sqlite default task priorities
@@ -128,19 +128,19 @@ export class SeedDefaultGlobalTaskPriorityAndSize1674638501088 implements Migrat
 		}
 	}
 
-    /**
-     * MySQL default task priorities
-     *
-     * @param queryRunner
-     */
-    public async mysqlSeedDefaultTastPriorities(queryRunner: QueryRunner): Promise<any> {
-    }
+	/**
+	 * MySQL default task priorities
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlSeedDefaultTastPriorities(queryRunner: QueryRunner): Promise<any> {
+	}
 
-    /**
-     * MySQL default task sizes
-     *
-     * @param queryRunner
-     */
-    public async mysqlSeedDefaultTaskSizes(queryRunner: QueryRunner): Promise<any> {
-    }
+	/**
+	 * MySQL default task sizes
+	 *
+	 * @param queryRunner
+	 */
+	public async mysqlSeedDefaultTaskSizes(queryRunner: QueryRunner): Promise<any> {
+	}
 }

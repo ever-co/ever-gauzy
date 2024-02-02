@@ -1,12 +1,14 @@
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 
-@Entity('employee_proposal_template')
+@MultiORMEntity('employee_proposal_template', { mikroOrmRepository: () => MikroOrmEmployeeProposalTemplateRepository })
 export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	implements IEmployeeProposalTemplate {
 
@@ -26,10 +28,10 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	isDefault?: boolean;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'

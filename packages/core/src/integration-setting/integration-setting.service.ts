@@ -1,17 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IntegrationSetting } from './integration-setting.entity';
+import { TypeOrmIntegrationSettingRepository } from './repository/type-orm-integration-setting.repository';
+import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-integration-setting.repository';
 
 @Injectable()
 export class IntegrationSettingService extends TenantAwareCrudService<IntegrationSetting> {
 	constructor(
 		@InjectRepository(IntegrationSetting)
-		readonly repository: Repository<IntegrationSetting>
+		readonly typeOrmIntegrationSettingRepository: TypeOrmIntegrationSettingRepository,
+
+		mikroOrmIntegrationSettingRepository: MikroOrmIntegrationSettingRepository
 	) {
-		super(repository);
+		super(typeOrmIntegrationSettingRepository, mikroOrmIntegrationSettingRepository);
 	}
 
 	/**
@@ -33,7 +36,7 @@ export class IntegrationSettingService extends TenantAwareCrudService<Integratio
 			const settings: IIntegrationSetting[] = Array.isArray(input) ? input : [input];
 
 			// Save the new settings to the database
-			return await this.repository.save(settings);
+			return await this.typeOrmIntegrationSettingRepository.save(settings);
 		} catch (error) {
 			// Handle any errors that occur during the bulk update or create process
 			console.error('Bulk update or create of integration settings failed:', error);

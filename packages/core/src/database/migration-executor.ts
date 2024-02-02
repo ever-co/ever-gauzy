@@ -6,6 +6,8 @@ import { IPluginConfig, isNotEmpty } from '@gauzy/common';
 import { registerPluginConfig } from '../bootstrap';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
+import { isDatabaseType, isSqliteDB } from './../core/utils';
+import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
  * @description
@@ -264,7 +266,7 @@ function queryParams(parameters: any[] | undefined): string {
 function getTemplate(connection: DataSource, name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
     return `
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 import { yellow } from "chalk";
 
 export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
@@ -280,14 +282,14 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
         console.log(yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlUpQueryRunner(queryRunner);
                 break;
             default:
@@ -302,14 +304,14 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlDownQueryRunner(queryRunner);
                 break;
             default:
@@ -323,7 +325,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${(connection.options.type === 'postgres') ? upSqls.join(`
+        ${isDatabaseType([DatabaseTypeEnum.postgres], connection.options) ? upSqls.join(`
         `) : [].join(`
         `)}
     }
@@ -334,7 +336,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${(connection.options.type === 'postgres') ? downSqls.join(`
+        ${isDatabaseType([DatabaseTypeEnum.postgres], connection.options) ? downSqls.join(`
         `) : [].join(`
         `)}
     }
@@ -345,7 +347,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${(['sqlite', 'better-sqlite3'].includes(connection.options.type)) ? upSqls.join(`
+        ${(isSqliteDB(connection.options)) ? upSqls.join(`
         `) : [].join(`
         `)}
     }
@@ -356,7 +358,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${(['sqlite', 'better-sqlite3'].includes(connection.options.type)) ? downSqls.join(`
+        ${(isSqliteDB(connection.options)) ? downSqls.join(`
         `) : [].join(`
         `)}
     }
@@ -367,8 +369,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${
-            (['mysql'].includes(connection.options.type)) ?
+        ${isDatabaseType([DatabaseTypeEnum.mysql], connection.options) ?
             upSqls.join(``) :
             [].join(``)
         }
@@ -380,8 +381,7 @@ export class ${camelCase(name, true)}${timestamp} implements MigrationInterface 
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        ${
-            (['mysql'].includes(connection.options.type)) ?
+        ${isDatabaseType([DatabaseTypeEnum.mysql], connection.options) ?
             downSqls.join(``) :
             [].join(``)
         }

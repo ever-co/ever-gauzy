@@ -1068,9 +1068,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 
 	showAlert(arg) {
 		let message = '';
-		switch (arg.type) {
+		switch (arg?.type) {
 			case 'update_config':
-				message = 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_CONFIG_UPDATED';
+				message = arg?.message ?? arg?.message ?? 'TIMER_TRACKER.SETTINGS.MESSAGES.SERVER_CONFIG_UPDATED';
 				break;
 			case 'start_server':
 				this._restartDisable$.next(false);
@@ -1079,7 +1079,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			default:
 				break;
 		}
-		this.toastrService.show(this._translateService.instant(message), `Success`, { status: arg.status });
+		this.toastrService.show(this._translateService.instant(message), `Success`, { status: arg?.status });
 		this._isRestart$.next(false);
 	}
 

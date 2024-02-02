@@ -6,7 +6,7 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_BASE_URL
 } from '@gauzy/common';
-import { dbConnectionConfig } from '@gauzy/config';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from '@gauzy/config';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
 import { ChangelogPlugin } from '@gauzy/changelog';
 import { CustomSmtpPlugin } from '@gauzy/custom-smtp-plugin';
@@ -51,7 +51,10 @@ export const pluginConfig: IPluginConfig = {
 		retryDelay: 3000,
 		migrationsTransactionMode: 'each', // Run migrations automatically in each transaction. i.e."all" | "none" | "each"
 		migrationsRun: process.env.DB_SYNCHRONIZE === 'true' ? false : true, // Run migrations automatically if we don't do DB_SYNCHRONIZE
-		...dbConnectionConfig
+		...dbTypeOrmConnectionConfig
+	},
+	dbMikroOrmConnectionOptions: {
+		...dbMikroOrmConnectionConfig
 	},
 	assetOptions: {
 		assetPath: assetPath,

@@ -5,7 +5,6 @@ import {
 	AfterUpdate,
 	BeforeInsert,
 	Column,
-	Entity,
 	OneToMany
 } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -14,11 +13,11 @@ import {
 	PipelineStage,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
 
-@Entity('pipeline')
-export class Pipeline
-	extends TenantOrganizationBaseEntity
-	implements IPipeline {
+@MultiORMEntity('pipeline', { mikroOrmRepository: () => MikroOrmPipelineRepository })
+export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline {
 
 	@ApiProperty({ type: () => PipelineStage })
 	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {

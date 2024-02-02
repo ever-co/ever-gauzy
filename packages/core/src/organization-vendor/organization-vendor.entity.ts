@@ -1,13 +1,13 @@
-import { Column, Entity, Index, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Column, Index, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IExpense, IOrganizationVendor, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
 
-@Entity('organization_vendor')
-export class OrganizationVendor
-	extends TenantOrganizationBaseEntity
-	implements IOrganizationVendor {
+@MultiORMEntity('organization_vendor', { mikroOrmRepository: () => MikroOrmOrganizationVendorRepository })
+export class OrganizationVendor extends TenantOrganizationBaseEntity implements IOrganizationVendor {
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -35,10 +35,10 @@ export class OrganizationVendor
 	website?: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Expense
@@ -48,10 +48,10 @@ export class OrganizationVendor
 	expenses?: IExpense[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * Tag

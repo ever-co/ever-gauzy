@@ -6,11 +6,13 @@ import { CandidateDocument } from './candidate-documents.entity';
 import { CandidateDocumentsService } from './candidate-documents.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/candidate-documents', module: CandidateDocumentsModule }]),
 		TypeOrmModule.forFeature([CandidateDocument]),
+		MikroOrmModule.forFeature([CandidateDocument]),
 		TenantModule,
 		UserModule
 	],
@@ -18,4 +20,4 @@ import { UserModule } from './../user/user.module';
 	controllers: [CandidateDocumentsController],
 	exports: [CandidateDocumentsService]
 })
-export class CandidateDocumentsModule {}
+export class CandidateDocumentsModule { }

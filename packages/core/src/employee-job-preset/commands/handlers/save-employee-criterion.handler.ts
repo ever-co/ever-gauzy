@@ -2,21 +2,22 @@ import { GauzyAIService } from '@gauzy/integration-ai';
 import { IMatchingCriterions } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { RequestContext } from '../../../core/context';
 import { Employee } from '../../../employee/employee.entity';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { SaveEmployeeCriterionCommand } from '../save-employee-criterion.command';
+import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm-employee.repository';
+import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 
 @CommandHandler(SaveEmployeeCriterionCommand)
-export class SaveEmployeeCriterionHandler
-	implements ICommandHandler<SaveEmployeeCriterionCommand> {
+export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmployeeCriterionCommand> {
+
 	constructor(
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private readonly employeeUpworkJobsSearchCriterionRepository: Repository<EmployeeUpworkJobsSearchCriterion>,
+		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
 
 		private readonly gauzyAIService: GauzyAIService
 	) { }
@@ -29,16 +30,16 @@ export class SaveEmployeeCriterionHandler
 
 		if (!input.organizationId) {
 			const user = RequestContext.currentUser();
-			const employee = await this.employeeRepository.findOneBy({
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({
 				id: input.employeeId || user.employeeId
 			});
 			input.organizationId = employee.organizationId;
 		}
 
 		const creation = new EmployeeUpworkJobsSearchCriterion(input);
-		await this.employeeUpworkJobsSearchCriterionRepository.save(creation);
+		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(creation);
 
-		const employee = await this.employeeRepository.findOne({
+		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: {
 				id: input.employeeId
 			},
@@ -47,7 +48,7 @@ export class SaveEmployeeCriterionHandler
 				organization: true
 			}
 		});
-		const criteria = await this.employeeUpworkJobsSearchCriterionRepository.findBy({
+		const criteria = await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({
 			employeeId: input.employeeId,
 			jobPresetId: input.jobPresetId
 		})

@@ -1,20 +1,20 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
-import { IsTeamAlreadyExistConstraint } from "./constraints";
+import { TeamAlreadyExistConstraint } from "./constraints";
 
 /**
- * Organization team already existed validation decorator
+ * Custom validation decorator factory for checking if a team already exists.
  *
- * @param validationOptions
- * @returns
+ * @param validationOptions - Validation options.
+ * @returns {PropertyDecorator} - Decorator function.
  */
-export const IsTeamAlreadyExist = (validationOptions?: ValidationOptions) => {
+export const IsTeamAlreadyExist = (validationOptions?: ValidationOptions): PropertyDecorator => {
 	return (object: Object, propertyName: string) => {
-        registerDecorator({
+		registerDecorator({
 			target: object.constructor,
-			propertyName: propertyName,
+			propertyName,
 			options: validationOptions,
 			constraints: [],
-			validator: IsTeamAlreadyExistConstraint,
+			validator: TeamAlreadyExistConstraint,
 		});
-    };
+	};
 }

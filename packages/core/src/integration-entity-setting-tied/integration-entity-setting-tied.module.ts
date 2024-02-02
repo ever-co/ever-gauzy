@@ -7,6 +7,7 @@ import { IntegrationEntitySettingTiedController } from './integration-entity-set
 import { IntegrationEntitySettingTiedService } from './integration-entity-setting-tied.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -17,12 +18,13 @@ import { UserModule } from './../user/user.module';
 			}
 		]),
 		TypeOrmModule.forFeature([IntegrationEntitySettingTied]),
+		MikroOrmModule.forFeature([IntegrationEntitySettingTied]),
 		TenantModule,
 		UserModule,
 		CqrsModule
 	],
 	controllers: [IntegrationEntitySettingTiedController],
 	providers: [IntegrationEntitySettingTiedService],
-	exports: [TypeOrmModule, IntegrationEntitySettingTiedService]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationEntitySettingTiedService]
 })
-export class IntegrationEntitySettingTiedModule {}
+export class IntegrationEntitySettingTiedModule { }

@@ -1,6 +1,12 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import { ElectronService } from '@gauzy/desktop-ui-lib';
 import { IProxyConfig } from '@gauzy/contracts';
+import { BehaviorSubject } from 'rxjs';
+
+interface ICheckSslResponse {
+	status: boolean;
+	message: string;
+}
 
 @Component({
 	selector: 'gauzy-ssl',
@@ -8,18 +14,33 @@ import { IProxyConfig } from '@gauzy/contracts';
 	styleUrls: ['./ssl.component.scss']
 })
 export class SslComponent implements OnInit {
+	public isCheckSsl$: BehaviorSubject<boolean>;
+	public isValid$: BehaviorSubject<ICheckSslResponse>;
+	public isHidden$: BehaviorSubject<boolean>;
 	private _config: IProxyConfig;
+
 	@Output()
 	public update: EventEmitter<IProxyConfig>;
 
 	constructor(private readonly electronService: ElectronService, private readonly ngZone: NgZone) {
 		this.update = new EventEmitter<IProxyConfig>();
+		this.isCheckSsl$ = new BehaviorSubject(false);
+		this.isHidden$ = new BehaviorSubject(true);
+		this.isValid$ = new BehaviorSubject({ status: true, message: '' });
 	}
 
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.on('app_setting', (event, { config }) =>
 			this.ngZone.run(async () => {
 				this.config = config?.secureProxy;
+			})
+		);
+
+		this.electronService.ipcRenderer.on('check_ssl', (event, response: ICheckSslResponse) =>
+			this.ngZone.run(() => {
+				this.isValid$.next(response);
+				this.isHidden$.next(false);
+				this.isCheckSsl$.next(false);
 			})
 		);
 	}
@@ -41,5 +62,14 @@ export class SslComponent implements OnInit {
 
 	public save(event: string): void {
 		this.electronService.ipcRenderer.send('save_encrypted_file', event);
+	}
+
+	public checkSsl(): void {
+		this.isCheckSsl$.next(true);
+		this.electronService.ipcRenderer.send('check_ssl');
+	}
+
+	public onHide(): void {
+		this.isHidden$.next(true);
 	}
 }

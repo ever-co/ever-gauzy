@@ -1,20 +1,20 @@
 import { registerDecorator, ValidationOptions } from "class-validator";
-import { IsExpenseCategoryAlreadyExistConstraint } from "./constraints";
+import { ExpenseCategoryAlreadyExistConstraint } from "./constraints";
 
 /**
- * Expense category already existed validation decorator
+ * Expense category existence validation decorator.
  *
- * @param validationOptions
- * @returns
+ * @param validationOptions - Options for the validation decorator.
+ * @returns {PropertyDecorator} - Decorator function.
  */
-export const IsExpenseCategoryAlreadyExist = (validationOptions?: ValidationOptions) => {
+export const IsExpenseCategoryAlreadyExist = (validationOptions?: ValidationOptions): PropertyDecorator => {
     return (object: any, propertyName: string) => {
         registerDecorator({
             target: object.constructor,
             propertyName,
             options: validationOptions,
             constraints: [],
-            validator: IsExpenseCategoryAlreadyExistConstraint,
+            validator: ExpenseCategoryAlreadyExistConstraint,
         });
     };
 };

@@ -7,6 +7,7 @@ import { OrganizationTeamEmployeeController } from './organization-team-employee
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 import { TaskModule } from './../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -17,12 +18,13 @@ import { TaskModule } from './../tasks/task.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationTeamEmployee]),
+		MikroOrmModule.forFeature([OrganizationTeamEmployee]),
 		TenantModule,
 		UserModule,
 		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],
 	providers: [OrganizationTeamEmployeeService],
-	exports: [TypeOrmModule, OrganizationTeamEmployeeService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamEmployeeService]
 })
-export class OrganizationTeamEmployeeModule {}
+export class OrganizationTeamEmployeeModule { }

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskPriority } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -7,8 +7,10 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
 
-@Entity('task_priority')
+@MultiORMEntity('task_priority', { mikroOrmRepository: () => MikroOrmTaskPriorityRepository })
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
 
 	@ApiProperty({ type: () => String })

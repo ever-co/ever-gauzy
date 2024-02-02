@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmailSendModule } from './../../email-send/email-send.module';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
@@ -17,6 +18,7 @@ import { Timesheet } from './timesheet.entity';
 	],
 	imports: [
 		TypeOrmModule.forFeature([Timesheet]),
+		MikroOrmModule.forFeature([Timesheet]),
 		CqrsModule,
 		EmailSendModule,
 		TenantModule,
@@ -30,7 +32,8 @@ import { Timesheet } from './timesheet.entity';
 	],
 	exports: [
 		TimeSheetService,
-		TypeOrmModule
+		TypeOrmModule,
+		MikroOrmModule
 	]
 })
 export class TimesheetModule { }

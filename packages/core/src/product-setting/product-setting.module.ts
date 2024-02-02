@@ -5,6 +5,7 @@ import { ProductVariantSetting } from './product-setting.entity';
 import { ProductVariantSettingService } from './product-setting.service';
 import { ProductVariantSettingController } from './product-setting.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -15,10 +16,11 @@ import { TenantModule } from '../tenant/tenant.module';
 			}
 		]),
 		TypeOrmModule.forFeature([ProductVariantSetting]),
+		MikroOrmModule.forFeature([ProductVariantSetting]),
 		TenantModule
 	],
 	controllers: [ProductVariantSettingController],
 	providers: [ProductVariantSettingService],
 	exports: [ProductVariantSettingService]
 })
-export class ProductVariantSettingModule {}
+export class ProductVariantSettingModule { }

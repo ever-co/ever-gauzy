@@ -10,11 +10,13 @@ import { Invoice } from '../invoice/invoice.entity';
 import { EstimateEmail } from './estimate-email.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { TaskModule } from '../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/estimate-email', module: EstimateEmailModule }]),
 		TypeOrmModule.forFeature([User, EstimateEmail, Invoice, Organization]),
+		MikroOrmModule.forFeature([User, EstimateEmail, Invoice, Organization]),
 		TenantModule,
 		TaskModule
 	],
@@ -22,4 +24,4 @@ import { TaskModule } from '../tasks/task.module';
 	providers: [EstimateEmailService, UserService],
 	exports: [EstimateEmailService, UserService]
 })
-export class EstimateEmailModule {}
+export class EstimateEmailModule { }

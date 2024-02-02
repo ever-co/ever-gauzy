@@ -16,6 +16,7 @@ import { PasswordResetModule } from './../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from './../feature/feature.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
 
@@ -33,6 +34,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		SocialAuthModule.registerAsync({
 			imports: [
 				TypeOrmModule.forFeature([OrganizationTeam]),
+				MikroOrmModule.forFeature([OrganizationTeam]),
 				AuthModule,
 				EmailSendModule,
 				UserModule,
@@ -43,6 +45,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			useClass: AuthService
 		}),
 		TypeOrmModule.forFeature([UserOrganization, Organization, OrganizationTeam]),
+		MikroOrmModule.forFeature([UserOrganization, Organization, OrganizationTeam]),
 		EmailSendModule,
 		UserModule,
 		RoleModule,
@@ -54,4 +57,4 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })
-export class AuthModule {}
+export class AuthModule { }

@@ -1,18 +1,6 @@
-import {
-	Injectable,
-	BadRequestException,
-	UnauthorizedException,
-	ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	Repository,
-	In,
-	ILike,
-	SelectQueryBuilder,
-	DeleteResult,
-	IsNull,
-} from 'typeorm';
+import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -22,13 +10,10 @@ import {
 	IEmployee,
 	PermissionsEnum,
 	IBasePerTenantAndOrganizationEntityModel,
-	IUser,
+	IUser
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import {
-	Employee,
-	OrganizationTeamEmployee,
-} from './../core/entities/internal';
+import { Employee, OrganizationTeamEmployee } from './../core/entities/internal';
 import { OrganizationTeam } from './organization-team.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
@@ -37,33 +22,35 @@ import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { TaskService } from './../tasks/task.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
+import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
 		@InjectRepository(OrganizationTeam)
-		protected readonly organizationTeamRepository: Repository<OrganizationTeam>,
+		typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+
+		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
+
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
+
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private readonly userService: UserService,
 		private readonly taskService: TaskService
 	) {
-		super(organizationTeamRepository);
+		super(typeOrmOrganizationTeamRepository, mikroOrmOrganizationTeamRepository);
 	}
 
-	async create(
-		entity: IOrganizationTeamCreateInput
-	): Promise<IOrganizationTeam> {
-		const {
-			tags = [],
-			memberIds = [],
-			managerIds = [],
-			projects = [],
-		} = entity;
-		const { name, organizationId, prefix, profile_link, logo, imageId } =
-			entity;
+	async create(entity: IOrganizationTeamCreateInput): Promise<IOrganizationTeam> {
+		const { tags = [], memberIds = [], managerIds = [], projects = [] } = entity;
+		const { name, organizationId, prefix, profile_link, logo, imageId } = entity;
 
 		try {
 			const tenantId = RequestContext.currentTenantId();
@@ -71,14 +58,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			 * If, employee create teams, default add as a manager
 			 */
 			try {
-				await this.roleService.findOneByIdString(
-					RequestContext.currentRoleId(),
-					{
-						where: {
-							name: RolesEnum.EMPLOYEE,
-						},
+				await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
+					where: {
+						name: RolesEnum.EMPLOYEE
 					}
-				);
+				});
 
 				const employeeId = RequestContext.currentEmployeeId();
 				if (!managerIds.includes(employeeId)) {
@@ -86,22 +70,22 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				}
 			} catch (error) { }
 
-			const employees = await this.employeeRepository.find({
+			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In([...memberIds, ...managerIds]),
 					organizationId,
-					tenantId,
+					tenantId
 				},
 				relations: {
-					user: true,
-				},
+					user: true
+				}
 			});
 
 			/**
 			 * Get manager role
 			 */
 			const manager = await this.roleService.findOneByWhereOptions({
-				name: RolesEnum.MANAGER,
+				name: RolesEnum.MANAGER
 			});
 
 			const members: OrganizationTeamEmployee[] = [];
@@ -112,7 +96,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						employeeId,
 						organizationId,
 						tenantId,
-						role: managerIds.includes(employeeId) ? manager : null,
+						role: managerIds.includes(employeeId) ? manager : null
 					})
 				);
 			});
@@ -127,35 +111,28 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				public: entity.public,
 				logo,
 				imageId,
-				projects,
+				projects
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
 		}
 	}
 
-	async update(
-		id: IOrganizationTeam['id'],
-		entity: IOrganizationTeamUpdateInput
-	): Promise<IOrganizationTeam> {
+	async update(id: IOrganizationTeam['id'], entity: IOrganizationTeamUpdateInput): Promise<IOrganizationTeam> {
 		const tenantId = RequestContext.currentTenantId();
 		const { managerIds, memberIds, organizationId } = entity;
 
 		let organizationTeam = await this.findOneByIdString(id, {
 			where: {
 				organizationId,
-				tenantId,
-			},
+				tenantId
+			}
 		});
 
 		/**
 		 * If employee has manager of the team, he/she should be able to update basic things for team
 		 */
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				const employeeId = RequestContext.currentEmployeeId();
 				if (employeeId) {
@@ -168,10 +145,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 								tenantId,
 								organizationId,
 								role: {
-									name: RolesEnum.MANAGER,
-								},
-							},
-						},
+									name: RolesEnum.MANAGER
+								}
+							}
+						}
 					});
 				}
 			} catch (error) {
@@ -185,18 +162,18 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				 * Get manager role
 				 */
 				const role = await this.roleService.findOneByWhereOptions({
-					name: RolesEnum.MANAGER,
+					name: RolesEnum.MANAGER
 				});
 
-				const employees = await this.employeeRepository.find({
+				const employees = await this.typeOrmEmployeeRepository.find({
 					where: {
 						id: In([...memberIds, ...managerIds]),
 						organizationId,
-						tenantId,
+						tenantId
 					},
 					relations: {
-						user: true,
-					},
+						user: true
+					}
 				});
 
 				// Update nested entity
@@ -213,7 +190,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { id: organizationTeamId } = organizationTeam;
 			return await super.create({
 				...entity,
-				id: organizationTeamId,
+				id: organizationTeamId
 			});
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
@@ -226,9 +203,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param params
 	 * @returns
 	 */
-	public async findMyTeams(
-		options: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<OrganizationTeam>> {
+	public async findMyTeams(options: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		try {
 			return await this.findAll(options);
 		} catch (error) {
@@ -242,9 +217,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param filter
 	 * @returns
 	 */
-	public async pagination(
-		options?: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<OrganizationTeam>> {
+	public async pagination(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
 		if ('where' in options) {
 			const { where } = options;
 			if ('name' in where) {
@@ -252,7 +225,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			}
 			if ('tags' in where) {
 				options['where']['tags'] = {
-					id: In(where.tags as []),
+					id: In(where.tags as [])
 				};
 			}
 		}
@@ -265,9 +238,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param options
 	 * @returns
 	 */
-	public async findAll(
-		options?: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<IOrganizationTeam>> {
+	public async findAll(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
@@ -325,7 +296,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				...(options.select ? { select: options.select } : {}),
 				...(options.relations ? { relations: options.relations } : {}),
 				...(options.where ? { where: options.where } : {}),
-				...(options.order ? { order: options.order } : {}),
+				...(options.order ? { order: options.order } : {})
 			});
 		}
 
@@ -359,20 +330,17 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				where: {
 					tenantId: RequestContext.currentTenantId(),
 					organizationId,
-					...(!RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
+					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
 							members: {
-								employeeId:
-									RequestContext.currentEmployeeId(),
+								employeeId: RequestContext.currentEmployeeId(),
 								role: {
-									name: RolesEnum.MANAGER,
-								},
-							},
+									name: RolesEnum.MANAGER
+								}
+							}
 						}
-						: {}),
-				},
+						: {})
+				}
 			});
 			return await this.repository.remove(team);
 		} catch (error) {
@@ -386,37 +354,29 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @param criteria
 	 * @param options
 	 */
-	public async existTeamsAsMember(
-		userId: IUser['id']
-	): Promise<DeleteResult> {
+	public async existTeamsAsMember(userId: IUser['id']): Promise<DeleteResult> {
 		const currentUserId = RequestContext.currentUserId();
 
 		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).
-		if (
-			!RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			// If user try to delete someone other user account, just denied the request.
 			if (currentUserId != userId) {
-				throw new ForbiddenException(
-					'You can not removed account for other members!'
-				);
+				throw new ForbiddenException('You can not removed account for other members!');
 			}
 		}
 
 		const user = await this.userService.findOneByIdString(userId, {
 			relations: {
-				employee: true,
-			},
+				employee: true
+			}
 		});
 		if (!user) {
-			throw new ForbiddenException("User not found!");
+			throw new ForbiddenException('User not found!');
 		}
 
 		const { employeeId } = user;
 		if (!employeeId) {
-			throw new ForbiddenException("User is not associated with an employee!");
+			throw new ForbiddenException('User is not associated with an employee!');
 		}
 
 		try {
@@ -424,19 +384,16 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				// Check if the user is only a manager (has no specific role)
 				await this.organizationTeamEmployeeService.findOneByWhereOptions({
 					employeeId,
-					roleId: IsNull(),
+					roleId: IsNull()
 				});
 
 				// Unassign this user from all tasks in a team
-				await this.taskService.unassignEmployeeFromTeamTasks(
-					employeeId,
-					undefined
-				);
+				await this.taskService.unassignEmployeeFromTeamTasks(employeeId, undefined);
 
 				// Delete the team employee record
 				return await this.organizationTeamEmployeeService.delete({
 					employeeId,
-					roleId: IsNull(),
+					roleId: IsNull()
 				});
 			}
 		} catch (error) {

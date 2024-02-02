@@ -1,23 +1,26 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { IFeature, IFeatureOrganization, IFeatureOrganizationUpdateInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { FeatureOrganization } from './feature-organization.entity';
 import { FeatureService } from './feature.service';
+import { TypeOrmFeatureOrganizationRepository } from './repository/type-orm-feature-organization.repository';
+import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
 
 @Injectable()
 export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOrganization> {
 	constructor(
 		@InjectRepository(FeatureOrganization)
-		public readonly featureOrganizationRepository: Repository<FeatureOrganization>,
+		typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
+
+		mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
 
 		@Inject(forwardRef(() => FeatureService))
 		private readonly _featureService: FeatureService
 	) {
-		super(featureOrganizationRepository);
+		super(typeOrmFeatureOrganizationRepository, mikroOrmFeatureOrganizationRepository);
 	}
 
 	/**
@@ -26,37 +29,36 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * @param input
 	 * @returns
 	 */
-	async updateFeatureOrganization(
-		entity: IFeatureOrganizationUpdateInput
-	): Promise<boolean> {
-
+	async updateFeatureOrganization(entity: IFeatureOrganizationUpdateInput): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
 		const { featureId, organizationId } = entity;
 
 		// find all feature organization by feature id
-		const { items : featureOrganizations, total } = await this.findAll({
+		const { items: featureOrganizations, total } = await this.findAll({
 			where: {
 				tenantId,
 				featureId,
-				...(isNotEmpty(organizationId) ? { organizationId } : {}),
+				...(isNotEmpty(organizationId) ? { organizationId } : {})
 			}
 		});
 
 		try {
 			if (!total) {
-				const featureOrganization: IFeatureOrganization  = new FeatureOrganization({
+				const featureOrganization: IFeatureOrganization = new FeatureOrganization({
 					...entity,
 					tenantId
 				});
-				await this.featureOrganizationRepository.save(featureOrganization);
+				await this.repository.save(featureOrganization);
 			} else {
 				featureOrganizations.map((item: IFeatureOrganization) => {
-					return new FeatureOrganization(Object.assign(item, {
-						...entity,
-						tenantId
-					}));
+					return new FeatureOrganization(
+						Object.assign(item, {
+							...entity,
+							tenantId
+						})
+					);
 				});
-				await this.featureOrganizationRepository.save(featureOrganizations);
+				await this.repository.save(featureOrganizations);
 			}
 			return true;
 		} catch (error) {
@@ -71,9 +73,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * @param tenants
 	 * @returns
 	 */
-	public async updateTenantFeatureOrganizations(
-		tenants: ITenant[]
-	): Promise<IFeatureOrganization[]> {
+	public async updateTenantFeatureOrganizations(tenants: ITenant[]): Promise<IFeatureOrganization[]> {
 		if (!tenants.length) {
 			return;
 		}
@@ -93,8 +93,6 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 				featureOrganizations.push(featureOrganization);
 			}
 		}
-		return await this.featureOrganizationRepository.save(
-			featureOrganizations
-		);
+		return await this.repository.save(featureOrganizations);
 	}
 }

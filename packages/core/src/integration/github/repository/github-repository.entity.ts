@@ -1,10 +1,12 @@
-import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany, RelationId, } from 'typeorm';
+import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue, IOrganizationProject } from '@gauzy/contracts';
-import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from 'core/entities/internal';
+import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from '../../../core/entities/internal';
+import { MultiORMEntity } from '../../../core/decorators/entity';
+import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-candidate.repository';
 
-@Entity('organization_github_repository')
+@MultiORMEntity('organization_github_repository', { mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryRepository })
 export class OrganizationGithubRepository extends TenantOrganizationBaseEntity implements IOrganizationGithubRepository {
 
     @ApiProperty({ type: () => Number })
