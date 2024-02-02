@@ -28,7 +28,6 @@ export * from '../../custom-smtp/custom-smtp.entity';
 export * from '../../deal/deal.entity';
 export * from '../../email-history/email-history.entity';
 export * from '../../email-reset/email-reset.entity';
-export * from '../../email-template/email-template.entity';
 export * from '../../employee-appointment/employee-appointment.entity';
 export * from '../../employee-award/employee-award.entity';
 export * from '../../employee-job-preset/employee-upwork-jobs-search-criterion.entity';
@@ -153,7 +152,6 @@ export * from '../../warehouse/warehouse.entity';
 //core subscribers
 export * from './../../candidate/candidate.subscriber';
 export * from './../../email-reset/email-reset.subscriber';
-export * from './../../email-template/email-template.subscriber';
 export * from './../../employee/employee.subscriber';
 export * from './../../export-import/import-history/import-history.subscriber';
 export * from './../../feature/feature.subscriber';

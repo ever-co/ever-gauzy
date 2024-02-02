@@ -66,7 +66,6 @@ import { EmailHistoryModule } from './email-history/email-history.module';
 import { TimeOffPolicyModule } from './time-off-policy/time-off-policy.module';
 import { RolePermissionModule } from './role-permission/role-permission.module';
 import { TenantModule } from './tenant/tenant.module';
-import { EmailTemplateModule } from './email-template/email-template.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { EmployeeLevelModule } from './employee-level/employee-level.module';
 import { ExportModule } from './export-import/export/export.module';
@@ -494,7 +493,6 @@ if (environment.THROTTLE_ENABLED) {
 		RequestApprovalTeamModule,
 		ProposalModule,
 		EmailHistoryModule,
-		EmailTemplateModule,
 		CountryModule,
 		CurrencyModule,
 		InviteModule,
