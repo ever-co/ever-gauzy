@@ -233,6 +233,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
+
 			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 
@@ -287,9 +288,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			if (isNotEmpty(projectId) && isNotEmpty(teams)) {

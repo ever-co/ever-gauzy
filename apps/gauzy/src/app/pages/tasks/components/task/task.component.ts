@@ -82,6 +82,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	selectedEmployee: ISelectedEmployee;
 	selectedEmployeeId: ISelectedEmployee['id'];
 	selectedProject: IOrganizationProject;
+	selectedTeamIds: string[] = [];
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -349,17 +350,17 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeEmployee$ = this._store.selectedEmployee$;
 		const storeProject$ = this._store.selectedProject$;
-		combineLatest([storeOrganization$, storeEmployee$, storeProject$])
+		const storeTeam$ = this._store.selectedTeam$;
+		combineLatest([storeOrganization$, storeEmployee$, storeProject$, storeTeam$])
 			.pipe(
 				distinctUntilChange(),
 				filter(([organization]) => !!organization),
-				tap(([organization, employee, project]) => {
+				tap(([organization, employee, project, team]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
+					this.selectedEmployeeId = employee?.id || null;
 					this.selectedProject = project;
-					this.viewMode = !!project
-						? project.taskListType
-						: TaskListTypeEnum.GRID;
+					this.selectedTeamIds = team?.id ? [team.id] : [];
+					this.viewMode = project?.taskListType || TaskListTypeEnum.GRID;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.taskSubject$.next(true)),
@@ -422,6 +423,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 		this.loading = true;
 
+		console.log(this.selectedTeamIds);
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
@@ -477,6 +479,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						},
 					}
 					: {}),
+				...(this.selectedTeamIds ? { teams: this.selectedTeamIds, } : {}),
 				...(this.filters.where ? this.filters.where : {}),
 			},
 			resultMap: (task: ITask) => {
@@ -736,21 +739,17 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	}
 
 	/**
-	 * Open task settings page for specific project
+	 * Open task settings page for a specific project.
 	 *
-	 * @param selectedProject
-	 * @returns
+	 * @param selectedProject - The project for which the task settings page should be opened.
 	 */
 	openTasksSettings(selectedProject: IOrganizationProject): void {
-		const hasPermission = this._store.hasAnyPermission(
-			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.ORG_PROJECT_EDIT
-		);
-		if (this.isDefaultProject || !hasPermission) {
+		if (this.isDefaultProject || !this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)) {
 			return;
 		}
+
 		this._router.navigate(['/pages/tasks/settings', selectedProject.id], {
-			state: selectedProject,
+			state: selectedProject
 		});
 	}
 
