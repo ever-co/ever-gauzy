@@ -5,9 +5,11 @@ import { EmailTemplateRenderService } from './email-template-render.service';
 import { EmailService } from './email.service';
 import { EmailHistoryModule } from './../email-history/email-history.module';
 import { OrganizationModule } from './../organization/organization.module';
+import { CustomSmtpModule } from '../custom-smtp/custom-smtp.module';
 
 @Module({
     imports: [
+        forwardRef(() => CustomSmtpModule),
         forwardRef(() => EmailTemplateModule),
         forwardRef(() => OrganizationModule),
         forwardRef(() => EmailHistoryModule),
