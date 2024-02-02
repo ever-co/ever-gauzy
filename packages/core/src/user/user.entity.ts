@@ -7,11 +7,8 @@ import {
 	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
-	ManyToMany,
 	JoinTable,
-	OneToOne,
 	OneToMany
 } from 'typeorm';
 import { Property } from '@mikro-orm/core';
@@ -45,6 +42,7 @@ import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroManyToOne } from './../core/decorators/entity/relations/mikro-orm';
 import { TypeManyToOne } from './../core/decorators/entity/relations/type-orm';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
@@ -218,7 +216,7 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -246,13 +244,13 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@OneToOne(() => Employee, (employee: Employee) => employee.user)
+	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user)
 	employee?: IEmployee;
 
 	/**
 	 * Candidate
 	 */
-	@OneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
+	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
 	candidate?: ICandidate;
 
 	/*
@@ -261,7 +259,7 @@ export class User extends TenantBaseEntity implements IUser {
 	|--------------------------------------------------------------------------
 	*/
 	// Tags
-	@ManyToMany(() => Tag, (tag) => tag.users, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.users, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
@@ -279,7 +277,7 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * UserOrganization
 	 */
-	@OneToMany(() => UserOrganization, (it) => it.user, {
+	@MultiORMOneToMany(() => UserOrganization, (it) => it.user, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -294,7 +292,7 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * User belongs to teams
 	 */
-	@OneToMany(() => OrganizationTeam, (it) => it.createdBy, {
+	@MultiORMOneToMany(() => OrganizationTeam, (it) => it.createdBy, {
 		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];
