@@ -479,7 +479,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						},
 					}
 					: {}),
-				...(this.selectedTeamIds ? { teams: this.selectedTeamIds, } : {}),
+				...(this.selectedTeamIds ? { teams: this.selectedTeamIds } : {}),
 				...(this.filters.where ? this.filters.where : {}),
 			},
 			resultMap: (task: ITask) => {
