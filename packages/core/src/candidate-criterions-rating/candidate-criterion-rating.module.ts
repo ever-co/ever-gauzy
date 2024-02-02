@@ -8,6 +8,7 @@ import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRatingController } from './candidate-criterion-rating.controller';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -18,6 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 			}
 		]),
 		TypeOrmModule.forFeature([CandidateCriterionsRating]),
+		MikroOrmModule.forFeature([CandidateCriterionsRating]),
 		TenantModule,
 		UserModule,
 		CqrsModule
@@ -26,4 +28,4 @@ import { CommandHandlers } from './commands/handlers';
 	controllers: [CandidateCriterionsRatingController],
 	exports: [CandidateCriterionsRatingService]
 })
-export class CandidateCriterionsRatingModule {}
+export class CandidateCriterionsRatingModule { }

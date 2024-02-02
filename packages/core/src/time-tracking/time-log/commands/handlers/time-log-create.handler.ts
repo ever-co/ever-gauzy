@@ -2,7 +2,6 @@ import { ICommandHandler, CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { TimeLogType, TimeLogSourceEnum, ITimeSlot } from '@gauzy/contracts';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as moment from 'moment';
-import { Repository } from 'typeorm';
 import { TimeLog } from './../../time-log.entity';
 import { TimeLogCreateCommand } from '../time-log-create.command';
 import { TimeSlotService } from '../../../time-slot/time-slot.service';
@@ -12,13 +11,16 @@ import {
 } from './../../../timesheet/commands';
 import { UpdateEmployeeTotalWorkedHoursCommand } from '../../../../employee/commands';
 import { RequestContext } from '../../../../core/context';
+import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.repository';
 
 @CommandHandler(TimeLogCreateCommand)
-export class TimeLogCreateHandler
-	implements ICommandHandler<TimeLogCreateCommand> {
+export class TimeLogCreateHandler implements ICommandHandler<TimeLogCreateCommand> {
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
 		private readonly commandBus: CommandBus,
 		private readonly timeSlotService: TimeSlotService
@@ -107,7 +109,7 @@ export class TimeLogCreateHandler
 			organizationId
 		);
 
-		await this.timeLogRepository.save(timeLog);
+		await this.typeOrmTimeLogRepository.save(timeLog);
 
 		/**
 		 * RECALCULATE timesheet activity
@@ -130,7 +132,7 @@ export class TimeLogCreateHandler
 			timeLog,
 			input
 		});
-		return await this.timeLogRepository.findOneBy({
+		return await this.typeOrmTimeLogRepository.findOneBy({
 			id: timeLog.id
 		});
 	}

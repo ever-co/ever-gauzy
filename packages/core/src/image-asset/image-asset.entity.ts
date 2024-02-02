@@ -2,7 +2,7 @@ import { FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@g
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Column, Entity, ManyToMany, OneToMany } from 'typeorm';
+import { Column, ManyToMany, OneToMany } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Product,
@@ -10,8 +10,10 @@ import {
 	Equipment,
 	Warehouse
 } from './../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
 
-@Entity('image_asset')
+@MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
 
 	@ApiPropertyOptional({ type: () => String })

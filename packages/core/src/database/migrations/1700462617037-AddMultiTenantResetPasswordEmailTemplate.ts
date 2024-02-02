@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
 import { EmailTemplateEnum } from "@gauzy/contracts";
 import { EmailTemplateUtils } from "../../email-template/utils";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class AddMultiTenantResetPasswordEmailTemplate1700462617037 implements MigrationInterface {
 
@@ -17,12 +17,12 @@ export class AddMultiTenantResetPasswordEmailTemplate1700462617037 implements Mi
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+            case DatabaseTypeEnum.postgres:
                 await this.sqlitePostgresResetPasswordEmailTemplate(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlResetPasswordEmailTemplate(queryRunner);
                 break;
             default:

@@ -12,6 +12,7 @@ import { EmployeeService } from '../employee/employee.service';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -22,6 +23,7 @@ import { TenantModule } from '../tenant/tenant.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationRecurringExpense, Organization, Employee]),
+		MikroOrmModule.forFeature([OrganizationRecurringExpense, Organization, Employee]),
 		CqrsModule,
 		TenantModule
 	],
@@ -35,4 +37,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	],
 	exports: [OrganizationRecurringExpenseService]
 })
-export class OrganizationRecurringExpenseModule {}
+export class OrganizationRecurringExpenseModule { }

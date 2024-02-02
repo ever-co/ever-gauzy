@@ -1,4 +1,4 @@
-import { Entity, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Column, OneToOne, JoinColumn } from 'typeorm';
 import { IProductVariantPrice, CurrenciesEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum } from 'class-validator';
@@ -6,11 +6,12 @@ import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductVariantPriceRepository } from './repository/mikro-orm-product-variant-price.repository';
 
-@Entity('product_variant_price')
-export class ProductVariantPrice
-	extends TenantOrganizationBaseEntity
-	implements IProductVariantPrice {
+@MultiORMEntity('product_variant_price', { mikroOrmRepository: () => MikroOrmProductVariantPriceRepository })
+export class ProductVariantPrice extends TenantOrganizationBaseEntity implements IProductVariantPrice {
+
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Column({ default: 0 })
@@ -32,16 +33,16 @@ export class ProductVariantPrice
 	retailPriceCurrency: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToOne
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * ProductVariant
 	 */
 	@OneToOne(() => ProductVariant, (productVariant) => productVariant.price, {
-		onDelete: 'CASCADE' 
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	productVariant: ProductVariant;

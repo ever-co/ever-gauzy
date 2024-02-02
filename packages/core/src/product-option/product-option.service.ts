@@ -2,58 +2,52 @@ import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { ProductOptionTranslation } from './../core/entities/internal';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import {
-	IProductOptionTranslatable,
-	IProductOptionTranslation
-} from '@gauzy/contracts';
+import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
 import { ProductOption } from './product-option.entity';
+import { TypeOrmProductOptionRepository } from './repository/type-orm-product-option.repository';
+import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
+import { MikroOrmProductOptionTranslationRepository } from './repository/mikro-orm-product-option-translation.repository';
+import { TypeOrmProductOptionTranslationRepository } from './repository/type-orm-product-option-translation.repository';
 
 @Injectable()
 export class ProductOptionService extends TenantAwareCrudService<ProductOption> {
 	constructor(
 		@InjectRepository(ProductOption)
-		private readonly productOptionRepository: Repository<ProductOption>,
-		
+		typeOrmProductOptionRepository: TypeOrmProductOptionRepository,
+
+		mikroOrmProductOptionRepository: MikroOrmProductOptionRepository,
+
 		@InjectRepository(ProductOptionTranslation)
-		private readonly productOptionTranslationRepository: Repository<ProductOptionTranslation>
+		private typeOrmProductOptionTranslationRepository: TypeOrmProductOptionTranslationRepository,
+
+		mikroOrmProductOptionTranslationRepository: MikroOrmProductOptionTranslationRepository
 	) {
-		super(productOptionRepository);
+		super(typeOrmProductOptionRepository, mikroOrmProductOptionRepository);
 	}
 
 	async saveProductOptionTranslations(
 		translationsInput: ProductOptionTranslation[]
 	): Promise<ProductOptionTranslation[]> {
-		return this.productOptionTranslationRepository.save(translationsInput);
+		return this.typeOrmProductOptionTranslationRepository.save(translationsInput);
 	}
 
-	async saveProductOptionTranslation(
-		translationInput: ProductOptionTranslation
-	): Promise<ProductOptionTranslation> {
-		return this.productOptionTranslationRepository.save(translationInput);
+	async saveProductOptionTranslation(translationInput: ProductOptionTranslation): Promise<ProductOptionTranslation> {
+		return this.typeOrmProductOptionTranslationRepository.save(translationInput);
 	}
 
-	async save(
-		productOptionInput: IProductOptionTranslatable
-	): Promise<ProductOption> {
-		return this.productOptionRepository.save(productOptionInput);
+	async save(productOptionInput: IProductOptionTranslatable): Promise<ProductOption> {
+		return this.repository.save(productOptionInput);
 	}
 
-	async saveBulk(
-		productOptionsInput: ProductOption[]
-	): Promise<ProductOption[]> {
-		return this.productOptionRepository.save(productOptionsInput);
+	async saveBulk(productOptionsInput: ProductOption[]): Promise<ProductOption[]> {
+		return this.repository.save(productOptionsInput);
 	}
 
 	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]) {
-		return this.productOptionRepository.remove(productOptionsInput as any);
+		return this.repository.remove(productOptionsInput as any);
 	}
 
-	async deleteOptionTranslationsBulk(
-		productOptionTranslationsInput: IProductOptionTranslation[]
-	) {
-		return this.productOptionTranslationRepository.remove(
-			productOptionTranslationsInput as any
-		);
+	async deleteOptionTranslationsBulk(productOptionTranslationsInput: IProductOptionTranslation[]) {
+		return this.typeOrmProductOptionTranslationRepository.remove(productOptionTranslationsInput as any);
 	}
 }

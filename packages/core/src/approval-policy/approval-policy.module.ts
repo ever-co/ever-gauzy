@@ -8,11 +8,13 @@ import { ApprovalPolicyService } from './approval-policy.service';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/approval-policy', module: ApprovalPolicyModule }]),
 		TypeOrmModule.forFeature([ApprovalPolicy]),
+		MikroOrmModule.forFeature([ApprovalPolicy]),
 		TenantModule,
 		UserModule,
 		CqrsModule
@@ -21,4 +23,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [ApprovalPolicyService, ...CommandHandlers],
 	exports: [ApprovalPolicyService]
 })
-export class ApprovalPolicyModule {}
+export class ApprovalPolicyModule { }

@@ -18,11 +18,13 @@ import { EquipmentSharingModule } from './../equipment-sharing/equipment-sharing
 import { TimeOffRequestModule } from './../time-off-request/time-off-request.module';
 import { CommandHandlers } from './commands/handlers';
 import { TaskModule } from './../tasks/task.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/request-approval', module: RequestApprovalModule }]),
 		TypeOrmModule.forFeature([RequestApproval, Employee, OrganizationTeam]),
+		MikroOrmModule.forFeature([RequestApproval, Employee, OrganizationTeam]),
 		CqrsModule,
 		OrganizationTeamEmployeeModule,
 		TenantModule,
@@ -37,4 +39,4 @@ import { TaskModule } from './../tasks/task.module';
 	providers: [RequestApprovalService, OrganizationTeamService, EmployeeService, ...CommandHandlers],
 	exports: [RequestApprovalService]
 })
-export class RequestApprovalModule {}
+export class RequestApprovalModule { }

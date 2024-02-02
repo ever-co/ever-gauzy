@@ -1,16 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ICandidateDocument, ICandidate } from '@gauzy/contracts';
 import { IsString } from 'class-validator';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmCandidateDocumentRepository } from './repository/mikro-orm-candidate-document.repository';
 
-@Entity('candidate_document')
-export class CandidateDocument
-	extends TenantOrganizationBaseEntity
-	implements ICandidateDocument {
+@MultiORMEntity('candidate_document', { mikroOrmRepository: () => MikroOrmCandidateDocumentRepository })
+export class CandidateDocument extends TenantOrganizationBaseEntity implements ICandidateDocument {
 	@ApiProperty({ type: () => String })
 	@Column()
 	name: string;
@@ -20,10 +20,10 @@ export class CandidateDocument
 	documentUrl: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiPropertyOptional({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.documents, {
 		onDelete: 'CASCADE'

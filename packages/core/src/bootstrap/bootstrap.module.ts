@@ -1,16 +1,18 @@
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
-import { ConfigModule } from '@gauzy/config';
+import { ConfigModule, getConfig } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
-import { Logger, LoggerModule } from '../logger';
-import { AppModule } from './../app.module';
 import tracer from './tracer';
+import { AppModule } from './../app.module';
+import { Logger, LoggerModule } from '../logger';
+import { HealthModule } from '../health/health.module';
 
 @Module({
 	imports: [
 		ConfigModule,
-		AppModule,
-		PluginModule.init(), // Import PluginModule first
 		LoggerModule.forRoot(),
+		PluginModule.forRoot(getConfig()),
+		AppModule,
+		HealthModule
 	]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {

@@ -13,10 +13,10 @@ import { Integrations } from '@sentry/node';
 // import { ProfilingIntegration } from '@sentry/profiling-node';
 import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { ConfigService, environment } from '@gauzy/config';
 import * as path from 'path';
 import * as moment from 'moment';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { ConfigService, environment } from '@gauzy/config';
 import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
 import { CoreModule } from './core/core.module';
@@ -74,7 +74,7 @@ import { ImportModule } from './export-import/import/import.module';
 import { IssueTypeModule } from './tasks/issue-type/issue-type.module';
 import { TaskModule } from './tasks/task.module';
 import { TaskPriorityModule } from './tasks/priorities/priority.module';
-import { TaskRelatedIssueTypesModule } from './tasks/related-issue-type/related-issue-type.module';
+import { TaskRelatedIssueTypeModule } from './tasks/related-issue-type/related-issue-type.module';
 import { TaskSizeModule } from './tasks/sizes/size.module';
 import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.module';
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
@@ -149,6 +149,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
+import { SharedModule } from './shared/shared.module';
 
 const { unleashConfig, github, jitsu, jira } = environment;
 
@@ -529,7 +530,7 @@ if (environment.THROTTLE_ENABLED) {
 		EquipmentSharingModule,
 		TaskModule,
 		TaskPriorityModule,
-		TaskRelatedIssueTypesModule,
+		TaskRelatedIssueTypeModule,
 		TaskSizeModule,
 		TaskStatusModule,
 		TaskVersionModule,

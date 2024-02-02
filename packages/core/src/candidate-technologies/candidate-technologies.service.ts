@@ -1,26 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { CandidateTechnologies } from './candidate-technologies.entity';
-import { ICandidateTechnologies, ICandidateTechnologiesCreateInput } from '@gauzy/contracts';
+import { TypeOrmCandidateTechnologiesRepository } from './repository/type-orm-candidate-technologies.repository';
+import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
 
 @Injectable()
 export class CandidateTechnologiesService extends TenantAwareCrudService<CandidateTechnologies> {
 	constructor(
 		@InjectRepository(CandidateTechnologies)
-		private readonly candidateTechnologiesRepository: Repository<CandidateTechnologies>
+		typeOrmCandidateTechnologiesRepository: TypeOrmCandidateTechnologiesRepository,
+
+		mikroOrmCandidateTechnologiesRepository: MikroOrmCandidateTechnologiesRepository
 	) {
-		super(candidateTechnologiesRepository);
+		super(typeOrmCandidateTechnologiesRepository, mikroOrmCandidateTechnologiesRepository);
 	}
-	
+
+	/**
+	 *
+	 * @param createInput
+	 * @returns
+	 */
 	async createBulk(createInput: ICandidateTechnologiesCreateInput[]) {
 		return await this.repository.save(createInput);
 	}
-	
-	async getTechnologiesByInterviewId(
-		interviewId: string
-	): Promise<ICandidateTechnologies[]> {
+
+	/**
+	 *
+	 * @param interviewId
+	 * @returns
+	 */
+	async getTechnologiesByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
 		return await this.repository
 			.createQueryBuilder('candidate_technology')
 			.where('candidate_technology.interviewId = :interviewId', {
@@ -29,6 +40,11 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 			.getMany();
 	}
 
+	/**
+	 *
+	 * @param ids
+	 * @returns
+	 */
 	async deleteBulk(ids: string[]) {
 		return await this.repository.delete(ids);
 	}

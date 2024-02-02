@@ -12,11 +12,13 @@ import { UserModule } from '../user/user.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/integration-tenant', module: IntegrationTenantModule }]),
 		TypeOrmModule.forFeature([IntegrationTenant]),
+		MikroOrmModule.forFeature([IntegrationTenant]),
 		TenantModule,
 		UserModule,
 		RoleModule,
@@ -29,4 +31,4 @@ import { TenantModule } from '../tenant/tenant.module';
 	controllers: [IntegrationTenantController],
 	providers: [IntegrationTenantService, ...CommandHandlers]
 })
-export class IntegrationTenantModule {}
+export class IntegrationTenantModule { }

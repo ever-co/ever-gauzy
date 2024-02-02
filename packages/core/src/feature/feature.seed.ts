@@ -3,7 +3,7 @@ import * as chalk from 'chalk';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
-import { ConfigService, environment as env, databaseTypes } from '@gauzy/config';
+import { ConfigService, environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import {
 	IFeature,
 	IFeatureOrganization,
@@ -82,18 +82,17 @@ async function createFeature(item: IFeature, tenant: ITenant, config: Partial<IP
 }
 
 async function cleanFeature(dataSource, config) {
-// <<<<<<< HEAD
 	switch (config.dbConnectionOptions.type) {
-		case databaseTypes.sqlite:
-		case databaseTypes.betterSqlite3:
+		case DatabaseTypeEnum.sqlite:
+		case DatabaseTypeEnum.betterSqlite3:
 			await dataSource.query('DELETE FROM feature');
 			await dataSource.query('DELETE FROM feature_organization');
 			break;
-		case databaseTypes.postgres:
+		case DatabaseTypeEnum.postgres:
 			await dataSource.query('TRUNCATE TABLE feature RESTART IDENTITY CASCADE');
 			await dataSource.query('TRUNCATE TABLE feature_organization RESTART IDENTITY CASCADE');
 			break;
-		case databaseTypes.mysql:
+		case DatabaseTypeEnum.mysql:
 			// -- disable foreign_key_checks to avoid query failing when there is a foreign key in the table
 			await dataSource.query('SET foreign_key_checks = 0;');
 			await dataSource.query('DELETE FROM feature;');

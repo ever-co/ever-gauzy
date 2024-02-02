@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	RelationId,
 	ManyToOne,
@@ -26,8 +25,10 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
-@Entity('time_slot')
+@MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity
 	implements ITimeSlot {
 

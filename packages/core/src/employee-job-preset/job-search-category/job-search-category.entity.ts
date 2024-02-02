@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Index, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -7,14 +7,16 @@ import {
 	IEmployeeUpworkJobsSearchCriterion,
 	IJobPresetUpworkJobSearchCriterion
 } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
 import {
 	EmployeeUpworkJobsSearchCriterion,
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { isMySQL } from '@gauzy/config';
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 
-@Entity('job_search_category')
+@MultiORMEntity('job_search_category', { mikroOrmRepository: () => MikroOrmJobSearchCategoryRepository })
 export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
 
 	@ApiProperty({ type: () => String })
@@ -38,10 +40,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@Index()
 	@Column({
 		default: JobPostSourceEnum.UPWORK,
-		...(isMySQL() ?
-			{ type: 'enum', enum: JobPostSourceEnum }
-			: { type: 'text' }
-		)
+		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
 	jobSource?: JobPostSourceEnum;
 

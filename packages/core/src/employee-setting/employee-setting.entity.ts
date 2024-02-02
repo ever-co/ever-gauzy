@@ -1,4 +1,4 @@
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -13,11 +13,11 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
 
-@Entity('employee_setting')
-export class EmployeeSetting
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeSetting {
+@MultiORMEntity('employee_setting', { mikroOrmRepository: () => MikroOrmEmployeeSettingRepository })
+export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
 	@IsNumber()
@@ -55,10 +55,10 @@ export class EmployeeSetting
 	currency: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, (employee) => employee.settings, {
 		onDelete: 'CASCADE'

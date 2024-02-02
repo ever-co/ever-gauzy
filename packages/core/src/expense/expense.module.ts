@@ -15,11 +15,13 @@ import { TenantModule } from './../tenant/tenant.module';
 import { ExpenseMapService } from './expense.map.service';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/expense', module: ExpenseModule }]),
 		TypeOrmModule.forFeature([Expense]),
+		MikroOrmModule.forFeature([Expense]),
 		forwardRef(() => EmployeeStatisticsModule),
 		forwardRef(() => EmployeeRecurringExpenseModule),
 		forwardRef(() => OrganizationRecurringExpenseModule),
@@ -33,4 +35,4 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 	providers: [ExpenseService, ExpenseMapService, ...CommandHandlers, ...QueryHandlers],
 	exports: [ExpenseService, ExpenseMapService]
 })
-export class ExpenseModule {}
+export class ExpenseModule { }

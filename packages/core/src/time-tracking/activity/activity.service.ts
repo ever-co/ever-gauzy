@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, In, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { TenantAwareCrudService } from './../../core/crud';
 import { Activity } from './activity.entity';
 import { RequestContext } from '../../core/context';
@@ -15,67 +15,82 @@ import { CommandBus } from '@nestjs/cqrs';
 import { BulkActivitiesSaveCommand } from './commands/bulk-activities-save.command';
 import { indexBy, pluck } from 'underscore';
 import { isNotEmpty } from '@gauzy/common';
-import { databaseTypes, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
+import { DatabaseTypeEnum, getConfig, isSqlite, isBetterSqlite3, isMySQL, isPostgres } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { Employee, OrganizationProject } from './../../core/entities/internal';
+import { TypeOrmActivityRepository } from './repository/type-orm-activity.repository';
+import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
+
 const config = getConfig();
 
 @Injectable()
 export class ActivityService extends TenantAwareCrudService<Activity> {
 	constructor(
 		@InjectRepository(Activity)
-		private readonly activityRepository: Repository<Activity>,
+		typeOrmActivityRepository: TypeOrmActivityRepository,
+
+		mikroOrmActivityRepository: MikroOrmActivityRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 
 		private readonly commandBus: CommandBus
 	) {
-		super(activityRepository);
+		super(typeOrmActivityRepository, mikroOrmActivityRepository);
 	}
 
-	async getDailyActivities(
-		request: IGetActivitiesInput
-	): Promise<IDailyActivity[]> {
+	async getDailyActivities(request: IGetActivitiesInput): Promise<IDailyActivity[]> {
 		const query = this.filterQuery(request);
 		query.select(p(`COUNT("${query.alias}"."id")`), `sessions`);
 		query.addSelect(p(`SUM("${query.alias}"."duration")`), `duration`);
 		query.addSelect(p(`"${query.alias}"."employeeId"`), `employeeId`);
 		query.addSelect(p(`"${query.alias}"."date"`), `date`);
 
-		switch(config.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+		switch (config.dbConnectionOptions.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				query.addSelect(`time("${query.alias}"."time")`, `time`);
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				query.addSelect(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`, 'time');
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				query.addSelect(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`), 'time');
 				break;
 			default:
-				throw Error(`cannot format daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot format daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`
+				);
 		}
 		query.addSelect(p(`"${query.alias}"."title"`), `title`);
 		query.groupBy(p(`"${query.alias}"."date"`));
 
-		switch(config.dbConnectionOptions.type) {
-			case databaseTypes.sqlite:
-			case databaseTypes.betterSqlite3:
+		switch (config.dbConnectionOptions.type) {
+			case DatabaseTypeEnum.sqlite:
+			case DatabaseTypeEnum.betterSqlite3:
 				query.addGroupBy(`time("${query.alias}"."time")`);
 				break;
-			case databaseTypes.postgres:
+			case DatabaseTypeEnum.postgres:
 				query.addGroupBy(`(to_char("${query.alias}"."time", 'HH24') || ':00')::time`);
 				break;
-			case databaseTypes.mysql:
+			case DatabaseTypeEnum.mysql:
 				query.addGroupBy(p(`CONCAT(DATE_FORMAT("${query.alias}"."time", '%H'), ':00')`));
 				break;
 			default:
-				throw Error(`cannot group by daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot group by daily activities time due to unsupported database type: ${config.dbConnectionOptions.type}`
+				);
 		}
 
 		query.addGroupBy(p(`"${query.alias}"."title"`));
@@ -87,9 +102,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		return await query.getRawMany();
 	}
 
-	async getDailyActivitiesReport(
-		request: IGetActivitiesInput
-	): Promise<IActivity[]> {
+	async getDailyActivitiesReport(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
 
 		query.select(p(`COUNT("${query.alias}"."id")`), `sessions`);
@@ -112,7 +125,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let employeeById: any = {};
 		if (employeeIds.length > 0) {
-			const employees = await this.employeeRepository.find({
+			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In(employeeIds)
 				},
@@ -123,7 +136,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 		let projectById: any = {};
 		if (projectIds.length > 0) {
-			const projects = await this.organizationProjectRepository.find({
+			const projects = await this.typeOrmOrganizationProjectRepository.find({
 				where: {
 					id: In(projectIds)
 				}
@@ -140,20 +153,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 
 	async getActivities(request: IGetActivitiesInput): Promise<IActivity[]> {
 		const query = this.filterQuery(request);
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
-			query.leftJoinAndSelect(
-				`${query.alias}.employee`,
-				'activityEmployee'
-			);
-			query.leftJoinAndSelect(
-				`activityEmployee.user`,
-				'activityUser',
-				p('"employee"."userId" = activityUser.id')
-			);
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
+			query.leftJoinAndSelect(`activityEmployee.user`, 'activityUser', p('"employee"."userId" = activityUser.id'));
 		}
 
 		query.orderBy(`${query.alias}.duration`, 'DESC');
@@ -161,9 +163,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 	}
 
 	async bulkSave(input: IBulkActivitiesInput) {
-		return await this.commandBus.execute(
-			new BulkActivitiesSaveCommand(input)
-		);
+		return await this.commandBus.execute(new BulkActivitiesSaveCommand(input));
 	}
 
 	private filterQuery(request: IGetActivitiesInput): SelectQueryBuilder<Activity> {
@@ -171,11 +171,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		const tenantId = RequestContext.currentTenantId();
 
 		let employeeIds: string[];
-		if (
-			RequestContext.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			)
-		) {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			if (request.employeeIds) {
 				employeeIds = request.employeeIds;
 			}
@@ -184,7 +180,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.activityRepository.createQueryBuilder();
+		const query = this.repository.createQueryBuilder();
 		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);
@@ -221,15 +217,20 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(
-					isSqlite() || isBetterSqlite3() ? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
-					: isPostgres() ? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
-					: isMySQL() ? p(`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`)
-					: '',
+					isSqlite() || isBetterSqlite3()
+						? `datetime("${query.alias}"."date" || ' ' || "${query.alias}"."time") Between :startDate AND :endDate`
+						: isPostgres()
+							? `concat("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :startDate AND :endDate`
+							: isMySQL()
+								? p(
+									`concat("${query.alias}"."date", ' ', "${query.alias}"."time") Between :startDate AND :endDate`
+								)
+								: '',
 					{
 						startDate,
 						endDate
 					}
-				)
+				);
 			})
 		);
 		query.andWhere(
@@ -255,8 +256,8 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 					 * Activity Level should be 0-100%
 					 * So, we have convert it into 10 minutes timeslot by multiply by 6
 					 */
-					const start = (activityLevel.start * 6);
-					const end = (activityLevel.end * 6);
+					const start = activityLevel.start * 6;
+					const end = activityLevel.end * 6;
 
 					qb.andWhere(p(`"time_slot"."overall" BETWEEN :start AND :end`), {
 						start,

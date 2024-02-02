@@ -1,5 +1,4 @@
 import {
-	Entity,
 	Column,
 	OneToMany,
 	RelationId,
@@ -30,8 +29,10 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 
-@Entity('product')
+@MultiORMEntity('product', { mikroOrmRepository: () => MikroOrmProductRepository })
 export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@ApiPropertyOptional({ type: () => Boolean })

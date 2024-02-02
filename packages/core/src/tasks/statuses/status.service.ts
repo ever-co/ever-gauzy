@@ -1,10 +1,6 @@
-
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	DeleteResult,
-	Repository
-} from 'typeorm';
+import { DeleteResult } from 'typeorm';
 import {
 	IOrganization,
 	IPagination,
@@ -17,14 +13,18 @@ import { TaskStatusPrioritySizeService } from '../task-status-priority-size.serv
 import { RequestContext } from './../../core/context';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
+import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
+import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
 	constructor(
 		@InjectRepository(TaskStatus)
-		protected readonly taskStatusRepository: Repository<TaskStatus>
+		typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+
+		mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository
 	) {
-		super(taskStatusRepository);
+		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository);
 	}
 
 	/**

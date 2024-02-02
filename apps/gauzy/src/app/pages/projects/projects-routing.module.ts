@@ -51,7 +51,8 @@ const routes: Routes = [
 			{
 				path: ':id',
 				data: {
-					integration: IntegrationEnum.GITHUB,
+					integration: IntegrationEnum.GITHUB, // Custom data associated with this route
+					relations: ['integration'],
 					selectors: {
 						project: false,
 						team: false,

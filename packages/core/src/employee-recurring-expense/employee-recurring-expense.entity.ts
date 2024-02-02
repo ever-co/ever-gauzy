@@ -11,18 +11,18 @@ import {
 	IsDate,
 	IsOptional
 } from 'class-validator';
-import { Column, Entity, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, ManyToOne, RelationId } from 'typeorm';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-orm-employee-recurring-expense.repository';
 
-@Entity('employee_recurring_expense')
-export class EmployeeRecurringExpense
-	extends TenantOrganizationBaseEntity
-	implements IEmployeeRecurringExpense {
-	
+@MultiORMEntity('employee_recurring_expense', { mikroOrmRepository: () => MikroOrmEmployeeRecurringExpenseRepository })
+export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity implements IEmployeeRecurringExpense {
+
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
 	@IsNumber()
 	@IsNotEmpty()
@@ -109,12 +109,12 @@ export class EmployeeRecurringExpense
 	@Column({ nullable: true })
 	parentRecurringExpenseId?: string;
 
-	
+
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
 	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
 		onDelete: 'CASCADE'

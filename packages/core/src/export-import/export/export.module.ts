@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
-// import { getEntitiesFromPlugins } from '@gauzy/plugin';
-// import { getConfig } from '@gauzy/config';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import { getConfig } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
 import { TenantModule } from '../../tenant/tenant.module';
 import { UserModule } from '../../user/user.module';
@@ -17,8 +18,11 @@ import { ExportService } from './export.service';
 		]),
 		TypeOrmModule.forFeature([
 			...coreEntities,
-			// ToDo: We need to load plugins entities here dynamically
-			// ...getEntitiesFromPlugins(getConfig().plugins)
+			...getEntitiesFromPlugins(getConfig().plugins)
+		]),
+		MikroOrmModule.forFeature([
+			...coreEntities,
+			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
 		TenantModule,
 		UserModule,

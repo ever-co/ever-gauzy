@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Entity, Column, ManyToMany, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, ManyToMany, ManyToOne, RelationId, Index } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
@@ -59,8 +59,10 @@ import {
 	User,
 	Warehouse
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
-@Entity('tag')
+@MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	@ApiProperty({ type: () => String, required: true })

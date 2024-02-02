@@ -1,9 +1,7 @@
 // import * as csurf from 'csurf';
-import tracer from './tracer';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SentryService } from '../core/sentry/ntegral';
 import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
@@ -18,11 +16,13 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getSubscribersFromPlugins } from '@gauzy/plugin';
+import tracer from './tracer';
+import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
-import { coreSubscribers } from './../core/entities/subscribers';
+import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
-import { AuthGuard } from './../shared/guards';
+import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
@@ -299,6 +299,9 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>,
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
+		},
+		dbMikroOrmConnectionOptions: {
+			entities: entities as Array<Type<any>>,
 		}
 	});
 

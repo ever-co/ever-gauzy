@@ -108,6 +108,13 @@
 		"Evereq",
 		"exif",
 		"ezkfxg",
+		"Mikro",
+		"mikro",
+		"MikroOrm",
+		"MikroORM",
+		"typeorm",
+		"typeOrm",
+		"typeORM",
 		"Fargate",
 		"fastify",
 		"fbstate",
@@ -437,7 +444,8 @@
 		"Yostorono",
 		"zfgk",
 		"Zrdm",
-		"TIMESTAMPDIFF",
+		"mikro",
+		"TIMESTAMPDIFF"
 		"listbox",
 		"combobox",
 		"tabid"

@@ -1,4 +1,4 @@
-import { Column, Entity, Index, OneToMany } from 'typeorm';
+import { Column, Index, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -7,14 +7,16 @@ import {
 	IJobPresetUpworkJobSearchCriterion,
 	IEmployeeUpworkJobsSearchCriterion
 } from '@gauzy/contracts';
+import { isMySQL } from "@gauzy/config";
 import {
 	EmployeeUpworkJobsSearchCriterion,
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { isMySQL } from "@gauzy/config";
+import { MultiORMEntity } from './../../core/decorators/entity';
+import { MikroOrmJobSearchOccupationRepository } from './repository/mikro-orm-job-search-occupation.repository';
 
-@Entity('job_search_occupation')
+@MultiORMEntity('job_search_occupation', { mikroOrmRepository: () => MikroOrmJobSearchOccupationRepository })
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
 
 	@ApiProperty({ type: () => String })

@@ -1,35 +1,26 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	IsNull,
-	Repository,
-	SelectQueryBuilder,
-	Brackets,
-	WhereExpressionBuilder,
-	Raw,
-} from 'typeorm';
-import {
-	IEmployee,
-	IGetTaskOptions,
-	IPagination,
-	ITask,
-	PermissionsEnum,
-} from '@gauzy/contracts';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
 import { isUUID } from 'class-validator';
+import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
 import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
+import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		@InjectRepository(Task)
-		private readonly taskRepository: Repository<Task>
+		typeOrmTaskRepository: TypeOrmTaskRepository,
+
+		mikroOrmTaskRepository: MikroOrmTaskRepository
 	) {
-		super(taskRepository);
+		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
 
 	/**
@@ -65,7 +56,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		`);
 
 		// Execute the raw SQL query with the issueId parameter
-		const result = await this.taskRepository.query(query, [issueId]);
+		const result = await this.repository.query(query, [issueId]);
 
 		// Check if any epic was found and return it, or return null
 		if (result.length > 0) {
@@ -94,15 +85,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
-			const {
-				status,
-				title,
-				prefix,
-				organizationSprintId = null,
-			} = where;
+			const { status, title, prefix, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 
-			const query = this.taskRepository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 			query.innerJoin(`${query.alias}.members`, 'members');
 			/**
 			 * If find options
@@ -111,91 +97,61 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				if ('skip' in options) {
 					query.setFindOptions({
 						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10,
+						take: options.take || 10
 					});
 				}
 				query.setFindOptions({
-					...(options.relations
-						? { relations: options.relations }
-						: {}),
+					...(options.relations ? { relations: options.relations } : {})
 				});
 			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
-				subQuery
-					.select(p('"task_employee"."taskId"'))
-					.from(p("task_employee"), p("task_employee"));
+				subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 
 				// If user have permission to change employee
-				if (
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-				) {
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
-						subQuery.andWhere(
-							p('"task_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
+						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
 					}
 				} else {
 					// If employee has login and don't have permission to change employee
 					const employeeId = RequestContext.currentEmployeeId();
 					if (isNotEmpty(employeeId)) {
-						subQuery.andWhere(
-							p('"task_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
+						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
 					}
 				}
-				return (
-					p('"task_members"."taskId" IN ') +
-					subQuery.distinct(true).getQuery()
-				);
+				return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(
-						p(`"${query.alias}"."organizationId" = :organizationId`),
-						{ organizationId }
-					);
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId,
-					});
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (isNotEmpty(projectId)) {
-						qb.andWhere(
-							p(`"${query.alias}"."projectId" = :projectId`),
-							{ projectId }
-						);
+						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 					}
 					if (isNotEmpty(status)) {
 						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status,
+							status
 						});
 					}
 					if (isNotEmpty(title)) {
 						qb.andWhere(p(`"${query.alias}"."title" ILIKE :title`), {
-							title: `%${title}%`,
+							title: `%${title}%`
 						});
 					}
 					if (isNotEmpty(title)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ILIKE :prefix`), {
-							prefix: `%${prefix}%`,
+							prefix: `%${prefix}%`
 						});
 					}
-					if (
-						isNotEmpty(organizationSprintId) &&
-						!isUUID(organizationSprintId)
-					) {
-						qb.andWhere(
-							p(`"${query.alias}"."organizationSprintId" IS NULL`)
-						);
+					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
 				})
 			);
@@ -213,12 +169,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param filter
 	 * @returns
 	 */
-	async getAllTasksByEmployee(
-		employeeId: IEmployee['id'],
-		options: PaginationParams<Task>
-	) {
+	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task>) {
 		try {
-			const query = this.taskRepository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 			/**
@@ -227,18 +180,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where,
+					where: options.where
 				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations,
-				}),
+					relations: options.relations
+				})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId,
+						tenantId
 					});
 				})
 			);
@@ -246,36 +199,20 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
-						subQuery
-							.select(p('"task_employee"."taskId"'))
-							.from(p("task_employee"), p("task_employee"));
-						subQuery.andWhere(
-							p('"task_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
-						return (
-							p('"task_members"."taskId" IN ') +
-							subQuery.distinct(true).getQuery()
-						);
+						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
+						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
+						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
 					web.orWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
-						subQuery
-							.select(p('"task_team"."taskId"'))
-							.from(p("task_team"), p("task_team"));
+						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 						subQuery.leftJoin(
 							'organization_team_employee',
 							'organization_team_employee',
 							p('"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"')
 						);
-						subQuery.andWhere(
-							p('"organization_team_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
-						return (
-							p('"task_teams"."taskId" IN ') +
-							subQuery.distinct(true).getQuery()
-						);
+						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
+						return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
 				})
 			);
@@ -291,21 +228,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	async findTeamTasks(
-		options: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
-			const {
-				status,
-				teams = [],
-				title,
-				prefix,
-				organizationSprintId = null,
-			} = where;
+
+			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 
-			const query = this.taskRepository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
 			/**
@@ -315,73 +245,48 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				if ('skip' in options) {
 					query.setFindOptions({
 						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10,
+						take: options.take || 10
 					});
 				}
 				query.setFindOptions({
 					...(options.select ? { select: options.select } : {}),
-					...(options.relations
-						? { relations: options.relations }
-						: {}),
-					...(options.order ? { order: options.order } : {}),
+					...(options.relations ? { relations: options.relations } : {}),
+					...(options.order ? { order: options.order } : {})
 				});
 			}
 			query.andWhere((qb: SelectQueryBuilder<Task>) => {
 				const subQuery = qb.subQuery();
-				subQuery
-					.select(p('"task_team"."taskId"'))
-					.from(p("task_team"), p("task_team"));
+				subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 				subQuery.leftJoin(
 					'organization_team_employee',
 					'organization_team_employee',
 					p('"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"')
 				);
 				// If user have permission to change employee
-				if (
-					RequestContext.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-				) {
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					if (isNotEmpty(members) && isNotEmpty(members['id'])) {
 						const employeeId = members['id'];
-						subQuery.andWhere(
-							p('"organization_team_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
+						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
 					}
 				} else {
 					// If employee has login and don't have permission to change employee
 					const employeeId = RequestContext.currentEmployeeId();
 					if (isNotEmpty(employeeId)) {
-						subQuery.andWhere(
-							p('"organization_team_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
+						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
 					}
 				}
 				if (isNotEmpty(teams)) {
-					subQuery.andWhere(
-						p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`),
-						{
-							teams,
-						}
-					);
+					subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), {
+						teams
+					});
 				}
-				return (
-					p(`"task_teams"."taskId" IN `) +
-					subQuery.distinct(true).getQuery()
-				);
+				return p(`"task_teams"."taskId" IN `) + subQuery.distinct(true).getQuery();
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(
-						p(`"${query.alias}"."organizationId" = :organizationId`),
-						{ organizationId }
-					);
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId,
-					});
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			if (isNotEmpty(projectId) && isNotEmpty(teams)) {
@@ -394,26 +299,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 					if (isNotEmpty(status)) {
 						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status,
+							status
 						});
 					}
 					if (isNotEmpty(title)) {
 						qb.andWhere(p(`"${query.alias}"."title" ILIKE :title`), {
-							title: `%${title}%`,
+							title: `%${title}%`
 						});
 					}
 					if (isNotEmpty(title)) {
 						qb.andWhere(p(`"${query.alias}"."prefix" ILIKE :prefix`), {
-							prefix: `%${prefix}%`,
+							prefix: `%${prefix}%`
 						});
 					}
-					if (
-						isNotEmpty(organizationSprintId) &&
-						!isUUID(organizationSprintId)
-					) {
-						qb.andWhere(
-							p(`"${query.alias}"."organizationSprintId" IS NULL`)
-						);
+					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
+						qb.andWhere(p(`"${query.alias}"."organizationSprintId" IS NULL`));
 					}
 				})
 			);
@@ -430,27 +330,27 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param options
 	 * @returns
 	 */
-	public async pagination(
-		options: PaginationParams<Task>
-	): Promise<IPagination<ITask>> {
+	public async pagination(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		if ('where' in options) {
 			const { where } = options;
 			if ('title' in where) {
 				const { title } = where;
-				options['where']['title'] = Raw(
-					(alias) => `${alias} ILIKE '%${title}%'`
-				);
+				options['where']['title'] = Raw((alias) => `${alias} ILIKE '%${title}%'`);
 			}
 			if ('prefix' in where) {
 				const { prefix } = where;
-				options['where']['prefix'] = Raw(
-					(alias) => `${alias} ILIKE '%${prefix}%'`
-				);
+				options['where']['prefix'] = Raw((alias) => `${alias} ILIKE '%${prefix}%'`);
 			}
 			if ('organizationSprintId' in where) {
 				const { organizationSprintId } = where;
 				if (!isUUID(organizationSprintId)) {
 					options['where']['organizationSprintId'] = IsNull();
+				}
+			}
+			if ('teams' in where) {
+				const { teams } = where;
+				options.where.teams = {
+					id: In(teams as string[])
 				}
 			}
 		}
@@ -468,7 +368,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 
-			const query = this.taskRepository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 
 			// Build the query to get the maximum task number
 			query.select(p(`COALESCE(MAX("${query.alias}"."number"), 0)`), 'maxTaskNumber');
@@ -507,20 +407,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * @param employeeId
 	 * @param organizationTeamId
 	 */
-	public async unassignEmployeeFromTeamTasks(
-		employeeId: string,
-		organizationTeamId: string
-	) {
+	public async unassignEmployeeFromTeamTasks(employeeId: string, organizationTeamId: string) {
 		try {
-			const query = this.taskRepository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.alias);
 			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
 			if (organizationTeamId) {
-				query.leftJoinAndSelect(
-					`${query.alias}.teams`,
-					'teams',
-					'teams.id = :organizationTeamId',
-					{ organizationTeamId }
-				);
+				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams', 'teams.id = :organizationTeamId', {
+					organizationTeamId
+				});
 			} else {
 				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams');
 			}
@@ -529,7 +423,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId,
+						tenantId
 					});
 				})
 			);
@@ -537,37 +431,21 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				new Brackets((web: WhereExpressionBuilder) => {
 					web.andWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
-						subQuery
-							.select(p('"task_employee"."taskId"'))
-							.from(p("task_employee"), p("task_employee"));
-						subQuery.andWhere(
-							p('"task_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
-						return (
-							p('"task_members"."taskId" IN ') +
-							subQuery.distinct(true).getQuery()
-						);
+						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
+						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
+						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
 					web.orWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
-						subQuery
-							.select(p('"task_team"."taskId"'))
-							.from(p("task_team"), p("task_team"));
+						subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
 						subQuery.leftJoin(
 							'organization_team_employee',
 							'organization_team_employee',
 							p('"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"')
 						);
-						subQuery.andWhere(
-							p('"organization_team_employee"."employeeId" = :employeeId'),
-							{ employeeId }
-						);
+						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
 
-						return (
-							p('"task_teams"."taskId" IN ') +
-							subQuery.distinct(true).getQuery()
-						);
+						return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
 					});
 				})
 			);
@@ -578,17 +456,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere((qb: SelectQueryBuilder<Task>) => {
 							const subQuery = qb.subQuery();
-							subQuery
-								.select(p('"task_team"."taskId"'))
-								.from(p("task_team"), p("task_team"));
-							subQuery.andWhere(
-								p('"task_teams"."organizationTeamId" = :organizationTeamId'),
-								{ employeeId }
-							);
-							return (
-								p('"task_teams"."taskId" IN ') +
-								subQuery.distinct(true).getQuery()
-							);
+							subQuery.select(p('"task_team"."taskId"')).from(p('task_team'), p('task_team'));
+							subQuery.andWhere(p('"task_teams"."organizationTeamId" = :organizationTeamId'), {
+								employeeId
+							});
+							return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
 						});
 					})
 				);
@@ -600,9 +472,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// Unassign member from All the Team Tasks
 			tasks.forEach((task) => {
 				if (task.teams.length) {
-					task.members = task.members.filter(
-						(member) => member.id !== employeeId
-					);
+					task.members = task.members.filter((member) => member.id !== employeeId);
 				}
 			});
 

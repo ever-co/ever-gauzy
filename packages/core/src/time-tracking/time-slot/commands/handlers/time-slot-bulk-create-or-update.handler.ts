@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { In } from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { isEmpty } from '@gauzy/common';
@@ -9,22 +9,25 @@ import { TimeSlotBulkCreateOrUpdateCommand } from './../time-slot-bulk-create-or
 import { RequestContext } from '../../../../core/context';
 import { TimeSlotMergeCommand } from './../time-slot-merge.command';
 import { Employee, TimeLog } from './../../../../core/entities/internal';
+import { TypeOrmTimeLogRepository } from '../../../time-log/repository/type-orm-time-log.repository';
+import { TypeOrmTimeSlotRepository } from '../../repository/type-orm-time-slot.repository';
+import { TypeOrmEmployeeRepository } from '../../../../employee/repository/type-orm-employee.repository';
 
 @CommandHandler(TimeSlotBulkCreateOrUpdateCommand)
-export class TimeSlotBulkCreateOrUpdateHandler
-	implements ICommandHandler<TimeSlotBulkCreateOrUpdateCommand> {
+export class TimeSlotBulkCreateOrUpdateHandler implements ICommandHandler<TimeSlotBulkCreateOrUpdateCommand> {
+
 	constructor(
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
 		@InjectRepository(TimeSlot)
-		private readonly timeSlotRepository: Repository<TimeSlot>,
+		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	public async execute(
 		command: TimeSlotBulkCreateOrUpdateCommand
@@ -39,7 +42,7 @@ export class TimeSlotBulkCreateOrUpdateHandler
 			return slot;
 		});
 
-		const insertedSlots = await this.timeSlotRepository.find({
+		const insertedSlots = await this.typeOrmTimeSlotRepository.find({
 			where: {
 				startedAt: In(_.pluck(slots, 'startedAt'))
 			},
@@ -47,7 +50,7 @@ export class TimeSlotBulkCreateOrUpdateHandler
 		});
 
 		if (isEmpty(organizationId)) {
-			const employee = await this.employeeRepository.findOneBy({
+			const employee = await this.typeOrmEmployeeRepository.findOneBy({
 				id: employeeId
 			});
 			organizationId = employee.organizationId;
@@ -67,7 +70,7 @@ export class TimeSlotBulkCreateOrUpdateHandler
 			.values()
 			.value();
 
-		const timeLogs = await this.timeLogRepository.find({
+		const timeLogs = await this.typeOrmTimeLogRepository.find({
 			where: {
 				id: In(timeLogIds)
 			}
@@ -105,7 +108,7 @@ export class TimeSlotBulkCreateOrUpdateHandler
 				}
 			});
 		}
-		await this.timeSlotRepository.save(slots);
+		await this.typeOrmTimeSlotRepository.save(slots);
 
 		const dates = slots.map((slot) => moment.utc(slot.startedAt).toDate());
 		const minDate = dates.reduce(function (a, b) {

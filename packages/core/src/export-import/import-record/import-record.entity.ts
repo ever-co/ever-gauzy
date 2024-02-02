@@ -1,10 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { IsDate } from 'class-validator';
 import { IImportRecord } from '@gauzy/contracts';
+import { MultiORMEntity } from './../../core/decorators/entity';
 import { TenantBaseEntity } from '../../core/entities/internal';
+import { MikroOrmImportRecordRepository } from './repository/mikro-orm-import-record.repository';
 
-@Entity('import-record')
+@MultiORMEntity('import-record', { mikroOrmRepository: () => MikroOrmImportRecordRepository })
 export class ImportRecord extends TenantBaseEntity implements IImportRecord {
 
 	@ApiProperty({ type: () => String })

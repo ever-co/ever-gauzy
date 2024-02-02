@@ -1,18 +1,7 @@
-import {
-	Injectable,
-	BadRequestException,
-	NotAcceptableException
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
 import { TimeLog } from './time-log.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	Repository,
-	SelectQueryBuilder,
-	Brackets,
-	WhereExpressionBuilder,
-	DeleteResult,
-	UpdateResult
-} from 'typeorm';
+import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
@@ -40,11 +29,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { chain, pluck } from 'underscore';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../../core/crud';
-import {
-	Employee,
-	OrganizationContact,
-	OrganizationProject
-} from '../../core/entities/internal';
+import { Employee, OrganizationContact, OrganizationProject } from '../../core/entities/internal';
 import {
 	DeleteTimeSpanCommand,
 	GetTimeLogGroupByClientCommand,
@@ -60,6 +45,14 @@ import { getDateRangeFormat, getDaysBetweenDates } from './../../core/utils';
 import { moment } from './../../core/moment-extend';
 import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
+import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
+import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
+import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
+import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository } from '../../organization-project/repository/mikro-orm-organization-project.repository';
+import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
+import { MikroOrmOrganizationContactRepository } from '../../organization-contact/repository/mikro-orm-organization-contact.repository';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -67,18 +60,26 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		private readonly commandBus: CommandBus,
 
 		@InjectRepository(TimeLog)
-		private readonly timeLogRepository: Repository<TimeLog>,
+		typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+
+		mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>,
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 
 		@InjectRepository(OrganizationProject)
-		private readonly organizationProjectRepository: Repository<OrganizationProject>,
+		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 
 		@InjectRepository(OrganizationContact)
-		private readonly organizationContactRepository: Repository<OrganizationContact>
+		private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+
+		mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository
 	) {
-		super(timeLogRepository);
+		super(typeOrmTimeLogRepository, mikroOrmTimeLogRepository);
 	}
 
 	/**
@@ -88,7 +89,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getTimeLogs(request: IGetTimeLogInput): Promise<ITimeLog[]> {
 		// Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -123,9 +124,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					}
 				}
 			},
-			relations: [
-				...(request.relations ? request.relations : [])
-			],
+			relations: [...(request.relations ? request.relations : [])],
 			order: {
 				// Order results by the 'startedAt' field in ascending order
 				startedAt: 'ASC'
@@ -150,7 +149,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getWeeklyReport(request: IGetTimeLogReportInput) {
 		// Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.repository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -205,38 +204,41 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
 
 		// Process weekly logs using lodash and Moment.js
-		const weeklyLogs = chain(logs).groupBy('employeeId').map((logs: ITimeLog[]) => {
-			// Calculate average duration for specific employee.
-			const weeklyDuration = calculateAverage(pluck(logs, 'duration'));
+		const weeklyLogs = chain(logs)
+			.groupBy('employeeId')
+			.map((logs: ITimeLog[]) => {
+				// Calculate average duration for specific employee.
+				const weeklyDuration = calculateAverage(pluck(logs, 'duration'));
 
-			// Calculate average weekly activity for specific employee.
-			const weeklyActivity = calculateAverageActivity(chain(logs).pluck('timeSlots').flatten(true).value());
+				// Calculate average weekly activity for specific employee.
+				const weeklyActivity = calculateAverageActivity(chain(logs).pluck('timeSlots').flatten(true).value());
 
-			const byDate = chain(logs)
-				.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
-				.mapObject((logs: ITimeLog[]) => {
-					// Calculate average duration of the employee for specific date range.
-					const sum = calculateAverage(pluck(logs, 'duration'));
-					return { sum, logs };
-				})
-				.value();
+				const byDate = chain(logs)
+					.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
+					.mapObject((logs: ITimeLog[]) => {
+						// Calculate average duration of the employee for specific date range.
+						const sum = calculateAverage(pluck(logs, 'duration'));
+						return { sum, logs };
+					})
+					.value();
 
-			// Retrieve employee details
-			const employee = logs.length > 0 ? logs[0].employee : null;
+				// Retrieve employee details
+				const employee = logs.length > 0 ? logs[0].employee : null;
 
-			const dates: Record<string, any> = {};
-			days.forEach((date) => {
-				dates[date] = byDate[date] || 0;
-			});
+				const dates: Record<string, any> = {};
+				days.forEach((date) => {
+					dates[date] = byDate[date] || 0;
+				});
 
-			// Return the processed weekly logs data
-			return {
-				employee,
-				dates,
-				sum: weeklyDuration || null,
-				activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2))
-			};
-		}).value();
+				// Return the processed weekly logs data
+				return {
+					employee,
+					dates,
+					sum: weeklyDuration || null,
+					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2))
+				};
+			})
+			.value();
 
 		return weeklyLogs;
 	}
@@ -248,7 +250,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getDailyReportCharts(request: IGetTimeLogReportInput) {
 		// Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.repository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -291,20 +293,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						[TimeLogType.RESUMED]: parseFloat((resumed / 3600).toFixed(1))
 					}
 				};
-			}).value();
-
+			})
+			.value();
 
 		// Map the calculated values to each date, ensuring no missing dates
 		const dates = days.map((date) => {
-			return byDate[date] || {
-				date,
-				value: {
-					[TimeLogType.TRACKED]: 0,
-					[TimeLogType.MANUAL]: 0,
-					[TimeLogType.IDLE]: 0,
-					[TimeLogType.RESUMED]: 0
+			return (
+				byDate[date] || {
+					date,
+					value: {
+						[TimeLogType.TRACKED]: 0,
+						[TimeLogType.MANUAL]: 0,
+						[TimeLogType.IDLE]: 0,
+						[TimeLogType.RESUMED]: 0
+					}
 				}
-			};
+			);
 		});
 
 		// Return the array of daily time log chart reports
@@ -321,7 +325,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { timezone } = request;
 
 		// Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.repository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -404,24 +408,16 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let dailyLogs: any;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByEmployeeCommand(logs, timezone)
-				);
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(logs, timezone));
 				break;
 			case ReportGroupFilterEnum.project:
-				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByProjectCommand(logs, timezone)
-				);
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByProjectCommand(logs, timezone));
 				break;
 			case ReportGroupFilterEnum.client:
-				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByClientCommand(logs, timezone)
-				);
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByClientCommand(logs, timezone));
 				break;
 			default:
-				dailyLogs = await this.commandBus.execute(
-					new GetTimeLogGroupByDateCommand(logs, timezone)
-				);
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, timezone));
 				break;
 		}
 
@@ -439,7 +435,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { timezone } = request;
 
 		// Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.repository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -483,26 +479,30 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 			.map((byDateLogs: ITimeLog[], date: string) => {
-				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
-					// Calculate average duration for specific employee.
-					const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						// Calculate average duration for specific employee.
+						const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
 
-					// Retrieve employee details
-					const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
-					const amount = employee?.billRateValue * (durationSum / 3600);
+						// Retrieve employee details
+						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
+						const amount = employee?.billRateValue * (durationSum / 3600);
 
-					return {
-						employee,
-						amount: parseFloat(amount.toFixed(1)),
-						duration: durationSum
-					};
-				}).value();
+						return {
+							employee,
+							amount: parseFloat(amount.toFixed(1)),
+							duration: durationSum
+						};
+					})
+					.value();
 
 				return {
 					date,
 					employees: byEmployee
 				};
-			}).value();
+			})
+			.value();
 
 		return dailyLogs;
 	}
@@ -514,7 +514,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getOwedAmountReportCharts(request: IGetTimeLogReportInput) {
 		// Step 1: Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.repository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -561,22 +561,25 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timezone).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
-				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
-					// Calculate average duration for specific employee.
-					const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						// Calculate average duration for specific employee.
+						const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
 
-					// Retrieve employee details
-					const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
+						// Retrieve employee details
+						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
-					// Calculate the owed amount based on the employee's bill rate and duration
-					const amount = employee?.billRateValue * (durationSum / 3600);
+						// Calculate the owed amount based on the employee's bill rate and duration
+						const amount = employee?.billRateValue * (durationSum / 3600);
 
-					return {
-						employee,
-						amount: parseFloat(amount.toFixed(1)),
-						duration: durationSum
-					};
-				}).value();
+						return {
+							employee,
+							amount: parseFloat(amount.toFixed(1)),
+							duration: durationSum
+						};
+					})
+					.value();
 
 				// Calculate the total owed amount for all employees on a specific date
 				const value = byEmployee.reduce((iteratee: any, item: any) => {
@@ -584,7 +587,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				}, 0);
 
 				return { date, value };
-			}).value();
+			})
+			.value();
 
 		// Map the result to an array of owed amount report chart data
 		const dates = days.map((date) => ({
@@ -608,7 +612,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Create a query builder for the TimeLog entity
-		const query = this.timeLogRepository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.alias);
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -656,46 +660,49 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const byDate: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timezone).startOf(request.duration).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
-				const byEmployee = chain(byDateLogs).groupBy('employeeId').map((byEmployeeLogs: ITimeLog[]) => {
-					// Calculate average duration for specific employee.
-					const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
+				const byEmployee = chain(byDateLogs)
+					.groupBy('employeeId')
+					.map((byEmployeeLogs: ITimeLog[]) => {
+						// Calculate average duration for specific employee.
+						const durationSum = calculateAverage(pluck(byEmployeeLogs, 'duration'));
 
-					// Retrieve employee details
-					const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
+						// Retrieve employee details
+						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
-					let limit = employee ? employee.reWeeklyLimit * 60 * 60 : 0;
+						let limit = employee ? employee.reWeeklyLimit * 60 * 60 : 0;
 
-					// Define a mapping object for duration multipliers
-					const multipliers = {
-						'day': 1 / 5,
-						'month': 4
-					};
+						// Define a mapping object for duration multipliers
+						const multipliers = {
+							day: 1 / 5,
+							month: 4
+						};
 
-					// Check if the requested duration is in the mapping object
-					if (request.duration in multipliers) {
-						const durationMultiplier = multipliers[request.duration];
+						// Check if the requested duration is in the mapping object
+						if (request.duration in multipliers) {
+							const durationMultiplier = multipliers[request.duration];
 
-						// Update the limit using the corresponding multiplier
-						limit *= durationMultiplier;
-					}
+							// Update the limit using the corresponding multiplier
+							limit *= durationMultiplier;
+						}
 
-					// Calculate duration percentage, handling the case where limit is 0
-					const durationPercentage = limit !== 0 ? (durationSum * 100) / limit : 0;
+						// Calculate duration percentage, handling the case where limit is 0
+						const durationPercentage = limit !== 0 ? (durationSum * 100) / limit : 0;
 
-					return {
-						employee,
-						duration: durationSum,
-						durationPercentage: Number.isFinite(durationPercentage) ? durationPercentage.toFixed(2) : 0,
-						limit
-					};
-				}).value();
+						return {
+							employee,
+							duration: durationSum,
+							durationPercentage: Number.isFinite(durationPercentage) ? durationPercentage.toFixed(2) : 0,
+							limit
+						};
+					})
+					.value();
 
 				return { date, employees: byEmployee };
 			})
 			.value();
 
 		// Create an array of ITimeLimitReport for each date.
-		const dates = days.map((date) => byDate[date] ? byDate[date] : { date, employees: [] });
+		const dates = days.map((date) => (byDate[date] ? byDate[date] : { date, employees: [] }));
 
 		// Return the final result as an array of ITimeLimitReport.
 		return dates as ITimeLimitReport[];
@@ -711,7 +718,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		// Step 1: Create a query builder for the OrganizationProject entity
-		const query = this.organizationProjectRepository.createQueryBuilder('organization_project');
+		const query = this.typeOrmOrganizationProjectRepository.createQueryBuilder('organization_project');
 
 		// Inner join with related entities (employee, timeLogs)
 		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -766,10 +773,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
 
 				// Date range condition
-				const { start, end } = getDateRangeFormat(
-					moment.utc(startDate),
-					moment.utc(endDate)
-				);
+				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
 				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
 					startDate: start,
 					endDate: end
@@ -791,38 +795,43 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve organization projects
 		const organizationProjects = await query.getMany();
 
-		const projects = organizationProjects.map((organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
-			const { budgetType, timeLogs = [] } = organizationProject;
-			const budget = organizationProject.budget || 0;
+		const projects = organizationProjects.map(
+			(organizationProject: IOrganizationProject): IProjectBudgetLimitReport => {
+				const { budgetType, timeLogs = [] } = organizationProject;
+				const budget = organizationProject.budget || 0;
 
-			let spent = 0;
-			let spentPercentage = 0;
-			let remainingBudget = 0;
+				let spent = 0;
+				let spentPercentage = 0;
+				let remainingBudget = 0;
 
-			if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
-				spent = timeLogs.reduce((totalDuration: number, log: ITimeLog) => totalDuration + log.duration / 3600, 0);
-			} else {
-				spent = timeLogs.reduce((totalAmount: number, log: ITimeLog) => {
-					const logAmount = log.employee ? (log.duration / 3600) * log.employee.billRateValue : 0;
-					return totalAmount + logAmount;
-				}, 0);
+				if (budgetType == OrganizationProjectBudgetTypeEnum.HOURS) {
+					spent = timeLogs.reduce(
+						(totalDuration: number, log: ITimeLog) => totalDuration + log.duration / 3600,
+						0
+					);
+				} else {
+					spent = timeLogs.reduce((totalAmount: number, log: ITimeLog) => {
+						const logAmount = log.employee ? (log.duration / 3600) * log.employee.billRateValue : 0;
+						return totalAmount + logAmount;
+					}, 0);
+				}
+
+				spentPercentage = (spent * 100) / budget;
+				remainingBudget = Math.max(budget - spent, 0);
+
+				// Remove timeLogs property from the organizationProject object
+				const { timeLogs: _, ...projectWithoutTimeLogs } = organizationProject;
+
+				return {
+					project: projectWithoutTimeLogs,
+					budgetType,
+					budget,
+					spent: parseFloat(spent.toFixed(2)),
+					remainingBudget: Number.isFinite(remainingBudget) ? parseFloat(remainingBudget.toFixed(2)) : 0,
+					spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0
+				};
 			}
-
-			spentPercentage = (spent * 100) / budget;
-			remainingBudget = Math.max(budget - spent, 0);
-
-			// Remove timeLogs property from the organizationProject object
-			const { timeLogs: _, ...projectWithoutTimeLogs } = organizationProject;
-
-			return {
-				project: projectWithoutTimeLogs,
-				budgetType,
-				budget,
-				spent: parseFloat(spent.toFixed(2)),
-				remainingBudget: Number.isFinite(remainingBudget) ? parseFloat(remainingBudget.toFixed(2)) : 0,
-				spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0,
-			};
-		});
+		);
 
 		return projects;
 	}
@@ -837,7 +846,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const tenantId = RequestContext.currentTenantId();
 
 		// Step 1: Create a query builder for the OrganizationClient entity
-		const query = this.organizationContactRepository.createQueryBuilder('organization_contact');
+		const query = this.typeOrmOrganizationContactRepository.createQueryBuilder('organization_contact');
 
 		// Inner join with related entities (employee, timeLogs)
 		query.innerJoin(`${query.alias}.timeLogs`, 'timeLogs');
@@ -878,10 +887,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				qb.andWhere(p(`"timeLogs"."organizationId" =:organizationId`), { organizationId });
 				qb.andWhere(p(`"timeLogs"."tenantId" =:tenantId`), { tenantId });
 
-				const { start, end } = getDateRangeFormat(
-					moment.utc(startDate),
-					moment.utc(endDate)
-				);
+				const { start, end } = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
 				qb.andWhere(p(`"timeLogs"."startedAt" >= :startDate AND "timeLogs"."startedAt" < :endDate`), {
 					startDate: start,
 					endDate: end
@@ -904,27 +910,32 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// Execute the query and retrieve organization contacts
 		const organizationContacts = await query.getMany();
 
-		const clients = organizationContacts.map((organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
-			const { budgetType, timeLogs = [], ...contactWithoutTimeLogs } = organizationContact;
-			const budget = organizationContact.budget || 0;
+		const clients = organizationContacts.map(
+			(organizationContact: IOrganizationContact): IClientBudgetLimitReport => {
+				const { budgetType, timeLogs = [], ...contactWithoutTimeLogs } = organizationContact;
+				const budget = organizationContact.budget || 0;
 
-			const spent = timeLogs.reduce((total: number, log: ITimeLog) => {
-				const amount = (budgetType === OrganizationContactBudgetTypeEnum.HOURS) ? total + log.duration / 3600 : total + ((log.duration / 3600) * (log.employee?.billRateValue || 0));
-				return amount;
-			}, 0);
+				const spent = timeLogs.reduce((total: number, log: ITimeLog) => {
+					const amount =
+						budgetType === OrganizationContactBudgetTypeEnum.HOURS
+							? total + log.duration / 3600
+							: total + (log.duration / 3600) * (log.employee?.billRateValue || 0);
+					return amount;
+				}, 0);
 
-			const spentPercentage = (spent * 100) / budget;
-			const remainingBudget = Math.max(budget - spent, 0);
+				const spentPercentage = (spent * 100) / budget;
+				const remainingBudget = Math.max(budget - spent, 0);
 
-			return {
-				organizationContact: { ...contactWithoutTimeLogs },
-				budgetType,
-				budget,
-				spent: parseFloat(spent.toFixed(2)),
-				remainingBudget: Number.isFinite(remainingBudget) ? parseFloat(remainingBudget.toFixed(2)) : 0,
-				spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0,
-			};
-		});
+				return {
+					organizationContact: { ...contactWithoutTimeLogs },
+					budgetType,
+					budget,
+					spent: parseFloat(spent.toFixed(2)),
+					remainingBudget: Number.isFinite(remainingBudget) ? parseFloat(remainingBudget.toFixed(2)) : 0,
+					spentPercentage: Number.isFinite(spentPercentage) ? parseFloat(spentPercentage.toFixed(2)) : 0
+				};
+			}
+		);
 
 		return clients;
 	}
@@ -967,10 +978,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				moment.utc(request.startDate || moment().startOf('day')),
 				moment.utc(request.endDate || moment().endOf('day'))
 			);
-			query.andWhere(p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`), {
-				startDate,
-				endDate
-			});
+			query.andWhere(
+				p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`),
+				{
+					startDate,
+					endDate
+				}
+			);
 		}
 
 		// Filter by organization employee IDs if used in the request
@@ -1052,7 +1066,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.employeeRepository.findOne({
+			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
 				where: { id: employeeId },
 				relations: { organization: true }
 			});
@@ -1087,17 +1101,13 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				for await (const timeLog of conflicts) {
 					const { timeSlots = [] } = timeLog;
 					for await (const timeSlot of timeSlots) {
-						await this.commandBus.execute(
-							new DeleteTimeSpanCommand(times, timeLog, timeSlot)
-						);
+						await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
 					}
 				}
 			}
 
 			// Create the new time log entry
-			return await this.commandBus.execute(
-				new TimeLogCreateCommand(request)
-			);
+			return await this.commandBus.execute(new TimeLogCreateCommand(request));
 		} catch (error) {
 			// Handle exceptions appropriately
 			throw new BadRequestException('Failed to add manual time log');
@@ -1111,10 +1121,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request The updated data for the manual time log.
 	 * @returns The updated time log entry.
 	 */
-	async updateManualTime(
-		id: ITimeLog['id'],
-		request: IManualTimeInput
-	): Promise<ITimeLog> {
+	async updateManualTime(id: ITimeLog['id'], request: IManualTimeInput): Promise<ITimeLog> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { startedAt, stoppedAt, employeeId, organizationId } = request;
@@ -1125,7 +1132,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Retrieve employee information
-			const employee: IEmployee = await this.employeeRepository.findOne({
+			const employee: IEmployee = await this.typeOrmEmployeeRepository.findOne({
 				where: { id: employeeId },
 				relations: { organization: true }
 			});
@@ -1140,7 +1147,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Check for conflicts with existing time logs
-			const timeLog = await this.timeLogRepository.findOneBy({
+			const timeLog = await this.repository.findOneBy({
 				id: id
 			});
 
@@ -1176,12 +1183,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			request.editedAt = new Date();
 
 			// Execute the command to update the time log
-			await this.commandBus.execute(
-				new TimeLogUpdateCommand(request, timeLog)
-			);
+			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
 			// Retrieve the updated time log entry
-			return await this.timeLogRepository.findOneBy({ id: request.id });
+			return await this.repository.findOneBy({ id: request.id });
 		} catch (error) {
 			// Handle exceptions appropriately
 			throw new BadRequestException('Failed to update manual time log');
@@ -1193,9 +1198,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param params
 	 * @returns
 	 */
-	async deleteTimeLogs(
-		params: IDeleteTimeLog
-	): Promise<DeleteResult | UpdateResult> {
+	async deleteTimeLogs(params: IDeleteTimeLog): Promise<DeleteResult | UpdateResult> {
 		let logIds: string | string[] = params.logIds;
 		if (isEmpty(logIds)) {
 			throw new NotAcceptableException('You can not delete time logs');
@@ -1208,7 +1211,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const user = RequestContext.currentUser();
 		const { organizationId, forceDelete } = params;
 
-		const query = this.timeLogRepository.createQueryBuilder('time_log');
+		const query = this.repository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			relations: {
 				timeSlots: true
@@ -1216,9 +1219,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 		query.where((db: SelectQueryBuilder<TimeLog>) => {
 			db.andWhere({
-				...(RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				)
+				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 					? {}
 					: {
 						employeeId: user.employeeId
@@ -1229,10 +1230,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					web.andWhere(p(`"${db.alias}"."tenantId" = :tenantId`), {
 						tenantId
 					});
-					web.andWhere(
-						p(`"${db.alias}"."organizationId" = :organizationId`),
-						{ organizationId }
-					);
+					web.andWhere(p(`"${db.alias}"."organizationId" = :organizationId`), { organizationId });
 					web.andWhere(p(`"${db.alias}"."id" IN (:...logIds)`), {
 						logIds
 					});
@@ -1241,9 +1239,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		});
 
 		const timeLogs = await query.getMany();
-		return await this.commandBus.execute(
-			new TimeLogDeleteCommand(timeLogs, forceDelete)
-		);
+		return await this.commandBus.execute(new TimeLogDeleteCommand(timeLogs, forceDelete));
 	}
 
 	/**

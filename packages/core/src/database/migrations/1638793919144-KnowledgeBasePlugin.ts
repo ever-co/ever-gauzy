@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import * as chalk from "chalk";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
     name = 'KnowledgeBasePlugin1638793919144';
@@ -14,14 +14,14 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresUpQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlUpQueryRunner(queryRunner);
                 break;
             default:
@@ -35,14 +35,14 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
      */
     public async down(queryRunner: QueryRunner): Promise<void> {
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresDownQueryRunner(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlDownQueryRunner(queryRunner);
                 break;
             default:
@@ -238,11 +238,11 @@ export class KnowledgeBasePlugin1638793919144 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "knowledge_base"`);
     }
 
-        /**
-     * MySQL Up Migration
-     *
-     * @param queryRunner
-     */
+    /**
+ * MySQL Up Migration
+ *
+ * @param queryRunner
+ */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 
     /**

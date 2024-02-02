@@ -3,7 +3,7 @@ import * as chalk from 'chalk';
 import { IntegrationTypeEnum } from "@gauzy/contracts";
 import { DEFAULT_INTEGRATIONS, PROJECT_MANAGE_DEFAULT_INTEGRATIONS } from "../../integration/default-integration";
 import { IntegrationsUtils } from "../../integration/utils";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class SeedIntegrationsAndIntegrationTypes1695112275840 implements MigrationInterface {
 
@@ -18,12 +18,12 @@ export class SeedIntegrationsAndIntegrationTypes1695112275840 implements Migrati
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
+            case DatabaseTypeEnum.postgres:
                 await this.sqlitePostgresUpsert(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlUpsert(queryRunner);
                 break;
             default:

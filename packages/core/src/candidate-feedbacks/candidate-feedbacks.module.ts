@@ -9,11 +9,13 @@ import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { CandidateFeedbacksController } from './candidate-feedbacks.controller';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/candidate-feedbacks', module: CandidateFeedbacksModule }]),
 		TypeOrmModule.forFeature([CandidateFeedback]),
+		MikroOrmModule.forFeature([CandidateFeedback]),
 		TenantModule,
 		UserModule,
 		CandidateInterviewModule,
@@ -23,4 +25,4 @@ import { CommandHandlers } from './commands/handlers';
 	controllers: [CandidateFeedbacksController],
 	exports: [CandidateFeedbacksService]
 })
-export class CandidateFeedbacksModule {}
+export class CandidateFeedbacksModule { }

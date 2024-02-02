@@ -10,15 +10,15 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { UserModule } from './../../user/user.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
 import { CommandHandlers } from './commands/handlers';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	controllers: [
 		ScreenshotController
 	],
 	imports: [
-		TypeOrmModule.forFeature([
-			Screenshot
-		]),
+		TypeOrmModule.forFeature([Screenshot]),
+		MikroOrmModule.forFeature([Screenshot]),
 		GauzyAIModule.forRoot(),
 		TenantModule,
 		forwardRef(() => TimeSlotModule),

@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
+import { TypeOrmExpenseCategoryRepository } from './repository/type-orm-expense-category.repository';
+import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-category.repository';
 import { ExpenseCategory } from './expense-category.entity';
 
 @Injectable()
 export class ExpenseCategoriesService extends TenantAwareCrudService<ExpenseCategory> {
 	constructor(
 		@InjectRepository(ExpenseCategory)
-		private readonly expenseCategoryRepository: Repository<ExpenseCategory>
+		typeOrmExpenseCategoryRepository: TypeOrmExpenseCategoryRepository,
+
+		mikroOrmExpenseCategoryRepository: MikroOrmExpenseCategoryRepository
 	) {
-		super(expenseCategoryRepository);
+		super(typeOrmExpenseCategoryRepository, mikroOrmExpenseCategoryRepository);
 	}
 }

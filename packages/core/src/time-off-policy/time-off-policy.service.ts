@@ -1,21 +1,29 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In } from 'typeorm';
 import { ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee } from '../employee/employee.entity';
+import { TypeOrmTimeOffPolicyRepository } from './repository/type-orm-time-off-policy.repository';
+import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { MikroOrmEmployeeRepository } from '../employee/repository/mikro-orm-employee.repository';
 
 @Injectable()
 export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> {
 	constructor(
 		@InjectRepository(TimeOffPolicy)
-		private readonly policyRepository: Repository<TimeOffPolicy>,
+		typeOrmTimeOffPolicyRepository: TypeOrmTimeOffPolicyRepository,
+
+		mikroOrmTimeOffPolicyRepository: MikroOrmTimeOffPolicyRepository,
 
 		@InjectRepository(Employee)
-		private readonly employeeRepository: Repository<Employee>
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
-		super(policyRepository);
+		super(typeOrmTimeOffPolicyRepository, mikroOrmTimeOffPolicyRepository);
 	}
 
 	async create(entity: ITimeOffPolicyCreateInput): Promise<TimeOffPolicy> {
@@ -27,7 +35,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 		policy.requiresApproval = entity.requiresApproval;
 		policy.paid = entity.paid;
 
-		const employees = await this.employeeRepository.find({
+		const employees = await this.typeOrmEmployeeRepository.find({
 			where: {
 				id: In(entity.employees)
 			},
@@ -36,12 +44,12 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			}
 		});
 		policy.employees = employees;
-		return this.policyRepository.save(policy);
+		return this.repository.save(policy);
 	}
 
 	async update(id: string, entity: ITimeOffPolicyUpdateInput): Promise<TimeOffPolicy> {
 		try {
-			await this.policyRepository.delete(id);
+			await this.repository.delete(id);
 			const policy = new TimeOffPolicy();
 
 			policy.name = entity.name;
@@ -50,7 +58,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.requiresApproval = entity.requiresApproval;
 			policy.paid = entity.paid;
 
-			const employees = await this.employeeRepository.find({
+			const employees = await this.typeOrmEmployeeRepository.find({
 				where: {
 					id: In(entity.employees)
 				},
@@ -59,7 +67,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 				}
 			});
 			policy.employees = employees;
-			return this.policyRepository.save(policy);
+			return this.repository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

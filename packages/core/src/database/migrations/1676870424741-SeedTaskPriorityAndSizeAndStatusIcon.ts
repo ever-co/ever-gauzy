@@ -5,7 +5,7 @@ import { copyAssets } from "../../core/seeds/utils";
 import { DEFAULT_GLOBAL_PRIORITIES } from "../../tasks/priorities/default-global-priorities";
 import { DEFAULT_GLOBAL_SIZES } from "../../tasks/sizes/default-global-sizes";
 import { DEFAULT_GLOBAL_STATUSES } from "../../tasks/statuses/default-global-statuses";
-import { databaseTypes } from "@gauzy/config";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements MigrationInterface {
 
@@ -21,18 +21,18 @@ export class SeedTaskPriorityAndSizeAndStatusIcon1676870424741 implements Migrat
         console.log(chalk.yellow(this.name + ' start running!'));
 
         switch (queryRunner.connection.options.type) {
-            case databaseTypes.sqlite:
-            case databaseTypes.betterSqlite3:
+            case DatabaseTypeEnum.sqlite:
+            case DatabaseTypeEnum.betterSqlite3:
                 await this.sqliteSeedTaskPriorityIcon(queryRunner);
                 await this.sqliteSeedTaskSizeIcon(queryRunner);
                 await this.sqliteSeedTaskStatusIcon(queryRunner);
                 break;
-            case databaseTypes.postgres:
+            case DatabaseTypeEnum.postgres:
                 await this.postgresSeedTaskPriorityIcon(queryRunner);
                 await this.postgresSeedTaskSizeIcon(queryRunner);
                 await this.postgresSeedTaskStatusIcon(queryRunner);
                 break;
-            case databaseTypes.mysql:
+            case DatabaseTypeEnum.mysql:
                 await this.mysqlSeedTaskPriorityIcon(queryRunner);
                 await this.mysqlSeedTaskSizeIcon(queryRunner);
                 await this.mysqlSeedTaskStatusIcon(queryRunner);

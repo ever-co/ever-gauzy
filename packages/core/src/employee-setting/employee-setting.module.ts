@@ -5,15 +5,17 @@ import { EmployeeSetting } from './employee-setting.entity';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSettingController } from './employee-setting.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/employee-settings', module: EmployeeSettingModule }]),
 		TypeOrmModule.forFeature([EmployeeSetting]),
+		MikroOrmModule.forFeature([EmployeeSetting]),
 		TenantModule
 	],
 	controllers: [EmployeeSettingController],
 	providers: [EmployeeSettingService],
 	exports: [EmployeeSettingService]
 })
-export class EmployeeSettingModule {}
+export class EmployeeSettingModule { }

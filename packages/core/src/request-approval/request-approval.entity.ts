@@ -6,7 +6,6 @@
   - Request Approval table has the many to many relationships to the Employee table through the RequestApprovalEmployee table.
 */
 import {
-	Entity,
 	Index,
 	Column,
 	OneToMany,
@@ -33,11 +32,11 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
+import { MultiORMEntity } from './../core/decorators/entity';
+import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 
-@Entity('request_approval')
-export class RequestApproval
-	extends TenantOrganizationBaseEntity
-	implements IRequestApproval {
+@MultiORMEntity('request_approval', { mikroOrmRepository: () => MikroOrmRequestApprovalRepository })
+export class RequestApproval extends TenantOrganizationBaseEntity implements IRequestApproval {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -76,14 +75,14 @@ export class RequestApproval
 	requestType: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToOne 
-    |--------------------------------------------------------------------------
-    */
-   	
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
 	/**
 	*  ApprovalPolicy
-    */
+	*/
 	@ApiProperty({ type: () => ApprovalPolicy })
 	@ManyToOne(() => ApprovalPolicy, {
 		nullable: true,
@@ -100,10 +99,10 @@ export class RequestApproval
 	approvalPolicyId: string;
 
 	/*
-    |--------------------------------------------------------------------------
-    | @OneToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
 
 	/**
 	 * RequestApprovalEmployee
@@ -124,10 +123,10 @@ export class RequestApproval
 	teamApprovals?: IRequestApprovalTeam[];
 
 	/*
-    |--------------------------------------------------------------------------
-    | @ManyToMany 
-    |--------------------------------------------------------------------------
-    */
+	|--------------------------------------------------------------------------
+	| @ManyToMany
+	|--------------------------------------------------------------------------
+	*/
 	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
 	@ManyToMany(() => Tag, (tag) => tag.requestApprovals, {
 		onUpdate: 'CASCADE',

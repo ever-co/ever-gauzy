@@ -17,11 +17,19 @@ import { JobSearchOccupationController } from './job-search-occupation/job-searc
 import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
 import { JobSearchOccupationService } from './job-search-occupation/job-search-occupation.service';
 import { JobSearchPresetController } from './job-search-preset.controller';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/job-preset', module: EmployeeJobPresetModule }]),
 		TypeOrmModule.forFeature([
+			JobPreset,
+			JobPresetUpworkJobSearchCriterion,
+			EmployeeUpworkJobsSearchCriterion,
+			JobSearchOccupation,
+			JobSearchCategory
+		]),
+		MikroOrmModule.forFeature([
 			JobPreset,
 			JobPresetUpworkJobSearchCriterion,
 			EmployeeUpworkJobsSearchCriterion,
@@ -41,4 +49,4 @@ import { JobSearchPresetController } from './job-search-preset.controller';
 	providers: [...Handlers, JobPresetService, JobSearchCategoryService, JobSearchOccupationService],
 	exports: [JobPresetService, JobSearchCategoryService, JobSearchOccupationService]
 })
-export class EmployeeJobPresetModule {}
+export class EmployeeJobPresetModule { }
