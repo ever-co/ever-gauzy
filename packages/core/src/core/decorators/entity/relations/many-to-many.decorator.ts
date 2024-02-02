@@ -10,24 +10,34 @@ type TypeORMInverseSide<T> = string | ((object: T) => any);
 type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 
 type TypeORMRelationOptions = RelationOptions;
-type MikroORMRelationOptions<T, O> = Partial<ManyToManyOptions<T, O>>;
+type MikroORMRelationOptions<T, O> = Partial<Omit<ManyToManyOptions<T, O>, 'onCreate' | 'onUpdate'>>;
 
+type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
+type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
+type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
 
 export function MultiORMManyToMany<T>(
-    targetEntity: TypeORMTarget<T> | MikroORMTarget<T, any>,
-    inverseSide?: TypeORMInverseSide<T> | MikroORMInverseSide<T>,
-    options?: MikroORMRelationOptions<T, any> & TypeORMRelationOptions
+    targetEntity: TargetEntity<T>,
+    inverseSide?: InverseSide<T> | Options<T>,
+    options?: Options<T>
 ): PropertyDecorator {
+
+    // If second params is options then set inverseSide as null and options = inverseSide
+    if (typeof inverseSide === 'object') {
+        options = inverseSide;
+        inverseSide = null;
+    }
+
     return (target: any, propertyKey: string) => {
-        MikroOrmManyToMany(mapManyToManyArgsForMikroORM({ targetEntity, inverseSide, options }))(target, propertyKey);
+        MikroOrmManyToMany(mapManyToManyArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options }))(target, propertyKey);
         TypeOrmManyToMany(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
     };
 }
 
 export interface MapManyToManyArgsForMikroORMOptions<T, O> {
-    targetEntity: TypeORMTarget<T> | MikroORMTarget<T, any>,
-    inverseSide?: TypeORMInverseSide<T> | MikroORMInverseSide<T>,
-    options?: TypeORMRelationOptions | MikroORMRelationOptions<T, any>
+    targetEntity: TargetEntity<T>,
+    inverseSide?: InverseSide<T>,
+    options?: Options<T>
 }
 
 export function mapManyToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, options }: MapManyToManyArgsForMikroORMOptions<T, O>) {
@@ -57,11 +67,11 @@ export function mapManyToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, 
         }
     }
 
-    const mikroOrmOptions: Partial<ManyToManyOptions<T, any>> = {
+    const mikroOrmOptions: Partial<Options<T>> = {
         cascade: mikroORMCascade,
         nullable: typeOrmOptions.nullable,
         lazy: !!typeOrmOptions.lazy,
-        ...options as Partial<ManyToManyOptions<T, any>>
+        ...options as Partial<Options<T>>
     };
 
 

@@ -4,10 +4,7 @@ import {
 	JoinColumn,
 	JoinTable,
 	ManyToMany,
-	ManyToOne,
-	OneToOne,
 	RelationId,
-	OneToMany,
 	Index,
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
@@ -76,9 +73,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
-import { MikroOneToOne } from 'core/decorators/entity/relations/mikro-orm';
-import { Cascade } from '@mikro-orm/core';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne, MultiORMOneToOne } from 'core/decorators/entity/relations';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
