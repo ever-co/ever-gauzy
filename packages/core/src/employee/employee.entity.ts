@@ -72,7 +72,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from 'core/decorators/entity/relations';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
