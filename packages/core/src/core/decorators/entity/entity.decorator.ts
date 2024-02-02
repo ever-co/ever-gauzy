@@ -47,6 +47,7 @@ export function MultiORMEntity<T>(
         // Apply MikroORM entity decorator to the target class prototype
         MikroOrmEntity(parseMikroOrmEntityOptions(mikroOrmOptions))(target);
 
+        console.log(typeOrmOptions);
         // Apply TypeORM entity decorator to the target class
         TypeOrmEntity(typeOrmOptions, maybeOptions)(target);
     };
