@@ -1,12 +1,13 @@
-import { Entity, Column } from 'typeorm';
+import { Column } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
 import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
-import { IsSecret, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { IsSecret, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
 
-@Entity('custom_smtp')
+@MultiORMEntity('custom_smtp', { mikroOrmRepository: () => MikroOrmCustomSmtpRepository })
 export class CustomSmtp extends TenantOrganizationBaseEntity
 	implements ICustomSmtp {
 

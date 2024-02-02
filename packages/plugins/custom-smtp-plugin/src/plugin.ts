@@ -17,6 +17,9 @@ import { CustomSmtpSubscriber } from './custom-smtp.subscriber';
 		TypeOrmModule.forFeature([
 			CustomSmtp
 		]),
+		MikroOrmModule.forFeature([
+			CustomSmtp
+		]),
 		TenantModule,
 		UserModule,
 		CqrsModule
