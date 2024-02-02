@@ -423,7 +423,6 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 
 		this.loading = true;
 
-		console.log(this.selectedTeamIds);
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
