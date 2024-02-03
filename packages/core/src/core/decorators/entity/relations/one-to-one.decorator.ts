@@ -14,18 +14,11 @@ type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
 type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'cascade'>;
 
 
-
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
 type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
     cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
 };
-
-
-type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
-type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
-
 
 export function MultiORMOneToOne<T>(
     targetEntity: TargetEntity<T>,
