@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
+import { Column, RelationId, JoinColumn } from 'typeorm';
 import { IKeyResult, IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
@@ -8,6 +8,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result_update', { mikroOrmRepository: () => MikroOrmKeyResultUpdateRepository })
 export class KeyResultUpdate extends TenantOrganizationBaseEntity
@@ -30,7 +31,7 @@ export class KeyResultUpdate extends TenantOrganizationBaseEntity
 	status: string;
 
 	@ApiProperty({ type: () => KeyResult })
-	@ManyToOne(() => KeyResult, (keyResult) => keyResult.update, {
+	@MultiORMManyToOne(() => KeyResult, (keyResult) => keyResult.update, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'keyResultId' })

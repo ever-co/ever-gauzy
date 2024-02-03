@@ -1,9 +1,7 @@
 import {
 	Column,
 	Index,
-	JoinTable,
-	ManyToMany,
-	OneToMany
+	JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
@@ -20,6 +18,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
+import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('job_preset', { mikroOrmRepository: () => MikroOrmJobPresetRepository })
 export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {
@@ -39,7 +38,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Employee Job Criterions
 	 */
-	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -47,7 +46,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Job Criterions
 	 */
-	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
@@ -61,8 +60,10 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Job Preset Employees
 	 */
-	@ManyToMany(() => Employee, (employee) => employee.jobPresets, {
-		cascade: true
+	@MultiORMManyToMany(() => Employee, (employee) => employee.jobPresets, {
+		cascade: true,
+		owner: true,
+		pivotTable: 'employee_job_preset',
 	})
 	@JoinTable({
 		name: 'employee_job_preset'

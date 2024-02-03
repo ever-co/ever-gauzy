@@ -2,8 +2,6 @@ import {
 	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
-	OneToMany,
 	RelationId
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
@@ -15,6 +13,7 @@ import {
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('feature', { mikroOrmRepository: () => MikroOrmFeatureRepository })
 export class Feature extends BaseEntity implements IFeature {
@@ -66,7 +65,7 @@ export class Feature extends BaseEntity implements IFeature {
 	 * Feature
 	 */
 	@ApiProperty({ type: () => Feature })
-	@ManyToOne(() => Feature, (feature) => feature.children, {
+	@MultiORMManyToOne(() => Feature, (feature) => feature.children, {
 		onDelete: 'CASCADE'
 	})
 	parent: IFeature;
@@ -87,7 +86,7 @@ export class Feature extends BaseEntity implements IFeature {
 	 * FeatureOrganization
 	 */
 	@ApiProperty({ type: () => FeatureOrganization })
-	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.feature, {
+	@MultiORMOneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.feature, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -97,7 +96,7 @@ export class Feature extends BaseEntity implements IFeature {
 	 * Feature
 	 */
 	@ApiProperty({ type: () => Feature })
-	@OneToMany(() => Feature, (feature) => feature.parent, {
+	@MultiORMOneToMany(() => Feature, (feature) => feature.parent, {
 		cascade: true
 	})
 	@JoinColumn({ name: 'parentId' })

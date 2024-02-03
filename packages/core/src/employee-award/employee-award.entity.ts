@@ -1,4 +1,4 @@
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeeAward } from '@gauzy/contracts';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeAwardRepository } from './repository/mikro-orm-employee-award.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_award', { mikroOrmRepository: () => MikroOrmEmployeeAwardRepository })
 export class EmployeeAward extends TenantOrganizationBaseEntity
@@ -27,7 +28,7 @@ export class EmployeeAward extends TenantOrganizationBaseEntity
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (it) => it.awards, {
+	@MultiORMManyToOne(() => Employee, (it) => it.awards, {
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;

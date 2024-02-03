@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { IsDateString, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { IIntegration, IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-integration-tenant.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration_tenant', { mikroOrmRepository: () => MikroOrmIntegrationTenantRepository })
 export class IntegrationTenant extends TenantOrganizationBaseEntity implements IIntegrationTenant {
@@ -41,7 +42,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * Integration
 	 */
-	@ManyToOne(() => Integration, {
+	@MultiORMManyToOne(() => Integration, {
 
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -68,7 +69,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * IntegrationSetting
 	 */
-	@OneToMany(() => IntegrationSetting, (it) => it.integration, {
+	@MultiORMOneToMany(() => IntegrationSetting, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -77,7 +78,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@OneToMany(() => IntegrationEntitySetting, (it) => it.integration, {
+	@MultiORMOneToMany(() => IntegrationEntitySetting, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -86,7 +87,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	/**
 	 * IntegrationMap
 	 */
-	@OneToMany(() => IntegrationMap, (it) => it.integration, {
+	@MultiORMOneToMany(() => IntegrationMap, (it) => it.integration, {
 		cascade: true
 	})
 	@JoinColumn()

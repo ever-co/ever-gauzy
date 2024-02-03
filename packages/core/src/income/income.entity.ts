@@ -3,8 +3,6 @@ import {
 	Index,
 	JoinColumn,
 	RelationId,
-	ManyToOne,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -33,6 +31,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('income', { mikroOrmRepository: () => MikroOrmIncomeRepository })
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
@@ -86,7 +85,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -102,7 +101,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	 * Client
 	 */
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.incomes, {
+	@MultiORMManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.incomes, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -126,7 +125,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	* Tag
 	*/
 	@ApiProperty({ type: () => () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.incomes, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.incomes, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

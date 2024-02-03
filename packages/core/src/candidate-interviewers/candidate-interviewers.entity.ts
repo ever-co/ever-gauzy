@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateInterviewers, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import {
@@ -9,6 +9,7 @@ import {
 import { IsString } from 'class-validator';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_interviewer', { mikroOrmRepository: () => MikroOrmCandidateInterviewersRepository })
 export class CandidateInterviewers extends TenantOrganizationBaseEntity implements ICandidateInterviewers {
@@ -18,7 +19,7 @@ export class CandidateInterviewers extends TenantOrganizationBaseEntity implemen
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (interview) => interview.interviewers, {
+	@MultiORMManyToOne(() => CandidateInterview, (interview) => interview.interviewers, {
 		onDelete: 'CASCADE'
 	})
 	interview: ICandidateInterview;
@@ -31,7 +32,7 @@ export class CandidateInterviewers extends TenantOrganizationBaseEntity implemen
 	interviewId: string;
 
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
+	@MultiORMManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
 	})
 	employee: IEmployee;

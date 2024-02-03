@@ -1,4 +1,4 @@
-import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateTechnologies, ICandidateInterview, ICandidateCriterionsRating } from '@gauzy/contracts';
 import {
@@ -10,6 +10,7 @@ import { IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_technology', { mikroOrmRepository: () => MikroOrmCandidateTechnologiesRepository })
 export class CandidateTechnologies extends TenantOrganizationBaseEntity implements ICandidateTechnologies {
@@ -33,7 +34,7 @@ export class CandidateTechnologies extends TenantOrganizationBaseEntity implemen
 	*/
 
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (interview) => interview.technologies, {
+	@MultiORMManyToOne(() => CandidateInterview, (interview) => interview.technologies, {
 		onDelete: 'CASCADE'
 	})
 	interview?: ICandidateInterview;
@@ -52,7 +53,7 @@ export class CandidateTechnologies extends TenantOrganizationBaseEntity implemen
 	*/
 
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.technology, {
+	@MultiORMOneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.technology, {
 		cascade: true
 	})
 	@JoinColumn()

@@ -4,7 +4,7 @@ import {
 	GoalTemplateCategoriesEnum,
 	IKeyResultTemplate
 } from '@gauzy/contracts';
-import { Column, OneToMany } from 'typeorm';
+import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalTemplateRepository } from './repository/mikro-orm-goal-template.repository';
+import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal_template', { mikroOrmRepository: () => MikroOrmGoalTemplateRepository })
 export class GoalTemplate extends TenantOrganizationBaseEntity implements IGoalTemplate {
@@ -32,6 +33,6 @@ export class GoalTemplate extends TenantOrganizationBaseEntity implements IGoalT
 	category: string;
 
 	@ApiProperty({ type: () => KeyResultTemplate })
-	@OneToMany(() => KeyResultTemplate, (keyResult) => keyResult.goal)
+	@MultiORMOneToMany(() => KeyResultTemplate, (keyResult) => keyResult.goal)
 	keyResults?: IKeyResultTemplate[];
 }

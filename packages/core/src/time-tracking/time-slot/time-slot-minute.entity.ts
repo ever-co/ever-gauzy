@@ -1,7 +1,6 @@
 import {
 	Column,
 	RelationId,
-	ManyToOne,
 	Unique,
 	Index,
 	JoinColumn
@@ -13,6 +12,7 @@ import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { TimeSlot } from './time-slot.entity';
 import { MikroOrmTimeSlotMinuteRepository } from './repository/mikro-orm-time-slot-minute.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_slot_minute', { mikroOrmRepository: () => MikroOrmTimeSlotMinuteRepository })
 @Unique(['timeSlotId', 'datetime'])
@@ -40,7 +40,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	*/
 
 	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, (it) => it.timeSlotMinutes, {
+	@MultiORMManyToOne(() => TimeSlot, (it) => it.timeSlotMinutes, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

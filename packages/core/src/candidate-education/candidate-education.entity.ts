@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId } from 'typeorm';
+import { Column, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateEducation, ICandidate } from '@gauzy/contracts';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateEducationRepository } from './repository/mikro-orm-candidate-education.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_education', { mikroOrmRepository: () => MikroOrmCandidateEducationRepository })
 export class CandidateEducation extends TenantOrganizationBaseEntity
@@ -42,7 +43,7 @@ export class CandidateEducation extends TenantOrganizationBaseEntity
 	 * Candidate
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@ManyToOne(() => Candidate, (candidate) => candidate.educations, {
+	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.educations, {
 		onDelete: 'CASCADE'
 	})
 	candidate?: ICandidate;

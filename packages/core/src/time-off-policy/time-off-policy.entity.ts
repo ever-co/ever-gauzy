@@ -1,4 +1,4 @@
-import { Index, Column, ManyToMany, OneToMany } from 'typeorm';
+import { Index, Column } from 'typeorm';
 import {
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
@@ -13,6 +13,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
+import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('time_off_policy', { mikroOrmRepository: () => MikroOrmTimeOffPolicyRepository })
 export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITimeOffPolicy {
@@ -38,7 +39,7 @@ export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITime
 	 * TimeOffRequest
 	 */
 	@ApiPropertyOptional({ type: () => TimeOffRequest, isArray: true })
-	@OneToMany(() => TimeOffRequest, (it) => it.policy, {
+	@MultiORMOneToMany(() => TimeOffRequest, (it) => it.policy, {
 		onDelete: 'SET NULL'
 	})
 	timeOffRequests?: ITimeOffRequest[];
@@ -49,7 +50,7 @@ export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITime
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Employee })
-	@ManyToMany(() => Employee, (employee) => employee.timeOffPolicies, {
+	@MultiORMManyToMany(() => Employee, (employee) => employee.timeOffPolicies, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

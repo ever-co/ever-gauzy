@@ -1,10 +1,8 @@
 import {
 	Column,
 	Index,
-	ManyToOne,
 	RelationId,
 	JoinColumn,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -23,6 +21,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('event_type', { mikroOrmRepository: () => MikroOrmEventTypeRepository })
 export class EventType extends TenantOrganizationBaseEntity implements IEventType {
@@ -65,7 +64,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -87,9 +86,11 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.eventTypes, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.eventTypes, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_event_type',
 	})
 	@JoinTable({
 		name: 'tag_event_type'

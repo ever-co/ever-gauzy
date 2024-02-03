@@ -1,4 +1,4 @@
-import { Column, OneToMany, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, JoinColumn } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -15,6 +15,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_sprint', { mikroOrmRepository: () => MikroOrmOrganizationSprintRepository })
 export class OrganizationSprint extends TenantOrganizationBaseEntity implements IOrganizationSprint {
@@ -68,7 +69,7 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	 * OrganizationProject Relationship
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (it) => it.organizationSprints, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.organizationSprints, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -85,7 +86,7 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	*/
 
 	@ApiProperty({ type: () => Task })
-	@OneToMany(() => Task, (task) => task.organizationSprint)
+	@MultiORMOneToMany(() => Task, (task) => task.organizationSprint)
 	@JoinColumn()
 	tasks?: Task[];
 }

@@ -9,12 +9,14 @@ type MikroORMTarget<T, O> = ManyToManyOptions<T, O> | string | ((e?: any) => Ent
 type TypeORMInverseSide<T> = string | ((object: T) => any);
 type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 
-type TypeORMRelationOptions = RelationOptions;
-type MikroORMRelationOptions<T, O> = Partial<Omit<ManyToManyOptions<T, O>, 'onCreate' | 'onUpdate'>>;
+type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
+type MikroORMRelationOptions<T, O> = Partial<Omit<ManyToManyOptions<T, O>, | 'cascade' | 'onCreate' | 'onUpdate'>>;
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
+type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
+    cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
+};
 
 export function MultiORMManyToMany<T>(
     targetEntity: TargetEntity<T>,
@@ -44,13 +46,13 @@ export function mapManyToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, 
 
     const typeOrmOptions = options as RelationOptions;
     let mikroORMCascade = [];
-    if (typeOrmOptions.cascade) {
-        if (typeof typeOrmOptions.cascade === 'boolean') {
-            mikroORMCascade = typeOrmOptions.cascade === true ? [Cascade.ALL] : [];
+    if (typeOrmOptions?.cascade) {
+        if (typeof typeOrmOptions?.cascade === 'boolean') {
+            mikroORMCascade = typeOrmOptions?.cascade === true ? [Cascade.ALL] : [];
         }
 
-        if (typeOrmOptions.cascade instanceof Array) {
-            mikroORMCascade = typeOrmOptions.cascade.map(c => {
+        if (typeOrmOptions?.cascade instanceof Array) {
+            mikroORMCascade = typeOrmOptions?.cascade.map(c => {
                 switch (c) {
                     case "insert":
                         return Cascade.PERSIST;
@@ -69,8 +71,8 @@ export function mapManyToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, 
 
     const mikroOrmOptions: Partial<Options<T>> = {
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions.nullable,
-        lazy: !!typeOrmOptions.lazy,
+        nullable: typeOrmOptions?.nullable,
+        lazy: !!typeOrmOptions?.lazy,
         ...options as Partial<Options<T>>
     };
 

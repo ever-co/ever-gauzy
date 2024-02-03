@@ -3,7 +3,6 @@ import {
 	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
 } from 'typeorm';
 import { IsEnum, IsUUID } from 'class-validator';
@@ -16,6 +15,7 @@ import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked-issue.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_linked_issues', { mikroOrmRepository: () => MikroOrmTaskLinkedIssueRepository })
 export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITaskLinkedIssue {
@@ -30,7 +30,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	|--------------------------------------------------------------------------
 	*/
 	@ApiPropertyOptional({ type: () => Task })
-	@ManyToOne(() => Task)
+	@MultiORMManyToOne(() => Task)
 	@JoinColumn()
 	taskFrom?: ITask;
 
@@ -45,7 +45,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	 * Task Linked Issues
 	 */
 	@ApiPropertyOptional({ type: () => Object })
-	@ManyToOne(() => Task, (it) => it.linkedIssues)
+	@MultiORMManyToOne(() => Task, (it) => it.linkedIssues)
 	@JoinColumn()
 	taskTo?: ITask;
 

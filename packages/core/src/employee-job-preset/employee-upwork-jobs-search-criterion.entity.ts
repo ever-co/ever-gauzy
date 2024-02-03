@@ -1,4 +1,4 @@
-import { Column, ManyToOne } from 'typeorm';
+import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -18,6 +18,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmEmployeeUpworkJobsSearchCriterionRepository })
 export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEntity implements IEmployeeUpworkJobsSearchCriterion {
@@ -28,7 +29,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@Column({ nullable: true })
 	jobPresetId?: string;
 
-	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
+	@MultiORMManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
 	jobPreset?: IJobPreset;
 
 	@ApiProperty({ type: () => String })
@@ -37,7 +38,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@Column()
 	employeeId?: string;
 
-	@ManyToOne(() => Employee, (employee) => employee.id)
+	@MultiORMManyToOne(() => Employee, (employee) => employee.id)
 	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
@@ -46,7 +47,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@Column({ nullable: true })
 	occupationId?: string;
 
-	@ManyToOne(
+	@MultiORMManyToOne(
 		() => JobSearchOccupation,
 		(occupation) => occupation.employeeCriterions
 	)
@@ -58,7 +59,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@Column({ nullable: true })
 	categoryId?: string;
 
-	@ManyToOne(
+	@MultiORMManyToOne(
 		() => JobSearchCategory,
 		(category) => category.employeeCriterions
 	)

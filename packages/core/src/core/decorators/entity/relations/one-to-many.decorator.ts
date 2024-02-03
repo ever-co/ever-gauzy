@@ -9,14 +9,16 @@ type MikroORMTarget<T, O> = OneToManyOptions<T, O> | string | ((e?: any) => Enti
 type TypeORMInverseSide<T> = string | ((object: T) => any);
 type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 
-type TypeORMRelationOptions = RelationOptions;
-type MikroORMRelationOptions<T, O> = Partial<OneToManyOptions<T, O>>;
+type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
+type MikroORMRelationOptions<T, O> = Omit<Partial<OneToManyOptions<T, O>>, 'cascade'>;
+
 
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
-
+type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
+    cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
+};
 
 export function MultiORMOneToMany<T>(
     targetEntity: TargetEntity<T>,
@@ -63,16 +65,16 @@ export function mapOneToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
     }
 
     const mikroOrmOptions: Partial<OneToManyOptions<T, any>> = {
+        ...options as Partial<OneToManyOptions<T, any>>,
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         lazy: !!typeOrmOptions?.lazy,
-        ...options as Partial<OneToManyOptions<T, any>>
     };
 
 
     return {
+        ...mikroOrmOptions,
         entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
         mappedBy: inverseSide,
-        ...mikroOrmOptions,
-    } as OneToManyOptions<T, O>;
+    } as OneToManyOptions<T, any>;
 }

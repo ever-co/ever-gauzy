@@ -6,7 +6,7 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Column, Index, JoinTable, ManyToMany } from 'typeorm';
+import { Column, Index, JoinTable } from 'typeorm';
 import {
 	Candidate,
 	Employee,
@@ -15,6 +15,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm-organization-department.repository';
+import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_department', { mikroOrmRepository: () => MikroOrmOrganizationDepartmentRepository })
 export class OrganizationDepartment extends TenantOrganizationBaseEntity implements IOrganizationDepartment {
@@ -35,9 +36,11 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.organizationDepartments, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.organizationDepartments, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_department',
 	})
 	@JoinTable({
 		name: 'tag_organization_department'
@@ -48,8 +51,10 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee, isArray: true })
-	@ManyToMany(() => Employee, (employee) => employee.organizationDepartments, {
-		cascade: ['update']
+	@MultiORMManyToMany(() => Employee, (employee) => employee.organizationDepartments, {
+		cascade: ['update'],
+		owner: true,
+		pivotTable: 'organization_department_employee',
 	})
 	@JoinTable({
 		name: 'organization_department_employee'
@@ -60,9 +65,11 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 	 * Candidate
 	 */
 	@ApiProperty({ type: () => Candidate, isArray: true })
-	@ManyToMany(() => Candidate, (candidate) => candidate.organizationDepartments, {
+	@MultiORMManyToMany(() => Candidate, (candidate) => candidate.organizationDepartments, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'candidate_department',
 	})
 	@JoinTable({
 		name: 'candidate_department'

@@ -3,8 +3,6 @@ import {
 	Index,
 	JoinColumn,
 	RelationId,
-	ManyToOne,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -23,6 +21,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
 export class Proposal extends TenantOrganizationBaseEntity
@@ -56,7 +55,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 	*/
 
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee: IEmployee;
 
@@ -66,7 +65,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 	employeeId?: string;
 
 	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.proposals, {
+	@MultiORMManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.proposals, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -85,9 +84,11 @@ export class Proposal extends TenantOrganizationBaseEntity
 	*/
 	// Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.proposals, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.proposals, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_proposal'
 	})
 	@JoinTable({
 		name: 'tag_proposal'

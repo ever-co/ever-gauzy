@@ -1,4 +1,4 @@
-import { Column, RelationId, ManyToOne, JoinColumn, ManyToMany, Index, AfterLoad } from 'typeorm';
+import { Column, RelationId, JoinColumn, Index, AfterLoad } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -27,6 +27,7 @@ import {
 } from './../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
@@ -119,7 +120,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Employee relationship
 	 */
-	@ManyToOne(() => Employee, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => Employee, (it) => it.timeLogs, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -136,7 +137,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Timesheet relationship
 	 */
-	@ManyToOne(() => Timesheet, {
+	@MultiORMManyToOne(() => Timesheet, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -157,7 +158,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -181,7 +182,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Task
 	 */
-	@ManyToOne(() => Task, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => Task, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -202,7 +203,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * OrganizationContact
 	 */
-	@ManyToOne(() => OrganizationContact, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => OrganizationContact, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -223,7 +224,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, {
+	@MultiORMManyToOne(() => OrganizationTeam, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -251,7 +252,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * TimeSlot
 	 */
 	@ApiProperty({ type: () => TimeSlot, isArray: true })
-	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+	@MultiORMManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
 		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */

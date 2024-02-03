@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, Index } from 'typeorm';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
 import { IIntegrationSetting } from '@gauzy/contracts';
@@ -10,6 +10,7 @@ import {
 import { IsSecret } from './../core/decorators';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-integration-setting.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration_setting', { mikroOrmRepository: () => MikroOrmIntegrationSettingRepository })
 export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {
@@ -35,7 +36,7 @@ export class IntegrationSetting extends TenantOrganizationBaseEntity implements 
 	/**
 	 * IntegrationTenant
 	 */
-	@ManyToOne(() => IntegrationTenant, (it) => it.settings, {
+	@MultiORMManyToOne(() => IntegrationTenant, (it) => it.settings, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})

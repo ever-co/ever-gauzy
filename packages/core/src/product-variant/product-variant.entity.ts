@@ -1,13 +1,9 @@
 import {
 	Column,
-	ManyToOne,
-	OneToOne,
 	RelationId,
 	JoinColumn,
-	ManyToMany,
 	JoinTable,
-	Index,
-	OneToMany
+	Index
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -31,6 +27,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant', { mikroOrmRepository: () => MikroOrmProductVariantRepository })
 export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {
@@ -73,7 +70,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	/**
 	 * ProductVariantPrice
 	 */
-	@OneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
@@ -86,7 +83,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	/**
 	 * ProductVariantSetting
 	 */
-	@OneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
@@ -106,7 +103,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.variants, {
+	@MultiORMManyToOne(() => Product, (product) => product.variants, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -123,7 +120,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 	})
@@ -147,7 +144,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })
-	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.variant, {
+	@MultiORMOneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.variant, {
 		cascade: true
 	})
 	warehouseProductVariants?: IWarehouseProductVariant[];
@@ -162,7 +159,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => ProductOption })
-	@ManyToMany(() => ProductOption, { eager: true })
+	@MultiORMManyToMany(() => ProductOption, { eager: true })
 	@JoinTable()
 	options: IProductOptionTranslatable[];
 }

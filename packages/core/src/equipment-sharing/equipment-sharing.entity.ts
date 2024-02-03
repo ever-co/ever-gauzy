@@ -1,10 +1,8 @@
 import {
 	RelationId,
 	Column,
-	ManyToMany,
 	JoinTable,
 	JoinColumn,
-	ManyToOne,
 	Index
 } from 'typeorm';
 import {
@@ -24,6 +22,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment_sharing', { mikroOrmRepository: () => MikroOrmEquipmentSharingRepository })
 export class EquipmentSharing extends TenantOrganizationBaseEntity
@@ -66,7 +65,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	 * Equipment
 	 */
 	@ApiProperty({ type: () => Equipment })
-	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings, {
+	@MultiORMManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -82,7 +81,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	* Equipment
 	*/
 	@ApiProperty({ type: () => EquipmentSharingPolicy })
-	@ManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
+	@MultiORMManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -103,9 +102,11 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	/**
 	 * Employee
 	 */
-	@ManyToMany(() => Employee, (it) => it.equipmentSharings, {
+	@MultiORMManyToMany(() => Employee, (it) => it.equipmentSharings, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'equipment_shares_employees',
 	})
 	@JoinTable({
 		name: 'equipment_shares_employees'
@@ -115,9 +116,11 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	/**
 	 * OrganizationTeam
 	 */
-	@ManyToMany(() => OrganizationTeam, (it) => it.equipmentSharings, {
+	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.equipmentSharings, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'equipment_shares_teams',
 	})
 	@JoinTable({
 		name: 'equipment_shares_teams'

@@ -1,10 +1,11 @@
 import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
-import { Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Employee, OrganizationTeam, Role, Task, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team_employee', { mikroOrmRepository: () => MikroOrmOrganizationTeamEmployeeRepository })
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity implements IOrganizationTeamEmployee {
@@ -27,7 +28,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	 * member's active task
 	 */
 	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, (it) => it.organizationTeamEmployees, {
+	@MultiORMManyToOne(() => Task, (it) => it.organizationTeamEmployees, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -45,7 +46,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	 * OrganizationTeam
 	 */
 	@ApiProperty({ type: () => OrganizationTeam })
-	@ManyToOne(() => OrganizationTeam, (it) => it.members, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.members, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -63,7 +64,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.teams, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.teams, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -79,7 +80,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	 * Role
 	 */
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, {
+	@MultiORMManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 

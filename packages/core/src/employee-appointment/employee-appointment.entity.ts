@@ -9,9 +9,7 @@ import {
 } from 'class-validator';
 import {
 	Column,
-	OneToMany,
 	JoinColumn,
-	ManyToOne,
 	RelationId
 } from 'typeorm';
 import {
@@ -21,12 +19,13 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_appointment', { mikroOrmRepository: () => MikroOrmEmployeeAppointmentRepository })
 export class EmployeeAppointment extends TenantOrganizationBaseEntity implements IEmployeeAppointment {
 
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -102,7 +101,7 @@ export class EmployeeAppointment extends TenantOrganizationBaseEntity implements
 	status?: string;
 
 	@ApiProperty({ type: () => AppointmentEmployee, isArray: true })
-	@OneToMany(
+	@MultiORMOneToMany(
 		() => AppointmentEmployee,
 		(entity) => entity.employeeAppointment,
 		{

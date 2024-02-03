@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskPriority } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -9,6 +9,7 @@ import {
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_priority', { mikroOrmRepository: () => MikroOrmTaskPriorityRepository })
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
@@ -54,7 +55,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.priorities, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.priorities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -77,7 +78,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	/**
 	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.priorities, {
+	@MultiORMManyToOne(() => OrganizationTeam, (team) => team.priorities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 

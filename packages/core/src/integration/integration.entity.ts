@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, ManyToMany, JoinTable, Unique } from 'typeorm';
+import { Column, JoinTable, Unique } from 'typeorm';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -7,6 +7,7 @@ import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integration.repository';
+import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration', { mikroOrmRepository: () => MikroOrmIntegrationRepository })
 @Unique(['name'])
@@ -87,9 +88,11 @@ export class Integration extends BaseEntity implements IIntegration {
 	/**
 	 *
 	 */
-	@ManyToMany(() => IntegrationType, (it) => it.integrations, {
+	@MultiORMManyToMany(() => IntegrationType, (it) => it.integrations, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'integration_integration_type',
 	})
 	@JoinTable({
 		name: 'integration_integration_type'
@@ -99,9 +102,11 @@ export class Integration extends BaseEntity implements IIntegration {
 	/**
 	 *
 	 */
-	@ManyToMany(() => Tag, (tag) => tag.integrations, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.integrations, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_integration',
 	})
 	@JoinTable({
 		name: 'tag_integration'

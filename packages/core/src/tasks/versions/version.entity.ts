@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskVersion } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_version', { mikroOrmRepository: () => MikroOrmTaskVersionRepository })
 export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
@@ -50,7 +51,7 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.versions, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.versions, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -73,7 +74,7 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	/**
 	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (it) => it.versions, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.versions, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 

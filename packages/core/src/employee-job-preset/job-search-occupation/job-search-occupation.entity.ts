@@ -1,4 +1,4 @@
-import { Column, Index, OneToMany } from 'typeorm';
+import { Column, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -15,6 +15,7 @@ import {
 } from '../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmJobSearchOccupationRepository } from './repository/mikro-orm-job-search-occupation.repository';
+import { MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('job_search_occupation', { mikroOrmRepository: () => MikroOrmJobSearchOccupationRepository })
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
@@ -58,7 +59,7 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	 */
 	@ApiPropertyOptional({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
 	@IsOptional()
-	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -68,7 +69,7 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	 */
 	@ApiPropertyOptional({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
 	@IsOptional()
-	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];

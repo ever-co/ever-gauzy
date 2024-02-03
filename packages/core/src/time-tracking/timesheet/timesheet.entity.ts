@@ -1,7 +1,6 @@
 import {
 	Column,
 	RelationId,
-	ManyToOne,
 	JoinColumn,
 	Index,
 	AfterLoad
@@ -16,6 +15,7 @@ import {
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
+import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
@@ -118,7 +118,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	/**
 	 * Employee
 	 */
-	@ManyToOne(() => Employee, (it) => it.timesheets, {
+	@MultiORMManyToOne(() => Employee, (it) => it.timesheets, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -135,7 +135,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	/**
 	 * Approve By User
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 	})

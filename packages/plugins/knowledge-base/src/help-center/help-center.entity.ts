@@ -1,10 +1,11 @@
-import { Column, ManyToOne, OneToMany, RelationId, Index } from 'typeorm';
+import { Column, RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
 import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
 import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '@gauzy/core';
 
 @MultiORMEntity('knowledge_base', { mikroOrmRepository: () => MikroOrmHelpCenterRepository })
 export class HelpCenter extends TenantOrganizationBaseEntity
@@ -51,7 +52,7 @@ export class HelpCenter extends TenantOrganizationBaseEntity
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	@ManyToOne(() => HelpCenter, (children) => children.children, {
+	@MultiORMManyToOne(() => HelpCenter, (children) => children.children, {
 		onDelete: 'CASCADE'
 	})
 	parent?: IHelpCenter;
@@ -69,12 +70,12 @@ export class HelpCenter extends TenantOrganizationBaseEntity
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	@OneToMany(() => HelpCenter, (children) => children.parent, {
+	@MultiORMOneToMany(() => HelpCenter, (children) => children.parent, {
 		cascade: true
 	})
 	children?: IHelpCenter[];
 
-	@OneToMany(() => HelpCenterArticle, (article) => article.category, {
+	@MultiORMOneToMany(() => HelpCenterArticle, (article) => article.category, {
 		cascade: true
 	})
 	articles?: IHelpCenterArticle[];

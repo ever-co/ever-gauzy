@@ -8,8 +8,7 @@ import {
 	Index,
 	JoinColumn,
 	RelationId,
-	JoinTable,
-	OneToMany
+	JoinTable
 } from 'typeorm';
 import { Property } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
@@ -261,7 +260,9 @@ export class User extends TenantBaseEntity implements IUser {
 	// Tags
 	@MultiORMManyToMany(() => Tag, (tag) => tag.users, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_user'
 	})
 	@JoinTable({
 		name: 'tag_user'
@@ -286,7 +287,7 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * User belongs to invites
 	 */
-	@OneToMany(() => Invite, (it) => it.user)
+	@MultiORMOneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
 
 	/**

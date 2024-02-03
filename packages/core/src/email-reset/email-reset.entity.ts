@@ -1,7 +1,6 @@
 import {
 	Index,
 	Column,
-	ManyToOne,
 	JoinColumn,
 	RelationId
 } from 'typeorm';
@@ -12,6 +11,7 @@ import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('email_reset', { mikroOrmRepository: () => MikroOrmEmailResetRepository })
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
@@ -53,7 +53,7 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

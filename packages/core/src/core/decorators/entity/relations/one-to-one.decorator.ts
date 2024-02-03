@@ -9,15 +9,17 @@ type MikroORMTarget<T, O> = OneToOneOptions<T, O> | string | ((e?: any) => Entit
 type TypeORMInverseSide<T> = string | ((object: T) => any);
 type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 
-type TypeORMRelationOptions = RelationOptions;
-type MikroORMRelationOptions<T, O> = Partial<OneToOneOptions<T, O>>;
+
+type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
+type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'cascade'>;
 
 
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
-
+type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
+    cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
+};
 
 export function MultiORMOneToOne<T>(
     targetEntity: TargetEntity<T>,
@@ -40,13 +42,13 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
 
     const typeOrmOptions = options as RelationOptions;
     let mikroORMCascade = [];
-    if (typeOrmOptions.cascade) {
-        if (typeof typeOrmOptions.cascade === 'boolean') {
-            mikroORMCascade = typeOrmOptions.cascade === true ? [Cascade.ALL] : [];
+    if (typeOrmOptions?.cascade) {
+        if (typeof typeOrmOptions?.cascade === 'boolean') {
+            mikroORMCascade = typeOrmOptions?.cascade === true ? [Cascade.ALL] : [];
         }
 
-        if (typeOrmOptions.cascade instanceof Array) {
-            mikroORMCascade = typeOrmOptions.cascade.map(c => {
+        if (typeOrmOptions?.cascade instanceof Array) {
+            mikroORMCascade = typeOrmOptions?.cascade.map(c => {
                 switch (c) {
                     case "insert":
                         return Cascade.PERSIST;
@@ -64,18 +66,17 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
     }
 
     const mikroOrmOptions: Partial<OneToOneOptions<T, any>> = {
+        ...options as Partial<OneToOneOptions<T, any>>,
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions.nullable,
-        deleteRule: typeOrmOptions.onDelete?.toLocaleLowerCase(),
-        updateRule: typeOrmOptions.onUpdate?.toLocaleLowerCase(),
-        lazy: !!typeOrmOptions.lazy,
-        ...options as Partial<OneToOneOptions<T, any>>
+        nullable: typeOrmOptions?.nullable,
+        deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
+        updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
+        lazy: !!typeOrmOptions?.lazy,
     };
 
-
     return {
+        ...mikroOrmOptions,
         entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
         inversedBy: inverseSide,
-        ...mikroOrmOptions,
     } as MikroORMRelationOptions<any, any>
 }

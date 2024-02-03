@@ -2,9 +2,6 @@ import {
 	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
-	ManyToMany,
-	OneToMany,
 	RelationId,
 	JoinTable,
 } from 'typeorm';
@@ -60,6 +57,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
@@ -163,7 +161,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * OrganizationGithubRepository Relationship
 	 */
-	@ManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
+	@MultiORMManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -187,7 +185,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Organization Contact Relationship
 	 */
-	@ManyToOne(() => OrganizationContact, (it) => it.projects, {
+	@MultiORMManyToOne(() => OrganizationContact, (it) => it.projects, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -214,7 +212,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * ImageAsset Relationship
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -247,73 +245,73 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Organization Tasks Relationship
 	 */
-	@OneToMany(() => Task, (it) => it.project)
+	@MultiORMOneToMany(() => Task, (it) => it.project)
 	tasks?: ITask[];
 
 	/**
 	 * TimeLog Relationship
 	 */
-	@OneToMany(() => TimeLog, (it) => it.project)
+	@MultiORMOneToMany(() => TimeLog, (it) => it.project)
 	timeLogs?: ITimeLog[];
 
 	/**
 	 * Organization Invoice Items Relationship
 	 */
-	@OneToMany(() => InvoiceItem, (it) => it.project)
+	@MultiORMOneToMany(() => InvoiceItem, (it) => it.project)
 	invoiceItems?: IInvoiceItem[];
 
 	/**
 	 * Organization Sprints Relationship
 	 */
-	@OneToMany(() => OrganizationSprint, (it) => it.project)
+	@MultiORMOneToMany(() => OrganizationSprint, (it) => it.project)
 	organizationSprints?: IOrganizationSprint[];
 
 	/**
 	 * Organization Payments Relationship
 	 */
-	@OneToMany(() => Payment, (it) => it.project)
+	@MultiORMOneToMany(() => Payment, (it) => it.project)
 	payments?: IPayment[];
 
 	/**
 	 * Expense Relationship
 	 */
-	@OneToMany(() => Expense, (it) => it.project)
+	@MultiORMOneToMany(() => Expense, (it) => it.project)
 	expenses?: IExpense[];
 
 	/**
 	 * Activity Relationship
 	 */
-	@OneToMany(() => Activity, (it) => it.project)
+	@MultiORMOneToMany(() => Activity, (it) => it.project)
 	activities?: IActivity[];
 
 	/**
 	 * Project Statuses
 	 */
-	@OneToMany(() => TaskStatus, (it) => it.project)
+	@MultiORMOneToMany(() => TaskStatus, (it) => it.project)
 	statuses?: ITaskStatus[];
 
 	/**
 	 * Project Related Issue Type Relationship
 	 */
-	@OneToMany(() => TaskRelatedIssueType, (it) => it.project)
+	@MultiORMOneToMany(() => TaskRelatedIssueType, (it) => it.project)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
 	 * Project Priorities Relationship
 	 */
-	@OneToMany(() => TaskPriority, (it) => it.project)
+	@MultiORMOneToMany(() => TaskPriority, (it) => it.project)
 	priorities?: ITaskPriority[];
 
 	/**
 	 * Project Sizes Relationship
 	 */
-	@OneToMany(() => TaskSize, (it) => it.project)
+	@MultiORMOneToMany(() => TaskSize, (it) => it.project)
 	sizes?: ITaskSize[];
 
 	/**
 	 * Project Versions Relationship
 	 */
-	@OneToMany(() => TaskVersion, (it) => it.project)
+	@MultiORMOneToMany(() => TaskVersion, (it) => it.project)
 	versions?: ITaskVersion[];
 
 	/*
@@ -325,11 +323,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Tags Relationship
 	 */
-	@ManyToMany(() => Tag, (it) => it.organizationProjects, {
+	@MultiORMManyToMany(() => Tag, (it) => it.organizationProjects, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_project',
 	})
 	@JoinTable({
 		name: 'tag_organization_project',
@@ -339,7 +339,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Project Members Relationship
 	 */
-	@ManyToMany(() => Employee, (it) => it.projects, {
+	@MultiORMManyToMany(() => Employee, (it) => it.projects, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
@@ -350,11 +350,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Organization Teams Relationship
 	 */
-	@ManyToMany(() => OrganizationTeam, (it) => it.projects, {
+	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.projects, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'organization_project_team',
 	})
 	@JoinTable({
 		name: 'organization_project_team'
