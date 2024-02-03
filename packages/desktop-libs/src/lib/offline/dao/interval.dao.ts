@@ -13,25 +13,30 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		this._trx = new IntervalTransaction(this._provider);
 	}
 
+	private _isJSON(value: any): boolean {
+		try {
+			JSON.parse(value);
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
 	public async findAll(): Promise<IntervalTO[]> {
 		try {
-			return await this._provider.connection<IntervalTO>(
-				TABLE_NAME_INTERVALS
-			);
+			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
 			return [];
 		}
 	}
 
-	public async findAllSynced(
-		isSynced: boolean,
-		user: UserTO
-	): Promise<IntervalTO[]> {
+	public async findAllSynced(isSynced: boolean, user: UserTO): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.where('employeeId', user.employeeId)
+				.andWhere('isDeleted', false)
 				.andWhere('synced', isSynced);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
@@ -46,7 +51,8 @@ export class IntervalDAO implements DAO<IntervalTO> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.where('id', id)[0];
+				.where('id', id)
+				.andWhere('isDeleted', false)[0];
 		} catch (error) {
 			console.log('[dao]: ', 'fail on find interval : ', error);
 		}
@@ -62,20 +68,13 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async delete(value: Partial<IntervalTO>): Promise<void> {
 		try {
-			return await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.where('id', value.id)
-				.del();
+			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS).where('id', value.id).del();
 		} catch (error) {
 			console.log('[dao]: ', 'interval deleted fails : ', error);
 		}
 	}
 
-	public async backedUpNoSynced(
-		startedAt: Date,
-		stoppedAt: Date,
-		user: UserTO
-	): Promise<IntervalTO[]> {
+	public async backedUpNoSynced(startedAt: Date, stoppedAt: Date, user: UserTO): Promise<IntervalTO[]> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
@@ -85,6 +84,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 					qb
 						.whereBetween('startedAt', [new Date(startedAt), new Date(stoppedAt)])
 						.andWhere('synced', false)
+						.andWhere('isDeleted', false)
 				);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backup fails : ', error);
@@ -105,6 +105,7 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.count('* as total')
 				.where('employeeId', user.employeeId)
+				.where('isDeleted', false)
 				.andWhere('synced', isSynced);
 		} catch (error) {
 			console.log('[dao]: ', 'interval backed up fails : ', error);
@@ -127,32 +128,18 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('id', 'screenshots', 'startedAt as recordedAt')
 				.where('employeeId', user.employeeId)
-				.andWhere((qb) =>
-					qb
-						.whereNot('screenshots', '[]')
-						.orWhereRaw(query(this._providerFactory.dialect))
-				)
+				.where('isDeleted', false)
+				.andWhere((qb) => qb.whereNot('screenshots', '[]').orWhereRaw(query(this._providerFactory.dialect)))
 				.orderBy('id', 'desc')
 				.limit(10);
 			return latests.map((latest) => {
 				return {
 					...latest,
-					screenshots: this._isJSON(latest.screenshots)
-						? JSON.parse(latest.screenshots)
-						: latest.screenshots,
+					screenshots: this._isJSON(latest.screenshots) ? JSON.parse(latest.screenshots) : latest.screenshots
 				};
 			});
 		} catch (error) {
 			console.error('[SCREENSHOT_DAO_ERROR]', error);
-		}
-	}
-
-	private _isJSON(value: any): boolean {
-		try {
-			JSON.parse(value);
-			return true;
-		} catch (error) {
-			return false;
 		}
 	}
 
@@ -186,31 +173,18 @@ export class IntervalDAO implements DAO<IntervalTO> {
 	}
 
 	/**
-	 * It deletes all the intervals that are not synced and that are between the given dates
+	 * It soft deletes all the intervals that are not synced and that are between the given dates
 	 * @param {Date} startedAt - Date,
 	 * @param {Date} stoppedAt - Date - the date when the user stopped working
 	 * @param {UserTO} user - UserTO
 	 */
-	public async deleteLocallyIdlesTime(
-		startedAt: Date,
-		stoppedAt: Date,
-		user: UserTO
-	): Promise<void> {
+	public async deleteLocallyIdlesTime(startedAt: Date, stoppedAt: Date, user: UserTO): Promise<void> {
 		try {
-			const subQuery = await this._provider
-				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.select('id')
-				.where('employeeId', user.employeeId)
-				.where((qb) =>
-					qb.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)])
-				);
 			await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.whereIn(
-					'id',
-					subQuery.map(({ id }) => id)
-				)
-				.del();
+				.where('employeeId', user.employeeId)
+				.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)])
+				.update({ isDeleted: true });
 		} catch (error) {
 			console.log('[dao]: ', error);
 		}
@@ -218,19 +192,23 @@ export class IntervalDAO implements DAO<IntervalTO> {
 
 	public async deleteByRemoteId(remoteId: string): Promise<void> {
 		try {
-			return await this._provider.connection<IntervalTO>(TABLE_NAME_INTERVALS).where('remoteId', remoteId).del();
+			return await this._provider
+				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
+				.where('remoteId', remoteId)
+				.update({ isDeleted: true });
 		} catch (error) {
 			console.log('[dao]: ', 'interval deleted fails : ', error);
 		}
 	}
 
 	public async lastSyncedInterval(employeeId: string): Promise<IntervalTO> {
-		const [interval] = await this._provider
+		return this._provider
 			.connection<TimerTO>(TABLE_NAME_INTERVALS)
 			.where('employeeId', employeeId)
-			.whereNotNull('remoteId')
+			.where((builder) => {
+				builder.whereNotNull('remoteId').andWhere('synced', true).andWhere('isDeleted', false);
+			})
 			.orderBy('id', 'desc')
-			.limit(1);
-		return interval;
+			.first();
 	}
 }

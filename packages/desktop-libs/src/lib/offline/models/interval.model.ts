@@ -1,5 +1,5 @@
 import { Serializable } from '../../interfaces';
-import { IntervalTO } from '../dto/interval.dto';
+import { IntervalTO } from '../dto';
 import { Base } from './base.model';
 
 export class Interval
@@ -19,6 +19,7 @@ export class Interval
 	private _stoppedAt: Date;
 	private _synced: boolean;
 	private _timerId: number;
+	private _isDeleted: boolean;
 
 	constructor(interval: IntervalTO) {
 		super(
@@ -39,6 +40,14 @@ export class Interval
 		this._startedAt = interval.startedAt;
 		this._stoppedAt = interval.stoppedAt;
 		this._synced = interval.synced;
+	}
+
+	public get isDeleted(): boolean {
+		return this._isDeleted;
+	}
+
+	public set isDeleted(value: boolean) {
+		this._isDeleted = value;
 	}
 
 	public get timerId(): number {
@@ -122,6 +131,7 @@ export class Interval
 	}
 	public toObject(): IntervalTO {
 		return {
+			isDeleted: this._isDeleted,
 			activities: this._activities,
 			screenshots: this._screenshots,
 			startedAt: this._startedAt,
