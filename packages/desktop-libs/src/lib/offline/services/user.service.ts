@@ -13,17 +13,23 @@ export class UserService implements IUserService<UserTO> {
 
 	public async save(user: UserTO): Promise<void> {
 		try {
+			if (!user) {
+				return console.error('WARN[USER_SERVICE]: No user data, cannot save');
+			}
 			await this._userDAO.save(user);
 		} catch (error) {
-			throw new AppError('USERSRVCE', error);
+			throw new AppError('USER_SERVICE', error);
 		}
 	}
 
 	public async update(user: Partial<UserTO>): Promise<void> {
 		try {
+			if (!user && !user.id) {
+				return console.error('WARN[USER_SERVICE]: No user data, cannot update');
+			}
 			await this._userDAO.update(user.id, user);
 		} catch (error) {
-			throw new AppError('USERSRVCE', error);
+			throw new AppError('USER_SERVICE', error);
 		}
 	}
 
@@ -43,7 +49,7 @@ export class UserService implements IUserService<UserTO> {
 		try {
 			await this._userDAO.delete();
 		} catch (error) {
-			throw new AppError('USERSRVCE', error);
+			throw new AppError('USER_SERVICE', error);
 		}
 	}
 }
