@@ -21,12 +21,6 @@ type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
 };
 
 
-
-type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
-type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
-
-
 export function MultiORMManyToOne<T>(
     targetEntity: TargetEntity<T>,
     inverseSide?: InverseSide<T> | Options<T>,
