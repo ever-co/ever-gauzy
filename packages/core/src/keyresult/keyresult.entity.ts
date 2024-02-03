@@ -1,9 +1,7 @@
 import {
 	Column,
-	ManyToOne,
 	RelationId,
 	JoinColumn,
-	OneToMany,
 	Index
 } from 'typeorm';
 import {
@@ -29,6 +27,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result', { mikroOrmRepository: () => MikroOrmKeyResultRepository })
 export class KeyResult extends TenantOrganizationBaseEntity
@@ -106,7 +105,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * Owner Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee)
+	@MultiORMManyToOne(() => Employee)
 	@JoinColumn()
 	owner: IEmployee;
 
@@ -121,7 +120,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * Lead Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
+	@MultiORMManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
 	lead?: IEmployee;
@@ -138,7 +137,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * Organization Project
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, { nullable: true })
+	@MultiORMManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
 	@IsOptional()
 	project?: IOrganizationProject;
@@ -155,7 +154,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * Task
 	 */
 	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, { nullable: true })
+	@MultiORMManyToOne(() => Task, { nullable: true })
 	@JoinColumn({ name: 'taskId' })
 	@IsOptional()
 	task?: ITask;
@@ -172,7 +171,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * GoalKPI
 	 */
 	@ApiProperty({ type: () => GoalKPI })
-	@ManyToOne(() => GoalKPI, { nullable: true })
+	@MultiORMManyToOne(() => GoalKPI, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: IKPI;
@@ -189,7 +188,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * Goal
 	 */
 	@ApiProperty({ type: () => Goal })
-	@ManyToOne(() => Goal, (goal) => goal.keyResults, {
+	@MultiORMManyToOne(() => Goal, (goal) => goal.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
@@ -210,7 +209,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	*/
 
 	@ApiProperty({ type: () => KeyResultUpdate })
-	@OneToMany(() => KeyResultUpdate, (keyResultUpdate) => keyResultUpdate.keyResult, {
+	@MultiORMOneToMany(() => KeyResultUpdate, (keyResultUpdate) => keyResultUpdate.keyResult, {
 		cascade: true
 	})
 	updates?: KeyResultUpdate[];

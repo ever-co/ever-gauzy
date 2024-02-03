@@ -2,9 +2,7 @@ import {
 	Index,
 	Column,
 	RelationId,
-	ManyToOne,
-	JoinColumn,
-	OneToMany
+	JoinColumn
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
@@ -14,6 +12,7 @@ import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('report', { mikroOrmRepository: () => MikroOrmReportRepository })
 export class Report extends BaseEntity implements IReport {
@@ -61,7 +60,7 @@ export class Report extends BaseEntity implements IReport {
 	*/
 
 	@ApiProperty({ type: () => ReportCategory })
-	@ManyToOne(() => ReportCategory, (it) => it.reports, {
+	@MultiORMManyToOne(() => ReportCategory, (it) => it.reports, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -81,7 +80,7 @@ export class Report extends BaseEntity implements IReport {
 	*/
 
 	@ApiProperty({ type: () => ReportOrganization })
-	@OneToMany(() => ReportOrganization, (it) => it.report, {
+	@MultiORMOneToMany(() => ReportOrganization, (it) => it.report, {
 		cascade: true
 	})
 	@JoinColumn()

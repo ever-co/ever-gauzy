@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, ManyToMany, ManyToOne, RelationId, Index } from 'typeorm';
+import { Column, RelationId, Index } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
@@ -61,6 +61,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
@@ -109,7 +110,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, (it) => it.labels, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.labels, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 	})
@@ -132,7 +133,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Candidate
 	 */
-	@ManyToMany(() => Candidate, (it) => it.tags, {
+	@MultiORMManyToMany(() => Candidate, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -141,7 +142,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Employee
 	 */
-	@ManyToMany(() => Employee, (it) => it.tags, {
+	@MultiORMManyToMany(() => Employee, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -150,7 +151,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Equipment
 	 */
-	@ManyToMany(() => Equipment, (it) => it.tags, {
+	@MultiORMManyToMany(() => Equipment, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -159,7 +160,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * EventType
 	 */
-	@ManyToMany(() => EventType, (it) => it.tags, {
+	@MultiORMManyToMany(() => EventType, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -168,7 +169,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Income
 	 */
-	@ManyToMany(() => Income, (it) => it.tags, {
+	@MultiORMManyToMany(() => Income, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -177,7 +178,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Expense
 	 */
-	@ManyToMany(() => Expense, (it) => it.tags, {
+	@MultiORMManyToMany(() => Expense, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -186,7 +187,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Invoice
 	 */
-	@ManyToMany(() => Invoice, (it) => it.tags, {
+	@MultiORMManyToMany(() => Invoice, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -195,7 +196,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Income
 	 */
-	@ManyToMany(() => Task, (it) => it.tags, {
+	@MultiORMManyToMany(() => Task, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -204,7 +205,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Proposal
 	 */
-	@ManyToMany(() => Proposal, (it) => it.tags, {
+	@MultiORMManyToMany(() => Proposal, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -213,7 +214,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationVendor
 	 */
-	@ManyToMany(() => OrganizationVendor, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationVendor, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -222,7 +223,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationTeam
 	 */
-	@ManyToMany(() => OrganizationTeam, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -231,7 +232,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationProject
 	 */
-	@ManyToMany(() => OrganizationProject, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationProject, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
@@ -240,7 +241,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationPosition
 	 */
-	@ManyToMany(() => OrganizationPosition, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationPosition, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -249,7 +250,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * ExpenseCategory
 	 */
-	@ManyToMany(() => ExpenseCategory, (it) => it.tags, {
+	@MultiORMManyToMany(() => ExpenseCategory, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -258,7 +259,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationEmploymentType
 	 */
-	@ManyToMany(() => OrganizationEmploymentType, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationEmploymentType, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -267,7 +268,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * EmployeeLevel
 	 */
-	@ManyToMany(() => EmployeeLevel, (it) => it.tags, {
+	@MultiORMManyToMany(() => EmployeeLevel, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -276,7 +277,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationDepartment
 	 */
-	@ManyToMany(() => OrganizationDepartment, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationDepartment, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -285,7 +286,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * OrganizationContact
 	 */
-	@ManyToMany(() => OrganizationContact, (it) => it.tags, {
+	@MultiORMManyToMany(() => OrganizationContact, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -294,7 +295,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Product
 	 */
-	@ManyToMany(() => Product, (it) => it.tags, {
+	@MultiORMManyToMany(() => Product, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -303,7 +304,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Payment
 	 */
-	@ManyToMany(() => Payment, (it) => it.tags, {
+	@MultiORMManyToMany(() => Payment, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -312,7 +313,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * RequestApproval
 	 */
-	@ManyToMany(() => RequestApproval, (it) => it.tags, {
+	@MultiORMManyToMany(() => RequestApproval, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -321,7 +322,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * User
 	 */
-	@ManyToMany(() => User, (it) => it.tags, {
+	@MultiORMManyToMany(() => User, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -330,7 +331,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Integration
 	 */
-	@ManyToMany(() => Integration, (it) => it.tags, {
+	@MultiORMManyToMany(() => Integration, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -339,7 +340,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Merchant
 	 */
-	@ManyToMany(() => Merchant, (it) => it.tags, {
+	@MultiORMManyToMany(() => Merchant, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -348,7 +349,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Warehouse
 	 */
-	@ManyToMany(() => Warehouse, (it) => it.tags, {
+	@MultiORMManyToMany(() => Warehouse, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -357,7 +358,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	/**
 	 * Organization
 	 */
-	@ManyToMany(() => Organization, (it) => it.tags, {
+	@MultiORMManyToMany(() => Organization, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})

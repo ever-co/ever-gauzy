@@ -1,4 +1,4 @@
-import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
+import { Column, RelationId, Index, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
@@ -7,6 +7,7 @@ import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { MultiORMEntity } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('screenshot', { mikroOrmRepository: () => MikroOrmScreenshotRepository })
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
@@ -100,7 +101,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	/**
 	 * TimeSlot
 	 */
-	@ManyToOne(() => TimeSlot, (it) => it.screenshots, {
+	@MultiORMManyToOne(() => TimeSlot, (it) => it.screenshots, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -121,7 +122,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 

@@ -1,4 +1,4 @@
-import { Column, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -42,6 +42,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
@@ -327,7 +328,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	*/
 
 	// Contact
-	@ManyToOne(() => Contact, (contact) => contact.organization, {
+	@MultiORMManyToOne(() => Contact, (contact) => contact.organization, {
 		cascade: true,
 		onDelete: 'SET NULL'
 	})
@@ -341,7 +342,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -365,52 +366,52 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	|--------------------------------------------------------------------------
 	*/
 
-	@OneToMany(() => Invoice, (invoice) => invoice.fromOrganization)
+	@MultiORMOneToMany(() => Invoice, (invoice) => invoice.fromOrganization)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
-	@OneToMany(() => Employee, (employee) => employee.organization)
+	@MultiORMOneToMany(() => Employee, (employee) => employee.organization)
 	@JoinColumn()
 	employees?: IEmployee[];
 
-	@OneToMany(() => Deal, (deal) => deal.organization)
+	@MultiORMOneToMany(() => Deal, (deal) => deal.organization)
 	@JoinColumn()
 	deals?: IDeal[];
 
-	@OneToMany(() => OrganizationAward, (award) => award.organization)
+	@MultiORMOneToMany(() => OrganizationAward, (award) => award.organization)
 	@JoinColumn()
 	awards?: IOrganizationAward[];
 
-	@OneToMany(() => OrganizationLanguage, (language) => language.organization)
+	@MultiORMOneToMany(() => OrganizationLanguage, (language) => language.organization)
 	@JoinColumn()
 	languages?: IOrganizationLanguage[];
 
-	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.organization)
+	@MultiORMOneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.organization)
 	featureOrganizations?: IFeatureOrganization[];
 
-	@OneToMany(() => Payment, (payment) => payment.organization, {
+	@MultiORMOneToMany(() => Payment, (payment) => payment.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	payments?: IPayment[];
 
-	@OneToMany(() => OrganizationSprint, (sprint) => sprint.organization)
+	@MultiORMOneToMany(() => OrganizationSprint, (sprint) => sprint.organization)
 	@JoinColumn()
 	organizationSprints?: IOrganizationSprint[];
 
-	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, {
+	@MultiORMOneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
 
-	@OneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, {
+	@MultiORMOneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	accountingTemplates?: IAccountingTemplate[];
 
-	@OneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.organization)
+	@MultiORMOneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.organization)
 	@JoinColumn()
 	reportOrganizations?: IReportOrganization[];
 
@@ -420,16 +421,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	|--------------------------------------------------------------------------
 	*/
 	// Tags
-	@ManyToMany(() => Tag, (it) => it.organizations, {
+	@MultiORMManyToMany(() => Tag, (it) => it.organizations, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization',
 	})
 	@JoinTable({
 		name: 'tag_organization'
 	})
 	tags: ITag[];
 
-	@ManyToMany(() => Skill, (skill) => skill.organizations, {
+	@MultiORMManyToMany(() => Skill, (skill) => skill.organizations, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

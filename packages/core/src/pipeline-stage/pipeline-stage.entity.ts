@@ -1,5 +1,5 @@
 import { IPipeline, IPipelineStage as IStage } from '@gauzy/contracts';
-import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, JoinColumn, RelationId } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPipelineStageRepository } from './repository/mikro-orm-pipeline-stage.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('pipeline_stage', { mikroOrmRepository: () => MikroOrmPipelineStageRepository })
 export class PipelineStage extends TenantOrganizationBaseEntity implements IStage {
@@ -36,7 +37,7 @@ export class PipelineStage extends TenantOrganizationBaseEntity implements IStag
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Pipeline })
-	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
 	@ApiProperty({ type: () => Pipeline })
 	@JoinColumn()
 	public pipeline: IPipeline;

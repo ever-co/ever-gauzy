@@ -2,7 +2,7 @@ import { FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@g
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Column, ManyToMany, OneToMany } from 'typeorm';
+import { Column } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Product,
@@ -12,6 +12,7 @@ import {
 } from './../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
+import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
@@ -91,7 +92,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product, isArray: true })
-	@OneToMany(() => Product, (product) => product.featuredImage, {
+	@MultiORMOneToMany(() => Product, (product) => product.featuredImage, {
 		onDelete: 'SET NULL'
 	})
 	productFeaturedImage?: Product[];
@@ -100,7 +101,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Equipment
 	 */
 	@ApiProperty({ type: () => Equipment, isArray: true })
-	@OneToMany(() => Equipment, (equipment) => equipment.image, {
+	@MultiORMOneToMany(() => Equipment, (equipment) => equipment.image, {
 		onDelete: 'SET NULL'
 	})
 	equipmentImage?: IEquipment[];
@@ -109,7 +110,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Warehouse
 	 */
 	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@OneToMany(() => Warehouse, (warehouse) => warehouse.logo, {
+	@MultiORMOneToMany(() => Warehouse, (warehouse) => warehouse.logo, {
 		onDelete: 'SET NULL'
 	})
 	warehouses?: IWarehouse[];
@@ -124,6 +125,6 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product, isArray: true })
-	@ManyToMany(() => Product, (product) => product.gallery)
+	@MultiORMManyToMany(() => Product, (product) => product.gallery)
 	productGallery?: Product[];
 }

@@ -21,11 +21,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Column,
 	JoinColumn,
-	ManyToMany,
-	ManyToOne,
-	OneToOne,
 	RelationId,
-	OneToMany,
 	Index,
 	JoinTable
 } from 'typeorm';
@@ -49,6 +45,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
@@ -122,7 +119,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * Contact
 	 */
 	@ApiProperty({ type: () => Contact })
-	@OneToOne(() => Contact, (contact) => contact.candidate, {
+	@MultiORMOneToOne(() => Contact, (contact) => contact.candidate, {
 		cascade: true,
 		onDelete: 'SET NULL'
 	})
@@ -141,7 +138,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => OrganizationPosition })
-	@ManyToOne(() => OrganizationPosition, { nullable: true })
+	@MultiORMManyToOne(() => OrganizationPosition, { nullable: true })
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
@@ -158,7 +155,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	*/
 
 	@ApiProperty({ type: () => CandidateSource })
-	@OneToOne(() => CandidateSource, {
+	@MultiORMOneToOne(() => CandidateSource, {
 		nullable: true,
 		cascade: true,
 		onDelete: 'CASCADE'
@@ -176,7 +173,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@OneToOne(() => User, (user) => user.candidate, {
+	@MultiORMOneToOne(() => User, (user) => user.candidate, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -193,7 +190,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@OneToOne(() => Employee, (employee) => employee.candidate)
+	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate)
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -208,37 +205,37 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	@OneToMany(() => CandidateEducation, (education) => education.candidate, {
+	@MultiORMOneToMany(() => CandidateEducation, (education) => education.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	educations?: ICandidateEducation[];
 
-	@OneToMany(() => CandidateInterview, (interview) => interview.candidate, {
+	@MultiORMOneToMany(() => CandidateInterview, (interview) => interview.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
-	@OneToMany(() => CandidateExperience, (experience) => experience.candidate, {
+	@MultiORMOneToMany(() => CandidateExperience, (experience) => experience.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	experience?: ICandidateExperience[];
 
-	@OneToMany(() => CandidateSkill, (skill) => skill.candidate, {
+	@MultiORMOneToMany(() => CandidateSkill, (skill) => skill.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	skills?: ICandidateSkill[];
 
-	@OneToMany(() => CandidateDocument, (document) => document.candidate, {
+	@MultiORMOneToMany(() => CandidateDocument, (document) => document.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	documents?: ICandidateDocument[];
 
-	@OneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
+	@MultiORMOneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -251,9 +248,11 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	*/
 
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.candidates, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.candidates, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		pivotTable: 'tag_candidate',
+		owner: true
 	})
 	@JoinTable({
 		name: 'tag_candidate'
@@ -263,7 +262,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	/**
 	 * Organization Departments
 	 */
-	@ManyToMany(() => OrganizationDepartment, (department) => department.candidates, {
+	@MultiORMManyToMany(() => OrganizationDepartment, (department) => department.candidates, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
@@ -272,6 +271,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	/**
 	 * Organization Employment Types
 	 */
-	@ManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
+	@MultiORMManyToMany(() => OrganizationEmploymentType, (employmentType) => employmentType.candidates)
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 }

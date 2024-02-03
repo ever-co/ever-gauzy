@@ -1,4 +1,4 @@
-import { ManyToOne, JoinColumn, Column, RelationId, Index } from 'typeorm';
+import { JoinColumn, Column, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
@@ -7,6 +7,7 @@ import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('warehouse_product_variant', { mikroOrmRepository: () => MikroOrmWarehouseProductVariantRepository })
 export class WarehouseProductVariant extends TenantOrganizationBaseEntity
@@ -31,7 +32,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	 * ProductVariant
 	 */
 	@ApiProperty({ type: () => ProductVariant })
-	@ManyToOne(() => ProductVariant, (productVariant) => productVariant.warehouseProductVariants, {
+	@MultiORMManyToOne(() => ProductVariant, (productVariant) => productVariant.warehouseProductVariants, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -47,7 +48,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	/**
 	 * WarehouseProduct
 	 */
-	@ManyToOne(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.variants, {
+	@MultiORMManyToOne(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.variants, {
 		onDelete: 'CASCADE'
 	})
 	warehouseProduct: IWarehouseProduct;

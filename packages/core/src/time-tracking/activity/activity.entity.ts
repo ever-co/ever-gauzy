@@ -1,4 +1,4 @@
-import { Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import { Column, RelationId, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -21,6 +21,7 @@ import {
 } from './../../core/entities/internal';
 import { MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('activity', { mikroOrmRepository: () => MikroOrmActivityRepository })
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -104,7 +105,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	 * Employee Activity
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
+	@MultiORMManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -121,7 +122,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	 * Organization Project Relationship
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (it) => it.activities, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.activities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -146,7 +147,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	 * Time Slot Activity
 	 */
 	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
+	@MultiORMManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -164,7 +165,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	 */
 	@ApiPropertyOptional({ type: () => Task })
 	@IsOptional()
-	@ManyToOne(() => Task, (task) => task.activities, {
+	@MultiORMManyToOne(() => Task, (task) => task.activities, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

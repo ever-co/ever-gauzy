@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { IFeature, IFeatureOrganization } from '@gauzy/contracts';
 import {
 	Feature,
@@ -8,6 +8,7 @@ import {
 import { IsString } from 'class-validator';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('feature_organization', { mikroOrmRepository: () => MikroOrmFeatureOrganizationRepository })
 export class FeatureOrganization extends TenantOrganizationBaseEntity implements IFeatureOrganization {
@@ -25,7 +26,7 @@ export class FeatureOrganization extends TenantOrganizationBaseEntity implements
 	 * Feature
 	 */
 	@ApiProperty({ type: () => Feature })
-	@ManyToOne(() => Feature, (feature) => feature.featureOrganizations, {
+	@MultiORMManyToOne(() => Feature, (feature) => feature.featureOrganizations, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

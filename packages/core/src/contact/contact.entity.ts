@@ -1,4 +1,4 @@
-import { Column, OneToOne } from 'typeorm';
+import { Column } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
@@ -16,6 +16,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
+import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
@@ -121,7 +122,7 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@OneToOne(() => Employee, (employee) => employee.contact, {
+	@MultiORMOneToOne(() => Employee, (employee) => employee.contact, {
 		onDelete: 'SET NULL'
 	})
 	employee?: IEmployee;
@@ -130,7 +131,7 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@OneToOne(() => Candidate, (candidate) => candidate.contact, {
+	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.contact, {
 		onDelete: 'SET NULL'
 	})
 	candidate?: ICandidate;
@@ -139,7 +140,7 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Organization Contact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@OneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
+	@MultiORMOneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
 		onDelete: 'SET NULL'
 	})
 	organizationContact?: IOrganizationContact;

@@ -1,4 +1,4 @@
-import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidatePersonalQualities,
@@ -14,6 +14,7 @@ import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_personal_quality', { mikroOrmRepository: () => MikroOrmCandidatePersonalQualitiesRepository })
 export class CandidatePersonalQualities extends TenantOrganizationBaseEntity implements ICandidatePersonalQualities {
@@ -37,7 +38,7 @@ export class CandidatePersonalQualities extends TenantOrganizationBaseEntity imp
 	*/
 
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (interview) => interview.personalQualities, {
+	@MultiORMManyToOne(() => CandidateInterview, (interview) => interview.personalQualities, {
 		onDelete: 'CASCADE'
 	})
 	interview?: ICandidateInterview;
@@ -56,7 +57,7 @@ export class CandidatePersonalQualities extends TenantOrganizationBaseEntity imp
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.personalQuality, {
+	@MultiORMOneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.personalQuality, {
 		cascade: true
 	})
 	@JoinColumn()

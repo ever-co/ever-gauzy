@@ -1,4 +1,4 @@
-import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IOrganizationLanguage } from '@gauzy/contracts';
@@ -8,12 +8,13 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationLanguageRepository } from './repository/mikro-orm-organization-language.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_language', { mikroOrmRepository: () => MikroOrmOrganizationLanguageRepository })
 export class OrganizationLanguage extends TenantOrganizationBaseEntity implements IOrganizationLanguage {
 
 	@ApiProperty({ type: () => Language })
-	@ManyToOne(() => Language, {
+	@MultiORMManyToOne(() => Language, {
 		nullable: false,
 		onDelete: 'CASCADE'
 	})

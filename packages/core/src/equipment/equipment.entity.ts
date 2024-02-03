@@ -7,10 +7,7 @@ import {
 } from '@gauzy/contracts';
 import {
 	Column,
-	OneToMany,
-	ManyToMany,
 	JoinTable,
-	ManyToOne,
 	JoinColumn
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -31,6 +28,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment', { mikroOrmRepository: () => MikroOrmEquipmentRepository })
 export class Equipment extends TenantOrganizationBaseEntity implements IEquipment {
@@ -104,7 +102,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage, {
+	@MultiORMManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -120,7 +118,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	 * EquipmentSharing
 	 */
 	@ApiProperty({ type: () => EquipmentSharing, isArray: true })
-	@OneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment, {
+	@MultiORMOneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment, {
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings: IEquipmentSharing[];
@@ -132,9 +130,11 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	*/
 
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.equipments, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.equipments, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_equipment',
 	})
 	@JoinTable({ name: 'tag_equipment' })
 	tags: ITag[];

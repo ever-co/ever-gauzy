@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { Column, RelationId, JoinColumn, Index } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
@@ -15,6 +15,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result_template', { mikroOrmRepository: () => MikroOrmKeyResultTemplateRepository })
 export class KeyResultTemplate extends TenantOrganizationBaseEntity implements IKeyResultTemplate {
@@ -54,7 +55,7 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => GoalKPITemplate })
-	@ManyToOne(() => GoalKPITemplate, { nullable: true })
+	@MultiORMManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: IGoalKPITemplate;
@@ -68,7 +69,7 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 
 
 	@ApiProperty({ type: () => GoalTemplate })
-	@ManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
+	@MultiORMManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })

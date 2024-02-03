@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -11,6 +11,7 @@ import {
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team_join_request', { mikroOrmRepository: () => MikroOrmOrganizationTeamJoinRequestRepository })
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
@@ -70,7 +71,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	/**
 	 * Join request belongs to user
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -91,7 +92,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	/**
 	 * Join request belongs to organization team
 	 */
-	@ManyToOne(() => OrganizationTeam, {
+	@MultiORMManyToOne(() => OrganizationTeam, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})

@@ -8,11 +8,8 @@ import {
 } from '@gauzy/contracts';
 import {
 	Column,
-	ManyToOne,
 	JoinColumn,
 	JoinTable,
-	ManyToMany,
-	OneToOne,
 	Index,
 	RelationId
 } from 'typeorm';
@@ -26,6 +23,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('merchant', { mikroOrmRepository: () => MikroOrmMerchantRepository })
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
@@ -68,7 +66,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * Contact
 	 */
 	@ApiProperty({ type: () => Contact })
-	@OneToOne(() => Contact, {
+	@MultiORMOneToOne(() => Contact, {
 		cascade: true,
 		onDelete: 'CASCADE'
 	})
@@ -91,7 +89,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, { cascade: true })
+	@MultiORMManyToOne(() => ImageAsset, { cascade: true })
 	@JoinColumn()
 	logo?: IImageAsset;
 
@@ -111,9 +109,11 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.merchants, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_merchant',
 	})
 	@JoinTable({
 		name: 'tag_merchant'
@@ -124,8 +124,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * Warehouses
 	 */
 	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@ManyToMany(() => Warehouse, (it) => it.merchants, {
-		onDelete: 'CASCADE'
+	@MultiORMManyToMany(() => Warehouse, (it) => it.merchants, {
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'warehouse_merchant',
 	})
 	@JoinTable({
 		name: 'warehouse_merchant'

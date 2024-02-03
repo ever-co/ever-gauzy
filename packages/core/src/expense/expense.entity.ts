@@ -1,12 +1,9 @@
 import {
 	Column,
 	Index,
-	ManyToOne,
 	RelationId,
 	JoinColumn,
-	ManyToMany,
-	JoinTable,
-	OneToMany
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -43,6 +40,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('expense', { mikroOrmRepository: () => MikroOrmExpenseRepository })
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
@@ -146,7 +144,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.expenses, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.expenses, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -165,7 +163,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * OrganizationVendor
 	 */
 	@ApiProperty({ type: () => OrganizationVendor })
-	@ManyToOne(() => OrganizationVendor, (vendor) => vendor.expenses, {
+	@MultiORMManyToOne(() => OrganizationVendor, (vendor) => vendor.expenses, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -182,7 +180,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * ExpenseCategory
 	 */
 	@ApiProperty({ type: () => ExpenseCategory })
-	@ManyToOne(() => ExpenseCategory, (category) => category.expenses, {
+	@MultiORMManyToOne(() => ExpenseCategory, (category) => category.expenses, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -199,7 +197,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * Organization Project Relationship
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (project) => project.expenses, {
+	@MultiORMManyToOne(() => OrganizationProject, (project) => project.expenses, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -224,7 +222,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * OrganizationContact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (contact) => contact.expenses, {
+	@MultiORMManyToOne(() => OrganizationContact, (contact) => contact.expenses, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -249,7 +247,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * InvoiceItem
 	 */
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
+	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -265,9 +263,11 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.expenses, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.expenses, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_expense',
 	})
 	@JoinTable({
 		name: 'tag_expense'

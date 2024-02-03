@@ -1,4 +1,4 @@
-import { Column, OneToMany } from 'typeorm';
+import { Column } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
+import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_type', { mikroOrmRepository: () => MikroOrmProductTypeRepository })
 export class ProductType extends TranslatableBase {
@@ -26,14 +27,14 @@ export class ProductType extends TranslatableBase {
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product, isArray: true })
-	@OneToMany(() => Product, (product) => product.productType)
+	@MultiORMOneToMany(() => Product, (product) => product.productType)
 	products: Product[];
 
 	/**
 	 * ProductTypeTranslation
 	 */
 	@ApiProperty({ type: () => ProductTypeTranslation, isArray: true })
-	@OneToMany(() => ProductTypeTranslation, (productTypeTranslation) => productTypeTranslation.reference, {
+	@MultiORMOneToMany(() => ProductTypeTranslation, (productTypeTranslation) => productTypeTranslation.reference, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 

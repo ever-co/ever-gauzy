@@ -4,8 +4,7 @@ import {
 	AfterLoad,
 	AfterUpdate,
 	BeforeInsert,
-	Column,
-	OneToMany
+	Column
 } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -15,12 +14,13 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
+import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('pipeline', { mikroOrmRepository: () => MikroOrmPipelineRepository })
 export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline {
 
 	@ApiProperty({ type: () => PipelineStage })
-	@OneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
+	@MultiORMOneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
 		cascade: ['insert']
 	})
 	public stages: IPipelineStage[];

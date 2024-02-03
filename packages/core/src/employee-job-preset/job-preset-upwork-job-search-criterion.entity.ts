@@ -1,4 +1,4 @@
-import { Column, ManyToOne } from 'typeorm';
+import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -13,6 +13,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('job_preset_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmJobPresetUpworkJobSearchCriterionRepository })
 export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEntity implements IJobPresetUpworkJobSearchCriterion {
@@ -23,7 +24,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@Column()
 	jobPresetId?: string;
 
-	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
+	@MultiORMManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
 	jobPreset?: JobPreset;
 
 	@ApiProperty({ type: () => String })
@@ -32,7 +33,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@Column({ nullable: true })
 	occupationId?: string;
 
-	@ManyToOne(
+	@MultiORMManyToOne(
 		() => JobSearchOccupation,
 		(occupation) => occupation.jobPresetCriterions
 	)
@@ -44,7 +45,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@Column({ nullable: true })
 	categoryId?: string;
 
-	@ManyToOne(
+	@MultiORMManyToOne(
 		() => JobSearchCategory,
 		(category) => category.jobPresetCriterions
 	)

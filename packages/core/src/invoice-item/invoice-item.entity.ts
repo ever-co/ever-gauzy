@@ -1,4 +1,4 @@
-import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Column, JoinColumn, RelationId } from 'typeorm';
 import {
 	IEmployee,
 	IExpense,
@@ -22,6 +22,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice_item', { mikroOrmRepository: () => MikroOrmInvoiceItemRepository })
 export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoiceItem {
@@ -73,7 +74,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	// Invoice Item Belongs to Expense
 	@ApiPropertyOptional({ type: () => Expense })
-	@ManyToOne(() => Expense, (expense) => expense.invoiceItems, {
+	@MultiORMManyToOne(() => Expense, (expense) => expense.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -88,7 +89,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	// Invoice Item Belongs to Invoice
 	@ApiPropertyOptional({ type: () => Invoice })
-	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
+	@MultiORMManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -103,7 +104,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	// Invoice Item Belongs to Task
 	@ApiPropertyOptional({ type: () => Task })
-	@ManyToOne(() => Task, (task) => task.invoiceItems, {
+	@MultiORMManyToOne(() => Task, (task) => task.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -118,7 +119,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	// Invoice Item Belongs to Employee
 	@ApiPropertyOptional({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.invoiceItems, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -133,7 +134,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	// Invoice Item Belongs to Project
 	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (it) => it.invoiceItems, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.invoiceItems, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -152,7 +153,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	// Invoice Item Belongs to Product
 	@ApiPropertyOptional({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.invoiceItems, {
+	@MultiORMManyToOne(() => Product, (product) => product.invoiceItems, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

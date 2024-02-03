@@ -1,4 +1,4 @@
-import { Column, ManyToOne, Index, RelationId } from 'typeorm';
+import { Column, Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTaskSetting,
@@ -20,6 +20,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_task_setting', { mikroOrmRepository: () => MikroOrmOrganizationTaskSettingRepository })
 export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implements IOrganizationTaskSetting {
@@ -224,7 +225,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	/**
 	 * Organization Project
 	 */
-	@ManyToOne(() => OrganizationProject, {
+	@MultiORMManyToOne(() => OrganizationProject, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -244,7 +245,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, {
+	@MultiORMManyToOne(() => OrganizationTeam, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 

@@ -22,10 +22,7 @@ import {
 import {
 	Column,
 	JoinColumn,
-	OneToMany,
-	ManyToOne,
 	Unique,
-	ManyToMany,
 	RelationId,
 	Index,
 	JoinTable
@@ -43,6 +40,7 @@ import {
 import { MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
@@ -216,7 +214,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	*/
 	// From Organization
 	@ApiPropertyOptional({ type: () => () => Organization })
-	@ManyToOne(() => Organization)
+	@MultiORMManyToOne(() => Organization)
 	@JoinColumn()
 	fromOrganization?: IOrganization;
 
@@ -229,7 +227,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	// To Contact
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (contact) => contact.invoices, {
+	@MultiORMManyToOne(() => OrganizationContact, (contact) => contact.invoices, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -249,7 +247,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	*/
 	// Invoice Estimate Items
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
+	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -257,13 +255,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	// Invoice Estimate Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (payment) => payment.invoice)
+	@MultiORMOneToMany(() => Payment, (payment) => payment.invoice)
 	@JoinColumn()
 	payments?: IPayment[];
 
 	// Invoice Estimate History
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
-	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, {
+	@MultiORMOneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -275,9 +273,11 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.invoices, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.invoices, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_invoice',
 	})
 	@JoinTable({
 		name: 'tag_invoice'

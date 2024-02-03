@@ -3,9 +3,6 @@ import {
 	Index,
 	JoinColumn,
 	JoinTable,
-	ManyToMany,
-	ManyToOne,
-	OneToMany,
 	RelationId,
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -58,6 +55,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
@@ -167,7 +165,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Task })
 	@IsOptional()
 	@IsObject()
-	@ManyToOne(() => Task, (task) => task.children, {
+	@MultiORMManyToOne(() => Task, (task) => task.children, {
 		onDelete: 'SET NULL',
 	})
 	parent?: Task;
@@ -185,7 +183,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@ManyToOne(() => OrganizationProject, (it) => it.tasks, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.tasks, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -205,7 +203,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Creator
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		nullable: true,
 		onDelete: 'CASCADE',
 	})
@@ -223,7 +221,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@ManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
+	@MultiORMManyToOne(() => OrganizationSprint, { onDelete: 'SET NULL' })
 	@JoinColumn()
 	organizationSprint?: IOrganizationSprint;
 
@@ -241,7 +239,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@ManyToOne(() => TaskStatus, {
+	@MultiORMManyToOne(() => TaskStatus, {
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
@@ -261,7 +259,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@ManyToOne(() => TaskSize, {
+	@MultiORMManyToOne(() => TaskSize, {
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
@@ -281,7 +279,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
-	@ManyToOne(() => TaskPriority, {
+	@MultiORMManyToOne(() => TaskPriority, {
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
@@ -304,46 +302,46 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	/**
 	 * Organization Team Employees
 	 */
-	@OneToMany(() => OrganizationTeamEmployee, (it) => it.activeTask)
+	@MultiORMOneToMany(() => OrganizationTeamEmployee, (it) => it.activeTask)
 	organizationTeamEmployees?: OrganizationTeamEmployee[];
 
 	/**
 	 * Estimations
 	 */
-	@OneToMany(() => TaskEstimation, (it) => it.task)
+	@MultiORMOneToMany(() => TaskEstimation, (it) => it.task)
 	estimations?: TaskEstimation[];
 
 	/**
 	 * Children Tasks
 	 */
-	@OneToMany(() => Task, (task) => task.parent)
+	@MultiORMOneToMany(() => Task, (task) => task.parent)
 	children?: Task[];
 
 	/**
 	 * InvoiceItem
 	 */
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.task)
+	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.task)
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
 	/**
 	 * TimeLog
 	 */
-	@OneToMany(() => TimeLog, (it) => it.task)
+	@MultiORMOneToMany(() => TimeLog, (it) => it.task)
 	@JoinColumn()
 	timeLogs?: ITimeLog[];
 
 	/**
 	 * Activity
 	 */
-	@OneToMany(() => Activity, (activity) => activity.task)
+	@MultiORMOneToMany(() => Activity, (activity) => activity.task)
 	@JoinColumn()
 	activities?: IActivity[];
 
 	/**
 	 * Linked Task Issues
 	 */
-	@OneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
+	@MultiORMOneToMany(() => TaskLinkedIssue, (it) => it.taskTo)
 	@JoinColumn()
 	linkedIssues?: TaskLinkedIssue[];
 
@@ -359,9 +357,11 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@ManyToMany(() => Tag, (tag) => tag.tasks, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_task'
 	})
 	@JoinTable({
 		name: 'tag_task',
@@ -374,9 +374,11 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@ManyToMany(() => Employee, (employee) => employee.tasks, {
+	@MultiORMManyToMany(() => Employee, (employee) => employee.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'task_employee'
 	})
 	@JoinTable({
 		name: 'task_employee',
@@ -389,9 +391,11 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
 	@IsOptional()
 	@IsArray()
-	@ManyToMany(() => OrganizationTeam, (team) => team.tasks, {
+	@MultiORMManyToMany(() => OrganizationTeam, (team) => team.tasks, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'task_team'
 	})
 	@JoinTable({
 		name: 'task_team',

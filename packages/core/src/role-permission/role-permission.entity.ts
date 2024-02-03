@@ -3,10 +3,11 @@ import {
 	IRolePermission
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, RelationId } from 'typeorm';
 import { Role, TenantBaseEntity } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('role_permission', { mikroOrmRepository: () => MikroOrmRolePermissionRepository })
 export class RolePermission extends TenantBaseEntity
@@ -30,7 +31,7 @@ export class RolePermission extends TenantBaseEntity
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	@ManyToOne(() => Role, (role) => role.rolePermissions, {
+	@MultiORMManyToOne(() => Role, (role) => role.rolePermissions, {
 		onDelete: 'CASCADE'
 	})
 	role: Role;

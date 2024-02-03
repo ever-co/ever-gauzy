@@ -3,7 +3,6 @@ import {
 	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
 } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -21,6 +20,7 @@ import {
 } from './../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
@@ -67,7 +67,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	/**
 	 * Image Asset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -88,7 +88,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	/**
 	 * Organization Project
 	 */
-	@ManyToOne(() => OrganizationProject, {
+	@MultiORMManyToOne(() => OrganizationProject, {
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
@@ -104,7 +104,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, {
+	@MultiORMManyToOne(() => OrganizationTeam, {
 		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;

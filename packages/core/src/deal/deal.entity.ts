@@ -7,9 +7,7 @@ import {
 import {
 	Column,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
-	OneToOne,
 	Index
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
@@ -29,6 +27,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
+import { MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
@@ -57,7 +56,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User)
+	@MultiORMManyToOne(() => User)
 	@JoinColumn({ name: 'createdByUserId' })
 	public createdBy: IUser;
 
@@ -73,7 +72,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * PipelineStage
 	 */
 	@ApiProperty({ type: () => PipelineStage })
-	@ManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	public stage: IPipelineStage;
 
@@ -95,7 +94,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * OrganizationContact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@OneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
+	@MultiORMOneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	public client: IOrganizationContact;
 

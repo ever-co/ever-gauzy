@@ -1,4 +1,4 @@
-import { Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, Index } from 'typeorm';
 import {
 	IProductOptionGroupTranslation,
 	LanguagesEnum
@@ -9,6 +9,7 @@ import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductOptionGroupTranslationRepository } from './repository/mikro-orm-product-option-group-translation.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_option_group_translation', { mikroOrmRepository: () => MikroOrmProductOptionGroupTranslationRepository })
 export class ProductOptionGroupTranslation extends TenantOrganizationBaseEntity implements IProductOptionGroupTranslation {
@@ -32,7 +33,7 @@ export class ProductOptionGroupTranslation extends TenantOrganizationBaseEntity 
 	 * ProductOptionGroup
 	 */
 	@ApiProperty({ type: () => ProductOptionGroup })
-	@ManyToOne(() => ProductOptionGroup, (group) => group.translations)
+	@MultiORMManyToOne(() => ProductOptionGroup, (group) => group.translations)
 	@JoinColumn()
 	reference: ProductOptionGroup;
 

@@ -15,8 +15,6 @@ import {
 	Index,
 	JoinColumn,
 	JoinTable,
-	ManyToMany,
-	ManyToOne,
 	RelationId
 } from 'typeorm';
 import {
@@ -30,6 +28,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invite', { mikroOrmRepository: () => MikroOrmInviteRepository })
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
@@ -74,7 +73,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Invited By User
 	 */
 	@ApiPropertyOptional({ type: () => User })
-	@ManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => User, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	invitedBy?: IUser;
 
@@ -88,7 +87,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Invited User Role
 	 */
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Role, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	role?: IRole;
 
@@ -102,7 +101,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Invites belongs to user
 	 */
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => User, (it) => it.invites, {
+	@MultiORMManyToOne(() => User, (it) => it.invites, {
 		onDelete: "SET NULL"
 	})
 	@JoinColumn()
@@ -123,7 +122,10 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Organization Projects
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject })
-	@ManyToMany(() => OrganizationProject)
+	@MultiORMManyToMany(() => OrganizationProject, {
+		owner: true,
+		pivotTable: 'invite_organization_project',
+	})
 	@JoinTable({
 		name: 'invite_organization_project'
 	})
@@ -133,7 +135,10 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Organization Contacts
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@ManyToMany(() => OrganizationContact)
+	@MultiORMManyToMany(() => OrganizationContact, {
+		owner: true,
+		pivotTable: 'invite_organization_contact',
+	})
 	@JoinTable({
 		name: 'invite_organization_contact'
 	})
@@ -143,7 +148,10 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	 * Organization Departments
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationDepartment })
-	@ManyToMany(() => OrganizationDepartment)
+	@MultiORMManyToMany(() => OrganizationDepartment, {
+		owner: true,
+		pivotTable: 'invite_organization_department',
+	})
 	@JoinTable({
 		name: 'invite_organization_department'
 	})
@@ -153,7 +161,10 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	* Organization Teams
 	*/
 	@ApiPropertyOptional({ type: () => OrganizationTeam })
-	@ManyToMany(() => OrganizationTeam)
+	@MultiORMManyToMany(() => OrganizationTeam, {
+		owner: true,
+		pivotTable: 'invite_organization_team',
+	})
 	@JoinTable({
 		name: 'invite_organization_team'
 	})

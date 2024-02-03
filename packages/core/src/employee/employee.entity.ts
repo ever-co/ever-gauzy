@@ -3,7 +3,6 @@ import {
 	Column,
 	JoinColumn,
 	JoinTable,
-	ManyToMany,
 	RelationId,
 	Index,
 } from 'typeorm';
@@ -502,9 +501,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	/**
 	 * Employee Organization Projects
 	 */
-	@ManyToMany(() => OrganizationProject, (it) => it.members, {
+	@MultiORMManyToMany(() => OrganizationProject, (it) => it.members, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'organization_project_employee',
 	})
 	@JoinTable({
 		name: 'organization_project_employee',
@@ -517,6 +518,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMManyToMany(() => Tag, (tag) => tag.employees, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_employee',
 	})
 	@JoinTable({
 		name: 'tag_employee',
@@ -579,6 +582,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 			onUpdate: 'CASCADE',
 			onDelete: 'CASCADE',
 			pivotTable: 'time_off_policy_employee',
+			owner: true,
 		}
 	)
 	@JoinTable({
@@ -589,12 +593,14 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	/**
 	 * TimeOffRequest
 	 */
-	@ManyToMany(
+	@MultiORMManyToMany(
 		() => TimeOffRequest,
 		(timeOffRequest) => timeOffRequest.employees,
 		{
 			onUpdate: 'CASCADE',
 			onDelete: 'CASCADE',
+			owner: true,
+			pivotTable: 'time_off_request_employee',
 		}
 	)
 	@JoinTable({
@@ -605,7 +611,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	/**
 	 * Task
 	 */
-	@ManyToMany(() => Task, (task) => task.members, {
+	@MultiORMManyToMany(() => Task, (task) => task.members, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 	})
@@ -615,7 +621,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	/**
 	 * Equipment Sharing
 	 */
-	@ManyToMany(() => EquipmentSharing, (it) => it.employees, {
+	@MultiORMManyToMany(() => EquipmentSharing, (it) => it.employees, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 	})

@@ -9,14 +9,16 @@ type MikroORMTarget<T, O> = ManyToOneOptions<T, O> | string | ((e?: any) => Enti
 type TypeORMInverseSide<T> = string | ((object: T) => any);
 type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 
-type TypeORMRelationOptions = RelationOptions;
-type MikroORMRelationOptions<T, O> = Partial<ManyToOneOptions<T, O>>;
+type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
+type MikroORMRelationOptions<T, O> = Omit<Partial<ManyToOneOptions<T, O>>, 'cascade' | 'onUpdate' | 'onDelete'>;
 
 
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions;
+type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
+    cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
+};
 
 
 export function MultiORMManyToOne<T>(
@@ -40,12 +42,12 @@ export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
 
     const typeOrmOptions = options as RelationOptions;
     let mikroORMCascade = [];
-    if (typeOrmOptions.cascade) {
+    if (typeOrmOptions?.cascade) {
         if (typeof typeOrmOptions.cascade === 'boolean') {
             mikroORMCascade = typeOrmOptions.cascade === true ? [Cascade.ALL] : [];
         }
 
-        if (typeOrmOptions.cascade instanceof Array) {
+        if (typeOrmOptions?.cascade instanceof Array) {
             mikroORMCascade = typeOrmOptions.cascade.map(c => {
                 switch (c) {
                     case "insert":
@@ -65,11 +67,11 @@ export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
 
     const mikroOrmOptions: Partial<ManyToOneOptions<T, any>> = {
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions.nullable,
-        deleteRule: typeOrmOptions.onDelete?.toLocaleLowerCase(),
-        updateRule: typeOrmOptions.onUpdate?.toLocaleLowerCase(),
-        lazy: !!typeOrmOptions.lazy,
-        ...options as Partial<ManyToOneOptions<T, any>>
+        nullable: typeOrmOptions?.nullable,
+        deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
+        updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
+        lazy: !!typeOrmOptions?.lazy,
+        ...options as any
     };
 
 

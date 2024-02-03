@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, Index } from 'typeorm';
 import { IIntegrationMap, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
@@ -8,6 +8,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
+import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('integration_map', { mikroOrmRepository: () => MikroOrmIntegrationMapRepository })
 export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {
@@ -34,7 +35,7 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, (it) => it.entityMaps, {
+	@MultiORMManyToOne(() => IntegrationTenant, (it) => it.entityMaps, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Column, Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTeam,
@@ -13,6 +13,7 @@ import {
 } from '../../core/entities/internal';
 import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_related_issue_type', { mikroOrmRepository: () => MikroOrmTaskRelatedIssueTypeRepository })
 export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implements ITaskRelatedIssueType {
@@ -58,7 +59,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.relatedIssueTypes, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.relatedIssueTypes, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -81,7 +82,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	/**
 	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (it) => it.relatedIssueTypes, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.relatedIssueTypes, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 

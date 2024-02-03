@@ -1,9 +1,6 @@
 import {
 	Column,
-	OneToOne,
 	JoinColumn,
-	OneToMany,
-	ManyToOne,
 	RelationId,
 	Index
 } from 'typeorm';
@@ -26,6 +23,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
+import { MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_feedback', { mikroOrmRepository: () => MikroOrmCandidateFeedbackRepository })
 export class CandidateFeedback extends TenantOrganizationBaseEntity
@@ -61,7 +59,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@ManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
+	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
 		onDelete: 'CASCADE'
 	})
 	candidate?: ICandidate;
@@ -76,7 +74,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate Interview
 	 */
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (candidateInterview) => candidateInterview.feedbacks, {
+	@MultiORMManyToOne(() => CandidateInterview, (candidateInterview) => candidateInterview.feedbacks, {
 		onDelete: 'CASCADE'
 	})
 	interview?: ICandidateInterview;
@@ -96,7 +94,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate Criterions Rating
 	 */
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, {
+	@MultiORMOneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, {
 		cascade: true
 	})
 	criterionsRating?: ICandidateCriterionsRating[];
@@ -111,7 +109,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate Interviewers
 	 */
 	@ApiProperty({ type: () => CandidateInterviewers })
-	@OneToOne(() => CandidateInterviewers)
+	@MultiORMOneToOne(() => CandidateInterviewers)
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 

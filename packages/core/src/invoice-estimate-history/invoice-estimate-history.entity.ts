@@ -4,7 +4,6 @@ import { IsOptional, IsString } from 'class-validator';
 import {
 	Column,
 	JoinColumn,
-	ManyToOne,
 	Index,
 	RelationId,
 } from 'typeorm';
@@ -15,6 +14,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmInvoiceEstimateHistoryRepository } from './repository/mikro-orm-invoice-estimate-history.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice_estimate_history', { mikroOrmRepository: () => MikroOrmInvoiceEstimateHistoryRepository })
 export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity implements IInvoiceEstimateHistory {
@@ -36,7 +36,7 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
@@ -50,7 +50,7 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	userId: string;
 
 	@ApiProperty({ type: () => Invoice })
-	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
+	@MultiORMManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'CASCADE',
 	})
 	invoice: IInvoice;

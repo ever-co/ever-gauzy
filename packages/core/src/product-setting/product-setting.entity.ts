@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, OneToOne, JoinColumn } from 'typeorm';
+import { Column, JoinColumn } from 'typeorm';
 import { IProductVariantSetting } from '@gauzy/contracts';
 import {
 	ProductVariant,
@@ -7,6 +7,7 @@ import {
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductVariantSettingRepository } from './repository/mikro-orm-product-setting.repository';
+import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant_setting', { mikroOrmRepository: () => MikroOrmProductVariantSettingRepository })
 export class ProductVariantSetting extends TenantOrganizationBaseEntity implements IProductVariantSetting {
@@ -52,7 +53,7 @@ export class ProductVariantSetting extends TenantOrganizationBaseEntity implemen
 	/**
 	 * ProductVariant
 	 */
-	@OneToOne(() => ProductVariant, (productVariant) => productVariant.setting, {
+	@MultiORMOneToOne(() => ProductVariant, (productVariant) => productVariant.setting, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()

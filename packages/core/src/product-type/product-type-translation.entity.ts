@@ -1,9 +1,10 @@
-import { Column, ManyToOne, JoinColumn, RelationId, Index } from 'typeorm';
+import { Column, JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductTypeTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductType, TranslationBase } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductTypeTranslationRepository } from './repository/mikro-orm-product-type-translation.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_type_translation', { mikroOrmRepository: () => MikroOrmProductTypeTranslationRepository })
 export class ProductTypeTranslation extends TranslationBase
@@ -31,7 +32,7 @@ export class ProductTypeTranslation extends TranslationBase
 	 * ProductType
 	 */
 	@ApiProperty({ type: () => ProductType })
-	@ManyToOne(() => ProductType, (productType) => productType.translations, {
+	@MultiORMManyToOne(() => ProductType, (productType) => productType.translations, {
 		onDelete: 'CASCADE',
 		onUpdate: 'CASCADE'
 	})

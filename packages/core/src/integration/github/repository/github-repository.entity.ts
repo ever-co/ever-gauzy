@@ -1,10 +1,11 @@
-import { Column, Index, JoinColumn, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Column, Index, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue, IOrganizationProject } from '@gauzy/contracts';
 import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from '../../../core/entities/internal';
 import { MultiORMEntity } from '../../../core/decorators/entity';
 import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-candidate.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../../../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_github_repository', { mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryRepository })
 export class OrganizationGithubRepository extends TenantOrganizationBaseEntity implements IOrganizationGithubRepository {
@@ -72,7 +73,7 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
 
     /** What integration tenant sync to */
     @ApiProperty({ type: () => IntegrationTenant })
-    @ManyToOne(() => IntegrationTenant, {
+    @MultiORMManyToOne(() => IntegrationTenant, {
         /** Indicates if relation column value can be nullable or not. */
         nullable: true,
 
@@ -96,13 +97,13 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     */
 
     /** Repository Sync Organization Projects */
-    @OneToMany(() => OrganizationProject, (it) => it.repository, {
+    @MultiORMOneToMany(() => OrganizationProject, (it) => it.repository, {
         cascade: true
     })
     projects?: IOrganizationProject[];
 
     /** Repository Sync Organization Projects */
-    @OneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository, {
+    @MultiORMOneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository, {
         cascade: true
     })
     issues?: IOrganizationGithubRepositoryIssue[];
