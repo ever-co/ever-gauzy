@@ -35,6 +35,7 @@ remoteMain.initialize();
 import {
 	AppError,
 	AppMenu,
+	DesktopServer,
 	DesktopUpdater,
 	DialogErrorHandler,
 	ErrorEventManager,
@@ -123,10 +124,13 @@ const updater = new DesktopUpdater({
 const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 const eventErrorManager = ErrorEventManager.instance;
 
+const server = new DesktopServer(true);
+const controller = new AbortController();
+const { signal } = controller;
+
 let tray = null;
 let isAlreadyRun = false;
 let onWaitingServer = false;
-let serverGauzy = null;
 let serverDesktop = null;
 let dialogErr = false;
 
@@ -255,50 +259,6 @@ async function startServer(value, restart = false) {
 		process.env.DB_USER = value['postgres']?.dbUsername;
 		process.env.DB_PASS = value['postgres']?.dbPassword;
 	}
-	if (value.isLocalServer) {
-		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
-		process.env.API_HOST = '0.0.0.0';
-		process.env.API_BASE_URL = `http://localhost:${value.port || environment.API_DEFAULT_PORT}`;
-		setEnvAdditional();
-		// require(path.join(__dirname, 'api/main.js'));
-		serverGauzy = fork(path.join(__dirname, './api/main.js'), {
-			silent: true
-		});
-		serverGauzy.stdout.on('data', async (data) => {
-			const msgData = data.toString();
-			console.log('log -- ', msgData);
-			setupWindow.webContents.send('setup-progress', {
-				msg: msgData
-			});
-			if (!value.serverConfigConnected || value.isLocalServer) {
-				if (msgData.indexOf('Listening at http') > -1) {
-					try {
-						setupWindow.hide();
-						// isAlreadyRun = true;
-						gauzyWindow = await createGauzyWindow(
-							gauzyWindow,
-							serve,
-							{ ...environment, gauzyWindow: value.gauzyWindow },
-							pathWindow.gauzyWindow
-						);
-						createTrayMenu();
-						gauzyWindow.show();
-					} catch (error) {
-						throw new AppError('MAINWININIT', error);
-					}
-				}
-			}
-			if (msgData.indexOf('Unable to connect to the database') > -1 && !dialogErr) {
-				const msg = 'Unable to connect to the database';
-				dialogMessage(msg);
-			}
-		});
-
-		serverGauzy.stderr.on('data', (data) => {
-			const msgData = data.toString();
-			console.log('log error--', msgData);
-		});
-	}
 
 	try {
 		const config: any = {
@@ -323,25 +283,37 @@ async function startServer(value, restart = false) {
 		throw new AppError('MAINSTRSERVER', error);
 	}
 
-	/* create main window */
-	if (value.serverConfigConnected || !value.isLocalServer) {
+	if (value.isLocalServer) {
+		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
+		process.env.API_HOST = '0.0.0.0';
+		process.env.API_BASE_URL = `http://127.0.0.1:${value.port || environment.API_DEFAULT_PORT}`;
+		setEnvAdditional();
 		try {
-			setupWindow.hide();
-			gauzyWindow = await createGauzyWindow(
-				gauzyWindow,
-				serve,
-				{ ...environment, gauzyWindow: value.gauzyWindow },
-				pathWindow.gauzyWindow
-			);
+			await server.start({ api: path.join(__dirname, 'api/main.js') }, process.env, setupWindow, signal);
 		} catch (error) {
 			throw new AppError('MAINWININIT', error);
 		}
+	}
+
+	/* create main window */
+	try {
+		gauzyWindow = await createGauzyWindow(
+			gauzyWindow,
+			serve,
+			{ ...environment, gauzyWindow: value.gauzyWindow },
+			pathWindow.gauzyWindow
+		);
+	} catch (error) {
+		throw new AppError('MAINWININIT', error);
 	}
 
 	createTrayMenu();
 
 	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
 	await notificationWindow.loadURL();
+
+	setupWindow.hide();
+
 	if (gauzyWindow) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
@@ -387,11 +359,16 @@ function createTrayMenu() {
 
 function setEnvAdditional() {
 	const additionalConfig = LocalStore.getAdditionalConfig();
+	const config = LocalStore.getStore('configs');
 	Object.keys(additionalConfig).forEach((key) => {
 		if (additionalConfig[key]) {
 			process.env[key] = additionalConfig[key];
 		}
 	});
+	global.variableGlobal = {
+		API_BASE_URL: getApiBaseUrl(config),
+		IS_INTEGRATED_DESKTOP: config.isLocalServer
+	};
 }
 
 const dialogMessage = (msg) => {
@@ -422,9 +399,7 @@ const dialogMessage = (msg) => {
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
-		return configs.port
-			? `http://localhost:${configs.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+		return configs.port ? `http://127.0.0.1:${configs.port}` : `http://127.0.0.1:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
@@ -623,18 +598,20 @@ ipcMain.on('restore', () => {
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
-	dialogErr = false;
-	LocalStore.updateConfigSetting(arg);
-	if (alwaysOn) alwaysOn.close();
-	if (serverGauzy) serverGauzy.kill();
-	if (gauzyWindow) gauzyWindow.destroy();
-	gauzyWindow = null;
-	isAlreadyRun = false;
-	const configs = LocalStore.getStore('configs');
-	global.variableGlobal = {
-		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
-	};
+	try {
+		dialogErr = false;
+		LocalStore.updateConfigSetting(arg);
+		isAlreadyRun = false;
+		const configs = LocalStore.getStore('configs');
+		global.variableGlobal = {
+			API_BASE_URL: getApiBaseUrl(configs),
+			IS_INTEGRATED_DESKTOP: configs.isLocalServer
+		};
+		await server.stop();
+		closeAllWindows();
+	} catch (error) {
+		console.error('ERROR: Occurred while server restart:' + error);
+	}
 	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
 	app.exit(0);
 });
@@ -669,11 +646,16 @@ ipcMain.on('open_browser', async (event, arg) => {
 });
 
 ipcMain.on('restart_and_update', () => {
-	setImmediate(() => {
-		app.removeAllListeners('window-all-closed');
-		autoUpdater.quitAndInstall(false);
-		if (serverDesktop) serverDesktop.kill();
-		if (serverGauzy) serverGauzy.kill();
+	setImmediate(async () => {
+		try {
+			app.removeAllListeners('window-all-closed');
+			autoUpdater.quitAndInstall(false);
+			if (serverDesktop) serverDesktop.kill();
+			await server.stop();
+			closeAllWindows();
+		} catch (error) {
+			console.error('ERROR: Occurred while server restart and update:' + error);
+		}
 		app.exit(0);
 	});
 });
@@ -722,25 +704,33 @@ app.on('activate', async () => {
 	}
 });
 
-app.on('before-quit', (e) => {
-	e.preventDefault();
+app.on('before-quit', async (e) => {
 	const appSetting = LocalStore.getStore('appSetting');
+
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
 		timeTrackerWindow.webContents.send('stop_from_tray', {
-			quitApp: true,
+			quitApp: true
 		});
-	} else {
-		// soft download cancellation
-		try {
-			updater.cancel();
-		} catch (e) {
-			throw new AppError('MAINUPDTABORT', e);
-		}
-		if (serverDesktop) serverDesktop.kill();
-		if (serverGauzy) serverGauzy.kill();
-		app.exit(0);
+		return;
 	}
+
+	// soft download cancellation
+	try {
+		updater.cancel();
+	} catch (e) {
+		throw new UIError('500', 'MAINUPDTABORT', e);
+	}
+
+	try {
+		if (serverDesktop) serverDesktop.kill();
+		await server.stop();
+		closeAllWindows();
+	} catch (error) {
+		console.error('ERROR: Occurred while server stop:' + error);
+	}
+
+	app.exit(0);
 });
 
 // On OS X it is common for applications and their menu bar
@@ -810,3 +800,24 @@ ipcMain.on('launch_on_startup', (event, arg) => {
 ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
+
+
+function closeAllWindows(): void {
+	const windows = [notificationWindow, splashScreen, alwaysOn];
+	const browserWindows: BrowserWindow[] = [
+		gauzyWindow,
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		imageView,
+		setupWindow
+	];
+
+	windows.forEach((window) => {
+		if (window) window.close();
+	});
+
+	browserWindows.forEach((window) => {
+		if (!window?.isDestroyed()) window.destroy();
+	});
+}
