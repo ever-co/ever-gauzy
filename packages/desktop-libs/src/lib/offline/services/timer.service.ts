@@ -34,7 +34,7 @@ export class TimerService implements ITimerService<TimerTO> {
 
 	public async update(timer: Partial<Timer>): Promise<void> {
 		try {
-			if (!timer && !timer.id) {
+			if (!timer.id) {
 				return console.error('WARN[TIMER_SERVICE]: No timer data, cannot update');
 			}
 			await this._timerDAO.update(timer.id, timer.toObject());
@@ -54,7 +54,7 @@ export class TimerService implements ITimerService<TimerTO> {
 
 	public async findById(timer: Partial<Timer>): Promise<TimerTO> {
 		try {
-			if (!timer && !timer.id) {
+			if (!timer.id) {
 				console.error('WARN[TIMER_SERVICE]: No timer data, cannot find');
 				return null;
 			}

@@ -24,7 +24,7 @@ export class UserService implements IUserService<UserTO> {
 
 	public async update(user: Partial<UserTO>): Promise<void> {
 		try {
-			if (!user && !user.id) {
+			if (!user.id) {
 				return console.error('WARN[USER_SERVICE]: No user data, cannot update');
 			}
 			await this._userDAO.update(user.id, user);
