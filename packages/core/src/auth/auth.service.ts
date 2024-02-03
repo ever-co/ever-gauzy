@@ -906,83 +906,56 @@ export class AuthService extends SocialAuthService {
 		employeeId: string | null
 	): Promise<IOrganizationTeam[]> {
 		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder("organization_team");
-		query.innerJoin('organization_team_employee',
-			p("team_member"),
-			p('"team_member"."organizationTeamId" = "organization_team"."id"')
-		);
+		query.innerJoin('organization_team_employee', "team_member", '"team_member"."organizationTeamId" = "organization_team"."id"');
 
 		query.select([
-			p(`"${query.alias}"."id" AS "team_id"`),
-			p(`"${query.alias}"."name" AS "team_name"`),
-			p(`"${query.alias}"."logo" AS "team_logo"`),
-			p(`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`),
-			p(`"${query.alias}"."profile_link" AS "profile_link"`),
-			p(`"${query.alias}"."prefix" AS "prefix")`)
+			`"${query.alias}"."id" AS "team_id"`,
+			`"${query.alias}"."name" AS "team_name"`,
+			`"${query.alias}"."logo" AS "team_logo"`,
+			`COALESCE(COUNT("team_member"."id"), 0) AS "team_member_count"`,
+			`"${query.alias}"."profile_link" AS "profile_link"`,
+			`"${query.alias}"."prefix" AS "prefix"`
 		]);
 
-		query.andWhere(
-			p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId }
-		);
+		query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+		query.andWhere(`"${query.alias}"."isActive" = :isActive`, { isActive: true });
+		query.andWhere(`"${query.alias}"."isArchived" = :isArchived`, { isArchived: false });
 
 		// Sub Query to get only assigned teams for specific organizations
 		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
-			const subQuery = cb.subQuery()
-				.select(
-					p('"user_organization"."organizationId"')
-				).from(
-					p("user_organization"),
-					p("user_organization")
-				);
-			subQuery.andWhere(
-				p(`"${subQuery.alias}"."isActive" = true`)
-			);
-			subQuery.andWhere(
-				p(`"${subQuery.alias}"."userId" = :userId`), { userId }
-			);
-			subQuery.andWhere(
-				p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
-			);
+			const subQuery = cb.subQuery().select('"user_organization"."organizationId"').from("user_organization", "user_organization");
+			subQuery.andWhere(`"${subQuery.alias}"."isActive" = :isActive`, { isActive: true });
+			subQuery.andWhere(`"${subQuery.alias}"."isArchived" = :isArchived`, { isArchived: false });
+			subQuery.andWhere(`"${subQuery.alias}"."userId" = :userId`, { userId });
+			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
 			return subQuery.distinct(true).getQuery();
 		};
 
 		// Sub Query to get only assigned teams for specific organizations
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			return (p(`"${query.alias}"."organizationId" IN `) + orgSubQuery(cb));
+			return (`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
 		});
 
 		// Sub Query to get only assigned teams for a specific employee for specific tenant
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			const subQuery = cb.subQuery()
-				.select(
-					p('"organization_team_employee"."organizationTeamId"')
-				)
-				.from(
-					p("organization_team_employee"),
-					p("organization_team_employee")
-				);
-			subQuery.andWhere(
-				p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId }
-			);
+			const subQuery = cb.subQuery().select('"organization_team_employee"."organizationTeamId"').from("organization_team_employee", "organization_team_employee");
+			subQuery.andWhere(`"${subQuery.alias}"."tenantId" = :tenantId`, { tenantId });
+			subQuery.andWhere(`"${subQuery.alias}"."isActive" = :isActive`, { isActive: true });
+			subQuery.andWhere(`"${subQuery.alias}"."isArchived" = :isArchived`, { isArchived: false });
 
 			if (isNotEmpty(employeeId)) {
-				subQuery.andWhere(
-					p(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId }
-				);
+				subQuery.andWhere(`"${subQuery.alias}"."employeeId" = :employeeId`, { employeeId });
 			}
 
 			// Sub Query to get only assigned teams for specific organizations
 			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				return (p(`"${subQuery.alias}"."organizationId" IN `) + orgSubQuery(cb));
+				return (`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb));
 			});
-			return (p(`"${query.alias}"."id" IN `) + subQuery.distinct(true).getQuery());
+			return (`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
 		});
 
-		query.addGroupBy(
-			p(`"${query.alias}"."id"`)
-		);
-		query.orderBy(
-			p(`"${query.alias}"."createdAt"`), 'DESC'
-		);
+		query.addGroupBy(`"${query.alias}"."id"`);
+		query.orderBy(`"${query.alias}"."createdAt"`, 'DESC');
 
 		return await query.getRawMany();
 	}
