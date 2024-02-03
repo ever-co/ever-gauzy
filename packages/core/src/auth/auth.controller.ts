@@ -47,7 +47,7 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Check if the user is authenticated.
@@ -169,8 +169,13 @@ export class AuthController {
 	@Post('/signin.email')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async sendWorkspaceSigninCode(@Body() entity: UserEmailDTO, @I18nLang() locale: LanguagesEnum): Promise<any> {
-		return await this.commandBus.execute(new WorkspaceSigninSendCodeCommand(entity, locale));
+	async sendWorkspaceSigninCode(
+		@Body() entity: UserEmailDTO,
+		@I18nLang() locale: LanguagesEnum
+	): Promise<any> {
+		return await this.commandBus.execute(
+			new WorkspaceSigninSendCodeCommand(entity, locale)
+		);
 	}
 
 	/**
@@ -185,8 +190,11 @@ export class AuthController {
 	async confirmWorkspaceSigninByCode(
 		@Query() query: Record<string, boolean>,
 		@Body() input: WorkspaceSigninEmailVerifyDTO
-	): Promise<any> {
-		return await this.authService.confirmWorkspaceSigninByCode(input, parseToBoolean(query.includeTeams));
+	): Promise<IUserSigninWorkspaceResponse> {
+		return await this.authService.confirmWorkspaceSigninByCode(
+			input,
+			parseToBoolean(query.includeTeams)
+		);
 	}
 
 	/**
@@ -198,8 +206,12 @@ export class AuthController {
 	@Post('/signin.workspace')
 	@Public()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async signinWorkspaceByToken(@Body() input: WorkspaceSigninDTO): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(new WorkspaceSigninVerifyTokenCommand(input));
+	async signinWorkspaceByToken(
+		@Body() input: WorkspaceSigninDTO
+	): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(
+			new WorkspaceSigninVerifyTokenCommand(input)
+		);
 	}
 
 	/**
