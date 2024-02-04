@@ -371,31 +371,6 @@ function setEnvAdditional() {
 	};
 }
 
-const dialogMessage = (msg) => {
-	dialogErr = true;
-	const options = {
-		type: 'question',
-		buttons: ['Open Setting', 'Exit'],
-		defaultId: 2,
-		title: 'warning',
-		message: msg
-	} as MessageBoxOptions;
-
-	dialog.showMessageBox(null, options).then(async (response) => {
-		if (response.response === 1) app.quit();
-		else {
-			if (settingsWindow) settingsWindow.show();
-			else {
-				if (!settingsWindow) {
-					settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
-				}
-				settingsWindow.show();
-				settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-			}
-		}
-	});
-};
-
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
