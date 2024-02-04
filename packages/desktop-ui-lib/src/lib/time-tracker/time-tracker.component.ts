@@ -2328,11 +2328,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				await callBack();
 			}
 			const timeLogs = resActivities.timeLogs;
+			if (!timeLogs?.length) {
+				// Stop process if there is no time logs associate to activity result.
+				console.error('[@SendActivities]', 'No time logs');
+				return;
+			}
 			this.electronService.ipcRenderer.send('return_time_slot', {
 				timerId: arg.timerId,
 				timeSlotId: resActivities.id,
 				quitApp: arg.quitApp,
-				timeLogs: timeLogs,
+				timeLogs: timeLogs
 			});
 			this.electronService.ipcRenderer.send('remove_aw_local_data');
 			this.electronService.ipcRenderer.send(

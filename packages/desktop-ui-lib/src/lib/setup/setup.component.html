@@ -1082,24 +1082,33 @@
 								</div>
 							</div>
 						</div>
-						<div class="progress-setup" *ngIf="onProgress">
-							<div class="progress-icon">
-								<nb-icon
-									icon="settings-2-outline"
-									class="gear-small icon-spin"
-								></nb-icon>
-								<nb-icon
-									icon="settings-2-outline"
-									class="gear-medium icon-spin"
-								></nb-icon>
-							</div>
-							<nb-progress-bar
-								[value]="progressSetup"
-								status="primary"
-								>{{ progressSetup }}%</nb-progress-bar
-							>
-							<div class="progress-icon progress-message">
-								{{ progressMessage }}
+						<div class="progress-setup" *ngIf="onProgress" [ngClass]="{init: onProgress}">
+							<div class="progress-anim">
+								<div class="progress-header">
+									<div class="progress-icon">
+										<nb-icon
+												icon="settings-2-outline"
+												class="gear-small icon-spin"
+										></nb-icon>
+										<nb-icon
+												icon="settings-2-outline"
+												class="gear-medium icon-spin"
+										></nb-icon>
+									</div>
+									<nb-progress-bar
+											[value]="progressSetup"
+											status="primary"
+									>{{ progressSetup }}%
+									</nb-progress-bar
+									>
+								</div>
+								<div class="progress-message-container">
+									<div #logBox class="progress-message">
+										<p class="content-text" *ngFor="let content of logContents">
+											{{content}}
+										</p>
+									</div>
+								</div>
 							</div>
 						</div>
 					</nb-step>

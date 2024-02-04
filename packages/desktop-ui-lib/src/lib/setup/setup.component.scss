@@ -22,16 +22,17 @@ $border-radius: calc(2 * var(--border-radius));
   right: -500px;
 }
 
-$height : calc(100vh - 10.5rem);
+$height: calc(100vh - 10.5rem);
 
 .content-body {
-	margin-top: 40px;
-    max-height: $height;
-    overflow: overlay;
-    margin-bottom: 10px;
-	&.final-step{
-		height: $height;
-	}
+  margin-top: 40px;
+  max-height: $height;
+  overflow: overlay;
+  margin-bottom: 10px;
+
+  &.final-step {
+    height: $height;
+  }
 }
 
 .margin-content {
@@ -54,11 +55,7 @@ $height : calc(100vh - 10.5rem);
   padding: 0px !important;
 }
 
-::ng-deep
-  nb-layout
-  .layout
-  .layout-container
-  .content.center {
+::ng-deep nb-layout .layout .layout-container .content.center {
   width: 960px;
   flex: 0 100 960px !important;
 }
@@ -67,13 +64,14 @@ $height : calc(100vh - 10.5rem);
   margin: auto;
 }
 
-::ng-deep  nb-stepper .step-content {
+::ng-deep nb-stepper .step-content {
   padding: 0px !important;
   height: calc(100vh - 3.5rem);
   display: flex;
   align-items: center;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
 }
 
 .card-full-height {
@@ -141,8 +139,9 @@ $height : calc(100vh - 10.5rem);
   text-align: left;
   box-shadow: var(--gauzy-shadow);
   min-height: 6rem;
+
   nb-card-body {
-	display: flex;
+    display: flex;
     justify-content: center;
     align-items: center;
   }
@@ -152,8 +151,9 @@ $height : calc(100vh - 10.5rem);
   height: 55px;
   position: relative;
   top: 10px;
+
   img {
-	filter : hue-rotate(20deg);
+    filter: hue-rotate(20deg);
   }
 }
 
@@ -188,9 +188,45 @@ $height : calc(100vh - 10.5rem);
 }
 
 .progress-setup {
+  width: 50%;
+  overflow: hidden;
+  z-index: 1;
   position: absolute;
-  bottom: 45px;
-  width: 95%;
+  bottom: 1rem;
+  left: 25%;
+
+  .progress-anim {
+    transition: .75s;
+    transform: translateY(100%);
+
+    .progress-header {
+      transition: .75s;
+      transform: translateY(-100%);
+    }
+
+    .progress-message-container {
+      background: black;
+      border-radius: 1rem;
+      box-shadow: 0 1px 1px 0 black;
+      padding: 1rem;
+    }
+
+
+    .progress-message {
+      overflow: auto;
+      height: 35.125vh;
+
+      .content-text {
+        color: #08c234;
+        font-size: 11px;
+        font-family: monospace !important;
+      }
+    }
+  }
+}
+.progress-setup:hover .progress-anim,
+.progress-setup:hover .progress-header {
+  transform: translateY(0);
 }
 
 .progress-icon {
@@ -236,7 +272,7 @@ $height : calc(100vh - 10.5rem);
   width: 100%;
 }
 
-.main-card-body{
+.main-card-body {
   background-color: var(--gauzy-card-2);
   padding: 1rem;
 }
@@ -246,11 +282,11 @@ h4 {
 }
 
 .lang-selector {
-	position: absolute;
-	left: 2rem;
-	top: 4rem;
+  position: absolute;
+  left: 2rem;
+  top: 4rem;
 }
 
 input {
-	height: 42px !important;
+  height: 42px !important;
 }
