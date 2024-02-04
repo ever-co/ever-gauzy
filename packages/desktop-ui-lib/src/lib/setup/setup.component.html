@@ -1102,10 +1102,12 @@
 									</nb-progress-bar
 									>
 								</div>
-								<div #logBox class="progress-message">
-									<p class="content-text" *ngFor="let content of logContents">
-										{{content}}
-									</p>
+								<div class="progress-message-container">
+									<div #logBox class="progress-message">
+										<p class="content-text" *ngFor="let content of logContents">
+											{{content}}
+										</p>
+									</div>
 								</div>
 							</div>
 						</div>

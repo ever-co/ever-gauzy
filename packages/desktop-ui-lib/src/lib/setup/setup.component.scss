@@ -190,27 +190,31 @@ $height: calc(100vh - 10.5rem);
 .progress-setup {
   width: 50%;
   overflow: hidden;
-  z-index: 2;
+  z-index: 1;
   position: absolute;
-  bottom: 16px;
+  bottom: 1rem;
   left: 25%;
 
   .progress-anim {
     transition: .75s;
     transform: translateY(100%);
-    padding: 1rem;
 
     .progress-header {
       transition: .75s;
       transform: translateY(-100%);
     }
 
+    .progress-message-container {
+      background: black;
+      border-radius: 1rem;
+      box-shadow: 0 1px 1px 0 black;
+      padding: 1rem;
+    }
+
+
     .progress-message {
       overflow: auto;
-      height: 32vh;
-      background: black;
-      border-radius: var(--border-radius);
-      box-shadow: var(--gauzy-shadow);
+      height: 35.125vh;
 
       .content-text {
         color: #08c234;
@@ -220,7 +224,6 @@ $height: calc(100vh - 10.5rem);
     }
   }
 }
-
 .progress-setup:hover .progress-anim,
 .progress-setup:hover .progress-header {
   transform: translateY(0);
