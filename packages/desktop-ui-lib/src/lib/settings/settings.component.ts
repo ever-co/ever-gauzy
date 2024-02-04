@@ -908,7 +908,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		const newConfig: any = {
 			...this.config
 		};
-		if (this.config.timeTrackerWindow) newConfig.awHost = `http://localhost:${this.config.awPort}`;
+		if (this.config.timeTrackerWindow) newConfig.awHost = `http://127.0.0.1:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('restart_app', newConfig);
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
 	}
@@ -1034,7 +1034,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				break;
 			case this.serverTypes.custom:
 				this.config.isLocalServer = false;
-				this.config.serverUrl = 'http://localhost:3000';
+				this.config.serverUrl = 'http://127.0.0.1:3000';
 				break;
 			case this.serverTypes.live:
 				this.config.isLocalServer = false;
