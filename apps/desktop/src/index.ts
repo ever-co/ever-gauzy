@@ -11,7 +11,6 @@ import {
 	BrowserWindow,
 	Menu,
 	MenuItemConstructorOptions,
-	MessageBoxOptions,
 	app,
 	dialog,
 	ipcMain,
