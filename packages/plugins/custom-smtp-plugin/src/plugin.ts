@@ -8,40 +8,29 @@ import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpController } from './custom-smtp.controller';
 import { CustomSmtpService } from './custom-smtp.service';
 import { CustomSmtpSubscriber } from './custom-smtp.subscriber';
+import { IPluginConfig } from '@gauzy/common';
 
 /**
  * @example
  */
 @CorePlugin({
 	imports: [
-		TypeOrmModule.forFeature([
-			CustomSmtp
-		]),
-		MikroOrmModule.forFeature([
-			CustomSmtp
-		]),
+		TypeOrmModule.forFeature([CustomSmtp]),
+		MikroOrmModule.forFeature([CustomSmtp]),
 		TenantModule,
 		UserModule,
 		CqrsModule
 	],
-	exports: [
-		CustomSmtpService,
-		TypeOrmModule,
-		MikroOrmModule
-	],
-	controllers: [
-		CustomSmtpController
-	],
-	providers: [
-		CustomSmtpService,
-		...CommandHandlers
-	],
-	entities: [
-		CustomSmtp
-	],
-	subscribers: [
-		CustomSmtpSubscriber
-	]
+	//
+	configuration: (config: IPluginConfig) => {
+		console.log({ config });
+		return config;
+	},
+	controllers: [CustomSmtpController],
+	providers: [CustomSmtpService, ...CommandHandlers],
+	entities: [CustomSmtp],
+	subscribers: [CustomSmtpSubscriber],
+	exports: [CustomSmtpService, TypeOrmModule, MikroOrmModule]
 })
 export class CustomSmtpPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 

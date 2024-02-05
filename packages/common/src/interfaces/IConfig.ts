@@ -127,3 +127,8 @@ export interface IPluginConfig {
 	 */
 	assetOptions?: IAssetOptions;
 }
+
+/**
+ * Represents a function that takes a plugin configuration and returns an updated configuration.
+ */
+export type PluginConfigurationFn = (config: IPluginConfig) => IPluginConfig;

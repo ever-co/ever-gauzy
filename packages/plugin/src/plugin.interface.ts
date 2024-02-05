@@ -1,24 +1,26 @@
-import { IAPIExtensionDefinition } from '@gauzy/common';
+import { IAPIExtensionDefinition, PluginConfigurationFn } from '@gauzy/common';
 import { ModuleMetadata, Type } from '@nestjs/common';
 
 /**
  * Metadata definition for a plugin in NestJS.
  */
-export interface IPluginMetaData extends ModuleMetadata {
+export interface PluginMetadata extends ModuleMetadata {
     /**
      * Definition of extensions provided by the plugin.
      */
     extensions?: IAPIExtensionDefinition;
-
     /**
      * List of entities injected by the plugin.
      */
-    entities?: Type<any>[];
-
+    entities?: Array<Type<any>> | (() => Array<Type<any>>);
     /**
      * List of subscribers injected by the plugin.
      */
-    subscribers?: Type<any>[];
+    subscribers?: Array<Type<any>> | (() => Array<Type<any>>);
+    /**
+     * Returns a configuration callback function for the plugin.
+     */
+    configuration?: PluginConfigurationFn;
 }
 
 

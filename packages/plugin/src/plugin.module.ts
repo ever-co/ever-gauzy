@@ -18,7 +18,6 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	 * @returns
 	 */
 	static init(): DynamicModule {
-		console.log(...getConfig().plugins);
 		return {
 			module: PluginModule,
 			imports: [...getConfig().plugins],

@@ -4,5 +4,6 @@
 export const PLUGIN_METADATA = {
 	ENTITIES: 'entities',
 	SUBSCRIBERS: 'subscribers',
-	EXTENSIONS: 'extensions'
+	EXTENSIONS: 'extensions',
+	CONFIGURATION: 'configuration'
 };

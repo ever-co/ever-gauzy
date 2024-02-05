@@ -56,11 +56,24 @@ export function getPluginExtensions(plugins: Array<Type<any> | DynamicModule>) {
 		return [];
 	}
 
-	const extensions = plugins.flatMap((plugin: Type<any> | DynamicModule) =>
+	return plugins.flatMap((plugin: Type<any> | DynamicModule) =>
 		reflectMetadata(plugin, PLUGIN_METADATA.EXTENSIONS) ?? []
 	);
+}
 
-	return extensions.filter(isNotEmpty);
+/**
+ * Get plugin configuration from an array of plugins by reflecting metadata.
+ * @param plugins An array of plugins containing configuration metadata.
+ * @returns An array of configurations obtained from the provided plugins.
+ */
+export function getPluginConfiguration(plugins: (Type<any> | DynamicModule)[] = []): any[] {
+	if (!plugins) {
+		return [];
+	}
+
+	return plugins.flatMap((plugin: Type<any> | DynamicModule) =>
+		reflectMetadata(plugin, PLUGIN_METADATA.CONFIGURATION) || []
+	);
 }
 
 /**
