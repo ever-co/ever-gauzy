@@ -6,70 +6,73 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import * as chalk from 'chalk';
-import { ConfigService } from '@gauzy/config';
-import { IPluginConfig } from '@gauzy/common';
-import { PluginLifecycleMethods } from './extension-plugin';
-import { getPluginModules, hasLifecycleMethod } from './plugin-helper';
+import { ConfigService, getConfig } from '@gauzy/config';
+import { PluginLifecycleMethods } from './plugin.interface';
+import { getPluginModules, hasLifecycleMethod } from './plugin.helper';
 
 @Module({})
 export class PluginModule implements OnModuleInit, OnModuleDestroy {
-	static forRoot(options: IPluginConfig): DynamicModule {
+
+	/**
+	 * Configure the plugin module with the provided options.
+	 * @returns
+	 */
+	static init(): DynamicModule {
 		return {
 			module: PluginModule,
-			providers: [],
-			imports: [...options.plugins]
-		} as DynamicModule;
+			imports: [...getConfig().plugins],
+		};
 	}
 
 	constructor(
 		private readonly moduleRef: ModuleRef,
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
+	/**
+	 * Lifecycle hook called once the module has been initialized.
+	 */
 	async onModuleInit() {
-		await this.bootstrapPluginLifecycleMethods(
-			'onPluginBootstrap',
-			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`Bootstrapped Plugin [${pluginName}]`));
-			}
-		);
+		await this.bootstrapPluginLifecycleMethods('onPluginBootstrap', (instance: Function) => {
+			const pluginName = instance.constructor.name || '(anonymous plugin)';
+			console.log(chalk.green(`Bootstrapped Plugin [${pluginName}]`));
+		});
 	}
 
+	/**
+	 * Lifecycle hook called once the module is about to be destroyed.
+	 */
 	async onModuleDestroy() {
-		await this.bootstrapPluginLifecycleMethods(
-			'onPluginDestroy',
-			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`Destroyed Plugin [${pluginName}]`));
-			}
-		);
+		await this.bootstrapPluginLifecycleMethods('onPluginDestroy', (instance: Function) => {
+			const pluginName = instance.constructor.name || '(anonymous plugin)';
+			console.log(chalk.green(`Destroyed Plugin [${pluginName}]`));
+		});
 	}
 
+	/**
+	 * Bootstrap plugin lifecycle methods.
+	 * @param lifecycleMethod The lifecycle method to invoke.
+	 * @param closure A closure function to execute after invoking the lifecycle method.
+	 */
 	private async bootstrapPluginLifecycleMethods(
 		lifecycleMethod: keyof PluginLifecycleMethods,
 		closure?: (instance: any) => void
 	): Promise<void> {
-		for (const plugin of getPluginModules(this.configService.plugins)) {
-			let classInstance: ClassDecorator;
-			try {
-				classInstance = this.moduleRef.get(plugin, { strict: false });
-			} catch (e) {
-				console.log(
-					`Could not find ${plugin.name}`,
-					undefined,
-					e.stack
-				);
-			}
-			if (classInstance) {
-				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
-					await classInstance[lifecycleMethod]();
+		const pluginsModules = getPluginModules(this.configService.plugins);
+		for await (const pluginModule of pluginsModules) {
+			let pluginInstance: ClassDecorator;
 
-					if (typeof closure === 'function') {
-						closure(classInstance);
-					}
+			try {
+				pluginInstance = this.moduleRef.get(pluginModule, { strict: false });
+			} catch (e) {
+				console.error(`Error initializing plugin ${pluginModule.name}:`, e.stack);
+			}
+
+			if (pluginInstance && hasLifecycleMethod(pluginInstance, lifecycleMethod)) {
+				await pluginInstance[lifecycleMethod]();
+
+				if (typeof closure === 'function') {
+					closure(pluginInstance);
 				}
 			}
 		}

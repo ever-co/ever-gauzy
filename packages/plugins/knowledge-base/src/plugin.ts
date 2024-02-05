@@ -1,9 +1,10 @@
+
+import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
-import { IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/common';
 import {
-	ExtensionPlugin,
-	OnDefaultPluginSeed,
-	OnRandomPluginSeed
+	CorePlugin,
+	IOnPluginWithDefaultSeed,
+	IOnPluginWithRandomSeed
 } from '@gauzy/plugin';
 import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
 import { HelpCenter, HelpCenterModule } from './help-center';
@@ -13,35 +14,51 @@ import {
 } from './help-center-article';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
-@ExtensionPlugin({
+@CorePlugin({
 	imports: [
 		HelpCenterModule,
 		HelpCenterArticleModule,
 		HelpCenterAuthorModule,
 		SeederModule
 	],
-	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
-	providers: [HelpCenterSeederService]
+	entities: [
+		HelpCenter,
+		HelpCenterArticle,
+		HelpCenterAuthor
+	],
+	providers: [
+		HelpCenterSeederService
+	]
 })
-export class KnowledgeBasePlugin
-	implements
-		IOnPluginBootstrap,
-		IOnPluginDestroy,
-		OnDefaultPluginSeed,
-		OnRandomPluginSeed {
+export class KnowledgeBasePlugin implements IOnPluginWithDefaultSeed, IOnPluginWithRandomSeed {
+
 	constructor(
 		private readonly helpCenterSeederService: HelpCenterSeederService
-	) {}
+	) { }
 
-	onPluginBootstrap() {}
-
-	onPluginDestroy() {}
-
-	async onDefaultPluginSeed() {
-		await this.helpCenterSeederService.createDefault();
+	/**
+	 * Seed default data using the Help Center seeder service.
+	 * This method is intended to be invoked during the default seed phase of the plugin lifecycle.
+	 */
+	async onPluginDefaultSeed() {
+		try {
+			await this.helpCenterSeederService.createDefault();
+			console.log(chalk.green(`Default data seeded successfully for ${KnowledgeBasePlugin.name}.`));
+		} catch (error) {
+			console.error(chalk.red('Error seeding default data:', error));
+		}
 	}
 
-	async onRandomPluginSeed() {
-		await this.helpCenterSeederService.createRandom();
+	/**
+	 * Seed random data using the Help Center seeder service.
+	 * This method is intended to be invoked during the random seed phase of the plugin lifecycle.
+	 */
+	async onPluginRandomSeed() {
+		try {
+			await this.helpCenterSeederService.createRandom();
+			console.log(chalk.green(`Random data seeded successfully for ${KnowledgeBasePlugin.name}.`));
+		} catch (error) {
+			console.error(chalk.red('Error seeding random data:', error));
+		}
 	}
 }
