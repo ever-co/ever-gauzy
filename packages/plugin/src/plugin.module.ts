@@ -35,7 +35,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	async onModuleInit() {
 		await this.bootstrapPluginLifecycleMethods('onPluginBootstrap', (instance: Function) => {
 			const pluginName = instance.constructor.name || '(anonymous plugin)';
-			console.log(chalk.green(`Bootstrapped Plugin [${pluginName}]`));
+			console.log(chalk.white(`Bootstrapped Plugin [${pluginName}]`));
 		});
 	}
 
@@ -45,7 +45,7 @@ export class PluginModule implements OnModuleInit, OnModuleDestroy {
 	async onModuleDestroy() {
 		await this.bootstrapPluginLifecycleMethods('onPluginDestroy', (instance: Function) => {
 			const pluginName = instance.constructor.name || '(anonymous plugin)';
-			console.log(chalk.green(`Destroyed Plugin [${pluginName}]`));
+			console.log(chalk.white(`Destroyed Plugin [${pluginName}]`));
 		});
 	}
 

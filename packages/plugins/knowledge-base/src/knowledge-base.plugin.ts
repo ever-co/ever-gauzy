@@ -3,6 +3,8 @@ import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
 import {
 	CorePlugin,
+	IOnPluginBootstrap,
+	IOnPluginDestroy,
 	IOnPluginWithDefaultSeed,
 	IOnPluginWithRandomSeed
 } from '@gauzy/plugin';
@@ -30,11 +32,33 @@ import { HelpCenterSeederService } from './help-center-seeder.service';
 		HelpCenterSeederService
 	]
 })
-export class KnowledgeBasePlugin implements IOnPluginWithDefaultSeed, IOnPluginWithRandomSeed {
+export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithDefaultSeed, IOnPluginWithRandomSeed {
+
+	private logging: boolean = true;
 
 	constructor(
 		private readonly helpCenterSeederService: HelpCenterSeederService
 	) { }
+
+	/**
+	 * Called when the plugin is being initialized.
+	 */
+	onPluginBootstrap(): void | Promise<void> {
+		if (this.logging) {
+			console.log('KnowledgeBasePlugin is being bootstrapped...');
+			// Your existing logic here...
+		}
+	}
+
+	/**
+	 * Called when the plugin is being destroyed.
+	 */
+	onPluginDestroy(): void | Promise<void> {
+		if (this.logging) {
+			console.log('KnowledgeBasePlugin is being destroyed...');
+			// Your existing logic here...
+		}
+	}
 
 	/**
 	 * Seed default data using the Help Center seeder service.
@@ -43,7 +67,10 @@ export class KnowledgeBasePlugin implements IOnPluginWithDefaultSeed, IOnPluginW
 	async onPluginDefaultSeed() {
 		try {
 			await this.helpCenterSeederService.createDefault();
-			console.log(chalk.green(`Default data seeded successfully for ${KnowledgeBasePlugin.name}.`));
+
+			if (this.logging) {
+				console.log(chalk.green(`Default data seeded successfully for ${KnowledgeBasePlugin.name}.`));
+			}
 		} catch (error) {
 			console.error(chalk.red('Error seeding default data:', error));
 		}
@@ -56,7 +83,10 @@ export class KnowledgeBasePlugin implements IOnPluginWithDefaultSeed, IOnPluginW
 	async onPluginRandomSeed() {
 		try {
 			await this.helpCenterSeederService.createRandom();
-			console.log(chalk.green(`Random data seeded successfully for ${KnowledgeBasePlugin.name}.`));
+
+			if (this.logging) {
+				console.log(chalk.green(`Random data seeded successfully for ${KnowledgeBasePlugin.name}.`));
+			}
 		} catch (error) {
 			console.error(chalk.red('Error seeding random data:', error));
 		}
