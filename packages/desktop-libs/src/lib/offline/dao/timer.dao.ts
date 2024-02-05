@@ -82,6 +82,7 @@ export class TimerDAO implements DAO<TimerTO> {
 				`${TABLE_NAME_INTERVALS}.timerId`
 			)
 			.where(`${TABLE_NAME_INTERVALS}.synced`, false)
+			.andWhere(`${TABLE_NAME_INTERVALS}.isDeleted`, false)
 			.andWhere(`${TABLE_NAME_TIMERS}.employeeId`, user.employeeId)
 			.andWhere((qb) =>
 				qb
@@ -140,7 +141,7 @@ export class TimerDAO implements DAO<TimerTO> {
 			.andWhere(`${TABLE_NAME_TIMERS}.synced`, true)
 			.orderBy(`${TABLE_NAME_TIMERS}.id`, 'asc');
 
-		const timersWithIntervals = timers.map((timer: TimerTO) => ({
+		return timers.map((timer: TimerTO) => ({
 			timer,
 			intervals: intervals
 				.map((interval: IntervalTO) => ({
@@ -152,8 +153,6 @@ export class TimerDAO implements DAO<TimerTO> {
 					(interval: IntervalTO) => interval.timerId === timer.id
 				),
 		}));
-
-		return timersWithIntervals
 	}
 
 	public async findFailedRuns(user: UserTO): Promise<ISequence[]> {

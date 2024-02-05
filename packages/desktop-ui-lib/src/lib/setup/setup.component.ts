@@ -26,8 +26,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	@ViewChild('selector') languageSelector: LanguageSelectorComponent;
+	@ViewChild('logBox') logBox: ElementRef;
 	public isSaving = false;
 	public isCheckConnection = false;
+	public logContents: string[] = [];
 	constructor(
 		private setupService: SetupService,
 		private _cdr: ChangeDetectorRef,
@@ -70,7 +72,7 @@ export class SetupComponent implements OnInit {
 			}
 		});
 
-		electronService.ipcRenderer.on('setup-progress', (event, arg) => {
+		electronService.ipcRenderer.on('log_state', (event, arg) => {
 			const validMessage = this.defaultMessage.findIndex(
 				(item) => arg.msg.indexOf(item) > -1
 			);
@@ -91,6 +93,13 @@ export class SetupComponent implements OnInit {
 					this.progressMessage = arg.msg;
 				}
 			}
+			if (this.logContents.length < 20) {
+				this.logContents.push(arg.msg);
+			} else {
+				this.logContents.shift();
+				this.logContents.push(arg.msg);
+			}
+			this.scrollToBottom();
 			this._cdr.detectChanges();
 		});
 
@@ -525,5 +534,10 @@ export class SetupComponent implements OnInit {
 
 	public get isServer(): boolean {
 		return this._environment.IS_SERVER;
+	}
+
+	private scrollToBottom() {
+		this.logBox.nativeElement.scrollTop =
+			this.logBox.nativeElement.scrollHeight;
 	}
 }
