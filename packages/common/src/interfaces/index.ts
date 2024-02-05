@@ -1,9 +1,6 @@
-export * from './hooks';
-
 export * from './IConfig';
 export * from './IGraphql';
 export * from './ILogger';
-export * from './IPlugin';
 
 export * from './IAppIntegrationConfig';
 export * from './IAuth0Config';

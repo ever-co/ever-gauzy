@@ -19,6 +19,9 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
+import { CoreModule } from './core/core.module';
+import { SharedModule } from './shared/shared.module';
+import { HealthModule } from './health/health.module';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
 import { CandidateSkillModule } from './candidate-skill/candidate-skill.module';
 import { InvoiceModule } from './invoice/invoice.module';
@@ -39,7 +42,6 @@ import { ExpenseModule } from './expense/expense.module';
 import { EmployeeSettingModule } from './employee-setting/employee-setting.module';
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 import { EmployeeAppointmentModule } from './employee-appointment/employee-appointment.module';
-import { CoreModule } from './core/core.module';
 import { AuthModule } from './auth/auth.module';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
 import { EmployeeStatisticsModule } from './employee-statistics/employee-statistics.module';
@@ -148,7 +150,6 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
-import { SharedModule } from './shared/shared.module';
 
 const { unleashConfig, github, jitsu, jira } = environment;
 
@@ -443,6 +444,7 @@ if (environment.THROTTLE_ENABLED) {
 				})
 			]
 			: []),
+		HealthModule,
 		CoreModule,
 		SharedModule,
 		AuthModule,
