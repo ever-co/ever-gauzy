@@ -16,7 +16,7 @@ export abstract class ServerTask {
 	protected pid: string;
 	protected isRunning: boolean;
 	protected signal: AbortSignal;
-	private criticalMessageError = '[CRITICAL::ERROR]';
+	private criticalMessageError = ['[CRITICAL::ERROR]', 'EADDRINUSE'];
 
 	protected constructor(
 		processPath: string,
@@ -35,13 +35,21 @@ export abstract class ServerTask {
 		this.pid = `${this.args.serviceName}Pid`;
 		this.signal = signal;
 		this.isRunning = false;
-		this.loggerObserver = new Observer((msg: string) => this.window.webContents.send('log_state', { msg }));
+		this.loggerObserver = new Observer((msg: string) => {
+			if (!this.window?.isDestroyed()) {
+				this.window.webContents.send('log_state', { msg });
+			}
+		});
 		this.stateObserver = new Observer((state: boolean) => {
-			this.window.webContents.send('running_state', state);
 			this.isRunning = state;
+			if (!this.window?.isDestroyed()) {
+				this.window.webContents.send('running_state', state);
+			}
 		});
 		this.restartObserver = new Observer((options?) => {
-			this.window.webContents.send('resp_msg', { type: 'start_server', status: 'success', ...options });
+			if (!this.window?.isDestroyed()) {
+				this.window.webContents.send('resp_msg', { type: 'start_server', status: 'success', ...options });
+			}
 		});
 	}
 
@@ -63,7 +71,7 @@ export abstract class ServerTask {
 						resolve();
 					}
 
-					if (msg.includes(this.criticalMessageError)) {
+					if (this.criticalMessageError.some((error) => msg.includes(error))) {
 						this.handleError(msg);
 						reject(msg);
 					}
