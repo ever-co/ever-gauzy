@@ -15,7 +15,7 @@ import {
 	Menu,
 	shell,
 	MenuItemConstructorOptions,
-	screen,
+	screen
 } from 'electron';
 import { environment } from './environments/environment';
 
@@ -32,7 +32,7 @@ console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 import {
 	LocalStore,
-	apiServer,
+	DesktopServer,
 	AppMenu,
 	DesktopUpdater,
 	TranslateLoader,
@@ -50,7 +50,6 @@ import {
 	ErrorReportRepository,
 	DialogErrorHandler,
 	AppError,
-	UIError,
 	DialogOpenFile,
 	ReverseUiProxy
 } from '@gauzy/desktop-libs';
@@ -59,7 +58,7 @@ import {
 	createServerWindow,
 	createSettingsWindow,
 	SplashScreen,
-	createAboutWindow,
+	createAboutWindow
 } from '@gauzy/desktop-window';
 import { initSentry } from './sentry';
 import * as remoteMain from '@electron/remote/main';
@@ -93,7 +92,7 @@ let willQuit = false;
 const updater = new DesktopUpdater({
 	repository: process.env.REPO_NAME,
 	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases',
+	typeRelease: 'releases'
 });
 
 const pathWindow: IPathWindow = {
@@ -101,27 +100,23 @@ const pathWindow: IPathWindow = {
 		? path.join(__dirname, '../data/ui/index.html')
 		: path.join(__dirname, './data/ui/index.html'),
 	ui: path.join(__dirname, 'index.html'),
-	dir: app.isPackaged
-		? path.join(__dirname, '../data/ui')
-		: path.join(__dirname, './data/ui'),
-	timeTrackerUi: path.join(__dirname, 'index.html'),
+	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui'),
+	timeTrackerUi: path.join(__dirname, 'index.html')
 };
 
-const serverConfig: IServerConfig = new ServerConfig(
-	new ReadWriteFile(pathWindow)
-);
+const serverConfig: IServerConfig = new ServerConfig(new ReadWriteFile(pathWindow));
 const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
 const reverseUiProxy: ILocalServer = new ReverseUiProxy(serverConfig);
 
 const executableName = path.basename(process.execPath);
 
 const eventErrorManager = ErrorEventManager.instance;
-const report = new ErrorReport(
-	new ErrorReportRepository(
-		process.env.REPO_OWNER,
-		process.env.REPO_NAME
-	)
-);
+const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
+
+const controller = new AbortController();
+const { signal } = controller;
+
+const desktopServer = new DesktopServer();
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -131,7 +126,7 @@ if (process.platform === 'win32') {
 }
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 
 // Set unlimited listeners
@@ -190,7 +185,6 @@ eventErrorManager.onSendReport(async (message) => {
 			app.exit(0);
 			break;
 	}
-
 });
 
 eventErrorManager.onShowError(async (message) => {
@@ -207,7 +201,7 @@ eventErrorManager.onShowError(async (message) => {
 			// 👀
 			break;
 	}
-})
+});
 
 const runSetup = async () => {
 	// Set default configuration
@@ -238,17 +232,8 @@ const runMainWindow = async () => {
 		createTray();
 	}
 
-	new AppMenu(
-		null,
-		settingsWindow,
-		null,
-		null,
-		pathWindow,
-		serverWindow,
-		false
-	);
-	const menuWindowSetting =
-		Menu.getApplicationMenu().getMenuItemById('window-setting');
+	new AppMenu(null, settingsWindow, null, null, pathWindow, serverWindow, false);
+	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
 	if (setupWindow) setupWindow.hide();
 	serverWindow.webContents.send('dashboard_ready', {
@@ -266,22 +251,18 @@ const initializeConfig = async (val) => {
 	}
 };
 
-const controller = new AbortController()
-const { signal } = controller;
-const runServer = (isRestart) => {
-	const envVal = getEnvApi();
-	const uiPort = serverConfig.uiPort;
+const runServer = async () => {
 	try {
-		apiServer(
-			{
-				ui: path.join(__dirname, 'preload', 'ui-server.js'),
-				api: path.join(__dirname, 'api/main.js'),
-			},
+		const envVal = getEnvApi();
+		const uiPort = serverConfig.uiPort;
+
+		// Instantiate API and UI servers
+		await desktopServer.start(
+			{ api: path.join(__dirname, 'api/main.js'), ui: path.join(__dirname, 'preload', 'ui-server.js') },
 			envVal,
 			serverWindow,
-			uiPort,
-			isRestart,
-			signal
+			signal,
+			uiPort
 		);
 	} catch (error) {
 		if (error.name === 'AbortError') {
@@ -296,8 +277,7 @@ const getEnvApi = () => {
 	const config = serverConfig.setting;
 	serverConfig.update();
 	const addsConfig = LocalStore.getAdditionalConfig();
-	const provider =
-		config.db === 'better-sqlite' ? 'better-sqlite3' : config.db;
+	const provider = config.db === 'better-sqlite' ? 'better-sqlite3' : config.db;
 	return {
 		IS_ELECTRON: 'true',
 		DB_PATH: sqlite3filename,
@@ -307,17 +287,15 @@ const getEnvApi = () => {
 			DB_PORT: String(config[provider]?.dbPort),
 			DB_NAME: config[provider]?.dbName,
 			DB_USER: config[provider]?.dbUsername,
-			DB_PASS: config[provider]?.dbPassword,
+			DB_PASS: config[provider]?.dbPassword
 		}),
 		API_PORT: String(config.port),
-		...addsConfig,
+		...addsConfig
 	};
 };
 
 const createTray = () => {
-	const iconNativePath = nativeImage.createFromPath(
-		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png')
-	);
+	const iconNativePath = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
 	iconNativePath.resize({ width: 16, height: 16 });
 	tray = new Tray(iconNativePath);
 	const serverMenu = contextMenu();
@@ -331,7 +309,7 @@ const contextMenu = () => {
 			label: TranslateService.instant('MENU.OPEN_GA_BROWSER'),
 			click() {
 				shell.openExternal(serverConfig.uiUrl);
-			},
+			}
 		},
 		{
 			id: 'check_for_update',
@@ -339,58 +317,52 @@ const contextMenu = () => {
 			click() {
 				settingsWindow.show();
 				settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
-			},
+				settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+			}
 		},
 		{
-			type: 'separator',
+			type: 'separator'
 		},
 		{
 			id: 'start_server',
 			label: TranslateService.instant('MENU.START_SERVER'),
-			click() {
-				runServer(false);
-			},
+			async click() {
+				await runServer();
+			}
 		},
 		{
 			id: 'stop_server',
 			label: TranslateService.instant('MENU.STOP_SERVER'),
 			click() {
-				stopServer(false);
-			},
+				stopServer();
+			}
 		},
 		{
-			type: 'separator',
+			type: 'separator'
 		},
 		{
 			id: 'server_help',
 			label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 			click() {
 				shell.openExternal('https://gauzy.co');
-			},
+			}
 		},
 		{
 			id: 'gauzy-about',
 			label: TranslateService.instant('MENU.ABOUT'),
 			enabled: true,
 			async click() {
-				const window: BrowserWindow =
-					await createAboutWindow(
-						pathWindow.ui
-					);
+				const window: BrowserWindow = await createAboutWindow(pathWindow.ui);
 				window.show();
-			},
+			}
 		},
 		{
 			id: 'server_exit',
 			label: TranslateService.instant('BUTTONS.EXIT'),
 			click() {
 				app.quit();
-			},
-		},
+			}
+		}
 	];
 
 	return serverMenu;
@@ -400,41 +372,17 @@ ipcMain.on('start_server', async (event, arg) => {
 	await initializeConfig(arg);
 });
 
-ipcMain.on('run_gauzy_server', (event, arg) => {
+ipcMain.on('run_gauzy_server', async (event, arg) => {
 	console.log('run Gauzy Server');
-	runServer(false);
+	await runServer();
 });
 
-const stopServer = (isRestart) => {
-	const config = serverConfig.setting;
-	console.log('api pid', config.apiPid);
-	console.log('api pid', config.uiPid);
-	if (config.apiPid) {
-		try {
-			process.kill(config.apiPid);
-			serverConfig.setting = { apiPid: null };
-			serverWindow.webContents.send('log_state', { msg: 'Api stopped' });
-		} catch (error) {
-			throw new UIError('400', error, 'KILL-API-SERVER');
-		}
-	}
-	if (config.uiPid) {
-		try {
-			process.kill(config.uiPid);
-			serverConfig.setting = { uiPid: null };
-			serverWindow.webContents.send('log_state', { msg: 'UI stopped' });
-			if (isRestart) {
-				runServer(true);
-			}
-		} catch (error) {
-			throw new UIError('400', error, 'KILL-UI-SERVER');
-		}
-	}
-	serverWindow.webContents.send('running_state', false);
+const stopServer = () => {
+	desktopServer.stop();
 };
 
 ipcMain.on('stop_gauzy_server', (event, arg) => {
-	stopServer(false);
+	stopServer();
 });
 
 app.on('ready', async () => {
@@ -447,7 +395,7 @@ app.on('ready', async () => {
 			launchAtStartup(true, false);
 		}
 		global.variableGlobal = {
-			API_BASE_URL: serverConfig.apiPort,
+			API_BASE_URL: serverConfig.apiUrl,
 			IS_INTEGRATED_DESKTOP: false
 		};
 		if (!settingsWindow) {
@@ -461,33 +409,24 @@ app.on('ready', async () => {
 		throw new AppError('MAINWININIT', error);
 	}
 	TranslateService.onLanguageChange(() => {
-		const menuWindowSetting =
-			Menu.getApplicationMenu().getMenuItemById('window-setting');
-		new AppMenu(
-			null,
-			settingsWindow,
-			null,
-			null,
-			pathWindow,
-			serverWindow,
-			false
-		);
+		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
+		new AppMenu(null, settingsWindow, null, null, pathWindow, serverWindow, false);
 		if (tray) tray.destroy();
 		createTray();
 		if (menuWindowSetting) menuWindowSetting.enabled = true;
-	})
+	});
 });
 
-ipcMain.on('restart_app', (event, arg) => {
+ipcMain.on('restart_app', async (event, arg) => {
 	console.log('Restarting Server', arg);
-	if (arg.apiPid) delete arg.apiPid;
-	if (arg.uiPid) delete arg.uiPid;
 	serverConfig.setting = arg;
 	serverConfig.update();
-	event.sender.send('resp_msg', { type: 'update_config', status: 'success' });
-	if (isServerRun) {
-		stopServer(true);
-	}
+	event.sender.send('resp_msg', {
+		type: 'update_config',
+		status: 'success',
+		...(!desktopServer.running && { message: 'TOASTR.MESSAGE.UPDATED' })
+	});
+	await desktopServer.restart();
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
@@ -516,23 +455,22 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			databaseOptions = {
 				client: 'sqlite',
 				connection: {
-					filename: sqlite3filename,
-				},
+					filename: sqlite3filename
+				}
 			};
 		}
 		const dbConn = require('knex')(databaseOptions);
 		await dbConn.raw('select 1+1 as result');
 		event.sender.send('database_status', {
 			status: true,
-			message: TranslateService.instant(
-				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-				{ driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite' }
-			)
+			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', {
+				driver: provider === 'postgres' ? 'PostgresSQL' : 'SQLite'
+			})
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message,
+			message: error.message
 		});
 	}
 });
@@ -572,7 +510,7 @@ ipcMain.on('loading_state', (event, arg) => {
 
 ipcMain.on('expand_window', (event, arg) => {
 	const display = screen.getPrimaryDisplay();
-	const { width, height } = display.workArea;
+	const { height, width } = display.workAreaSize;
 	console.log('width ', width);
 	console.log('height ', height);
 	const wx = 640;
@@ -593,15 +531,15 @@ ipcMain.on('expand_window', (event, arg) => {
 			break;
 		default:
 			{
-	serverWindow.setBounds(
-		{
-			width: wx,
-			height: hx,
-			x: (width - wx) * 0.5,
-			y: (height - hx) * 0.5
-		},
-		true
-	);
+				serverWindow.setBounds(
+					{
+						width: wx,
+						height: hx,
+						x: (width - wx) * 0.5,
+						y: (height - hx) * 0.5
+					},
+					true
+				);
 			}
 			break;
 	}
@@ -634,15 +572,15 @@ app.on('before-quit', async (e) => {
 		const button = await exitConfirmationDialog.show();
 		if (button.response === 0) {
 			// Stop the server from main
-			stopServer(false);
+			stopServer();
 			// Mark as will quit
 			willQuit = true;
-		};
+		}
 	} else {
 		// soft download cancellation
 		try {
 			updater.cancel();
-		} catch (e) { }
+		} catch (e) {}
 		app.exit(0);
 	}
 });
@@ -657,8 +595,8 @@ ipcMain.on('update_app_setting', (event, arg) => {
 });
 
 app.on('browser-window-created', (_, window) => {
-	require("@electron/remote/main").enable(window.webContents)
-})
+	require('@electron/remote/main').enable(window.webContents);
+});
 
 ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 	const setting = LocalStore.getStore('appSetting');
@@ -727,9 +665,9 @@ ipcMain.on('save_encrypted_file', (event, value) => {
 			serverConfig.setting = {
 				secureProxy
 			};
-			event.reply('app_setting', LocalStore.getApplicationConfig());
+			event.sender.send('app_setting', LocalStore.getApplicationConfig());
 		}
 	} catch (error) {
 		console.error(error);
 	}
-})
+});

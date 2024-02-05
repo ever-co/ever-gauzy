@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw } from 'typeorm';
+import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
@@ -127,9 +127,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			query.andWhere(
@@ -233,6 +231,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async findTeamTasks(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		try {
 			const { where } = options;
+
 			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 
@@ -287,9 +286,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			if (isNotEmpty(projectId) && isNotEmpty(teams)) {
@@ -348,6 +345,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				const { organizationSprintId } = where;
 				if (!isUUID(organizationSprintId)) {
 					options['where']['organizationSprintId'] = IsNull();
+				}
+			}
+			if ('teams' in where) {
+				const { teams } = where;
+				options.where.teams = {
+					id: In(teams as string[])
 				}
 			}
 		}

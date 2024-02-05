@@ -88,6 +88,7 @@ export class PaginationParams<T = any> extends OptionParams<T> {
  * @returns {TenantOrganizationBaseDTO} - The escaped and converted query parameters as a DTO instance.
  */
 export function escapeQueryWithParameters(nativeParameters: SimpleObjectLiteral): TenantOrganizationBaseDTO {
+
 	// Convert native parameters based on the database connection type
 	const builtParameters: SimpleObjectLiteral = convertNativeParameters(nativeParameters);
 

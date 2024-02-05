@@ -14,6 +14,7 @@ export interface IntervalTO extends BaseTO {
 	stoppedAt: Date;
 	synced: boolean;
 	timerId: number;
+	isDeleted: boolean;
 }
 
 export const TABLE_NAME_INTERVALS = 'intervals';

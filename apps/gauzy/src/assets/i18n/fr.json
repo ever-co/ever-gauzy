@@ -148,7 +148,7 @@
 		"RESTART": "Redémarrage",
 		"LATER": "Plus tard",
 		"UPGRADE": "Mise à niveau",
-		"SKIP_NOW": "Passons maintenant",
+		"SKIP_NOW": "Ignorer Maintenant",
 		"EXIT": "Sortie",
 		"LOGOUT": "Déconnexion",
 		"COPY": "Copier",
@@ -3067,8 +3067,8 @@
 		"SELECT_TEAM": "Sélectionner l'équipe"
 	},
 	"HEADER_TITLE": {
-		"FOR": "Pour",
-		"FROM": "De"
+		"FOR": "pour",
+		"FROM": "de"
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "404 Page non trouvée",

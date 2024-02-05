@@ -1,6 +1,9 @@
 import { INetworkState } from '../../interfaces';
 import { LocalStore } from '../../desktop-store';
 import fetch from 'node-fetch';
+import dns from 'node:dns';
+
+dns.setDefaultResultOrder('ipv4first');
 
 export class ApiServerConnectivity implements INetworkState {
 	public async established(): Promise<boolean> {
