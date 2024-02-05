@@ -788,14 +788,10 @@ export class SeedDataService {
 		);
 
 		// run all plugins random seed method
-		await this.bootstrapPluginSeedMethods(
-			'onBasicPluginSeed',
-			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
-				console.log(chalk.green(`SEEDED Basic Plugin [${pluginName}]`));
-			}
-		);
+		await this.bootstrapPluginSeedMethods('onPluginBasicSeed', (instance: any) => {
+			const pluginName = instance.constructor.name || '(anonymous plugin)';
+			console.log(chalk.green(`SEEDED Basic Plugin [${pluginName}]`));
+		});
 
 		this.log(
 			chalk.magenta(
@@ -1360,16 +1356,10 @@ export class SeedDataService {
 		);
 
 		// run all plugins default seed method
-		await this.bootstrapPluginSeedMethods(
-			'onDefaultPluginSeed',
-			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
-				console.log(
-					chalk.green(`SEEDED Default Plugin [${pluginName}]`)
-				);
-			}
-		);
+		await this.bootstrapPluginSeedMethods('onPluginDefaultSeed', (instance: any) => {
+			const pluginName = instance.constructor.name || '(anonymous plugin)';
+			console.log(chalk.green(`SEEDED Default Plugin [${pluginName}]`));
+		});
 
 		this.log(
 			chalk.magenta(
@@ -2127,16 +2117,10 @@ export class SeedDataService {
 		);
 
 		// run all plugins random seed method
-		await this.bootstrapPluginSeedMethods(
-			'onRandomPluginSeed',
-			(instance: any) => {
-				const pluginName =
-					instance.constructor.name || '(anonymous plugin)';
-				console.log(
-					chalk.green(`SEEDED Random Plugin [${pluginName}]`)
-				);
-			}
-		);
+		await this.bootstrapPluginSeedMethods('onPluginRandomSeed', (instance: any) => {
+			const pluginName = instance.constructor.name || '(anonymous plugin)';
+			console.log(chalk.green(`SEEDED Random Plugin [${pluginName}]`));
+		});
 
 		this.log(
 			chalk.magenta(
@@ -2308,18 +2292,13 @@ export class SeedDataService {
 			try {
 				classInstance = this.moduleRef.get(plugin, { strict: false });
 			} catch (e) {
-				console.log(
-					`Could not find ${plugin.name}`,
-					undefined,
-					e.stack
-				);
+				console.log(`Could not find ${plugin.name}`, undefined, e.stack);
 			}
-			if (classInstance) {
-				if (hasLifecycleMethod(classInstance, lifecycleMethod)) {
-					await classInstance[lifecycleMethod]();
-					if (typeof closure === 'function') {
-						closure(classInstance);
-					}
+			if (classInstance && hasLifecycleMethod(classInstance, lifecycleMethod)) {
+				await classInstance[lifecycleMethod]();
+
+				if (typeof closure === 'function') {
+					closure(classInstance);
 				}
 			}
 		}

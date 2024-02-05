@@ -163,7 +163,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 				}
 			};
 
-			const redisClient = await createClient(redisConnectionOptions)
+			const redisClient = createClient(redisConnectionOptions)
 				.on('error', (err) => {
 					console.log('Redis Client Error: ', err);
 				})
@@ -309,40 +309,51 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 }
 
 /**
- * Returns an array of core entities and any additional entities defined in plugins.
+ * Register entities from core and plugin configurations.
+ * @param pluginConfig The plugin configuration.
+ * @returns An array of registered entity types.
  */
-export async function registerAllEntities(pluginConfig: Partial<IPluginConfig>) {
-	const allEntities = coreEntities as Array<Type<any>>;
-	const pluginEntities = getEntitiesFromPlugins(pluginConfig.plugins);
+export async function registerAllEntities(
+	pluginConfig: Partial<IPluginConfig>
+): Promise<Array<Type<any>>> {
+	try {
+		const coreEntitiesList = coreEntities as Array<Type<any>>;
+		const pluginEntitiesList = getEntitiesFromPlugins(pluginConfig.plugins);
 
-	for (const pluginEntity of pluginEntities) {
-		if (allEntities.find((e) => e.name === pluginEntity.name)) {
-			throw new ConflictException({
-				message: `error.${pluginEntity.name} conflict by default entities`
-			});
-		} else {
-			allEntities.push(pluginEntity);
+		for (const pluginEntity of pluginEntitiesList) {
+			const entityName = pluginEntity.name;
+
+			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
+				throw new ConflictException({ message: `Error: ${entityName} conflicts with default entities.` });
+			} else {
+				coreEntitiesList.push(pluginEntity);
+			}
 		}
+
+		return coreEntitiesList;
+	} catch (error) {
+		console.error('Error registering entities:', error);
+		throw error;
 	}
-	return allEntities;
 }
 
 /**
- * GET migrations directory & CLI paths
+ * GET migrations directory & CLI paths.
  *
- * @returns
+ * @returns Object containing migrations and CLI paths.
  */
 export function getMigrationsSetting() {
-	console.log(`Reporting __dirname: ${__dirname} `);
+	// Consider removing this debug statement in the final implementation
+	console.log(`Reporting __dirname: ${__dirname}`);
 
-	//TODO: We need to define some dynamic path here
+	// Define dynamic paths for migrations and CLI
+	const migrationsPath = join(__dirname, '../database/migrations/*{.ts,.js}');
+	const cliMigrationsDir = join(__dirname, '../../src/database/migrations');
+
 	return {
-		migrations: [
-			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
-			join(__dirname, '../database/migrations/*{.ts,.js}')
-		],
+		migrations: [migrationsPath],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations')
+			migrationsDir: cliMigrationsDir
 		}
 	};
 }

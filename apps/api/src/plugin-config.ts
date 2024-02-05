@@ -59,5 +59,8 @@ export const pluginConfig: IPluginConfig = {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
-	plugins: [KnowledgeBasePlugin, ChangelogPlugin]
+	plugins: [
+		KnowledgeBasePlugin,
+		ChangelogPlugin
+	]
 };

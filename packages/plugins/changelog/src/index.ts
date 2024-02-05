@@ -1,1 +1,1 @@
-export * from './plugin';
+export * from './changelog.plugin';

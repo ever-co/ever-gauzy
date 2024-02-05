@@ -1,1 +1,1 @@
-export * from './plugin';
+export * from './knowledge-base.plugin';
