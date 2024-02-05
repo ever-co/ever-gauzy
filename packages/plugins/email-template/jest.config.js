@@ -1,9 +1,9 @@
 module.exports = {
-	name: 'email-template-plugin',
+	name: 'email-template',
 	preset: '../../../jest.config.js',
 	transform: {
 		'^.+\\.[tj]sx?$': 'ts-jest'
 	},
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
-	coverageDirectory: '../../coverage/plugins/email-template-plugin'
+	coverageDirectory: '../../coverage/plugins/email-template'
 };
