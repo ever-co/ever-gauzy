@@ -32,21 +32,24 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 
 		const { organizationId, tenantId } = filter.where as any;
 		query.where(p(`
-			"${super.alias}"."organizationId" = :organizationId
+			"${query.alias}"."organizationId" = :organizationId
 			AND
-			"${super.alias}"."tenantId" = :tenantId
+			"${query.alias}"."tenantId" = :tenantId
 			AND
-			"${super.alias}"."isArchived" = :isArchived
+			"${query.alias}"."isArchived" = :isArchived
+			AND
+			"${query.alias}"."isActive" = :isActive
 		`),
 			{
 				organizationId,
 				tenantId,
-				isArchived: false
+				isArchived: false,
+				isActive: true
 			}
 		);
 
 		query.take(filter.take ? (filter.take as number) : 20);
-		query.orderBy(`email_sent.createdAt`, 'DESC');
+		query.orderBy(`${query.alias}.createdAt`, 'DESC');
 
 		const [items, total] = await query.getManyAndCount();
 		return {
