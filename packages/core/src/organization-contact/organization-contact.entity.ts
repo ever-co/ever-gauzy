@@ -114,7 +114,8 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 		cascade: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;

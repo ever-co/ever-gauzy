@@ -20,6 +20,6 @@ export class CandidateSource extends TenantOrganizationBaseEntity
     |--------------------------------------------------------------------------
     */
 
-    @MultiORMOneToOne(() => Candidate, (candidate) => candidate.source, { owner: true })
+    @MultiORMOneToOne(() => Candidate, (candidate) => candidate.source)
     candidate?: ICandidate;
 }

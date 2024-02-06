@@ -26,6 +26,13 @@ export function MultiORMOneToMany<T>(
     inverseSide?: InverseSide<T> | Options<T>,
     options?: Options<T>
 ): PropertyDecorator {
+
+    // If second params is options then set inverseSide as null and options = inverseSide
+    if (typeof inverseSide === 'object') {
+        options = inverseSide;
+        inverseSide = null;
+    }
+
     return (target: any, propertyKey: string) => {
         MikroOrmOneToMany(mapOneToManyArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options }))(target, propertyKey);
         TypeOrmOneToMany(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
@@ -67,15 +74,13 @@ export function mapOneToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
 
     const mikroOrmOptions: Partial<OneToManyOptions<T, any>> = {
         ...omit(options, 'onDelete', 'onUpdate') as Partial<OneToManyOptions<T, any>>,
+        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
+        mappedBy: inverseSide,
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         lazy: !!typeOrmOptions?.lazy,
     };
 
 
-    return {
-        ...mikroOrmOptions,
-        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
-        mappedBy: inverseSide,
-    } as OneToManyOptions<T, any>;
+    return mikroOrmOptions as OneToManyOptions<T, any>;
 }

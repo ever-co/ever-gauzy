@@ -72,16 +72,17 @@ export function mapManyToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, 
 
     const mikroOrmOptions: Partial<Options<T>> = {
         ...omit(options, 'onDelete', 'onUpdate') as any,
+        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         lazy: !!typeOrmOptions?.lazy,
     };
 
+    if (mikroOrmOptions.owner === true) {
+        mikroOrmOptions.inversedBy = inverseSide;
+    } else {
+        mikroOrmOptions.mappedBy = inverseSide;
+    }
 
-    return {
-        ...mikroOrmOptions,
-        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
-        mappedBy: inverseSide,
-
-    } as MikroORMRelationOptions<any, any>
+    return mikroOrmOptions as MikroORMRelationOptions<any, any>
 }

@@ -38,8 +38,6 @@ import {
 	UserOrganization
 } from '../core/entities/internal';
 import { MultiORMEntity } from './../core/decorators/entity';
-import { MikroManyToOne } from './../core/decorators/entity/relations/mikro-orm';
-import { TypeManyToOne } from './../core/decorators/entity/relations/type-orm';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
@@ -186,19 +184,12 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Role
 	 */
-	@MikroManyToOne(() => Role, {
+	@MultiORMManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		deleteRule: 'set null'
-	})
-	@TypeManyToOne(() => Role, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
+		deleteRule: 'set null',
 	})
 	@JoinColumn()
 	role?: IRole;
@@ -243,13 +234,13 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user, { owner: true })
+	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user)
 	employee?: IEmployee;
 
 	/**
 	 * Candidate
 	 */
-	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user, { owner: true })
+	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
 	candidate?: ICandidate;
 
 	/*

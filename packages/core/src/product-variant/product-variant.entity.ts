@@ -76,7 +76,6 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
-		owner: true
 	})
 	@JoinColumn()
 	price: IProductVariantPrice;
@@ -90,7 +89,6 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
-		owner: true
 	})
 	@JoinColumn()
 	setting: IProductVariantSetting;

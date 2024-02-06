@@ -121,7 +121,8 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.candidate, {
 		cascade: true,
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
@@ -155,10 +156,11 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	*/
 
 	@ApiProperty({ type: () => CandidateSource })
-	@MultiORMOneToOne(() => CandidateSource, {
+	@MultiORMOneToOne(() => CandidateSource, (candidateSource) => candidateSource.candidate, {
 		nullable: true,
 		cascade: true,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true
 	})
 	@JoinColumn()
 	source?: ICandidateSource;
@@ -175,7 +177,8 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, (user) => user.candidate, {
 		cascade: true,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true
 	})
 	@JoinColumn()
 	user: IUser;
@@ -190,7 +193,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate)
+	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate, { owner: true })
 	@JoinColumn()
 	employee?: IEmployee;
 

@@ -26,6 +26,12 @@ export function MultiORMOneToOne<T>(
     inverseSide?: InverseSide<T> | Options<T>,
     options?: Options<T>
 ): PropertyDecorator {
+    // If second params is options then set inverseSide as null and options = inverseSide
+    if (typeof inverseSide === 'object') {
+        options = inverseSide;
+        inverseSide = null;
+    }
+
     return (target: any, propertyKey: string) => {
         MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options }))(target, propertyKey);
         TypeOrmOneToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
@@ -33,12 +39,14 @@ export function MultiORMOneToOne<T>(
 }
 
 export interface MapOneToOneArgsForMikroORMOptions<T, O> {
-    targetEntity: TargetEntity<T>,
-    inverseSide?: InverseSide<T>,
-    options?: Options<T>
+    targetEntity: TargetEntity<T>;
+    inverseSide?: InverseSide<T>;
+    options?: Options<T>;
+    target?: string;
+    propertyKey?: string;
 }
 
-export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options }: MapOneToOneArgsForMikroORMOptions<T, O>) {
+export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options, propertyKey }: MapOneToOneArgsForMikroORMOptions<T, O>) {
 
     const typeOrmOptions = options as RelationOptions;
     let mikroORMCascade = [];
@@ -67,6 +75,7 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
 
     const mikroOrmOptions: Partial<OneToOneOptions<T, any>> = {
         ...omit(options, 'onDelete', 'onUpdate') as Partial<OneToOneOptions<T, any>>,
+        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
@@ -74,10 +83,15 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
         lazy: !!typeOrmOptions?.lazy,
     };
 
-    return {
-        ...mikroOrmOptions,
-        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
-        mappedBy: inverseSide,
-        // inversedBy: inverseSide,
-    } as MikroORMRelationOptions<any, any>
+    if (!mikroOrmOptions.joinColumn && propertyKey) {
+        // Set default joinColumn if not overwrite in options
+        mikroOrmOptions.joinColumn = `${propertyKey}Id`
+    }
+
+    if (mikroOrmOptions.owner === true) {
+        mikroOrmOptions.inversedBy = inverseSide;
+    } else {
+        mikroOrmOptions.mappedBy = inverseSide;
+    }
+    return mikroOrmOptions as MikroORMRelationOptions<any, any>
 }
