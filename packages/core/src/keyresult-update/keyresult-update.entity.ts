@@ -31,7 +31,7 @@ export class KeyResultUpdate extends TenantOrganizationBaseEntity
 	status: string;
 
 	@ApiProperty({ type: () => KeyResult })
-	@MultiORMManyToOne(() => KeyResult, (keyResult) => keyResult.update, {
+	@MultiORMManyToOne(() => KeyResult, (keyResult) => keyResult.updates, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'keyResultId' })

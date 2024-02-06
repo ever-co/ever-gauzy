@@ -55,7 +55,7 @@ export class ProductVariantSetting extends TenantOrganizationBaseEntity implemen
 	 */
 	@MultiORMOneToOne(() => ProductVariant, (productVariant) => productVariant.setting, {
 		onDelete: 'CASCADE',
-		owner: true
+		owner: true,
 	})
 	@JoinColumn()
 	productVariant: ProductVariant;

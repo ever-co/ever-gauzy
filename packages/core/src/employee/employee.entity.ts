@@ -345,6 +345,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMOneToOne(() => User, (user) => user.employee, {
 		cascade: true,
 		onDelete: 'CASCADE',
+		joinColumn: 'userId',
+		referenceColumnName: 'id',
+		owner: true,
 	})
 	@JoinColumn()
 	user: IUser;
@@ -362,6 +365,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMOneToOne(() => Contact, (contact) => contact.employee, {
 		cascade: true,
 		onDelete: 'SET NULL',
+		owner: true,
 	})
 	@JoinColumn()
 	contact?: IContact;

@@ -94,7 +94,11 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * OrganizationContact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@MultiORMOneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
+	@MultiORMOneToOne(() => OrganizationContact, {
+		onDelete: 'CASCADE',
+		owner: true,
+		joinColumn: 'clientId',
+	})
 	@JoinColumn()
 	public client: IOrganizationContact;
 
