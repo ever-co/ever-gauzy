@@ -1,4 +1,4 @@
-<nb-card class="card-scroll">
+<nb-card class="card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary">
 	<nb-card-header class="d-flex justify-content-between">
 		<h4 class="email-history-header">
 			<ngx-header-title>
@@ -31,7 +31,6 @@
 		<div class="content-container">
 			<aside class="email-list">
 				<nb-list
-					[nbSpinner]="loading"
 					nbInfiniteList
 					[threshold]="20"
 					(bottomThreshold)="loadNext()"
@@ -141,7 +140,7 @@
 					<button *ngIf="selectedEmail" status="primary" outline nbButton size="small" (click)="archive()">
 						{{ 'SETTINGS.EMAIL_HISTORY.ARCHIVE' | translate }}
 					</button>
-					</div>
+				</div>
 
 				<ng-container *ngIf="selectedEmail; else emailNotSelected">
 					<div class="custom-parent-email-content">
