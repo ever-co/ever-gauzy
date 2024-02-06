@@ -29,7 +29,7 @@ import {
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
+import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
@@ -147,7 +147,6 @@ export class AuthService extends SocialAuthService {
 			!!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive)
 		);
 
-		/** */
 		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
@@ -680,10 +679,27 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Generate a random alphanumeric code
-			const magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			let magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 
 			// Calculate the expiration time for the code
 			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+			// Check if the environment variable 'DEMO' is set to 'true' and the Node.js environment is set to 'development'
+			const IS_DEMO = process.env.DEMO === 'true' && process.env.NODE_ENV === 'development';
+
+			// If it's a demo environment, handle special cases
+			if (IS_DEMO) {
+				// Check the value of the 'email' variable against certain demo email addresses
+				switch (email) {
+					case process.env.DEMO_ADMIN_EMAIL:
+					case process.env.DEMO_EMPLOYEE_EMAIL:
+						// Set 'magicCode' to the value of 'DEMO_EMPLOYEE_PASSWORD' or 'DEMO_PASSWORD_LESS_MAGIC_CODE'
+						magicCode = process.env.DEMO_EMPLOYEE_PASSWORD || DEMO_PASSWORD_LESS_MAGIC_CODE;
+						break;
+					default:
+						break;
+				}
+			}
 
 			// Update the user record with the generated code and expiration time
 			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
