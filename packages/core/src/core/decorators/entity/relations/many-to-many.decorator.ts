@@ -1,5 +1,6 @@
 import { Cascade, EntityName, ManyToManyOptions, ManyToMany as MikroOrmManyToMany } from "@mikro-orm/core";
 import { ObjectType, RelationOptions, ManyToMany as TypeOrmManyToMany } from 'typeorm';
+import { omit } from "underscore";
 
 
 type TypeORMTarget<T> = string | ((type?: any) => ObjectType<T>);
@@ -70,16 +71,17 @@ export function mapManyToManyArgsForMikroORM<T, O>({ targetEntity, inverseSide, 
     }
 
     const mikroOrmOptions: Partial<Options<T>> = {
+        ...omit(options, 'onDelete', 'onUpdate') as any,
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         lazy: !!typeOrmOptions?.lazy,
-        ...options as Partial<Options<T>>
     };
 
 
     return {
+        ...mikroOrmOptions,
         entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
         mappedBy: inverseSide,
-        ...mikroOrmOptions,
+
     } as MikroORMRelationOptions<any, any>
 }

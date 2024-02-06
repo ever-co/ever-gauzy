@@ -275,12 +275,8 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
-		owner: true,
-		pivotTable: 'organization_team_tasks_task'
 	})
-	@JoinTable({
-		name: 'organization_team_tasks_task'
-	})
+	@JoinTable()
 	tasks?: ITask[];
 
 	/**

@@ -59,7 +59,7 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	 */
 	@ApiPropertyOptional({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
 	@IsOptional()
-	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.occupation, { // Here relations was wrong
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -69,7 +69,7 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	 */
 	@ApiPropertyOptional({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
 	@IsOptional()
-	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.occupation, {  // Here relations was wrong
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];

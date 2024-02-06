@@ -42,7 +42,7 @@ export class AppointmentEmployee extends TenantOrganizationBaseEntity implements
 	 * EmployeeAppointment
 	 */
 	@ApiProperty({ type: () => EmployeeAppointment })
-	@MultiORMManyToOne(() => EmployeeAppointment, (employeeAppointment) => employeeAppointment, {
+	@MultiORMManyToOne(() => EmployeeAppointment, (employeeAppointment) => employeeAppointment?.invitees, {
 		onDelete: 'SET NULL'
 	})
 	public employeeAppointment?: IEmployeeAppointment;

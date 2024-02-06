@@ -108,8 +108,8 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	/**
 	 * User
 	 */
-	@ApiPropertyOptional({ type: () => User })
-	@MultiORMManyToOne(() => User)
+	@ApiPropertyOptional({ type: () => Employee })
+	@MultiORMManyToOne(() => Employee)
 	@JoinColumn()
 	recordedBy?: IUser;
 
