@@ -76,11 +76,9 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.organization = organization),
-				tap(() => this.loading = true),
 				tap(() => this.resetFilters()),
 				tap(() => this._getEmployees()),
 				tap(() => this._getOrganizationContacts()),
-				tap(() => this.loading = false),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -130,7 +128,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-
+			this.loading = true;
 			await this.emailService.getAll(['emailTemplate', 'user'],
 				{
 					organizationId,
@@ -140,20 +138,22 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 				},
 				this.thresholdHitCount * this.pageSize
 			)
-				.then((data) => {
-					this.emails = data.items;
-					this.selectedEmail = this.emails ? this.emails[0] : null;
-					const totalNoPage = Math.ceil(data.total / this.pageSize)
+			.then((data) => {
+				this.emails = data.items;
+				this.selectedEmail = this.emails ? this.emails[0] : null;
+				const totalNoPage = Math.ceil(data.total / this.pageSize)
 
-					if (this.thresholdHitCount >= totalNoPage) {
-						this.disableLoadMore = true
-					} else {
-						this.disableLoadMore = false
-					}
-				}).finally(() => {
-					this.nextDataLoading = false;
-				});
+				if (this.thresholdHitCount >= totalNoPage) {
+					this.disableLoadMore = true
+				} else {
+					this.disableLoadMore = false
+				}
+			}).finally(() => {
+				this.nextDataLoading = false;
+				this.loading = false;
+			});
 		} catch (error) {
+			this.loading = false;
 			this.toastrService.danger(
 				error,
 				this.getTranslation('TOASTR.TITLE.ERROR')
