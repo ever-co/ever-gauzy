@@ -127,7 +127,9 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@ApiProperty({ type: () => () => Tag, isArray: true })
 	@MultiORMManyToMany(() => Tag, (tag) => tag.incomes, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_income',
 	})
 	@JoinTable({
 		name: 'tag_income'

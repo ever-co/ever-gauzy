@@ -1,5 +1,6 @@
 import { Cascade, EntityName, ManyToOneOptions, ManyToOne as MikroOrmManyToOne } from "@mikro-orm/core";
 import { ObjectType, RelationOptions, ManyToOne as TypeOrmManyToOne } from 'typeorm';
+import { omit } from "underscore";
 
 
 type TypeORMTarget<T> = string | ((type?: any) => ObjectType<T>);
@@ -66,18 +67,22 @@ export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
     }
 
     const mikroOrmOptions: Partial<ManyToOneOptions<T, any>> = {
+        ...omit(options, 'onDelete', 'onUpdate') as any,
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
         updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
         lazy: !!typeOrmOptions?.lazy,
-        ...options as any
+
     };
 
+    //@ts-ignore
+    // console.log('targetEntity', typeof targetEntity === 'function' ? targetEntity() : targetEntity, 'inverseSide', typeof inverseSide === 'function' ? inverseSide() : inverseSide)
 
     return {
-        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
-        inversedBy: inverseSide,
         ...mikroOrmOptions,
+        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
+        // inversedBy: inverseSide,
+
     } as MikroORMRelationOptions<any, any>
 }
