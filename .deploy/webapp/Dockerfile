@@ -65,6 +65,7 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
+COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
