@@ -15,7 +15,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
 import { IPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
-import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import { getEntitiesFromPlugins, getSubscribersFromPlugins } from '@gauzy/plugin';
 import tracer from './tracer';
 import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
@@ -294,13 +294,15 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 	 * Registered core & plugins entities
 	 */
 	const entities = await registerAllEntities(pluginConfig);
+	const subscribers = await registerAllSubscribers(pluginConfig);
+
 	setConfig({
 		dbConnectionOptions: {
-			entities,
-			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>
+			entities: entities as Array<Type<any>>,
+			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
 		},
 		dbMikroOrmConnectionOptions: {
-			entities,
+			entities: entities as Array<Type<any>>,
 		}
 	});
 
@@ -334,6 +336,34 @@ export async function registerAllEntities(
 	} catch (error) {
 		console.error('Error registering entities:', error);
 		throw error;
+	}
+}
+
+/**
+ * Register subscribers from core and plugin configurations.
+ * @param pluginConfig The plugin configuration.
+ * @returns A promise that resolves to an array of registered subscriber types.
+ */
+export async function registerAllSubscribers(
+	pluginConfig: Partial<IPluginConfig>
+): Promise<Array<Type<EntitySubscriberInterface>>> {
+	try {
+		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
+		const pluginSubscribersList = getSubscribersFromPlugins(pluginConfig.plugins);
+
+		for (const pluginSubscriber of pluginSubscribersList) {
+			const subscriberName = pluginSubscriber.name;
+
+			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
+				throw new ConflictException({ message: `Error: ${subscriberName} conflicts with default subscribers.` });
+			} else {
+				subscribers.push(pluginSubscriber);
+			}
+		}
+
+		return subscribers;
+	} catch (error) {
+		console.error('Error registering subscribers:', error.message);
 	}
 }
 

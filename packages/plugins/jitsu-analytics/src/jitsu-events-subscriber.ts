@@ -1,7 +1,13 @@
 import { AnalyticsInterface } from '@jitsu/js';
 import { Logger } from '@nestjs/common';
+import {
+	InsertEvent,
+	RemoveEvent,
+	EntitySubscriberInterface,
+	UpdateEvent,
+	EventSubscriber
+} from 'typeorm';
 import * as chalk from 'chalk';
-import { InsertEvent, RemoveEvent, EntitySubscriberInterface, UpdateEvent, EventSubscriber } from 'typeorm';
 import { environment } from '@gauzy/config';
 import { createJitsu } from './jitsu-helper';
 
@@ -28,7 +34,11 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 					debug: jitsu.debug,
 					echoEvents: jitsu.echoEvents
 				};
-				this.logger.log(`JITSU Configuration`, chalk.magenta(JSON.stringify(jitsuConfig)));
+
+				if (this.logEnabled) {
+					this.logger.log(`JITSU Configuration`, chalk.magenta(JSON.stringify(jitsuConfig)));
+				}
+
 				// Create an instance of Jitsu Analytics with configuration
 				this.jitsuAnalytics = createJitsu(jitsuConfig);
 			} else {
@@ -43,7 +53,9 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity insertion.
 	 */
 	async afterInsert(event: InsertEvent<any>) {
-		if (this.logEnabled) this.logger.log(`AFTER ENTITY INSERTED: `, JSON.stringify(event.entity));
+		if (this.logEnabled) {
+			this.logger.log(`AFTER ENTITY INSERTED: `, JSON.stringify(event.entity));
+		}
 
 		// Track an event with Jitsu Analytics
 		// NOTE: we do not await before we want to track events asynchronously
@@ -56,7 +68,9 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity update.
 	 */
 	async afterUpdate(event: UpdateEvent<any>) {
-		if (this.logEnabled) this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(event.entity));
+		if (this.logEnabled) {
+			this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(event.entity));
+		}
 
 		// Track an event with Jitsu Analytics
 		// NOTE: we do not await before we want to track events asynchronously
@@ -69,7 +83,10 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 	 * Called after entity removal.
 	 */
 	async afterRemove(event: RemoveEvent<any>) {
-		if (this.logEnabled) this.logger.log(`AFTER ENTITY REMOVED: `, JSON.stringify(event.entity));
+		if (this.logEnabled) {
+			this.logger.log(`AFTER ENTITY REMOVED: `, JSON.stringify(event.entity));
+		}
+
 
 		// Track an event with Jitsu Analytics
 		// NOTE: we do not await before we want to track events asynchronously
@@ -88,16 +105,15 @@ export class JitsuEventsSubscriber implements EntitySubscriberInterface {
 		// Check if this.jitsu is defined and both host and writeKey are defined
 		if (this.jitsuAnalytics) {
 			try {
-				if (this.logEnabled)
-					this.logger.log(
-						`Before Jitsu Tracking Entity Events: ${event}`,
-						chalk.magenta(JSON.stringify(properties))
-					);
+				if (this.logEnabled) {
+					this.logger.log(`Before Jitsu Tracking Entity Events: ${event}`, chalk.magenta(JSON.stringify(properties)));
+				}
 
 				const tracked = await this.trackEvent(event, properties);
 
-				if (this.logEnabled)
+				if (this.logEnabled) {
 					this.logger.log(`After Jitsu Tracked Entity Events`, chalk.blue(JSON.stringify(tracked)));
+				}
 			} catch (error) {
 				this.logger.error(`Error while Jitsu tracking event. Unable to track event: ${error.message}`);
 			}

@@ -56,7 +56,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@godaddy/terminus": "^4.12.1",
 		"@grpc/grpc-js": "^1.6.7",
-		"@jitsu/js": "^1.3.0",
+		"@jitsu/js": "^1.8.2",
 		"@mikro-orm/better-sqlite": "^6.0.5",
 		"@mikro-orm/core": "^6.0.5",
 		"@mikro-orm/knex": "^6.0.5",

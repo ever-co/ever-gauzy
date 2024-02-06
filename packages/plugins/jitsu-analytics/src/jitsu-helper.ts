@@ -22,6 +22,7 @@ export const parseConfig = (config: JitsuOptions): Record<string, any> => ({
 export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
     // Parse the configuration options
     const config = parseConfig(opts);
+
     if (!config.host || !config.writeKey) {
         // Handle the case where 'host' or 'writeKey' is missing
         console.error('Jitsu Analytics initialization failed: Missing host or writeKey.');
@@ -29,7 +30,7 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
     }
 
     config.fetch = fetch; // Assign the 'fetch' function to 'fetch'
-    console.log(`JITSU Configuration`, config);
+
     // Create and return a Jitsu Analytics instance with the parsed configuration properties
     return jitsuAnalytics({
         ...config, // Spread the parsed configuration properties
