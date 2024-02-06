@@ -151,7 +151,7 @@ import { OrganizationTaskSettingModule } from './organization-task-setting/organ
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 
 
-const { unleashConfig, github, jitsu, jira } = environment;
+const { unleashConfig, github, jira } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
