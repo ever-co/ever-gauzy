@@ -35,6 +35,10 @@ function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
 	return (process.env.DB_ORM as MultiORM) || defaultValue;
 }
 
+console.log(chalk.magenta(`NodeJs version %s`), process.version);
+console.log('Is DEMO: ', process.env.DEMO);
+console.log('NODE_ENV: ', process.env.NODE_ENV);
+
 const dbORM: MultiORM = getORMType();
 console.log('DB ORM: ' + dbORM);
 
@@ -43,9 +47,6 @@ const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 
-// `process` is a built-in global in Node.js, no need to `require()`
-console.log(chalk.magenta(`Currently running Node.js version %s`), process.version);
-
 let typeOrmConnectionConfig: TypeOrmModuleOptions;
 let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 
@@ -53,7 +54,9 @@ let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
 const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+	: 10000; // 10 seconds default
 
 console.log('DB Pool Size: ' + dbPoolSize);
 console.log('DB Connection Timeout: ' + dbConnectionTimeout);
@@ -206,7 +209,8 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath =
+			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
 		// MikroORM DB Config
