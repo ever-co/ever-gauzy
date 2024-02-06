@@ -672,6 +672,8 @@ export class AuthService extends SocialAuthService {
 			return;
 		}
 
+		console.log('Email: ', email);
+
 		try {
 			// Count the number of users with the given email
 			const count = await this.typeOrmUserRepository.countBy({
@@ -690,20 +692,24 @@ export class AuthService extends SocialAuthService {
 			// Check if the environment variable 'DEMO' is set to 'true' and the Node.js environment is set to 'development'
 			const IS_DEMO = process.env.DEMO === 'true' && process.env.NODE_ENV === 'development';
 
+			console.log('Auth Is Demo: ', IS_DEMO);
+
 			let isDemoCode = false;
+
+			const demoEmployeeEmail = process.env.DEMO_EMPLOYEE_EMAIL;
+			const demoAdminEmail = process.env.DEMO_ADMIN_EMAIL;
+
+			console.log('Demo Employee Email: ', demoEmployeeEmail);
+			console.log('Demo Admin Email: ', demoAdminEmail);
 
 			// If it's a demo environment, handle special cases
 			if (IS_DEMO) {
 				// Check the value of the 'email' variable against certain demo email addresses
-				switch (email) {
-					case process.env.DEMO_ADMIN_EMAIL:
-					case process.env.DEMO_EMPLOYEE_EMAIL:
-						// Set 'magicCode' to the value of 'DEMO_EMPLOYEE_PASSWORD' or 'DEMO_PASSWORD_LESS_MAGIC_CODE'
+				if (email === demoEmployeeEmail || email === demoAdminEmail) {
+					{
 						magicCode = process.env.DEMO_EMPLOYEE_PASSWORD || DEMO_PASSWORD_LESS_MAGIC_CODE;
 						isDemoCode = true;
-						break;
-					default:
-						break;
+					}
 				}
 			}
 
@@ -712,7 +718,9 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Calculate the expiration time for the code
-			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+			const codeExpireAt = moment()
+				.add(environment.MAGIC_CODE_EXPIRATION_TIME || 600, 'seconds')
+				.toDate();
 
 			// Update the user record with the generated code and expiration time
 			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
