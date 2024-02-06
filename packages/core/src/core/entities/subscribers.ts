@@ -13,7 +13,6 @@ import {
 	InviteSubscriber,
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
-	JitsuEventsSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationDocumentSubscriber,
 	OrganizationProjectSubscriber,
@@ -56,7 +55,6 @@ export const coreSubscribers = [
 	InviteSubscriber,
 	InvoiceSubscriber,
 	IssueTypeSubscriber,
-	JitsuEventsSubscriber,
 	OrganizationContactSubscriber,
 	OrganizationDocumentSubscriber,
 	OrganizationProjectSubscriber,
@@ -78,5 +76,5 @@ export const coreSubscribers = [
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 ];

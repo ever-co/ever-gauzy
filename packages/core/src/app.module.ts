@@ -11,7 +11,6 @@ import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-stati
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { Integrations } from '@sentry/node';
 // import { ProfilingIntegration } from '@sentry/profiling-node';
-import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import * as path from 'path';
 import * as moment from 'moment';
@@ -19,6 +18,7 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
+import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
@@ -149,9 +149,9 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { JitsuAnalyticsModule } from './jitsu-analytics/jitsu-analytics.module';
 
-const { unleashConfig, github, jitsu, jira } = environment;
+
+const { unleashConfig, github, jira } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -416,19 +416,6 @@ if (environment.THROTTLE_ENABLED) {
 				vendorUrl: jira.vendorUrl
 			}
 		}),
-		/** Jitsu Configuration */
-		...(environment.jitsu.serverHost && environment.jitsu.serverWriteKey
-			? [
-				JitsuAnalyticsModule.forRoot({
-					config: {
-						host: jitsu.serverHost,
-						writeKey: jitsu.serverWriteKey,
-						debug: jitsu.debug,
-						echoEvents: jitsu.echoEvents
-					}
-				})
-			]
-			: []),
 		...(environment.THROTTLE_ENABLED
 			? [
 				ThrottlerModule.forRootAsync({
