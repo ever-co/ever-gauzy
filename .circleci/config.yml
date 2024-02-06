@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  node: circleci/node@5.1.0
+  node: circleci/node@5.2.0
   pulumi: pulumi/pulumi@2.1.0
 
 aliases:
