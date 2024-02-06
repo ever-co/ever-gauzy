@@ -43,7 +43,8 @@ export class ProductVariantPrice extends TenantOrganizationBaseEntity implements
 	 * ProductVariant
 	 */
 	@MultiORMOneToOne(() => ProductVariant, (productVariant) => productVariant.price, {
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true
 	})
 	@JoinColumn()
 	productVariant: ProductVariant;

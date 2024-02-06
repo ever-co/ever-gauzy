@@ -123,7 +123,8 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 */
 	@ApiProperty({ type: () => Employee })
 	@MultiORMOneToOne(() => Employee, (employee) => employee.contact, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		owner: true
 	})
 	employee?: IEmployee;
 
@@ -132,7 +133,8 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 */
 	@ApiProperty({ type: () => Candidate })
 	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.contact, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		owner: true
 	})
 	candidate?: ICandidate;
 
@@ -141,7 +143,8 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
 	@MultiORMOneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		owner: true
 	})
 	organizationContact?: IOrganizationContact;
 }

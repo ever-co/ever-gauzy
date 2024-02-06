@@ -243,13 +243,13 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user)
+	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user, { owner: true })
 	employee?: IEmployee;
 
 	/**
 	 * Candidate
 	 */
-	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
+	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user, { owner: true })
 	candidate?: ICandidate;
 
 	/*

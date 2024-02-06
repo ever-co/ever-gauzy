@@ -77,6 +77,7 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
     return {
         ...mikroOrmOptions,
         entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
+        mappedBy: inverseSide,
         // inversedBy: inverseSide,
     } as MikroORMRelationOptions<any, any>
 }
