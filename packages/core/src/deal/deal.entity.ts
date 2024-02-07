@@ -56,7 +56,9 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@MultiORMManyToOne(() => User)
+	@MultiORMManyToOne(() => User, {
+		joinColumn: 'createdByUserId',
+	})
 	@JoinColumn({ name: 'createdByUserId' })
 	public createdBy: IUser;
 
