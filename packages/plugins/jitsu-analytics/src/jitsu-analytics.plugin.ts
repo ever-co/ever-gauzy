@@ -1,10 +1,10 @@
 import { DynamicModule } from '@nestjs/common';
-import { NestFeatureExtensionPlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { JitsuAnalyticsService } from './jitsu-analytics.service';
 import { JITSU_MODULE_PROVIDER_CONFIG, JitsuModuleOptions } from './jitsu.types';
 import { JitsuEventsSubscriber } from './jitsu-events-subscriber';
 
-@NestFeatureExtensionPlugin({
+@GauzyCorePlugin({
 	providers: [
 		JitsuAnalyticsService
 	],

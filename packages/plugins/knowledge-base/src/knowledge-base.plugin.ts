@@ -2,7 +2,7 @@
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
 import {
-	NestFeatureExtensionPlugin,
+	GauzyCorePlugin,
 	IOnPluginBootstrap,
 	IOnPluginDestroy,
 	IOnPluginWithDefaultSeed,
@@ -16,7 +16,7 @@ import {
 } from './help-center-article';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
-@NestFeatureExtensionPlugin({
+@GauzyCorePlugin({
 	imports: [
 		HelpCenterModule,
 		HelpCenterArticleModule,
