@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { isMySQL } from '@gauzy/config';
 import { IEmailHistory, IEmailTemplate, IUser, EmailStatusEnum } from '@gauzy/contracts';
@@ -8,7 +8,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -18,12 +18,12 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	name: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'text' } : {})
 	})
@@ -31,7 +31,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 
@@ -55,7 +55,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsUUID()
 	@RelationId((it: EmailHistory) => it.user)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	userId?: IUser['id'];
 
 	/**
@@ -69,14 +69,14 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsUUID()
 	@RelationId((it: EmailHistory) => it.emailTemplate)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	emailTemplateId: IEmailTemplate['id'];
 
 	@Index()
 	@ApiPropertyOptional({ type: () => String, enum: EmailStatusEnum })
 	@IsOptional()
 	@IsEnum(EmailStatusEnum)
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: EmailStatusEnum,

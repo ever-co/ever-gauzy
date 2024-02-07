@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	RelationId,
 	JoinColumn,
@@ -38,7 +37,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -49,7 +48,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -59,51 +58,51 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	typeOfExpense: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	purpose?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxType?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxLabel?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Index()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -113,22 +112,22 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	receipt?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	splitExpense: boolean;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reference?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: ExpenseStatusesEnum })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: ExpenseStatusesEnum
@@ -156,7 +155,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId?: string;
 
 	/**
@@ -173,7 +172,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@RelationId((it: Expense) => it.vendor)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	vendorId: string;
 
 	/**
@@ -190,7 +189,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@RelationId((it: Expense) => it.category)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	categoryId: string;
 
 	/**
@@ -215,7 +214,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsUUID()
 	@RelationId((it: Expense) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: string;
 
 	/**
@@ -234,7 +233,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationContactId?: string;
 
 	/*

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { IsNumber } from 'class-validator';
 import { IEmployee, ITask, ITaskEstimation } from '@gauzy/contracts';
 import {
@@ -7,7 +7,7 @@ import {
 	TenantOrganizationBaseEntity,
 	Task,
 } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskEstimationRepository } from './repository/mikro-orm-estimation.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -15,19 +15,19 @@ import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 export class TaskEstimation extends TenantOrganizationBaseEntity implements ITaskEstimation {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column()
+	@MultiORMColumn()
 	estimate: number;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: TaskEstimation) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	employeeId: IEmployee['id'];
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: TaskEstimation) => it.task)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	taskId: ITask['id'];
 
 	/*

@@ -1,11 +1,11 @@
-import { Column, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateExperience, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateExperienceRepository } from './repository/mikro-orm-candidate-experience.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -14,15 +14,15 @@ export class CandidateExperience extends TenantOrganizationBaseEntity
 	implements ICandidateExperience {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	occupation: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	duration: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	/*
@@ -38,6 +38,6 @@ export class CandidateExperience extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateExperience) => it.candidate)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	candidateId?: string;
 }

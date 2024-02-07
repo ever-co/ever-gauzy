@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -18,7 +17,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -29,31 +28,31 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false, update: false })
+	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
 	fullIconUrl?: string;
@@ -82,7 +81,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsUUID()
 	@RelationId((it: IssueType) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/**
@@ -98,7 +97,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsUUID()
 	@RelationId((it: IssueType) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -114,6 +113,6 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsUUID()
 	@RelationId((it: IssueType) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

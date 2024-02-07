@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { IIntegrationMap, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
 import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
@@ -15,18 +15,18 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 
 	@ApiProperty({ type: () => String, enum: IntegrationEntity })
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	entity: IntegrationEntity;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	sourceId: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsUUID()
-	@Column()
+	@MultiORMColumn()
 	gauzyId: string;
 
 	/*
@@ -46,6 +46,6 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 	@IsUUID()
 	@RelationId((it: IntegrationMap) => it.integration)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	integrationId: IIntegrationTenant['id'];
 }

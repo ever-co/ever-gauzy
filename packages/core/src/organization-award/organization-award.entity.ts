@@ -1,9 +1,9 @@
-import { Column, Index } from 'typeorm';
+import { Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationAward } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationAwardRepository } from './repository/mikro-orm-organization-award.repository';
 
 @MultiORMEntity('organization_award', { mikroOrmRepository: () => MikroOrmOrganizationAwardRepository })
@@ -13,12 +13,12 @@ export class OrganizationAward extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	year: string;
 }

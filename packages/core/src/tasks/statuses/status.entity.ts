@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import {
@@ -7,7 +7,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { MultiORMEntity } from '../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -18,40 +18,40 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	order?: number;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false, update: false })
+	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isCollapsed?: boolean;
 
 	/**
@@ -84,7 +84,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsUUID()
 	@RelationId((it: TaskStatus) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -104,6 +104,6 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsUUID()
 	@RelationId((it: TaskStatus) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

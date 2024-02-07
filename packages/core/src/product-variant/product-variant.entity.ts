@@ -1,5 +1,4 @@
 import {
-	Column,
 	RelationId,
 	JoinColumn,
 	JoinTable,
@@ -25,7 +24,7 @@ import {
 	TenantOrganizationBaseEntity,
 	WarehouseProductVariant
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -33,32 +32,32 @@ import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneTo
 export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	taxes: number;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	quantity: number;
 
 	@ApiProperty({ type: () => String })
 	@IsEnum(BillingInvoicingPolicyEnum)
-	@Column({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
+	@MultiORMColumn({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
 	billingInvoicingPolicy: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	internalReference: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	enabled: boolean;
 
 	/*
@@ -113,7 +112,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@RelationId((it: ProductVariant) => it.product)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	productId?: string;
 
 	/**
@@ -131,7 +130,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@RelationId((it: ProductVariant) => it.image)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: string;
 
 	/*

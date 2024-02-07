@@ -1,4 +1,3 @@
-import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -16,7 +15,7 @@ import {
 	JobSearchOccupation,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -26,7 +25,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	jobPresetId?: string;
 
 	@MultiORMManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
@@ -35,7 +34,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	employeeId?: string;
 
 	@MultiORMManyToOne(() => Employee, (employee) => employee.id)
@@ -44,7 +43,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	occupationId?: string;
 
 	@MultiORMManyToOne(
@@ -56,7 +55,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	categoryId?: string;
 
 	@MultiORMManyToOne(
@@ -68,12 +67,12 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	keyword?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: 'text', nullable: true })
 	jobType?: JobPostTypeEnum;
 }

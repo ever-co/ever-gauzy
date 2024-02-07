@@ -4,7 +4,6 @@
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -37,7 +36,7 @@ import {
 	TenantBaseEntity,
 	UserOrganization
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
@@ -48,97 +47,85 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastName?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsOptional()
 	@IsEmail()
 	@Index({ unique: false })
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	email?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 4, maxLength: 12 })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@IsOptional()
 	@IsString()
 	@Index({ unique: false })
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	username?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	timeZone?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	hash?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ insert: false, nullable: true })
 	public refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@IsString()
-	@Column({ length: 500, nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: LanguagesEnum })
 	@IsOptional()
 	@IsEnum(LanguagesEnum)
-	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true, default: LanguagesEnum.ENGLISH })
 	preferredLanguage?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: ComponentLayoutStyleEnum })
 	@IsOptional()
 	@IsEnum(ComponentLayoutStyleEnum)
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		default: ComponentLayoutStyleEnum.TABLE,
 		enum: ComponentLayoutStyleEnum
 	})
-	@Property({ nullable: true })
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
 
@@ -146,29 +133,25 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsString()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
+	@MultiORMColumn({ insert: false, nullable: true })
 	public code?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
+	@MultiORMColumn({ insert: false, nullable: true })
 	public codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
+	@MultiORMColumn({ insert: false, nullable: true })
 	public emailVerifiedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
+	@MultiORMColumn({ insert: false, nullable: true })
 	public emailToken?: string;
 
 	name?: string;
@@ -199,8 +182,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsUUID()
 	@RelationId((it: User) => it.role)
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	roleId?: string;
 
 	/**
@@ -221,8 +203,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsUUID()
 	@RelationId((it: User) => it.image)
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

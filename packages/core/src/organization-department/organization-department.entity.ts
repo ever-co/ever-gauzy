@@ -6,14 +6,14 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Column, Index, JoinTable } from 'typeorm';
+import { Index, JoinTable } from 'typeorm';
 import {
 	Candidate,
 	Employee,
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationDepartmentRepository } from './repository/mikro-orm-organization-department.repository';
 import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
@@ -24,7 +24,7 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 	/*
 	|--------------------------------------------------------------------------

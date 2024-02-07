@@ -1,11 +1,11 @@
-import { Column, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateEducation, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateEducationRepository } from './repository/mikro-orm-candidate-education.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -14,23 +14,23 @@ export class CandidateEducation extends TenantOrganizationBaseEntity
 	implements ICandidateEducation {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	schoolName: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	degree: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	field: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column()
+	@MultiORMColumn()
 	completionDate: Date;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	/*
@@ -50,6 +50,6 @@ export class CandidateEducation extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateEducation) => it.candidate)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	candidateId?: string;
 }

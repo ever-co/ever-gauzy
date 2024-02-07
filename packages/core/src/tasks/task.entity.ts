@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -53,32 +52,32 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @Index('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'bigint' } : {})
 	})
 	number?: number;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	prefix?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	title: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'text' } : {})
 	})
@@ -88,40 +87,40 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	status?: TaskStatusEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	priority?: TaskPriorityEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	size?: TaskSizeEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	issueType?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	estimate?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	dueDate?: Date;
 
 	/**
@@ -130,23 +129,23 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: true })
+	@MultiORMColumn({ nullable: true, default: true })
 	public?: boolean;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	resolvedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	version?: string;
 
 	/**
@@ -174,7 +173,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	parentId?: Task['id'];
 
 	/**
@@ -197,7 +196,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -212,7 +211,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	@RelationId((it: Task) => it.creator)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	creatorId?: IUser['id'];
 
 	/**
@@ -230,7 +229,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.organizationSprint)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationSprintId?: IOrganizationSprint['id'];
 
 	/**
@@ -250,7 +249,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskStatus)
 	@Index()
-	@Column({ nullable: true, type: 'varchar' })
+	@MultiORMColumn({ nullable: true, type: 'varchar' })
 	taskStatusId?: ITaskStatus['id'];
 
 	/**
@@ -270,7 +269,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskSize)
 	@Index()
-	@Column({ nullable: true, type: 'varchar' })
+	@MultiORMColumn({ nullable: true, type: 'varchar' })
 	taskSizeId?: ITaskSize['id'];
 
 	/**
@@ -290,7 +289,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskPriority)
 	@Index()
-	@Column({ nullable: true, type: 'varchar' })
+	@MultiORMColumn({ nullable: true, type: 'varchar' })
 	taskPriorityId?: ITaskPriority['id'];
 
 	/*

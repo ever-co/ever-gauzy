@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -29,7 +28,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -40,7 +39,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -50,30 +49,30 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isBonus: boolean;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reference?: string;
 
 	/*
@@ -94,7 +93,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId?: string;
 
 	/**
@@ -112,7 +111,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	clientId?: string;
 
 	/*

@@ -1,4 +1,4 @@
-import { Column, JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset, IProductCategoryTranslatable } from '@gauzy/contracts';
@@ -8,7 +8,7 @@ import {
 	ProductCategoryTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -19,7 +19,7 @@ export class ProductCategory extends TranslatableBase
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageUrl: string;
 
 	/*
@@ -46,7 +46,7 @@ export class ProductCategory extends TranslatableBase
 	@IsUUID()
 	@RelationId((it: ProductCategory) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

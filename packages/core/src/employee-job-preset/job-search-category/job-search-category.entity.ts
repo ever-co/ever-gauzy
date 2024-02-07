@@ -1,4 +1,4 @@
-import { Column, Index } from 'typeorm';
+import { Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -13,7 +13,7 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 import { MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
@@ -24,7 +24,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	// Id of category in the job source (e.g. upwork)
@@ -32,14 +32,14 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	jobSourceCategoryId?: string;
 
 	@ApiProperty({ type: () => String, enum: JobPostSourceEnum })
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		default: JobPostSourceEnum.UPWORK,
 		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})

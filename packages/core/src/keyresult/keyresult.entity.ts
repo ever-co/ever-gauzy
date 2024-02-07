@@ -1,5 +1,4 @@
 import {
-	Column,
 	RelationId,
 	JoinColumn,
 	Index
@@ -25,7 +24,7 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -34,64 +33,64 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	implements IKeyResult {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	description?: string;
 
 	@ApiProperty({ type: () => String, enum: KeyResultTypeEnum })
 	@IsEnum(KeyResultTypeEnum)
-	@Column()
+	@MultiORMColumn()
 	type: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	targetValue?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	initialValue: number;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	update: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	progress: number;
 
 	@ApiProperty({ type: () => String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
-	@Column()
+	@MultiORMColumn()
 	deadline: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	hardDeadline?: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	softDeadline?: Date;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	status?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	weight?: string;
 
@@ -113,7 +112,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.owner)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	ownerId: string;
 
 	/**
@@ -130,7 +129,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	leadId?: string;
 
 	/**
@@ -147,7 +146,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly projectId?: string;
 
 	/**
@@ -164,7 +163,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly taskId?: string;
 
 	/**
@@ -181,7 +180,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly kpiId?: string;
 
 	/**
@@ -199,7 +198,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly goalId?: string;
 
 	/*

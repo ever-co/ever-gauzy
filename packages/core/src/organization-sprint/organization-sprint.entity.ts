@@ -1,4 +1,4 @@
-import { Column, JoinColumn } from 'typeorm';
+import { JoinColumn } from 'typeorm';
 import { IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -13,7 +13,7 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationSprintRepository } from './repository/mikro-orm-organization-sprint.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -22,41 +22,41 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	projectId: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	goal?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 7 })
+	@MultiORMColumn({ default: 7 })
 	length: number;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
 	@ApiProperty({ type: () => Number, enum: SprintStartDayEnum })
 	@IsNumber()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	dayStart?: number;
 
 	/*

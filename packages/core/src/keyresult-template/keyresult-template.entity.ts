@@ -1,4 +1,4 @@
-import { Column, RelationId, JoinColumn, Index } from 'typeorm';
+import { RelationId, JoinColumn, Index } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
@@ -13,7 +13,7 @@ import {
 	GoalTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -21,32 +21,32 @@ import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 export class KeyResultTemplate extends TenantOrganizationBaseEntity implements IKeyResultTemplate {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String, enum: KeyResultTypeEnum })
 	@IsEnum(KeyResultTypeEnum)
-	@Column()
+	@MultiORMColumn()
 	type: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	targetValue?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	initialValue: number;
 
 	@ApiProperty({ type: () => String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
-	@Column()
+	@MultiORMColumn()
 	deadline: string;
 
 	/*
@@ -64,7 +64,7 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@RelationId((it: KeyResultTemplate) => it.kpi)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	kpiId?: string;
 
 
@@ -80,6 +80,6 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly goalId?: string;
 }

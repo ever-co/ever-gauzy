@@ -15,9 +15,9 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Column, Index } from 'typeorm';
+import { Index } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationRecurringExpenseRepository } from './repository/mikro-orm-organization-recurring-expense.repository';
 
 @MultiORMEntity('organization_recurring_expense', { mikroOrmRepository: () => MikroOrmOrganizationRecurringExpenseRepository })
@@ -27,7 +27,7 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@IsNotEmpty()
 	@Min(1)
 	@Max(31)
-	@Column()
+	@MultiORMColumn()
 	startDay: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
@@ -35,19 +35,19 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@IsNotEmpty()
 	@Min(1)
 	@Max(12)
-	@Column()
+	@MultiORMColumn()
 	startMonth: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(0)
-	@Column()
+	@MultiORMColumn()
 	startYear: number;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	startDate: Date;
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 31 })
@@ -55,7 +55,7 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@IsOptional()
 	@Min(1)
 	@Max(31)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endDay: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1, maximum: 12 })
@@ -63,33 +63,33 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@IsOptional()
 	@Min(1)
 	@Max(12)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endMonth: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@IsOptional()
 	@Min(0)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endYear: number;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	categoryName: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -99,18 +99,18 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	splitExpense: boolean;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	parentRecurringExpenseId?: string;
 }

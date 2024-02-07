@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId
@@ -11,7 +10,7 @@ import {
 	IFeatureOrganization
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -20,36 +19,36 @@ export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	code: FeatureEnum;
 
 	@ApiProperty({ type: () => Boolean, default: false })
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isPaid?: boolean;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	image: string;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@Column()
+	@MultiORMColumn()
 	link: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	status: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon: string;
 
 	isEnabled?: boolean;
@@ -73,7 +72,7 @@ export class Feature extends BaseEntity implements IFeature {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Feature) => it.parent)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	parentId?: string;
 
 	/*

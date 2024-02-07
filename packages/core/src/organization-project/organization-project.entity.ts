@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -55,7 +54,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -63,59 +62,59 @@ import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../cor
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
 
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billing: ProjectBillingEnum;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	currency: CurrenciesEnum;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	public: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	owner: ProjectOwnerEnum;
 
-	@Column({ default: TaskListTypeEnum.GRID })
+	@MultiORMColumn({ default: TaskListTypeEnum.GRID })
 	taskListType: TaskListTypeEnum;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	code?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billable?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billingFlat?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	openSource?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectUrl?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	openSourceProjectUrl?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		default: OrganizationProjectBudgetTypeEnum.COST,
 		...(isMySQL() ?
@@ -125,31 +124,31 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 
-	@Column({ nullable: true, default: 0 })
+	@MultiORMColumn({ nullable: true, default: 0 })
 	membersCount?: number;
 
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ default: true, nullable: true })
+	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSync?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ default: true, nullable: true })
+	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	syncTag?: string;
 
 	/*
@@ -179,7 +178,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.repository)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	repositoryId?: IOrganizationGithubRepository['id'];
 
 	/**
@@ -206,7 +205,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.organizationContact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationContactId?: IOrganizationContact['id'];
 
 	/**
@@ -233,7 +232,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

@@ -1,12 +1,12 @@
 import { IPipeline, IPipelineStage as IStage } from '@gauzy/contracts';
-import { Column, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	Pipeline,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPipelineStageRepository } from './repository/mikro-orm-pipeline-stage.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -14,12 +14,12 @@ import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 export class PipelineStage extends TenantOrganizationBaseEntity implements IStage {
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true, type: 'text' })
+	@MultiORMColumn({ nullable: true, type: 'text' })
 	@IsString()
 	public description: string;
 
 	@ApiProperty({ type: () => Number, minimum: 1 })
-	@Column({ type: 'int' })
+	@MultiORMColumn({ type: 'int' })
 	@Min(1)
 	@IsNotEmpty()
 	@IsNumber()
@@ -28,7 +28,7 @@ export class PipelineStage extends TenantOrganizationBaseEntity implements IStag
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	public name: string;
 
 	/*
@@ -46,6 +46,6 @@ export class PipelineStage extends TenantOrganizationBaseEntity implements IStag
 	@RelationId((it: PipelineStage) => it.pipeline)
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	public pipelineId: string;
 }

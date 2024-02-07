@@ -20,7 +20,6 @@ import {
 	IsEnum
 } from 'class-validator';
 import {
-	Column,
 	JoinColumn,
 	Unique,
 	RelationId,
@@ -37,7 +36,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
@@ -48,12 +47,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invoiceDate: Date;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		transformer: new ColumnNumericTransformerPipe(),
 		...(isMySQL() ? { type: 'bigint' } : { type: 'numeric' })
@@ -62,17 +61,17 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	dueDate: Date;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -80,12 +79,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	paid: boolean;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -94,7 +93,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -104,13 +103,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	terms?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -120,62 +119,62 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	status?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	isEstimate?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	isAccepted?: boolean;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	discountType: DiscountTaxTypeEnum;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxType: DiscountTaxTypeEnum;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	tax2Type: DiscountTaxTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invoiceType?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	sentTo?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationContactId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	internalNote?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -185,7 +184,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -194,13 +193,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: "text" } : {})
 	})
@@ -222,7 +221,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.fromOrganization)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	fromOrganizationId?: string;
 
 	// To Contact
@@ -237,7 +236,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.toContact)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	toContactId?: string;
 
 	/*

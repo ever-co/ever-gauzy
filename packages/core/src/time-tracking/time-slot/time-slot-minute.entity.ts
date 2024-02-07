@@ -1,5 +1,4 @@
 import {
-	Column,
 	RelationId,
 	Unique,
 	Index,
@@ -9,7 +8,7 @@ import { ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { TimeSlot } from './time-slot.entity';
 import { MikroOrmTimeSlotMinuteRepository } from './repository/mikro-orm-time-slot-minute.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
@@ -20,17 +19,17 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	mouse?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
-	@Column()
+	@MultiORMColumn()
 	datetime?: Date;
 
 	/*
@@ -50,6 +49,6 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	readonly timeSlotId?: string;
 }

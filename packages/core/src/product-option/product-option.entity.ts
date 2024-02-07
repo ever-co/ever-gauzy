@@ -1,4 +1,4 @@
-import { Column, JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
@@ -7,7 +7,7 @@ import {
 	ProductOptionTranslation
 } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -16,12 +16,12 @@ export class ProductOption extends TenantOrganizationBaseEntity implements IProd
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	code: string;
 
 	/*
@@ -42,7 +42,7 @@ export class ProductOption extends TenantOrganizationBaseEntity implements IProd
 	@RelationId((it: ProductOption) => it.group)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	groupId?: string;
 
 	/*

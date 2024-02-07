@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -13,14 +12,14 @@ import {
 } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked-issue.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_linked_issues', { mikroOrmRepository: () => MikroOrmTaskLinkedIssueRepository })
 export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITaskLinkedIssue {
 	@ApiProperty({ type: () => String, enum: TaskRelatedIssuesRelationEnum })
-	@Column()
+	@MultiORMColumn()
 	@IsEnum(TaskRelatedIssuesRelationEnum)
 	action: TaskRelatedIssuesRelationEnum;
 
@@ -38,7 +37,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@IsUUID()
 	@RelationId((it: TaskLinkedIssue) => it.taskFrom)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	taskFromId: ITask['id'];
 
 	/**
@@ -53,6 +52,6 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@IsUUID()
 	@RelationId((it: TaskLinkedIssue) => it.taskTo)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	taskToId: ITask['id'];
 }

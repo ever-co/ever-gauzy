@@ -1,9 +1,9 @@
-import { Column, Index, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset as IDocumentAsset, IOrganizationDocument } from '@gauzy/contracts';
 import { ImageAsset, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationDocumentRepository } from './repository/mikro-orm-organization-document.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -13,13 +13,13 @@ export class OrganizationDocument extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	documentUrl: string;
 
 	/*
@@ -46,6 +46,6 @@ export class OrganizationDocument extends TenantOrganizationBaseEntity implement
 	@IsUUID()
 	@RelationId((it: OrganizationDocument) => it.document)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	documentId?: IDocumentAsset['id'];
 }

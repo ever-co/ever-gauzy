@@ -1,50 +1,50 @@
-import { Column, RelationId, Index } from 'typeorm';
+import { RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle } from '@gauzy/contracts';
 import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
 import { MikroOrmHelpCenterRepository } from './repository/mikro-orm-help-center.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '@gauzy/core';
+import { MultiORMManyToOne, MultiORMOneToMany, MultiORMColumn } from '@gauzy/core';
 
 @MultiORMEntity('knowledge_base', { mikroOrmRepository: () => MikroOrmHelpCenterRepository })
 export class HelpCenter extends TenantOrganizationBaseEntity
 	implements IHelpCenter {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	flag: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	icon: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	privacy: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	language: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	color: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	data?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	index: number;
 
 	/*
@@ -62,7 +62,7 @@ export class HelpCenter extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	parentId?: string;
 
 	/*

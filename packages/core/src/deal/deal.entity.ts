@@ -5,7 +5,6 @@ import {
 	IOrganizationContact
 } from '@gauzy/contracts';
 import {
-	Column,
 	JoinColumn,
 	RelationId,
 	Index
@@ -25,7 +24,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
 import { MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -35,7 +34,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	public title: string;
 
 	@ApiProperty({ type: () => Number })
@@ -43,7 +42,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsInt()
 	@Min(0)
 	@Max(5)
-	@Column()
+	@MultiORMColumn()
 	public probability?: number;
 
 	/*
@@ -67,7 +66,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	public createdByUserId: string;
 
 	/**
@@ -83,7 +82,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	public stageId: string;
 
 	/*
@@ -108,6 +107,6 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@RelationId((it: Deal) => it.client)
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	public clientId: string;
 }

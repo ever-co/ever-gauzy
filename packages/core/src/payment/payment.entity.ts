@@ -1,5 +1,4 @@
 import {
-	Column,
 	JoinColumn,
 	JoinTable,
 	RelationId,
@@ -28,7 +27,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { IsOptional, IsUUID } from 'class-validator';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from 'core/decorators/entity/relations';
 
@@ -36,11 +35,11 @@ import { MultiORMManyToMany, MultiORMManyToOne } from 'core/decorators/entity/re
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	paymentDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -48,15 +47,15 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	amount?: number;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	note?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
-	@Column()
+	@MultiORMColumn()
 	currency?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: PaymentMethodEnum })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: PaymentMethodEnum
@@ -64,7 +63,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	paymentMethod?: PaymentMethodEnum;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	overdue?: boolean;
 
 	/*
@@ -79,7 +78,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.employee)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId?: string;
 
 	@ApiProperty({ type: () => Employee })
@@ -95,7 +94,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.invoice)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invoiceId?: string;
 
 	@ApiPropertyOptional({ type: () => Invoice })
@@ -116,7 +115,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.recordedBy)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	recordedById?: string;
 
 	/**
@@ -141,7 +140,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@IsUUID()
 	@RelationId((it: Payment) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -157,7 +156,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.organizationContact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationContactId?: string;
 
 	/*

@@ -11,7 +11,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import {
-	Column,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -26,7 +25,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -34,32 +33,32 @@ import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	token: string;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String, enum: InviteStatusEnum })
-	@Column()
+	@MultiORMColumn()
 	status: InviteStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	expireDate: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	actionDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	public code?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	public fullName?: string;
 
 	public isExpired?: boolean;
@@ -80,7 +79,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invite) => it.invitedBy)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invitedById: string;
 
 	/**
@@ -94,7 +93,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.role)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	roleId: string;
 
 	/**
@@ -110,7 +109,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.user)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	userId?: IUser['id'];
 
 	/*

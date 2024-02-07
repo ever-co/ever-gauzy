@@ -1,4 +1,3 @@
-import { Column } from 'typeorm';
 import { ProductTypesIconsEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -6,7 +5,7 @@ import {
 	ProductTypeTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
 import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -14,7 +13,7 @@ import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 export class ProductType extends TranslatableBase {
 
 	@ApiProperty({ type: () => String, enum: ProductTypesIconsEnum })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon: string;
 
 	/*

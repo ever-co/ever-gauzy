@@ -1,4 +1,4 @@
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTaskSetting,
@@ -18,7 +18,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -32,7 +32,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksPrivacyEnabled: boolean;
 
 	/**
@@ -42,7 +42,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksMultipleAssigneesEnabled: boolean;
 
 	/**
@@ -52,7 +52,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksManualTimeEnabled: boolean;
 
 	/**
@@ -62,7 +62,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksGroupEstimationEnabled: boolean;
 
 	/**
@@ -72,7 +72,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksEstimationInHoursEnabled: boolean;
 
 	/**
@@ -82,7 +82,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksEstimationInStoryPointsEnabled: boolean;
 
 	/**
@@ -92,7 +92,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksProofOfCompletionEnabled: boolean;
 
 	/**
@@ -102,7 +102,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => String, enum: TaskProofOfCompletionTypeEnum })
 	@IsOptional()
 	@IsEnum(TaskProofOfCompletionTypeEnum)
-	@Column({ default: TaskProofOfCompletionTypeEnum.PRIVATE })
+	@MultiORMColumn({ default: TaskProofOfCompletionTypeEnum.PRIVATE })
 	tasksProofOfCompletionType: TaskProofOfCompletionTypeEnum;
 
 	/**
@@ -112,7 +112,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksLinkedEnabled: boolean;
 
 	/**
@@ -122,7 +122,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksCommentsEnabled: boolean;
 
 	/**
@@ -132,7 +132,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksHistoryEnabled: boolean;
 
 	/**
@@ -142,7 +142,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksAcceptanceCriteriaEnabled: boolean;
 
 	/**
@@ -152,7 +152,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksDraftsEnabled: boolean;
 
 	/**
@@ -162,7 +162,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksNotifyLeftEnabled: boolean;
 
 	/**
@@ -171,7 +171,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 7 })
+	@MultiORMColumn({ default: 7 })
 	tasksNotifyLeftPeriodDays: number;
 
 	/**
@@ -181,7 +181,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksAutoCloseEnabled: boolean;
 
 	/**
@@ -190,7 +190,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 7 })
+	@MultiORMColumn({ default: 7 })
 	tasksAutoClosePeriodDays: number;
 
 	/**
@@ -200,7 +200,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksAutoArchiveEnabled: boolean;
 
 	/**
@@ -209,7 +209,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 7 })
+	@MultiORMColumn({ default: 7 })
 	tasksAutoArchivePeriodDays: number;
 
 	/**
@@ -219,7 +219,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	isTasksAutoStatusEnabled: boolean;
 
 	/**
@@ -239,7 +239,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@IsUUID()
 	@RelationId((it: OrganizationTaskSetting) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -259,6 +259,6 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@IsUUID()
 	@RelationId((it: OrganizationTaskSetting) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }
