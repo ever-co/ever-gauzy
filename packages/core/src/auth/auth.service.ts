@@ -689,27 +689,25 @@ export class AuthService extends SocialAuthService {
 			// Generate a random alphanumeric code
 			let magicCode: string;
 
+			let isDemoCode = false;
+
 			// Check if the environment variable 'DEMO' is set to 'true' and the Node.js environment is set to 'development'
 			const IS_DEMO = process.env.DEMO === 'true' && process.env.NODE_ENV === 'development';
 
 			console.log('Auth Is Demo: ', IS_DEMO);
 
-			let isDemoCode = false;
-
-			const demoEmployeeEmail = process.env.DEMO_EMPLOYEE_EMAIL;
-			const demoAdminEmail = process.env.DEMO_ADMIN_EMAIL;
-
-			console.log('Demo Employee Email: ', demoEmployeeEmail);
-			console.log('Demo Admin Email: ', demoAdminEmail);
-
 			// If it's a demo environment, handle special cases
 			if (IS_DEMO) {
+				const demoEmployeeEmail = environment.demoCredentialConfig?.employeeEmail || 'employee@ever.co';
+				const demoAdminEmail = environment.demoCredentialConfig?.adminEmail || 'local.admin@ever.co';
+
+				console.log('Demo Employee Email: ', demoEmployeeEmail);
+				console.log('Demo Admin Email: ', demoAdminEmail);
+
 				// Check the value of the 'email' variable against certain demo email addresses
 				if (email === demoEmployeeEmail || email === demoAdminEmail) {
-					{
-						magicCode = process.env.DEMO_EMPLOYEE_PASSWORD || DEMO_PASSWORD_LESS_MAGIC_CODE;
-						isDemoCode = true;
-					}
+					magicCode = environment.demoCredentialConfig?.employeePassword || '123456';
+					isDemoCode = true;
 				}
 			}
 
@@ -725,7 +723,7 @@ export class AuthService extends SocialAuthService {
 			// Update the user record with the generated code and expiration time
 			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
 
-			console.log(`Email: '${email}' magic code: '${magicCode}'`);
+			console.log(`Email: '${email}' magic code: '${magicCode}' expires at: '${codeExpireAt}'`);
 
 			// If it's not a demo code, send the magic code to the user's email
 			if (!isDemoCode) {
@@ -743,11 +741,13 @@ export class AuthService extends SocialAuthService {
 				// Override the default config by merging in the provided values.
 				const integration = deepMerge(environment.appIntegrationConfig, appIntegration);
 
-				/** */
 				let magicLink: string;
+
 				if (integration.appMagicSignUrl) {
 					magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
 				}
+
+				console.log('Magic Link: ', magicLink);
 
 				// Send the magic code to the user's email
 				this.emailService.sendMagicLoginCode({
@@ -759,8 +759,7 @@ export class AuthService extends SocialAuthService {
 				});
 			}
 		} catch (error) {
-			// Handle errors during the process
-			console.log('Error while sending workspace magic login code', error?.message);
+			console.log(`Error while sending workspace magic login code for email: ${email}`, error?.message);
 		}
 	}
 

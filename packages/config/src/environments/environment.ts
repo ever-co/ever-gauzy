@@ -2,7 +2,9 @@
  * `ng build ---prod` replaces `environment.ts` with `environment.prod.ts`.
  * The list of file replacements can be found in `angular.json`.
  */
-import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+
+// see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { FileStorageProviderEnum } from '@gauzy/contracts';
@@ -205,6 +207,7 @@ export const environment: IEnvironment = {
 		},
 		fromAddress: process.env.MAIL_FROM_ADDRESS
 	},
+
 	defaultCurrency: process.env.DEFAULT_CURRENCY || 'USD',
 
 	unleashConfig: {
@@ -234,6 +237,7 @@ export const environment: IEnvironment = {
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,
+
 	demoCredentialConfig: {
 		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@ever.co`,
 		superAdminPassword: process.env.DEMO_SUPER_ADMIN_PASSWORD || `admin`,
