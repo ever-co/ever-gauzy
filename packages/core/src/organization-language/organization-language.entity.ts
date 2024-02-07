@@ -16,7 +16,9 @@ export class OrganizationLanguage extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => Language })
 	@MultiORMManyToOne(() => Language, {
 		nullable: false,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		referenceColumnName: 'code',
+		joinColumn: 'languageCode'
 	})
 	@JoinColumn({ referencedColumnName: "code" })
 	language: Language;

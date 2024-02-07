@@ -34,7 +34,7 @@ export function MultiORMManyToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
-        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options }))(target, propertyKey);
+        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options, propertyKey }))(target, propertyKey);
         TypeOrmManyToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
     };
 }
@@ -87,10 +87,12 @@ export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
 
     };
 
-
     if (!mikroOrmOptions.joinColumn && propertyKey) {
         // Set default joinColumn if not overwrite in options
-        mikroOrmOptions.joinColumn = `${propertyKey}Id`
+
+        console.log('propertyKey', `${propertyKey}Id`);
+        mikroOrmOptions.joinColumn = `${propertyKey}Id`;
+        mikroOrmOptions.referenceColumnName = `id`;
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>

@@ -15,6 +15,7 @@ type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
 type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'cascade'>;
 
 
+
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
 type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
@@ -33,7 +34,7 @@ export function MultiORMOneToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
-        MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options }))(target, propertyKey);
+        MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options, propertyKey }))(target, propertyKey);
         TypeOrmOneToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
     };
 }
@@ -83,9 +84,10 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
         lazy: !!typeOrmOptions?.lazy,
     };
 
-    if (!mikroOrmOptions.joinColumn && propertyKey) {
+    if (mikroOrmOptions.owner === true && !mikroOrmOptions.joinColumn && propertyKey) {
         // Set default joinColumn if not overwrite in options
-        mikroOrmOptions.joinColumn = `${propertyKey}Id`
+        mikroOrmOptions.joinColumn = `${propertyKey}Id`;
+        mikroOrmOptions.referenceColumnName = `id`;
     }
 
     if (mikroOrmOptions.owner === true) {
@@ -93,5 +95,6 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
     } else {
         mikroOrmOptions.mappedBy = inverseSide;
     }
+
     return mikroOrmOptions as MikroORMRelationOptions<any, any>
 }
