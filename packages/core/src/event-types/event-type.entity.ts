@@ -72,7 +72,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@IsOptional()
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 
 	/*

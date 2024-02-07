@@ -42,7 +42,7 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.technology)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	technologyId?: string;
 
 	/**
@@ -57,7 +57,7 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.personalQuality)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	personalQualityId?: string;
 
 	/**
@@ -72,6 +72,6 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.feedback)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	feedbackId?: string;
 }

@@ -66,7 +66,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.candidate)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: ICandidate['id'];
 
 	/**
@@ -81,7 +81,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.interview)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewId?: ICandidateInterview['id'];
 	/*
 	|--------------------------------------------------------------------------
@@ -114,6 +114,6 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.interviewer)
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewerId?: ICandidateInterviewers['id'];
 }

@@ -64,7 +64,7 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@RelationId((it: KeyResultTemplate) => it.kpi)
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	kpiId?: string;
 
 
@@ -80,6 +80,6 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly goalId?: string;
 }

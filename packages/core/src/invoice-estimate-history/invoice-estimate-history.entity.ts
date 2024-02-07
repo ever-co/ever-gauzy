@@ -45,7 +45,7 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	@RelationId((it: InvoiceEstimateHistory) => it.user)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId: string;
 
 	@ApiProperty({ type: () => Invoice })
@@ -58,6 +58,6 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	@RelationId((it: InvoiceEstimateHistory) => it.invoice)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	invoiceId: string;
 }

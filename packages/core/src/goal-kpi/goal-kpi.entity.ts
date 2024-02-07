@@ -60,6 +60,6 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 }

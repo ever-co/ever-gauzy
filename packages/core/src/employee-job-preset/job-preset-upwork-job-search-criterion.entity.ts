@@ -20,7 +20,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	jobPresetId?: string;
 
 	@MultiORMManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
@@ -29,7 +29,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	occupationId?: string;
 
 	@MultiORMManyToOne(
@@ -41,7 +41,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	categoryId?: string;
 
 	@MultiORMManyToOne(

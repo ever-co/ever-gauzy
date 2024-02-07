@@ -75,7 +75,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
 	/*
@@ -95,7 +95,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: IImageAsset['id'];
 
 	/*

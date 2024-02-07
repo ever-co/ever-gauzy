@@ -42,6 +42,6 @@ export class ProductCategoryTranslation extends TranslationBase
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductCategoryTranslation) => it.reference)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	referenceId: string;
 }

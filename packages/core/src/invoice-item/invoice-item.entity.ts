@@ -84,7 +84,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.expense)
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	expenseId?: string;
 
 	// Invoice Item Belongs to Invoice
@@ -99,7 +99,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.invoice)
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	invoiceId?: string;
 
 	// Invoice Item Belongs to Task
@@ -114,7 +114,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.task)
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: string;
 
 	// Invoice Item Belongs to Employee
@@ -129,7 +129,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.employee)
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	// Invoice Item Belongs to Project
@@ -148,7 +148,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@IsOptional()
 	@RelationId((it: InvoiceItem) => it.project)
 	@IsUUID()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	// Invoice Item Belongs to Product
@@ -163,6 +163,6 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.product)
 	@IsString()
 	@IsOptional()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productId?: string;
 }

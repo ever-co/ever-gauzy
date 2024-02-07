@@ -70,7 +70,7 @@ export class Report extends BaseEntity implements IReport {
 	@IsUUID()
 	@RelationId((it: Report) => it.category)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	categoryId?: IReportCategory['id'];
 
 	/*

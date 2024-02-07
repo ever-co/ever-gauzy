@@ -105,6 +105,6 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateInterview) => it.candidate)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: string;
 }

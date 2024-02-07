@@ -46,6 +46,6 @@ export class PipelineStage extends TenantOrganizationBaseEntity implements IStag
 	@RelationId((it: PipelineStage) => it.pipeline)
 	@IsNotEmpty()
 	@IsString()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public pipelineId: string;
 }

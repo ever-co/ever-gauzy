@@ -79,7 +79,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invite) => it.invitedBy)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	invitedById: string;
 
 	/**
@@ -93,7 +93,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.role)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId: string;
 
 	/**
@@ -109,7 +109,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.user)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 
 	/*

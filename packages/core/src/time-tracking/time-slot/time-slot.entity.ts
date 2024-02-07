@@ -86,7 +86,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
 	/*

@@ -40,7 +40,7 @@ export class ProductOptionGroup extends TenantOrganizationBaseEntity implements 
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	productId: string;
 
 	/*

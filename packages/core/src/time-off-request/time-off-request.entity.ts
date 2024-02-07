@@ -88,7 +88,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.policy)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	policyId?: string;
 
 	/**
@@ -109,7 +109,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.document)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	documentId?: IDocumentAsset['id'];
 
 	/*

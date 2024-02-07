@@ -53,7 +53,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.warehouse)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	warehouseId: string;
 
 	/**
@@ -69,7 +69,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.product)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	productId: string;
 
 	/*

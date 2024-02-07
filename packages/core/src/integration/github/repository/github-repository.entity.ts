@@ -87,7 +87,7 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     @IsUUID()
     @RelationId((it: OrganizationGithubRepository) => it.integration)
     @Index()
-    @MultiORMColumn({ nullable: true })
+    @MultiORMColumn({ nullable: true, relationId: true })
     integrationId: IIntegrationTenant['id'];
 
     /*

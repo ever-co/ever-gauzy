@@ -71,6 +71,6 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId: string;
 }

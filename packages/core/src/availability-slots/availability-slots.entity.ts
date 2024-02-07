@@ -60,6 +60,6 @@ export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IA
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 }

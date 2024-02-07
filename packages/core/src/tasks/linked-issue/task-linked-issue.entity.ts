@@ -37,7 +37,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@IsUUID()
 	@RelationId((it: TaskLinkedIssue) => it.taskFrom)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	taskFromId: ITask['id'];
 
 	/**
@@ -52,6 +52,6 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@IsUUID()
 	@RelationId((it: TaskLinkedIssue) => it.taskTo)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	taskToId: ITask['id'];
 }

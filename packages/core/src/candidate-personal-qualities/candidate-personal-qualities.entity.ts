@@ -48,7 +48,7 @@ export class CandidatePersonalQualities extends TenantOrganizationBaseEntity imp
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewId?: string;
 
 	/*

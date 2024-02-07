@@ -55,7 +55,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsUUID()
 	@RelationId((it: EmailHistory) => it.user)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 
 	/**
@@ -69,7 +69,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsUUID()
 	@RelationId((it: EmailHistory) => it.emailTemplate)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	emailTemplateId: IEmailTemplate['id'];
 
 	@Index()

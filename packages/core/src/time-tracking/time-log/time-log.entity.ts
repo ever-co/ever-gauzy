@@ -131,7 +131,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
 	/**
@@ -152,7 +152,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.timesheet)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	timesheetId?: ITimesheet['id'];
 
 	/**
@@ -176,7 +176,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -197,7 +197,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.task)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
 
 	/**
@@ -218,7 +218,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.organizationContact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: IOrganizationContact['id'];
 
 	/**
@@ -239,7 +239,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 
 	/*

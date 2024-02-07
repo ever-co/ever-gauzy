@@ -57,7 +57,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	@IsUUID()
 	@RelationId((it: IntegrationTenant) => it.integration)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	integrationId?: IIntegration['id'];
 
 	/*

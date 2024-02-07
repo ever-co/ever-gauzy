@@ -43,7 +43,7 @@ export class CandidateTechnologies extends TenantOrganizationBaseEntity implemen
 	@RelationId((it: CandidateTechnologies) => it.interview)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewId?: string;
 
 	/*

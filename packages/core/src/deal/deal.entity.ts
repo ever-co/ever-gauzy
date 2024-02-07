@@ -66,7 +66,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public createdByUserId: string;
 
 	/**
@@ -82,7 +82,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public stageId: string;
 
 	/*
@@ -107,6 +107,6 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@RelationId((it: Deal) => it.client)
 	@IsOptional()
 	@IsString()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	public clientId: string;
 }

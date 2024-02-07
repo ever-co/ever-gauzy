@@ -115,7 +115,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
 	@Index()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	employeeId?: IEmployee['id'];
 
 	/**
@@ -140,7 +140,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -157,7 +157,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.timeSlot)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
@@ -176,6 +176,6 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.task)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
 }

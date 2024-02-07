@@ -45,6 +45,6 @@ export class ProductOptionTranslation extends TenantOrganizationBaseEntity imple
 	@RelationId((it: ProductOptionTranslation) => it.reference)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	referenceId: string;
 }

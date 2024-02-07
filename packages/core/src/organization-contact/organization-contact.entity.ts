@@ -124,7 +124,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
 	/**
@@ -145,7 +145,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

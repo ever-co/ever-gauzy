@@ -30,6 +30,6 @@ export class CandidateSkill extends TenantOrganizationBaseEntity implements ICan
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateSkill) => it.candidate)
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: ICandidate['id'];
 }

@@ -73,7 +73,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipment)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	equipmentId: IEquipment['id'];
 
 	/**
@@ -89,7 +89,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipmentSharingPolicy)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
 
 	/*

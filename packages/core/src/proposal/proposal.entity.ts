@@ -60,7 +60,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Proposal) => it.employee)
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	@ApiPropertyOptional({ type: () => OrganizationContact })
@@ -73,7 +73,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Proposal) => it.organizationContact)
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: string;
 
 	/*

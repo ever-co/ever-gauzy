@@ -36,6 +36,6 @@ export class FeatureOrganization extends TenantOrganizationBaseEntity implements
 	@RelationId((it: FeatureOrganization) => it.feature)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	readonly featureId: string;
 }

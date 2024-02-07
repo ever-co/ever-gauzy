@@ -57,7 +57,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	@IsUUID()
 	@RelationId((it: Tenant) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

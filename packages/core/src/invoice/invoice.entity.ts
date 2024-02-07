@@ -221,7 +221,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.fromOrganization)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	fromOrganizationId?: string;
 
 	// To Contact
@@ -236,7 +236,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.toContact)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	toContactId?: string;
 
 	/*

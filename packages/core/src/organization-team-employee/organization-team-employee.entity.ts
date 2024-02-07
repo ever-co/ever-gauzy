@@ -39,7 +39,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.activeTask)
 	@Index()
-	@MultiORMColumn({ type: String, nullable: true })
+	@MultiORMColumn({ type: String, nullable: true, relationId: true })
 	public activeTaskId?: ITask['id'];
 
 	/**
@@ -57,7 +57,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public organizationTeamId: IOrganizationTeam['id'];
 
 	/**
@@ -73,7 +73,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String })
 	@RelationId((it: OrganizationTeamEmployee) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public employeeId: IEmployee['id'];
 
 	/**
@@ -94,7 +94,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.role)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	public roleId?: IRole['id'];
 
 	@ApiPropertyOptional({ type: () => Number })

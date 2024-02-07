@@ -42,7 +42,7 @@ export class ProductOption extends TenantOrganizationBaseEntity implements IProd
 	@RelationId((it: ProductOption) => it.group)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	groupId?: string;
 
 	/*

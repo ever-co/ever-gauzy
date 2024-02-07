@@ -5,6 +5,7 @@ type DataType = TypeORMColumnType | MikroORMColumnType;
 
 type Options<T> = Omit<MikroORMColumnOptions<T>, 'type' | 'default'> & Omit<TypeORMColumnOptions, 'type'> & {
     type?: DataType;
+    relationId?: boolean // Need to prevent Mikro-orm property decorator when relationId column
 };
 
 export function MultiORMColumn<T>(
@@ -34,6 +35,10 @@ export function mapColumnArgsForMikroORM<T, O>({ type, options }) {
 
     if (typeof options?.default === 'function') {
         options.default = options.default();
+    }
+
+    if (options?.relationId) {
+        options.persist = false
     }
 
 

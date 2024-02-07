@@ -196,7 +196,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -211,7 +211,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 
 	@RelationId((it: Task) => it.creator)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	creatorId?: IUser['id'];
 
 	/**
@@ -229,7 +229,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.organizationSprint)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationSprintId?: IOrganizationSprint['id'];
 
 	/**
@@ -249,7 +249,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskStatus)
 	@Index()
-	@MultiORMColumn({ nullable: true, type: 'varchar' })
+	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskStatusId?: ITaskStatus['id'];
 
 	/**
@@ -269,7 +269,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskSize)
 	@Index()
-	@MultiORMColumn({ nullable: true, type: 'varchar' })
+	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskSizeId?: ITaskSize['id'];
 
 	/**
@@ -289,7 +289,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsUUID()
 	@RelationId((it: Task) => it.taskPriority)
 	@Index()
-	@MultiORMColumn({ nullable: true, type: 'varchar' })
+	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskPriorityId?: ITaskPriority['id'];
 
 	/*

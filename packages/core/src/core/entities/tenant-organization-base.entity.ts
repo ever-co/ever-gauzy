@@ -34,6 +34,6 @@ export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity impl
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationId?: IOrganization['id'];
 }

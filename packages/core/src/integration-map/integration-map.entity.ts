@@ -46,6 +46,6 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 	@IsUUID()
 	@RelationId((it: IntegrationMap) => it.integration)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	integrationId: IIntegrationTenant['id'];
 }

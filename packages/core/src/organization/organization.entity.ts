@@ -336,7 +336,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@RelationId((it: Organization) => it.contact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
 	/**
@@ -357,7 +357,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsUUID()
 	@RelationId((it: Organization) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

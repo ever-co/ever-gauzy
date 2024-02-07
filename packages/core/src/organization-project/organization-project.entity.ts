@@ -178,7 +178,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.repository)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	repositoryId?: IOrganizationGithubRepository['id'];
 
 	/**
@@ -205,7 +205,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.organizationContact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: IOrganizationContact['id'];
 
 	/**
@@ -232,7 +232,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

@@ -112,7 +112,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.owner)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	ownerId: string;
 
 	/**
@@ -129,7 +129,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 
 	/**
@@ -146,7 +146,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly projectId?: string;
 
 	/**
@@ -163,7 +163,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly taskId?: string;
 
 	/**
@@ -180,7 +180,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly kpiId?: string;
 
 	/**
@@ -198,7 +198,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly goalId?: string;
 
 	/*

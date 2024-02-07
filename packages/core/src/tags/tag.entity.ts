@@ -121,7 +121,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@IsUUID()
 	@RelationId((it: Tag) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 
 	/*

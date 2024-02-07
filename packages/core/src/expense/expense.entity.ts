@@ -155,7 +155,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	/**
@@ -172,7 +172,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@RelationId((it: Expense) => it.vendor)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	vendorId: string;
 
 	/**
@@ -189,7 +189,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@RelationId((it: Expense) => it.category)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	categoryId: string;
 
 	/**
@@ -214,7 +214,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsUUID()
 	@RelationId((it: Expense) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: string;
 
 	/**
@@ -233,7 +233,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: string;
 
 	/*

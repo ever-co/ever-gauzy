@@ -21,13 +21,13 @@ export class TaskEstimation extends TenantOrganizationBaseEntity implements ITas
 	@ApiProperty({ type: () => String })
 	@RelationId((it: TaskEstimation) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: TaskEstimation) => it.task)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	taskId: ITask['id'];
 
 	/*

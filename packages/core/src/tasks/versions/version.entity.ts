@@ -68,7 +68,7 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	@IsUUID()
 	@RelationId((it: TaskVersion) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -91,6 +91,6 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	@IsUUID()
 	@RelationId((it: TaskVersion) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

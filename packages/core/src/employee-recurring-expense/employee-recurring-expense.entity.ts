@@ -125,6 +125,6 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeRecurringExpense) => it.employee)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId: string;
 }

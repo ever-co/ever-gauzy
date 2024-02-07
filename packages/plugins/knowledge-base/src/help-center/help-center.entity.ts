@@ -62,7 +62,7 @@ export class HelpCenter extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: string;
 
 	/*
