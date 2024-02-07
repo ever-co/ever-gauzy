@@ -15087,9 +15087,9 @@ ckeditor4-integrations-common@^1.0.0:
   integrity sha512-OAoQT/gYrHkg0qgzf6MS/rndYhq3SScLVQ3rtXQeuCE8ju7nFHg3qZ7WGA2XpFxcZzsMP6hhugXqdel5vbcC3g==
 
 ckeditor4@^4.23.0:
-  version "4.23.0"
-  resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.23.0.tgz#c0c3bc4e2a66ada6010b89466a41b09202f7bb7a"
-  integrity sha512-K9DUzTa7roj8JffKLm6nOxDF02aPURDK8m7oFibvvkyAaomj24qOgpVdt7yvszmIubeJLbAB6q4k7Euk8jzD1A==
+  version "4.24.0"
+  resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.24.0.tgz#9699ddbce7eaa9cb1063f7f7d75b0ae761106405"
+  integrity sha512-ShtIqZMMNmP5r8AhZqnysSaONsx+qKjI/zf5AkU9wKxl0yHVw2/CSxWYmdd40u3dMjJR2kOthQ6USahz528lbw==
 
 class-transformer@^0.5.1:
   version "0.5.1"
