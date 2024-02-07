@@ -1,5 +1,4 @@
 import {
-	Column,
 	JoinColumn,
 	RelationId,
 	Index
@@ -26,7 +25,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffPolicy
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -36,39 +35,39 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	documentUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	start: Date;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	end: Date;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	requestDate: Date;
 
 	@ApiProperty({ type: () => String, enum: StatusTypesEnum })
 	@IsEnum(StatusTypesEnum)
-	@Column()
+	@MultiORMColumn()
 	status?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	isHoliday?: boolean;
 
 
@@ -89,7 +88,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.policy)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	policyId?: string;
 
 	/**
@@ -110,7 +109,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.document)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	documentId?: IDocumentAsset['id'];
 
 	/*

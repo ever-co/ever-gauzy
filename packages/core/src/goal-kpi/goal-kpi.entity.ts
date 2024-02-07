@@ -1,4 +1,4 @@
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { IEmployee, IKPI, KpiMetricEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
@@ -6,40 +6,40 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalKPIRepository } from './repository/mikro-orm-goal-kpi.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal_kpi', { mikroOrmRepository: () => MikroOrmGoalKPIRepository })
 export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String, enum: KpiMetricEnum })
-	@Column()
+	@MultiORMColumn()
 	@IsEnum(KpiMetricEnum)
 	type: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	operator: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	currentValue: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	targetValue: number;
 
 	/*
@@ -60,6 +60,6 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	leadId?: string;
 }

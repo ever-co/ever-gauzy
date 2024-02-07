@@ -1,11 +1,11 @@
-import { JoinColumn, Column, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
 import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -14,7 +14,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	implements IWarehouseProductVariant {
 
 	@ApiPropertyOptional({ type: Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		default: 0,
@@ -42,7 +42,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	@RelationId((it: WarehouseProductVariant) => it.variant)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	variantId: string;
 
 	/**
@@ -57,6 +57,6 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	@RelationId((it: WarehouseProductVariant) => it.warehouseProduct)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	warehouseProductId: string;
 }

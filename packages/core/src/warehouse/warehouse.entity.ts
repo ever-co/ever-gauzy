@@ -1,5 +1,4 @@
 import {
-	Column,
 	JoinColumn,
 	JoinTable,
 	Index,
@@ -25,7 +24,7 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -33,23 +32,23 @@ import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneTo
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	active: boolean;
 
 	/*
@@ -71,7 +70,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	logoId?: string;
 
 	/*
@@ -94,7 +93,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	contactId?: string;
 
 	/*

@@ -1,4 +1,4 @@
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidateCriterionsRating,
@@ -12,7 +12,7 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-orm-candidate-criterions-rating.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -21,7 +21,7 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	rating: number;
 
 	/*
@@ -42,7 +42,7 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.technology)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	technologyId?: string;
 
 	/**
@@ -57,7 +57,7 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.personalQuality)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	personalQualityId?: string;
 
 	/**
@@ -72,6 +72,6 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.feedback)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	feedbackId?: string;
 }

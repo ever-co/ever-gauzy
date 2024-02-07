@@ -1,4 +1,4 @@
-import { Column, RelationId, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import { RelationId, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -19,7 +19,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { MultiORMEntity } from '../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -30,13 +30,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	title: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'longtext' } : {})
 	})
@@ -47,7 +47,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	})
 	@IsOptional()
 	@IsString()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
@@ -68,14 +68,14 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
 	@ApiPropertyOptional({ type: () => String, enum: ActivityType })
 	@IsOptional()
 	@IsEnum(ActivityType)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	type?: string;
 
 	@ApiPropertyOptional({
@@ -86,14 +86,14 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
 	@Index()
-	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
+	@MultiORMColumn({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	recordedAt?: Date;
 
 	/*
@@ -115,7 +115,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
 	@Index()
-	@Column({ nullable: false })
+	@MultiORMColumn({ nullable: false })
 	employeeId?: IEmployee['id'];
 
 	/**
@@ -140,7 +140,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -157,7 +157,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.timeSlot)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
@@ -176,6 +176,6 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.task)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taskId?: ITask['id'];
 }

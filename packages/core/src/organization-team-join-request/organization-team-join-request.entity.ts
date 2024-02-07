@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -9,7 +9,7 @@ import {
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -20,43 +20,43 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsEmail()
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fullName: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	linkAddress: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	position: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsEnum(OrganizationTeamJoinRequestStatusEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	status: OrganizationTeamJoinRequestStatusEnum;
 
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	code: string;
 
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	token: string;
 
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	expiredAt: Date;
 
 	/** Additional fields */
@@ -86,7 +86,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.user)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	userId?: IUser['id'];
 
 	/**
@@ -103,6 +103,6 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.organizationTeam)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	organizationTeamId?: IOrganizationTeam['id'];
 }

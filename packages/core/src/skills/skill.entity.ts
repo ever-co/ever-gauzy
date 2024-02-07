@@ -1,4 +1,4 @@
-import { Column, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -6,7 +6,7 @@ import {
 	Organization,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmSkillRepository } from './repository/mikro-orm-skill.repository';
 import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
@@ -15,15 +15,15 @@ export class Skill extends TenantOrganizationBaseEntity
 	implements ISkill {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	color?: string;
 
 	/*

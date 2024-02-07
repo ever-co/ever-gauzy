@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	JoinTable,
@@ -37,7 +36,7 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -47,19 +46,19 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	primaryEmail: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	primaryPhone: string;
 
 	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: ContactOrganizationInviteStatus
@@ -67,11 +66,11 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	inviteStatus?: ContactOrganizationInviteStatus;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => String, enum: ContactType })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: false,
 		enum: ContactType,
@@ -80,15 +79,15 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	contactType: ContactType;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: OrganizationContactBudgetTypeEnum,
@@ -97,7 +96,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	budgetType?: OrganizationContactBudgetTypeEnum;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdBy?: string;
 
 	/*
@@ -125,7 +124,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	contactId?: IContact['id'];
 
 	/**
@@ -146,7 +145,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

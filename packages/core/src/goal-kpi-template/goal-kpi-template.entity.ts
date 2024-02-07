@@ -1,4 +1,4 @@
-import { Column, JoinColumn } from 'typeorm';
+import { JoinColumn } from 'typeorm';
 import {
 	IGoalKPITemplate,
 	KpiMetricEnum,
@@ -10,32 +10,32 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalKPITemplateRepository } from './repository/mikro-orm-goal-kpi-template.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal_kpi_template', { mikroOrmRepository: () => MikroOrmGoalKPITemplateRepository })
 export class GoalKPITemplate extends TenantOrganizationBaseEntity implements IGoalKPITemplate {
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String, enum: KpiMetricEnum })
-	@Column()
+	@MultiORMColumn()
 	@IsEnum(KpiMetricEnum)
 	type: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	operator: string;
 
 	@ApiProperty({ type: () => Employee })
@@ -45,12 +45,12 @@ export class GoalKPITemplate extends TenantOrganizationBaseEntity implements IGo
 	lead?: IEmployee;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	currentValue?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	targetValue?: number;
 }

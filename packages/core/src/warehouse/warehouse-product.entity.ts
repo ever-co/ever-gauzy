@@ -1,6 +1,5 @@
 import {
 	JoinColumn,
-	Column,
 	RelationId,
 	Index
 } from 'typeorm';
@@ -18,7 +17,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -27,7 +26,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	implements IWarehouseProduct {
 
 	@ApiPropertyOptional({ type: Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		default: 0,
@@ -54,7 +53,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.warehouse)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	warehouseId: string;
 
 	/**
@@ -70,7 +69,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.product)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	productId: string;
 
 	/*

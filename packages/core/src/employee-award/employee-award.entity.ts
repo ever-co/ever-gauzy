@@ -1,11 +1,11 @@
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeeAward } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeAwardRepository } from './repository/mikro-orm-employee-award.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -15,11 +15,11 @@ export class EmployeeAward extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	year: string;
 
 	/*
@@ -36,6 +36,6 @@ export class EmployeeAward extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeAward) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	employeeId?: string;
 }

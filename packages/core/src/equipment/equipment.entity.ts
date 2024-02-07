@@ -6,7 +6,6 @@ import {
 	IImageAsset
 } from '@gauzy/contracts';
 import {
-	Column,
 	JoinTable,
 	JoinColumn
 } from 'typeorm';
@@ -26,7 +25,7 @@ import {
 	ImageAsset
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -36,24 +35,24 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	type: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	serialNumber?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -63,7 +62,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -73,13 +72,13 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -89,7 +88,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	autoApproveShare: boolean;
 
 	/*

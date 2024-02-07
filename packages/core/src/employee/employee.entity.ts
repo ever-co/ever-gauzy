@@ -1,13 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	JoinColumn,
 	JoinTable,
 	RelationId,
 	Index,
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -78,67 +77,67 @@ import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneTo
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 200 })
-	@Column({ length: 200, nullable: true })
+	@MultiORMColumn({ length: 200, nullable: true })
 	short_description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startedWorkOn?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endWork?: Date;
 
 	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	payPeriod?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billRateValue?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billRateCurrency?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reWeeklyLimit?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	offerDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	acceptDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	rejectDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	employeeLevel?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	anonymousBonus?: boolean;
 
 	@ApiProperty({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe(),
@@ -146,7 +145,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	averageIncome?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe(),
@@ -154,7 +153,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	averageBonus?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		default: 0,
@@ -163,7 +162,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	totalWorkHours?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		nullable: true,
 		transformer: new ColumnNumericTransformerPipe(),
@@ -171,79 +170,79 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	averageExpenses?: number;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_anonymous_bonus?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_average_bonus?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_average_expenses?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_average_income?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_billrate?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_payperiod?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_start_work_on?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isJobSearchActive?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	linkedInUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	facebookUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	instagramUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	twitterUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	githubUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	gitlabUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	upworkUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	stackoverflowUrl?: string;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isVerified?: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isVetted?: boolean;
 
 	@ApiProperty({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		nullable: true,
 		transformer: new ColumnNumericTransformerPipe(),
@@ -251,7 +250,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	totalJobs?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		nullable: true,
 		transformer: new ColumnNumericTransformerPipe(),
@@ -260,14 +259,14 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
 	@Index({ unique: false })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
 	/**
 	 * Enabled/Disabled Time Tracking Feature
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({
+	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
 		default: false,
@@ -278,7 +277,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * Employee status (Online/Offline)
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({
+	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
 		default: false,
@@ -286,7 +285,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	isOnline?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({
+	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
 		default: false,
@@ -297,7 +296,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * Employee time tracking status
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({
+	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
 		default: false,
@@ -308,21 +307,21 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * Enabled/Disabled Screen Capture Feature
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: true })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	allowScreenshotCapture?: boolean;
 
 	/** Upwork ID */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	upworkId?: string;
 
 	/** LinkedIn ID */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	linkedInId?: string;
 
 
@@ -355,7 +354,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.user)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	readonly userId: string;
 
 	/**
@@ -373,7 +372,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly contactId?: string;
 
 	/**
@@ -397,7 +396,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.organizationPosition)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly organizationPositionId?: string;
 
 	/*

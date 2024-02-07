@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinTable
 } from 'typeorm';
@@ -16,7 +15,7 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
 import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -27,7 +26,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	/*

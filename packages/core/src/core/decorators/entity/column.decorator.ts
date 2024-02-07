@@ -3,12 +3,12 @@ import { ColumnType as TypeORMColumnType, ColumnOptions as TypeORMColumnOptions,
 
 type DataType = TypeORMColumnType | MikroORMColumnType;
 
-type Options<T> = Omit<MikroORMColumnOptions<T>, 'type'> & Omit<TypeORMColumnOptions, 'type'> & {
-    type: DataType;
+type Options<T> = Omit<MikroORMColumnOptions<T>, 'type' | 'default'> & Omit<TypeORMColumnOptions, 'type'> & {
+    type?: DataType;
 };
 
 export function MultiORMColumn<T>(
-    type?: DataType,
+    type?: DataType | Options<T>,
     options?: Options<T>
 ): PropertyDecorator {
 
@@ -18,9 +18,10 @@ export function MultiORMColumn<T>(
         type = options.type;
     }
 
+
     return (target: any, propertyKey: string) => {
-        MikroORMColumn(mapColumnArgsForMikroORM({ type: type, options }))(target, propertyKey);
-        TypeORMColumn({ type: type, ...options })(target, propertyKey);
+        MikroORMColumn(mapColumnArgsForMikroORM({ type: type as DataType, options }))(target, propertyKey);
+        TypeORMColumn({ type: type as DataType, ...options })(target, propertyKey);
     };
 }
 
@@ -30,8 +31,14 @@ export interface MapColumnArgsForMikroORMOptions<T, O> {
 }
 
 export function mapColumnArgsForMikroORM<T, O>({ type, options }) {
+
+    if (typeof options?.default === 'function') {
+        options.default = options.default();
+    }
+
+
     return {
-        type,
+        type: type,
         ...options
     } as MikroORMColumnOptions<T>
 }

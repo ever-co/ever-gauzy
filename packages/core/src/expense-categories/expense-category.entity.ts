@@ -1,9 +1,9 @@
-import { Column, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IExpense, IExpenseCategory, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmExpenseCategoryRepository } from './repository/mikro-orm-expense-category.repository';
 import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -13,7 +13,7 @@ export class ExpenseCategory extends TenantOrganizationBaseEntity implements IEx
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/*

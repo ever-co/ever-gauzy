@@ -1,6 +1,5 @@
 import {
 	RelationId,
-	Column,
 	JoinTable,
 	JoinColumn,
 	Index
@@ -20,7 +19,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -29,30 +28,30 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	name: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	shareRequestDay: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	shareStartDay: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	shareEndDay: Date;
 
-	@Column()
+	@MultiORMColumn()
 	status: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdBy: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdByName: string;
 
 	/*
@@ -74,7 +73,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipment)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	equipmentId: IEquipment['id'];
 
 	/**
@@ -90,7 +89,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipmentSharingPolicy)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
 
 	/*

@@ -7,7 +7,6 @@ import {
 	IContact
 } from '@gauzy/contracts';
 import {
-	Column,
 	JoinColumn,
 	JoinTable,
 	Index,
@@ -21,7 +20,7 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -29,31 +28,31 @@ import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	phone: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	active: boolean;
 
 	@ApiProperty({ type: () => String })
-	@Column({ default: CurrenciesEnum.USD })
+	@MultiORMColumn({ default: CurrenciesEnum.USD })
 	currency: CurrenciesEnum;
 
 	/*
@@ -76,7 +75,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	contactId?: IContact['id'];
 
 	/*
@@ -96,7 +95,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	logoId?: IImageAsset['id'];
 
 	/*

@@ -4,7 +4,6 @@ import {
 	AfterLoad,
 	AfterUpdate,
 	BeforeInsert,
-	Column
 } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -12,7 +11,7 @@ import {
 	PipelineStage,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
 import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -25,7 +24,7 @@ export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline 
 	})
 	public stages: IPipelineStage[];
 
-	@Column({ nullable: true, type: 'text' })
+	@MultiORMColumn({ nullable: true, type: 'text' })
 	@ApiProperty({ type: () => String })
 	@IsString()
 	public description: string;
@@ -33,7 +32,7 @@ export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	public name: string;
 
 

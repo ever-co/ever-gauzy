@@ -34,7 +34,7 @@ export function MultiORMManyToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
-        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options, propertyKey }))(target, propertyKey);
+        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options, propertyKey, target }))(target, propertyKey);
         TypeOrmManyToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
     };
 }
@@ -47,7 +47,7 @@ export interface MapManyToOneArgsForMikroORMOptions<T, O> {
     target?: string;
 }
 
-export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options, propertyKey }: MapManyToOneArgsForMikroORMOptions<T, O>) {
+export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options, propertyKey, target }: MapManyToOneArgsForMikroORMOptions<T, O>) {
 
     const typeOrmOptions = options as RelationOptions;
     let mikroORMCascade = [];
@@ -89,11 +89,12 @@ export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
 
     if (!mikroOrmOptions.joinColumn && propertyKey) {
         // Set default joinColumn if not overwrite in options
-
-        console.log('propertyKey', `${propertyKey}Id`);
         mikroOrmOptions.joinColumn = `${propertyKey}Id`;
         mikroOrmOptions.referenceColumnName = `id`;
     }
+
+    const classConstructor = target.constructor;
+    const metaData = Reflect.getMetadataKeys(classConstructor);
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>
 }

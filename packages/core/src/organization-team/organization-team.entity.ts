@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinTable,
 	JoinColumn,
@@ -49,7 +48,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -63,7 +62,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/**
@@ -72,7 +71,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	/**
@@ -81,7 +80,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	emoji?: string;
 
 	/**
@@ -90,7 +89,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	teamSize?: string;
 
 	/**
@@ -99,7 +98,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	logo?: string;
 
 	/**
@@ -108,7 +107,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	prefix?: string;
 
 	/**
@@ -118,7 +117,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	public?: boolean;
 
 	/**
@@ -128,7 +127,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
 
@@ -153,7 +152,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 
 	@RelationId((it: OrganizationTeam) => it.createdBy)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdById?: IUser['id'];
 
 	/**
@@ -177,7 +176,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsUUID()
 	@RelationId((it: OrganizationTeam) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

@@ -1,4 +1,3 @@
-import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
@@ -11,7 +10,7 @@ import {
 	JobSearchOccupation,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -21,7 +20,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	jobPresetId?: string;
 
 	@MultiORMManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
@@ -30,7 +29,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	occupationId?: string;
 
 	@MultiORMManyToOne(
@@ -42,7 +41,7 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	categoryId?: string;
 
 	@MultiORMManyToOne(
@@ -54,12 +53,12 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	keyword?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: 'text', nullable: true })
 	jobType?: JobPostTypeEnum;
 }

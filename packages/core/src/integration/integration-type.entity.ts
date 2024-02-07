@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Unique } from 'typeorm';
+import { Unique } from 'typeorm';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IIntegration, IIntegrationType } from '@gauzy/contracts';
 import { BaseEntity, Integration } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationTypeRepository } from './repository/mikro-orm-integration-type.repository';
 import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
@@ -13,28 +13,28 @@ export class IntegrationType extends BaseEntity implements IIntegrationType {
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	groupName: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsNumber()
-	@Column()
+	@MultiORMColumn()
 	order: number;
 
 	/*

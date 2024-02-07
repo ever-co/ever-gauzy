@@ -1,5 +1,4 @@
 import {
-	Column,
 	RelationId,
 	JoinColumn,
 	JoinTable,
@@ -26,7 +25,7 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -34,17 +33,17 @@ import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../cor
 export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	enabled: boolean;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageUrl: string;
 
 	/*
@@ -67,7 +66,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.featuredImage)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	featuredImageId?: string;
 
 	/**
@@ -84,7 +83,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productType)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	productTypeId?: string;
 
 	/**
@@ -102,7 +101,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productCategory)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	productCategoryId?: string;
 	/*
 	|--------------------------------------------------------------------------

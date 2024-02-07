@@ -4,14 +4,13 @@ import {
 	GoalTemplateCategoriesEnum,
 	IKeyResultTemplate
 } from '@gauzy/contracts';
-import { Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import {
 	KeyResultTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalTemplateRepository } from './repository/mikro-orm-goal-template.repository';
 import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -19,17 +18,17 @@ import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 export class GoalTemplate extends TenantOrganizationBaseEntity implements IGoalTemplate {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String, enum: GoalLevelEnum })
 	@IsEnum(GoalLevelEnum)
-	@Column()
+	@MultiORMColumn()
 	level: string;
 
 	@ApiProperty({ type: () => String, enum: GoalTemplateCategoriesEnum })
 	@IsEnum(GoalTemplateCategoriesEnum)
-	@Column()
+	@MultiORMColumn()
 	category: string;
 
 	@ApiProperty({ type: () => KeyResultTemplate })

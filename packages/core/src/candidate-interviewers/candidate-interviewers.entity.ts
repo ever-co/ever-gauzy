@@ -1,4 +1,4 @@
-import { Column, RelationId, Index } from 'typeorm';
+import { RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateInterviewers, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import {
@@ -7,7 +7,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateInterviewersRepository } from './repository/mikro-orm-candidate-interviewers.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -28,7 +28,7 @@ export class CandidateInterviewers extends TenantOrganizationBaseEntity implemen
 	@RelationId((it: CandidateInterviewers) => it.interview)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	interviewId: string;
 
 	@ApiProperty({ type: () => Employee })
@@ -41,6 +41,6 @@ export class CandidateInterviewers extends TenantOrganizationBaseEntity implemen
 	@RelationId((it: CandidateInterviewers) => it.employee)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId: string;
 }

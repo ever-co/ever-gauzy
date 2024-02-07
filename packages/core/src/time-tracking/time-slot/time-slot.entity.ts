@@ -1,5 +1,4 @@
 import {
-	Column,
 	RelationId,
 	JoinTable,
 	Index
@@ -22,7 +21,7 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
@@ -34,33 +33,33 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsNumber()
 	@Index()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	mouse?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
 	@Index()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsNotEmpty()
 	@IsDateString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	startedAt: Date;
 
 	/** Additional fields */
@@ -87,7 +86,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	employeeId: IEmployee['id'];
 
 	/*

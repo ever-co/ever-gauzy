@@ -19,7 +19,6 @@ import {
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	JoinColumn,
 	RelationId,
 	Index,
@@ -43,14 +42,14 @@ import {
 	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -58,51 +57,51 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	rating?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	appliedDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	hiredDate?: Date;
 
 	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
-	@Column({ nullable: true, default: CandidateStatusEnum.APPLIED })
+	@MultiORMColumn({ nullable: true, default: CandidateStatusEnum.APPLIED })
 	status?: CandidateStatusEnum;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	rejectDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	candidateLevel?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reWeeklyLimit?: number; // Recurring Weekly Limit (hours)
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
-	@Column({ length: 255, nullable: true })
+	@MultiORMColumn({ length: 255, nullable: true })
 	billRateCurrency?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
 	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	payPeriod?: PayPeriodEnum;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	cvUrl?: string;
 
 
@@ -130,7 +129,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly contactId?: string;
 
 	/*
@@ -146,7 +145,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.organizationPosition)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationPositionId?: IOrganizationPosition['id'];
 
 	/*
@@ -168,7 +167,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.source)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	sourceId?: ICandidateSource['id'];
 
 	/**
@@ -186,7 +185,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.user)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	userId: IUser['id'];
 
 	/**
@@ -200,7 +199,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.employee)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId?: IEmployee['id'];
 
 	/*

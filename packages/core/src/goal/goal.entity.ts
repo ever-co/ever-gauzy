@@ -1,5 +1,5 @@
 import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { Column, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
@@ -8,7 +8,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalRepository } from './repository/mikro-orm-goal.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -16,25 +16,25 @@ import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	description?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	deadline: string;
 
 	@ApiProperty({ type: () => String, enum: GoalLevelEnum })
 	@IsEnum(GoalLevelEnum)
-	@Column()
+	@MultiORMColumn()
 	level: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	progress: number;
 
 	/*
@@ -57,7 +57,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	ownerTeamId?: string;
 
 	/**
@@ -74,7 +74,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	ownerEmployeeId?: string;
 
 	/**
@@ -91,7 +91,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	leadId?: string;
 
 	/**
@@ -106,7 +106,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	alignedKeyResultId?: string;
 
 	/*

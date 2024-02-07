@@ -7,7 +7,6 @@
 */
 import {
 	Index,
-	Column,
 	RelationId,
 	JoinColumn,
 	JoinTable
@@ -29,7 +28,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -39,37 +38,37 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	status: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdBy: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdByName: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	min_count: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	requestId: string;
 
 	@ApiProperty({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
 	@IsEnum(ApprovalPolicyTypesStringEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	requestType: string;
 
 	/*
@@ -93,7 +92,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@RelationId((it: RequestApproval) => it.approvalPolicy)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	approvalPolicyId: string;
 
 	/*

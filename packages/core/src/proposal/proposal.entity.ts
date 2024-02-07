@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
@@ -19,7 +18,7 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -29,23 +28,23 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	jobPostUrl: string;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	jobPostContent?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	proposalContent?: string;
 
 	@ApiProperty({ type: () => String, enum: ProposalStatusEnum })
-	@Column()
+	@MultiORMColumn()
 	status?: ProposalStatusEnum;
 
 	/*
@@ -61,7 +60,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Proposal) => it.employee)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId?: string;
 
 	@ApiPropertyOptional({ type: () => OrganizationContact })
@@ -74,7 +73,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Proposal) => it.organizationContact)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationContactId?: string;
 
 	/*

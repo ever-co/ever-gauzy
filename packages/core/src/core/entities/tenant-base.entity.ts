@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { Property } from '@mikro-orm/core';
 import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 import { BaseEntity, Tenant } from '../entities/internal';
-import { MikroManyToOne } from '../../core/decorators/entity/relations/mikro-orm';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
+import { MikroManyToOne } from '../decorators/entity/relations/mikro-orm';
+import { MultiORMManyToOne } from '../decorators/entity/relations';
+import { MultiORMColumn } from '../decorators';
 
 export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
 
@@ -28,7 +29,6 @@ export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTen
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true, })
+	@MultiORMColumn({ nullable: true })
 	tenantId?: ITenant['id'];
 }

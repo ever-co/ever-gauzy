@@ -1,38 +1,38 @@
-import { Column, RelationId, Index } from 'typeorm';
+import { RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IHelpCenter, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
 import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenter, HelpCenterAuthor } from './../entities';
 import { MikroOrmHelpCenterArticleRepository } from './repository/mikro-orm-help-center-article.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '@gauzy/core';
+import { MultiORMManyToOne, MultiORMOneToMany, MultiORMColumn } from '@gauzy/core';
 
 @MultiORMEntity('knowledge_base_article', { mikroOrmRepository: () => MikroOrmHelpCenterArticleRepository })
 export class HelpCenterArticle extends TenantOrganizationBaseEntity
 	implements IHelpCenterArticle {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	data: string;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column()
+	@MultiORMColumn()
 	draft: boolean;
 
 	@ApiProperty({ type: () => Boolean })
-	@Column()
+	@MultiORMColumn()
 	privacy: boolean;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	index: number;
 
 	/*
@@ -49,7 +49,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity
 	@RelationId((it: HelpCenterArticle) => it.category)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	categoryId: string;
 
 	/*

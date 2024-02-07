@@ -1,6 +1,6 @@
 import {
 	Index,
-	Column,
+
 	RelationId,
 	JoinColumn
 } from 'typeorm';
@@ -10,7 +10,7 @@ import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts'
 import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -21,34 +21,34 @@ export class Report extends BaseEntity implements IReport {
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	slug?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	image?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	iconClass?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	showInMenu?: boolean;
 
 	imageUrl?: string;
@@ -70,7 +70,7 @@ export class Report extends BaseEntity implements IReport {
 	@IsUUID()
 	@RelationId((it: Report) => it.category)
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	categoryId?: IReportCategory['id'];
 
 	/*

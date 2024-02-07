@@ -1,4 +1,4 @@
-import { Column, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import {
 	IEmployee,
 	IExpense,
@@ -20,7 +20,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -29,12 +29,12 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -42,7 +42,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -50,7 +50,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -58,12 +58,12 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	applyTax?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	applyDiscount?: boolean;
 
 	/*
@@ -84,7 +84,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.expense)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	expenseId?: string;
 
 	// Invoice Item Belongs to Invoice
@@ -99,7 +99,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.invoice)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invoiceId?: string;
 
 	// Invoice Item Belongs to Task
@@ -114,7 +114,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.task)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taskId?: string;
 
 	// Invoice Item Belongs to Employee
@@ -129,7 +129,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.employee)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId?: string;
 
 	// Invoice Item Belongs to Project
@@ -148,7 +148,7 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@IsOptional()
 	@RelationId((it: InvoiceItem) => it.project)
 	@IsUUID()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	// Invoice Item Belongs to Product
@@ -163,6 +163,6 @@ export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoic
 	@RelationId((it: InvoiceItem) => it.product)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	productId?: string;
 }

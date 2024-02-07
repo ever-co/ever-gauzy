@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
@@ -17,7 +17,7 @@ import {
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -26,11 +26,11 @@ export class Tenant extends BaseEntity implements ITenant {
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	logo?: string;
 
 	/*
@@ -57,7 +57,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	@IsUUID()
 	@RelationId((it: Tenant) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageId?: IImageAsset['id'];
 
 	/*

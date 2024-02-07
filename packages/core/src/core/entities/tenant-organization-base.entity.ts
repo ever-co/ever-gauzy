@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { Property } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
@@ -7,8 +7,9 @@ import {
 	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { Organization, TenantBaseEntity } from '../entities/internal';
-import { MikroManyToOne } from '../../core/decorators/entity/relations/mikro-orm';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
+import { MikroManyToOne } from '../decorators/entity/relations/mikro-orm';
+import { MultiORMManyToOne } from '../decorators/entity/relations';
+import { MultiORMColumn } from '../decorators';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 
@@ -33,7 +34,6 @@ export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity impl
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationId?: IOrganization['id'];
 }

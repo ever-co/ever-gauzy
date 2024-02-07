@@ -1,11 +1,11 @@
-import { Column, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateSkill, ICandidate } from '@gauzy/contracts';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateSkillRepository } from './repository/mikro-orm-candidate-skill.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -13,7 +13,7 @@ import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 export class CandidateSkill extends TenantOrganizationBaseEntity implements ICandidateSkill {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/*
@@ -29,6 +29,6 @@ export class CandidateSkill extends TenantOrganizationBaseEntity implements ICan
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateSkill) => it.candidate)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	candidateId?: ICandidate['id'];
 }

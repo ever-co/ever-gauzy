@@ -1,5 +1,4 @@
 import {
-	Column,
 	Index,
 	RelationId,
 	JoinColumn,
@@ -19,7 +18,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -30,7 +29,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -39,18 +38,18 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	durationUnit: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	title: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 
@@ -73,7 +72,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	readonly employeeId?: string;
 
 	/*
