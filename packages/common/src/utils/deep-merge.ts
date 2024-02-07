@@ -38,5 +38,5 @@ export function deepMerge(target: any, source: any, depth = 0): any {
 		}
 	}
 
-	return target as any;
+	return target;
 }
