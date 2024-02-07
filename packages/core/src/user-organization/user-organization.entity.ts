@@ -39,6 +39,6 @@ export class UserOrganization extends TenantOrganizationBaseEntity implements IU
 	@RelationId((it: UserOrganization) => it.user)
 	@IsUUID()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	userId: IUser['id'];
 }

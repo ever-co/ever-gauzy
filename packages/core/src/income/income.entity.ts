@@ -93,7 +93,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	/**
@@ -111,7 +111,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	clientId?: string;
 
 	/*

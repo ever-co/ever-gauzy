@@ -84,7 +84,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsUUID()
 	@RelationId((it: TaskStatus) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -104,6 +104,6 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsUUID()
 	@RelationId((it: TaskStatus) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

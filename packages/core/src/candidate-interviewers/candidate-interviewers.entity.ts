@@ -28,7 +28,7 @@ export class CandidateInterviewers extends TenantOrganizationBaseEntity implemen
 	@RelationId((it: CandidateInterviewers) => it.interview)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	interviewId: string;
 
 	@ApiProperty({ type: () => Employee })
@@ -41,6 +41,6 @@ export class CandidateInterviewers extends TenantOrganizationBaseEntity implemen
 	@RelationId((it: CandidateInterviewers) => it.employee)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId: string;
 }

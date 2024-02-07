@@ -31,6 +31,6 @@ export class EmployeePhone extends TenantOrganizationBaseEntity implements IEmpl
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeePhone) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 }

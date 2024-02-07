@@ -46,6 +46,6 @@ export class ProductTranslation extends TranslationBase implements IProductTrans
 	@RelationId((it: ProductTranslation) => it.reference)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	referenceId: string;
 }

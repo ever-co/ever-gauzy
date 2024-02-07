@@ -354,7 +354,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.user)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	readonly userId: string;
 
 	/**
@@ -372,7 +372,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.contact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
 	/**
@@ -396,7 +396,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.organizationPosition)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly organizationPositionId?: string;
 
 	/*

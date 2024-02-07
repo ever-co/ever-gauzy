@@ -49,7 +49,7 @@ export class HelpCenterArticle extends TenantOrganizationBaseEntity
 	@RelationId((it: HelpCenterArticle) => it.category)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	categoryId: string;
 
 	/*

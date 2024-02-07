@@ -72,7 +72,7 @@ export class Feature extends BaseEntity implements IFeature {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Feature) => it.parent)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: string;
 
 	/*

@@ -78,7 +78,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.employee)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	@ApiProperty({ type: () => Employee })
@@ -94,7 +94,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.invoice)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	invoiceId?: string;
 
 	@ApiPropertyOptional({ type: () => Invoice })
@@ -115,7 +115,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.recordedBy)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	recordedById?: string;
 
 	/**
@@ -140,7 +140,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@IsUUID()
 	@RelationId((it: Payment) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -156,7 +156,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.organizationContact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: string;
 
 	/*

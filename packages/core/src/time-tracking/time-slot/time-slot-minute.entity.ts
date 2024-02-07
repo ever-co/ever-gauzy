@@ -49,6 +49,6 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	readonly timeSlotId?: string;
 }

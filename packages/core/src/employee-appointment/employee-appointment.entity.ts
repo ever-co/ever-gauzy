@@ -33,7 +33,7 @@ export class EmployeeAppointment extends TenantOrganizationBaseEntity implements
 		(employeeAppointment: EmployeeAppointment) =>
 			employeeAppointment.employee
 	)
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 
 	@ApiProperty({ type: () => String })

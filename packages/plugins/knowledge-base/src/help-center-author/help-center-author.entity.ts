@@ -25,7 +25,7 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	@RelationId((it: HelpCenterAuthor) => it.employee)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId: string;
 
 	@ApiProperty({ type: () => HelpCenterArticle })
@@ -38,6 +38,6 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	@RelationId((it: HelpCenterAuthor) => it.article)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	articleId: string;
 }

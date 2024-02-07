@@ -35,7 +35,7 @@ export class AppointmentEmployee extends TenantOrganizationBaseEntity implements
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public employeeId?: string;
 
 	/**
@@ -51,6 +51,6 @@ export class AppointmentEmployee extends TenantOrganizationBaseEntity implements
 	@RelationId((it: AppointmentEmployee) => it.employeeAppointment)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	public employeeAppointmentId?: string;
 }

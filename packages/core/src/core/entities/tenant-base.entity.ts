@@ -29,6 +29,6 @@ export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTen
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	tenantId?: ITenant['id'];
 }

@@ -42,6 +42,6 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeProposalTemplate) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId?: string;
 }

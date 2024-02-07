@@ -64,6 +64,6 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@IsUUID()
 	@RelationId((it: EmailReset) => it.user)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 }

@@ -182,7 +182,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsUUID()
 	@RelationId((it: User) => it.role)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId?: string;
 
 	/**
@@ -203,7 +203,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsUUID()
 	@RelationId((it: User) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

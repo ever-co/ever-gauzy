@@ -70,7 +70,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: string;
 
 	/*
@@ -93,7 +93,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: string;
 
 	/*

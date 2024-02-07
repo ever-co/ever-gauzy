@@ -33,7 +33,7 @@ export class RequestApprovalTeam extends TenantOrganizationBaseEntity implements
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public requestApprovalId!: string;
 
 	@MultiORMManyToOne(() => OrganizationTeam, (team) => team.requestApprovals, {
@@ -46,6 +46,6 @@ export class RequestApprovalTeam extends TenantOrganizationBaseEntity implements
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	public teamId!: string;
 }

@@ -112,7 +112,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@RelationId((it: ProductVariant) => it.product)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productId?: string;
 
 	/**
@@ -130,7 +130,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@RelationId((it: ProductVariant) => it.image)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: string;
 
 	/*

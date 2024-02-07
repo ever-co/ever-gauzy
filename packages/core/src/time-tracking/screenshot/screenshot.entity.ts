@@ -116,7 +116,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.timeSlot)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
@@ -137,6 +137,6 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.user)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 }

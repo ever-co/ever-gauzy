@@ -21,6 +21,6 @@ export class ReportOrganization extends TenantOrganizationBaseEntity implements 
 	@MultiORMColumn()
 	reportId?: string;
 
-	@MultiORMColumn({ default: true })
+	@MultiORMColumn({ default: true, relationId: true })
 	isEnabled?: boolean;
 }

@@ -152,7 +152,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 
 	@RelationId((it: OrganizationTeam) => it.createdBy)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	createdById?: IUser['id'];
 
 	/**
@@ -176,7 +176,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsUUID()
 	@RelationId((it: OrganizationTeam) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

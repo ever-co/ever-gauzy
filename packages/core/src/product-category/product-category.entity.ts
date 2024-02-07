@@ -46,7 +46,7 @@ export class ProductCategory extends TranslatableBase
 	@IsUUID()
 	@RelationId((it: ProductCategory) => it.image)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*

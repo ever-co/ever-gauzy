@@ -128,7 +128,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@IsUUID()
 	@RelationId((it: Timesheet) => it.employee)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 
 	/**
@@ -146,7 +146,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@IsUUID()
 	@RelationId((it: Timesheet) => it.approvedBy)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	approvedById?: IUser['id'];
 
 	/**

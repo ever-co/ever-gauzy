@@ -92,7 +92,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@RelationId((it: RequestApproval) => it.approvalPolicy)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	approvalPolicyId: string;
 
 	/*

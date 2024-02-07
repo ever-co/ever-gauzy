@@ -57,7 +57,7 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: IntegrationEntitySetting) => it.integration)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	integrationId?: IIntegrationTenant['id'];
 
 	/*

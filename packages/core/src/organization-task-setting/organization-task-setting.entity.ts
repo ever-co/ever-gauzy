@@ -239,7 +239,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@IsUUID()
 	@RelationId((it: OrganizationTaskSetting) => it.project)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
@@ -259,6 +259,6 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@IsUUID()
 	@RelationId((it: OrganizationTaskSetting) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

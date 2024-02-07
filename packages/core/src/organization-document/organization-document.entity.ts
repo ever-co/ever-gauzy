@@ -46,6 +46,6 @@ export class OrganizationDocument extends TenantOrganizationBaseEntity implement
 	@IsUUID()
 	@RelationId((it: OrganizationDocument) => it.document)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	documentId?: IDocumentAsset['id'];
 }

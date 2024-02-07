@@ -39,6 +39,6 @@ export class RolePermission extends TenantBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: RolePermission) => it.role)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	roleId: string;
 }

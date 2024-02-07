@@ -28,7 +28,7 @@ export class OrganizationLanguage extends TenantOrganizationBaseEntity implement
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: false })
+	@MultiORMColumn({ nullable: false, relationId: true })
 	languageCode: string;
 
 	@ApiProperty({ type: () => String })

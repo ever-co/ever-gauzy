@@ -39,6 +39,6 @@ export class KeyResultUpdate extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: KeyResultUpdate) => it.keyResult)
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	keyResultId?: string;
 }

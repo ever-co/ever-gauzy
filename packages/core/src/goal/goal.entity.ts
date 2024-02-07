@@ -57,7 +57,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	ownerTeamId?: string;
 
 	/**
@@ -74,7 +74,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	ownerEmployeeId?: string;
 
 	/**
@@ -91,7 +91,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 
 	/**
@@ -106,7 +106,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	alignedKeyResultId?: string;
 
 	/*

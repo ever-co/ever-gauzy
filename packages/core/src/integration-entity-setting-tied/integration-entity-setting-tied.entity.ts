@@ -50,6 +50,6 @@ export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity i
 	@IsUUID()
 	@RelationId((it: IntegrationEntitySettingTied) => it.integrationEntitySetting)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
 }

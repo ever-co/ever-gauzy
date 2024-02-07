@@ -129,7 +129,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
 	/*
@@ -145,7 +145,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.organizationPosition)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationPositionId?: IOrganizationPosition['id'];
 
 	/*
@@ -167,7 +167,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.source)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	sourceId?: ICandidateSource['id'];
 
 	/**
@@ -185,7 +185,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.user)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	userId: IUser['id'];
 
 	/**
@@ -199,7 +199,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.employee)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: IEmployee['id'];
 
 	/*

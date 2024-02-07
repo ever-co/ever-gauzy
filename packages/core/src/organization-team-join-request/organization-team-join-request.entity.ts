@@ -86,7 +86,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.user)
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 
 	/**
@@ -103,6 +103,6 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.organizationTeam)
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

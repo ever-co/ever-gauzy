@@ -66,7 +66,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.featuredImage)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	featuredImageId?: string;
 
 	/**
@@ -83,7 +83,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productType)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productTypeId?: string;
 
 	/**
@@ -101,7 +101,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productCategory)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productCategoryId?: string;
 	/*
 	|--------------------------------------------------------------------------

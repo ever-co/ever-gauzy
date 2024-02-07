@@ -35,6 +35,6 @@ export class CandidateDocument extends TenantOrganizationBaseEntity implements I
 	@RelationId((it: CandidateDocument) => it.candidate)
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: string;
 }

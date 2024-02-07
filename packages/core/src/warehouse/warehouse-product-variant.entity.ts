@@ -42,7 +42,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	@RelationId((it: WarehouseProductVariant) => it.variant)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	variantId: string;
 
 	/**
@@ -57,6 +57,6 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	@RelationId((it: WarehouseProductVariant) => it.warehouseProduct)
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	warehouseProductId: string;
 }
