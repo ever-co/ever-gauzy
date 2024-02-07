@@ -1,8 +1,8 @@
-import { CorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ProductReview } from './entities/product-review.entity';
 import { schemaExtensions } from './graphql/schema-extensions';
 
-@CorePlugin({
+@GauzyCorePlugin({
 	imports: [],
 	entities: [ProductReview],
 	extensions: {

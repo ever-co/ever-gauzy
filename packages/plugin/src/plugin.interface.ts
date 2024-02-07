@@ -1,5 +1,5 @@
-import { IAPIExtensionDefinition, PluginConfigurationFn } from '@gauzy/common';
 import { ModuleMetadata, Type } from '@nestjs/common';
+import { ExtensionConfigurationOptions, ApplicationPluginConfigurationFn } from '@gauzy/common';
 
 /**
  * Metadata definition for a plugin in NestJS.
@@ -8,21 +8,23 @@ export interface PluginMetadata extends ModuleMetadata {
     /**
      * Definition of extensions provided by the plugin.
      */
-    extensions?: IAPIExtensionDefinition;
+    extensions?: ExtensionConfigurationOptions;
+
     /**
      * List of entities injected by the plugin.
      */
     entities?: Array<Type<any>> | (() => Array<Type<any>>);
+
     /**
      * List of subscribers injected by the plugin.
      */
     subscribers?: Array<Type<any>> | (() => Array<Type<any>>);
-    /**
-     * Returns a configuration callback function for the plugin.
-     */
-    configuration?: PluginConfigurationFn;
-}
 
+    /**
+    * Returns a configuration callback function for the plugin.
+    */
+    configuration?: ApplicationPluginConfigurationFn;
+}
 
 /**
  * Interface for plugins with a bootstrap lifecycle method.

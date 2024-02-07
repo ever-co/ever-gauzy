@@ -1,4 +1,4 @@
-export * from './IConfig';
+export * from './IApplicationPluginConfig';
 export * from './IGraphql';
 export * from './ILogger';
 

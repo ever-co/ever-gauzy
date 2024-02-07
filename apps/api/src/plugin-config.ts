@@ -1,4 +1,4 @@
-import { IPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
+import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment } from '@gauzy/config';
 import * as path from 'path';
 import { ChangelogPlugin } from '@gauzy/changelog';
@@ -28,7 +28,7 @@ console.log('Plugin Config -> assetPath: ' + assetPath);
 console.log('Plugin Config -> assetPublicPath: ' + assetPublicPath);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
 
-export const pluginConfig: IPluginConfig = {
+export const pluginConfig: ApplicationPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.API_HOST || DEFAULT_API_HOST,
 		port: process.env.API_PORT || DEFAULT_API_PORT,

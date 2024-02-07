@@ -2,7 +2,7 @@
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
 import {
-	CorePlugin,
+	GauzyCorePlugin,
 	IOnPluginBootstrap,
 	IOnPluginDestroy,
 	IOnPluginWithDefaultSeed,
@@ -16,7 +16,7 @@ import {
 } from './help-center-article';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
-@CorePlugin({
+@GauzyCorePlugin({
 	imports: [
 		HelpCenterModule,
 		HelpCenterArticleModule,
@@ -28,9 +28,7 @@ import { HelpCenterSeederService } from './help-center-seeder.service';
 		HelpCenterArticle,
 		HelpCenterAuthor
 	],
-	providers: [
-		HelpCenterSeederService
-	]
+	providers: [HelpCenterSeederService]
 })
 export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithDefaultSeed, IOnPluginWithRandomSeed {
 
