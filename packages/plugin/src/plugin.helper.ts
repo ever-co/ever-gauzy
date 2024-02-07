@@ -66,7 +66,7 @@ export function getPluginExtensions(plugins: Array<Type<any> | DynamicModule>) {
  * @param plugins An array of plugins containing configuration metadata.
  * @returns An array of configurations obtained from the provided plugins.
  */
-export function getPluginConfiguration(plugins: (Type<any> | DynamicModule)[] = []): any[] {
+export function getPluginConfigurations(plugins: (Type<any> | DynamicModule)[] = []): any[] {
 	if (!plugins) {
 		return [];
 	}

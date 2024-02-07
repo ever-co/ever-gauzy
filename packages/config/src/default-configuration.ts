@@ -6,7 +6,7 @@ import {
 	DEFAULT_API_PORT,
 	DEFAULT_API_BASE_URL,
 	DEFAULT_GRAPHQL_API_PATH,
-	IPluginConfig
+	ApplicationPluginConfig
 } from '@gauzy/common';
 import * as path from 'path';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from './database';
@@ -34,11 +34,10 @@ if (__dirname.startsWith('/srv/gauzy')) {
 console.log('Default Config -> assetPath: ' + assetPath);
 console.log('Default Config -> assetPublicPath: ' + assetPublicPath);
 
-
 /**
- * The default configurations.
+ * Application plugin default configuration
  */
-export const defaultConfiguration: IPluginConfig = {
+export const defaultConfiguration: ApplicationPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.API_HOST || DEFAULT_API_HOST,
 		port: process.env.API_PORT || DEFAULT_API_PORT,

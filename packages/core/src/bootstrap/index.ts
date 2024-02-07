@@ -13,9 +13,9 @@ import { join } from 'path';
 import { urlencoded, json } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
-import { IPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
-import { getEntitiesFromPlugins, getSubscribersFromPlugins } from '@gauzy/plugin';
+import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import tracer from './tracer';
 import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
@@ -25,7 +25,7 @@ import { AppModule } from '../app.module';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
-export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time('Application Bootstrap Time');
 
 	if (process.env.OTEL_ENABLED === 'true') {
@@ -274,7 +274,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 /**
  * Setting the global config must be done prior to loading the Bootstrap Module.
  */
-export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>) {
+export async function registerPluginConfig(pluginConfig: Partial<ApplicationPluginConfig>) {
 	if (Object.keys(pluginConfig).length > 0) {
 		setConfig(pluginConfig);
 	}
@@ -293,9 +293,12 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 	/**
 	 * Registered core & plugins entities
 	 */
-	const entities = await registerAllEntities(pluginConfig);
-	const subscribers = await registerAllSubscribers(pluginConfig);
+	const entities = await registerEntities(pluginConfig);
+	const subscribers = await registerSubscribers(pluginConfig);
 
+	/**
+	 *
+	 */
 	setConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>,
@@ -306,8 +309,26 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 		}
 	});
 
-	const registeredConfig = getConfig();
-	return registeredConfig;
+	let config = getConfig();
+	config = await applyPluginConfigurations(config);
+	return config;
+}
+
+/**
+ * Apply plugin configurations to the provided application configuration asynchronously.
+ * @param config Initial application configuration.
+ * @returns Updated application configuration after applying plugin configurations.
+ */
+async function applyPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
+	const pluginConfigurations = getPluginConfigurations(config.plugins);
+
+	for await (const pluginConfigurationFn of pluginConfigurations) {
+		if (typeof pluginConfigurationFn === 'function') {
+			config = await pluginConfigurationFn(config);
+		}
+	}
+
+	return config;
 }
 
 /**
@@ -315,8 +336,8 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
  * @param pluginConfig The plugin configuration.
  * @returns An array of registered entity types.
  */
-export async function registerAllEntities(
-	pluginConfig: Partial<IPluginConfig>
+async function registerEntities(
+	pluginConfig: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<any>>> {
 	try {
 		const coreEntitiesList = coreEntities as Array<Type<any>>;
@@ -344,8 +365,8 @@ export async function registerAllEntities(
  * @param pluginConfig The plugin configuration.
  * @returns A promise that resolves to an array of registered subscriber types.
  */
-export async function registerAllSubscribers(
-	pluginConfig: Partial<IPluginConfig>
+async function registerSubscribers(
+	pluginConfig: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<EntitySubscriberInterface>>> {
 	try {
 		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
