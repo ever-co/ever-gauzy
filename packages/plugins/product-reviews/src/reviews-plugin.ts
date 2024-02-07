@@ -1,8 +1,8 @@
-import { CorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { NestFeatureExtensionPlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ProductReview } from './entities/product-review.entity';
 import { schemaExtensions } from './graphql/schema-extensions';
 
-@CorePlugin({
+@NestFeatureExtensionPlugin({
 	imports: [],
 	entities: [ProductReview],
 	extensions: {
