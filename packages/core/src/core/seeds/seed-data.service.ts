@@ -692,8 +692,7 @@ export class SeedDataService {
 		);
 
 		if (this.seedType !== SeederTypeEnum.DEFAULT) {
-			const { defaultEverEmployeeUsers, defaultCandidateUsers } =
-				await createDefaultUsers(this.dataSource, this.tenant);
+			const { defaultEverEmployeeUsers, defaultCandidateUsers } = await createDefaultUsers(this.dataSource, this.tenant);
 			this.defaultCandidateUsers.push(...defaultCandidateUsers);
 			defaultEmployeeUsers.push(...defaultEverEmployeeUsers);
 		}
