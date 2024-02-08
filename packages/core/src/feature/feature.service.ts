@@ -24,7 +24,7 @@ export class FeatureService extends CrudService<Feature> {
 	}
 
 	async getParentFeatures(relations: string[] = []): Promise<IPagination<IFeature>> {
-		return await this.findAll({
+		return await super.findAll({
 			where: {
 				parentId: IsNull()
 			},
@@ -42,7 +42,7 @@ export class FeatureService extends CrudService<Feature> {
 	 * @returns
 	 */
 	public async isFeatureEnabled(flag: FeatureEnum) {
-		const featureFlag = await this.findOneOrFailByWhereOptions({
+		const featureFlag = await super.findOneOrFailByWhereOptions({
 			code: flag
 		});
 		if (!featureFlag.success) {

@@ -1,4 +1,4 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
@@ -18,55 +18,53 @@ export class TenantPermissionGuard extends TenantBaseGuard
 		super(_reflector);
 	}
 
+	/**
+	 *
+	 * @param context
+	 * @returns
+	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const currentTenantId = RequestContext.currentTenantId();
 		let isAuthorized = false;
+
 		if (!currentTenantId) {
 			return isAuthorized;
 		}
 
-		// Basically if this guard is true then try the check tenant permissions.
+		// Check if the guard allows access based on the parent class's canActivate method
 		isAuthorized = await super.canActivate(context);
+
+		// If the guard disallows access, return early
 		if (!isAuthorized) {
 			return isAuthorized;
 		}
 
-		//Enabled AllowSuperAdminRole from .env file
-		if (env.allowSuperAdminRole === true) {
-			//Super admin and admin has allowed to access request
-			const isSuperAdmin = RequestContext.hasRoles([
-				RolesEnum.SUPER_ADMIN
-			]);
-			if (isSuperAdmin === true) {
-				isAuthorized = isSuperAdmin;
-				return isAuthorized;
-			}
+		// Check for super admin role
+		if (env.allowSuperAdminRole && RequestContext.hasRoles([RolesEnum.SUPER_ADMIN])) {
+			return true;
 		}
-		/*
-		* Retrieve metadata for a specified key for a specified set of permissions
-		*/
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, [
-			context.getHandler(),
-			context.getClass(),
-		])) || [];
+
+		// Retrieve permissions from metadata
+		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
+		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+
 		if (isNotEmpty(permissions)) {
+			// Retrieve tenant with rolePermissions relations
 			const tenant = await this._tenantService.findOneByIdString(currentTenantId, {
-				relations: {
-					rolePermissions: true
-				}
+				relations: { rolePermissions: true },
 			});
-			isAuthorized = !!tenant.rolePermissions.find(
-				(p) => permissions.indexOf(p.permission) > -1 && p.enabled
+
+			// Check if the tenant has the required permissions
+			isAuthorized = !!tenant?.rolePermissions.find(
+				(p) => permissions.includes(p.permission) && p.enabled
 			);
 		}
+
+		// Log unauthorized access attempts
 		if (!isAuthorized) {
-			console.log(
-				'Unauthorized access blocked. TenantId:',
-				currentTenantId,
-				' Permissions Checked:',
-				permissions
-			);
+			console.log(`Unauthorized access blocked. Tenant ID:', ${currentTenantId}, Permissions Checked: ${permissions.join(', ')}`);
 		}
+
 		return isAuthorized;
 	}
 }

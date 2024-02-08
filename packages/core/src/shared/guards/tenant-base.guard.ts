@@ -1,13 +1,21 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { RequestMethodEnum } from '@gauzy/contracts';
 import { isJSON } from 'class-validator';
 import { Reflector } from '@nestjs/core';
+import { RequestMethodEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 
 @Injectable()
 export class TenantBaseGuard implements CanActivate {
-	constructor(protected readonly reflector: Reflector) {}
 
+	constructor(
+		readonly reflector: Reflector
+	) { }
+
+	/**
+	 *
+	 * @param context
+	 * @returns
+	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const currentTenantId = RequestContext.currentTenantId();
 		const request: any = context.switchToHttp().getRequest();
@@ -48,10 +56,8 @@ export class TenantBaseGuard implements CanActivate {
 								'findInput' in parse &&
 								'tenantId' in parse['findInput']
 							) {
-								const queryTenantId =
-									parse['findInput']['tenantId'];
-								isAuthorized =
-									currentTenantId === queryTenantId;
+								const queryTenantId = parse['findInput']['tenantId'];
+								isAuthorized = currentTenantId === queryTenantId;
 							} else {
 								//If tenantId not found in query params
 								return false;
@@ -85,10 +91,7 @@ export class TenantBaseGuard implements CanActivate {
 			}
 		}
 		if (!isAuthorized) {
-			console.log(
-				'Unauthorized access blocked. TenantId:',
-				headerTenantId
-			);
+			console.log('Unauthorized access blocked. TenantId:', headerTenantId);
 		}
 		return isAuthorized;
 	}
