@@ -45,8 +45,8 @@ import { OrganizationTeamStore } from '../../../@core/services/organization-team
 		}
 	]
 })
-export class TeamSelectorComponent
-	implements OnInit, OnDestroy {
+export class TeamSelectorComponent implements OnInit, OnDestroy {
+
 	teams: IOrganizationTeam[] = [];
 	selectedTeam: IOrganizationTeam;
 	hasAddTeam$: Observable<boolean>;
@@ -131,13 +131,13 @@ export class TeamSelectorComponent
 	onChanged = new EventEmitter<IOrganizationTeam>();
 
 	constructor(
-		private readonly organizationTeams: OrganizationTeamsService,
+		private readonly _router: Router,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _organizationTeamsService: OrganizationTeamsService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly _organizationTeamStore: OrganizationTeamStore,
-		private readonly _truncatePipe: TruncatePipe,
-		private readonly router: Router,
-		private readonly activatedRoute: ActivatedRoute
+		private readonly _truncatePipe: TruncatePipe
 	) { }
 
 	ngOnInit(): void {
@@ -153,22 +153,20 @@ export class TeamSelectorComponent
 			.pipe(
 				switchMap(() => this.getTeams()),
 				tap(() => {
-					if (this.activatedRoute.snapshot.queryParams.teamId) {
-						this.selectTeamById(this.activatedRoute.snapshot.queryParams.teamId);
+					if (this._activatedRoute.snapshot.queryParams.teamId) {
+						this.selectTeamById(this._activatedRoute.snapshot.queryParams.teamId);
 					}
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		this.activatedRoute.queryParams
+		this._activatedRoute.queryParams
 			.pipe(
 				filter((query) => !!query.teamId),
 				tap(({ teamId }) => this.selectTeamById(teamId)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -215,28 +213,25 @@ export class TeamSelectorComponent
 		const { id: organizationId } = this.organization;
 
 		if (this.employeeId) {
-			this.teams = await this.organizationTeams.getAllByEmployee(
-				this.employeeId,
-				{
-					organizationId,
-					tenantId,
-					...(this.organizationContactId
-						? {
-							organizationContactId:
-								this.organizationContactId
-						}
-						: {})
-				}
-			);
-		} else {
-			const { items = [] } = await this.organizationTeams.getAll([], {
+			// Fetch teams from the service
+			const { items = [] } = await this._organizationTeamsService.getMyTeams({
 				organizationId,
 				tenantId,
-				...(this.organizationContactId
+				// Additional parameters based on selectedEmployeeId
+				...(this.employeeId
 					? {
-						organizationContactId: this.organizationContactId
+						members: {
+							employeeId: this.employeeId
+						}
 					}
 					: {})
+			});
+			this.teams = items;
+		} else {
+			const { items = [] } = await this._organizationTeamsService.getAll([], {
+				organizationId,
+				tenantId,
+				...(this.organizationContactId ? { organizationContactId: this.organizationContactId } : {})
 			});
 			this.teams = items;
 		}
@@ -293,7 +288,7 @@ export class TeamSelectorComponent
 				request['members'] = [member];
 			}
 
-			const team = await this.organizationTeams.create(request);
+			const team = await this._organizationTeamsService.create(request);
 
 			this.teams = this.teams.concat([team]);
 			this.teamId = team.id;
@@ -360,8 +355,8 @@ export class TeamSelectorComponent
 	}
 
 	private setAttributesToParams(params: Object) {
-		this.router.navigate([], {
-			relativeTo: this.activatedRoute,
+		this._router.navigate([], {
+			relativeTo: this._activatedRoute,
 			queryParams: { ...params },
 			queryParamsHandling: 'merge',
 		});
