@@ -43,7 +43,8 @@
 					></ga-timer-picker>
 				</div>
 				<div class="col">
-					<button nbButton status="primary" (click)="setSchedule()">
+					<button nbButton status="primary" (click)="setSchedule()"
+					[disabled]="!createForm.startTime || !createForm.endTime ? true : false" >
 						{{ 'BUTTONS.SET' | translate }}
 					</button>
 				</div>
