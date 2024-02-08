@@ -13,9 +13,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 	constructor(
 		readonly _reflector: Reflector,
 		readonly _employeeService: EmployeeService
-	) {
-		console.log({ _employeeService }, 'OrganizationPermissionGuard');
-	}
+	) { }
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
