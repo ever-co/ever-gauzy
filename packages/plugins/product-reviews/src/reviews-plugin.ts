@@ -12,15 +12,15 @@ import { schemaExtensions } from './graphql/schema-extensions';
 })
 export class ReviewsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 
-	private logging: boolean = true;
+	// We disable by default additional logging for each event to avoid cluttering the logs
+	private logEnabled = true;
 
 	/**
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
-		if (this.logging) {
+		if (this.logEnabled) {
 			console.log('ReviewsPlugin is being bootstrapped...');
-			// Your existing logic here...
 		}
 	}
 
@@ -28,9 +28,8 @@ export class ReviewsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 * Called when the plugin is being destroyed.
 	 */
 	onPluginDestroy(): void | Promise<void> {
-		if (this.logging) {
+		if (this.logEnabled) {
 			console.log('ReviewsPlugin is being destroyed...');
-			// Your existing logic here...
 		}
 	}
 }

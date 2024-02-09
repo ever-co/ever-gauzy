@@ -5,12 +5,14 @@ import { ChangelogPlugin } from '@gauzy/changelog-plugin';
 import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
 import { SentryPlugin } from '@gauzy/sentry-plugin';
+import { version } from './../version';
 
 const { jitsu } = environment;
 
 let assetPath: any;
 let assetPublicPath: any;
 
+console.log('API Version: ' + version);
 console.log('Plugin Config -> __dirname: ' + __dirname);
 console.log('Plugin Config -> process.cwd: ' + process.cwd());
 
@@ -70,6 +72,19 @@ export const pluginConfig: ApplicationPluginConfig = {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		SentryPlugin
+		SentryPlugin.init({
+			dsn: environment.sentry.dsn,
+			debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
+			environment: environment.production ? 'production' : 'development',
+			release: 'gauzy@' + version,
+			logLevels: ['error'],
+			tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE ? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE) : 0.01,
+			profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE ? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE) : 1,
+			close: {
+				enabled: true,
+				// Time in milliseconds to forcefully quit the application
+				timeout: 3000
+			}
+		})
 	]
 };
