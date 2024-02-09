@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/jitsu-analytics-plugin",
+	"name": "@gauzy/sentry-plugin",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Jitsu Analytics Plugin",
+	"description": "Gauzy Sentry Plugin - Seamless integration with Sentry for advanced error tracking and monitoring in Gauzy Platform.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -12,33 +12,25 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
-		"dist"
+		"dist/**/*"
 	],
 	"directories": {
-		"lib": "dist",
-		"test": "__test__"
+		"lib": "dist"
 	},
 	"publishConfig": {
 		"access": "restricted"
 	},
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.js",
-		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"watch": "tsc -p ./tsconfig.build.json --watch",
+		"build": "rimraf lib && tsc -p ./tsconfig.build.json"
 	},
-	"keywords": [],
 	"dependencies": {
-		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@jitsu/js": "^1.8.2",
 		"@nestjs/common": "^10.3.0",
-		"chalk": "4.1.2",
-		"node-fetch": "^2.6.7",
-		"typeorm": "^0.3.17"
+		"chalk": "4.1.2"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
-		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	}
 }

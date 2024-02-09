@@ -1,9 +1,10 @@
 import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment } from '@gauzy/config';
 import * as path from 'path';
-import { ChangelogPlugin } from '@gauzy/changelog';
-import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics';
-import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
+import { ChangelogPlugin } from '@gauzy/changelog-plugin';
+import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
+import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
+import { SentryPlugin } from '@gauzy/sentry-plugin';
 
 const { jitsu } = environment;
 
@@ -58,6 +59,8 @@ export const pluginConfig: ApplicationPluginConfig = {
 	plugins: [
 		// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 		ChangelogPlugin,
+		// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
+		KnowledgeBasePlugin,
 		// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 		JitsuAnalyticsPlugin.init({
 			config: {
@@ -67,7 +70,6 @@ export const pluginConfig: ApplicationPluginConfig = {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
-		KnowledgeBasePlugin
+		SentryPlugin
 	]
 };
