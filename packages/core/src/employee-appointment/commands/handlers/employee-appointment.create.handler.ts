@@ -38,10 +38,9 @@ export class EmployeeAppointmentCreateHandler
 		appointment.agenda = employeeAppointmentInput.agenda;
 		appointment.description = employeeAppointmentInput.description;
 		appointment.bufferTimeEnd = employeeAppointmentInput.bufferTimeEnd;
-		appointment.bufferTimeInMins =
-			employeeAppointmentInput.bufferTimeInMins;
+		appointment.bufferTimeInMins = +employeeAppointmentInput.bufferTimeInMins;
 		appointment.breakStartTime = employeeAppointmentInput.breakStartTime;
-		appointment.breakTimeInMins = employeeAppointmentInput.breakTimeInMins;
+		appointment.breakTimeInMins = +employeeAppointmentInput.breakTimeInMins;
 		appointment.bufferTimeStart = employeeAppointmentInput.bufferTimeStart;
 		appointment.emails = employeeAppointmentInput.emails;
 		appointment.startDateTime = employeeAppointmentInput.startDateTime;

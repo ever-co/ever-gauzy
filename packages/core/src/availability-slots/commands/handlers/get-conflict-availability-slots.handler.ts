@@ -57,7 +57,11 @@ export class GetConflictAvailabilitySlotsHandler implements ICommandHandler<GetC
 			case DatabaseTypeEnum.mysql:
 				query.andWhere(
 					p(`(
-						"${query.alias}"."startTime", "${query.alias}"."endTime") OVERLAPS (timestamptz '${startedAt}', timestamptz '${stoppedAt}'
+						("${query.alias}"."startTime" BETWEEN CAST('${startedAt}' AS DATETIME) AND CAST('${stoppedAt}' AS DATETIME))
+						OR
+						("${query.alias}"."endTime" BETWEEN CAST('${startedAt}' AS DATETIME) AND CAST('${stoppedAt}' AS DATETIME))
+						OR
+						("${query.alias}"."startTime" <= CAST('${startedAt}' AS DATETIME) AND "${query.alias}"."endTime" >= CAST('${stoppedAt}' AS DATETIME))
 					)`)
 				);
 				break;
