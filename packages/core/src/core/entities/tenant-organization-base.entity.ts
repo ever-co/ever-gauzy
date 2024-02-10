@@ -19,12 +19,6 @@ export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity impl
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	@MikroManyToOne(() => Organization, {
-		nullable: true,
-		deleteRule: 'cascade',
-		updateRule: 'cascade',
-		persist: false
-	})
 	@JoinColumn()
 	@IsOptional()
 	organization?: IOrganization;

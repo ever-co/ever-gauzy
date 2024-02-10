@@ -15,11 +15,6 @@ export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTen
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
-	@MikroManyToOne(() => Tenant, {
-		nullable: true,
-		deleteRule: 'cascade',
-		persist: false,
-	})
 	@JoinColumn()
 	@IsOptional()
 	tenant?: ITenant;
