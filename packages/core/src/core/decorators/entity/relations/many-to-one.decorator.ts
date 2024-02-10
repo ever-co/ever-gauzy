@@ -89,8 +89,8 @@ export function mapManyToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, o
 
     if (!mikroOrmOptions.joinColumn && propertyKey) {
         // Set default joinColumn if not overwrite in options
-        // mikroOrmOptions.joinColumn = `${propertyKey}Id`;
-        // mikroOrmOptions.referenceColumnName = `id`;
+        mikroOrmOptions.joinColumn = `${propertyKey}Id`;
+        mikroOrmOptions.referenceColumnName = `id`;
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>
