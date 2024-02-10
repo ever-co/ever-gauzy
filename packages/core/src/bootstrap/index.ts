@@ -55,15 +55,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 			app.useLogger(config.logger);
 		}
 	} else {
-		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception Handler in Bootstrap:', error);
-			setTimeout(() => {
-				process.exit(1);
-			}, 3000);
-		});
-		process.on('unhandledRejection', (reason, promise) => {
-			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-		});
+		process.on('uncaughtException', handleUncaughtException);
+		process.on('unhandledRejection', handleUnhandledRejection);
 	}
 
 	app.use(json({ limit: '50mb' }));
@@ -242,6 +235,26 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	console.timeEnd('Application Bootstrap Time');
 	return app;
+}
+
+/**
+ * Handles uncaught exceptions.
+ * @param error - The uncaught exception.
+ */
+function handleUncaughtException(error: Error) {
+	console.error('Uncaught Exception Handler in Bootstrap:', error);
+	setTimeout(() => {
+		process.exit(1);
+	}, 3000);
+}
+
+/**
+ * Handles unhandled rejections.
+ * @param reason - The reason for the unhandled rejection.
+ * @param promise - The rejected promise.
+ */
+function handleUnhandledRejection(reason: any, promise: Promise<any>) {
+	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 }
 
 /**
