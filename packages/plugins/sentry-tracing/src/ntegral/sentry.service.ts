@@ -18,7 +18,7 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 	) {
 		super();
 		if (!(opts && opts.dsn)) {
-			console.log('options not found. Did you use SentryModule.forRoot?');
+			console.log('Sentry options not found. Did you use SentryModule.forRoot?');
 			return;
 		}
 		const { debug, integrations = [], ...sentryOptions } = opts;
@@ -26,14 +26,14 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			...sentryOptions,
 			integrations: [
 				new Sentry.Integrations.OnUncaughtException({
-					onFatalError: async (err) => {
-						console.error('Uncaught Exception Handler in Sentry Service', err);
-						if (err.name === 'SentryError') {
-							console.log(err);
+					onFatalError: async (error) => {
+						console.error('Uncaught Exception Handler in Sentry Service', error);
+						if (error.name === 'SentryError') {
+							console.log(error);
 						} else {
 							(
 								Sentry.getCurrentHub().getClient<Client<ClientOptions>>() as Client<ClientOptions>
-							).captureException(err);
+							).captureException(error);
 
 							Sentry.flush(3000).then(() => {
 								process.exit(1);

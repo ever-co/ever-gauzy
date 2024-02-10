@@ -1,10 +1,12 @@
+import * as path from 'path';
+import * as chalk from 'chalk';
 import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment } from '@gauzy/config';
-import * as path from 'path';
 import { ChangelogPlugin } from '@gauzy/changelog-plugin';
 import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
-import { SentryPlugin } from '@gauzy/sentry-plugin';
+import { SentryService } from '@gauzy/sentry-plugin';
+import { Sentry as SentryPlugin } from './sentry';
 import { version } from './../version';
 
 const { jitsu } = environment;
@@ -12,7 +14,7 @@ const { jitsu } = environment;
 let assetPath: any;
 let assetPublicPath: any;
 
-console.log('API Version: ' + version);
+console.log(chalk.magenta(`API Version %s`), version);
 console.log('Plugin Config -> __dirname: ' + __dirname);
 console.log('Plugin Config -> process.cwd: ' + process.cwd());
 
@@ -42,7 +44,7 @@ export const pluginConfig: ApplicationPluginConfig = {
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
-		}
+		},
 	},
 	dbConnectionOptions: {
 		retryAttempts: 100,
@@ -58,6 +60,9 @@ export const pluginConfig: ApplicationPluginConfig = {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
+	...(environment.sentry && environment.sentry.dsn ? {
+		logger: new SentryService(SentryPlugin.options)
+	} : {}),
 	plugins: [
 		// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 		ChangelogPlugin,
@@ -72,19 +77,11 @@ export const pluginConfig: ApplicationPluginConfig = {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		SentryPlugin.init({
-			dsn: environment.sentry.dsn,
-			debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
-			environment: environment.production ? 'production' : 'development',
-			release: 'gauzy@' + version,
-			logLevels: ['error'],
-			tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE ? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE) : 0.01,
-			profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE ? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE) : 1,
-			close: {
-				enabled: true,
-				// Time in milliseconds to forcefully quit the application
-				timeout: 3000
-			}
-		})
+		...(environment.sentry && environment.sentry.dsn
+			? [
+				SentryPlugin
+			]
+			: []),
 	]
 };
+console.log(pluginConfig);

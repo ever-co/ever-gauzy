@@ -1,7 +1,7 @@
 import { Integrations } from "@sentry/node";
 import { Integration } from '@sentry/types';
-import { environment } from "@gauzy/config";
 import { ProfilingIntegration } from '@sentry/profiling-node';
+import { environment } from "@gauzy/config";
 import { SentryPluginOptions } from "./sentry.types";
 
 /**
@@ -30,7 +30,7 @@ export const parseOptions = (config: SentryPluginOptions): Record<string, any> =
  * Creates an array of Sentry integrations based on the provided environment configuration.
  * @returns {Integration[]} An array of Sentry integrations.
  */
-export function createSentryIntegrations(): Integration[] {
+export function createDefaultSentryIntegrations(): Integration[] {
     const integrations: Integration[] = [];
 
     if (environment.sentry && environment.sentry.dsn) {

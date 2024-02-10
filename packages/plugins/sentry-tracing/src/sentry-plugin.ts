@@ -1,12 +1,16 @@
 import { APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from "@nestjs/common";
 import { GauzyCorePlugin, IOnPluginBootstrap } from "@gauzy/plugin";
+import { Integration } from '@sentry/types';
 import { SentryRequestMiddleware } from "./sentry-request.middleware";
 import { SentryTraceMiddleware } from "./sentry-trace.middleware";
 import { SentryPluginOptions } from "./sentry.types";
 import { SentryCustomInterceptor } from "./sentry-custom.interceptor";
 import { GraphqlInterceptor, SENTRY_MODULE_OPTIONS, SentryModule } from "./ntegral";
-import { createSentryIntegrations, parseOptions, removeDuplicateIntegrations } from './sentry.helper';
+import { createDefaultSentryIntegrations, parseOptions, removeDuplicateIntegrations } from './sentry.helper';
+
+// Assuming createDefaultSentryIntegrations returns an array of Integrations
+export const DefaultSentryIntegrations: Integration[] = createDefaultSentryIntegrations();
 
 @GauzyCorePlugin({
     imports: [
@@ -34,7 +38,7 @@ import { createSentryIntegrations, parseOptions, removeDuplicateIntegrations } f
 export class SentryPlugin implements NestModule, IOnPluginBootstrap {
     // We disable by default additional logging for each event to avoid cluttering the logs
     private logEnabled = true;
-
+    //
     static options: SentryPluginOptions = {} as any;
 
     /**
@@ -83,7 +87,7 @@ export class SentryPlugin implements NestModule, IOnPluginBootstrap {
 export function createSentryOptions(host: HttpAdapterHost): SentryPluginOptions {
     // Concatenate the integrations returned by createSentryIntegrations with the existing integrations
     SentryPlugin.options.integrations = removeDuplicateIntegrations(
-        (SentryPlugin.options.integrations ?? []).concat(createSentryIntegrations())
+        (SentryPlugin.options.integrations ?? []).concat(DefaultSentryIntegrations)
     );
 
     // Return the Sentry module options
