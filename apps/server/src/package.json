@@ -29,7 +29,7 @@
             "../../../packages/plugins/knowledge-base",
             "../../../packages/plugins/changelog",
             "../../../packages/plugins/jitsu-analytics",
-            "../../../packages/plugins/sentry-ntegral",
+            "../../../packages/plugins/sentry-tracing",
             "../../../packages/common",
             "../../../packages/config",
             "../../../packages/contracts",
