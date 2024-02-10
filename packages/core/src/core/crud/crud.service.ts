@@ -27,7 +27,7 @@ import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
-import { MultiORM, MultiORMEnum, flatten, getORMType } from './../../core/utils';
+import { MultiORM, MultiORMEnum, flatten, getORMType, praseMikroORMEntityToJson } from './../../core/utils';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -118,6 +118,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					options?.where as MikroFilterQuery<T>,
 					options as MikroFindOptions<T>
 				);
+				items = praseMikroORMEntityToJson(items);
 				break;
 			case MultiORMEnum.TypeORM:
 				[items, total] = await this.repository.findAndCount(options as FindManyOptions<T>);
@@ -137,10 +138,12 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroRepository.find(
+				const items = await this.mikroRepository.find(
 					options.where as MikroFilterQuery<T>,
 					options as MikroFindOptions<T>
 				);
+
+				return praseMikroORMEntityToJson(items);
 			case MultiORMEnum.TypeORM:
 				return await this.repository.find(options as FindManyOptions<T>);
 			default:
@@ -171,6 +174,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 							...options
 						} as MikroFindOptions<T>
 					);
+
+					items = praseMikroORMEntityToJson(items);
 					break;
 				case MultiORMEnum.TypeORM:
 					[items, total] = await this.repository.findAndCount({
@@ -235,6 +240,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					}
 
 					record = await this.mikroRepository.findOneOrFail(where, options as FindOneOrFailOptions<T>);
+					record = praseMikroORMEntityToJson(record);
 					break;
 
 				case MultiORMEnum.TypeORM:
@@ -285,6 +291,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						options.where as MikroFilterQuery<T>,
 						options as FindOneOrFailOptions<T>
 					);
+					record = praseMikroORMEntityToJson(record);
 					break;
 				case MultiORMEnum.TypeORM:
 					record = await this.repository.findOneOrFail(options as FindOneOptions<T>);
@@ -317,6 +324,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					record = await this.mikroRepository.findOneOrFail(options as MikroFilterQuery<T>);
+					record = praseMikroORMEntityToJson(record);
 					break;
 				case MultiORMEnum.TypeORM:
 					record = await this.repository.findOneByOrFail(options as FindOptionsWhere<T>);
@@ -367,6 +375,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				}
 
 				record = await this.mikroRepository.findOne(where, options as MikroFindOneOptions<T>);
+
+				record = praseMikroORMEntityToJson(record);
 				break;
 			case MultiORMEnum.TypeORM:
 				options = options as FindOneOptions<T>;
@@ -408,8 +418,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					...(mikroOptions.relations ? { populate: flatten(mikroOptions.relations) } : {}),
 					...(mikroOptions.order ? { orderBy: mikroOptions.order } : {})
 				};
-				console.log({ mikroFilterQuery }, { mikroFindOneOptions });
 				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
+
+				record = praseMikroORMEntityToJson(record);
 				break;
 			case MultiORMEnum.TypeORM:
 				record = await this.repository.findOne(options as FindOneOptions<T>);
@@ -437,6 +448,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				record = await this.mikroRepository.findOne(options as MikroFilterQuery<T>);
+				record = praseMikroORMEntityToJson(record);
 				break;
 			case MultiORMEnum.TypeORM:
 				record = await this.repository.findOneBy(options as FindOptionsWhere<T>);

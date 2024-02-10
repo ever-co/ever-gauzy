@@ -9,6 +9,7 @@ import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { SqliteDriver } from '@mikro-orm/sqlite';
+import { Collection } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -466,3 +467,24 @@ export const flatten = (input: any): any => {
 	// If input is neither an array nor an object, return an empty array
 	return [];
 };
+
+
+export function praseMikroORMEntityToJson<T>(entity: any | Collection<any, any> | any[]) {
+	if (entity instanceof Array) {
+		return entity.map((item) => praseMikroORMEntityToJson(item)) as T;
+	} else if (entity instanceof Collection) {
+		return praseMikroORMEntityToJson(entity.toArray()) as T[];
+	} else {
+		for (const key in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, key)) {
+				const value = entity[key];
+				if (value instanceof Collection || value instanceof Array) {
+					entity[key] = praseMikroORMEntityToJson(value) as any;
+				} else {
+					entity[key] = value;
+				}
+			}
+		}
+		return entity;
+	}
+}
