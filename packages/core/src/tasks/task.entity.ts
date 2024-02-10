@@ -173,7 +173,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@MultiORMColumn({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: Task['id'];
 
 	/**

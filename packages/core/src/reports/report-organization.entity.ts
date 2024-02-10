@@ -18,7 +18,7 @@ export class ReportOrganization extends TenantOrganizationBaseEntity implements 
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((report: ReportOrganization) => report.report)
-	@MultiORMColumn()
+	@MultiORMColumn({ relationId: true })
 	reportId?: string;
 
 	@MultiORMColumn({ default: true, relationId: true })

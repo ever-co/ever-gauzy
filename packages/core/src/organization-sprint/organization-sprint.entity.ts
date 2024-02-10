@@ -27,12 +27,6 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@IsNotEmpty()
-	@MultiORMColumn()
-	projectId: string;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	goal?: string;
@@ -78,6 +72,13 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 	})
 	@JoinColumn()
 	project?: OrganizationProject;
+
+
+	@ApiProperty({ type: () => String })
+	@IsString()
+	@IsNotEmpty()
+	@MultiORMColumn({ relationId: true })
+	projectId: string;
 
 	/*
 	|--------------------------------------------------------------------------
