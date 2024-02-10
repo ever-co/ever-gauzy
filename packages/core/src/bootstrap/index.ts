@@ -268,7 +268,7 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 * Configure migration settings
 	 */
-	setConfig({
+	await setConfig({
 		dbConnectionOptions: {
 			...getMigrationsSetting()
 		}
