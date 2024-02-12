@@ -84,4 +84,3 @@ export const pluginConfig: ApplicationPluginConfig = {
 			: []),
 	]
 };
-console.log(pluginConfig);
