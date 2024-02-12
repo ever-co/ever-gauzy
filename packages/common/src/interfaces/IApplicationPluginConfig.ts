@@ -2,7 +2,7 @@ import { DynamicModule, Type } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { PluginDefinition } from 'apollo-server-core';
-import { ILogger } from './ILogger';
+import { AbstractLogger } from './IAbstractLogger';
 
 /**
  * Configuration options for GraphQL.
@@ -142,7 +142,7 @@ export interface ApplicationPluginConfig {
 	 * Logger configuration.
 	 * @description Defines options for configuring the application logger.
 	 */
-	logger?: ILogger;
+	logger?: AbstractLogger;
 
 	/**
 	 * Authentication options.

@@ -1,0 +1,45 @@
+{
+	"name": "@gauzy/sentry-plugin",
+	"version": "0.1.0",
+	"description": "Gauzy Sentry Plugin - Seamless integration with Sentry for advanced error tracking and monitoring in Gauzy Platform.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist/**/*"
+	],
+	"directories": {
+		"lib": "dist"
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
+	"scripts": {
+		"watch": "tsc -p ./tsconfig.build.json --watch",
+		"build": "rimraf lib && tsc -p ./tsconfig.build.json"
+	},
+	"dependencies": {
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@nestjs/common": "^10.3.0",
+		"@nestjs/core": "^10.3.0",
+		"@nestjs/graphql": "^12.0.11",
+		"@sentry/hub": "^7.90.0",
+		"@sentry/node": "^7.90.0",
+		"@sentry/profiling-node": "^1.3.2",
+		"@sentry/types": "^7.90.0",
+		"chalk": "4.1.2",
+		"express": "^4.18.2",
+		"rxjs": "^7.4.0"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.33",
+		"typescript": "5.1.6"
+	}
+}

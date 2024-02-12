@@ -2,7 +2,6 @@
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import RedisStore from 'connect-redis';
@@ -17,7 +16,6 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import tracer from './tracer';
-import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
@@ -27,17 +25,9 @@ import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time('Application Bootstrap Time');
-
-	if (process.env.OTEL_ENABLED === 'true') {
-		// Start tracing using Signoz first
-		tracer.start();
-		console.log('OTEL/Signoz Tracing started');
-	} else {
-		console.log('OTEL/Signoz Tracing not enabled');
-	}
+	startTracing(); // Start tracing using Signoz if OTEL is enabled.
 
 	const config = await registerPluginConfig(pluginConfig);
-
 	const { BootstrapModule } = await import('./bootstrap.module');
 
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
@@ -60,35 +50,13 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	// Initialize Sentry if the DSN is available
 	if (sentry && sentry.dsn) {
-		// Attach the Sentry logger to the app
-		app.useLogger(app.get(SentryService));
-
-		// NOTE: possible below is not needed because already included inside SentryService constructor
-
-		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception Handler in Bootstrap:', error);
-			Sentry.captureException(error);
-			Sentry.flush(3000).then(() => {
-				process.exit(1);
-			});
-		});
-
-		process.on('unhandledRejection', (reason, promise) => {
-			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-			Sentry.captureException(reason);
-		});
+		if (config.logger) {
+			// Attach the Sentry logger to the app
+			app.useLogger(config.logger);
+		}
 	} else {
-		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception Handler in Bootstrap:', error);
-
-			setTimeout(() => {
-				process.exit(1);
-			}, 3000);
-		});
-
-		process.on('unhandledRejection', (reason, promise) => {
-			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-		});
+		process.on('uncaughtException', handleUncaughtException);
+		process.on('unhandledRejection', handleUnhandledRejection);
 	}
 
 	app.use(json({ limit: '50mb' }));
@@ -98,8 +66,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
-		allowedHeaders:
-			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		allowedHeaders: 'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.
@@ -113,7 +80,6 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// https://github.com/tj/connect-redis
 
 	let redisWorked = false;
-
 	console.log('REDIS_ENABLED: ', process.env.REDIS_ENABLED);
 
 	if (process.env.REDIS_ENABLED === 'true') {
@@ -272,6 +238,39 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 }
 
 /**
+ * Handles uncaught exceptions.
+ * @param error - The uncaught exception.
+ */
+function handleUncaughtException(error: Error) {
+	console.error('Uncaught Exception Handler in Bootstrap:', error);
+	setTimeout(() => {
+		process.exit(1);
+	}, 3000);
+}
+
+/**
+ * Handles unhandled rejections.
+ * @param reason - The reason for the unhandled rejection.
+ * @param promise - The rejected promise.
+ */
+function handleUnhandledRejection(reason: any, promise: Promise<any>) {
+	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+}
+
+/**
+ * Start tracing using Signoz if OTEL is enabled.
+ */
+export function startTracing(): void {
+	if (process.env.OTEL_ENABLED === 'true') {
+		// Start tracing using Signoz first
+		tracer.start();
+		console.log('OTEL/Signoz Tracing started');
+	} else {
+		console.log('OTEL/Signoz Tracing not enabled');
+	}
+}
+
+/**
  * Setting the global config must be done prior to loading the Bootstrap Module.
  */
 export async function registerPluginConfig(pluginConfig: Partial<ApplicationPluginConfig>) {
@@ -282,7 +281,7 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 * Configure migration settings
 	 */
-	setConfig({
+	await setConfig({
 		dbConnectionOptions: {
 			...getMigrationsSetting()
 		}
@@ -299,7 +298,7 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 *
 	 */
-	setConfig({
+	await setConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>,
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>

@@ -1,15 +1,20 @@
+import * as path from 'path';
+import * as chalk from 'chalk';
 import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment } from '@gauzy/config';
-import * as path from 'path';
-import { ChangelogPlugin } from '@gauzy/changelog';
-import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics';
-import { KnowledgeBasePlugin } from '@gauzy/knowledge-base';
+import { ChangelogPlugin } from '@gauzy/changelog-plugin';
+import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
+import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
+import { SentryService } from '@gauzy/sentry-plugin';
+import { Sentry as SentryPlugin } from './sentry';
+import { version } from './../version';
 
 const { jitsu } = environment;
 
 let assetPath: any;
 let assetPublicPath: any;
 
+console.log(chalk.magenta(`API Version %s`), version);
 console.log('Plugin Config -> __dirname: ' + __dirname);
 console.log('Plugin Config -> process.cwd: ' + process.cwd());
 
@@ -39,7 +44,7 @@ export const pluginConfig: ApplicationPluginConfig = {
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
-		}
+		},
 	},
 	dbConnectionOptions: {
 		retryAttempts: 100,
@@ -55,9 +60,14 @@ export const pluginConfig: ApplicationPluginConfig = {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
+	...(environment.sentry && environment.sentry.dsn ? {
+		logger: new SentryService(SentryPlugin.options)
+	} : {}),
 	plugins: [
 		// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 		ChangelogPlugin,
+		// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
+		KnowledgeBasePlugin,
 		// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 		JitsuAnalyticsPlugin.init({
 			config: {
@@ -67,7 +77,10 @@ export const pluginConfig: ApplicationPluginConfig = {
 				echoEvents: jitsu.echoEvents
 			}
 		}),
-		// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
-		KnowledgeBasePlugin
+		...(environment.sentry && environment.sentry.dsn
+			? [
+				SentryPlugin
+			]
+			: []),
 	]
 };
