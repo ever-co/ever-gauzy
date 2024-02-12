@@ -12,7 +12,8 @@ import { ChangelogSeederService } from './changelog-seeder.service';
 })
 export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithBasicSeed {
 
-	private logging: boolean = true;
+	// We disable by default additional logging for each event to avoid cluttering the logs
+	private logEnabled = true;
 
 	constructor(
 		private readonly changelogSeederService: ChangelogSeederService
@@ -22,9 +23,8 @@ export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
-		if (this.logging) {
+		if (this.logEnabled) {
 			console.log('ChangelogPlugin is being bootstrapped...');
-			// Your existing logic here...
 		}
 	}
 
@@ -32,9 +32,8 @@ export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 	 * Called when the plugin is being destroyed.
 	 */
 	onPluginDestroy(): void | Promise<void> {
-		if (this.logging) {
+		if (this.logEnabled) {
 			console.log('ChangelogPlugin is being destroyed...');
-			// Your existing logic here...
 		}
 	}
 
@@ -46,7 +45,7 @@ export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 		try {
 			await this.changelogSeederService.createBasicDefault();
 
-			if (this.logging) {
+			if (this.logEnabled) {
 				console.log(chalk.green(`Basic default data seeded successfully for ${ChangelogPlugin.name}.`));
 			}
 		} catch (error) {

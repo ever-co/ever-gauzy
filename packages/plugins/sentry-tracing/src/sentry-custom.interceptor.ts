@@ -1,16 +1,7 @@
-import {
-	CallHandler,
-	ExecutionContext
-	// HttpException
-} from '@nestjs/common';
-import {
-	SentryInterceptor
-	// ,InjectSentry
-	// ,SentryService
-} from './ntegral';
+import { CallHandler, ExecutionContext } from '@nestjs/common';
 import { Handlers } from '@sentry/node';
 import { Observable, catchError, throwError } from 'rxjs';
-// import { EntityNotFoundError } from 'typeorm';
+import { SentryInterceptor } from './ntegral';
 
 export class SentryCustomInterceptor extends SentryInterceptor {
 	private readonly handler = Handlers.errorHandler();
@@ -31,6 +22,12 @@ export class SentryCustomInterceptor extends SentryInterceptor {
 		});
 	}
 
+	/**
+	 * Intercepts the execution context and handles errors.
+	 * @param {ExecutionContext} context - The execution context.
+	 * @param {CallHandler} next - The call handler.
+	 * @returns {Observable<any>} An observable that represents the result of the intercepted operation.
+	 */
 	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
 		return next.handle().pipe(
 			catchError((error) => {
@@ -38,7 +35,7 @@ export class SentryCustomInterceptor extends SentryInterceptor {
 				// @ts-ignore
 				if (this.shouldReport(error)) {
 					const http = context.switchToHttp();
-					this.handler(error, http.getRequest(), http.getResponse(), () => {});
+					this.handler(error, http.getRequest(), http.getResponse(), () => { });
 				}
 
 				return throwError(() => error);

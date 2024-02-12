@@ -1,16 +1,12 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { SentryModule, SentryModuleOptions, SENTRY_MODULE_OPTIONS } from './core/sentry/ntegral';
-import { GraphqlInterceptor } from './core/sentry/ntegral';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
-import { Integrations } from '@sentry/node';
-// import { ProfilingIntegration } from '@sentry/profiling-node';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import * as path from 'path';
 import * as moment from 'moment';
@@ -18,7 +14,6 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
 import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
-import { SentryCustomInterceptor } from './core/sentry/sentry-custom.interceptor';
 import { CoreModule } from './core/core.module';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
@@ -150,7 +145,6 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 
-
 const { unleashConfig, github, jira } = environment;
 
 if (unleashConfig.url) {
@@ -187,90 +181,6 @@ if (unleashConfig.url) {
 	instance.on('warn', console.log);
 } else {
 	console.log('Unleash Client Not Registered. UNLEASH_API_URL configuration is not provided.');
-}
-
-const sentryIntegrations = [];
-
-if (environment.sentry && environment.sentry.dsn) {
-	if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
-		sentryIntegrations.push(
-			// enable HTTP calls tracing
-			new Integrations.Http({
-				tracing: true,
-				breadcrumbs: true
-			})
-		);
-		console.log('Sentry HTTP Tracing Enabled');
-	}
-
-	if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true') {
-		if (process.env.DB_TYPE === 'postgres') {
-			sentryIntegrations.push(new Integrations.Postgres());
-			console.log('Sentry Postgres Tracking Enabled');
-		}
-	}
-
-	/*
-	if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
-		sentryIntegrations.push(new ProfilingIntegration());
-		console.log('Sentry Profiling Enabled');
-	}
-	*/
-
-	sentryIntegrations.push(new Integrations.Console());
-	console.log('Sentry Console Enabled');
-
-	sentryIntegrations.push(new Integrations.GraphQL());
-	console.log('Sentry GraphQL Enabled');
-
-	sentryIntegrations.push(new Integrations.Apollo({ useNestjs: true }));
-	console.log('Sentry Apollo Enabled');
-
-	sentryIntegrations.push(
-		new Integrations.LocalVariables({
-			captureAllExceptions: true
-		})
-	);
-	console.log('Sentry Local Variables Enabled');
-
-	sentryIntegrations.push(
-		new Integrations.RequestData({
-			ip: true
-		})
-	);
-	console.log('Sentry Request Data Enabled');
-}
-
-function createSentryOptions(host: HttpAdapterHost): SentryModuleOptions {
-	console.log('Creating Sentry Options');
-
-	return {
-		dsn: environment.sentry.dsn,
-		debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
-		environment: environment.production ? 'production' : 'development',
-		// TODO: we should use some internal function which returns version of Gauzy
-		release: 'gauzy@' + process.env.npm_package_version,
-		logLevels: ['error'],
-		integrations: [
-			...sentryIntegrations,
-			host?.httpAdapter
-				? new Integrations.Express({
-					app: host.httpAdapter.getInstance()
-				})
-				: null
-		].filter((i) => !!i),
-		tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-			? parseInt(process.env.SENTRY_TRACES_SAMPLE_RATE)
-			: 0.01,
-		profilesSampleRate: process.env.SENTRY_PROFILE_SAMPLE_RATE
-			? parseInt(process.env.SENTRY_PROFILE_SAMPLE_RATE)
-			: 1,
-		close: {
-			enabled: true,
-			// Time in milliseconds to forcefully quit the application
-			timeout: 3000
-		}
-	};
 }
 
 if (environment.THROTTLE_ENABLED) {
@@ -383,14 +293,6 @@ if (environment.THROTTLE_ENABLED) {
 			},
 			resolvers: [new HeaderResolver(['language'])]
 		}),
-		...(environment.sentry && environment.sentry.dsn
-			? [
-				SentryModule.forRootAsync({
-					inject: [ConfigService, HttpAdapterHost],
-					useFactory: createSentryOptions
-				})
-			]
-			: []),
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
@@ -561,35 +463,16 @@ if (environment.THROTTLE_ENABLED) {
 	controllers: [AppController],
 	providers: [
 		AppService,
-		...(environment.THROTTLE_ENABLED
-			? [
-				{
-					provide: APP_GUARD,
-					useClass: ThrottlerBehindProxyGuard
-				}
-			]
-			: []),
+		...(environment.THROTTLE_ENABLED ? [
+			{
+				provide: APP_GUARD,
+				useClass: ThrottlerBehindProxyGuard
+			}
+		] : []),
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: TransformInterceptor
-		},
-		...(environment.sentry && environment.sentry.dsn
-			? [
-				{
-					provide: SENTRY_MODULE_OPTIONS,
-					useFactory: createSentryOptions,
-					inject: [HttpAdapterHost]
-				},
-				{
-					provide: APP_INTERCEPTOR,
-					useFactory: () => new SentryCustomInterceptor()
-				},
-				{
-					provide: APP_INTERCEPTOR,
-					useFactory: () => new GraphqlInterceptor()
-				}
-			]
-			: [])
+		}
 	],
 	exports: []
 })
