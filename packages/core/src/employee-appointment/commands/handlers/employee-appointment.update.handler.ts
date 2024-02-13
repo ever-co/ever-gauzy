@@ -5,6 +5,7 @@ import { EmployeeAppointment } from '../../employee-appointment.entity';
 import { UpdateResult } from 'typeorm';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
+import { isNotEmpty } from '@gauzy/common';
 
 @CommandHandler(EmployeeAppointmentUpdateCommand)
 export class EmployeeAppointmentUpdateHandler
@@ -18,57 +19,36 @@ export class EmployeeAppointmentUpdateHandler
 	public async execute(
 		command?: EmployeeAppointmentUpdateCommand
 	): Promise<UpdateResult | EmployeeAppointment> {
-		const { id, employeeAppointmentUpdateRequest } = command;
-
-		const appointment = new EmployeeAppointment();
-		const employee = employeeAppointmentUpdateRequest.employeeId
+		const { id, employeeAppointmentUpdateRequest: data } = command;
+		const employee = data.employeeId
 			? await this.employeeService.findOneByIdString(
-					employeeAppointmentUpdateRequest.employeeId
+					data.employeeId
 			  )
 			: null;
-		const organization = employeeAppointmentUpdateRequest.organizationId
+		const organization = data.organizationId
 			? await this.organizationService.findOneByIdString(
-					employeeAppointmentUpdateRequest.organizationId
+					data.organizationId
 			  )
 			: null;
-
-		employee && (appointment.employee = employee);
-		organization && (appointment.organization = organization);
-		employeeAppointmentUpdateRequest.agenda &&
-			(appointment.agenda = employeeAppointmentUpdateRequest.agenda);
-		employeeAppointmentUpdateRequest.description &&
-			(appointment.description =
-				employeeAppointmentUpdateRequest.description);
-		employeeAppointmentUpdateRequest.bufferTimeEnd &&
-			(appointment.bufferTimeEnd =
-				employeeAppointmentUpdateRequest.bufferTimeEnd);
-		employeeAppointmentUpdateRequest.bufferTimeInMins &&
-			(appointment.bufferTimeInMins =
-				employeeAppointmentUpdateRequest.bufferTimeInMins);
-		employeeAppointmentUpdateRequest.breakStartTime &&
-			(appointment.breakStartTime =
-				employeeAppointmentUpdateRequest.breakStartTime);
-		employeeAppointmentUpdateRequest.breakTimeInMins &&
-			(appointment.breakTimeInMins =
-				employeeAppointmentUpdateRequest.breakTimeInMins);
-		employeeAppointmentUpdateRequest.bufferTimeStart &&
-			(appointment.bufferTimeStart =
-				employeeAppointmentUpdateRequest.bufferTimeStart);
-		employeeAppointmentUpdateRequest.startDateTime &&
-			(appointment.startDateTime =
-				employeeAppointmentUpdateRequest.startDateTime);
-		employeeAppointmentUpdateRequest.endDateTime &&
-			(appointment.endDateTime =
-				employeeAppointmentUpdateRequest.endDateTime);
-		employeeAppointmentUpdateRequest.location &&
-			(appointment.location = employeeAppointmentUpdateRequest.location);
-		employeeAppointmentUpdateRequest.status &&
-			(appointment.status = employeeAppointmentUpdateRequest.status);
-
-		const updatedAppointment = await this.employeeAppointmentService.update(
-			id,
-			appointment
-		);
+		const tenantId = organization?.tenantId ? organization.tenantId : null;
+		const newAppointment = {
+			...(isNotEmpty(employee) ? { employeeId: employee.id } : {}),
+			...(isNotEmpty(organization) ? { organizationId: organization.id } : {}),
+			...(isNotEmpty(tenantId) ? { tenantId: organization.tenantId } : {}),
+			...(isNotEmpty(data.agenda) ? { agenda: data.agenda } : {}),
+			...(isNotEmpty(data['emails']) ? { emails: data['emails'] } : {}),
+			...(isNotEmpty(data['status']) ? { status: data['status'] } : {}),
+			...(isNotEmpty(data.description) ? { description: data.description } : {} ),
+			...(isNotEmpty(data.location) ? { location: data.location } : {}),
+			...(isNotEmpty(data.breakStartTime) ? { breakStartTime: data.breakStartTime } : {}),
+			...(isNotEmpty(data.breakTimeInMins) ? { breakTimeInMins: +data.breakTimeInMins } : {}),
+			...(isNotEmpty(data.bufferTimeStart) ? { bufferTimeStart: data.bufferTimeStart } : {}),
+			...(isNotEmpty(data.bufferTimeEnd) ? { bufferTimeEnd: data.bufferTimeEnd } : {}),
+			...(isNotEmpty(data.bufferTimeInMins) ? { bufferTimeInMins: +data.bufferTimeInMins } : {}),
+			...(isNotEmpty(data.startDateTime) ? { startDateTime: data.startDateTime } : {}),
+			...(isNotEmpty(data.endDateTime) ? { endDateTime: data.endDateTime } : {}),
+		}
+		const updatedAppointment = await this.employeeAppointmentService.update(id, newAppointment);
 
 		return updatedAppointment;
 	}
