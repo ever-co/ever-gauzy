@@ -1,6 +1,6 @@
 export * from './IApplicationPluginConfig';
 export * from './IGraphql';
-export * from './ILogger';
+export * from './IAbstractLogger';
 
 export * from './IAppIntegrationConfig';
 export * from './IAuth0Config';

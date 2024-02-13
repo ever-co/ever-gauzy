@@ -13,9 +13,19 @@ import { SentryService } from './sentry.service';
 
 @Injectable()
 export class SentryInterceptor implements NestInterceptor {
-	protected readonly client: SentryService = SentryService.SentryServiceInstance();
-	constructor(private readonly options?: SentryInterceptorOptions) { }
 
+	protected readonly client: SentryService = SentryService.SentryServiceInstance();
+
+	constructor(
+		private readonly options?: SentryInterceptorOptions
+	) { }
+
+	/**
+	 *
+	 * @param context
+	 * @param next
+	 * @returns
+	 */
 	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
 		// first param would be for events, second is for errors
 		return next.handle().pipe(
@@ -29,6 +39,13 @@ export class SentryInterceptor implements NestInterceptor {
 		);
 	}
 
+	/**
+	 *
+	 * @param context
+	 * @param scope
+	 * @param exception
+	 * @returns
+	 */
 	protected captureException(context: ExecutionContext, scope: Scope, exception: HttpException) {
 		switch (context.getType<ContextType>()) {
 			case 'http':
@@ -40,6 +57,12 @@ export class SentryInterceptor implements NestInterceptor {
 		}
 	}
 
+	/**
+	 *
+	 * @param scope
+	 * @param http
+	 * @param exception
+	 */
 	private captureHttpException(scope: Scope, http: HttpArgumentsHost, exception: HttpException): void {
 		const data = Handlers.parseRequest(<any>{}, http.getRequest(), this.options);
 
@@ -51,12 +74,24 @@ export class SentryInterceptor implements NestInterceptor {
 		this.client.instance().captureException(exception);
 	}
 
+	/**
+	 *
+	 * @param scope
+	 * @param rpc
+	 * @param exception
+	 */
 	private captureRpcException(scope: Scope, rpc: RpcArgumentsHost, exception: any): void {
 		scope.setExtra('rpc_data', rpc.getData());
 
 		this.client.instance().captureException(exception);
 	}
 
+	/**
+	 *
+	 * @param scope
+	 * @param ws
+	 * @param exception
+	 */
 	private captureWsException(scope: Scope, ws: WsArgumentsHost, exception: any): void {
 		scope.setExtra('ws_client', ws.getClient());
 		scope.setExtra('ws_data', ws.getData());
@@ -64,6 +99,11 @@ export class SentryInterceptor implements NestInterceptor {
 		this.client.instance().captureException(exception);
 	}
 
+	/**
+	 *
+	 * @param exception
+	 * @returns
+	 */
 	private shouldReport(exception: any) {
 		if (this.options && !this.options.filters) return true;
 

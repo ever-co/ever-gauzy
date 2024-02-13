@@ -2,7 +2,7 @@ import { DynamicModule } from '@nestjs/common';
 import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { JitsuAnalyticsService } from './jitsu-analytics.service';
 import { JITSU_MODULE_PROVIDER_CONFIG, JitsuModuleOptions } from './jitsu.types';
-import { JitsuEventsSubscriber } from './jitsu-events-subscriber';
+import { JitsuEventsSubscriber } from './jitsu-events.subscriber';
 
 @GauzyCorePlugin({
 	providers: [
@@ -23,7 +23,6 @@ export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestro
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
 			console.log('JitsuAnalyticsPlugin is being bootstrapped...');
-			// Your existing logic here...
 		}
 	}
 
@@ -33,7 +32,6 @@ export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestro
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
 			console.log('JitsuAnalyticsPlugin is being destroyed...');
-			// Your existing logic here...
 		}
 	}
 

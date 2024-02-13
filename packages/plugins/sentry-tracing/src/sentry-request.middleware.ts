@@ -13,7 +13,14 @@ export class SentryRequestMiddleware implements NestMiddleware {
 		}
 	});
 
-	constructor() {}
+	constructor() { }
+
+	/**
+	 * Handles the request.
+	 * @param {Request} req - The Express request object.
+	 * @param {Response} res - The Express response object.
+	 * @param {NextFunction} next - The Express next function.
+	 */
 	use(req: Request, res: Response, next: NextFunction): void {
 		this.handler(req, res, next);
 	}

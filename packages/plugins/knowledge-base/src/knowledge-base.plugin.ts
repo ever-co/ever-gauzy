@@ -32,7 +32,8 @@ import { HelpCenterSeederService } from './help-center-seeder.service';
 })
 export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithDefaultSeed, IOnPluginWithRandomSeed {
 
-	private logging: boolean = true;
+	// We disable by default additional logging for each event to avoid cluttering the logs
+	private logEnabled = true;
 
 	constructor(
 		private readonly helpCenterSeederService: HelpCenterSeederService
@@ -42,9 +43,8 @@ export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
-		if (this.logging) {
+		if (this.logEnabled) {
 			console.log('KnowledgeBasePlugin is being bootstrapped...');
-			// Your existing logic here...
 		}
 	}
 
@@ -52,9 +52,8 @@ export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy
 	 * Called when the plugin is being destroyed.
 	 */
 	onPluginDestroy(): void | Promise<void> {
-		if (this.logging) {
+		if (this.logEnabled) {
 			console.log('KnowledgeBasePlugin is being destroyed...');
-			// Your existing logic here...
 		}
 	}
 
@@ -66,7 +65,7 @@ export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy
 		try {
 			await this.helpCenterSeederService.createDefault();
 
-			if (this.logging) {
+			if (this.logEnabled) {
 				console.log(chalk.green(`Default data seeded successfully for ${KnowledgeBasePlugin.name}.`));
 			}
 		} catch (error) {
@@ -82,7 +81,7 @@ export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy
 		try {
 			await this.helpCenterSeederService.createRandom();
 
-			if (this.logging) {
+			if (this.logEnabled) {
 				console.log(chalk.green(`Random data seeded successfully for ${KnowledgeBasePlugin.name}.`));
 			}
 		} catch (error) {
