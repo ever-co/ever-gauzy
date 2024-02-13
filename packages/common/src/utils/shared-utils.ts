@@ -1,6 +1,15 @@
 import slugify from 'slugify';
 
 /**
+ * Checks if a value is not null or undefined.
+ * @param value The value to be checked.
+ * @returns true if the value is not null or undefined, false otherwise.
+ */
+export function isNotNullOrUndefined<T>(value: T | undefined | null): boolean {
+	return value !== undefined && value !== null;
+}
+
+/**
  * Check is function .
  * @param item
  * @returns {boolean}
@@ -15,7 +24,7 @@ export function isFunction(item: any): boolean {
  * @returns {boolean}
  * From https://stackoverflow.com/a/34749873/772859
  */
-export function isObject(item: any) {
+export function isObject(item: any): boolean {
 	return item && typeof item === 'object' && !Array.isArray(item);
 }
 

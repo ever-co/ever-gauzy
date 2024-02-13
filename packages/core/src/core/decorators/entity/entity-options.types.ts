@@ -1,6 +1,6 @@
 import { EntityOptions as TypeEntityOptions } from 'typeorm';
-import { EntityOptions as MikroEntityOptions } from "@mikro-orm/core";
-import { ConstructorType } from "../../crud/crud.helper";
+import { EntityOptions as MikroEntityOptions } from '@mikro-orm/core';
+import { ConstructorType } from '@gauzy/common';
 
 /**
  * Options for defining MikroORM entities.
