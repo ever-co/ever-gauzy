@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, SelectQueryBuilder } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import {
 	IIssueType,
 	IIssueTypeCreateInput,
@@ -20,11 +22,14 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	constructor(
 		@InjectRepository(IssueType)
-		typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
+		readonly typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
 
-		mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository
+		readonly mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmIssueTypeRepository, mikroOrmIssueTypeRepository);
+		super(typeOrmIssueTypeRepository, mikroOrmIssueTypeRepository, knexConnection);
 	}
 
 	/**
@@ -36,7 +41,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	async delete(id: IIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
+				isSystem: false
 			},
 		});
 	}
@@ -104,7 +109,6 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			console.log('error', error);
 			throw new BadRequestException(error);
 		}
 	}
@@ -121,9 +125,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const issueTypes: IIssueType[] = [];
-			const { items = [] } = await this.findAllIssueTypes({
-				tenantId,
-			});
+			const { items = [] } = await this.findAllIssueTypes({ tenantId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
@@ -159,12 +161,12 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const issueTypes: IIssueType[] = [];
 			const { items = [] } = await this.findAllIssueTypes({
 				tenantId,
-				organizationId,
+				organizationId
 			});
 
+			const issueTypes: IIssueType[] = [];
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
 
@@ -182,7 +184,6 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 
 			return issueTypes;
 		} catch (error) {
-			console.log('error', error);
 			throw new BadRequestException(error);
 		}
 	}

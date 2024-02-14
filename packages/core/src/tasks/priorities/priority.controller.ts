@@ -47,9 +47,9 @@ export class TaskPriorityController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskPriorities(
+	async fetchAll(
 		@Query() params: TaskPriorityQuerDTO
 	): Promise<IPagination<ITaskPriority>> {
-		return await this.taskPriorityService.findTaskPriorities(params);
+		return await this.taskPriorityService.fetchAll(params);
 	}
 }
