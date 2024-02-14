@@ -1,6 +1,20 @@
 import { environment } from "@gauzy/config";
 import { AnalyticsInterface, JitsuOptions, jitsuAnalytics } from "@jitsu/js";
 import fetch from 'node-fetch';
+import { JitsuModuleOptions } from "./jitsu.types";
+
+/**
+ * Parses the options for Jitsu Analytics.
+ * @param options The input options object.
+ * @returns A record containing parsed Jitsu module options.
+ */
+export const parseOptions = (options: JitsuModuleOptions): JitsuModuleOptions => ({
+    // If the 'isGlobal' property is defined in the input options, use its value; otherwise, default to true.
+    isGlobal: options.isGlobal ?? true,
+
+    // Parse the configuration using the 'parseConfig' function and assign the result to the 'config' property.
+    config: parseConfig(options.config), //
+});
 
 /**
  * Parse the configuration for Jitsu Analytics.
