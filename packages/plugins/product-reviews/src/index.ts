@@ -1,3 +1,3 @@
-export * from './reviews-plugin';
+export * from './prouct-reviews.plugin';
 export * from './entities';
 export * from './graphql/schema-extensions';
