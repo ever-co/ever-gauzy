@@ -1,18 +1,24 @@
 import { DynamicModule } from '@nestjs/common';
 import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
-import { JitsuAnalyticsService } from './jitsu-analytics.service';
 import { JITSU_MODULE_PROVIDER_CONFIG, JitsuModuleOptions } from './jitsu.types';
+import { parseOptions } from './jitsu-helper';
+import { JitsuAnalyticsService } from './jitsu-analytics.service';
 import { JitsuEventsSubscriber } from './jitsu-events.subscriber';
 
 @GauzyCorePlugin({
 	providers: [
-		JitsuAnalyticsService
+		JitsuAnalyticsService,
+		{
+			provide: JITSU_MODULE_PROVIDER_CONFIG,
+			useFactory: () => JitsuAnalyticsPlugin.options?.config,
+		},
 	],
 	subscribers: [
 		JitsuEventsSubscriber
 	]
 })
 export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
+	static options: JitsuModuleOptions = {} as any;
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
@@ -41,19 +47,20 @@ export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestro
 	 * @returns A dynamic module definition.
 	 */
 	static init(options: JitsuModuleOptions): DynamicModule {
+		// Assuming `parseOptions` is defined
+		this.options = parseOptions(options);
+
 		return {
-			global: options.isGlobal || true,
+			global: options.isGlobal ?? true,
 			module: JitsuAnalyticsPlugin,
 			providers: [
+				JitsuAnalyticsService,
 				{
 					provide: JITSU_MODULE_PROVIDER_CONFIG,
 					useFactory: () => options.config,
 				},
-				JitsuAnalyticsService
 			],
-			exports: [
-				JitsuAnalyticsService
-			],
+			exports: [JitsuAnalyticsService],
 		};
 	}
 }
