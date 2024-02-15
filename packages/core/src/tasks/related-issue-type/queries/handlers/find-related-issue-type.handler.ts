@@ -4,19 +4,19 @@ import { TaskRelatedIssueTypeService } from '../../related-issue-type.service';
 import { FindRelatedIssueTypesQuery } from '../find-related-issue-type.query';
 
 @QueryHandler(FindRelatedIssueTypesQuery)
-export class FindRelatedIssueTypesHandler
-	implements IQueryHandler<FindRelatedIssueTypesQuery>
-{
+export class FindRelatedIssueTypesHandler implements IQueryHandler<FindRelatedIssueTypesQuery> {
+
 	constructor(
 		private readonly TaskRelatedIssueTypeervice: TaskRelatedIssueTypeService
 	) { }
 
-	async execute(
-		query: FindRelatedIssueTypesQuery
-	): Promise<IPagination<ITaskRelatedIssueType>> {
+	/**
+	 *
+	 * @param query
+	 * @returns
+	 */
+	async execute(query: FindRelatedIssueTypesQuery): Promise<IPagination<ITaskRelatedIssueType>> {
 		const { options } = query;
-		return await this.TaskRelatedIssueTypeervice.findTaskRelatedIssueType(
-			options
-		);
+		return await this.TaskRelatedIssueTypeervice.fetchAll(options);
 	}
 }

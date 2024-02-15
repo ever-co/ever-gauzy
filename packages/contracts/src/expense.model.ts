@@ -141,6 +141,7 @@ export interface IGetExpenseInput extends IPaginationInput, IBasePerTenantAndOrg
 	endDate?: Date | string;
 	projectIds?: string[];
 	employeeIds?: string[];
+	categoryId?: string;
 }
 
 export interface IExpenseReportGroupByDate {

@@ -51,14 +51,25 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	) { }
 
 	/**
-	 * Alias (default we used table name) for pagination crud
+	 * Get the table name from the repository metadata.
+	 * @returns {string} The table name.
+	 */
+	protected get tableName(): string {
+		return this.repository.metadata.tableName;
+	}
+
+	/**
+	 * Get the alias for pagination CRUD operations.
+	 * By default, it uses the table name.
+	 * @returns {string} The alias.
 	 */
 	protected get alias(): string {
 		return this.repository.metadata.tableName;
 	}
 
 	/**
-	 * Returns the ORM type.
+	 * Get the ORM type.
+	 * @returns {MultiORM} The ORM type.
 	 */
 	protected get ormType(): MultiORM {
 		return ormType;
