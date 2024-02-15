@@ -7,6 +7,7 @@ import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
+import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
@@ -49,8 +50,9 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
+			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('notes' in where) {
-				filter['where']['notes'] = Raw((alias) => `${alias} ILIKE '%${where.notes}%'`);
+				filter['where']['notes'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${where.notes}%'`);
 			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;

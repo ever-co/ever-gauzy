@@ -16,6 +16,7 @@ import { IInvoice } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
+import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
@@ -223,9 +224,10 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
+			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('note' in where) {
 				const { note } = where;
-				filter['where']['note'] = Raw((alias) => `${alias} ILIKE '%${note}%'`);
+				filter['where']['note'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${note}%'`);
 			}
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;

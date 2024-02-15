@@ -12,6 +12,7 @@ import { getDateRangeFormat, getDaysBetweenDates } from './../core/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
+import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class ExpenseService extends TenantAwareCrudService<Expense> {

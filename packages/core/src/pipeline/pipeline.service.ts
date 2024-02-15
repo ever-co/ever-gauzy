@@ -12,6 +12,7 @@ import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.reposito
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
 import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
+import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {
@@ -123,13 +124,14 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
+			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('name' in where) {
 				const { name } = where;
-				filter['where']['name'] = Raw((alias) => `${alias} ILIKE '%${name}%'`);
+				filter['where']['name'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${name}%'`);
 			}
 			if ('description' in where) {
 				const { description } = where;
-				filter['where']['description'] = Raw((alias) => `${alias} ILIKE '%${description}%'`);
+				filter['where']['description'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${description}%'`);
 			}
 			if ('isActive' in where) {
 				const { isActive } = where;
@@ -143,7 +145,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			if ('stages' in where) {
 				const { stages } = where;
 				filter['where']['stages'] = {
-					name: Raw((alias) => `${alias} ILIKE '%${stages}%'`)
+					name: Raw((alias) => `${alias} ${insensitiveOperator} '%${stages}%'`)
 				};
 			}
 		}

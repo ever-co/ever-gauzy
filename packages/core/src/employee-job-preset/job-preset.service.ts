@@ -29,6 +29,7 @@ import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.r
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/type-orm-job-preset-upwork-job-search-criterion.repository';
 import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { TypeOrmEmployeeRepository } from './../employee/repository/type-orm-employee.repository';
+import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
@@ -60,6 +61,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public async getAll(request?: IGetJobPresetInput) {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, search, employeeId } = request;
+		const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
 
 		const query = this.repository.createQueryBuilder('job_preset');
 		query.setFindOptions({
@@ -85,7 +88,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 				});
 			}
 			if (isNotEmpty(search)) {
-				qb.andWhere(p(`"${query.alias}"."name" ILIKE :search`), {
+				qb.andWhere(p(`"${query.alias}"."name" ${insensitiveOperator} :search`), {
 					search: `%${search}%`
 				});
 			}

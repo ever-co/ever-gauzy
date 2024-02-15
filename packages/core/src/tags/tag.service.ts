@@ -16,6 +16,7 @@ import { FileStorage } from './../core/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
+import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {
@@ -176,6 +177,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	getFilterTagQuery(query: SelectQueryBuilder<Tag>, request: ITagFindInput): SelectQueryBuilder<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
+		const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
@@ -210,17 +212,17 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		 * Additionally you can add parameters used in where expression.
 		 */
 		if (isNotEmpty(name)) {
-			query.andWhere(p(`"${query.alias}"."name" ILIKE :name`), {
+			query.andWhere(p(`"${query.alias}"."name" ${insensitiveOperator} :name`), {
 				name: `%${name}%`
 			});
 		}
 		if (isNotEmpty(color)) {
-			query.andWhere(p(`"${query.alias}"."color" ILIKE :color`), {
+			query.andWhere(p(`"${query.alias}"."color" ${insensitiveOperator} :color`), {
 				color: `%${color}%`
 			});
 		}
 		if (isNotEmpty(description)) {
-			query.andWhere(p(`"${query.alias}"."description" ILIKE :description`), {
+			query.andWhere(p(`"${query.alias}"."description" ${insensitiveOperator} :description`), {
 				description: `%${description}%`
 			});
 		}
