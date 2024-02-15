@@ -1,7 +1,7 @@
 import { IGetExpenseInput, ReportGroupFilterEnum } from "@gauzy/contracts";
 import { IntersectionType } from "@nestjs/mapped-types";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsOptional } from "class-validator";
+import { IsEnum, IsOptional, IsUUID } from "class-validator";
 import { RelationsQueryDTO, SelectorsQueryDTO } from "./../../../shared/dto";
 
 /**
@@ -16,4 +16,9 @@ export class ExpenseReportQueryDTO extends IntersectionType(
     @IsOptional()
     @IsEnum(ReportGroupFilterEnum)
     readonly groupBy: ReportGroupFilterEnum;
+
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
+    @IsUUID()
+    readonly categoryId: string;
 }

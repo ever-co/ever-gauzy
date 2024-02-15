@@ -191,6 +191,25 @@ export enum OrganizationSelectInput {
 	tags = 'tags',
 }
 
+/**
+ * Enumeration for region codes.
+ */
+export enum RegionCodeEnum {
+	ENGLISH = 'en',
+	BULGARIAN = 'bg',
+	HEBREW = 'he',
+	RUSSIAN = 'ru',
+	FRENCH = 'fr',
+	SPANISH = 'es',
+	CHINESE = 'zh',
+	GERMAN = 'de',
+	PORTUGUESE = 'pt',
+	ITALIAN = 'it',
+	DUTCH = 'nl',
+	POLISH = 'pl',
+	ARABIC = 'ar',
+}
+
 export enum RegionsEnum {
 	'EN' = 'English (United States)',
 	'BG' = 'Bulgarian (Bulgaria)',

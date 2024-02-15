@@ -88,7 +88,8 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 		}
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy
+			groupBy: this.groupBy,
+			...(this.filters?.categoryId ? { categoryId: this.filters?.categoryId } : {}),
 		};
 		this.payloads$.next(request);
 	}

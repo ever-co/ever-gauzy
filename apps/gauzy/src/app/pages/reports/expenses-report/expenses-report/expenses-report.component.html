@@ -32,6 +32,7 @@
 				class="action-select"
 				[clearable]="true"
 				[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
+				(onChanged)="filterByCategory($event)"
 			></ga-expense-category-select>
 		</div>
 	</nb-card-header>
