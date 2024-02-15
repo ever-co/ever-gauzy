@@ -47,9 +47,9 @@ export class TaskSizeController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskSizes(
+	async fetchAll(
 		@Query() params: TaskSizeQuerDTO
 	): Promise<IPagination<ITaskSize>> {
-		return await this.taskSizeService.findTaskSizes(params);
+		return await this.taskSizeService.fetchAll(params);
 	}
 }

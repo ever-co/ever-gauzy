@@ -4,5 +4,7 @@ import { ITaskVersionFindInput } from '@gauzy/contracts';
 export class FindVersionsQuery implements IQuery {
 	static readonly type = '[Task Versions] Query All';
 
-	constructor(public readonly options: ITaskVersionFindInput) {}
+	constructor(
+		public readonly options: ITaskVersionFindInput
+	) { }
 }

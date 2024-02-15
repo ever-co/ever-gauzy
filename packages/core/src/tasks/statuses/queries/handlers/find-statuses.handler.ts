@@ -10,8 +10,13 @@ export class FindStatusesHandler implements IQueryHandler<FindStatusesQuery> {
 		private readonly taskStatusService: TaskStatusService
 	) { }
 
+	/**
+	 *
+	 * @param query
+	 * @returns
+	 */
 	async execute(query: FindStatusesQuery): Promise<IPagination<ITaskStatus>> {
 		const { options } = query;
-		return await this.taskStatusService.findTaskStatuses(options);
+		return await this.taskStatusService.fetchAll(options);
 	}
 }
