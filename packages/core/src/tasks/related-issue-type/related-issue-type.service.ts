@@ -1,6 +1,8 @@
-import { DeleteResult } from 'typeorm';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import {
 	IOrganization,
 	IPagination,
@@ -8,7 +10,9 @@ import {
 	ITaskRelatedIssueTypeCreateInput,
 	ITaskRelatedIssueTypeFindInput,
 } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
+import { MultiORMEnum } from '../../core/utils';
 import { RequestContext } from '../../core/context';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { TypeOrmTaskRelatedIssueTypeRepository } from './repository/type-orm-related-issue-type.repository';
@@ -18,11 +22,14 @@ import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-r
 export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<TaskRelatedIssueType> {
 	constructor(
 		@InjectRepository(TaskRelatedIssueType)
-		typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
+		readonly typeOrmTaskRelatedIssueTypeRepository: TypeOrmTaskRelatedIssueTypeRepository,
 
-		mikroOrmTaskRelatedIssueTypeRepository: MikroOrmTaskRelatedIssueTypeRepository
+		readonly mikroOrmTaskRelatedIssueTypeRepository: MikroOrmTaskRelatedIssueTypeRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmTaskRelatedIssueTypeRepository, mikroOrmTaskRelatedIssueTypeRepository);
+		super(typeOrmTaskRelatedIssueTypeRepository, mikroOrmTaskRelatedIssueTypeRepository, knexConnection);
 	}
 
 	/**
@@ -32,13 +39,15 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 	 * @param params
 	 * @returns
 	 */
-	async findTaskRelatedIssueType(
-		params: ITaskRelatedIssueTypeFindInput
-	): Promise<IPagination<TaskRelatedIssueType>> {
+	async fetchAll(params: ITaskRelatedIssueTypeFindInput): Promise<IPagination<TaskRelatedIssueType>> {
 		try {
-			return await this.findEntitiesByParams(params);
+			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
+				return await super.fetchAllByKnex(params);
+			} else {
+				return await super.fetchAll(params);
+			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -51,7 +60,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 	async delete(id: ITaskRelatedIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
+				isSystem: false
 			},
 		});
 	}
@@ -68,13 +77,10 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 			const statuses: ITaskRelatedIssueType[] = [];
 
 			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await this.findEntitiesByParams({
-				tenantId,
-			});
+			const { items = [] } = await super.fetchAll({ tenantId });
 
 			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } =
-					item;
+				const { tenantId, name, value, description, icon, color } = item;
 				const status = new TaskRelatedIssueType({
 					tenantId,
 					name,
@@ -107,9 +113,9 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 			const tenantId = RequestContext.currentTenantId();
 
 			const statuses: ITaskRelatedIssueType[] = [];
-			const { items = [] } = await this.findEntitiesByParams({
+			const { items = [] } = await super.fetchAll({
 				tenantId,
-				organizationId,
+				organizationId
 			});
 
 			for (const item of items) {

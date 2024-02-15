@@ -54,9 +54,7 @@ let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
 const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-	: 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 
 console.log('DB Pool Size: ' + dbPoolSize);
 console.log('DB Connection Timeout: ' + dbConnectionTimeout);
@@ -209,8 +207,7 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
 		// MikroORM DB Config
