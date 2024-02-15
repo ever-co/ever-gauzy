@@ -4,14 +4,14 @@ import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import { IOrganization, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
-import { RequestContext } from './../../core/context';
+import { isPostgres } from '@gauzy/config';
+import { RequestContext } from '../../core/context';
+import { MultiORMEnum } from '../../core/utils';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskPriority } from './priority.entity';
 import { DEFAULT_GLOBAL_PRIORITIES } from './default-global-priorities';
 import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
 import { TypeOrmTaskPriorityRepository } from './repository/type-orm-task-priority.repository';
-import { MultiORMEnum } from 'core/utils';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPriority> {

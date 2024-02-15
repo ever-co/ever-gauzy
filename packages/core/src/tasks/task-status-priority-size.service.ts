@@ -121,12 +121,12 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	getFilterQuery(query: SelectQueryBuilder<BaseEntity>, request: IFindEntityByParams) {
 		const { organizationId, projectId, organizationTeamId } = request;
-		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 
 		/**
 		 * GET by tenant level
 		 */
-		if (isNotEmpty(tenantId)) {
+		if (isNotEmpty(request.tenantId)) {
+			const tenantId = RequestContext.currentTenantId() || request.tenantId;
 			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 		} else {
 			query.andWhere(p(`"${query.alias}"."tenantId" IS NULL`));
@@ -135,9 +135,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		 * GET by organization level
 		 */
 		if (isNotEmpty(organizationId)) {
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), {
-				organizationId
-			});
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 		} else {
 			query.andWhere(p(`"${query.alias}"."organizationId" IS NULL`));
 		}
@@ -145,9 +143,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		 * GET by project level
 		 */
 		if (isNotEmpty(projectId)) {
-			query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), {
-				projectId
-			});
+			query.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 		} else {
 			query.andWhere(p(`"${query.alias}"."projectId" IS NULL`));
 		}
@@ -156,9 +152,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 		 * GET by team level
 		 */
 		if (isNotEmpty(organizationTeamId)) {
-			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
-				organizationTeamId
-			});
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
 		} else {
 			query.andWhere(p(`"${query.alias}"."organizationTeamId" IS NULL`));
 		}
