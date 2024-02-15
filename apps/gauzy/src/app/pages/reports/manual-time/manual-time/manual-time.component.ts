@@ -43,6 +43,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	dailyData: any;
 	ManualTimeLogAction: typeof ManualTimeLogAction = ManualTimeLogAction;
 	actions: string[] = Object.values(ManualTimeLogAction);
+	isFilteringByAction: boolean = false;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -69,7 +70,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 			.subscribe();
 		this.payloads$
 			.pipe(
-				distinctUntilChange(),
+				tap(() => { !this.isFilteringByAction ? distinctUntilChange() : null }),
 				filter((payloads: ITimeLogFilters) => !!payloads),
 				tap(() => this.getManualLogs()),
 				untilDestroyed(this)
@@ -82,6 +83,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 		this.control.valueChanges
             .pipe(
                 distinctUntilChanged(),
+				tap((value) => this.isFilteringByAction = value ? true : false),
                 tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
             )
