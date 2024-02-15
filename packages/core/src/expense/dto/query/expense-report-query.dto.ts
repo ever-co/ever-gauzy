@@ -16,4 +16,8 @@ export class ExpenseReportQueryDTO extends IntersectionType(
     @IsOptional()
     @IsEnum(ReportGroupFilterEnum)
     readonly groupBy: ReportGroupFilterEnum;
+
+    @ApiPropertyOptional({ type: () => String})
+    @IsOptional()
+    readonly categoryId: string;
 }
