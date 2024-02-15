@@ -4,6 +4,7 @@ import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from
 import { Knex as KnexConnection } from 'knex';
 import { EntityRepository } from '@mikro-orm/core';
 import {
+	FileStorageProviderEnum,
 	IIssueTypeFindInput,
 	IPagination,
 	ITaskPriorityFindInput,
@@ -11,9 +12,10 @@ import {
 	ITaskStatusFindInput,
 	ITaskVersionFindInput
 } from '@gauzy/contracts';
-import { TenantBaseEntity } from '../core/entities/internal';
+import { FileStorage } from '../core/file-storage';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { TenantBaseEntity } from '../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
 export type IFindEntityByParams = | ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput | IIssueTypeFindInput | ITaskVersionFindInput;
@@ -35,7 +37,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	async fetchAllByKnex(input: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
-			// Attempt to get at least one record that matches the specified parameters
+			// Ensure at least one record matches the specified parameters
 			const first = await this.getOneOrFailByKnex(this.knexConnection, input);
 
 			// If no record is found, throw an error
@@ -45,6 +47,14 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 
 			// Perform the Knex query to fetch entities and their count
 			const items = await this.getManyAndCountByKnex(this.knexConnection, input);
+
+			// Fetch fullIconUrl for items with an icon
+			await Promise.all(items.map(async (item: any) => {
+				if (item.icon) {
+					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+					item.fullIconUrl = await store.getProviderInstance().url(item.icon);
+				}
+			}));
 
 			// Calculate the total count of items
 			const total = items.length;
