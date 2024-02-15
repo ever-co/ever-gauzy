@@ -114,7 +114,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 		}
 		this.filters = Object.assign({}, {
 			...this.filters,
-			...(event?.id ? { categoryId: event?.id } : {})
+			categoryId: event?.id ? event?.id : ''
 		});
 		this.subject$.next(true);
 	}
