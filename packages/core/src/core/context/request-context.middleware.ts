@@ -5,7 +5,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import * as cls from 'cls-hooked';
 import { Request, Response, NextFunction } from 'express';
-
 import { RequestContext } from './request-context';
 
 // There are few alternatives to 'cls-hooked', see:
@@ -14,8 +13,17 @@ import { RequestContext } from './request-context';
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
+	/**
+	 *
+	 * @param req
+	 * @param res
+	 * @param next
+	 */
 	use(req: Request, res: Response, next: NextFunction) {
-		const requestContext = new RequestContext(req, res);
+		/**
+		 *
+		 */
+		const context = new RequestContext({ req, res });
 		const session = cls.getNamespace(RequestContext.name) || cls.createNamespace(RequestContext.name);
 
 		// Note: this is "session" created by "cls-hooked" lib code,
@@ -24,7 +32,7 @@ export class RequestContextMiddleware implements NestMiddleware {
 		// request so all data is isolated without any potential conflicts
 		// for concurrent requests
 		session.run(async () => {
-			session.set(RequestContext.name, requestContext);
+			session.set(RequestContext.name, context);
 			next();
 		});
 	}

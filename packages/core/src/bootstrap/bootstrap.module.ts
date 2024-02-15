@@ -1,27 +1,34 @@
 import tracer from './tracer';
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
-import { ConfigModule, getConfig } from '@gauzy/config';
+import { ConfigModule } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
 import { AppModule } from './../app.module';
 import { Logger, LoggerModule } from '../logger';
-import { HealthModule } from '../health/health.module';
 
 @Module({
 	imports: [
 		ConfigModule,
 		LoggerModule.forRoot(),
-		PluginModule.forRoot(getConfig()),
-		AppModule,
-		HealthModule
+		PluginModule.init(),
+		AppModule
 	]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
+
 	constructor() { }
 
+	/**
+	 *
+	 * @param consumer
+	 */
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply().forRoutes('*');
 	}
 
+	/**
+	 *
+	 * @param signal
+	 */
 	async onApplicationShutdown(signal: string) {
 		if (signal) {
 			Logger.log(`Received shutdown signal: ${signal}`);

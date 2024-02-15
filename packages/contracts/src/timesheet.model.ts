@@ -199,6 +199,7 @@ export interface ITimeLogFilters
 	taskIds?: string[];
 	defaultRange?: boolean;
 	unitOfTime?: any;
+	categoryId?: string
 }
 
 export interface ITimeLogTodayFilters

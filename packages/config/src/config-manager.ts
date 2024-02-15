@@ -1,21 +1,29 @@
-import { deepMerge, IPluginConfig } from '@gauzy/common';
+import { deepMerge, ApplicationPluginConfig } from '@gauzy/common';
 import { defaultConfiguration } from './default-configuration';
 
-let defaultConfig: IPluginConfig = defaultConfiguration;
+let defaultApplicationPluginConfig: ApplicationPluginConfig = defaultConfiguration;
 
 /**
  * Override the default config by merging in the provided values.
- * 
+ *
+ * @param providedConfig - The provided configuration to merge with the default configuration.
  */
-export function setConfig(providedConfig: Partial<IPluginConfig>): void {
-	defaultConfig = deepMerge(defaultConfig, providedConfig);
+export function setConfig(providedConfig: Partial<ApplicationPluginConfig>): void {
+	defaultApplicationPluginConfig = deepMerge(defaultApplicationPluginConfig, providedConfig);
 }
-
 
 /**
  * Returns the app bootstrap config object.
- * 
+ *
+ * @returns The readonly default configuration.
  */
-export function getConfig(): Readonly<IPluginConfig> {
-	return defaultConfig;
+export function getConfig(): Readonly<ApplicationPluginConfig> {
+	return defaultApplicationPluginConfig;
+}
+
+/**
+ * Reset the configuration to the default values.
+ */
+export function resetConfig(): void {
+	defaultApplicationPluginConfig = defaultConfiguration;
 }

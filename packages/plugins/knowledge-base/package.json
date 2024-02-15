@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/knowledge-base",
+	"name": "@gauzy/knowledge-base-plugin",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Knowledge Base plugin",
 	"author": {

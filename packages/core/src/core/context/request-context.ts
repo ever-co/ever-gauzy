@@ -10,37 +10,99 @@ import { JsonWebTokenError, verify } from 'jsonwebtoken';
 import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
+import { SerializedRequestContext } from './types';
 
 export class RequestContext {
-	readonly id: number;
-	request: Request;
-	response: Response;
 
-	constructor(request: Request, response: Response) {
-		this.id = Math.random();
-		this.request = request;
-		this.response = response;
+	protected readonly _id: number;
+	protected readonly _res: Response;
+	private readonly _req: Request;
+	private readonly _languageCode: LanguagesEnum;
+
+	/**
+	 * Constructor for the SampleClass.
+	 * @param options - An object containing optional parameters for initializing the instance.
+	 * @param options.id - Optional ID number for the instance. If not provided, a random ID is generated.
+	 * @param options.req - Optional Request object.
+	 * @param options.res - Optional Response object.
+	 * @param options.languageCode - Optional language code (enum) for the instance.
+	 */
+	constructor(options: {
+		id?: number;
+		req?: Request;
+		res?: Response;
+		languageCode?: LanguagesEnum;
+		isAuthorized?: boolean;
+	}) {
+		// Destructure options to extract individual properties.
+		const { req, res, id, languageCode } = options;
+
+		// If 'id' is not provided, generate a random ID.
+		this._id = id || Math.random();
+
+		// Assign values to instance properties.
+		this._req = req;
+		this._res = res;
+		this._languageCode = languageCode;
 	}
 
+	/**
+	 *
+	 * @param ctx
+	 * @returns
+	 */
+	static deserialize(ctxObject: SerializedRequestContext): RequestContext {
+		return new RequestContext({
+			req: ctxObject._req,
+			languageCode: ctxObject._languageCode,
+		});
+	}
+
+	/**
+	 * Creates a shallow copy of the current instance of the RequestContext class.
+	 * @returns A new instance of RequestContext with the same property values as the original.
+	 */
+	copy(): RequestContext {
+		// Create a new object with the same prototype as the current instance
+		// and copy the properties of the current instance to the new object
+		return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+	}
+
+	/**
+	 *
+	 */
+	get languageCode(): LanguagesEnum {
+		return this._languageCode;
+	}
+
+	/**
+	 *
+	 * @returns
+	 */
 	static currentRequestContext(): RequestContext {
 		const session = cls.getNamespace(RequestContext.name);
 		if (session && session.active) {
 			return session.get(RequestContext.name);
 		}
-
 		return null;
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	static currentRequest(): Request {
 		const requestContext = RequestContext.currentRequestContext();
-
 		if (requestContext) {
-			return requestContext.request;
+			return requestContext._req;
 		}
-
 		return null;
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	static currentTenantId(): string {
 		try {
 			const user: IUser = RequestContext.currentUser();
@@ -50,6 +112,10 @@ export class RequestContext {
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	static currentUserId(): string {
 		try {
 			const user: IUser = RequestContext.currentUser();
@@ -62,6 +128,10 @@ export class RequestContext {
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	static currentRoleId(): string {
 		try {
 			const user: IUser = RequestContext.currentUser();
@@ -74,6 +144,10 @@ export class RequestContext {
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	static currentEmployeeId(): string {
 		try {
 			const user: IUser = RequestContext.currentUser();
@@ -88,12 +162,17 @@ export class RequestContext {
 		}
 	}
 
+	/**
+	 *
+	 * @param throwError
+	 * @returns
+	 */
 	static currentUser(throwError?: boolean): IUser {
 		const requestContext = RequestContext.currentRequestContext();
 
 		if (requestContext) {
 			// tslint:disable-next-line
-			const user: IUser = requestContext.request['user'];
+			const user: IUser = requestContext._req['user'];
 
 			if (user) {
 				return user;
@@ -107,25 +186,40 @@ export class RequestContext {
 		return null;
 	}
 
+	/**
+	 *
+	 * @param permission
+	 * @param throwError
+	 * @returns
+	 */
 	static hasPermission(permission: PermissionsEnum, throwError?: boolean): boolean {
 		return this.hasPermissions([permission], throwError);
 	}
 
+	/**
+	 * Retrieves the language code from the headers of the current request.
+	 * @returns The language code (LanguagesEnum) extracted from the headers, or the default language (ENGLISH) if not found.
+	 */
 	static getLanguageCode(): LanguagesEnum {
-		const req = this.currentRequest();
+		// Retrieve the current request
+		const req = RequestContext.currentRequest();
+
+		// Variable to store the extracted language code
 		let lang: LanguagesEnum;
-		const keys = ['language'];
+
+		// Check if a request exists
 		if (req) {
-			for (const key of keys) {
-				if (req.headers && req.headers[key]) {
-					lang = req.headers[key] as LanguagesEnum;
-					break;
-				}
+			// Check if the 'language' header exists in the request
+			if (req.headers && req.headers['language']) {
+				// If found, set the lang variable
+				lang = req.headers['language'] as LanguagesEnum;
 			}
 		}
 
-		return lang;
+		// Return the extracted language code or the default language (ENGLISH) if not found
+		return lang || LanguagesEnum.ENGLISH;
 	}
+
 
 	static hasPermissions(findPermissions: PermissionsEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
@@ -133,7 +227,7 @@ export class RequestContext {
 		if (requestContext) {
 			try {
 				// tslint:disable-next-line
-				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any);
+				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext._req as any);
 
 				if (token) {
 					const { permissions } = verify(token, env.JWT_SECRET) as {
@@ -169,7 +263,7 @@ export class RequestContext {
 		if (requestContext) {
 			try {
 				// tslint:disable-next-line
-				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any);
+				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext._req as any);
 
 				if (token) {
 					const { permissions } = verify(token, env.JWT_SECRET) as {
@@ -200,7 +294,7 @@ export class RequestContext {
 		if (requestContext) {
 			try {
 				// tslint:disable-next-line
-				return ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext.request as any);
+				return ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext._req as any);
 			} catch (error) {
 				// Do nothing here, we throw below anyway if needed
 				console.log(error);

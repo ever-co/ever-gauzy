@@ -35,6 +35,10 @@ function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
 	return (process.env.DB_ORM as MultiORM) || defaultValue;
 }
 
+console.log(chalk.magenta(`NodeJs version %s`), process.version);
+console.log('Is DEMO: ', process.env.DEMO);
+console.log('NODE_ENV: ', process.env.NODE_ENV);
+
 const dbORM: MultiORM = getORMType();
 console.log('DB ORM: ' + dbORM);
 
@@ -42,9 +46,6 @@ const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
 
 console.log(`Selected DB Type (DB_TYPE env var): ${dbType}`);
 console.log('DB Synchronize: ' + process.env.DB_SYNCHRONIZE);
-
-// `process` is a built-in global in Node.js, no need to `require()`
-console.log(chalk.magenta(`Currently running Node.js version %s`), process.version);
 
 let typeOrmConnectionConfig: TypeOrmModuleOptions;
 let mikroOrmConnectionConfig: MikroOrmModuleOptions;

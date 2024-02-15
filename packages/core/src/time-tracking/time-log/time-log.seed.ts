@@ -11,7 +11,7 @@ import {
 	ITimeLog
 } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { IPluginConfig, isEmpty } from '@gauzy/common';
+import { ApplicationPluginConfig, isEmpty } from '@gauzy/common';
 import { createRandomScreenshot } from '../screenshot/screenshot.seed';
 import { createTimeSlots } from '../time-slot/time-slot.seed';
 import { OrganizationProject, Screenshot, TimeLog, Timesheet, TimeSlot } from './../../core/entities/internal';
@@ -21,7 +21,7 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 
 export const createRandomTimeLogs = async (
 	dataSource: DataSource,
-	config: Partial<IPluginConfig>,
+	config: Partial<ApplicationPluginConfig>,
 	tenant: ITenant,
 	timeSheets: ITimesheet[]
 ) => {

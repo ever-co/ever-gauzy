@@ -3,12 +3,12 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_PORT,
 	DEFAULT_GRAPHQL_API_PATH,
-	IPluginConfig,
+	ApplicationPluginConfig,
 } from '@gauzy/common';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from '@gauzy/config';
 
 // Define the dev configuration
-export const devConfig: IPluginConfig = {
+export const devConfig: ApplicationPluginConfig = {
 	apiConfigOptions: {
 		host: process.env.API_HOST || DEFAULT_API_HOST,
 		port: process.env.API_PORT || DEFAULT_API_PORT,

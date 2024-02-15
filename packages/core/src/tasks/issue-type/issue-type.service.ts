@@ -1,6 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, SelectQueryBuilder } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import {
 	IIssueType,
 	IIssueTypeCreateInput,
@@ -20,11 +22,14 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	constructor(
 		@InjectRepository(IssueType)
-		typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
+		readonly typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
 
-		mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository
+		readonly mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmIssueTypeRepository, mikroOrmIssueTypeRepository);
+		super(typeOrmIssueTypeRepository, mikroOrmIssueTypeRepository, knexConnection);
 	}
 
 	/**
@@ -36,26 +41,24 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	async delete(id: IIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
+				isSystem: false
 			},
 		});
 	}
 
 	/**
-	 * GET issue types by filters
-	 * If parameters not match, retrieve global issue types
+	 * Fetches issue types based on specified parameters.
 	 *
-	 * @param params
-	 * @returns
+	 * @param params - Parameters for finding issue types (IIssueTypeFindInput).
+	 * @returns A Promise resolving to an object with items (array of issue types) and total count.
+	 * @throws Error if no records are found or an error occurs during the query.
 	 */
-	async findAllIssueTypes(
-		params: IIssueTypeFindInput
-	): Promise<IPagination<IIssueType>> {
+	public async fetchAll(params: IIssueTypeFindInput): Promise<IPagination<IIssueType>> {
 		try {
 			/**
 			 * Find at least one record or get global records
 			 */
-			const cqb = this.repository.createQueryBuilder(this.alias);
+			const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.alias);
 			cqb.where((qb: SelectQueryBuilder<IssueType>) => {
 				this.getFilterQuery(qb, params);
 			});
@@ -64,11 +67,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			/**
 			 * Find task issue types for given params
 			 */
-			const query = this.repository.createQueryBuilder(this.alias).setFindOptions({
-				relations: {
-					image: true
-				}
-			});
+			const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.alias);
 			query.where((qb: SelectQueryBuilder<IssueType>) => {
 				this.getFilterQuery(qb, params);
 			});
@@ -80,32 +79,44 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	}
 
 	/**
-	 * Create bulk issue type for tenants
+	 * Create or fetch issue types for a list of tenants.
 	 *
-	 * @param tenants '
+	 * @param tenants The list of tenants.
+	 * @returns A promise resolving to an array of created or fetched issue types.
 	 */
-	async bulkCreateTenantsIssueTypes(
-		tenants: ITenant[]
-	): Promise<IIssueType[]> {
+	async bulkCreateTenantsIssueTypes(tenants: ITenant[]): Promise<IIssueType[]> {
 		try {
-			const issueTypes: IIssueType[] = [];
+			// Fetch existing issue types
+			const { items = [], total } = await super.fetchAll({});
 
-			for (const tenant of tenants) {
-				for (const issueType of DEFAULT_GLOBAL_ISSUE_TYPES) {
-					const create = this.repository.create({
-						...issueType,
-						icon: `ever-icons/${issueType.icon}`,
-						tenant,
-						isSystem: false,
-					});
-					issueTypes.push(create);
-				}
-			}
+			// Define default issue types
+			const defaultIssueTypes = DEFAULT_GLOBAL_ISSUE_TYPES.map((issueType: IIssueType) => ({
+				...issueType,
+				icon: `ever-icons/${issueType.icon}`,
+				isSystem: false
+			}));
 
+			// Function to generate issue types based on a source array
+			const generateIssueTypes = (source: IIssueType[]) => tenants.flatMap((tenant) =>
+				source.map(({ name, value, description, icon, color, imageId = null }: IIssueType) => ({
+					name,
+					value,
+					description,
+					icon,
+					color,
+					imageId,
+					tenant,
+					isSystem: false
+				}))
+			);
+
+			// Generate the array of issue types based on existing or default values
+			const issueTypes: IIssueType[] = total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
+
+			// Save the created or fetched issue types to the repository and return the result.
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			console.log('error', error);
-			throw new BadRequestException(error);
+			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -114,76 +125,68 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 *
 	 * @param organization
 	 */
-	async bulkCreateOrganizationIssueType(
-		organization: IOrganization
-	): Promise<IIssueType[]> {
+	async bulkCreateOrganizationIssueType(organization: IOrganization): Promise<IIssueType[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
+			const { items = [] } = await super.fetchAll({ tenantId });
 
-			const issueTypes: IIssueType[] = [];
-			const { items = [] } = await this.findAllIssueTypes({
-				tenantId,
-			});
-
-			for (const item of items) {
-				const { name, value, description, icon, color } = item;
-
-				const create = this.repository.create({
+			// Use map to generate issue types for each item.
+			const issueTypes: IIssueType[] = items.map((item: IIssueType) => (
+				new IssueType({
 					tenantId,
-					name,
-					value,
-					description,
-					icon,
-					color,
+					name: item.name,
+					value: item.value,
+					description: item.description,
+					icon: item.icon,
+					color: item.color,
+					imageId: item.imageId,
 					organization,
-					isSystem: false,
-				});
-				issueTypes.push(create);
-			}
+					isSystem: false
+				})
+			));
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			throw new BadRequestException(error);
+			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	/**
-	 * Create bulk issue type for specific organization entity
+	 * Create bulk issue types for a specific organization entity.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity - Partial input for creating issue types (Partial<IIssueTypeCreateInput>).
+	 * @returns A Promise resolving to an array of created issue types (IIssueType[]).
+	 * @throws HttpException if an error occurs during the creation process.
 	 */
-	async createBulkIssueTypeByEntity(
-		entity: Partial<IIssueTypeCreateInput>
-	): Promise<IIssueType[]> {
+	async createBulkIssueTypeByEntity(entity: Partial<IIssueTypeCreateInput>): Promise<IIssueType[]> {
 		try {
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const issueTypes: IIssueType[] = [];
-			const { items = [] } = await this.findAllIssueTypes({
-				tenantId,
-				organizationId,
-			});
+			// Fetch items based on tenant and organizationId
+			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
-			for (const item of items) {
-				const { name, value, description, icon, color } = item;
-
-				const issueType = await this.create({
-					...entity,
-					name,
-					value,
-					description,
-					icon,
-					color,
-					isSystem: false,
-				});
-				issueTypes.push(issueType);
-			}
-
+			// Use Promise.all to concurrently create issue types for each item
+			// Wait for all issue types to be created and resolve the promises
+			const issueTypes = await Promise.all(
+				items.map(async (item: IIssueType) => {
+					const { name, value, description, icon, color, imageId } = item;
+					// Create and return the issue type
+					return await this.create({
+						...entity,
+						name,
+						value,
+						description,
+						icon,
+						color,
+						imageId,
+						isSystem: false
+					});
+				})
+			);
 			return issueTypes;
 		} catch (error) {
-			console.log('error', error);
-			throw new BadRequestException(error);
+			// If an error occurs, throw an HttpException with a more specific message.
+			throw new HttpException('Failed to create bulk issue types for the organization entity.', HttpStatus.BAD_REQUEST);
 		}
 	}
 }

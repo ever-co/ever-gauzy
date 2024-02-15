@@ -21,8 +21,9 @@ export class AvailabilitySlotsCreateHandler
 	): Promise<IAvailabilitySlot> {
 		const { input, insertType } = command;
 		const { organizationId, employeeId, startTime, endTime, type } = input;
+		if (!startTime || !endTime) return;
 		const tenantId = RequestContext.currentTenantId();
-				
+
 		const conflicts: IAvailabilitySlot[] = await this.commandBus.execute(
 			new GetConflictAvailabilitySlotsCommand({
 				employeeId,
@@ -62,7 +63,7 @@ export class AvailabilitySlotsCreateHandler
 			...input,
 			tenantId
 		});
-		
+
 		return await this.availabilitySlotsService.create(availabilitySlots);
 	}
 }

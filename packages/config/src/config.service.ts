@@ -1,14 +1,20 @@
 import { DynamicModule, Injectable, Type, Logger } from '@nestjs/common';
-import { IPluginConfig, IApiServerOptions, IAssetOptions } from '@gauzy/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
+import {
+	ApplicationPluginConfig,
+	ApiServerConfigurationOptions,
+	AssetConfigurationOptions,
+	GraphqlConfigurationOptions
+} from '@gauzy/common';
 import { getConfig } from './config-manager';
 import { environment } from './environments/environment';
 import { IEnvironment } from './environments/ienvironment';
 
 @Injectable()
 export class ConfigService {
-	public config: Partial<IPluginConfig>;
+
+	public readonly config: Partial<ApplicationPluginConfig>;
 	private readonly environment = environment;
 	private readonly logger = new Logger(ConfigService.name);
 
@@ -22,27 +28,47 @@ export class ConfigService {
 		this.logger.log(`Is Production: ${environment.production}`);
 	}
 
-	get apiConfigOptions(): IApiServerOptions {
+	/**
+	 * Get the API server configuration options.
+	 */
+	get apiConfigOptions(): Readonly<ApiServerConfigurationOptions> {
 		return this.config.apiConfigOptions;
 	}
 
-	get graphqlConfigOptions() {
+
+	/**
+	 * Get the GraphQL configuration options.
+	 */
+	get graphqlConfigOptions(): Readonly<GraphqlConfigurationOptions> {
 		return this.config.apiConfigOptions.graphqlConfigOptions;
 	}
 
-	get dbConnectionOptions(): TypeOrmModuleOptions {
+
+	/**
+	 * Get the TypeORM connection options.
+	 */
+	get dbConnectionOptions(): Readonly<TypeOrmModuleOptions> {
 		return this.config.dbConnectionOptions;
 	}
 
-	get dbMikroOrmConnectionOptions(): MikroOrmModuleOptions {
+	/**
+	 * Get the MikroORM connection options.
+	 */
+	get dbMikroOrmConnectionOptions(): Readonly<MikroOrmModuleOptions> {
 		return this.config.dbMikroOrmConnectionOptions;
 	}
 
-	get plugins(): Array<DynamicModule | Type<any>> {
-		return this.config.plugins;
+	/**
+	 * Get the plugins configuration.
+	 */
+	get plugins(): Array<Type<any> | DynamicModule> {
+		return this.config.plugins || [];
 	}
 
-	get assetOptions(): Required<IAssetOptions> {
+	/**
+	 * Get the asset configuration options.
+	 */
+	get assetOptions(): Readonly<AssetConfigurationOptions> {
 		return this.config.assetOptions;
 	}
 

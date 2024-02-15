@@ -1,4 +1,5 @@
 import { IEstimateEmail } from '@gauzy/contracts';
+import { isMySQL } from '@gauzy/config';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -10,7 +11,9 @@ export class EstimateEmail extends TenantOrganizationBaseEntity
 	implements IEstimateEmail {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@Column({
+		...(isMySQL() ? { type: 'text' } : {})
+	})
 	token?: string;
 
 	@ApiProperty({ type: () => String })

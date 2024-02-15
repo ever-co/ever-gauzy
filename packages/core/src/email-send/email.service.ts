@@ -37,7 +37,6 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 
 @Injectable()
 export class EmailService {
-
 	constructor(
 		@InjectRepository(EmailHistory)
 		private typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
@@ -55,7 +54,7 @@ export class EmailService {
 		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
 
 		private readonly _emailSendService: EmailSendService
-	) { }
+	) {}
 
 	/**
 	 *
@@ -108,7 +107,7 @@ export class EmailService {
 			message: ''
 		};
 
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
@@ -117,7 +116,9 @@ export class EmailService {
 				body.message = sendResult.originalMessage;
 			} catch (error) {
 				console.log(`Error while sending payment receipt ${invoiceNumber}: %s`, error?.message);
-				throw new BadRequestException(`Error while sending payment receipt ${invoiceNumber}: ${error?.message}`);
+				throw new BadRequestException(
+					`Error while sending payment receipt ${invoiceNumber}: ${error?.message}`
+				);
 			} finally {
 				await this.createEmailRecord(body);
 			}
@@ -177,8 +178,8 @@ export class EmailService {
 			languageCode,
 			organization,
 			message: ''
-		}
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		};
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
@@ -224,7 +225,7 @@ export class EmailService {
 				name: organizationContact.name,
 				host: baseUrl,
 				id: organizationContact.id,
-				inviterName: inviterUser ? (inviterUser.name || '') : '',
+				inviterName: inviterUser ? inviterUser.name || '' : '',
 				organizationName: organization.name,
 				organizationId,
 				tenantId,
@@ -237,8 +238,8 @@ export class EmailService {
 			languageCode,
 			message: '',
 			organization
-		}
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => body.email.includes(server));
+		};
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
 				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
@@ -259,15 +260,7 @@ export class EmailService {
 	 * @param inviteUserModel
 	 */
 	async inviteUser(inviteUserModel: IInviteUserModel) {
-		const {
-			email,
-			role,
-			organization,
-			registerUrl,
-			originUrl,
-			languageCode,
-			invitedBy
-		} = inviteUserModel;
+		const { email, role, organization, registerUrl, originUrl, languageCode, invitedBy } = inviteUserModel;
 		const tenantId = RequestContext.currentTenantId();
 		const { id: organizationId } = organization;
 		const sendOptions = {
@@ -292,7 +285,7 @@ export class EmailService {
 			message: '',
 			organization,
 			user: invitedBy
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -341,7 +334,7 @@ export class EmailService {
 			message: '',
 			organization,
 			user: invitedBy
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -387,7 +380,7 @@ export class EmailService {
 			message: '',
 			organization,
 			user: invitedBy
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -407,12 +400,7 @@ export class EmailService {
 	 *
 	 */
 	async sendAcceptInvitationEmail(joinEmployeeModel: IJoinEmployeeModel, originUrl?: string) {
-		const {
-			email,
-			employee,
-			organization,
-			languageCode,
-		} = joinEmployeeModel;
+		const { email, employee, organization, languageCode } = joinEmployeeModel;
 
 		const { id: organizationId, tenantId } = organization;
 		const sendOptions = {
@@ -424,7 +412,7 @@ export class EmailService {
 				host: originUrl || env.clientBaseUrl,
 				locale: languageCode,
 				organizationName: organization.name,
-				employeeName: employee.user.firstName,
+				employeeName: employee.user.firstName
 			}
 		};
 
@@ -433,8 +421,8 @@ export class EmailService {
 			email: sendOptions.message.to,
 			languageCode,
 			message: '',
-			organization,
-		}
+			organization
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -471,7 +459,7 @@ export class EmailService {
 				id: organizationId
 			});
 		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 
 		// Override the default config by merging in the provided values.
 		const appIntegration = deepMerge(env.appIntegrationConfig, integration);
@@ -497,8 +485,8 @@ export class EmailService {
 				email: sendOptions.message.to,
 				languageCode,
 				organization,
-				message: '',
-			}
+				message: ''
+			};
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
@@ -555,7 +543,7 @@ export class EmailService {
 			email: sendOptions.message.to,
 			languageCode: sendOptions.locals.locale,
 			message: ''
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -577,12 +565,7 @@ export class EmailService {
 	 * @param organizationId
 	 * @param originUrl
 	 */
-	async requestPassword(
-		user: IUser,
-		resetLink: string,
-		languageCode: LanguagesEnum,
-		originUrl?: string
-	) {
+	async requestPassword(user: IUser, resetLink: string, languageCode: LanguagesEnum, originUrl?: string) {
 		const integration = Object.assign({}, env.appIntegrationConfig);
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_RESET,
@@ -603,8 +586,8 @@ export class EmailService {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode,
-			message: '',
-		}
+			message: ''
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -637,10 +620,10 @@ export class EmailService {
 
 		/** */
 		const items: {
-			resetLink: string,
-			tenantName: ITenant['name'],
-			tenantId: ITenant['id'],
-			userName: IUser['name']
+			resetLink: string;
+			tenantName: ITenant['name'];
+			tenantId: ITenant['id'];
+			userName: IUser['name'];
 		}[] = [];
 
 		/** */
@@ -674,8 +657,8 @@ export class EmailService {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode,
-			message: '',
-		}
+			message: ''
+		};
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
@@ -700,19 +683,14 @@ export class EmailService {
 	 * @param organizationId
 	 * @param originUrl
 	 */
-	async sendAppointmentMail(
-		email: string,
-		languageCode: LanguagesEnum,
-		organizationId?: string,
-		originUrl?: string
-	) {
+	async sendAppointmentMail(email: string, languageCode: LanguagesEnum, organizationId?: string, originUrl?: string) {
 		let organization: Organization;
 		if (organizationId) {
 			organization = await this.typeOrmOrganizationRepository.findOneBy({
 				id: organizationId
 			});
 		}
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: 'email-appointment',
 			message: {
@@ -731,8 +709,8 @@ export class EmailService {
 			email: sendOptions.message.to,
 			languageCode,
 			organization,
-			message: '',
-		}
+			message: ''
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -759,7 +737,7 @@ export class EmailService {
 		const organization = await this.typeOrmOrganizationRepository.findOneBy({
 			id: timesheet.employee.organizationId
 		});
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: EmailTemplateEnum.TIME_SHEET_ACTION,
 			message: {
@@ -782,7 +760,7 @@ export class EmailService {
 			message: '',
 			organization,
 			user: timesheet.employee.user
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -809,7 +787,7 @@ export class EmailService {
 		const organization = await this.typeOrmOrganizationRepository.findOneBy({
 			id: timesheet.employee.organizationId
 		});
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const sendOptions = {
 			template: EmailTemplateEnum.TIME_SHEET_SUBMIT,
 			message: {
@@ -833,7 +811,7 @@ export class EmailService {
 			message: '',
 			organization,
 			user: timesheet.employee.user
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -877,15 +855,15 @@ export class EmailService {
 		const sendOptions = {
 			template: EmailTemplateEnum.PASSWORD_LESS_AUTHENTICATION,
 			message: {
-				to: `${email}`,
+				to: `${email}`
 			},
 			locals: {
 				locale,
 				email,
 				magicCode,
 				magicLink,
-				...integration,
-			},
+				...integration
+			}
 		};
 
 		/** */
@@ -893,7 +871,7 @@ export class EmailService {
 			templateName: sendOptions.template,
 			email: sendOptions.message.to,
 			languageCode: locale,
-			message: '',
+			message: ''
 		};
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -904,11 +882,14 @@ export class EmailService {
 				// Get the email sending service instance
 				const instance = await this._emailSendService.getInstance();
 
-				// Send the email
-				const send = await instance.send(sendOptions);
-
-				// Update the body with the original message
-				body['message'] = send.originalMessage;
+				if (instance) {
+					// Send the email
+					const send = await instance.send(sendOptions);
+					// Update the body with the original message
+					body['message'] = send.originalMessage;
+				} else {
+					console.error('Error while getting email instance for password-less authentication');
+				}
 			} catch (error) {
 				// Handle errors during email sending
 				console.log('Error while sending password-less authentication code: %s', error);
@@ -922,12 +903,7 @@ export class EmailService {
 	 * @param user
 	 * @param languageCode
 	 */
-	async emailReset(
-		user: IUser,
-		languageCode: LanguagesEnum,
-		verificationCode: string,
-		organization: IOrganization
-	) {
+	async emailReset(user: IUser, languageCode: LanguagesEnum, verificationCode: string, organization: IOrganization) {
 		const integration = Object.assign({}, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -941,7 +917,7 @@ export class EmailService {
 				email: user.email,
 				host: env.clientBaseUrl,
 				verificationCode,
-				name: user.name,
+				name: user.name
 			}
 		};
 		const body = {
@@ -951,7 +927,7 @@ export class EmailService {
 			message: '',
 			user: user,
 			organization
-		}
+		};
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
@@ -986,9 +962,9 @@ export class EmailService {
 		integration?: IAppIntegrationConfig
 	) {
 		/**
-		* Override the default config by merging in the provided values.
-		*
-		*/
+		 * Override the default config by merging in the provided values.
+		 *
+		 */
 		deepMerge(integration, env.appIntegrationConfig);
 
 		const sendOptions = {
@@ -1010,7 +986,7 @@ export class EmailService {
 			languageCode,
 			message: '',
 			organization
-		}
+		};
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -1027,7 +1003,6 @@ export class EmailService {
 	}
 
 	async resendEmail(input: IResendEmailInput, languageCode: LanguagesEnum) {
-
 		const { id } = input;
 		const emailHistory: IEmailHistory = await this.typeOrmEmailHistoryRepository.findOne({
 			where: {
@@ -1035,7 +1010,7 @@ export class EmailService {
 			},
 			relations: {
 				emailTemplate: true,
-				organization: true,
+				organization: true
 			}
 		});
 		if (!emailHistory) {
@@ -1054,11 +1029,14 @@ export class EmailService {
 			}
 		};
 
-		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find(server => sendOptions.message.to.includes(server));
+		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => sendOptions.message.to.includes(server));
 
 		if (!isEmailBlocked) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId: organization.id, tenantId: emailHistory.tenantId });
+				const instance = await this._emailSendService.getEmailInstance({
+					organizationId: organization.id,
+					tenantId: emailHistory.tenantId
+				});
 				await instance.send(sendOptions);
 				emailHistory.status = EmailStatusEnum.SENT;
 
@@ -1082,15 +1060,8 @@ export class EmailService {
 		user?: IUser;
 	}): Promise<IEmailHistory> {
 		const emailEntity = new EmailHistory();
-		const {
-			templateName: template,
-			email,
-			languageCode,
-			message,
-			organization,
-			user
-		} = createEmailOptions;
-		const tenantId = (organization) ? organization.tenantId : RequestContext.currentTenantId();
+		const { templateName: template, email, languageCode, message, organization, user } = createEmailOptions;
+		const tenantId = organization ? organization.tenantId : RequestContext.currentTenantId();
 		const emailTemplate = await this.typeOrmEmailTemplateRepository.findOneBy({
 			name: template + '/html',
 			languageCode
@@ -1100,7 +1071,7 @@ export class EmailService {
 		emailEntity.content = message.html;
 		emailEntity.emailTemplate = emailTemplate;
 		emailEntity.tenantId = tenantId;
-		emailEntity.organizationId = (organization) ? organization.id : null;
+		emailEntity.organizationId = organization ? organization.id : null;
 		if (user) {
 			emailEntity.user = user;
 		}

@@ -5,35 +5,35 @@ import { PUBLIC_METHOD_METADATA } from '@gauzy/common';
 
 @Injectable()
 export class AuthGuard extends PassportAuthGuard('jwt') {
+
 	constructor(private readonly _reflector: Reflector) {
 		super();
 	}
 
+	/**
+	 * Determines if the current request can be activated based on authorization and PUBLIC decorators.
+	 * @param context The execution context of the request.
+	 * @returns A boolean indicating whether access is allowed.
+	 */
 	canActivate(context: ExecutionContext) {
-		/*
-		 * PUBLIC decorator method level
-		 */
-		const isMethodPublic = this._reflector.get<boolean>(
-			PUBLIC_METHOD_METADATA,
-			context.getHandler()
-		);
-
-		/*
-		 * PUBLIC decorator class level
-		 */
+		// Check if the class has a PUBLIC decorator
 		const isClassPublic = this._reflector.get<boolean>(
 			PUBLIC_METHOD_METADATA,
 			context.getClass()
 		);
 
-		/*
-		 * IF methods/class are publics allowed them
-		 */
-		if (isMethodPublic || isClassPublic) {
+		// Check if the method has a PUBLIC decorator
+		const isMethodPublic = this._reflector.get<boolean>(
+			PUBLIC_METHOD_METADATA,
+			context.getHandler()
+		);
+
+		// Allow access if the method or class has the PUBLIC decorator
+		if (isClassPublic || isMethodPublic) {
 			return true;
 		}
 
-		// Make sure to check the authorization, for now, just return false to have a difference between public routes.
+		// For non-public methods or classes, check the authorization
 		return super.canActivate(context);
 	}
 }
