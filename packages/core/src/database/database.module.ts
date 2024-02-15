@@ -46,14 +46,14 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 		KnexModule.forRootAsync({
 			useFactory: () => ({
 				config: {
-					client: 'pg', // Specify the database client (PostgreSQL in this case)
-					useNullAsDefault: true,
+					client: 'pg', // Database client (PostgreSQL in this case)
+					useNullAsDefault: true, // Specify whether to use null as the default for unspecified fields
 					connection: {
-						host: process.env.DB_HOST || 'localhost',
-						port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
-						user: process.env.DB_USER || 'root',
-						password: process.env.DB_PASS || 'root',
-						database: process.env.DB_NAME || 'postgres',
+						host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
+						port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
+						database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
+						user: process.env.DB_USER || 'postgres', // Database username (default: postgres)
+						password: process.env.DB_PASS || 'root', // Database password (default: root)
 					}
 				},
 				retryAttempts: 100, // Number of retry attempts in case of connection failures
