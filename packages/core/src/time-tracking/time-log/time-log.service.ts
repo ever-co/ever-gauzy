@@ -88,8 +88,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
-		console.log({ request });
-
 		// Create a query builder for the TimeLog entity
 		const query = this.repository.createQueryBuilder(this.alias);
 
@@ -1058,7 +1056,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			})
 		);
 
-		console.log(query.getQueryAndParameters());
 		return query;
 	}
 
