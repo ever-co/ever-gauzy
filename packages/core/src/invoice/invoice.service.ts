@@ -64,7 +64,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 			try {
 				//generate estimate/invoice pdf and attached in email
 				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
-				const base64 = buffer.toString('base64');
+				if (!buffer) throw new Error('PDF generation failed');
+				const base64 = buffer?.toString('base64');
 
 				await this.emailService.emailInvoice(
 					languageCode,
