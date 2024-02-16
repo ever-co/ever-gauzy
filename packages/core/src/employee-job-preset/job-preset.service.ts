@@ -10,6 +10,7 @@ import {
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
@@ -60,6 +61,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public async getAll(request?: IGetJobPresetInput) {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, search, employeeId } = request;
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+
 
 		const query = this.repository.createQueryBuilder('job_preset');
 		query.setFindOptions({
@@ -85,7 +88,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 				});
 			}
 			if (isNotEmpty(search)) {
-				qb.andWhere(p(`"${query.alias}"."name" ILIKE :search`), {
+				qb.andWhere(p(`"${query.alias}"."name" ${likeOperator} :search`), {
 					search: `%${search}%`
 				});
 			}

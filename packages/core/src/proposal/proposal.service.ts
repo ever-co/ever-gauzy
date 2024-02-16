@@ -4,6 +4,7 @@ import { FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
 import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
@@ -52,6 +53,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('valueDate' in where) {
 				const { valueDate } = where;
 				const { startDate, endDate } = valueDate;
@@ -69,7 +71,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 			}
 			if ('jobPostContent' in where) {
 				const { jobPostContent } = where;
-				filter['where']['jobPostContent'] = Raw((alias) => `${alias} ILIKE '%${jobPostContent}%'`);
+				filter['where']['jobPostContent'] = Raw((alias) => `${alias} ${likeOperator} '%${jobPostContent}%'`);
 			}
 		}
 		return super.paginate(filter);
