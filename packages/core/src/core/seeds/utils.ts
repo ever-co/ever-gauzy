@@ -1,4 +1,4 @@
-import { IPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
@@ -12,12 +12,12 @@ import * as rimraf from 'rimraf';
  * @param config
  * @returns
  */
-export function copyAssets(filename: string, config: Partial<IPluginConfig>, destDir: string = 'ever-icons') {
+export function copyAssets(filename: string, config: Partial<ApplicationPluginConfig>, destDir: string = 'ever-icons') {
 	try {
 		const dir = env.isElectron
 			? path.join(env.gauzySeedPath, destDir)
 			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
-			  path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
+			path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
 
 		const baseDir = env.isElectron
 			? path.resolve(env.gauzyUserPath, ...['public'])
@@ -48,7 +48,7 @@ export function copyAssets(filename: string, config: Partial<IPluginConfig>, des
  * @param config
  * @param destDir
  */
-export async function cleanAssets(config: Partial<IPluginConfig>, destDir: string) {
+export async function cleanAssets(config: Partial<ApplicationPluginConfig>, destDir: string) {
 	console.log(chalk.green(`CLEANING UP SEED ASSETS FOR ${destDir}`));
 
 	await new Promise((resolve, reject) => {

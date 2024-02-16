@@ -1,4 +1,4 @@
-import { IPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import { IReport, IReportCategory, IReportOrganization, ITenant } from '@gauzy/contracts';
 import * as chalk from 'chalk';
@@ -15,7 +15,7 @@ import { Report } from './report.entity';
 
 export const createDefaultReport = async (
 	dataSource: DataSource,
-	config: Partial<IPluginConfig>,
+	config: Partial<ApplicationPluginConfig>,
 	tenant: ITenant
 ): Promise<IReport[]> => {
 	await cleanReport(dataSource, config);
@@ -141,7 +141,7 @@ export const createDefaultReport = async (
 	return reports;
 };
 
-async function cleanReport(dataSource: DataSource, config: Partial<IPluginConfig>) {
+async function cleanReport(dataSource: DataSource, config: Partial<ApplicationPluginConfig>) {
 	const report = dataSource.getRepository(Report).metadata.tableName;
 	const reportCategory = dataSource.getRepository(ReportCategory).metadata.tableName;
 
@@ -190,7 +190,7 @@ async function cleanReport(dataSource: DataSource, config: Partial<IPluginConfig
 	});
 }
 
-function copyImage(fileName: string, config: Partial<IPluginConfig>) {
+function copyImage(fileName: string, config: Partial<ApplicationPluginConfig>) {
 	try {
 		const destDir = 'reports';
 

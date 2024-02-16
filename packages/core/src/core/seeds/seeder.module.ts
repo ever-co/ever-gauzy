@@ -1,11 +1,11 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { getDynamicPluginsModules } from '@gauzy/plugin';
+import { HeaderResolver, I18nModule } from 'nestjs-i18n';
+import * as path from 'path';
 import { ConfigModule, environment } from '@gauzy/config';
+import { getDynamicPluginsModules } from '@gauzy/plugin';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { SeedDataService } from './seed-data.service';
 import { DatabaseModule } from './../../database/database.module';
-import { HeaderResolver, I18nModule } from 'nestjs-i18n';
-import { LanguagesEnum } from '@gauzy/contracts';
-import * as path from 'path';
 
 /**
  * Import and provide seeder classes.
@@ -18,12 +18,15 @@ import * as path from 'path';
 	exports: [SeedDataService]
 })
 export class SeederModule {
+	/**
+	 * Creates a dynamic module configuration for SeederModule with plugin support.
+	 * @returns A dynamic module definition.
+	 */
 	static forPlugins(): DynamicModule {
 		return {
 			module: SeederModule,
 			providers: [],
 			imports: [
-				...getDynamicPluginsModules(),
 				DatabaseModule,
 				I18nModule.forRoot({
 					fallbackLanguage: LanguagesEnum.ENGLISH,
@@ -32,7 +35,8 @@ export class SeederModule {
 						watch: !environment.production
 					},
 					resolvers: [new HeaderResolver(['language'])]
-				})
+				}),
+				...getDynamicPluginsModules(),
 			],
 			exports: []
 		} as DynamicModule;

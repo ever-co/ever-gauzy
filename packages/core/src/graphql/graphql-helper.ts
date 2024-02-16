@@ -1,15 +1,22 @@
-import { IGraphQLApiOptions, isNotEmpty } from '@gauzy/common';
 import { GqlModuleOptions, GraphQLTypesLoader } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { buildSchema, extendSchema, printSchema } from 'graphql';
 import * as path from 'path';
+import { GraphQLApiConfigurationOptions, isNotEmpty } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { getPluginExtensions } from '@gauzy/plugin';
 
+/**
+ *
+ * @param configService
+ * @param typesLoader
+ * @param options
+ * @returns
+ */
 export async function createGraphqlModuleOptions(
 	configService: ConfigService,
 	typesLoader: GraphQLTypesLoader,
-	options: IGraphQLApiOptions
+	options: GraphQLApiConfigurationOptions
 ): Promise<GqlModuleOptions> {
 	return {
 		driver: ApolloDriver,
@@ -27,9 +34,16 @@ export async function createGraphqlModuleOptions(
 	} as GqlModuleOptions;
 }
 
+/**
+ *
+ * @param configService
+ * @param options
+ * @param typesLoader
+ * @returns
+ */
 async function createTypeDefs(
 	configService: ConfigService,
-	options: IGraphQLApiOptions,
+	options: GraphQLApiConfigurationOptions,
 	typesLoader: GraphQLTypesLoader
 ): Promise<string> {
 	const normalizedPaths = options.typePaths.map((p) =>

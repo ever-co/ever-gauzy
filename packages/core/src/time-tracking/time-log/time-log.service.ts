@@ -5,7 +5,6 @@ import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, Upd
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
-	IGetTimeLogInput,
 	PermissionsEnum,
 	IDateRange,
 	IGetTimeLogReportInput,
@@ -87,7 +86,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request The input parameters for fetching time logs.
 	 * @returns A Promise that resolves to an array of time logs.
 	 */
-	async getTimeLogs(request: IGetTimeLogInput): Promise<ITimeLog[]> {
+	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
 		// Create a query builder for the TimeLog entity
 		const query = this.repository.createQueryBuilder(this.alias);
 
@@ -946,7 +945,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param request - The criteria for filtering TimeLogs.
 	 * @returns The modified query.
 	 */
-	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogInput) {
+	getFilterTimeLogQuery(query: SelectQueryBuilder<TimeLog>, request: IGetTimeLogReportInput) {
 		const { organizationId, projectIds = [], teamIds = [] } = request;
 		let { employeeIds = [] } = request;
 
@@ -978,13 +977,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				moment.utc(request.startDate || moment().startOf('day')),
 				moment.utc(request.endDate || moment().endOf('day'))
 			);
-			query.andWhere(
-				p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`),
-				{
-					startDate,
-					endDate
-				}
-			);
+			query.andWhere(p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`), {
+				startDate,
+				endDate
+			});
 		}
 
 		// Filter by organization employee IDs if used in the request
@@ -1030,6 +1026,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const condition = logType instanceof Array ? p(`"${query.alias}"."logType" IN (:...logType)`) : p(`"${query.alias}"."logType" = :logType`);
 
 			query.andWhere(condition, { logType });
+		}
+
+		/**
+		 * Apply a condition to the TypeORM query based on the 'isEdited' property in the request.
+		 * If 'isEdited' is true, filter rows where the 'editedAt' column is not null.
+		 * If 'isEdited' is false, filter rows where the 'editedAt' column is null.
+		 */
+		if ('isEdited' in request) {
+			if (request.isEdited) {
+				query.andWhere(p(`"${query.alias}"."editedAt" IS NOT NULL`));
+			} else {
+				query.andWhere(p(`"${query.alias}"."editedAt" IS NULL`));
+			}
 		}
 
 		// Additional conditions for filtering by tenantId and organizationId

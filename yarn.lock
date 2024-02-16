@@ -5211,10 +5211,10 @@
   dependencies:
     regenerator-runtime "^0.13.3"
 
-"@jitsu/js@^1.3.0":
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/@jitsu/js/-/js-1.7.2.tgz#4ab497b51b534aef5fdb89e23ea0350b770f9510"
-  integrity sha512-7u5CFnre5PKjxSI7nr53IU7Ejr/66CbxfENQBrcsV8uyTS5xb8FHNdSqFKaTLWln4dcc2zGiu3ZntUyc5DL/uQ==
+"@jitsu/js@^1.8.2":
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/@jitsu/js/-/js-1.8.2.tgz#5406140c31e1e456b57b75650c983febae341b98"
+  integrity sha512-EbGxdZLkwjv+wWHe2k6JscfjoN8cOM7xOM8kg55/u1hC1IC1umK+dH8hqLeKi25snEHFoIMvxu6n3lDXGIYMXQ==
   dependencies:
     analytics "0.8.9"
 
@@ -15087,9 +15087,9 @@ ckeditor4-integrations-common@^1.0.0:
   integrity sha512-OAoQT/gYrHkg0qgzf6MS/rndYhq3SScLVQ3rtXQeuCE8ju7nFHg3qZ7WGA2XpFxcZzsMP6hhugXqdel5vbcC3g==
 
 ckeditor4@^4.23.0:
-  version "4.23.0"
-  resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.23.0.tgz#c0c3bc4e2a66ada6010b89466a41b09202f7bb7a"
-  integrity sha512-K9DUzTa7roj8JffKLm6nOxDF02aPURDK8m7oFibvvkyAaomj24qOgpVdt7yvszmIubeJLbAB6q4k7Euk8jzD1A==
+  version "4.24.0"
+  resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.24.0.tgz#9699ddbce7eaa9cb1063f7f7d75b0ae761106405"
+  integrity sha512-ShtIqZMMNmP5r8AhZqnysSaONsx+qKjI/zf5AkU9wKxl0yHVw2/CSxWYmdd40u3dMjJR2kOthQ6USahz528lbw==
 
 class-transformer@^0.5.1:
   version "0.5.1"
@@ -19738,7 +19738,7 @@ express-session@^1.17.3:
     safe-buffer "5.2.1"
     uid-safe "~2.1.5"
 
-express@4.18.2, express@^4.17.1, express@^4.17.2, express@^4.17.3, express@^4.18.2:
+express@4.18.2, express@^4.17.1, express@^4.17.3, express@^4.18.2:
   version "4.18.2"
   resolved "https://registry.yarnpkg.com/express/-/express-4.18.2.tgz#3fabe08296e930c796c19e3c516979386ba9fd59"
   integrity sha512-5/PsL6iGPdfQ/lKM1UuielYgv3BUoJfz1aUwU9vHZ+J7gyvwdQXFEBIEIaxeGf0GIcreATNyBExtalisDbuMqQ==
@@ -28059,6 +28059,11 @@ nerf-dart@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/nerf-dart/-/nerf-dart-1.0.0.tgz#e6dab7febf5ad816ea81cf5c629c5a0ebde72c1a"
   integrity sha512-EZSPZB70jiVsivaBLYDCyntd5eH8NTSMOn3rB+HxwdmKThGELLdYv8qVIMWvZEFy9w8ZZpW9h9OB32l1rGtj7g==
+
+nest-knexjs@^0.0.21:
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/nest-knexjs/-/nest-knexjs-0.0.21.tgz#75972804b1f6053a312e531a1abfaec89759b947"
+  integrity sha512-nlEG/Ao8gu8IVP1nudpTFXgqxRyYlezxtKAwojwpMMFkthGuNRk3nq46MwpjwQPJoupcjm4TX0jkSpfHQGx7cg==
 
 nestjs-i18n@^10.4.0:
   version "10.4.0"

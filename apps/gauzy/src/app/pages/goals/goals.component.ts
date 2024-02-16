@@ -355,12 +355,12 @@ export class GoalsComponent
 			if (selection === 'employee' && !!this.employee) {
 				this.goals = allGoals.filter((goal) =>
 					this.employee.id == null
-						? goal.level.toLowerCase() === selection
-						: goal.ownerEmployee.id === this.employee.id
+						? goal.level?.toLowerCase() === selection
+						: goal.ownerEmployee?.id === this.employee.id
 				);
 			} else {
 				this.goals = allGoals.filter(
-					(goal) => goal.level.toLowerCase() === selection
+					(goal) => goal.level?.toLowerCase() === selection
 				);
 			}
 			this.goalLevels = [GoalLevelEnum[selection.toUpperCase()]];

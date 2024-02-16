@@ -11,7 +11,7 @@ import {
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import * as chalk from 'chalk';
-import { IPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { createRandomTimeLogs, recalculateTimesheetActivity } from './../time-log/time-log.seed';
 import { createRandomActivities } from '../activity/activity.seed';
 import { Employee, Timesheet } from './../../core/entities/internal';
@@ -19,7 +19,7 @@ import { randomSeedConfig } from './../../core/seeds/random-seed-config';
 
 export const createDefaultTimeSheet = async (
 	dataSource: DataSource,
-	config: Partial<IPluginConfig>,
+	config: Partial<ApplicationPluginConfig>,
 	tenant: ITenant,
 	organization: IOrganization,
 	employees: IEmployee[]
@@ -108,7 +108,7 @@ export const createDefaultTimeSheet = async (
 
 export const createRandomTimesheet = async (
 	dataSource: DataSource,
-	config: Partial<IPluginConfig>,
+	config: Partial<ApplicationPluginConfig>,
 	tenants: ITenant[]
 ) => {
 	for await (const tenant of tenants) {

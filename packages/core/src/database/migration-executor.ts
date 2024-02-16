@@ -2,7 +2,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { camelCase } from 'typeorm/util/StringUtils';
 import * as chalk from 'chalk';
 import * as path from 'path';
-import { IPluginConfig, isNotEmpty } from '@gauzy/common';
+import { ApplicationPluginConfig, isNotEmpty } from '@gauzy/common';
 import { registerPluginConfig } from '../bootstrap';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
@@ -15,7 +15,7 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *
  * @param pluginConfig
  */
-export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>) {
+export async function runDatabaseMigrations(pluginConfig: Partial<ApplicationPluginConfig>) {
     const config = await registerPluginConfig(pluginConfig);
     const dataSource: DataSource = await establishDatabaseConnection(config);
 
@@ -45,7 +45,7 @@ export async function runDatabaseMigrations(pluginConfig: Partial<IPluginConfig>
  *
  * @param pluginConfig
  */
-export async function revertLastDatabaseMigration(pluginConfig: Partial<IPluginConfig>) {
+export async function revertLastDatabaseMigration(pluginConfig: Partial<ApplicationPluginConfig>) {
     const config = await registerPluginConfig(pluginConfig);
     const connection = await establishDatabaseConnection(config);
 
@@ -69,7 +69,7 @@ export async function revertLastDatabaseMigration(pluginConfig: Partial<IPluginC
  *
  * @param pluginConfig
  */
-export async function generateMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
+export async function generateMigration(pluginConfig: Partial<ApplicationPluginConfig>, options: IMigrationOptions) {
     if (!options.name) {
         console.log(chalk.yellow("Migration name must be required.Please specify migration name!"));
         return;
@@ -142,7 +142,7 @@ export async function generateMigration(pluginConfig: Partial<IPluginConfig>, op
  *
  * @param pluginConfig
  */
-export async function createMigration(pluginConfig: Partial<IPluginConfig>, options: IMigrationOptions) {
+export async function createMigration(pluginConfig: Partial<ApplicationPluginConfig>, options: IMigrationOptions) {
     if (!options.name) {
         console.log(chalk.yellow("Migration name must be required.Please specify migration name!"));
         return;
@@ -200,7 +200,7 @@ export async function createMigration(pluginConfig: Partial<IPluginConfig>, opti
  *
  * @param config
  */
-export async function establishDatabaseConnection(config: Partial<IPluginConfig>): Promise<DataSource> {
+export async function establishDatabaseConnection(config: Partial<ApplicationPluginConfig>): Promise<DataSource> {
     const { dbConnectionOptions } = config;
     const overrideDbConfig = {
         subscribers: [],

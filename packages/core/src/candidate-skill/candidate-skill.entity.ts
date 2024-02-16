@@ -22,6 +22,10 @@ export class CandidateSkill extends TenantOrganizationBaseEntity implements ICan
 	*/
 	@ApiProperty({ type: () => Candidate })
 	@ManyToOne(() => Candidate, (candidate) => candidate.skills, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	candidate?: ICandidate;

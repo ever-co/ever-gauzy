@@ -28,6 +28,9 @@
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"dependencies": {
+		"@mikro-orm/nestjs": "^5.2.3",
+		"@nestjs/common": "^10.3.0",
+		"@nestjs/typeorm": "^10.0.1",
 		"apollo-server-core": "^3.10.1",
 		"slugify": "^1.6.5"
 	},

@@ -373,6 +373,7 @@ const generateDefaultUser = async (
 	user.tenant = tenant;
 	user.preferredLanguage = preferredLanguage;
 	user.preferredComponentLayout = preferredComponentLayout;
+	user.emailVerifiedAt = new Date();
 
 	user.hash = await bcrypt.hash(
 		defaultUser.password,
@@ -400,10 +401,8 @@ const generateRandomUser = async (
 	user.role = role;
 	user.imageUrl = avatar;
 	user.tenant = tenant;
-
-	const languages = Object.values(LanguagesEnum);
-	user.preferredLanguage =
-		languages[Math.floor(Math.random() * languages.length)];
+	user.preferredLanguage = getRandomLanguage();
+	user.emailVerifiedAt = new Date();
 
 	user.hash = await bcrypt.hash(
 		'123456',
@@ -412,6 +411,16 @@ const generateRandomUser = async (
 
 	return user;
 };
+
+/**
+ * Get a randomly selected language from the LanguagesEnum.
+ * @returns {LanguagesEnum} A randomly selected language.
+ */
+function getRandomLanguage(): LanguagesEnum {
+	const languages = Object.values(LanguagesEnum);
+	const index = Math.floor(Math.random() * languages.length);
+	return languages[index];
+}
 
 const insertUsers = async (
 	dataSource: DataSource,

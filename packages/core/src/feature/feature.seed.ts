@@ -1,8 +1,8 @@
-import { IPluginConfig } from '@gauzy/common';
 import * as chalk from 'chalk';
 import { copyFileSync, mkdirSync } from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { ConfigService, environment as env, DatabaseTypeEnum } from '@gauzy/config';
 import {
 	IFeature,
@@ -16,7 +16,7 @@ import { Feature } from './feature.entity';
 
 export const createDefaultFeatureToggle = async (
 	dataSource: DataSource,
-	config: Partial<IPluginConfig>,
+	config: Partial<ApplicationPluginConfig>,
 	tenant: ITenant
 ) => {
 	await cleanFeature(dataSource, config);
@@ -61,7 +61,7 @@ export const createRandomFeatureToggle = async (dataSource: DataSource, tenants:
 	return features;
 };
 
-async function createFeature(item: IFeature, tenant: ITenant, config: Partial<IPluginConfig>) {
+async function createFeature(item: IFeature, tenant: ITenant, config: Partial<ApplicationPluginConfig>) {
 	const { name, code, description, image, link, isEnabled, status, icon } = item;
 	const feature: IFeature = new Feature({
 		name,
@@ -134,7 +134,7 @@ async function cleanFeature(dataSource, config) {
 	});
 }
 
-function copyImage(fileName: string, config: Partial<IPluginConfig>) {
+function copyImage(fileName: string, config: Partial<ApplicationPluginConfig>) {
 	try {
 		const destDir = 'features';
 

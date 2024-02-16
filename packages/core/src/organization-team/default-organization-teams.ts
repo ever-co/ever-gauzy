@@ -27,5 +27,10 @@ export const DEFAULT_ORGANIZATION_TEAMS = [
 		name: 'QA',
 		defaultMembers: ['julia@example-ever.co'],
 		manager: []
+	},
+	{
+		name: 'Default Team',
+		defaultMembers: [environment.demoCredentialConfig.employeeEmail],
+		manager: [environment.demoCredentialConfig.superAdminEmail]
 	}
 ];

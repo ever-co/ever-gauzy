@@ -8,8 +8,6 @@ import { DynamicModule, MiddlewareConsumer, Module, NestModule } from '@nestjs/c
 import * as path from 'path';
 import { ConfigService, environment } from '@gauzy/config';
 import { RequestContextMiddleware } from './context';
-import { SentryTraceMiddleware } from './sentry/sentry-trace.middleware';
-import { SentryRequestMiddleware } from './sentry/sentry-request.middleware';
 import { FileStorageModule } from './file-storage';
 import { GraphqlModule } from '../graphql/graphql.module';
 import { GraphqlApiModule } from '../graphql/graphql-api.module';
@@ -45,7 +43,5 @@ import { DatabaseModule } from '../database/database.module';
 export class CoreModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(RequestContextMiddleware).forRoutes('*');
-		consumer.apply(SentryRequestMiddleware).forRoutes('*');
-		consumer.apply(SentryTraceMiddleware).forRoutes('*');
 	}
 }
