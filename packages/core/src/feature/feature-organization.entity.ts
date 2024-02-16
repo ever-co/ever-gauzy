@@ -26,16 +26,16 @@ export class FeatureOrganization extends TenantOrganizationBaseEntity implements
 	 * Feature
 	 */
 	@ApiProperty({ type: () => Feature })
-	@MultiORMManyToOne(() => Feature, (feature) => feature.featureOrganizations, {
+	@MultiORMManyToOne(() => Feature, (it) => it.featureOrganizations, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	feature: IFeature;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: FeatureOrganization) => it.feature)
 	@IsString()
 	@Index()
 	@MultiORMColumn({ relationId: true })
-	readonly featureId: string;
+	featureId: IFeature['id'];
 }

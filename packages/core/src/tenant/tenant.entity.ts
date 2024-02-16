@@ -66,21 +66,24 @@ export class Tenant extends BaseEntity implements ITenant {
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Organization })
-	@MultiORMOneToMany(() => Organization, (organization) => organization.tenant, {
+	@MultiORMOneToMany(() => Organization, (it) => it.tenant, {
 		cascade: true
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
 	@ApiProperty({ type: () => RolePermission })
-	@MultiORMOneToMany(() => RolePermission, (rolePermission) => rolePermission.tenant, {
+	@MultiORMOneToMany(() => RolePermission, (it) => it.tenant, {
 		cascade: true
 	})
 	rolePermissions?: IRolePermission[];
 
+	/**
+	 * Array of feature organizations associated with the entity.
+	 */
 	@ApiProperty({ type: () => FeatureOrganization })
-	@MultiORMOneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.tenant, {
-		cascade: true
+	@MultiORMOneToMany(() => FeatureOrganization, (it) => it.tenant, {
+		cascade: true,
 	})
 	featureOrganizations?: IFeatureOrganization[];
 

@@ -79,13 +79,11 @@ export class EmployeeCreateHandler
 			return employee;
 		} else {
 			try {
-				const { userId } = input;
-				const user = await this._userService.findOneByIdString(userId);
-
+				const user = await this._userService.findOneByIdString(input.userId);
 				//2. Create employee for specific user
 				return await this._employeeService.create({
 					...input,
-					user
+					userId: user.id
 				});
 			} catch (error) {
 				console.log('Error while creating employee for existing user', error);

@@ -26,21 +26,27 @@ import { ITryRequest } from './try-request';
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
 	constructor(
 		repository: Repository<T>,
-		mikroRepository?: EntityRepository<T>
+		mikroRepository: EntityRepository<T>
 	) {
 		super(repository, mikroRepository);
 	}
 
+	/**
+	 * Define find conditions when retrieving data with employee by user.
+	 *
+	 * @returns The find conditions based on the current user's relationship with employees.
+	 */
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
 		const employeeId = RequestContext.currentEmployeeId();
 		return (
 			/**
-			 * If employee has login & retrieve self data
+			 * If the employee has logged in, retrieve their own data unless
+			 * they have the permission to change the selected employee.
 			 */
 			(
 				isNotEmpty(employeeId)
 					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-						this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+						this.repository.metadata?.hasColumnWithPropertyPath('employeeId')
 						? {
 							employee: {
 								id: employeeId
@@ -53,9 +59,15 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		);
 	}
 
+	/**
+	 * Define find conditions when retrieving data with tenant by user.
+	 *
+	 * @param user - The user for whom the conditions are defined.
+	 * @returns The find conditions based on the user's relationship with the tenant and employees.
+	 */
 	private findConditionsWithTenantByUser(user: IUser): FindOptionsWhere<T> {
 		return {
-			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
 					tenant: {
 						id: user.tenantId
@@ -67,6 +79,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		} as FindOptionsWhere<T>;
 	}
 
+	/**
+	 * Define find conditions when retrieving data with tenant.
+	 *
+	 * @param user - The user for whom the conditions are defined.
+	 * @param where - Additional find options.
+	 * @returns The find conditions based on the user's relationship with the tenant and additional options.
+	 */
 	private findConditionsWithTenant(
 		user: User,
 		where?: FindOptionsWhere<T>[] | FindOptionsWhere<T>
@@ -93,6 +112,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		) as FindOptionsWhere<T>;
 	}
 
+	/**
+	 * Define find one options when retrieving data with tenant.
+	 *
+	 * @param filter - Additional find options.
+	 * @returns The find one options based on the current user's relationship with the tenant and additional options.
+	 */
 	private findOneWithTenant(filter?: FindOneOptions<T>): FindOneOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
@@ -118,6 +143,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		return filter;
 	}
 
+	/**
+	 * Define find many options when retrieving data with tenant.
+	 *
+	 * @param filter - Additional find options.
+	 * @returns The find many options based on the current user's relationship with the tenant and additional options.
+	 */
 	private findManyWithTenant(filter?: FindManyOptions<T>): FindManyOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
@@ -301,9 +332,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
-		return super.create({
+		return await super.create({
 			...entity,
-			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
 					tenant: {
 						id: tenantId
@@ -316,7 +347,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			 */
 			...(isNotEmpty(employeeId)
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					this.repository.metadata.hasColumnWithPropertyPath('employeeId')
+					this.repository.metadata?.hasColumnWithPropertyPath('employeeId')
 					? {
 						employee: {
 							id: employeeId

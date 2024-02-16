@@ -475,27 +475,27 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		return record;
 	}
 
+	/**
+	 * Create a new entity.
+	 *
+	 * @param entity - The entity data to create.
+	 * @returns A promise resolving to the created entity.
+	 */
 	public async create(entity: IPartialEntity<T>): Promise<T> {
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				try {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
 					const row = this.mikroRepository.create(entity as RequiredEntityData<T>);
-					return await this.mikroRepository.upsert(row);
-				} catch (err /*: WriteError*/) {
-					throw new BadRequestException(err);
-				}
-
-			case MultiORMEnum.TypeORM:
-				const obj = this.repository.create(entity as DeepPartial<T>);
-				try {
-					// https://github.com/Microsoft/TypeScript/issues/21592
-					return await this.repository.save(obj as any);
-				} catch (err /*: WriteError*/) {
-					throw new BadRequestException(err);
-				}
-
-			default:
-				throw new Error(`Not implemented for ${this.ormType}`);
+					return await this.save(row);
+				case MultiORMEnum.TypeORM:
+					const obj = this.repository.create(entity as DeepPartial<T>);
+					return await this.save(obj);
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.error('Error in crud service create method:', error);
+			throw new BadRequestException(error);
 		}
 	}
 
@@ -590,13 +590,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		} catch (error) {
 			throw new NotFoundException(`The record was not found`, error);
 		}
-
-		// try {
-		// 	return await this.repository.delete(criteria);
-		// } catch (error) {
-		// 	console.log(error)
-		// 	throw new NotFoundException(`The record was not found`, error);
-		// }
 	}
 
 	/**

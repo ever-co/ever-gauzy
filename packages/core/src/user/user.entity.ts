@@ -215,7 +215,7 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user)
+	@MultiORMOneToOne(() => Employee, (it: Employee) => it.user)
 	employee?: IEmployee;
 
 	/**

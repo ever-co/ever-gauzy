@@ -22,9 +22,9 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		@InjectRepository(Employee)
-		typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
+		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}

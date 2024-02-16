@@ -341,7 +341,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@MultiORMOneToOne(() => User, (user) => user.employee, {
+	@MultiORMOneToOne(() => User, (it) => it.employee, {
 		cascade: true,
 		onDelete: 'CASCADE',
 		joinColumn: 'userId',
@@ -351,7 +351,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@JoinColumn()
 	user: IUser;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Employee) => it.user)
 	@Index()
 	@MultiORMColumn({ relationId: true })
