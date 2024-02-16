@@ -4,10 +4,10 @@ import { FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
 import { Proposal } from './proposal.entity';
 import { IProposalCreateInput, IProposal, IPagination } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {

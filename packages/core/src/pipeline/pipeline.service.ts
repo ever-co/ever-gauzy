@@ -3,6 +3,7 @@ import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPipelineStage } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage, User } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
@@ -12,7 +13,6 @@ import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.reposito
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
 import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {

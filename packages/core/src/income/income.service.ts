@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IDateRangePicker, IPagination } from '@gauzy/contracts';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
+import { IDateRangePicker, IPagination } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { Income } from './income.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {

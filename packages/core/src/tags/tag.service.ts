@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
@@ -16,7 +17,6 @@ import { FileStorage } from './../core/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class TagService extends TenantAwareCrudService<Tag> {

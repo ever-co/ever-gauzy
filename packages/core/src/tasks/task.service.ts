@@ -4,6 +4,7 @@ import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In }
 import { isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
+import { isPostgres } from '@gauzy/config';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Task } from './task.entity';
@@ -11,7 +12,6 @@ import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {

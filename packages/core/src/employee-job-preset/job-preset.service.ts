@@ -10,6 +10,7 @@ import {
 	IJobPreset,
 	IMatchingCriterions
 } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
@@ -29,7 +30,6 @@ import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.r
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/type-orm-job-preset-upwork-job-search-criterion.repository';
 import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { TypeOrmEmployeeRepository } from './../employee/repository/type-orm-employee.repository';
-import { isPostgres } from '@gauzy/config';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
