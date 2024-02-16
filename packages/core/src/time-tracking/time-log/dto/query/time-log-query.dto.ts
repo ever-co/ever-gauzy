@@ -1,7 +1,9 @@
 import { ApiPropertyOptional, IntersectionType } from "@nestjs/swagger";
 import { IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from "class-validator";
+import { Transform, TransformFnParams } from "class-transformer";
 import * as moment from 'moment';
 import { IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from "@gauzy/contracts";
+import { parseToBoolean } from "@gauzy/common";
 import { FiltersQueryDTO, RelationsQueryDTO, SelectorsQueryDTO } from "../../../../shared/dto";
 
 /**
@@ -27,4 +29,9 @@ export class TimeLogQueryDTO extends IntersectionType(
     @IsString()
     @IsTimeZone()
     readonly timezone: string = moment.tz.guess();
+
+    @ApiPropertyOptional({ type: () => Boolean })
+    @IsOptional()
+    @Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+    readonly isEdited: boolean;
 }
