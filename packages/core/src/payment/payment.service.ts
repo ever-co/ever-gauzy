@@ -221,10 +221,10 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('note' in where) {
 				const { note } = where;
-				filter['where']['note'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${note}%'`);
+				filter['where']['note'] = Raw((alias) => `${alias} ${likeOperator} '%${note}%'`);
 			}
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;

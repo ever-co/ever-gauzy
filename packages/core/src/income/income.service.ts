@@ -50,9 +50,9 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('notes' in where) {
-				filter['where']['notes'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${where.notes}%'`);
+				filter['where']['notes'] = Raw((alias) => `${alias} ${likeOperator} '%${where.notes}%'`);
 			}
 			if ('valueDate' in where) {
 				const { valueDate } = where;

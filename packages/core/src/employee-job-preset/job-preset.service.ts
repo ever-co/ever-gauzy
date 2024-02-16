@@ -61,7 +61,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public async getAll(request?: IGetJobPresetInput) {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, search, employeeId } = request;
-		const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 
 		const query = this.repository.createQueryBuilder('job_preset');
@@ -88,7 +88,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 				});
 			}
 			if (isNotEmpty(search)) {
-				qb.andWhere(p(`"${query.alias}"."name" ${insensitiveOperator} :search`), {
+				qb.andWhere(p(`"${query.alias}"."name" ${likeOperator} :search`), {
 					search: `%${search}%`
 				});
 			}

@@ -88,7 +88,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { where } = options;
 			const { status, title, prefix, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.repository.createQueryBuilder(this.alias);
 			query.innerJoin(`${query.alias}.members`, 'members');
@@ -143,12 +143,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${insensitiveOperator} :title`), {
+						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
 							title: `%${title}%`
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${insensitiveOperator} :prefix`), {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
 							prefix: `%${prefix}%`
 						});
 					}
@@ -236,7 +236,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.repository.createQueryBuilder(this.alias);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
@@ -306,12 +306,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."title" ${insensitiveOperator} :title`), {
+						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
 							title: `%${title}%`
 						});
 					}
 					if (isNotEmpty(title)) {
-						qb.andWhere(p(`"${query.alias}"."prefix" ${insensitiveOperator} :prefix`), {
+						qb.andWhere(p(`"${query.alias}"."prefix" ${likeOperator} :prefix`), {
 							prefix: `%${prefix}%`
 						});
 					}
@@ -336,14 +336,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	public async pagination(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		if ('where' in options) {
 			const { where } = options;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE'
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE'
 			if ('title' in where) {
 				const { title } = where;
-				options['where']['title'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${title}%'`);
+				options['where']['title'] = Raw((alias) => `${alias} ${likeOperator} '%${title}%'`);
 			}
 			if ('prefix' in where) {
 				const { prefix } = where;
-				options['where']['prefix'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${prefix}%'`);
+				options['where']['prefix'] = Raw((alias) => `${alias} ${likeOperator} '%${prefix}%'`);
 			}
 			if ('organizationSprintId' in where) {
 				const { organizationSprintId } = where;

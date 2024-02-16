@@ -177,7 +177,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	getFilterTagQuery(query: SelectQueryBuilder<Tag>, request: ITagFindInput): SelectQueryBuilder<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
-		const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
@@ -212,17 +212,17 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		 * Additionally you can add parameters used in where expression.
 		 */
 		if (isNotEmpty(name)) {
-			query.andWhere(p(`"${query.alias}"."name" ${insensitiveOperator} :name`), {
+			query.andWhere(p(`"${query.alias}"."name" ${likeOperator} :name`), {
 				name: `%${name}%`
 			});
 		}
 		if (isNotEmpty(color)) {
-			query.andWhere(p(`"${query.alias}"."color" ${insensitiveOperator} :color`), {
+			query.andWhere(p(`"${query.alias}"."color" ${likeOperator} :color`), {
 				color: `%${color}%`
 			});
 		}
 		if (isNotEmpty(description)) {
-			query.andWhere(p(`"${query.alias}"."description" ${insensitiveOperator} :description`), {
+			query.andWhere(p(`"${query.alias}"."description" ${likeOperator} :description`), {
 				description: `%${description}%`
 			});
 		}

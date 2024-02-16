@@ -53,7 +53,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('valueDate' in where) {
 				const { valueDate } = where;
 				const { startDate, endDate } = valueDate;
@@ -71,7 +71,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 			}
 			if ('jobPostContent' in where) {
 				const { jobPostContent } = where;
-				filter['where']['jobPostContent'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${jobPostContent}%'`);
+				filter['where']['jobPostContent'] = Raw((alias) => `${alias} ${likeOperator} '%${jobPostContent}%'`);
 			}
 		}
 		return super.paginate(filter);

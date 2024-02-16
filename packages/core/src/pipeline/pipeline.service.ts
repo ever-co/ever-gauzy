@@ -124,14 +124,14 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('name' in where) {
 				const { name } = where;
-				filter['where']['name'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${name}%'`);
+				filter['where']['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
 			}
 			if ('description' in where) {
 				const { description } = where;
-				filter['where']['description'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${description}%'`);
+				filter['where']['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
 			}
 			if ('isActive' in where) {
 				const { isActive } = where;
@@ -145,7 +145,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			if ('stages' in where) {
 				const { stages } = where;
 				filter['where']['stages'] = {
-					name: Raw((alias) => `${alias} ${insensitiveOperator} '%${stages}%'`)
+					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
 				};
 			}
 		}
