@@ -5,7 +5,6 @@ import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, Upd
 import { RequestContext } from '../../core/context';
 import {
 	IManualTimeInput,
-	IGetTimeLogInput,
 	PermissionsEnum,
 	IDateRange,
 	IGetTimeLogReportInput,
