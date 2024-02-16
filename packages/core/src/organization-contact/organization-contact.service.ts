@@ -136,19 +136,19 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 	public async pagination(params?: PaginationParams<any>): Promise<IPagination<IOrganizationContact>> {
 		// Custom Filters
 		if ('where' in params) {
-			const insensitiveOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			const { where } = params;
 			if ('name' in where) {
 				const { name } = where;
-				params['where']['name'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${name}%'`);
+				params['where']['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
 			}
 			if ('primaryPhone' in where) {
 				const { primaryPhone } = where;
-				params['where']['primaryPhone'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${primaryPhone}%'`);
+				params['where']['primaryPhone'] = Raw((alias) => `${alias} ${likeOperator} '%${primaryPhone}%'`);
 			}
 			if ('primaryEmail' in where) {
 				const { primaryEmail } = where;
-				params['where']['primaryEmail'] = Raw((alias) => `${alias} ${insensitiveOperator} '%${primaryEmail}%'`);
+				params['where']['primaryEmail'] = Raw((alias) => `${alias} ${likeOperator} '%${primaryEmail}%'`);
 			}
 			if ('members' in where) {
 				const { members } = where;

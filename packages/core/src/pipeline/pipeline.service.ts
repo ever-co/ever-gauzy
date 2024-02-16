@@ -3,6 +3,7 @@ import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPipelineStage } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage, User } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
@@ -123,13 +124,14 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public pagination(filter: FindManyOptions) {
 		if ('where' in filter) {
 			const { where } = filter;
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('name' in where) {
 				const { name } = where;
-				filter['where']['name'] = Raw((alias) => `${alias} ILIKE '%${name}%'`);
+				filter['where']['name'] = Raw((alias) => `${alias} ${likeOperator} '%${name}%'`);
 			}
 			if ('description' in where) {
 				const { description } = where;
-				filter['where']['description'] = Raw((alias) => `${alias} ILIKE '%${description}%'`);
+				filter['where']['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
 			}
 			if ('isActive' in where) {
 				const { isActive } = where;
@@ -143,7 +145,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			if ('stages' in where) {
 				const { stages } = where;
 				filter['where']['stages'] = {
-					name: Raw((alias) => `${alias} ILIKE '%${stages}%'`)
+					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
 				};
 			}
 		}
