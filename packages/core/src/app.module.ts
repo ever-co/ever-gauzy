@@ -479,11 +479,10 @@ if (environment.THROTTLE_ENABLED) {
 export class AppModule {
 	constructor() {
 		// Set Monday as start of the week
-		moment.locale(LanguagesEnum.ENGLISH, {
+		moment.updateLocale(LanguagesEnum.ENGLISH, {
 			week: {
 				dow: 1
 			}
 		});
-		moment.locale(LanguagesEnum.ENGLISH);
 	}
 }
