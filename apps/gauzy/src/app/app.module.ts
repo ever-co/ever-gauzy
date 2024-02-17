@@ -37,7 +37,7 @@ import { ServerConnectionService } from './@core/services/server-connection.serv
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import * as Sentry from '@sentry/angular';
+import * as Sentry from '@sentry/angular-ivy';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
@@ -73,21 +73,30 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
 		debug: !environment.production,
-		// this enables automatic instrumentation
 		integrations: [
 			// Registers and configures the Tracing integration,
 			// which automatically instruments your application to monitor its
 			// performance, including custom Angular routing instrumentation
-			new Sentry.BrowserTracing({
-				tracingOrigins: [
-					'localhost',
-					'https://apidemo.gauzy.co/api',
-					'https://api.gauzy.co/api',
-					'https://apistage.gauzy.co/api',
-				],
-				routingInstrumentation: Sentry.routingInstrumentation,
-			}),
+			Sentry.browserTracingIntegration(),
+			// Registers the Replay integration,
+			// which automatically captures Session Replays
+			Sentry.replayIntegration()
 		],
+
+		// Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
+		tracePropagationTargets: [
+			'localhost',
+			/^https:\/\/api\.gauzy\.co\/api/,
+			/^https:\/\/apistage\.gauzy\.co\/api/,
+			/^https:\/\/apidemo\.gauzy\.co\/api/
+		],
+
+		// Capture Replay for 10% of all sessions,
+		// plus for 100% of sessions with an error
+		replaysSessionSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
+			? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
+			: 0.01,
+		replaysOnErrorSampleRate: 1.0,
 		// TODO: we should use some internal function which returns version of Gauzy
 		release: 'gauzy@' + version,
 		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring

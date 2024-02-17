@@ -3,9 +3,8 @@ import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
-import { enableAkitaProdMode, persistState } from '@datorama/akita';
-import { akitaConfig } from '@datorama/akita';
-import * as Sentry from '@sentry/angular';
+import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
+import * as Sentry from '@sentry/angular-ivy';
 
 if (environment.production) {
 	enableProdMode();
@@ -13,11 +12,11 @@ if (environment.production) {
 }
 
 persistState({
-	key: '_gauzyStore',
+	key: '_gauzyStore'
 });
 
 akitaConfig({
-	resettable: true,
+	resettable: true
 });
 
 Sentry.init({
@@ -28,28 +27,36 @@ Sentry.init({
 		// Registers and configures the Tracing integration,
 		// which automatically instruments your application to monitor its
 		// performance, including custom Angular routing instrumentation
-		new Sentry.BrowserTracing({
-			tracePropagationTargets: [
-				'localhost',
-				'https://apidemo.gauzy.co',
-				'https://apistage.gauzy.co',
-				'https://api.gauzy.co',
-			],
-			routingInstrumentation: Sentry.routingInstrumentation,
-		}),
+		Sentry.browserTracingIntegration(),
+		// Registers the Replay integration,
+		// which automatically captures Session Replays
+		Sentry.replayIntegration()
 	],
+
+	// Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled
+	tracePropagationTargets: [
+		'localhost',
+		/^https:\/\/api\.gauzy\.co\/api/,
+		/^https:\/\/apistage\.gauzy\.co\/api/,
+		/^https:\/\/apidemo\.gauzy\.co\/api/
+	],
+
+	// Capture Replay for 10% of all sessions,
+	// plus for 100% of sessions with an error
+	replaysSessionSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
+		? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
+		: 0.01,
+	replaysOnErrorSampleRate: 1.0,
 
 	// Set tracesSampleRate to 1.0 to capture 100%
 	// of transactions for performance monitoring.
 	// We recommend adjusting this value in production
-	tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE
-		? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE)
-		: 0.01,
+	tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01
 });
 
 platformBrowserDynamic()
 	.bootstrapModule(AppModule, {
-		preserveWhitespaces: false,
+		preserveWhitespaces: false
 	})
 	.then((success) => console.log(`Bootstrap success`))
 	.catch((err) => console.error(err));

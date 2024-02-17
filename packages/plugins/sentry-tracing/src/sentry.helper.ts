@@ -125,7 +125,7 @@ export function addLocalVariablesIntegration(integrations: Integration[]): void 
  * @param integrations The array of Sentry integrations.
  */
 export function addRequestDataIntegration(integrations: Integration[]): void {
-    integrations.push(new Integrations.RequestData({ ip: true }));
+    integrations.push(new Integrations.RequestData({ include: { ip: true } }));
     console.log('Sentry Request Data Enabled');
 }
 
