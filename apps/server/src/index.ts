@@ -658,7 +658,9 @@ ipcMain.on('save_encrypted_file', (event, value) => {
 	try {
 		const { secureProxy = { enable: false, secure: true, ssl: { key: '', cert: '' } } } =
 			serverConfig.setting || {};
-		const dialog = new DialogOpenFile(settingsWindow, 'ssl');
+		// Get the current window
+		const currentWindow = BrowserWindow.getFocusedWindow();
+		const dialog = new DialogOpenFile(currentWindow, 'ssl');
 		const filePath = dialog.save();
 		if (filePath) {
 			secureProxy.ssl[value] = filePath;
