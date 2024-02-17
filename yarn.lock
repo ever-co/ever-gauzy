@@ -320,6 +320,15 @@
     "@angular-eslint/bundled-angular-compiler" "16.3.1"
     "@typescript-eslint/utils" "5.62.0"
 
+"@angular-slider/ngx-slider@^17.0.1":
+  version "17.0.1"
+  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-17.0.1.tgz#03f72a970d74b161951f609cf054fdd5ec1e9344"
+  integrity sha512-AwzzkkIByMQCqqTr/HiozwSv7mU3QdLDDF3nrkgYvdjrKa66yiJbT36iod2dTF8mpC6MuZAJZykLqxmt1k88hQ==
+  dependencies:
+    detect-passive-events "^2.0.3"
+    rxjs "^7.8.1"
+    tslib "^2.3.0"
+
 "@angular/animations@^16.2.12":
   version "16.2.12"
   resolved "https://registry.yarnpkg.com/@angular/animations/-/animations-16.2.12.tgz#27744d8176e09e70e0f6d837c3abcfcee843a936"
@@ -7727,6 +7736,12 @@
   version "15.9.7"
   resolved "https://registry.yarnpkg.com/@nrwl/linter/-/linter-15.9.7.tgz#8cb2b02e945fdd461cdd8f52c470ab55c5ac0ab3"
   integrity sha512-PSbdBodqpbw1jmCWGLB1kxKRM8wpbonhZ3V133aLwb8P9c4q0aN7b3Z9VvtNKSS9eaLxYLu50BGiOahMIf4VXg==
+  dependencies:
+    "@nrwl/devkit" "15.9.7"
+    "@nrwl/js" "15.9.7"
+    "@phenomnomnominal/tsquery" "4.1.1"
+    tmp "~0.2.1"
+    tslib "^2.3.0"
 
 "@nrwl/nest@15.9.4":
   version "15.9.4"
@@ -7861,6 +7876,8 @@
   version "15.9.7"
   resolved "https://registry.yarnpkg.com/@nrwl/tao/-/tao-15.9.7.tgz#c0e78c99caa6742762f7558f20d8524bc9015e97"
   integrity sha512-OBnHNvQf3vBH0qh9YnvBQQWyyFZ+PWguF6dJ8+1vyQYlrLVk/XZ8nJ4ukWFb+QfPv/O8VBmqaofaOI9aFC4yTw==
+  dependencies:
+    nx "15.9.7"
 
 "@nrwl/web@^15.0.0":
   version "15.9.7"
@@ -28266,14 +28283,19 @@ ngx-permissions@^13.0.1:
   dependencies:
     tslib "^2.1.0"
 
-ngx-slider-v2@16.0.2:
-  version "16.0.2"
-  resolved "https://registry.yarnpkg.com/ngx-slider-v2/-/ngx-slider-v2-16.0.2.tgz#68ece02e21547f07220acf3d4abdb7c3f74d3aa4"
-  integrity sha512-Lpl7SlErL+tJJvTRZYdyZoXTThKN8Ro1z3vscJQ1O5azHXwvbv3pnTcsOwY4ltfaP+dpzY27KL1QXyDr6QMaxQ==
+ngx-slider-v2@^17.0.0:
+  version "17.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-slider-v2/-/ngx-slider-v2-17.0.0.tgz#b82172c2ce9c97a74f8c2cf29788fa5d377e34bb"
+  integrity sha512-226pb8TeZWhmMiQQnPVBZmos2qZua2NgMsuwumxatIBy7UwOGg8xkcUl8HvXVg+rO5w733uvPMN/yz//7rReJw==
   dependencies:
     detect-passive-events "^2.0.3"
-    rxjs "^7.4.0"
+    rxjs "^7.8.1"
     tslib "^2.3.0"
+
+ngx-slider@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/ngx-slider/-/ngx-slider-0.0.5.tgz#0d3a94b56cf400c6c9067e12595868a4ebe9bdb7"
+  integrity sha512-HLwNkPEEmjZWsHS+i9BMkGltA54A8zikMktOH7T53PCoAjkZXhdrAgIKE2cmYhbgSFyxOvq7PoBi/V+AmBBP/w==
 
 ngx-window-token@>=6.0.0:
   version "7.0.0"
@@ -33379,7 +33401,7 @@ rw@1:
   resolved "https://registry.yarnpkg.com/rw/-/rw-1.3.3.tgz#3f862dfa91ab766b14885ef4d01124bfda074fb4"
   integrity sha512-PdhdWy89SiZogBLaw42zdeqtRJ//zFd2PgQavcICDUgJT5oW10QCRKbJ6bg4r0/UY2M6BWd5tkxuGFRvCkgfHQ==
 
-rxjs@6.4.0, rxjs@6.6.2, rxjs@6.6.7, rxjs@7.8.1, rxjs@^6.4.0, rxjs@^6.5.2, rxjs@^6.5.3, rxjs@^6.5.4, rxjs@^6.6.0, rxjs@^7.4.0, rxjs@^7.5.1, rxjs@^7.5.5, rxjs@^7.5.6:
+rxjs@6.4.0, rxjs@6.6.2, rxjs@6.6.7, rxjs@7.8.1, rxjs@^6.4.0, rxjs@^6.5.2, rxjs@^6.5.3, rxjs@^6.5.4, rxjs@^6.6.0, rxjs@^7.4.0, rxjs@^7.5.1, rxjs@^7.5.5, rxjs@^7.5.6, rxjs@^7.8.1:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==

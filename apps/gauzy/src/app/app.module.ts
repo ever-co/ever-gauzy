@@ -59,6 +59,7 @@ import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { GAUZY_ENV } from "./@core/constants";
 import { version } from './../../version';
+import { BrowserTracing } from '@sentry/browser';
 
 
 if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
@@ -78,7 +79,7 @@ if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 			// Registers and configures the Tracing integration,
 			// which automatically instruments your application to monitor its
 			// performance, including custom Angular routing instrumentation
-			new Sentry.BrowserTracing({
+			new BrowserTracing({
 				tracingOrigins: [
 					'localhost',
 					'https://apidemo.gauzy.co/api',
