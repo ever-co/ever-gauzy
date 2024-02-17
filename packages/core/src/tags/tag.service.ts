@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { Tag } from './tag.entity';
@@ -176,6 +177,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	getFilterTagQuery(query: SelectQueryBuilder<Tag>, request: ITagFindInput): SelectQueryBuilder<Tag> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, name, color, description } = request;
+		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
@@ -210,17 +212,17 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		 * Additionally you can add parameters used in where expression.
 		 */
 		if (isNotEmpty(name)) {
-			query.andWhere(p(`"${query.alias}"."name" ILIKE :name`), {
+			query.andWhere(p(`"${query.alias}"."name" ${likeOperator} :name`), {
 				name: `%${name}%`
 			});
 		}
 		if (isNotEmpty(color)) {
-			query.andWhere(p(`"${query.alias}"."color" ILIKE :color`), {
+			query.andWhere(p(`"${query.alias}"."color" ${likeOperator} :color`), {
 				color: `%${color}%`
 			});
 		}
 		if (isNotEmpty(description)) {
-			query.andWhere(p(`"${query.alias}"."description" ILIKE :description`), {
+			query.andWhere(p(`"${query.alias}"."description" ${likeOperator} :description`), {
 				description: `%${description}%`
 			});
 		}
