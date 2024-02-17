@@ -59,7 +59,7 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" SET DEFAULT '0'`);
     }
 
     /**
@@ -68,7 +68,7 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" SET DEFAULT now()`);
     }
 
     /**
