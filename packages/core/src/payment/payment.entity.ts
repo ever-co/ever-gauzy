@@ -22,8 +22,7 @@ import {
 	OrganizationContact,
 	OrganizationProject,
 	Tag,
-	TenantOrganizationBaseEntity,
-	User
+	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { IsOptional, IsUUID } from 'class-validator';

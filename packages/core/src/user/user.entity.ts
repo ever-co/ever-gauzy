@@ -9,7 +9,6 @@ import {
 	RelationId,
 	JoinTable
 } from 'typeorm';
-import { Property } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {

@@ -1,13 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Index, JoinColumn, RelationId } from 'typeorm';
-import { Property } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	IOrganization,
 	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { Organization, TenantBaseEntity } from '../entities/internal';
-import { MikroManyToOne } from '../decorators/entity/relations/mikro-orm';
 import { MultiORMManyToOne } from '../decorators/entity/relations';
 import { MultiORMColumn } from '../decorators';
 
