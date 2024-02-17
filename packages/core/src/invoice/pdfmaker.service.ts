@@ -41,7 +41,7 @@ export class PdfmakerService {
 		try {
 			const printer = new PdfPrinter(this.fonts);
 			const pdfDefinition = {
-        watermark: docDefinition['watermark'],
+        		watermark: docDefinition['watermark'],
 				content: docDefinition['content'],
 				defaultStyle: {
 					font: 'Helvetica'
@@ -69,6 +69,7 @@ export class PdfmakerService {
 
 				pdfDoc.on('end', async () => {
 					Buffer.concat(chunks);
+					if (!Buffer?.length) return reject(new Error('PDF generation failed'));
 					try {
 						//convert pdf to Buffer
 						const pdf = await new Promise<Buffer>((resolve, reject) => {
