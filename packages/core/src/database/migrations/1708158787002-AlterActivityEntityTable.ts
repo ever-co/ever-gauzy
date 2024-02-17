@@ -156,16 +156,12 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
      *
      * @param queryRunner
      */
-    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '0'`);
-    }
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 
     /**
      * MySQL Down Migration
      *
      * @param queryRunner
      */
-    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '00:00:00.000000'`);
-    }
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
 }
