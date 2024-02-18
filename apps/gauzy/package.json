@@ -28,6 +28,7 @@
 	"dependencies": {
 		"@akveo/ng2-completer": "^9.0.1",
 		"@ali-hm/angular-tree-component": "^12.0.5",
+		"@angular-slider/ngx-slider": "^17.0.1",
 		"@angular/animations": "^16.2.12",
 		"@angular/cdk": "^16.2.12",
 		"@angular/common": "^16.2.12",
@@ -145,7 +146,7 @@
 		"ngx-page-scroll-core": "^11.0.0",
 		"ngx-perfect-scrollbar": "^10.1.1",
 		"ngx-permissions": "^13.0.1",
-		"ngx-slider-v2": "16.0.2",
+		"ngx-slider-v2": "^17.0.0",
 		"normalize.css": "^8.0.1",
 		"pug": "^3.0.2",
 		"randomcolor": "^0.6.2",

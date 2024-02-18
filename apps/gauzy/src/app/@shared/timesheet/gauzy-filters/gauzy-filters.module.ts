@@ -13,7 +13,7 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgxSliderModule } from 'ngx-slider-v2';
+import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 
