@@ -62,7 +62,21 @@ import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular-ivy';
 import { environment as gauzyEnvironment } from '@env/environment';
 import { environment } from '../environments/environment';
+import { initializeSentry } from './sentry';
 
+/**
+ * Initializes Sentry based on the environment configuration.
+ * If a valid Sentry DSN is provided, Sentry is initialized with the specified configuration.
+ * If the DSN is set to 'DOCKER_SENTRY_DSN', a warning is logged indicating that the environment
+ * is running inside Docker without a Sentry DSN.
+ */
+if (environment.SENTRY_DSN) {
+	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
+		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
+	} else {
+		initializeSentry();
+	}
+}
 
 @NgModule({
 	declarations: [AppComponent],
