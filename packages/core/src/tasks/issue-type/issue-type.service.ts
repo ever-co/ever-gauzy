@@ -74,6 +74,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
+			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
 			return await this.getDefaultEntities();
 		}
 	}

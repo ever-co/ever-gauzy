@@ -1,6 +1,7 @@
 import { DynamicModule, Type } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
+import { KnexModuleOptions } from 'nest-knexjs';
 import { PluginDefinition } from 'apollo-server-core';
 import { AbstractLogger } from './IAbstractLogger';
 
@@ -131,6 +132,11 @@ export interface ApplicationPluginConfig {
 	 * @description Specifies options for connecting to the database using MikroORM.
 	 */
 	dbMikroOrmConnectionOptions: MikroOrmModuleOptions;
+
+	/**
+	 * Database connection options for Knex.
+	 */
+	dbKnexConnectionOptions: KnexModuleOptions;
 
 	/**
 	 * Array of plugins to be dynamically added to the application.
