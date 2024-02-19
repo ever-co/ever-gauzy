@@ -120,7 +120,7 @@ switch (dbType) {
 		// Knex DB Config (MySQL)
 		const knexMySqlOptions: KnexModuleOptions = {
 			config: {
-				client: 'mysql', // Database client (MySQL in this case)
+				client: 'mysql2', // Database client (MySQL in this case)
 				connection: {
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306, // Database port (default: 3306)
