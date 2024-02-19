@@ -55,11 +55,13 @@ const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE)
 const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
+const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
 console.log('DB Pool Size: ' + dbPoolSize);
 console.log('DB Connection Timeout: ' + dbConnectionTimeout);
 console.log('DB Idle Timeout: ' + idleTimeoutMillis);
 console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
+console.log('DB SSL MODE ENABLE: ' + dbSslMode);
 
 switch (dbType) {
 	case DatabaseTypeEnum.mongodb:
@@ -79,7 +81,9 @@ switch (dbType) {
 			},
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			driverOptions: {
-				connection: { ssl: getTlsOptions(process.env.DB_SSL_MODE) }
+				connection: {
+					ssl: getTlsOptions(dbSslMode)
+				}
 			},
 			pool: {
 				min: 10,
@@ -92,7 +96,7 @@ switch (dbType) {
 		// TypeORM Config
 		const typeOrmMySqlOptions: MysqlConnectionOptions = {
 			type: dbType,
-			ssl: getTlsOptions(process.env.DB_SSL_MODE),
+			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
 			database: process.env.DB_NAME || 'mysql',
@@ -131,7 +135,9 @@ switch (dbType) {
 			},
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			driverOptions: {
-				connection: { ssl: getTlsOptions(process.env.DB_SSL_MODE) }
+				connection: {
+					ssl: getTlsOptions(dbSslMode)
+				}
 			},
 			pool: {
 				min: 10,
@@ -149,7 +155,7 @@ switch (dbType) {
 		// TypeORM DB Config
 		const typeOrmPostgresOptions: PostgresConnectionOptions = {
 			type: dbType,
-			ssl: getTlsOptions(process.env.DB_SSL_MODE),
+			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
 			database: process.env.DB_NAME || 'postgres',

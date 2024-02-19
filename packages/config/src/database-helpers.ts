@@ -27,9 +27,9 @@ export const isMongodb = (): boolean => isMongodbValue;
  * @param {string} dbSslMode - The SSL mode for the database connection.
  * @returns {TlsOptions | undefined} - TLS options for the database connection or undefined if SSL is disabled.
  */
-export const getTlsOptions = (dbSslMode: string): TlsOptions | undefined => {
+export const getTlsOptions = (dbSslMode: boolean): TlsOptions | undefined => {
 	// Check if SSL is enabled based on the provided SSL mode
-	if (!parseToBoolean(dbSslMode)) {
+	if (!dbSslMode) {
 		// If SSL is not enabled, return undefined
 		return undefined;
 	}
