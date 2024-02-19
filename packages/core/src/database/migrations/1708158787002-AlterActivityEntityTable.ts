@@ -59,7 +59,10 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" SET DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "date" DROP NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "date" DROP DEFAULT`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" DROP NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" DROP DEFAULT`);
     }
 
     /**
@@ -69,6 +72,9 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" SET DEFAULT now()`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "time" SET NOT NULL`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "date" SET DEFAULT now()`);
+        await queryRunner.query(`ALTER TABLE "activity" ALTER COLUMN "date" SET NOT NULL`);
     }
 
     /**
@@ -91,7 +97,7 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
         await queryRunner.query(`DROP INDEX "IDX_f27285af15ef48363745ab2d79"`);
         await queryRunner.query(`DROP INDEX "IDX_0e36a2c95e2f1df7f1b3059d24"`);
         await queryRunner.query(`DROP INDEX "IDX_ffd736f18ba71b3221e4f835a9"`);
-        await queryRunner.query(`CREATE TABLE "temporary_activity" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "title" varchar, "description" varchar, "metaData" text, "date" date NOT NULL DEFAULT (datetime('now')), "time" time NOT NULL DEFAULT ('0'), "duration" integer NOT NULL DEFAULT (0), "type" varchar, "source" varchar NOT NULL DEFAULT ('BROWSER'), "deletedAt" datetime, "employeeId" varchar NOT NULL, "projectId" varchar, "timeSlotId" varchar, "taskId" varchar, "recordedAt" datetime, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), CONSTRAINT "FK_f2401d8fdff5d8970dfe30d3aed" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_fdb3f018c2bba4885bfa5757d16" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_a6f74ae99d549932391f0f44609" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_5a898f44fa31ef7916f0c38b016" FOREIGN KEY ("projectId") REFERENCES "organization_project" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_4e382caaf07ab0923b2e06bf918" FOREIGN KEY ("timeSlotId") REFERENCES "time_slot" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_2743f8990fde12f9586287eb09f" FOREIGN KEY ("taskId") REFERENCES "task" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_activity" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "title" varchar, "description" varchar, "metaData" text, "date" date, "time" time, "duration" integer NOT NULL DEFAULT (0), "type" varchar, "source" varchar NOT NULL DEFAULT ('BROWSER'), "deletedAt" datetime, "employeeId" varchar NOT NULL, "projectId" varchar, "timeSlotId" varchar, "taskId" varchar, "recordedAt" datetime, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), CONSTRAINT "FK_f2401d8fdff5d8970dfe30d3aed" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_fdb3f018c2bba4885bfa5757d16" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_a6f74ae99d549932391f0f44609" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_5a898f44fa31ef7916f0c38b016" FOREIGN KEY ("projectId") REFERENCES "organization_project" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_4e382caaf07ab0923b2e06bf918" FOREIGN KEY ("timeSlotId") REFERENCES "time_slot" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_2743f8990fde12f9586287eb09f" FOREIGN KEY ("taskId") REFERENCES "task" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_activity"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "title", "description", "metaData", "date", "time", "duration", "type", "source", "deletedAt", "employeeId", "projectId", "timeSlotId", "taskId", "recordedAt", "isActive", "isArchived") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "title", "description", "metaData", "date", "time", "duration", "type", "source", "deletedAt", "employeeId", "projectId", "timeSlotId", "taskId", "recordedAt", "isActive", "isArchived" FROM "activity"`);
         await queryRunner.query(`DROP TABLE "activity"`);
         await queryRunner.query(`ALTER TABLE "temporary_activity" RENAME TO "activity"`);
@@ -156,12 +162,24 @@ export class AlterActivityEntityTable1708158787002 implements MigrationInterface
      *
      * @param queryRunner
      */
-    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+    public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`DROP INDEX \`IDX_302b60a4970ffe94d5223f1c23\` ON \`activity\``);
+        await queryRunner.query(`ALTER TABLE \`activity\` DROP COLUMN \`date\``);
+        await queryRunner.query(`ALTER TABLE \`activity\` ADD \`date\` date NULL`);
+        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time NULL`);
+        await queryRunner.query(`CREATE INDEX \`IDX_302b60a4970ffe94d5223f1c23\` ON \`activity\` (\`date\`)`);
+    }
 
     /**
      * MySQL Down Migration
      *
      * @param queryRunner
      */
-    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+    public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+        await queryRunner.query(`DROP INDEX \`IDX_302b60a4970ffe94d5223f1c23\` ON \`activity\``);
+        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '00:00:00.000000'`);
+        await queryRunner.query(`ALTER TABLE \`activity\` DROP COLUMN \`date\``);
+        await queryRunner.query(`ALTER TABLE \`activity\` ADD \`date\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_302b60a4970ffe94d5223f1c23\` ON \`activity\` (\`date\`)`);
+    }
 }
