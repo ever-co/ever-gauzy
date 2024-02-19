@@ -1,5 +1,4 @@
 import { TlsOptions } from "tls";
-import { parseToBoolean } from '@gauzy/common';
 
 export enum DatabaseTypeEnum {
 	mongodb = 'mongodb',
