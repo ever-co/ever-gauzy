@@ -44,32 +44,13 @@ import { ConfigModule, ConfigService } from '@gauzy/config';
 		 * Configure the Knex.js module for the application using asynchronous options.
 		 */
 		KnexModule.forRootAsync({
-			useFactory: () => ({
-				config: {
-					client: 'pg', // Database client (PostgreSQL in this case)
-					useNullAsDefault: true, // Specify whether to use null as the default for unspecified fields
-					connection: {
-						host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
-						port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
-						database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
-						user: process.env.DB_USER || 'postgres', // Database username (default: postgres)
-						password: process.env.DB_PASS || 'root', // Database password (default: root)
-					},
-					// Connection pool settings
-					pool: {
-						min: 10, // Minimum number of connections in the pool
-						max: process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80, // Maximum number of connections in the pool
-						// Number of milliseconds a client must sit idle in the pool
-						// before it is disconnected from the backend and discarded
-						idleTimeoutMillis: process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000, // 10 seconds
-						// Connection timeout - number of milliseconds to wait before timing out
-						// when connecting a new client
-						acquireTimeoutMillis: process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000, // 5 seconds default
-					},
-				},
-				retryAttempts: 100, // Number of retry attempts in case of connection failures
-				retryDelay: 3000, // Delay between retry attempts in milliseconds
-			}),
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			// Use useFactory, useClass, or useExisting
+			useFactory: async (configService: ConfigService) => {
+				const { dbKnexConnectionOptions } = configService.config;
+				return dbKnexConnectionOptions;
+			}
 		})
 	],
 	exports: [
