@@ -1,4 +1,4 @@
-import {Injector, NgModule} from '@angular/core';
+import { Injector, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
 	GAUZY_ENV,
@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 		CommonModule
 	]
 })
-export class DesktopUiLibModule {}
+export class DesktopUiLibModule { }
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
