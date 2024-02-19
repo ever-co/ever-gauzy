@@ -59,7 +59,7 @@ export class UpgradeEstimateEmailTableTokenColumnValue1706968055472 implements M
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+
     }
 
     /**
@@ -68,7 +68,7 @@ export class UpgradeEstimateEmailTableTokenColumnValue1706968055472 implements M
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+
     }
 
     /**
@@ -77,7 +77,7 @@ export class UpgradeEstimateEmailTableTokenColumnValue1706968055472 implements M
     * @param queryRunner
     */
     public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+
     }
 
     /**
@@ -86,7 +86,7 @@ export class UpgradeEstimateEmailTableTokenColumnValue1706968055472 implements M
     * @param queryRunner
     */
     public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        
+
     }
 
     /**
@@ -95,7 +95,9 @@ export class UpgradeEstimateEmailTableTokenColumnValue1706968055472 implements M
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE \`estimate_email\` DROP COLUMN \`token\``);await queryRunner.query(`ALTER TABLE \`estimate_email\` ADD \`token\` text NOT NULL`);await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '0'`);
+        await queryRunner.query(`ALTER TABLE \`estimate_email\` DROP COLUMN \`token\``);
+        await queryRunner.query(`ALTER TABLE \`estimate_email\` ADD \`token\` text NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '0'`);
     }
 
     /**
@@ -104,6 +106,8 @@ export class UpgradeEstimateEmailTableTokenColumnValue1706968055472 implements M
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '00:00:00.000000'`);await queryRunner.query(`ALTER TABLE \`estimate_email\` DROP COLUMN \`token\``);await queryRunner.query(`ALTER TABLE \`estimate_email\` ADD \`token\` longtext NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`activity\` CHANGE \`time\` \`time\` time(6) NOT NULL DEFAULT '00:00:00.000000'`);
+        await queryRunner.query(`ALTER TABLE \`estimate_email\` DROP COLUMN \`token\``);
+        await queryRunner.query(`ALTER TABLE \`estimate_email\` ADD \`token\` longtext NOT NULL`);
     }
 }
