@@ -249,7 +249,7 @@ $height: calc(100vh - 10.5rem);
 }
 
 .icon-spin {
-  animation: rotate 2s ease-in-out 0s infinite;
+  animation: rotate 2s linear 0s infinite;
 }
 
 @keyframes rotate {
@@ -289,4 +289,8 @@ h4 {
 
 input {
   height: 42px !important;
+}
+
+::ng-deep .ssl nb-card {
+  background-color: var(--gauzy-card-2);
 }

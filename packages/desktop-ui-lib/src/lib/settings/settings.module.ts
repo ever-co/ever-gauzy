@@ -28,11 +28,11 @@ import { LanguageModule } from '../language/language.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '../services';
 import { LanguageSelectorService } from '../language/language-selector.service';
-import {TaskRenderModule} from "../time-tracker/task-render";
-import { SslComponent } from './ssl/ssl.component';
+import { TaskRenderModule } from '../time-tracker/task-render';
+import { SslModule } from './ssl';
 
 @NgModule({
-	declarations: [SettingsComponent, SslComponent],
+	declarations: [SettingsComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -55,15 +55,10 @@ import { SslComponent } from './ssl/ssl.component';
 		DesktopDirectiveModule,
 		LanguageModule,
 		TranslateModule,
-		TaskRenderModule
+		TaskRenderModule,
+		SslModule
 	],
-	providers: [
-		NbToastrService,
-		TimeTrackerService,
-		NbDialogService,
-		Store,
-		LanguageSelectorService
-	],
+	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store, LanguageSelectorService],
 	exports: [SettingsComponent]
 })
 export class SettingsModule {}

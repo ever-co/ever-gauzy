@@ -1,1 +1,1 @@
-export { JitsuAnalyticsPlugin } from './jitsu-analytics.plugin';
+export * from './jitsu-analytics.plugin';

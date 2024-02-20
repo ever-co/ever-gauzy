@@ -20,7 +20,7 @@
 				</nb-toggle>
 			</div>
 		</div>
-		<ng-container *ngIf="config.enable">
+		<ng-container *ngIf="(config$ | async).enable">
 			<div class="row">
 				<div class="col-5 ga-flex centered-text">
 					<p>
@@ -33,7 +33,7 @@
 				</div>
 				<div class="col-7 form-group ga-flex file">
 					<input
-						[(ngModel)]="config.ssl.key"
+							[(ngModel)]="config.ssl.key"
 						(ngModelChange)="onUpdate()"
 						type="text"
 						nbInput
@@ -59,7 +59,7 @@
 				</div>
 				<div class="col-7 ga-flex file form-group">
 					<input
-						[(ngModel)]="config.ssl.cert"
+							[(ngModel)]="config.ssl.cert"
 						(ngModelChange)="onUpdate()"
 						type="text"
 						nbInput

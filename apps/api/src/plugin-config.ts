@@ -1,18 +1,13 @@
 import * as path from 'path';
 import * as chalk from 'chalk';
 import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
-import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment } from '@gauzy/config';
-import { ChangelogPlugin } from '@gauzy/changelog-plugin';
-import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
-import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment, dbKnexConnectionConfig } from '@gauzy/config';
 import { SentryService } from '@gauzy/sentry-plugin';
-import { Sentry as SentryPlugin } from './sentry';
+import { SentryTracing as SentryPlugin } from './sentry';
 import { version } from './../version';
+import { plugins } from './plugins';
 
-const { jitsu } = environment;
-
-let assetPath: any;
-let assetPublicPath: any;
+const { sentry } = environment;
 
 console.log(chalk.magenta(`API Version %s`), version);
 console.log('Plugin Config -> __dirname: ' + __dirname);
@@ -20,6 +15,8 @@ console.log('Plugin Config -> process.cwd: ' + process.cwd());
 
 // TODO: maybe better to use process.cwd() instead of __dirname?
 
+let assetPath: any;
+let assetPublicPath: any;
 // for Docker
 if (__dirname.startsWith('/srv/gauzy')) {
 	assetPath = '/srv/gauzy/apps/api/src/assets';
@@ -56,31 +53,15 @@ export const pluginConfig: ApplicationPluginConfig = {
 	dbMikroOrmConnectionOptions: {
 		...dbMikroOrmConnectionConfig
 	},
+	dbKnexConnectionOptions: {
+		retryAttempts: 100,
+		retryDelay: 3000,
+		...dbKnexConnectionConfig
+	},
 	assetOptions: {
 		assetPath: assetPath,
 		assetPublicPath: assetPublicPath
 	},
-	...(environment.sentry && environment.sentry.dsn ? {
-		logger: new SentryService(SentryPlugin.options)
-	} : {}),
-	plugins: [
-		// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
-		ChangelogPlugin,
-		// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
-		KnowledgeBasePlugin,
-		// Initializes the Jitsu Analytics Plugin by providing a configuration object.
-		JitsuAnalyticsPlugin.init({
-			config: {
-				host: jitsu.serverHost,
-				writeKey: jitsu.serverWriteKey,
-				debug: jitsu.debug,
-				echoEvents: jitsu.echoEvents
-			}
-		}),
-		...(environment.sentry && environment.sentry.dsn
-			? [
-				SentryPlugin
-			]
-			: []),
-	]
+	...(sentry?.dsn ? { logger: new SentryService(SentryPlugin.options) } : {}),
+	plugins,
 };

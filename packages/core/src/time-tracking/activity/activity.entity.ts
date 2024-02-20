@@ -1,4 +1,4 @@
-import { Column, RelationId, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import { Column, RelationId, ManyToOne, JoinColumn, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -47,21 +47,21 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsOptional()
 	@IsString()
 	@Column({
-		nullable: true,
-		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
+		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json',
+		nullable: true
 	})
 	metaData?: string | IURLMetaData;
 
 	@ApiProperty({ type: () => 'date' })
-	@IsDateString()
+	@IsString()
 	@Index()
-	@CreateDateColumn(isMySQL() ? { type: 'datetime' } : { type: 'date' })
+	@Column({ type: 'date', nullable: true })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
-	@IsDateString()
+	@IsString()
 	@Index()
-	@CreateDateColumn({ type: 'time', default: '0' })
+	@Column({ type: 'time', nullable: true })
 	time: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
@@ -77,11 +77,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@Column({ nullable: true })
 	type?: string;
 
-	@ApiPropertyOptional({
-		type: () => String,
-		enum: TimeLogSourceEnum,
-		default: TimeLogSourceEnum.WEB_TIMER
-	})
+	@ApiPropertyOptional({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
 	@Index()
@@ -101,26 +97,31 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 * Employee Activity
+	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
 	@ManyToOne(() => Employee, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: false,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	employee?: IEmployee;
 
+	/**
+	 * Employee ID
+	 */
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
 	@Index()
-	@Column({ nullable: false })
+	@Column()
 	employeeId?: IEmployee['id'];
 
 	/**
 	 * Organization Project Relationship
 	 */
-	@ApiProperty({ type: () => OrganizationProject })
 	@ManyToOne(() => OrganizationProject, (it) => it.activities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
@@ -137,16 +138,19 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Activity) => it.project)
 	@Index()
+	@RelationId((it: Activity) => it.project)
 	@Column({ nullable: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Time Slot Activity
 	 */
-	@ApiProperty({ type: () => TimeSlot })
-	@ManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
+	@ManyToOne(() => TimeSlot, (it) => it.activities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -154,17 +158,19 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
-	@RelationId((it: Activity) => it.timeSlot)
 	@Index()
+	@RelationId((it: Activity) => it.timeSlot)
 	@Column({ nullable: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
 	 * Task Activity
 	 */
-	@ApiPropertyOptional({ type: () => Task })
-	@IsOptional()
-	@ManyToOne(() => Task, (task) => task.activities, {
+	@ManyToOne(() => Task, (it) => it.activities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -173,8 +179,8 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Activity) => it.task)
 	@Index()
+	@RelationId((it: Activity) => it.task)
 	@Column({ nullable: true })
 	taskId?: ITask['id'];
 }

@@ -25,6 +25,7 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
 import { TranslateModule } from '@ngx-translate/core';
+import { SslModule } from '../settings/ssl';
 
 @NgModule({
 	declarations: [SetupComponent],
@@ -49,9 +50,10 @@ import { TranslateModule } from '@ngx-translate/core';
 		NbDialogModule,
 		DesktopDirectiveModule,
 		LanguageModule,
-		TranslateModule
+		TranslateModule,
+		SslModule
 	],
 	exports: [SetupComponent],
-	providers: [SetupService, NbDialogService],
+	providers: [SetupService, NbDialogService]
 })
 export class SetupModule {}

@@ -74,6 +74,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
+			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
 			return await this.getDefaultEntities();
 		}
 	}
@@ -116,7 +117,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Save the created or fetched issue types to the repository and return the result.
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
+			throw new HttpException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST, { cause: error });
 		}
 	}
 
@@ -146,7 +147,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			));
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
+			throw new HttpException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST, { cause: error });
 		}
 	}
 

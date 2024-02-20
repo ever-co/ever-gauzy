@@ -57,7 +57,8 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
+			console.log('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', error);
+			throw new HttpException('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', HttpStatus.BAD_REQUEST, { cause: error });
 		}
 	}
 
