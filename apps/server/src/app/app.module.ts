@@ -1,8 +1,8 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
+import { HttpClientModule } from '@angular/common/http';
+import { Router, RouterModule } from '@angular/router';
 import {
 	NbDialogModule,
 	NbThemeModule,
@@ -12,8 +12,7 @@ import {
 	NbMenuModule,
 	NbSidebarModule,
 } from '@nebular/theme';
-import { AppService } from './app.service';
-import { HttpClientModule } from '@angular/common/http';
+import * as Sentry from '@sentry/angular-ivy';
 import {
 	UpdaterModule,
 	SettingsModule,
@@ -25,11 +24,21 @@ import {
 	GAUZY_ENV,
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { RouterModule } from '@angular/router';
-import * as Sentry from '@sentry/angular';
-import { Router } from '@angular/router';
 import { environment as gauzyEnvironment } from '@env/environment';
+import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+import { AppService } from './app.service';
 import { environment } from '../environments/environment';
+import { initializeSentry } from './sentry';
+
+if (environment.SENTRY_DSN) {
+	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
+		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
+	} else {
+		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		initializeSentry();
+	}
+}
 
 @NgModule({
 	declarations: [AppComponent],

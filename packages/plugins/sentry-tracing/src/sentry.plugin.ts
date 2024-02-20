@@ -1,7 +1,7 @@
 import { APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from "@nestjs/common";
-import { GauzyCorePlugin, IOnPluginBootstrap } from "@gauzy/plugin";
 import { Integration } from '@sentry/types';
+import { GauzyCorePlugin, IOnPluginBootstrap } from "@gauzy/plugin";
 import { SentryRequestMiddleware } from "./sentry-request.middleware";
 import { SentryTraceMiddleware } from "./sentry-trace.middleware";
 import { SentryPluginOptions } from "./sentry.types";
@@ -38,7 +38,6 @@ export const DefaultSentryIntegrations: Integration[] = createDefaultSentryInteg
 export class SentryPlugin implements NestModule, IOnPluginBootstrap {
     // We disable by default additional logging for each event to avoid cluttering the logs
     private logEnabled = true;
-    //
     static options: SentryPluginOptions = {} as any;
 
     /**
@@ -84,7 +83,7 @@ export class SentryPlugin implements NestModule, IOnPluginBootstrap {
  * @param {HttpAdapterHost} host - The host object from the NestJS framework.
  * @returns {SentryPluginOptions} The Sentry plugin options.
  */
-export function createSentryOptions(host: HttpAdapterHost): SentryPluginOptions {
+function createSentryOptions(host: HttpAdapterHost): SentryPluginOptions {
     // Concatenate the integrations returned by createSentryIntegrations with the existing integrations
     SentryPlugin.options.integrations = removeDuplicateIntegrations(
         (SentryPlugin.options.integrations ?? []).concat(DefaultSentryIntegrations)
