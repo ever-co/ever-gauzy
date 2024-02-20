@@ -5,7 +5,7 @@ import {
 	ChangeDetectionStrategy,
 	ViewChild,
 	ElementRef,
-	Inject,
+	Inject
 } from '@angular/core';
 import { SetupService } from './setup.service';
 import { NbDialogService } from '@nebular/theme';
@@ -16,12 +16,13 @@ import { LanguageSelectorComponent } from '../language/language-selector.compone
 import { TranslateService } from '@ngx-translate/core';
 import { GAUZY_ENV } from '../constants';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { IProxyConfig } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ngx-setup',
 	templateUrl: './setup.component.html',
 	styleUrls: ['./setup.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SetupComponent implements OnInit {
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
@@ -47,18 +48,14 @@ export class SetupComponent implements OnInit {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
 			this.desktopFeatures.timeTracking = arg.timeTrackerWindow;
 			this.connectivity.integrated = arg.isLocalServer;
-			this.connectivity.custom =
-				!arg.isLocalServer && arg.serverUrl !== 'https://api.gauzy.co';
-			this.connectivity.live =
-				arg.serverUrl && arg.serverUrl === 'https://api.gauzy.co';
+			this.connectivity.custom = !arg.isLocalServer && arg.serverUrl !== 'https://api.gauzy.co';
+			this.connectivity.live = arg.serverUrl && arg.serverUrl === 'https://api.gauzy.co';
 			this.thirdParty.activityWatch = arg.aw;
 			this.databaseDriver.sqlite = arg.db === 'sqlite';
 			this.databaseDriver.postgre = arg.db === 'postgres';
 			this.serverConfig.integrated.port = arg.port;
 			if (!arg.isLocalServer) {
-				this.serverConfig.custom.apiHost = arg.serverUrl
-					.split(':')[1]
-					.slice(2);
+				this.serverConfig.custom.apiHost = arg.serverUrl.split(':')[1].slice(2);
 				this.serverConfig.custom.port = arg.serverUrl.split(':')[2];
 			}
 			if (arg.db === 'postgres') {
@@ -67,20 +64,15 @@ export class SetupComponent implements OnInit {
 					dbPort: arg[arg.db]?.dbPort,
 					dbName: arg[arg.db]?.dbName,
 					dbUser: arg[arg.db]?.dbUsername,
-					dbPassword: arg[arg.db]?.dbPassword,
+					dbPassword: arg[arg.db]?.dbPassword
 				};
 			}
 		});
 
 		electronService.ipcRenderer.on('log_state', (event, arg) => {
-			const validMessage = this.defaultMessage.findIndex(
-				(item) => arg.msg.indexOf(item) > -1
-			);
+			const validMessage = this.defaultMessage.findIndex((item) => arg.msg.indexOf(item) > -1);
 			if (validMessage > -1) {
-				if (
-					validMessage === 0 &&
-					arg.msg.indexOf('Found 0 users in DB') < 0
-				) {
+				if (validMessage === 0 && arg.msg.indexOf('Found 0 users in DB') < 0) {
 					this.progressSetup = 100;
 					this.progressMessage = arg.msg;
 				} else {
@@ -105,9 +97,7 @@ export class SetupComponent implements OnInit {
 
 		electronService.ipcRenderer.send('reset_permissions');
 
-		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO
-		);
+		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 	appName: string = this.electronService.remote.app.getName();
 	loading: Boolean = false;
@@ -122,38 +112,38 @@ export class SetupComponent implements OnInit {
 			: '../assets/images/logos/logo_Gauzy.svg';
 	desktopFeatures: any = {
 		gauzyPlatform: !this.isDesktopTimer,
-		timeTracking: !this.isServer,
+		timeTracking: !this.isServer
 	};
 
 	connectivity: any = {
 		integrated: this.isServer,
 		custom: false,
-		live: !this.isServer,
+		live: !this.isServer
 	};
 
 	thirdParty: any = {
 		activitywatch: true,
-		wakatime: true,
+		wakatime: true
 	};
 
 	databaseDriver: any = {
 		sqlite: true,
-		postgre: false,
+		postgre: false
 	};
 
 	serverConfig: any = {
 		integrated: {
 			port: '3000',
 			portUi: '4200',
-			host: '0.0.0.0',
+			host: '0.0.0.0'
 		},
 		custom: {
 			apiHost: '127.0.0.1',
-			port: '3000',
+			port: '3000'
 		},
 		live: {
-			url: 'https://api.gauzy.co',
-		},
+			url: 'https://api.gauzy.co'
+		}
 	};
 
 	databaseConfig: any = {
@@ -162,8 +152,17 @@ export class SetupComponent implements OnInit {
 			dbPort: '5432',
 			dbName: 'postgres',
 			dbUser: 'postgres',
-			dbPassword: '',
+			dbPassword: ''
+		}
+	};
+
+	proxyOptions: IProxyConfig = {
+		ssl: {
+			key: '',
+			cert: ''
 		},
+		secure: true,
+		enable: false
 	};
 
 	showPassword = false;
@@ -200,13 +199,13 @@ export class SetupComponent implements OnInit {
 		'SEEDING Default Time Off Policy',
 		'SEEDING Default Integration Types',
 		'SEEDING Default Integrations',
-		'SEEDED PRODUCTION DATABASE',
+		'SEEDED PRODUCTION DATABASE'
 	];
 
 	dialogData: any = {
 		title: 'TOASTR.TITLE.SUCCESS',
 		message: '',
-		status: 'success',
+		status: 'success'
 	};
 
 	runApp = false;
@@ -245,7 +244,7 @@ export class SetupComponent implements OnInit {
 		return {
 			aw: this.thirdParty.activitywatch,
 			awHost: this.awAPI,
-			wakatime: this.thirdParty.wakatime,
+			wakatime: this.thirdParty.wakatime
 		};
 	}
 
@@ -253,21 +252,16 @@ export class SetupComponent implements OnInit {
 		if (this.connectivity.integrated) {
 			return {
 				...this.serverConfig.integrated,
-				isLocalServer: true,
+				isLocalServer: true
 			};
 		}
 
 		if (this.connectivity.custom) {
-			const protocol =
-				this.serverConfig.custom.apiHost.indexOf('http') === 0
-					? ''
-					: 'http://';
-			const port = this.serverConfig.custom.port
-				? ':' + this.serverConfig.custom.port
-				: '';
+			const protocol = this.serverConfig.custom.apiHost.indexOf('http') === 0 ? '' : 'http://';
+			const port = this.serverConfig.custom.port ? ':' + this.serverConfig.custom.port : '';
 			return {
 				serverUrl: protocol + this.serverConfig.custom.apiHost + port,
-				isLocalServer: false,
+				isLocalServer: false
 			};
 		}
 
@@ -275,7 +269,7 @@ export class SetupComponent implements OnInit {
 		if (this.connectivity.live) {
 			return {
 				serverUrl: this.serverConfig.live.url,
-				isLocalServer: false,
+				isLocalServer: false
 			};
 		}
 	}
@@ -288,15 +282,15 @@ export class SetupComponent implements OnInit {
 					dbPort: this.databaseConfig.postgre.dbPort,
 					dbName: this.databaseConfig.postgre.dbName,
 					dbUsername: this.databaseConfig.postgre.dbUser,
-					dbPassword: this.databaseConfig.postgre.dbPassword,
+					dbPassword: this.databaseConfig.postgre.dbPassword
 				},
-				db: 'postgres',
+				db: 'postgres'
 			};
 		}
 
 		if (this.databaseDriver.sqlite) {
 			return {
-				db: 'better-sqlite',
+				db: 'better-sqlite'
 			};
 		}
 
@@ -306,7 +300,7 @@ export class SetupComponent implements OnInit {
 	getFeature() {
 		return {
 			gauzyWindow: this.desktopFeatures.gauzyPlatform,
-			timeTrackerWindow: this.desktopFeatures.timeTracking,
+			timeTrackerWindow: this.desktopFeatures.timeTracking
 		};
 	}
 
@@ -318,26 +312,17 @@ export class SetupComponent implements OnInit {
 			...this.getServerConfig(),
 			...this.getDataBaseConfig(),
 			...this.getThirdPartyConfig(),
-			...this.getFeature(),
+			...this.getFeature()
 		};
-		await this.electronService.ipcRenderer.invoke(
-			'PREFERRED_LANGUAGE',
-			this.languageSelector.preferredLanguage
-		);
+		await this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE', this.languageSelector.preferredLanguage);
 
 		try {
 			let isStarted = false;
 			if (this.isServer) {
-				this.electronService.ipcRenderer.send(
-					'start_server',
-					gauzyConfig
-				);
+				this.electronService.ipcRenderer.send('start_server', gauzyConfig);
 				isStarted = true;
 			} else {
-				isStarted = await this.electronService.ipcRenderer.invoke(
-					'START_SERVER',
-					gauzyConfig
-				);
+				isStarted = await this.electronService.ipcRenderer.invoke('START_SERVER', gauzyConfig);
 			}
 			if (isStarted && !gauzyConfig.isLocalServer) {
 				this.electronService.ipcRenderer.send('app_is_init');
@@ -374,21 +359,12 @@ export class SetupComponent implements OnInit {
 		const { integrated, custom, live } = this.connectivity;
 		const { port, portUi } = this.serverConfig.integrated;
 		const { apiHost } = this.serverConfig.custom;
-		const { host, dbPort, dbName, dbUser, dbPassword } =
-			this.databaseConfig.postgre;
+		const { host, dbPort, dbName, dbUser, dbPassword } = this.databaseConfig.postgre;
 
 		const { postgre, sqlite } = this.databaseDriver;
 
 		switch (true) {
-			case integrated &&
-				port &&
-				portUi &&
-				dbPort &&
-				host &&
-				dbName &&
-				dbUser &&
-				dbPassword &&
-				postgre:
+			case integrated && port && portUi && dbPort && host && dbName && dbUser && dbPassword && postgre:
 				this.buttonSave = true;
 				break;
 			case integrated && port && portUi && sqlite:
@@ -411,7 +387,7 @@ export class SetupComponent implements OnInit {
 
 	openLink(link) {
 		this.electronService.ipcRenderer.send('open_browser', {
-			url: link,
+			url: link
 		});
 	}
 
@@ -428,7 +404,7 @@ export class SetupComponent implements OnInit {
 
 	checkDatabaseConn() {
 		this.electronService.ipcRenderer.send('check_database_connection', {
-			...this.getDataBaseConfig(),
+			...this.getDataBaseConfig()
 		});
 	}
 
@@ -437,7 +413,7 @@ export class SetupComponent implements OnInit {
 		console.log('server host', serverHostOptions);
 		this.setupService
 			.pingServer({
-				host: serverHostOptions.serverUrl,
+				host: serverHostOptions.serverUrl
 			})
 			.then(async (res) => {
 				if (this.runApp) {
@@ -445,11 +421,10 @@ export class SetupComponent implements OnInit {
 				} else {
 					this.dialogData = {
 						title: 'TOASTR.TITLE.SUCCESS',
-						message: this._translateService.instant(
-							'TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS',
-							{ url: serverHostOptions.serverUrl }
-						),
-						status: 'success',
+						message: this._translateService.instant('TIMER_TRACKER.SETTINGS.MESSAGES.CONNECTION_SUCCEEDS', {
+							url: serverHostOptions.serverUrl
+						}),
+						status: 'success'
 					};
 					const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 					elBtn.click();
@@ -460,7 +435,7 @@ export class SetupComponent implements OnInit {
 				this.dialogData = {
 					title: 'TOASTR.TITLE.ERROR',
 					message: e.message,
-					status: 'danger',
+					status: 'danger'
 				};
 				const elBtn: HTMLElement = this.btnDialogOpen.nativeElement;
 				elBtn.click();
@@ -484,8 +459,8 @@ export class SetupComponent implements OnInit {
 	open(hasBackdrop: boolean) {
 		this.dialogService.open(AlertComponent, {
 			context: {
-				data: this.dialogData,
-			},
+				data: this.dialogData
+			}
 		});
 	}
 
@@ -501,13 +476,13 @@ export class SetupComponent implements OnInit {
 				this.dialogData = {
 					title: 'TOASTR.TITLE.SUCCESS',
 					message: arg.message,
-					status: 'success',
+					status: 'success'
 				};
 			} else {
 				this.dialogData = {
 					title: 'TOASTR.TITLE.WARNING',
 					message: arg.message,
-					status: 'danger',
+					status: 'danger'
 				};
 			}
 
@@ -537,7 +512,12 @@ export class SetupComponent implements OnInit {
 	}
 
 	private scrollToBottom() {
-		this.logBox.nativeElement.scrollTop =
-			this.logBox.nativeElement.scrollHeight;
+		this.logBox.nativeElement.scrollTop = this.logBox.nativeElement.scrollHeight;
+	}
+
+	public onChangeProxyConfig(config: IProxyConfig) {
+		this.electronService.ipcRenderer.send('update_server_config', {
+			secureProxy: config
+		});
 	}
 }

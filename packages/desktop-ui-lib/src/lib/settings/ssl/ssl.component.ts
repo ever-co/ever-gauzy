@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import { ElectronService } from '@gauzy/desktop-ui-lib';
 import { IProxyConfig } from '@gauzy/contracts';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 interface ICheckSslResponse {
 	status: boolean;
@@ -17,7 +17,7 @@ export class SslComponent implements OnInit {
 	public isCheckSsl$: BehaviorSubject<boolean>;
 	public isValid$: BehaviorSubject<ICheckSslResponse>;
 	public isHidden$: BehaviorSubject<boolean>;
-	private _config: IProxyConfig;
+	private _config: BehaviorSubject<IProxyConfig>;
 
 	@Output()
 	public update: EventEmitter<IProxyConfig>;
@@ -27,6 +27,14 @@ export class SslComponent implements OnInit {
 		this.isCheckSsl$ = new BehaviorSubject(false);
 		this.isHidden$ = new BehaviorSubject(true);
 		this.isValid$ = new BehaviorSubject({ status: true, message: '' });
+		this._config = new BehaviorSubject({
+			ssl: {
+				key: '',
+				cert: ''
+			},
+			secure: true,
+			enable: false
+		});
 	}
 
 	ngOnInit(): void {
@@ -46,13 +54,17 @@ export class SslComponent implements OnInit {
 	}
 
 	public get config(): IProxyConfig {
-		return this._config;
+		return this._config.getValue();
+	}
+
+	public get config$(): Observable<IProxyConfig> {
+		return this._config.asObservable();
 	}
 
 	@Input()
 	public set config(value: IProxyConfig) {
 		if (value) {
-			this._config = value;
+			this._config.next(value);
 		}
 	}
 

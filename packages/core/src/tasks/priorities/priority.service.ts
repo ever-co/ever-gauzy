@@ -57,8 +57,8 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
-			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
+			console.log('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', error);
+			throw new HttpException('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', HttpStatus.BAD_REQUEST, { cause: error });
 		}
 	}
 

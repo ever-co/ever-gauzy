@@ -25,4 +25,4 @@ export function initializeSentry(): typeof SentryPlugin {
     });
 }
 
-export const Sentry = initializeSentry();
+export const SentryTracing = initializeSentry();
