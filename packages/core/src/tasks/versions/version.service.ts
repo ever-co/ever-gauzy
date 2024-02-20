@@ -49,8 +49,8 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
-			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
+			console.log('Failed to retrieve task versions. Please ensure that all required parameters are provided correctly.', error);
+			throw new HttpException('Failed to retrieve task versions. Please ensure that all required parameters are provided correctly.', HttpStatus.BAD_REQUEST, { cause: error });
 		}
 	}
 
