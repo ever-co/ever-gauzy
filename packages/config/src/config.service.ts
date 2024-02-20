@@ -1,6 +1,7 @@
 import { DynamicModule, Injectable, Type, Logger } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
+import { KnexModuleOptions } from 'nest-knexjs';
 import {
 	ApplicationPluginConfig,
 	ApiServerConfigurationOptions,
@@ -56,6 +57,13 @@ export class ConfigService {
 	 */
 	get dbMikroOrmConnectionOptions(): Readonly<MikroOrmModuleOptions> {
 		return this.config.dbMikroOrmConnectionOptions;
+	}
+
+	/**
+	 * Get the MikroORM connection options.
+	 */
+	get dbKnexConnectionOptions(): Readonly<KnexModuleOptions> {
+		return this.config.dbKnexConnectionOptions;
 	}
 
 	/**

@@ -49,6 +49,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
+			console.log('Invalid request parameter: Some required parameters are missing or incorrect', error);
 			throw new HttpException('Invalid request parameter: Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST);
 		}
 	}

@@ -32,6 +32,7 @@
 		"@nestjs/common": "^10.3.0",
 		"@nestjs/typeorm": "^10.0.1",
 		"apollo-server-core": "^3.10.1",
+		"nest-knexjs": "^0.0.21",
 		"slugify": "^1.6.5"
 	},
 	"devDependencies": {

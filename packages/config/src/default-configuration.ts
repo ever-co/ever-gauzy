@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 dotenv.config();
 
+import * as path from 'path';
 import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_PORT,
@@ -8,8 +9,7 @@ import {
 	DEFAULT_GRAPHQL_API_PATH,
 	ApplicationPluginConfig
 } from '@gauzy/common';
-import * as path from 'path';
-import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from './database';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from './database';
 
 process.cwd();
 
@@ -27,7 +27,6 @@ if (__dirname.startsWith('/srv/gauzy')) {
 	assetPublicPath = '/srv/gauzy/apps/api/public';
 } else {
 	assetPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets']));
-
 	assetPublicPath = path.join(path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']));
 }
 
@@ -59,6 +58,11 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 	},
 	dbMikroOrmConnectionOptions: {
 		...dbMikroOrmConnectionConfig,
+	},
+	dbKnexConnectionOptions: {
+		retryAttempts: 100, // Number of retry attempts in case of connection failures
+		retryDelay: 3000, // Delay between retry attempts in milliseconds
+		...dbKnexConnectionConfig
 	},
 	plugins: [],
 	authOptions: {

@@ -5,7 +5,7 @@ import {
 	DEFAULT_GRAPHQL_API_PATH,
 	ApplicationPluginConfig,
 } from '@gauzy/common';
-import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig } from '@gauzy/config';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from '@gauzy/config';
 
 // Define the dev configuration
 export const devConfig: ApplicationPluginConfig = {
@@ -30,6 +30,9 @@ export const devConfig: ApplicationPluginConfig = {
 	},
 	dbMikroOrmConnectionOptions: {
 		...dbMikroOrmConnectionConfig
+	},
+	dbKnexConnectionOptions: {
+		...dbKnexConnectionConfig
 	},
 	plugins: []
 };
