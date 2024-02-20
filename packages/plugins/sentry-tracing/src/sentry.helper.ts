@@ -1,6 +1,5 @@
 import { Integrations } from "@sentry/node";
 import { Integration } from '@sentry/types';
-import { ProfilingIntegration } from '@sentry/profiling-node';
 import { environment } from "@gauzy/config";
 import { SentryPluginOptions } from "./sentry.types";
 
@@ -36,8 +35,6 @@ export function createDefaultSentryIntegrations(): Integration[] {
     if (environment.sentry && environment.sentry.dsn) {
         addHttpTracingIntegration(integrations);
         addPostgresTrackingIntegration(integrations);
-        // Uncomment the following line if needed
-        // addProfilingIntegration(integrations);
         addConsoleIntegration(integrations);
         addGraphQLIntegration(integrations);
         addApolloIntegration(integrations);
@@ -52,7 +49,7 @@ export function createDefaultSentryIntegrations(): Integration[] {
  * Add HTTP Tracing integration if enabled.
  * @param integrations The array of Sentry integrations.
  */
-export function addHttpTracingIntegration(integrations: Integration[]): void {
+function addHttpTracingIntegration(integrations: Integration[]): void {
     if (process.env.SENTRY_HTTP_TRACING_ENABLED === 'true') {
         integrations.push(new Integrations.Http({ tracing: true, breadcrumbs: true }));
         console.log('Sentry HTTP Tracing Enabled');
@@ -63,7 +60,7 @@ export function addHttpTracingIntegration(integrations: Integration[]): void {
  * Add Postgres Tracking integration if enabled.
  * @param integrations The array of Sentry integrations.
  */
-export function addPostgresTrackingIntegration(integrations: Integration[]): void {
+function addPostgresTrackingIntegration(integrations: Integration[]): void {
     if (process.env.SENTRY_POSTGRES_TRACKING_ENABLED === 'true' && process.env.DB_TYPE === 'postgres') {
         integrations.push(new Integrations.Postgres());
         console.log('Sentry Postgres Tracking Enabled');
@@ -71,24 +68,10 @@ export function addPostgresTrackingIntegration(integrations: Integration[]): voi
 }
 
 /**
- * Adds the ProfilingIntegration to the array of Sentry integrations if profiling is enabled.
- * @param integrations The array of Sentry integrations.
- */
-export function addProfilingIntegration(integrations: Integration[]): void {
-    // Check if Sentry profiling is enabled
-    if (process.env.SENTRY_PROFILING_ENABLED === 'true') {
-        // Add ProfilingIntegration to the array
-        integrations.push(new ProfilingIntegration());
-        // Log a message indicating that Sentry Profiling is enabled
-        console.log('Sentry Profiling Enabled');
-    }
-}
-
-/**
  * Add Console integration.
  * @param integrations The array of Sentry integrations.
  */
-export function addConsoleIntegration(integrations: Integration[]): void {
+function addConsoleIntegration(integrations: Integration[]): void {
     integrations.push(new Integrations.Console());
     console.log('Sentry Console Enabled');
 }
@@ -97,7 +80,7 @@ export function addConsoleIntegration(integrations: Integration[]): void {
  * Add GraphQL integration.
  * @param integrations The array of Sentry integrations.
  */
-export function addGraphQLIntegration(integrations: Integration[]): void {
+function addGraphQLIntegration(integrations: Integration[]): void {
     integrations.push(new Integrations.GraphQL());
     console.log('Sentry GraphQL Enabled');
 }
@@ -106,7 +89,7 @@ export function addGraphQLIntegration(integrations: Integration[]): void {
  * Add Apollo integration.
  * @param integrations The array of Sentry integrations.
  */
-export function addApolloIntegration(integrations: Integration[]): void {
+function addApolloIntegration(integrations: Integration[]): void {
     integrations.push(new Integrations.Apollo({ useNestjs: true }));
     console.log('Sentry Apollo Enabled');
 }
@@ -115,7 +98,7 @@ export function addApolloIntegration(integrations: Integration[]): void {
  * Add Local Variables integration.
  * @param integrations The array of Sentry integrations.
  */
-export function addLocalVariablesIntegration(integrations: Integration[]): void {
+function addLocalVariablesIntegration(integrations: Integration[]): void {
     integrations.push(new Integrations.LocalVariables({ captureAllExceptions: true }));
     console.log('Sentry Local Variables Enabled');
 }
@@ -124,8 +107,8 @@ export function addLocalVariablesIntegration(integrations: Integration[]): void 
  * Add Request Data integration.
  * @param integrations The array of Sentry integrations.
  */
-export function addRequestDataIntegration(integrations: Integration[]): void {
-    integrations.push(new Integrations.RequestData({ ip: true }));
+function addRequestDataIntegration(integrations: Integration[]): void {
+    integrations.push(new Integrations.RequestData({ include: { ip: true } }));
     console.log('Sentry Request Data Enabled');
 }
 

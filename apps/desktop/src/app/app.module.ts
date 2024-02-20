@@ -44,10 +44,26 @@ import {
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RouterModule } from '@angular/router';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import * as Sentry from "@sentry/angular";
+import * as Sentry from "@sentry/angular-ivy";
 import { Router } from '@angular/router';
 import { environment as gauzyEnvironment } from '@env/environment';
 import { environment } from '../environments/environment';
+import { initializeSentry } from './sentry';
+
+/**
+ * Initializes Sentry based on the environment configuration.
+ * If a valid Sentry DSN is provided, Sentry is initialized with the specified configuration.
+ * If the DSN is set to 'DOCKER_SENTRY_DSN', a warning is logged indicating that the environment
+ * is running inside Docker without a Sentry DSN.
+ */
+if (environment.SENTRY_DSN) {
+	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
+		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
+	} else {
+		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		initializeSentry();
+	}
+}
 
 @NgModule({
 	declarations: [AppComponent],
