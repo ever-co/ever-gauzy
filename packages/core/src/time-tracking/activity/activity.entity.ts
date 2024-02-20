@@ -1,4 +1,4 @@
-import { RelationId, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -54,15 +54,15 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	metaData?: string | IURLMetaData;
 
 	@ApiProperty({ type: () => 'date' })
-	@IsDateString()
+	@IsString()
 	@Index()
-	@CreateDateColumn(isMySQL() ? { type: 'datetime' } : { type: 'date' })
+	@MultiORMColumn({ type: 'date', nullable: true })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
-	@IsDateString()
+	@IsString()
 	@Index()
-	@CreateDateColumn({ type: 'time', default: '0' })
+	@MultiORMColumn({ type: 'time', nullable: true })
 	time: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
@@ -78,11 +78,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@MultiORMColumn({ nullable: true })
 	type?: string;
 
-	@ApiPropertyOptional({
-		type: () => String,
-		enum: TimeLogSourceEnum,
-		default: TimeLogSourceEnum.WEB_TIMER
-	})
+	@ApiPropertyOptional({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
 	@Index()
@@ -102,20 +98,24 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	|--------------------------------------------------------------------------
 	*/
 	/**
-	 * Employee Activity
+	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
 	@MultiORMManyToOne(() => Employee, {
+		nullable: false,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	employee?: IEmployee;
 
+	/**
+	 * Employee ID
+	 */
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
 	@Index()
-	@MultiORMColumn({ nullable: false, relationId: true })
+	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 
 	/**
@@ -138,16 +138,19 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Activity) => it.project)
 	@Index()
+	@RelationId((it: Activity) => it.project)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Time Slot Activity
 	 */
-	@ApiProperty({ type: () => TimeSlot })
-	@MultiORMManyToOne(() => TimeSlot, (timeSlot) => timeSlot.activities, {
+	@MultiORMManyToOne(() => TimeSlot, (it) => it.activities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -155,17 +158,19 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
-	@RelationId((it: Activity) => it.timeSlot)
 	@Index()
+	@RelationId((it: Activity) => it.timeSlot)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
 	 * Task Activity
 	 */
-	@ApiPropertyOptional({ type: () => Task })
-	@IsOptional()
-	@MultiORMManyToOne(() => Task, (task) => task.activities, {
+	@MultiORMManyToOne(() => Task, (it) => it.activities, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -174,8 +179,8 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@RelationId((it: Activity) => it.task)
 	@Index()
+	@RelationId((it: Activity) => it.task)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
 }

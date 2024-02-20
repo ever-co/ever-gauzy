@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as chalk from 'chalk';
 import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
-import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment } from '@gauzy/config';
+import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment, dbKnexConnectionConfig } from '@gauzy/config';
 import { ChangelogPlugin } from '@gauzy/changelog-plugin';
 import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
@@ -55,6 +55,11 @@ export const pluginConfig: ApplicationPluginConfig = {
 	},
 	dbMikroOrmConnectionOptions: {
 		...dbMikroOrmConnectionConfig
+	},
+	dbKnexConnectionOptions: {
+		retryAttempts: 100,
+		retryDelay: 3000,
+		...dbKnexConnectionConfig
 	},
 	assetOptions: {
 		assetPath: assetPath,
