@@ -27,7 +27,7 @@ import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
-import { MultiORM, MultiORMEnum, flatten, getORMType, praseMikroORMEntityToJson } from './../../core/utils';
+import { MultiORM, MultiORMEnum, concatIdToWhere, flatten, getORMType, parseTypeORMFindToMikroOrm, praseMikroORMEntityToJson } from './../../core/utils';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -85,7 +85,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async count(options?: ICountOptions<T>): Promise<number> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
 				return await this.repository.count(options as FindManyOptions<T>);
 			default:
@@ -103,7 +104,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async countBy(options?: ICountByOptions<T>): Promise<number> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
 				return await this.repository.countBy(options as FindOptionsWhere<T>);
 			default:
@@ -125,10 +127,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				[items, total] = await this.mikroRepository.findAndCount(
-					options?.where as MikroFilterQuery<T>,
-					options as MikroFindOptions<T>
-				);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				[items, total] = await this.mikroRepository.findAndCount(where, mikroOptions) as any;
 				items = praseMikroORMEntityToJson(items);
 				break;
 			case MultiORMEnum.TypeORM:
@@ -149,10 +149,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const items = await this.mikroRepository.find(
-					options.where as MikroFilterQuery<T>,
-					options as MikroFindOptions<T>
-				);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				const items = await this.mikroRepository.find(where, mikroOptions);
 
 				return praseMikroORMEntityToJson(items);
 			case MultiORMEnum.TypeORM:
@@ -177,15 +175,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					[items, total] = await this.mikroRepository.findAndCount(
-						options?.where as MikroFilterQuery<T>,
-						{
-							skip: options && options.skip ? options.take * (options.skip - 1) : 0,
-							take: options && options.take ? options.take : 10,
-							...options
-						} as MikroFindOptions<T>
-					);
 
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+
+					[items, total] = await this.mikroRepository.findAndCount(where, mikroOptions) as any;
 					items = praseMikroORMEntityToJson(items);
 					break;
 				case MultiORMEnum.TypeORM:
@@ -238,19 +231,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
-					options = options as IMikroOptions<T>;
 
-					let where: MikroFilterQuery<T>;
-					if (options?.where instanceof Array) {
-						where = options.where.concat({ id } as any);
-					} else {
-						where = {
-							id,
-							...(options?.where ? options.where : ({} as any))
-						};
-					}
-
-					record = await this.mikroRepository.findOneOrFail(where, options as FindOneOrFailOptions<T>);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					record = await this.mikroRepository.findOneOrFail(concatIdToWhere(id, where), mikroOptions) as any;
 					record = praseMikroORMEntityToJson(record);
 					break;
 
@@ -298,10 +281,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					record = await this.mikroRepository.findOneOrFail(
-						options.where as MikroFilterQuery<T>,
-						options as FindOneOrFailOptions<T>
-					);
+
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					record = await this.mikroRepository.findOneOrFail(where, mikroOptions) as any;
 					record = praseMikroORMEntityToJson(record);
 					break;
 				case MultiORMEnum.TypeORM:
@@ -334,7 +316,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			let record: T;
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					record = await this.mikroRepository.findOneOrFail(options as MikroFilterQuery<T>);
+
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					record = await this.mikroRepository.findOneOrFail(where, mikroOptions) as any;
 					record = praseMikroORMEntityToJson(record);
 					break;
 				case MultiORMEnum.TypeORM:
@@ -373,19 +357,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				// return await this.mikroRepository.find(options.where as MikroFilterQuery<T>, options as MikroFindOptions<T>);
-				options = options as IMikroOptions<T>;
-
-				let where: MikroFilterQuery<T>;
-				if (options?.where instanceof Array) {
-					where = options.where.concat({ id } as any);
-				} else {
-					where = {
-						id,
-						...(options?.where ? options.where : ({} as any))
-					};
-				}
-
-				record = await this.mikroRepository.findOne(where, options as MikroFindOneOptions<T>);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				record = (await this.mikroRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions)) as any;
 
 				record = praseMikroORMEntityToJson(record);
 				break;
@@ -423,13 +396,15 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const mikroOptions = options as any;
-				const mikroFilterQuery: MikroFilterQuery<T> = options.where as FilterQuery<T>;
-				const mikroFindOneOptions: MikroFindOneOptions<T> = {
-					...(mikroOptions.relations ? { populate: flatten(mikroOptions.relations) } : {}),
-					...(mikroOptions.order ? { orderBy: mikroOptions.order } : {})
-				};
-				record = await this.mikroRepository.findOne(mikroFilterQuery, mikroFindOneOptions);
+				// const mikroOptions = options as any;
+				// const mikroFilterQuery: MikroFilterQuery<T> = options.where as FilterQuery<T>;
+				// const mikroFindOneOptions: MikroFindOneOptions<T> = {
+				// 	...(mikroOptions.relations ? { populate: flatten(mikroOptions.relations) } : {}),
+				// 	...(mikroOptions.order ? { orderBy: mikroOptions.order } : {})
+				// };
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				const query = this.mikroRepository.findOne(where, mikroOptions);
+				record = await query as any;
 
 				record = praseMikroORMEntityToJson(record);
 				break;
@@ -458,7 +433,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				record = await this.mikroRepository.findOne(options as MikroFilterQuery<T>);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as any);
+				record = await this.mikroRepository.findOne(where, mikroOptions) as any;
 				record = praseMikroORMEntityToJson(record);
 				break;
 			case MultiORMEnum.TypeORM:

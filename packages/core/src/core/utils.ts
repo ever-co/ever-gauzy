@@ -9,11 +9,13 @@ import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { SqliteDriver } from '@mikro-orm/sqlite';
-import { Collection } from '@mikro-orm/core';
+import { Collection, FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { FindManyOptions, FindOneOptions, FindOptions as TypeORMFindOptions } from 'typeorm';
+import { IMikroOptions } from './crud/icrud.service';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -470,21 +472,76 @@ export const flatten = (input: any): any => {
 
 
 export function praseMikroORMEntityToJson<T>(entity: any | Collection<any, any> | any[]) {
-	if (entity instanceof Array) {
-		return entity.map((item) => praseMikroORMEntityToJson(item)) as T;
-	} else if (entity instanceof Collection) {
-		return praseMikroORMEntityToJson(entity.toArray()) as T[];
+
+	return JSON.parse(JSON.stringify(entity));
+
+	// if (entity instanceof Array) {
+	// 	console.log('entity instanceof Array', entity)
+	// 	return entity.map((item) => praseMikroORMEntityToJson(item)) as T;
+	// } else if (entity instanceof Collection) {
+	// 	console.log('entity instanceof Collection', entity, entity.toArray())
+	// 	return praseMikroORMEntityToJson(entity.toArray()) as T[];
+	// } else {
+	// 	for (const key in entity) {
+	// 		if (Object.prototype.hasOwnProperty.call(entity, key)) {
+	// 			const value = entity[key];
+	// 			if (value instanceof Collection || value instanceof Array) {
+	// 				console.log('value Collection or Array', key, value)
+	// 				entity[key] = praseMikroORMEntityToJson(value) as any;
+	// 			} else {
+	// 				entity[key] = value;
+	// 			}
+	// 		}
+	// 	}
+
+	// 	console.log('entity', entity)
+	// 	return entity;
+	// }
+}
+
+export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>) {
+	if (where instanceof Array) {
+		where = where.concat({ id } as any);
 	} else {
-		for (const key in entity) {
-			if (Object.prototype.hasOwnProperty.call(entity, key)) {
-				const value = entity[key];
-				if (value instanceof Collection || value instanceof Array) {
-					entity[key] = praseMikroORMEntityToJson(value) as any;
-				} else {
-					entity[key] = value;
-				}
-			}
-		}
-		return entity;
+		where = {
+			id,
+			...(where ? where : ({} as any))
+		};
 	}
+	return where;
+}
+
+export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions) {
+	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {};
+	let where: MikroFilterQuery<T> = {}
+
+	if (options) {
+
+
+		if (options.where) {
+			where = options.where as MikroFilterQuery<T>;
+		}
+
+		if (options.relations) {
+			mikroOptions.populate = flatten(options.relations) as any;
+		}
+
+		if (options.order) {
+			mikroOptions.orderBy = Object.entries(options.order).reduce((acc, [key, value]) => {
+				acc[key] = `${value}`.toLowerCase();
+				return acc;
+			}, {});
+		}
+
+		if (options.skip !== undefined) {
+			mikroOptions.offset = options.skip;
+		}
+
+		if (options.take !== undefined) {
+			mikroOptions.limit = options.take;
+		}
+
+	}
+
+	return { where, mikroOptions };
 }
