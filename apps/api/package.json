@@ -40,10 +40,10 @@
 		"seed:prod:build": "yarn ng run api:seed -c=production"
 	},
 	"dependencies": {
-		"@gauzy/changelog-plugin": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
-		"@gauzy/jitsu-analytics-plugin": "^0.1.0",
+		"@gauzy/changelog-plugin": "^0.1.0",
 		"@gauzy/knowledge-base-plugin": "^0.1.0",
+		"@gauzy/jitsu-analytics-plugin": "^0.1.0",
 		"@gauzy/sentry-plugin": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
