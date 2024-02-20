@@ -32,7 +32,6 @@
 		"@nestjs/graphql": "^12.0.11",
 		"@sentry/hub": "^7.101.1",
 		"@sentry/node": "^7.101.1",
-		"@sentry/profiling-node": "^7.101.1",
 		"@sentry/types": "^7.101.1",
 		"chalk": "4.1.2",
 		"express": "^4.18.2",
@@ -40,6 +39,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
+		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	}
 }
