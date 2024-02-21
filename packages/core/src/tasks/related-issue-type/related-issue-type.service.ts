@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
@@ -47,8 +47,8 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve related issue types for tasks. Please ensure that all required parameters are provided correctly.', error);
-			throw new HttpException('Failed to retrieve related issue types for tasks. Please ensure that all required parameters are provided correctly.', HttpStatus.BAD_REQUEST, { cause: error });
+			console.log('Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.', error);
+			throw new BadRequestException('Failed to retrieve related issue types for tasks. Please ensure that the provided parameters are valid and complete.', error);
 		}
 	}
 
