@@ -141,12 +141,9 @@
 			</div>
 		</div>
 		<div class="integration-value">
-			<nb-icon (click)="setting.show = !setting.show" [icon]="!!setting.show ? 'eye-outline' : 'eye-off-outline'"></nb-icon>
-			<div
-				gaTextMask
-				[config]="{ text: setting.settingsValue, showOriginal: !!setting.show }"
-				class="integration-mask"
-			></div>
+			<div class="integration-mask">
+				{{ setting.settingsValue }}
+			</div>
 		</div>
 	</div>
 </ng-template>

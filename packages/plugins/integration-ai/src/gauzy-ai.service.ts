@@ -75,7 +75,7 @@ export interface ImageAnalysisResult {
 export class GauzyAIService {
     private readonly _logger = new Logger(GauzyAIService.name);
     private _client: ApolloClient<NormalizedCacheObject>;
-    public logging: boolean = false;
+    public logging: boolean = true;
 
     // For now, we disable Apollo client caching for all GraphQL queries and mutations
     private readonly defaultOptions: DefaultOptions = {
