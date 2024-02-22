@@ -1,0 +1,37 @@
+:host {
+	header {
+		font-size: 18px;
+		font-weight: 600;
+		line-height: 30px;
+		letter-spacing: 0em;
+	}
+	.integration-container {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		.date {
+			color: var(--gauzy-text-color-2);
+			font-size: 12px;
+		}
+		.integration-row {
+			background: var(--gauzy-card-2);
+			padding: 1rem;
+			border-radius: var(--border-radius);
+			display: flex;
+			justify-content: space-between;
+			.integration-label {
+				nb-icon {
+					font-size: 1rem;
+				}
+			}
+			.integration-value {
+				display: flex;
+				gap: 0.25rem;
+
+				nb-icon {
+					cursor: pointer;
+				}
+			}
+		}
+	}
+}
