@@ -75,7 +75,7 @@ export interface ImageAnalysisResult {
 export class GauzyAIService {
     private readonly _logger = new Logger(GauzyAIService.name);
     private _client: ApolloClient<NormalizedCacheObject>;
-    public logging: boolean = true;
+    public logging: boolean = false;
 
     // For now, we disable Apollo client caching for all GraphQL queries and mutations
     private readonly defaultOptions: DefaultOptions = {
@@ -1309,6 +1309,7 @@ export class GauzyAIService {
                 console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
                 console.log('Custom Run Time Headers: %s', customHeaders);
             }
+
             // Modify the operation context to include the headers
             operation.setContext(({ headers }) => ({
                 headers: {

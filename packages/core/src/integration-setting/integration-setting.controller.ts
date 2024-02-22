@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Param, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, HttpStatus, Param, Put, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IIntegrationSetting, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -41,9 +41,14 @@ export class IntegrationSettingController {
 		@Param('id', UUIDValidationPipe) id: IIntegrationSetting['id'],
 		@Body() input: UpdateIntegrationSettingDTO
 	): Promise<IIntegrationSetting> {
-		return await this.integrationSettingService.create({
-			...input,
-			id
-		});
+		try {
+			await this.integrationSettingService.create({
+				...input,
+				id
+			});
+			return await this.integrationSettingService.findOneByIdString(id);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }

@@ -1,7 +1,7 @@
-import { Component, Input } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { IIntegrationSetting } from "@gauzy/contracts";
+import { IIntegration, IIntegrationSetting } from "@gauzy/contracts";
 import { IntegrationSettingService } from "../../../../../@core/services";
 import { TranslationBaseComponent } from "../../../../../@shared/language-base";
 
@@ -18,9 +18,7 @@ export enum SettingTitlesEnum {
     templateUrl: './integration-setting-card.component.html',
 })
 export class IntegrationSettingCardComponent extends TranslationBaseComponent {
-
     public isIntegrationAISettingsEdit: boolean = false;
-
     // Define a mapping object for setting names to titles and information
     public settingTitles: Record<string, string>[] = [
         {
@@ -45,8 +43,28 @@ export class IntegrationSettingCardComponent extends TranslationBaseComponent {
         }
     ];
 
+    /**
+     * Input property for the title of the component.
+     */
     @Input() title: string;
-    @Input() items: IIntegrationSetting[] = []; // Adjust the type accordingly
+
+    /**
+     * Input property for an array of integration settings.
+     * Adjust the type accordingly based on the actual type of integration settings.
+     */
+    _items: IIntegrationSetting[] = [];
+    get items(): IIntegrationSetting[] {
+        return this._items;
+    }
+    @Input() set items(value: IIntegrationSetting[]) {
+        this._items = value;
+    }
+
+    /**
+     * Output property to emit an event when the component has saved data.
+     * This allows the parent component to listen for the 'saved' event.
+     */
+    @Output() saved = new EventEmitter();
 
     constructor(
         public readonly translateService: TranslateService,
@@ -87,17 +105,29 @@ export class IntegrationSettingCardComponent extends TranslationBaseComponent {
      * Save settings.
      */
     async saveSettings(): Promise<void> {
-        const settings: IIntegrationSetting[] = this.items;
-
-        // Use Promise.all to wait for all update operations to complete
-        await Promise.all(settings.map(async (setting: IIntegrationSetting) => {
-            await firstValueFrom(
-                this._integrationSettingService.update(
-                    setting.id,
-                    this._mapIntegrationSettingPayload(setting)
-                )
+        try {
+            // Use Promise.all to wait for all update operations to complete
+            const settings = await Promise.all(
+                this.items.map(async (setting: IIntegrationSetting) => {
+                    // Update each setting
+                    return await firstValueFrom(
+                        this._integrationSettingService.update(
+                            setting.id,
+                            this._mapIntegrationSettingPayload(setting)
+                        )
+                    );
+                })
             );
-        }));
+
+            // Update the items array with the updated settings
+            this.items = settings;
+
+            // Emit an event indicating that the settings have been saved
+            this.saved.emit();
+        } finally {
+            // Toggle integration AI settings edit mode, whether success or error
+            this.toggleIntegrationAISettings();
+        }
     }
 
     /**
@@ -113,5 +143,13 @@ export class IntegrationSettingCardComponent extends TranslationBaseComponent {
             organizationId: setting['organizationId'],
             tenantId: setting['tenantId'],
         });
+    }
+
+    /**
+     * Toggle integration AI settings edit mode.
+     */
+    public toggleIntegrationAISettings() {
+        // Toggle the value of isIntegrationAISettingsEdit
+        this.isIntegrationAISettingsEdit = !this.isIntegrationAISettingsEdit;
     }
 }

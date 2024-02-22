@@ -1,18 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { ActivatedRoute, Data } from '@angular/router';
-import { filter, map, tap } from 'rxjs/operators';
+import { EMPTY } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationEntitySetting, IIntegrationSetting, IOrganization, IntegrationEntity } from '@gauzy/contracts';
+import { HttpStatus, IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant, IOrganization, IntegrationEntity } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { ReplacePipe } from '../../../../../@shared/pipes';
 import {
+	ErrorHandlingService,
+	GauzyAIService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
 	Store,
 	ToastrService
-} from './../../../../../@core/services';
+} from '../../../../../@core/services';
 import { SettingTitlesEnum } from '../integration-setting-card/integration-setting-card.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,10 +39,13 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
+		private readonly _replacePipe: ReplacePipe,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
+		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 	) {
 		super(translateService);
 	}
@@ -185,5 +192,43 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	 */
 	setJobMatchingEntity(jobSearchMatchingSync: IIntegrationEntitySetting): void {
 		this._integrationEntitySettingServiceStoreService.setJobMatchingEntity(jobSearchMatchingSync);
+	}
+
+	/**
+	 * Update integration settings.
+	 *
+	 * @param {IIntegrationSetting[]} settings - The integration settings to update.
+	 */
+	updateIntegrationSettings() {
+		// Get the integrationId from the current route snapshot
+		const integrationId = this._activatedRoute.snapshot.paramMap.get('id');
+
+		this._gauzyAIService.update(integrationId, {}).pipe(
+			tap((response: any) => {
+				if (response['status'] == HttpStatus.BAD_REQUEST) {
+					throw new Error(`${response['message']}`);
+				}
+			}),
+			// Perform actions after the integration creation
+			tap((integration: IIntegrationTenant) => {
+				if (!!integration) {
+					// Transform integration name for display
+					const provider = this._replacePipe.transform(integration?.name, '_', ' ');
+					// Display success message
+					this._toastrService.success(`INTEGRATIONS.MESSAGE.SETTINGS_UPDATED`, {
+						provider
+					});
+				}
+			}),
+			// Catch and handle errors
+			catchError((error) => {
+				// Handle and log errors using the _errorHandlingService
+				this._errorHandlingService.handleError(error);
+				// Return an empty observable to continue the stream
+				return EMPTY;
+			}),
+			// Unsubscribe when the component is destroyed
+			untilDestroyed(this)
+		).subscribe();
 	}
 }

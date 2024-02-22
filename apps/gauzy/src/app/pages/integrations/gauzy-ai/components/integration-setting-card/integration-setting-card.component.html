@@ -15,7 +15,7 @@
                                     nbButton
                                     size="tiny"
                                     class="mr-2"
-                                    (click)="isIntegrationAISettingsEdit = false"
+                                    (click)="toggleIntegrationAISettings()"
                                 >
                                     {{ 'BUTTONS.CANCEL' | translate }}
                                 </button>
@@ -35,7 +35,7 @@
                                     type="button"
                                     status="success"
                                     size="tiny"
-                                    (click)="isIntegrationAISettingsEdit = true"
+                                    (click)="toggleIntegrationAISettings()"
                                 >
                                     <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
                                     {{ 'BUTTONS.EDIT' | translate }}
