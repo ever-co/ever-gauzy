@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { IIntegration, IIntegrationSetting } from "@gauzy/contracts";
+import { IIntegrationSetting } from "@gauzy/contracts";
 import { IntegrationSettingService } from "../../../../../@core/services";
 import { TranslationBaseComponent } from "../../../../../@shared/language-base";
 
@@ -19,6 +19,7 @@ export enum SettingTitlesEnum {
 })
 export class IntegrationSettingCardComponent extends TranslationBaseComponent {
     public isIntegrationAISettingsEdit: boolean = false;
+
     // Define a mapping object for setting names to titles and information
     public settingTitles: Record<string, string>[] = [
         {

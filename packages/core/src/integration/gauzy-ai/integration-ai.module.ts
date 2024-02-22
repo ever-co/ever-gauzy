@@ -5,7 +5,6 @@ import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
 import { IntegrationModule } from './../integration.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
-import { IntegrationSettingModule } from '../../integration-setting/integration-setting.module';
 import { IntegrationAIController } from './integration-ai.controller';
 import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationAIMiddleware } from './integration-ai.middleware';
