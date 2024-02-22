@@ -12,7 +12,7 @@ export class IntegrationSettingService extends TenantAwareCrudService<Integratio
 		@InjectRepository(IntegrationSetting)
 		readonly typeOrmIntegrationSettingRepository: TypeOrmIntegrationSettingRepository,
 
-		mikroOrmIntegrationSettingRepository: MikroOrmIntegrationSettingRepository
+		readonly mikroOrmIntegrationSettingRepository: MikroOrmIntegrationSettingRepository
 	) {
 		super(typeOrmIntegrationSettingRepository, mikroOrmIntegrationSettingRepository);
 	}

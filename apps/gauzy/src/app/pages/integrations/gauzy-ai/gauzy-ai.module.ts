@@ -19,12 +19,14 @@ import { GauzyAIRoutingModule } from './gauzy-ai-routing.module';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
+import { IntegrationSettingCardComponent } from './components/integration-setting-card/integration-setting-card.component';
 
 @NgModule({
 	declarations: [
 		GauzyAILayoutComponent,
 		GauzyAIAuthorizationComponent,
-		GauzyAIViewComponent
+		GauzyAIViewComponent,
+		IntegrationSettingCardComponent
 	],
 	imports: [
 		CommonModule,

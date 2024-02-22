@@ -301,7 +301,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
-		return super.create({
+		return await super.create({
 			...entity,
 			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
 				? {

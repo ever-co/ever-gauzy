@@ -1309,6 +1309,7 @@ export class GauzyAIService {
                 console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
                 console.log('Custom Run Time Headers: %s', customHeaders);
             }
+
             // Modify the operation context to include the headers
             operation.setContext(({ headers }) => ({
                 headers: {
