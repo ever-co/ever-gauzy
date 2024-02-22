@@ -1,8 +1,9 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { IIntegrationAICreateInput, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from './../../shared/decorators';
+import { Body, Controller, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IIntegrationAICreateInput, IIntegrationTenant, IIntegrationTenantUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { Permissions } from './../../shared/decorators';
+import { UUIDValidationPipe } from '../../shared/pipes';
 import { IntegrationAIService } from './integration-ai.service';
 
 @ApiTags('Integrations')
@@ -25,5 +26,28 @@ export class IntegrationAIController {
 		@Body() input: IIntegrationAICreateInput
 	): Promise<IIntegrationTenant> {
 		return await this._integrationAIService.create(input);
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Update Gauzy AI integration.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Update Gauzy AI integration',
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found',
+	})
+	@Put(':id')
+	async update(
+		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
+		@Body() input: IIntegrationTenantUpdateInput
+	) {
+		return await this._integrationAIService.update(id, input);
 	}
 }
