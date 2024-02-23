@@ -66,7 +66,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsOptional()
 	@IsEmail()
-	@Index({ unique: false })
+	@Index()
 	@MultiORMColumn({ nullable: true })
 	email?: string;
 
@@ -102,7 +102,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
-	public refreshToken?: string;
+	refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
@@ -133,25 +133,25 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
-	public code?: string;
+	code?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
-	public codeExpireAt?: Date;
+	codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
-	public emailVerifiedAt?: Date;
+	emailVerifiedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ insert: false, nullable: true })
-	public emailToken?: string;
+	emailToken?: string;
 
 	name?: string;
 	employeeId?: string;
@@ -171,7 +171,7 @@ export class User extends TenantBaseEntity implements IUser {
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		deleteRule: 'set null',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	role?: IRole;

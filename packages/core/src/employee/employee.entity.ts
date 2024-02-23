@@ -444,11 +444,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
-	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@MultiORMOneToMany(() => Payment, (it) => it.recordedBy)
-	@JoinColumn()
-	payments?: IPayment[];
-
 	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
 	@MultiORMOneToMany(() => RequestApprovalEmployee, (it) => it.employee)
 	requestApprovals?: IRequestApprovalEmployee[];

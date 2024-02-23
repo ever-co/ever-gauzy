@@ -22,7 +22,8 @@ import {
 	OrganizationContact,
 	OrganizationProject,
 	Tag,
-	TenantOrganizationBaseEntity
+	TenantOrganizationBaseEntity,
+	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { IsOptional, IsUUID } from 'class-validator';
@@ -106,8 +107,8 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	/**
 	 * User
 	 */
-	@ApiPropertyOptional({ type: () => Employee })
-	@MultiORMManyToOne(() => Employee)
+	@ApiPropertyOptional({ type: () => User })
+	@MultiORMManyToOne(() => User)
 	@JoinColumn()
 	recordedBy?: IUser;
 
@@ -115,7 +116,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@RelationId((it: Payment) => it.recordedBy)
 	@Index()
 	@MultiORMColumn({ relationId: true })
-	recordedById?: string;
+	recordedById?: IUser['id'];
 
 	/**
 	 * Organization Project Relationship
@@ -126,7 +127,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
