@@ -1,6 +1,6 @@
 @import 'var';
-@import '../filters/filters.component.scss';
 @import 'gauzy/_gauzy-overrides';
+@import 'filters.component.scss';
 
 $button-radius : nb-theme(button-rectangle-border-radius);
 

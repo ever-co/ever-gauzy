@@ -28356,15 +28356,6 @@ ngx-permissions@^13.0.1:
   dependencies:
     tslib "^2.1.0"
 
-ngx-slider-v2@^17.0.0:
-  version "17.0.0"
-  resolved "https://registry.yarnpkg.com/ngx-slider-v2/-/ngx-slider-v2-17.0.0.tgz#b82172c2ce9c97a74f8c2cf29788fa5d377e34bb"
-  integrity sha512-226pb8TeZWhmMiQQnPVBZmos2qZua2NgMsuwumxatIBy7UwOGg8xkcUl8HvXVg+rO5w733uvPMN/yz//7rReJw==
-  dependencies:
-    detect-passive-events "^2.0.3"
-    rxjs "^7.8.1"
-    tslib "^2.3.0"
-
 ngx-window-token@>=6.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/ngx-window-token/-/ngx-window-token-7.0.0.tgz#2e1bc76846411a388188b802154e4841d3e27856"
