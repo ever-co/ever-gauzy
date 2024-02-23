@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, SelectQueryBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
@@ -117,7 +117,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Save the created or fetched issue types to the repository and return the result.
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			throw new HttpException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST, { cause: error });
+			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
 		}
 	}
 
@@ -147,7 +147,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			));
 			return await this.repository.save(issueTypes);
 		} catch (error) {
-			throw new HttpException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', HttpStatus.BAD_REQUEST, { cause: error });
+			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
 		}
 	}
 

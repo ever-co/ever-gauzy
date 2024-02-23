@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
@@ -58,7 +58,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 			}
 		} catch (error) {
 			console.log('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', error);
-			throw new HttpException('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', HttpStatus.BAD_REQUEST, { cause: error });
+			throw new BadRequestException('Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.', error);
 		}
 	}
 

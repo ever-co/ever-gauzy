@@ -1,5 +1,6 @@
 import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
+import { IIntegrationSetting } from './integration-setting.model';
 
 export interface IRelationIntegration {
 	integration?: IIntegration;
@@ -9,11 +10,6 @@ export interface IRelationIntegration {
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
 	integrationId?: IIntegrationTenant['id'];
-}
-
-export interface IIntegrationSetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
-	settingsName: string;
-	settingsValue: string;
 }
 
 export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
