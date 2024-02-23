@@ -320,6 +320,15 @@
     "@angular-eslint/bundled-angular-compiler" "16.3.1"
     "@typescript-eslint/utils" "5.62.0"
 
+"@angular-slider/ngx-slider@^17.0.1":
+  version "17.0.1"
+  resolved "https://registry.yarnpkg.com/@angular-slider/ngx-slider/-/ngx-slider-17.0.1.tgz#03f72a970d74b161951f609cf054fdd5ec1e9344"
+  integrity sha512-AwzzkkIByMQCqqTr/HiozwSv7mU3QdLDDF3nrkgYvdjrKa66yiJbT36iod2dTF8mpC6MuZAJZykLqxmt1k88hQ==
+  dependencies:
+    detect-passive-events "^2.0.3"
+    rxjs "^7.8.1"
+    tslib "^2.3.0"
+
 "@angular/animations@^16.2.12":
   version "16.2.12"
   resolved "https://registry.yarnpkg.com/@angular/animations/-/animations-16.2.12.tgz#27744d8176e09e70e0f6d837c3abcfcee843a936"
@@ -28347,15 +28356,6 @@ ngx-permissions@^13.0.1:
   dependencies:
     tslib "^2.1.0"
 
-ngx-slider-v2@16.0.2:
-  version "16.0.2"
-  resolved "https://registry.yarnpkg.com/ngx-slider-v2/-/ngx-slider-v2-16.0.2.tgz#68ece02e21547f07220acf3d4abdb7c3f74d3aa4"
-  integrity sha512-Lpl7SlErL+tJJvTRZYdyZoXTThKN8Ro1z3vscJQ1O5azHXwvbv3pnTcsOwY4ltfaP+dpzY27KL1QXyDr6QMaxQ==
-  dependencies:
-    detect-passive-events "^2.0.3"
-    rxjs "^7.4.0"
-    tslib "^2.3.0"
-
 ngx-window-token@>=6.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/ngx-window-token/-/ngx-window-token-7.0.0.tgz#2e1bc76846411a388188b802154e4841d3e27856"
@@ -33460,7 +33460,7 @@ rw@1:
   resolved "https://registry.yarnpkg.com/rw/-/rw-1.3.3.tgz#3f862dfa91ab766b14885ef4d01124bfda074fb4"
   integrity sha512-PdhdWy89SiZogBLaw42zdeqtRJ//zFd2PgQavcICDUgJT5oW10QCRKbJ6bg4r0/UY2M6BWd5tkxuGFRvCkgfHQ==
 
-rxjs@6.4.0, rxjs@6.6.2, rxjs@6.6.7, rxjs@7.8.1, rxjs@^6.4.0, rxjs@^6.5.2, rxjs@^6.5.3, rxjs@^6.5.4, rxjs@^6.6.0, rxjs@^7.4.0, rxjs@^7.5.1, rxjs@^7.5.5, rxjs@^7.5.6:
+rxjs@6.4.0, rxjs@6.6.2, rxjs@6.6.7, rxjs@7.8.1, rxjs@^6.4.0, rxjs@^6.5.2, rxjs@^6.5.3, rxjs@^6.5.4, rxjs@^6.6.0, rxjs@^7.4.0, rxjs@^7.5.1, rxjs@^7.5.5, rxjs@^7.5.6, rxjs@^7.8.1:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
