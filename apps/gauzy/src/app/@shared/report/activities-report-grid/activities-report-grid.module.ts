@@ -10,7 +10,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
-import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
 import { ProjectColumnViewModule } from "../project-column-view/project-column-view.module";
 import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
@@ -25,7 +24,6 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		ProgressStatusModule,
@@ -33,4 +31,4 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 		NoDataMessageModule
 	],
 })
-export class ActivitiesReportGridModule {}
+export class ActivitiesReportGridModule { }
