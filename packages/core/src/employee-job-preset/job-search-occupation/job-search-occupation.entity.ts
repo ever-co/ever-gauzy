@@ -40,10 +40,7 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	@Index()
 	@Column({
 		default: JobPostSourceEnum.UPWORK,
-		...(isMySQL() ?
-			{ type: 'enum', enum: JobPostSourceEnum }
-			: { type: 'text' }
-		)
+		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
 	jobSource?: JobPostSourceEnum;
 
@@ -56,9 +53,8 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
-	@ApiPropertyOptional({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
-	@IsOptional()
-	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.occupation, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -66,9 +62,8 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
-	@ApiPropertyOptional({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
-	@IsOptional()
-	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.occupation, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
