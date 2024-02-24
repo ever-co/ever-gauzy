@@ -59,9 +59,6 @@ const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_
 const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
-// Get TLS (Transport Layer Security) options based on the specified SSL mode.
-const tlsOptions = getTlsOptions(dbSslMode);
-
 console.log('DB Pool Size: ' + dbPoolSize);
 console.log('DB Connection Timeout: ' + dbConnectionTimeout);
 console.log('DB Idle Timeout: ' + idleTimeoutMillis);
@@ -87,7 +84,7 @@ switch (dbType) {
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			driverOptions: {
 				connection: {
-					ssl: tlsOptions
+					ssl: getTlsOptions(dbSslMode)
 				}
 			},
 			pool: {
@@ -101,7 +98,7 @@ switch (dbType) {
 		// TypeORM DB Config (MySQL)
 		const typeOrmMySqlOptions: MysqlConnectionOptions = {
 			type: dbType,
-			ssl: tlsOptions,
+			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
 			database: process.env.DB_NAME || 'mysql',
@@ -124,12 +121,17 @@ switch (dbType) {
 		};
 		typeOrmConnectionConfig = typeOrmMySqlOptions;
 
+		// Get TLS (Transport Layer Security) options based on the specified SSL mode.
+		const tlsOptions = getTlsOptions(dbSslMode);
+
 		// Knex DB Config (MySQL)
 		const knexMySqlOptions: KnexModuleOptions = {
 			config: {
 				client: 'mysql2', // Database client (MySQL in this case)
 				connection: {
-					ssl: tlsOptions ? { ca: tlsOptions.ca, rejectUnauthorized: tlsOptions.rejectUnauthorized } : false,
+					ssl: tlsOptions
+						? { ca: tlsOptions.ca, rejectUnauthorized: tlsOptions.rejectUnauthorized }
+						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306, // Database port (default: 3306)
 					database: process.env.DB_NAME || 'mysql', // Database name (default: mysql)
@@ -171,7 +173,7 @@ switch (dbType) {
 			entities: ['src/modules/not-exists/*.entity{.ts,.js}'],
 			driverOptions: {
 				connection: {
-					ssl: tlsOptions
+					ssl: getTlsOptions(dbSslMode)
 				}
 			},
 			pool: {
@@ -190,7 +192,7 @@ switch (dbType) {
 		// TypeORM DB Config (PostgreSQL)
 		const typeOrmPostgresOptions: PostgresConnectionOptions = {
 			type: dbType,
-			ssl: tlsOptions,
+			ssl: getTlsOptions(dbSslMode),
 			host: process.env.DB_HOST || 'localhost',
 			port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
 			database: process.env.DB_NAME || 'postgres',
@@ -221,12 +223,17 @@ switch (dbType) {
 		};
 		typeOrmConnectionConfig = typeOrmPostgresOptions;
 
+		// Get TLS (Transport Layer Security) options based on the specified SSL mode.
+		const tlsOptions = getTlsOptions(dbSslMode);
+
 		// Knex DB Config (PostgreSQL)
 		const knexPostgresOptions: KnexModuleOptions = {
 			config: {
 				client: 'pg', // Database client (PostgreSQL in this case)
 				connection: {
-					ssl: tlsOptions ? { ca: tlsOptions.ca, rejectUnauthorized: tlsOptions.rejectUnauthorized } : false,
+					ssl: tlsOptions
+						? { ca: tlsOptions.ca, rejectUnauthorized: tlsOptions.rejectUnauthorized }
+						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
 					database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
