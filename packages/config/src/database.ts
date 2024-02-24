@@ -122,15 +122,15 @@ switch (dbType) {
 		typeOrmConnectionConfig = typeOrmMySqlOptions;
 
 		// Get TLS (Transport Layer Security) options based on the specified SSL mode.
-		const tlsOptions = getTlsOptions(dbSslMode);
+		const tlsMySqlOptions = getTlsOptions(dbSslMode);
 
 		// Knex DB Config (MySQL)
 		const knexMySqlOptions: KnexModuleOptions = {
 			config: {
 				client: 'mysql2', // Database client (MySQL in this case)
 				connection: {
-					ssl: tlsOptions
-						? { ca: tlsOptions.ca, rejectUnauthorized: tlsOptions.rejectUnauthorized }
+					ssl: tlsMySqlOptions
+						? { ca: tlsMySqlOptions.ca, rejectUnauthorized: tlsMySqlOptions.rejectUnauthorized }
 						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306, // Database port (default: 3306)
@@ -224,15 +224,15 @@ switch (dbType) {
 		typeOrmConnectionConfig = typeOrmPostgresOptions;
 
 		// Get TLS (Transport Layer Security) options based on the specified SSL mode.
-		const tlsOptions = getTlsOptions(dbSslMode);
+		const tlsPostgresOptions = getTlsOptions(dbSslMode);
 
 		// Knex DB Config (PostgreSQL)
 		const knexPostgresOptions: KnexModuleOptions = {
 			config: {
 				client: 'pg', // Database client (PostgreSQL in this case)
 				connection: {
-					ssl: tlsOptions
-						? { ca: tlsOptions.ca, rejectUnauthorized: tlsOptions.rejectUnauthorized }
+					ssl: tlsPostgresOptions
+						? { ca: tlsPostgresOptions.ca, rejectUnauthorized: tlsPostgresOptions.rejectUnauthorized }
 						: false,
 					host: process.env.DB_HOST || 'localhost', // Database host (default: localhost)
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
