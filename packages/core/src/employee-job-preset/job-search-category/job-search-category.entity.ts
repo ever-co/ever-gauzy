@@ -53,7 +53,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
-	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -61,7 +61,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
-	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
