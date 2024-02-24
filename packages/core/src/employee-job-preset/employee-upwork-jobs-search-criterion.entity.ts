@@ -1,6 +1,6 @@
-import { Column, ManyToOne } from 'typeorm';
+import { Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
 	IEmployee,
 	IEmployeeUpworkJobsSearchCriterion,
@@ -26,48 +26,6 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@IsString()
 	@IsNotEmpty()
 	@Column({ nullable: true })
-	jobPresetId?: string;
-
-	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.employeeCriterions)
-	jobPreset?: IJobPreset;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column()
-	employeeId?: string;
-
-	@ManyToOne(() => Employee, (employee) => employee.id)
-	employee?: IEmployee;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	occupationId?: string;
-
-	@ManyToOne(
-		() => JobSearchOccupation,
-		(occupation) => occupation.employeeCriterions
-	)
-	occupation?: IJobSearchOccupation;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	categoryId?: string;
-
-	@ManyToOne(
-		() => JobSearchCategory,
-		(category) => category.employeeCriterions
-	)
-	category?: IJobSearchCategory;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
 	keyword?: string;
 
 	@ApiProperty({ type: () => Boolean })
@@ -75,4 +33,62 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	@IsNotEmpty()
 	@Column({ type: 'text', nullable: true })
 	jobType?: JobPostTypeEnum;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobPreset, (it) => it.employeeCriterions)
+	jobPreset?: IJobPreset;
+
+	@ApiProperty({ type: () => String })
+	@IsString()
+	@IsNotEmpty()
+	@RelationId((it: EmployeeUpworkJobsSearchCriterion) => it.jobPreset)
+	@Column({ nullable: true })
+	jobPresetId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => Employee)
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: EmployeeUpworkJobsSearchCriterion) => it.employee)
+	@Column()
+	employeeId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobSearchOccupation, (it) => it.employeeCriterions)
+	occupation?: IJobSearchOccupation;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: EmployeeUpworkJobsSearchCriterion) => it.occupation)
+	@Column({ nullable: true })
+	occupationId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobSearchCategory, (it) => it.employeeCriterions)
+	category?: IJobSearchCategory;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: EmployeeUpworkJobsSearchCriterion) => it.category)
+	@Column({ nullable: true })
+	categoryId?: string;
 }

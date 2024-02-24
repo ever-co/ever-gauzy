@@ -61,7 +61,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Job Preset Employees
 	 */
-	@ManyToMany(() => Employee, (employee) => employee.jobPresets, {
+	@ManyToMany(() => Employee, (it) => it.jobPresets, {
 		cascade: true
 	})
 	@JoinTable({
