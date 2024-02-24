@@ -1,4 +1,4 @@
-import { Index } from 'typeorm';
+import { Column, Index, OneToMany } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -13,9 +13,8 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmJobSearchOccupationRepository } from './repository/mikro-orm-job-search-occupation.repository';
-import { MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('job_search_occupation', { mikroOrmRepository: () => MikroOrmJobSearchOccupationRepository })
 export class JobSearchOccupation extends TenantOrganizationBaseEntity implements IJobSearchOccupation {
@@ -24,7 +23,7 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@MultiORMColumn()
+	@Column()
 	name?: string;
 
 	// Id of occupation in the job source (e.g. upwork)
@@ -32,19 +31,16 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	@IsOptional()
 	@IsString()
 	@Index()
-	@MultiORMColumn({ nullable: true })
+	@Column({ nullable: true })
 	jobSourceOccupationId?: string;
 
 	@ApiProperty({ type: () => String, enum: JobPostSourceEnum })
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@MultiORMColumn({
+	@Column({
 		default: JobPostSourceEnum.UPWORK,
-		...(isMySQL() ?
-			{ type: 'enum', enum: JobPostSourceEnum }
-			: { type: 'text' }
-		)
+		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
 	jobSource?: JobPostSourceEnum;
 
@@ -57,9 +53,8 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
-	@ApiPropertyOptional({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
-	@IsOptional()
-	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.occupation, { // Here relations was wrong
+	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.occupation, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -67,9 +62,8 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
-	@ApiPropertyOptional({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
-	@IsOptional()
-	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.occupation, {  // Here relations was wrong
+	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.occupation, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];

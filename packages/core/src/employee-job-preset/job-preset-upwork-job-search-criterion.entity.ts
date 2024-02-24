@@ -1,7 +1,11 @@
+import { Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
+	IJobPreset,
 	IJobPresetUpworkJobSearchCriterion,
+	IJobSearchCategory,
+	IJobSearchOccupation,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
 import {
@@ -10,55 +14,66 @@ import {
 	JobSearchOccupation,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('job_preset_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmJobPresetUpworkJobSearchCriterionRepository })
 export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEntity implements IJobPresetUpworkJobSearchCriterion {
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsNotEmpty()
-	@MultiORMColumn({ relationId: true })
-	jobPresetId?: string;
-
-	@MultiORMManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
-	jobPreset?: JobPreset;
-
-	@ApiProperty({ type: () => String })
 	@IsString()
-	@IsNotEmpty()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	occupationId?: string;
-
-	@MultiORMManyToOne(
-		() => JobSearchOccupation,
-		(occupation) => occupation.jobPresetCriterions
-	)
-	occupation?: JobSearchOccupation;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	categoryId?: string;
-
-	@MultiORMManyToOne(
-		() => JobSearchCategory,
-		(category) => category.jobPresetCriterions
-	)
-	category?: JobSearchCategory;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@MultiORMColumn({ nullable: true })
+	@Column({ nullable: true })
 	keyword?: string;
 
 	@ApiProperty({ type: () => Boolean })
-	@IsString()
 	@IsNotEmpty()
-	@MultiORMColumn({ type: 'text', nullable: true })
+	@IsEnum(JobPostTypeEnum)
+	@Column({ type: 'text', nullable: true })
 	jobType?: JobPostTypeEnum;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobPreset, (it) => it.jobPresetCriterions)
+	jobPreset?: IJobPreset;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: JobPresetUpworkJobSearchCriterion) => it.jobPreset)
+	@Column()
+	jobPresetId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobSearchOccupation, (it) => it.jobPresetCriterions)
+	occupation?: IJobSearchOccupation;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: JobPresetUpworkJobSearchCriterion) => it.occupation)
+	@Column({ nullable: true })
+	occupationId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobSearchCategory, (it) => it.jobPresetCriterions)
+	category?: IJobSearchCategory;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: JobPresetUpworkJobSearchCriterion) => it.category)
+	@Column({ nullable: true })
+	categoryId?: string;
 }
