@@ -21,7 +21,6 @@ import { ScreenshotsItemModule } from '../../../@shared/timesheet/screenshots/sc
 import { ActivityItemModule } from '../../../@shared/timesheet/activities/activity-item/activity-item.module';
 import { GalleryModule } from '../../../@shared/gallery/gallery.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { FiltersModule } from '../../../@shared/timesheet/filters/filters.module';
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
 import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
@@ -47,7 +46,6 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		GalleryModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-		FiltersModule,
 		CounterPointModule,
 		WidgetLayoutModule,
 		WindowLayoutModule,
