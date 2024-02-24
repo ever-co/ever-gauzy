@@ -53,7 +53,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
-	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -61,7 +61,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
-	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
