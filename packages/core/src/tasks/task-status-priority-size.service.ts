@@ -18,10 +18,17 @@ import { TenantAwareCrudService } from '../core/crud';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
-export type IFindEntityByParams = | ITaskStatusFindInput | ITaskPriorityFindInput | ITaskSizeFindInput | IIssueTypeFindInput | ITaskVersionFindInput;
+export type IFindEntityByParams =
+	| ITaskStatusFindInput
+	| ITaskPriorityFindInput
+	| ITaskSizeFindInput
+	| IIssueTypeFindInput
+	| ITaskVersionFindInput;
 
 @Injectable()
-export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
+export class TaskStatusPrioritySizeService<
+	BaseEntity extends TenantBaseEntity
+> extends TenantAwareCrudService<BaseEntity> {
 	constructor(
 		readonly typeOrmTaskStatusRepository: Repository<BaseEntity>,
 		readonly mikroOrmTaskStatusRepository: EntityRepository<BaseEntity>,
@@ -37,24 +44,29 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	async fetchAllByKnex(input: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
+			// this call depends on tenant and organization, so we can't make it global
+			const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+			const provider = store.getProviderInstance();
+
 			// Ensure at least one record matches the specified parameters
 			const first = await this.getOneOrFailByKnex(this.knexConnection, input);
 
-			// If no record is found, throw an error
 			if (!first) {
-				throw new Error('No entities found matching the specified parameters');
+				console.log(`No entities found matching the specified parameters ${JSON.stringify(input)}`);
+				return await this.getDefaultEntitiesByKnex();
 			}
 
 			// Perform the Knex query to fetch entities and their count
 			const items = await this.getManyAndCountByKnex(this.knexConnection, input);
 
 			// Fetch fullIconUrl for items with an icon
-			await Promise.all(items.map(async (item: any) => {
-				if (item.icon) {
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					item.fullIconUrl = await store.getProviderInstance().url(item.icon);
-				}
-			}));
+			await Promise.all(
+				items.map(async (item: any) => {
+					if (item.icon) {
+						item.fullIconUrl = await provider.url(item.icon);
+					}
+				})
+			);
 
 			// Calculate the total count of items
 			const total = items.length;
@@ -62,6 +74,7 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 			// Return an object containing the items and total count
 			return { items, total };
 		} catch (error) {
+			console.error('Failed to retrieve entities based on the specified parameters', error);
 			// If an error occurs during the query, fallback to default entities
 			return await this.getDefaultEntitiesByKnex();
 		}
@@ -78,11 +91,19 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 			 * Find at least one record or get global records
 			 */
 			const checkQueryBuilder = this.repository.createQueryBuilder(this.alias);
+
 			checkQueryBuilder.where((qb: SelectQueryBuilder<BaseEntity>) => {
 				// Apply filters based on request parameters
 				this.getFilterQuery(qb, params);
 			});
-			await checkQueryBuilder.getOneOrFail(); // Attempt to retrieve at least one record
+
+			// Ensure at least one record matches the specified parameters
+			const first = await checkQueryBuilder.getOneOrFail();
+
+			if (!first) {
+				console.log(`No entities found matching the specified parameters ${JSON.stringify(params)}`);
+				return await this.getDefaultEntities();
+			}
 
 			/**
 			 * Find task sizes/priorities for given params
@@ -92,9 +113,11 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 				// Apply filters based on request parameters
 				this.getFilterQuery(qb, params);
 			});
+
 			const [items, total] = await queryBuilder.getManyAndCount(); // Retrieve entities and their count
 			return { items, total };
 		} catch (error) {
+			console.error('Failed to retrieve entities based on the specified parameters', error);
 			// If an error occurs during the retrieval, fallback to default entities
 			return await this.getDefaultEntities();
 		}
@@ -187,13 +210,15 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 */
 	async getOneOrFailByKnex(knex: KnexConnection, request: IFindEntityByParams) {
 		// Create a Knex query builder
-		return this.createKnexQueryBuilder(knex).modify((qb: KnexConnection.QueryBuilder<any, any>) => {
-			// Apply filters based on request parameters
-			this.getFilterQueryByKnex(qb, request);
+		return this.createKnexQueryBuilder(knex)
+			.modify((qb: KnexConnection.QueryBuilder<any, any>) => {
+				// Apply filters based on request parameters
+				this.getFilterQueryByKnex(qb, request);
 
-			// Log the generated SQL query (for debugging purposes)
-			console.log(qb.toQuery(), 'Get One Or Fail By Knex');
-		}).first(); // Retrieve the first result or undefined
+				// Log the generated SQL query (for debugging purposes)
+				console.log('Get One Or Fail By Knex', qb.toQuery());
+			})
+			.first(); // Retrieve the first result or undefined
 	}
 
 	/**
@@ -202,14 +227,17 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 	 * @param request - Request parameters for filtering (IFindEntityByParams).
 	 * @returns A Knex query builder with applied filters.
 	 */
-	async getManyAndCountByKnex(knex: KnexConnection, request: IFindEntityByParams): Promise<KnexConnection.QueryBuilder<any, any>> {
+	async getManyAndCountByKnex(
+		knex: KnexConnection,
+		request: IFindEntityByParams
+	): Promise<KnexConnection.QueryBuilder<any, any>> {
 		// Create a Knex query builder
 		return this.createKnexQueryBuilder(knex).modify((qb: KnexConnection.QueryBuilder<any, any>) => {
 			// Apply filters based on request parameters
 			this.getFilterQueryByKnex(qb, request);
 
 			// Log the generated SQL query (for debugging purposes)
-			console.log(qb.toQuery(), 'Get Many And Count By Knex');
+			console.log('Get Many And Count By Knex', qb.toQuery());
 		});
 	}
 
