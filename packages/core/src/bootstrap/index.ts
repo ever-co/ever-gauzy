@@ -48,12 +48,10 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Assuming `env` contains the environment configuration, including Sentry DSN
 	const { sentry } = env;
 
-	// Initialize Sentry if the DSN is available
-	if (sentry && sentry.dsn) {
-		if (config.logger) {
-			// Attach the Sentry logger to the app
-			app.useLogger(config.logger);
-		}
+	// Initialize Sentry if the DSN is available and if it's production environment
+	if (sentry && sentry.dsn && config.logger) {
+		// Attach the Sentry logger to the app
+		app.useLogger(config.logger);
 	} else {
 		process.on('uncaughtException', handleUncaughtException);
 		process.on('unhandledRejection', handleUnhandledRejection);
@@ -66,7 +64,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
-		allowedHeaders: 'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		allowedHeaders:
+			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.
@@ -186,7 +185,11 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		);
 	}
 
-	app.use(helmet());
+	// let's use helmet for security in production
+	if (env.envName === 'prod') {
+		app.use(helmet());
+	}
+
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
 
@@ -304,7 +307,7 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
 		},
 		dbMikroOrmConnectionOptions: {
-			entities: entities as Array<Type<any>>,
+			entities: entities as Array<Type<any>>
 		}
 	});
 
@@ -335,9 +338,7 @@ async function applyPluginConfigurations(config: ApplicationPluginConfig): Promi
  * @param pluginConfig The plugin configuration.
  * @returns An array of registered entity types.
  */
-async function registerEntities(
-	pluginConfig: Partial<ApplicationPluginConfig>
-): Promise<Array<Type<any>>> {
+async function registerEntities(pluginConfig: Partial<ApplicationPluginConfig>): Promise<Array<Type<any>>> {
 	try {
 		const coreEntitiesList = coreEntities as Array<Type<any>>;
 		const pluginEntitiesList = getEntitiesFromPlugins(pluginConfig.plugins);
@@ -375,7 +376,9 @@ async function registerSubscribers(
 			const subscriberName = pluginSubscriber.name;
 
 			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
-				throw new ConflictException({ message: `Error: ${subscriberName} conflicts with default subscribers.` });
+				throw new ConflictException({
+					message: `Error: ${subscriberName} conflicts with default subscribers.`
+				});
 			} else {
 				subscribers.push(pluginSubscriber);
 			}
