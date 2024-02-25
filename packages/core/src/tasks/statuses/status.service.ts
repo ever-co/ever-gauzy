@@ -19,6 +19,7 @@ import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
@@ -31,6 +32,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		@InjectConnection()
 		readonly knexConnection: KnexConnection
 	) {
+		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
 	}
 
@@ -49,8 +51,14 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
-			throw new BadRequestException('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
+			console.log(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 
@@ -64,7 +72,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -88,7 +96,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 						...status,
 						icon: `ever-icons/${status.icon}`,
 						isSystem: false,
-						tenant,
+						tenant
 					});
 
 					// Add the new status to the array.
@@ -126,7 +134,6 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 
 			// Iterate over each found entity.
 			for (const item of items) {
-
 				// Extract relevant properties from the entity.
 				const { tenantId, name, value, description, icon, color, order, isCollapsed } = item;
 
@@ -141,7 +148,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					organization,
 					isSystem: false,
 					order: order || index,
-					isCollapsed,
+					isCollapsed
 				});
 
 				// Increment the index.
@@ -195,7 +202,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					color,
 					isSystem: false,
 					order: order || index,
-					isCollapsed,
+					isCollapsed
 				});
 
 				// Increment the index.
