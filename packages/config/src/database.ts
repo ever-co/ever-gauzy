@@ -52,14 +52,24 @@ let typeOrmConnectionConfig: TypeOrmModuleOptions;
 let mikroOrmConnectionConfig: MikroOrmModuleOptions;
 let knexConnectionConfig: KnexModuleOptions;
 
-// We set default pool size as 80. Usually PG has 100 connections max by default.
-const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 80;
+// We set default pool size as 40. Usually PG has 100 connections max by default.
+const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40;
+// For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
+const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
+
 const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process.env.DB_CONNECTION_TIMEOUT) : 5000; // 5 seconds default
+
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
+
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
+	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
+	: 10000; // 10 seconds default
+
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
-console.log('DB Pool Size: ' + dbPoolSize);
+console.log('DB ORM Pool Size: ' + dbPoolSize);
+console.log('DB Knex Pool Size: ' + dbPoolSizeKnex);
+
 console.log('DB Connection Timeout: ' + dbConnectionTimeout);
 console.log('DB Idle Timeout: ' + idleTimeoutMillis);
 console.log('DB Slow Query Logging Timeout: ' + dbSlowQueryLoggingTimeout);
@@ -88,10 +98,10 @@ switch (dbType) {
 				}
 			},
 			pool: {
-				min: 10,
+				min: 0,
 				max: dbPoolSize
 			},
-			namingStrategy: EntityCaseNamingStrategy,
+			namingStrategy: EntityCaseNamingStrategy
 		};
 		mikroOrmConnectionConfig = mikroOrmMySqlOptions;
 
@@ -136,12 +146,12 @@ switch (dbType) {
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306, // Database port (default: 3306)
 					database: process.env.DB_NAME || 'mysql', // Database name (default: mysql)
 					user: process.env.DB_USER || 'root', // Database username (default: mysql)
-					password: process.env.DB_PASS || 'root', // Database password (default: root)
+					password: process.env.DB_PASS || 'root' // Database password (default: root)
 				},
 				// Connection pool settings
 				pool: {
-					min: 10, // Minimum number of connections in the pool
-					max: dbPoolSize, // Maximum number of connections in the pool
+					min: 0, // Minimum number of connections in the pool
+					max: dbPoolSizeKnex, // Maximum number of connections in the pool
 					// Number of milliseconds a client must sit idle in the pool
 					// before it is disconnected from the backend and discarded
 					idleTimeoutMillis: idleTimeoutMillis,
@@ -149,16 +159,15 @@ switch (dbType) {
 					// when connecting a new client
 					acquireTimeoutMillis: dbConnectionTimeout
 				},
-				useNullAsDefault: true, // Specify whether to use null as the default for unspecified fields
+				useNullAsDefault: true // Specify whether to use null as the default for unspecified fields
 			}
-		}
+		};
 
 		knexConnectionConfig = knexMySqlOptions;
 
 		break;
 
 	case DatabaseTypeEnum.postgres:
-
 		// MikroORM DB Config (PostgreSQL)
 		const mikroOrmPostgresOptions: MikroOrmPostgreSqlOptions = {
 			driver: PostgreSqlDriver,
@@ -177,7 +186,7 @@ switch (dbType) {
 				}
 			},
 			pool: {
-				min: 10,
+				min: 0,
 				max: dbPoolSize,
 				// number of milliseconds a client must sit idle in the pool and not be checked out
 				// before it is disconnected from the backend and discarded
@@ -211,7 +220,7 @@ switch (dbType) {
 			extra: {
 				// based on  https://node-postgres.com/api/pool max connection pool size
 				max: dbPoolSize,
-				minConnection: 10,
+				minConnection: 0,
 				maxConnection: dbPoolSize,
 				poolSize: dbPoolSize,
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
@@ -238,12 +247,12 @@ switch (dbType) {
 					port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432, // Database port (default: 5432)
 					database: process.env.DB_NAME || 'postgres', // Database name (default: postgres)
 					user: process.env.DB_USER || 'postgres', // Database username (default: postgres)
-					password: process.env.DB_PASS || 'root', // Database password (default: root)
+					password: process.env.DB_PASS || 'root' // Database password (default: root)
 				},
 				// Connection pool settings
 				pool: {
-					min: 10, // Minimum number of connections in the pool
-					max: dbPoolSize, // Maximum number of connections in the pool
+					min: 0, // Minimum number of connections in the pool
+					max: dbPoolSizeKnex, // Maximum number of connections in the pool
 					// Number of milliseconds a client must sit idle in the pool
 					// before it is disconnected from the backend and discarded
 					idleTimeoutMillis: idleTimeoutMillis,
@@ -251,9 +260,9 @@ switch (dbType) {
 					// when connecting a new client
 					acquireTimeoutMillis: dbConnectionTimeout
 				},
-				useNullAsDefault: true, // Specify whether to use null as the default for unspecified fields
+				useNullAsDefault: true // Specify whether to use null as the default for unspecified fields
 			}
-		}
+		};
 
 		knexConnectionConfig = knexPostgresOptions;
 
@@ -286,17 +295,18 @@ switch (dbType) {
 			config: {
 				client: 'sqlite3',
 				connection: {
-					filename: dbPath,
+					filename: dbPath
 				},
-				useNullAsDefault: true, // Specify whether to use null as the default for unspecified fields
+				useNullAsDefault: true // Specify whether to use null as the default for unspecified fields
 			}
-		}
+		};
 		knexConnectionConfig = knexSqliteConfig;
 
 		break;
 
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath =
+			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)
@@ -328,11 +338,11 @@ switch (dbType) {
 			config: {
 				client: 'better-sqlite3',
 				connection: {
-					filename: betterSqlitePath,
+					filename: betterSqlitePath
 				},
-				useNullAsDefault: true, // Specify whether to use null as the default for unspecified fields
+				useNullAsDefault: true // Specify whether to use null as the default for unspecified fields
 			}
-		}
+		};
 		knexConnectionConfig = knexBetterSqliteConfig;
 
 		break;
