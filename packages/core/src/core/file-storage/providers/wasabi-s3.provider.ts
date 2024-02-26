@@ -15,7 +15,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { addHttpsPrefix, isNotEmpty, trimAndGetValue } from '@gauzy/common';
+import { addHttpsPrefix, trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
 
@@ -106,6 +106,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	public config: IWasabiProviderConfig;
 	public defaultConfig: IWasabiProviderConfig;
 
+	private readonly _detailedloggingEnabled = false;
+
 	constructor() {
 		super();
 		this.config = this.defaultConfig = {
@@ -141,7 +143,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			...this.defaultConfig
 		};
 
-		console.log(`setWasabiConfiguration this.config value: ${JSON.stringify(this.config)}`);
+		if (this._detailedloggingEnabled)
+			console.log(`setWasabiConfiguration this.config value: ${JSON.stringify(this.config)}`);
 
 		try {
 			const request = RequestContext.currentRequest();
@@ -149,49 +152,60 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			if (request) {
 				const settings = request['tenantSettings'];
 
-				console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
-
 				if (settings) {
+					if (this._detailedloggingEnabled)
+						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+
 					if (trimAndGetValue(settings.wasabi_aws_access_key_id)) {
 						this.config.wasabi_aws_access_key_id = trimAndGetValue(settings.wasabi_aws_access_key_id);
-						console.log(
-							`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
-						);
+
+						if (this._detailedloggingEnabled)
+							console.log(
+								`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
+							);
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_secret_access_key)) {
 						this.config.wasabi_aws_secret_access_key = trimAndGetValue(
 							settings.wasabi_aws_secret_access_key
 						);
-						console.log(
-							`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
-						);
+
+						if (this._detailedloggingEnabled)
+							console.log(
+								`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
+							);
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_service_url)) {
 						this.config.wasabi_aws_service_url = addHttpsPrefix(
 							trimAndGetValue(settings.wasabi_aws_service_url)
 						);
-						console.log(
-							'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
-							this.config.wasabi_aws_service_url
-						);
+
+						if (this._detailedloggingEnabled)
+							console.log(
+								'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
+								this.config.wasabi_aws_service_url
+							);
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_default_region)) {
 						this.config.wasabi_aws_default_region = trimAndGetValue(settings.wasabi_aws_default_region);
-						console.log(
-							'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
-							this.config.wasabi_aws_default_region
-						);
+
+						if (this._detailedloggingEnabled)
+							console.log(
+								'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
+								this.config.wasabi_aws_default_region
+							);
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_bucket)) {
 						this.config.wasabi_aws_bucket = trimAndGetValue(settings.wasabi_aws_bucket);
-						console.log(
-							'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
-							this.config.wasabi_aws_bucket
-						);
+
+						if (this._detailedloggingEnabled)
+							console.log(
+								'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
+								this.config.wasabi_aws_bucket
+							);
 					}
 				}
 			}
@@ -380,10 +394,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				return await this.mapUploadedFile(file);
 			} else {
-				console.error('Error while retrieving signed URL: s3Client is null');
+				console.warn('Error while retrieving signed URL: s3Client is null');
 			}
 		} catch (error) {
-			console.log('Error while put file for wasabi provider', error);
+			console.error('Error while put file for wasabi provider', error);
 		}
 	}
 
@@ -414,7 +428,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					data
 				});
 			} else {
-				console.error('Error while retrieving signed URL: s3Client is null');
+				console.warn('Error while retrieving signed URL: s3Client is null');
 			}
 		} catch (error) {
 			console.error(`Error while deleting file with key '${key}':`, error);
@@ -451,7 +465,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 
 				return s3Client;
 			} else {
-				console.log(
+				console.warn(
 					`Can't retrieve ${FileStorageProviderEnum.WASABI} instance for tenant: this.config.wasabi_aws_service_url, wasabi_aws_access_key_id or wasabi_aws_secret_access_key undefined in that tenant settings`
 				);
 
