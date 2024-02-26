@@ -247,7 +247,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			delete options.where['members'];
 		}
 
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		// If employee has login and don't have permission to change employee
 		if (employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {

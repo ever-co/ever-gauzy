@@ -90,7 +90,7 @@ export class TaskStatusPrioritySizeService<
 			/**
 			 * Find at least one record or get global records
 			 */
-			const checkQueryBuilder = this.repository.createQueryBuilder(this.alias);
+			const checkQueryBuilder = this.repository.createQueryBuilder(this.tableName);
 
 			checkQueryBuilder.where((qb: SelectQueryBuilder<BaseEntity>) => {
 				// Apply filters based on request parameters
@@ -108,7 +108,7 @@ export class TaskStatusPrioritySizeService<
 			/**
 			 * Find task sizes/priorities for given params
 			 */
-			const queryBuilder = this.repository.createQueryBuilder(this.alias);
+			const queryBuilder = this.repository.createQueryBuilder(this.tableName);
 			queryBuilder.where((qb: SelectQueryBuilder<BaseEntity>) => {
 				// Apply filters based on request parameters
 				this.getFilterQuery(qb, params);
@@ -129,7 +129,7 @@ export class TaskStatusPrioritySizeService<
 	 * @returns
 	 */
 	async getDefaultEntities(): Promise<IPagination<BaseEntity>> {
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 		query.where((qb: SelectQueryBuilder<BaseEntity>) => {
 			qb.andWhere(
 				new Brackets((bck: WhereExpressionBuilder) => {

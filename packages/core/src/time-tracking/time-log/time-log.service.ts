@@ -88,7 +88,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -611,7 +611,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');

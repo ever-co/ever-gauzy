@@ -15,19 +15,15 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	EntityRepository,
-	FindOneOptions as MikroFindOneOptions,
-	FindOptions as MikroFindOptions,
 	FilterQuery as MikroFilterQuery,
 	RequiredEntityData,
-	DeleteOptions,
-	FindOneOrFailOptions,
-	FilterQuery
+	DeleteOptions
 } from '@mikro-orm/core';
 import { of as observableOf, throwError } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
-import { MultiORM, MultiORMEnum, concatIdToWhere, flatten, getORMType, parseTypeORMFindToMikroOrm, praseMikroORMEntityToJson } from './../../core/utils';
+import { MultiORM, MultiORMEnum, concatIdToWhere, getORMType, parseTypeORMFindToMikroOrm, praseMikroORMEntityToJson } from './../../core/utils';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -35,7 +31,6 @@ import {
 	IFindManyOptions,
 	IFindOneOptions,
 	IFindWhereOptions,
-	IMikroOptions,
 	IPartialEntity,
 	IUpdateCriteria
 } from './icrud.service';
@@ -55,15 +50,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns {string} The table name.
 	 */
 	protected get tableName(): string {
-		return this.repository.metadata.tableName;
-	}
-
-	/**
-	 * Get the alias for pagination CRUD operations.
-	 * By default, it uses the table name.
-	 * @returns {string} The alias.
-	 */
-	protected get alias(): string {
 		return this.repository.metadata.tableName;
 	}
 

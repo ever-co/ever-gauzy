@@ -58,7 +58,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			/**
 			 * Find at least one record or get global records
 			 */
-			const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.alias);
+			const cqb = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
 			cqb.where((qb: SelectQueryBuilder<IssueType>) => {
 				this.getFilterQuery(qb, params);
 			});
@@ -67,7 +67,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			/**
 			 * Find task issue types for given params
 			 */
-			const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.alias);
+			const query = this.typeOrmIssueTypeRepository.createQueryBuilder(this.tableName);
 			query.where((qb: SelectQueryBuilder<IssueType>) => {
 				this.getFilterQuery(qb, params);
 			});

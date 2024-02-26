@@ -147,7 +147,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	 */
 	public async pagination(options: any) {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			// Set query options
 			if (isNotEmpty(options)) {
 				query.setFindOptions({

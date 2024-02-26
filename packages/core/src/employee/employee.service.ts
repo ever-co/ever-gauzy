@@ -61,7 +61,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		forRange: IDateRangePicker | any,
 		withUser: boolean
 	): Promise<IPagination<IEmployee>> {
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 		query.innerJoin(`${query.alias}.user`, 'user');
 		query.innerJoin(`user.organizations`, 'organizations');
 		query.setFindOptions({
@@ -168,7 +168,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Create a query builder for the Employee entity
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 
 			// Tables joins with relations
 			query.innerJoin(`${query.alias}.user`, 'user');

@@ -90,7 +90,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 			/**
 			 * If find options
@@ -173,7 +173,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task>) {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 			/**
@@ -238,7 +238,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
 			/**
@@ -372,7 +372,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 
 			// Build the query to get the maximum task number
 			query.select(p(`COALESCE(MAX("${query.alias}"."number"), 0)`), 'maxTaskNumber');
@@ -413,7 +413,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	public async unassignEmployeeFromTeamTasks(employeeId: string, organizationTeamId: string) {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
 			if (organizationTeamId) {
 				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams', 'teams.id = :organizationTeamId', {
