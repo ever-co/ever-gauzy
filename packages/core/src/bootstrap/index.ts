@@ -116,7 +116,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 				username: username,
 				password: password,
 				isolationPoolOptions: {
-					min: 10,
+					min: 1,
 					max: 100
 				},
 				socket: {
@@ -125,24 +125,25 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 					port: port,
 					passphrase: password,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'
-				}
+				},
+				ttl: 60 * 60 * 24 * 7 // 1 week
 			};
 
 			const redisClient = createClient(redisConnectionOptions)
 				.on('error', (err) => {
-					console.log('Redis Client Error: ', err);
+					console.log('Redis Session Store Client Error: ', err);
 				})
 				.on('connect', () => {
-					console.log('Redis Client Connected');
+					console.log('Redis Session Store Client Connected');
 				})
 				.on('ready', () => {
-					console.log('Redis Client Ready');
+					console.log('Redis Session Store Client Ready');
 				})
 				.on('reconnecting', () => {
-					console.log('Redis Client Reconnecting');
+					console.log('Redis Session Store Client Reconnecting');
 				})
 				.on('end', () => {
-					console.log('Redis Client End');
+					console.log('Redis Session Store Client End');
 				});
 
 			// connecting to Redis
@@ -150,7 +151,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 			// ping Redis
 			const res = await redisClient.ping();
-			console.log('Redis Client Sessions Ping: ', res);
+			console.log('Redis Session Store Client Sessions Ping: ', res);
 
 			const redisStore = new RedisStore({
 				client: redisClient,
@@ -169,7 +170,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 			redisWorked = true;
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	}
 

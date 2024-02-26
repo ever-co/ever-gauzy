@@ -16,13 +16,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./.deploy/api/Dockerfile
@@ -33,7 +35,7 @@ jobs:
             everco/gauzy-api-demo:latest
             registry.digitalocean.com/ever/gauzy-api-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
-          cache-from: type=registry,ref=everco/gauzy-api-demo:latest
+          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
@@ -43,7 +45,7 @@ jobs:
           sudo docker image list
 
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -65,7 +67,7 @@ jobs:
           docker push registry.digitalocean.com/ever/gauzy-api-demo:latest
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -76,7 +78,7 @@ jobs:
           docker push ghcr.io/ever-co/gauzy-api-demo:latest
 
       - name: Login to CW Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CW_DOCKER_REGISTRY }}
           username: ${{ secrets.CW_DOCKER_USER }}
@@ -93,29 +95,34 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
+      - name: Build
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./.deploy/webapp/Dockerfile
           load: true
+          platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-webapp-demo:latest
             everco/gauzy-webapp-demo:latest
             registry.digitalocean.com/ever/gauzy-webapp-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
-          cache-from: type=registry,ref=everco/gauzy-webapp-demo:latest
+          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
 
+      - name: Docker images list
+        run: |
+          sudo docker image list
+
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -137,7 +144,7 @@ jobs:
           docker push registry.digitalocean.com/ever/gauzy-webapp-demo:latest
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -148,7 +155,7 @@ jobs:
           docker push ghcr.io/ever-co/gauzy-webapp-demo:latest
 
       - name: Login to CW Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CW_DOCKER_REGISTRY }}
           username: ${{ secrets.CW_DOCKER_USER }}
