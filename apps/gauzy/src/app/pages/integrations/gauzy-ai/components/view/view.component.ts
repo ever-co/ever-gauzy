@@ -1,25 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { ActivatedRoute, Data, Router } from '@angular/router';
-import { filter, map, tap } from 'rxjs/operators';
+import { ActivatedRoute, Data } from '@angular/router';
+import { EMPTY } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IIntegrationEntitySetting, IIntegrationSetting, IOrganization, IntegrationEntity } from '@gauzy/contracts';
+import { HttpStatus, IIntegrationEntitySetting, IIntegrationSetting, IIntegrationTenant, IOrganization, IntegrationEntity } from '@gauzy/contracts';
 import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { ReplacePipe } from '../../../../../@shared/pipes';
 import {
+	ErrorHandlingService,
+	GauzyAIService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
 	Store,
 	ToastrService
-} from './../../../../../@core/services';
-
-enum SettingTitlesEnum {
-	API_KEY = 'apiKey',
-	API_SECRET = 'apiSecret',
-	OPEN_AI_API_SECRET_KEY = 'openAiSecretKey',
-	OPEN_AI_ORGANIZATION_ID = 'openAiOrganizationId'
-}
+} from '../../../../../@core/services';
+import { SettingTitlesEnum } from '../integration-setting-card/integration-setting-card.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,39 +33,19 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	public openAISettings$: Observable<IIntegrationSetting[]>;
 	public jobSearchMatchingSync: IIntegrationEntitySetting;
 	public employeePerformanceAnalysisSync: IIntegrationEntitySetting;
-
-	// Define a mapping object for setting names to titles and information
-	public settingTitles: Record<string, string>[] = [
-		{
-			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.API_KEY'),
-			matching: SettingTitlesEnum.API_KEY,
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_KEY')
-		},
-		{
-			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.API_SECRET'),
-			matching: SettingTitlesEnum.API_SECRET,
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_SECRET')
-		},
-		{
-			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_SECRET_KEY'),
-			matching: SettingTitlesEnum.OPEN_AI_API_SECRET_KEY,
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_API_SECRET_KEY')
-		},
-		{
-			title: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_ORGANIZATION_ID'),
-			matching: SettingTitlesEnum.OPEN_AI_ORGANIZATION_ID,
-			information: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_ORGANIZATION_ID')
-		}
-	];
+	public isOpenAISettingsEdit: boolean = false;
+	public isIntegrationAISettingsEdit: boolean = false;
 
 	constructor(
-		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
+		private readonly _replacePipe: ReplacePipe,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
-		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
+		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 	) {
 		super(translateService);
 	}
@@ -183,7 +161,6 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 					case IntegrationEntity.JOB_MATCHING:
 						this.jobSearchMatchingSync = updatedSetting;
 						this.setJobMatchingEntity(this.jobSearchMatchingSync);
-
 						messageKey = 'JOBS_SEARCH_MATCHING';
 						break;
 					case IntegrationEntity.EMPLOYEE_PERFORMANCE:
@@ -218,44 +195,40 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	}
 
 	/**
-	 * Gets the title for a given integration setting.
+	 * Update integration settings.
 	 *
-	 * @param setting - The integration setting for which to retrieve the title.
-	 * @returns The title for the integration setting, or the original setting name if not found.
+	 * @param {IIntegrationSetting[]} settings - The integration settings to update.
 	 */
-	public getTitleForSetting(setting: IIntegrationSetting): string {
-		// Find the key configuration that matches the setting name
-		const keyConfig = this.settingTitles.find((key) => key.matching === setting.settingsName);
+	updateIntegrationSettings() {
+		// Get the integrationId from the current route snapshot
+		const integrationId = this._activatedRoute.snapshot.paramMap.get('id');
 
-		// If a key configuration is found, return its title; otherwise, return the original setting name
-		return keyConfig?.title || setting.settingsName;
-	}
-
-	/**
-	 * Gets the tooltip content for a given integration setting.
-	 *
-	 * @param setting - The integration setting for which to retrieve the tooltip content.
-	 * @returns The tooltip content for the integration setting, or an empty string if not found.
-	 */
-	public getTooltipForSetting(setting: IIntegrationSetting): string {
-		// Find the key configuration that matches the setting name
-		const keyConfig = this.settingTitles.find((key) => key.matching === setting.settingsName);
-
-		// If a key configuration is found, return its information; otherwise, return an empty string
-		return keyConfig?.information || '';
-	}
-
-	/**
-	 * Navigate to the "Integrations" page.
-	 */
-	public navigateToIntegrations(): void {
-		this._router.navigate(['/pages/integrations']);
-	}
-
-	/**
-	 * Navigates to the 'Reset Integration' route within the GitHub integration setup wizard.
-	 */
-	public navigateToResetIntegration(): void {
-		this._router.navigate(['/pages/integrations/gauzy-ai/reset']);
+		this._gauzyAIService.update(integrationId, {}).pipe(
+			tap((response: any) => {
+				if (response['status'] == HttpStatus.BAD_REQUEST) {
+					throw new Error(`${response['message']}`);
+				}
+			}),
+			// Perform actions after the integration creation
+			tap((integration: IIntegrationTenant) => {
+				if (!!integration) {
+					// Transform integration name for display
+					const provider = this._replacePipe.transform(integration?.name, '_', ' ');
+					// Display success message
+					this._toastrService.success(`INTEGRATIONS.MESSAGE.SETTINGS_UPDATED`, {
+						provider
+					});
+				}
+			}),
+			// Catch and handle errors
+			catchError((error) => {
+				// Handle and log errors using the _errorHandlingService
+				this._errorHandlingService.handleError(error);
+				// Return an empty observable to continue the stream
+				return EMPTY;
+			}),
+			// Unsubscribe when the component is destroyed
+			untilDestroyed(this)
+		).subscribe();
 	}
 }

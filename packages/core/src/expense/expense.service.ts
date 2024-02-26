@@ -138,7 +138,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 * @returns
 	 */
 	private filterQuery(request: IGetExpenseInput) {
-		const { organizationId, startDate, endDate, projectIds = [] } = request;
+		const { organizationId, startDate, endDate, categoryId, projectIds = [] } = request;
 		let { employeeIds = [] } = request;
 
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -192,6 +192,11 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				if (isNotEmpty(projectIds)) {
 					qb.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), {
 						projectIds
+					});
+				}
+				if (categoryId) {
+					qb.andWhere(p(`"${query.alias}"."categoryId" = :categoryId`), {
+						categoryId
 					});
 				}
 			})

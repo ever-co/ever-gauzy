@@ -1,15 +1,19 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { GraphQLModule, GraphQLTypesLoader } from '@nestjs/graphql';
-import { IGraphQLApiOptions } from '@gauzy/common';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { GraphQLApiConfigurationOptions } from '@gauzy/common';
 import { ConfigService } from '@gauzy/config';
 import { createGraphqlModuleOptions } from './graphql-helper';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 
 @Module({})
 export class GraphqlModule {
-	static registerAsync(
-		options: (configService: ConfigService) => IGraphQLApiOptions
-	): DynamicModule {
+
+	/**
+ * Register GraphQL module asynchronously.
+ * @param optionsFactory Factory function to provide GraphQL configuration options.
+ * @returns Dynamic module configuration.
+ */
+	static registerAsync(optionsFactory: (configService: ConfigService) => GraphQLApiConfigurationOptions): DynamicModule {
 		return GraphQLModule.forRootAsync<ApolloDriverConfig>({
 			driver: ApolloDriver,
 			useFactory: async (
@@ -19,11 +23,11 @@ export class GraphqlModule {
 				return createGraphqlModuleOptions(
 					configService,
 					typesLoader,
-					options(configService)
+					optionsFactory(configService)
 				);
 			},
 			inject: [ConfigService, GraphQLTypesLoader],
 			imports: []
-		}) as DynamicModule;
+		});
 	}
 }

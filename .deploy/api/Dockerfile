@@ -20,6 +20,8 @@ ARG DB_PASS
 ARG DB_TYPE
 ARG DB_SSL_MODE
 ARG DB_CA_CERT
+ARG DB_POOL_SIZE
+ARG DB_POOL_SIZE_KNEX
 ARG DEMO
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
@@ -139,6 +141,8 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
+COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
+COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
@@ -189,6 +193,8 @@ COPY --chown=node:node packages/plugins/integration-hubstaff/package.json ./pack
 COPY --chown=node:node packages/plugins/integration-upwork/package.json ./packages/plugins/integration-upwork/
 COPY --chown=node:node packages/plugins/integration-github/package.json ./packages/plugins/integration-github/
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
+COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
+COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
@@ -301,6 +307,8 @@ ENV DB_PASS=${DB_PASS}
 ENV DB_TYPE=${DB_TYPE:-sqlite}
 ENV DB_SSL_MODE=${DB_SSL_MODE}
 ENV DB_CA_CERT=${DB_CA_CERT}
+ENV DB_POOL_SIZE=${DB_POOL_SIZE}
+ENV DB_POOL_SIZE_KNEX=${DB_POOL_SIZE_KNEX}
 ENV DEMO=${DEMO:-false}
 ENV CLOUD_PROVIDER=${CLOUD_PROVIDER}
 ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}

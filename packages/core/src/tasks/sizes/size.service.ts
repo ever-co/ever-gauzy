@@ -1,24 +1,32 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import { IOrganization, IPagination, ITaskSize, ITaskSizeCreateInput, ITaskSizeFindInput, ITenant } from '@gauzy/contracts';
-import { RequestContext } from './../../core/context';
+import { isPostgres } from '@gauzy/config';
+import { RequestContext } from '../../core/context';
+import { MultiORMEnum } from '../../core/utils';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskSize } from './size.entity';
 import { DEFAULT_GLOBAL_SIZES } from './default-global-sizes';
 import { TypeOrmTaskSizeRepository } from './repository/type-orm-task-size.repository';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
+
 @Injectable()
 export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 
 	constructor(
 		@InjectRepository(TaskSize)
-		typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
+		readonly typeOrmTaskSizeRepository: TypeOrmTaskSizeRepository,
 
-		mikroOrmTaskSizeRepository: MikroOrmTaskSizeRepository
+		readonly mikroOrmTaskSizeRepository: MikroOrmTaskSizeRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmTaskSizeRepository, mikroOrmTaskSizeRepository);
+		super(typeOrmTaskSizeRepository, mikroOrmTaskSizeRepository, knexConnection);
 	}
 
 	/**
@@ -30,25 +38,27 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 	async delete(id: ITaskSize['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
+				isSystem: false
 			},
 		});
 	}
 
 	/**
-	 * GET task sizes by filters
-	 * If parameters not match, retrieve global task sizes
-	 *
-	 * @param params
-	 * @returns
+	 * Find task sizes based on the provided parameters.
+	 * @param params - The input parameters for the task size search.
+	 * @returns {Promise<IPagination<ITaskSize>>} A promise resolving to the paginated list of task sizes.
+	 * @throws {HttpException} Thrown if there's an issue with the request parameters, such as missing or unauthorized integration.
 	 */
-	async findTaskSizes(
-		params: ITaskSizeFindInput
-	): Promise<IPagination<ITaskSize>> {
+	public async fetchAll(params: ITaskSizeFindInput): Promise<IPagination<ITaskSize>> {
 		try {
-			return await this.findEntitiesByParams(params);
+			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
+				return await super.fetchAllByKnex(params);
+			} else {
+				return await super.fetchAll(params);
+			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.log('Failed to retrieve task sizes. Please ensure that all required parameters are provided correctly.', error);
+			throw new BadRequestException('Failed to retrieve task sizes. Ensure that the provided parameters are valid and complete.', error);
 		}
 	}
 
@@ -87,11 +97,10 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const sizes: ITaskSize[] = [];
-			const { items = [] } = await this.findEntitiesByParams({ tenantId });
+			const { items = [] } = await super.fetchAll({ tenantId });
 
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } = item;
-
 				const create = this.repository.create({
 					tenantId,
 					name,
@@ -122,7 +131,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 			const tenantId = RequestContext.currentTenantId();
 
 			const sizes: ITaskSize[] = [];
-			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
+			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;

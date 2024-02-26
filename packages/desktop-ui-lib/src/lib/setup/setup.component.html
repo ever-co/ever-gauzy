@@ -703,6 +703,9 @@
 									</ng-container>
 								</div>
 							</div>
+							<div *ngIf="isServer" class="col-8 col-center margin-setting-content">
+								<gauzy-ssl class="ssl" [config]="proxyOptions" (update)="onChangeProxyConfig($event)" ></gauzy-ssl>
+							</div>
 							<div
 								class="col-6 text-center margin-setting-content col-center"
 								*ngIf="connectivity.integrated"

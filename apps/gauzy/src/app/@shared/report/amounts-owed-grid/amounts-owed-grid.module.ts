@@ -10,7 +10,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
-import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 
 @NgModule({
@@ -23,10 +22,9 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
 		NoDataMessageModule
 	]
 })
-export class AmountsOwedGridModule {}
+export class AmountsOwedGridModule { }

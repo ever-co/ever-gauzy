@@ -1,8 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import { IOrganization, IPagination, ITaskPriority, ITaskPriorityCreateInput, ITaskPriorityFindInput, ITenant } from '@gauzy/contracts';
-import { RequestContext } from './../../core/context';
+import { isPostgres } from '@gauzy/config';
+import { RequestContext } from '../../core/context';
+import { MultiORMEnum } from '../../core/utils';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskPriority } from './priority.entity';
 import { DEFAULT_GLOBAL_PRIORITIES } from './default-global-priorities';
@@ -14,11 +18,14 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 
 	constructor(
 		@InjectRepository(TaskPriority)
-		typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
+		readonly typeOrmTaskPriorityRepository: TypeOrmTaskPriorityRepository,
 
-		mikroOrmTaskPriorityRepository: MikroOrmTaskPriorityRepository
+		readonly mikroOrmTaskPriorityRepository: MikroOrmTaskPriorityRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmTaskPriorityRepository, mikroOrmTaskPriorityRepository);
+		super(typeOrmTaskPriorityRepository, mikroOrmTaskPriorityRepository, knexConnection);
 	}
 
 	/**
@@ -30,7 +37,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	async delete(id: ITaskPriority['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
+				isSystem: false
 			},
 		});
 	}
@@ -42,13 +49,16 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 	 * @param params
 	 * @returns
 	 */
-	async findTaskPriorities(
-		params: ITaskPriorityFindInput
-	): Promise<IPagination<ITaskPriority>> {
+	public async fetchAll(params: ITaskPriorityFindInput): Promise<IPagination<ITaskPriority>> {
 		try {
-			return await this.findEntitiesByParams(params);
+			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
+				return await super.fetchAllByKnex(params);
+			} else {
+				return await super.fetchAll(params);
+			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.log('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', error);
+			throw new BadRequestException('Failed to retrieve task priorities. Ensure that the provided parameters are valid and complete.', error);
 		}
 	}
 
@@ -87,7 +97,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			const tenantId = RequestContext.currentTenantId();
 
 			const priorities: ITaskPriority[] = [];
-			const { items = [] } = await this.findEntitiesByParams({ tenantId });
+			const { items = [] } = await super.fetchAll({ tenantId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
@@ -122,7 +132,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			const tenantId = RequestContext.currentTenantId();
 
 			const priorities: ITaskPriority[] = [];
-			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
+			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;

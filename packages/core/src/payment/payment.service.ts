@@ -3,16 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
-import { IDateRangePicker, IGetPaymentInput } from '@gauzy/contracts';
+import { IDateRangePicker, IGetPaymentInput, IInvoice, IPayment, LanguagesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { isPostgres } from '@gauzy/config';
 import { Payment } from './payment.entity';
 import { getDateRangeFormat, getDaysBetweenDates } from '../core/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { EmailService } from './../email-send/email.service';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { IPayment } from '@gauzy/contracts';
-import { IInvoice } from '@gauzy/contracts';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
@@ -223,9 +221,10 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	public pagination(filter: any) {
 		if ('where' in filter) {
 			const { where } = filter;
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('note' in where) {
 				const { note } = where;
-				filter['where']['note'] = Raw((alias) => `${alias} ILIKE '%${note}%'`);
+				filter['where']['note'] = Raw((alias) => `${alias} ${likeOperator} '%${note}%'`);
 			}
 			if ('paymentDate' in where) {
 				const { paymentDate } = where;

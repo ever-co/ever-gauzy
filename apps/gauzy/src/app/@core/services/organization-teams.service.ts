@@ -85,15 +85,4 @@ export class OrganizationTeamsService {
 			})
 		);
 	}
-
-	getAllByEmployee(
-		id: IOrganizationTeam['id'],
-		where?: IOrganizationTeamFindInput
-	): Promise<IOrganizationTeam[]> {
-		return firstValueFrom(
-			this.http.get<IOrganizationTeam[]>(`${API_PREFIX}/organization-team/employee/${id}`, {
-				params: toParams({ ...where })
-			})
-		);
-	}
 }

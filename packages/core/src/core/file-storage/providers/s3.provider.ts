@@ -15,10 +15,9 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
-import { isNotEmpty, trimAndGetValue } from '@gauzy/common';
+import { trimAndGetValue } from '@gauzy/common';
 import { Provider } from './provider';
 import { RequestContext } from '../../context';
-import { th } from 'date-fns/locale';
 
 /**
  * Configuration interface for AWS S3 storage.
@@ -45,6 +44,8 @@ export class S3Provider extends Provider<S3Provider> {
 	public readonly name = FileStorageProviderEnum.S3;
 	public config: IS3ProviderConfig;
 	public defaultConfig: IS3ProviderConfig;
+
+	private readonly _detailedloggingEnabled = false;
 
 	constructor() {
 		super();
@@ -88,6 +89,9 @@ export class S3Provider extends Provider<S3Provider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
+					if (this._detailedloggingEnabled)
+						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+
 					if (trimAndGetValue(settings.aws_access_key_id))
 						this.config.aws_access_key_id = trimAndGetValue(settings.aws_access_key_id);
 
@@ -193,7 +197,7 @@ export class S3Provider extends Provider<S3Provider> {
 					}
 				});
 			} else {
-				console.error('Error while retrieving Multer for S3: s3Client is null');
+				console.warn('Error while retrieving Multer for S3: s3Client is null');
 				return null;
 			}
 		} catch (error) {
@@ -333,7 +337,7 @@ export class S3Provider extends Provider<S3Provider> {
 
 				return s3Client;
 			} else {
-				console.log(`Can't retrieve ${FileStorageProviderEnum.S3} instance: AWS credentials are missing`);
+				console.warn(`Can't retrieve ${FileStorageProviderEnum.S3} instance: AWS credentials are missing`);
 				return null;
 			}
 		} catch (error) {

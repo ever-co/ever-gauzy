@@ -1,349 +1,352 @@
 version: 2.1
 
 orbs:
-    node: circleci/node@5.1.0
-    pulumi: pulumi/pulumi@2.1.0
+  node: circleci/node@5.2.0
+  pulumi: pulumi/pulumi@2.1.0
 
 aliases:
-    - &install-node
-      name: Install Node with NPM using NVM
-      command: |
-          echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
-          echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
-          nvm install v18
-          nvm alias default v18
-          echo 'export NODE_OPTIONS=--max-old-space-size=7000' >> $BASH_ENV
-          echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
-          source $BASH_ENV
-          nvm use v18
-          node --version
+  - &install-node
+    name: Install Node with NPM using NVM
+    command: |
+      echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+      echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
+      nvm install v18
+      nvm alias default v18
+      echo 'export NODE_OPTIONS=--max-old-space-size=7000' >> $BASH_ENV
+      echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
+      source $BASH_ENV
+      nvm use v18
+      node --version
 
-    - &install-chrome
-      name: Install Chrome
-      command: |
-          nvm use v18
-          sudo apt install -y libappindicator3-1
-          curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo dpkg -i google-chrome.deb
-          sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
-          rm google-chrome.deb
+  - &install-chrome
+    name: Install Chrome
+    command: |
+      nvm use v18
+      sudo apt install -y libappindicator3-1
+      curl -L -o google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+      sudo dpkg -i google-chrome.deb
+      sudo sed -i 's|HERE/chrome\"|HERE/chrome\" --disable-setuid-sandbox|g' /opt/google/chrome/google-chrome
+      rm google-chrome.deb
 
-    - &install-deps
-      name: Install Global Dependencies
-      command: |
-          nvm use v18
-          sudo rm -rf /etc/apt/sources.list.d/heroku.list
-          sudo apt-get update
-          sudo apt install npm
-          sudo apt install build-essential
-          sudo npm install --quiet node-gyp@9.3.1 -g
-          sudo npm config set python /usr/bin/python
+  - &install-deps
+    name: Install Global Dependencies
+    command: |
+      nvm use v18
+      sudo rm -rf /etc/apt/sources.list.d/heroku.list
+      sudo apt-get update
+      sudo apt install npm
+      sudo apt install build-essential
+      sudo apt install python3-distutils
+      sudo apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick
+      python3 -m pip install packaging setuptools
+      sudo npm install --quiet node-gyp@9.3.1 -g
+      sudo npm config set python /usr/bin/python
 
-    - &install-yarn
-      name: Install Latest Yarn
-      command: |
-          nvm use v18
-          # remove default yarn
-          sudo rm -rf $(dirname $(which yarn))/yarn*
-          # download latest
-          rm -rf ~/.yarn
-          curl -o- -L https://yarnpkg.com/install.sh | bash
-          echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
-          source $BASH_ENV
+  - &install-yarn
+    name: Install Latest Yarn
+    command: |
+      nvm use v18
+      # remove default yarn
+      sudo rm -rf $(dirname $(which yarn))/yarn*
+      # download latest
+      rm -rf ~/.yarn
+      curl -o- -L https://yarnpkg.com/install.sh | bash
+      echo 'export PATH="${PATH}:${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin"' >> $BASH_ENV
+      source $BASH_ENV
 
 defaults: &defaults
-    # put here anything which is common between all jobs
-    # we define default work dir, however almost every job redefine it
-    working_directory: /tmp/workspace
+  # put here anything which is common between all jobs
+  # we define default work dir, however almost every job redefine it
+  working_directory: /tmp/workspace
 
 jobs:
-    sonarqube:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
-        working_directory: /tmp/workspace/sonarqube-root
-        description: Check Code Quality with SonarQube
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
-            - run:
-                  name: Install Dependencies
-                  command: nvm use v18 && yarn install
-                  no_output_timeout: 60m
-            - run:
-                  name: Install Sonarqube scanner
-                  command: |
-                      wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102.zip
-                      unzip sonar-scanner-cli-4.3.0.2102.zip
-            - run:
-                  name: Run Sonarscanner
-                  command: |
-                      export SONAR_SCANNER_OPTS="-Xmx2048m"
-                      eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=$SONAR_SERVER \
-                      -Dsonar.projectKey=gauzy \
-                      -Dsonar.sources=. \
-                      -Dsonar.login=$SONAR_TOKEN
-                  no_output_timeout: 60m
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
-            - persist_to_workspace:
-                  root: /tmp/workspace/sonarqube-root
-                  paths:
-                      - '*'
-    build-monorepo-root:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
-        working_directory: /tmp/workspace/monorepo-root
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
-            - run:
-                  name: Run Bootstrap
-                  command: nvm use v18 && yarn bootstrap
-                  no_output_timeout: 60m
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
-            - persist_to_workspace:
-                  root: /tmp/workspace/monorepo-root
-                  paths:
-                      - '*'
-    build-desktop:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
-        working_directory: /tmp/workspace/desktop
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-desktop-{{ checksum "yarn.lock" }}
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
-            - run:
-                  name: Run Bootstrap
-                  command: nvm use v18 && yarn bootstrap
-                  no_output_timeout: 60m
-            - run:
-                  name: Run Build
-                  command: nvm use v18 && yarn build:desktop
-                  no_output_timeout: 60m
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
-            - persist_to_workspace:
-                  root: /tmp/workspace/desktop
-                  paths:
-                      - '*'
-    build-api:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
-        working_directory: /tmp/workspace/api
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-api-{{ checksum "yarn.lock" }}
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
-            - run:
-                  name: Run Bootstrap
-                  command: nvm use v18 && yarn bootstrap
-                  no_output_timeout: 60m
-            - run:
-                  name: Run Packages Build
-                  command: nvm use v18 && yarn build:package:all
-                  no_output_timeout: 60m
-            - run:
-                  name: Run Build
-                  command: nvm use v18 && yarn build:api:prod:ci
-                  no_output_timeout: 60m
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-api-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
-            - persist_to_workspace:
-                  root: /tmp/workspace/api
-                  paths:
-                      - '*'
-    build-web:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
-        working_directory: /tmp/workspace/web
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-web-{{ checksum "yarn.lock" }}
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
-            - run:
-                  name: Run Bootstrap
-                  command: nvm use v18 && yarn bootstrap
-                  no_output_timeout: 60m
-            - run:
-                  name: Run Packages Build
-                  command: nvm use v18 && yarn build:package:all
-                  no_output_timeout: 60m
-            - run:
-                  name: Run Build
-                  command: nvm use v18 && yarn build:gauzy:prod:ci
-                  no_output_timeout: 60m
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-web-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
-            - persist_to_workspace:
-                  root: /tmp/workspace/web
-                  paths:
-                      - '*'
+  sonarqube:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
+    working_directory: /tmp/workspace/sonarqube-root
+    description: Check Code Quality with SonarQube
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
+      - run:
+          name: Install Dependencies
+          command: nvm use v18 && yarn install
+          no_output_timeout: 60m
+      - run:
+          name: Install Sonarqube scanner
+          command: |
+            wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.3.0.2102.zip
+            unzip sonar-scanner-cli-4.3.0.2102.zip
+      - run:
+          name: Run Sonarscanner
+          command: |
+            export SONAR_SCANNER_OPTS="-Xmx2048m"
+            eval ./sonar-scanner-4.3.0.2102/bin/sonar-scanner -Dsonar.host.url=$SONAR_SERVER \
+            -Dsonar.projectKey=gauzy \
+            -Dsonar.sources=. \
+            -Dsonar.login=$SONAR_TOKEN
+          no_output_timeout: 60m
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-sonarqube-root-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
+      - persist_to_workspace:
+          root: /tmp/workspace/sonarqube-root
+          paths:
+            - '*'
+  build-monorepo-root:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
+    working_directory: /tmp/workspace/monorepo-root
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
+      - run:
+          name: Run Bootstrap
+          command: nvm use v18 && yarn bootstrap
+          no_output_timeout: 60m
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-monorepo-root-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
+      - persist_to_workspace:
+          root: /tmp/workspace/monorepo-root
+          paths:
+            - '*'
+  build-desktop:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
+    working_directory: /tmp/workspace/desktop
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-desktop-{{ checksum "yarn.lock" }}
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
+      - run:
+          name: Run Bootstrap
+          command: nvm use v18 && yarn bootstrap
+          no_output_timeout: 60m
+      - run:
+          name: Run Build
+          command: nvm use v18 && yarn build:desktop
+          no_output_timeout: 60m
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-desktop-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
+      - persist_to_workspace:
+          root: /tmp/workspace/desktop
+          paths:
+            - '*'
+  build-api:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
+    working_directory: /tmp/workspace/api
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-api-{{ checksum "yarn.lock" }}
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
+      - run:
+          name: Run Bootstrap
+          command: nvm use v18 && yarn bootstrap
+          no_output_timeout: 60m
+      - run:
+          name: Run Packages Build
+          command: nvm use v18 && yarn build:package:all
+          no_output_timeout: 60m
+      - run:
+          name: Run Build
+          command: nvm use v18 && yarn build:api:prod:ci
+          no_output_timeout: 60m
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-api-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
+      - persist_to_workspace:
+          root: /tmp/workspace/api
+          paths:
+            - '*'
+  build-web:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
+    working_directory: /tmp/workspace/web
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-web-{{ checksum "yarn.lock" }}
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
+      - run:
+          name: Run Bootstrap
+          command: nvm use v18 && yarn bootstrap
+          no_output_timeout: 60m
+      - run:
+          name: Run Packages Build
+          command: nvm use v18 && yarn build:package:all
+          no_output_timeout: 60m
+      - run:
+          name: Run Build
+          command: nvm use v18 && yarn build:gauzy:prod:ci
+          no_output_timeout: 60m
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-web-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
+      - persist_to_workspace:
+          root: /tmp/workspace/web
+          paths:
+            - '*'
 
-    test-e2e:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
-        working_directory: /tmp/workspace/test-e2e
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
+  test-e2e:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
+    working_directory: /tmp/workspace/test-e2e
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
 
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
-            - run:
-                  name: Run Bootstrap
-                  command: nvm use v18 && yarn bootstrap
-                  no_output_timeout: 60m
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
+      - run:
+          name: Run Bootstrap
+          command: nvm use v18 && yarn bootstrap
+          no_output_timeout: 60m
 
-            - run:
-                  name: Run API in background
-                  command: nvm use v18 && yarn start:api:ci
-                  background: true
+      - run:
+          name: Run API in background
+          command: nvm use v18 && yarn start:api:ci
+          background: true
 
-            # - run:
-            #      name: Run e2e tests
-            #      command: yarn run e2e:ci
-            #      no_output_timeout: 120m
+      # - run:
+      #      name: Run e2e tests
+      #      command: yarn run e2e:ci
+      #      no_output_timeout: 120m
 
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-test-e2e-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
 
-            - run:
-                  name: Kill API Background Process
-                  command: pgrep node &> /dev/null && killall -w node || true
+      - run:
+          name: Kill API Background Process
+          command: pgrep node &> /dev/null && killall -w node || true
 
-            - persist_to_workspace:
-                  root: /tmp/workspace/test-e2e
-                  paths:
-                      - '*'
+      - persist_to_workspace:
+          root: /tmp/workspace/test-e2e
+          paths:
+            - '*'
 
-    pulumi_deploy:
-        <<: *defaults
-        machine:
-            image: ubuntu-2204:current
+  pulumi_deploy:
+    <<: *defaults
+    machine:
+      image: ubuntu-2204:current
 
-        working_directory: /tmp/workspace/pulumi
-        steps:
-            - checkout
-            - run: *install-node
-            - run: *install-deps
-            - run: *install-yarn
+    working_directory: /tmp/workspace/pulumi
+    steps:
+      - checkout
+      - run: *install-node
+      - run: *install-deps
+      - run: *install-yarn
 
-            - restore_cache:
-                  name: Restore Yarn Package Cache
-                  keys:
-                      - yarn-packages-pulumi-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-pulumi-{{ checksum "yarn.lock" }}
 
-            - run:
-                  name: verify Node version
-                  command: nvm use v18 && node --version
+      - run:
+          name: verify Node version
+          command: nvm use v18 && node --version
 
-            - pulumi/login
+      - pulumi/login
 
-            - run:
-                  name: 'Installing NPM Packages'
-                  command: |
-                      nvm use v18
-                      yarn bootstrap
-                  no_output_timeout: 60m
+      - run:
+          name: 'Installing NPM Packages'
+          command: |
+            nvm use v18
+            yarn bootstrap
+          no_output_timeout: 60m
 
-            - pulumi/update:
-                  stack: dev
+      - pulumi/update:
+          stack: dev
 
-            - save_cache:
-                  name: Save Yarn Package Cache
-                  key: yarn-packages-pulumi-{{ checksum "yarn.lock" }}
-                  paths:
-                      - ~/.cache/yarn
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-pulumi-{{ checksum "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
 
-            - persist_to_workspace:
-                  root: /tmp/workspace/pulumi
-                  paths:
-                      - '*'
+      - persist_to_workspace:
+          root: /tmp/workspace/pulumi
+          paths:
+            - '*'
 
 workflows:
-    version: 2
-    build:
-        jobs:
-            # - sonarqube
-            - build-monorepo-root
-            - build-web
-            - build-api
-            - build-desktop
-    test:
-        jobs:
-            - test-e2e
+  version: 2
+  build:
+    jobs:
+      # - sonarqube
+      - build-monorepo-root
+      - build-web
+      - build-api
+      - build-desktop
+  test:
+    jobs:
+      - test-e2e

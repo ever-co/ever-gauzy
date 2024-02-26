@@ -99,11 +99,24 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 		// Prepare the request object
 		const request: IGetExpenseInput = {
 			...this.getFilterRequest(this.request), // Calls a method to get additional filter request parameters
-			groupBy: this.groupBy // Adds a "groupBy" property to the request
+			groupBy: this.groupBy, // Adds a "groupBy" property to the request
+			...(this.filters?.categoryId ? { categoryId: this.filters?.categoryId } : {}), // add a "categoryId" to the request to filter with
 		};
 
 		// Emit the request object to the observable stream
 		this.payloads$.next(request);
+	}
+
+	filterByCategory(event) {
+		if (this.gauzyFiltersComponent.saveFilters) {
+			// If true, set the timesheetFilterService's filter property to the provided filters
+			this.timesheetFilterService.filter = this.filters;
+		}
+		this.filters = Object.assign({}, {
+			...this.filters,
+			categoryId: event?.id ? event?.id : ''
+		});
+		this.subject$.next(true);
 	}
 
 	/**

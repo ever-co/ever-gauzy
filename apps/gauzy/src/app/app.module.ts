@@ -37,7 +37,7 @@ import { ServerConnectionService } from './@core/services/server-connection.serv
 import { Store } from './@core/services/store.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import * as Sentry from '@sentry/angular';
+import * as Sentry from '@sentry/angular-ivy';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
@@ -58,41 +58,15 @@ import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { GAUZY_ENV } from "./@core/constants";
-import { version } from './../../version';
+import { initializeSentry } from './sentry';
 
-
-if (environment.SENTRY_DSN && environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
-	console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
-} else if (
-	environment.SENTRY_DSN &&
-	environment.SENTRY_DSN !== 'DOCKER_SENTRY_DSN'
-) {
-	console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
-
-	Sentry.init({
-		dsn: environment.SENTRY_DSN,
-		environment: environment.production ? 'production' : 'development',
-		debug: !environment.production,
-		// this enables automatic instrumentation
-		integrations: [
-			// Registers and configures the Tracing integration,
-			// which automatically instruments your application to monitor its
-			// performance, including custom Angular routing instrumentation
-			new Sentry.BrowserTracing({
-				tracingOrigins: [
-					'localhost',
-					'https://apidemo.gauzy.co/api',
-					'https://api.gauzy.co/api',
-					'https://apistage.gauzy.co/api',
-				],
-				routingInstrumentation: Sentry.routingInstrumentation,
-			}),
-		],
-		// TODO: we should use some internal function which returns version of Gauzy
-		release: 'gauzy@' + version,
-		// set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring
-		tracesSampleRate: environment.SENTRY_TRACES_SAMPLE_RATE ? parseInt(environment.SENTRY_TRACES_SAMPLE_RATE) : 0.01,
-	});
+if (environment.SENTRY_DSN) {
+	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
+		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
+	} else {
+		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		initializeSentry();
+	}
 }
 
 @NgModule({

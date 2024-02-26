@@ -19,9 +19,9 @@ import * as moment from 'moment';
 import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { chain, pick } from 'underscore';
+import { chain } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService, ErrorHandlingService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
@@ -50,9 +50,10 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
+		public readonly translateService: TranslateService,
+		private readonly errorHandler: ErrorHandlingService,
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
-		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
@@ -77,37 +78,35 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 			.subscribe();
 	}
 
+	/**
+	 *
+	 */
 	ngAfterViewInit() {
 		this.cd.detectChanges();
 		this.control.valueChanges
-            .pipe(
-                distinctUntilChanged(),
-                tap(() => this.subject$.next(true)),
+			.pipe(
+				distinctUntilChanged(),
+				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
-            )
-            .subscribe();
+			)
+			.subscribe();
 	}
 
 	/**
-	 * Get header selectors request
-	 * Get gauzy timesheet filters request
-	 *
-	 * @returns
+	 * Prepares the time log report request.
+	 * @returns {void}
 	 */
-	prepareRequest() {
+	prepareRequest(): void {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'logType'
-		);
 		const request: IGetTimeLogReportInput = {
-			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			logType: [TimeLogType.MANUAL]
 		};
+		if (this.control.getRawValue()) {
+			request['isEdited'] = this.control.getRawValue() === ManualTimeLogAction.EDITED;
+		}
 		this.payloads$.next(request);
 	}
 
@@ -125,44 +124,44 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 * Get manual logs reports
+	 * Asynchronously fetch manual time logs and update the component's state.
+	 * Handles loading state, API request, data processing, and errors.
 	 *
-	 * @returns
+	 * @returns A promise resolving to an array of objects containing date and timeLogs.
 	 */
-	getManualLogs() {
+	async getManualLogs() {
+		// Check if organization and request data are available
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Set loading state to true
 		this.loading = true;
-		const payloads = this.payloads$.getValue();
-		this.timesheetService
-			.getTimeLogs(payloads, [
+
+		try {
+			// Get the payloads from the observable
+			const payloads = this.payloads$.getValue();
+
+			// Call the timesheetService to fetch time logs
+			const logs: ITimeLog[] = await this.timesheetService.getTimeLogs(payloads, [
 				'task',
 				'project',
 				'employee',
 				'employee.user'
-			])
-			.then((logs: ITimeLog[]) => {
-				switch (this.control.value) {
-					case ManualTimeLogAction.ADDED:
-						logs = logs.filter((log: ITimeLog) => !log.isEdited);
-						break;
-					case ManualTimeLogAction.EDITED:
-						logs = logs.filter((log: ITimeLog) => log.isEdited);
-						break;
-				}
-				this.dailyData = chain(logs)
-					.groupBy((log: ITimeLog) => {
-						return moment(log.updatedAt).format('YYYY-MM-DD');
-					})
-					.map((timeLogs, date) => {
-						return {
-							date,
-							timeLogs
-						};
-					})
-					.value();
-			})
-			.finally(() => (this.loading = false));
+			]);
+
+			// Process the fetched logs and update the component's state
+			this.dailyData = chain(logs)
+				.groupBy((log: ITimeLog) => moment(log.updatedAt).format('YYYY-MM-DD'))
+				.map((timeLogs, date) => ({ date, timeLogs }))
+				.value();
+		} catch (error) {
+			// Handle any exceptions or errors during the fetch
+			console.log('Error fetching manual logs:', error);
+			this.errorHandler.handleError(error);
+		} finally {
+			// Set loading state to false regardless of success or failure
+			this.loading = false;
+		}
 	}
 }

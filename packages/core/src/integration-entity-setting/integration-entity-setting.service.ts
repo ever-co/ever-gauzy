@@ -46,7 +46,11 @@ export class IntegrationEntitySettingService extends TenantAwareCrudService<Inte
 	async bulkUpdateOrCreate(
 		input: IIntegrationEntitySetting | IIntegrationEntitySetting[]
 	): Promise<IIntegrationEntitySetting[]> {
-		const settings = Array.isArray(input) ? input : [input];
+
+		// Prepare an array of settings to be saved
+		const settings: IIntegrationEntitySetting[] = Array.isArray(input) ? input : [input];
+
+		// Save the new settings to the database
 		return await this.typeOrmIntegrationEntitySettingRepository.save(settings);
 	}
 }

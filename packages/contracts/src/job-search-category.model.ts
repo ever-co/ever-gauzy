@@ -5,9 +5,9 @@ import {
 	IJobPresetUpworkJobSearchCriterion
 } from './job-matching.model';
 
-export interface IJobSearchCategory
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IJobSearchCategory extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
+	jobSourceCategoryId?: string;
 	jobSource?: JobPostSourceEnum;
 	jobPresetUpworkJobSearchCriterion?: IJobPresetUpworkJobSearchCriterion[];
 	employeeUpworkJobSearchCriterion?: IEmployeeUpworkJobsSearchCriterion[];

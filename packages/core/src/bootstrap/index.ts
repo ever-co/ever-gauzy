@@ -2,7 +2,6 @@
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import * as Sentry from '@sentry/node';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import RedisStore from 'connect-redis';
@@ -13,11 +12,10 @@ import { join } from 'path';
 import { urlencoded, json } from 'express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { EntitySubscriberInterface } from 'typeorm';
-import { IPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
-import { getEntitiesFromPlugins } from '@gauzy/plugin';
+import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import tracer from './tracer';
-import { SentryService } from '../core/sentry/ntegral';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
@@ -25,19 +23,11 @@ import { AppModule } from '../app.module';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
-export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<INestApplication> {
+export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time('Application Bootstrap Time');
-
-	if (process.env.OTEL_ENABLED === 'true') {
-		// Start tracing using Signoz first
-		tracer.start();
-		console.log('OTEL/Signoz Tracing started');
-	} else {
-		console.log('OTEL/Signoz Tracing not enabled');
-	}
+	startTracing(); // Start tracing using Signoz if OTEL is enabled.
 
 	const config = await registerPluginConfig(pluginConfig);
-
 	const { BootstrapModule } = await import('./bootstrap.module');
 
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
@@ -58,37 +48,13 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	// Assuming `env` contains the environment configuration, including Sentry DSN
 	const { sentry } = env;
 
-	// Initialize Sentry if the DSN is available
-	if (sentry && sentry.dsn) {
+	// Initialize Sentry if the DSN is available and if it's production environment
+	if (sentry && sentry.dsn && config.logger) {
 		// Attach the Sentry logger to the app
-		app.useLogger(app.get(SentryService));
-
-		// NOTE: possible below is not needed because already included inside SentryService constructor
-
-		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception Handler in Bootstrap:', error);
-			Sentry.captureException(error);
-			Sentry.flush(3000).then(() => {
-				process.exit(1);
-			});
-		});
-
-		process.on('unhandledRejection', (reason, promise) => {
-			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-			Sentry.captureException(reason);
-		});
+		app.useLogger(config.logger);
 	} else {
-		process.on('uncaughtException', (error) => {
-			console.error('Uncaught Exception Handler in Bootstrap:', error);
-
-			setTimeout(() => {
-				process.exit(1);
-			}, 3000);
-		});
-
-		process.on('unhandledRejection', (reason, promise) => {
-			console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-		});
+		process.on('uncaughtException', handleUncaughtException);
+		process.on('unhandledRejection', handleUnhandledRejection);
 	}
 
 	app.use(json({ limit: '50mb' }));
@@ -113,7 +79,6 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 	// https://github.com/tj/connect-redis
 
 	let redisWorked = false;
-
 	console.log('REDIS_ENABLED: ', process.env.REDIS_ENABLED);
 
 	if (process.env.REDIS_ENABLED === 'true') {
@@ -151,7 +116,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 				username: username,
 				password: password,
 				isolationPoolOptions: {
-					min: 10,
+					min: 1,
 					max: 100
 				},
 				socket: {
@@ -160,24 +125,25 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 					port: port,
 					passphrase: password,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'
-				}
+				},
+				ttl: 60 * 60 * 24 * 7 // 1 week
 			};
 
-			const redisClient = await createClient(redisConnectionOptions)
+			const redisClient = createClient(redisConnectionOptions)
 				.on('error', (err) => {
-					console.log('Redis Client Error: ', err);
+					console.log('Redis Session Store Client Error: ', err);
 				})
 				.on('connect', () => {
-					console.log('Redis Client Connected');
+					console.log('Redis Session Store Client Connected');
 				})
 				.on('ready', () => {
-					console.log('Redis Client Ready');
+					console.log('Redis Session Store Client Ready');
 				})
 				.on('reconnecting', () => {
-					console.log('Redis Client Reconnecting');
+					console.log('Redis Session Store Client Reconnecting');
 				})
 				.on('end', () => {
-					console.log('Redis Client End');
+					console.log('Redis Session Store Client End');
 				});
 
 			// connecting to Redis
@@ -185,7 +151,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 			// ping Redis
 			const res = await redisClient.ping();
-			console.log('Redis Client Sessions Ping: ', res);
+			console.log('Redis Session Store Client Sessions Ping: ', res);
 
 			const redisStore = new RedisStore({
 				client: redisClient,
@@ -204,7 +170,7 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 
 			redisWorked = true;
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	}
 
@@ -220,7 +186,11 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 		);
 	}
 
-	app.use(helmet());
+	// let's use helmet for security in production
+	if (env.envName === 'prod') {
+		app.use(helmet());
+	}
+
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
 
@@ -272,9 +242,42 @@ export async function bootstrap(pluginConfig?: Partial<IPluginConfig>): Promise<
 }
 
 /**
+ * Handles uncaught exceptions.
+ * @param error - The uncaught exception.
+ */
+function handleUncaughtException(error: Error) {
+	console.error('Uncaught Exception Handler in Bootstrap:', error);
+	setTimeout(() => {
+		process.exit(1);
+	}, 3000);
+}
+
+/**
+ * Handles unhandled rejections.
+ * @param reason - The reason for the unhandled rejection.
+ * @param promise - The rejected promise.
+ */
+function handleUnhandledRejection(reason: any, promise: Promise<any>) {
+	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+}
+
+/**
+ * Start tracing using Signoz if OTEL is enabled.
+ */
+export function startTracing(): void {
+	if (process.env.OTEL_ENABLED === 'true') {
+		// Start tracing using Signoz first
+		tracer.start();
+		console.log('OTEL/Signoz Tracing started');
+	} else {
+		console.log('OTEL/Signoz Tracing not enabled');
+	}
+}
+
+/**
  * Setting the global config must be done prior to loading the Bootstrap Module.
  */
-export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>) {
+export async function registerPluginConfig(pluginConfig: Partial<ApplicationPluginConfig>) {
 	if (Object.keys(pluginConfig).length > 0) {
 		setConfig(pluginConfig);
 	}
@@ -282,7 +285,7 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 	/**
 	 * Configure migration settings
 	 */
-	setConfig({
+	await setConfig({
 		dbConnectionOptions: {
 			...getMigrationsSetting()
 		}
@@ -293,56 +296,118 @@ export async function registerPluginConfig(pluginConfig: Partial<IPluginConfig>)
 	/**
 	 * Registered core & plugins entities
 	 */
-	const entities = await registerAllEntities(pluginConfig);
-	setConfig({
+	const entities = await registerEntities(pluginConfig);
+	const subscribers = await registerSubscribers(pluginConfig);
+
+	/**
+	 *
+	 */
+	await setConfig({
 		dbConnectionOptions: {
-			entities,
-			subscribers: coreSubscribers as Array<Type<EntitySubscriberInterface>>
+			entities: entities as Array<Type<any>>,
+			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
 		},
 		dbMikroOrmConnectionOptions: {
-			entities,
+			entities: entities as Array<Type<any>>
 		}
 	});
 
-	const registeredConfig = getConfig();
-	return registeredConfig;
+	let config = getConfig();
+	config = await applyPluginConfigurations(config);
+	return config;
 }
 
 /**
- * Returns an array of core entities and any additional entities defined in plugins.
+ * Apply plugin configurations to the provided application configuration asynchronously.
+ * @param config Initial application configuration.
+ * @returns Updated application configuration after applying plugin configurations.
  */
-export async function registerAllEntities(pluginConfig: Partial<IPluginConfig>) {
-	const allEntities = coreEntities as Array<Type<any>>;
-	const pluginEntities = getEntitiesFromPlugins(pluginConfig.plugins);
+async function applyPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
+	const pluginConfigurations = getPluginConfigurations(config.plugins);
 
-	for (const pluginEntity of pluginEntities) {
-		if (allEntities.find((e) => e.name === pluginEntity.name)) {
-			throw new ConflictException({
-				message: `error.${pluginEntity.name} conflict by default entities`
-			});
-		} else {
-			allEntities.push(pluginEntity);
+	for await (const pluginConfigurationFn of pluginConfigurations) {
+		if (typeof pluginConfigurationFn === 'function') {
+			config = await pluginConfigurationFn(config);
 		}
 	}
-	return allEntities;
+
+	return config;
 }
 
 /**
- * GET migrations directory & CLI paths
+ * Register entities from core and plugin configurations.
+ * @param pluginConfig The plugin configuration.
+ * @returns An array of registered entity types.
+ */
+async function registerEntities(pluginConfig: Partial<ApplicationPluginConfig>): Promise<Array<Type<any>>> {
+	try {
+		const coreEntitiesList = coreEntities as Array<Type<any>>;
+		const pluginEntitiesList = getEntitiesFromPlugins(pluginConfig.plugins);
+
+		for (const pluginEntity of pluginEntitiesList) {
+			const entityName = pluginEntity.name;
+
+			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
+				throw new ConflictException({ message: `Error: ${entityName} conflicts with default entities.` });
+			} else {
+				coreEntitiesList.push(pluginEntity);
+			}
+		}
+
+		return coreEntitiesList;
+	} catch (error) {
+		console.error('Error registering entities:', error);
+		throw error;
+	}
+}
+
+/**
+ * Register subscribers from core and plugin configurations.
+ * @param pluginConfig The plugin configuration.
+ * @returns A promise that resolves to an array of registered subscriber types.
+ */
+async function registerSubscribers(
+	pluginConfig: Partial<ApplicationPluginConfig>
+): Promise<Array<Type<EntitySubscriberInterface>>> {
+	try {
+		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
+		const pluginSubscribersList = getSubscribersFromPlugins(pluginConfig.plugins);
+
+		for (const pluginSubscriber of pluginSubscribersList) {
+			const subscriberName = pluginSubscriber.name;
+
+			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
+				throw new ConflictException({
+					message: `Error: ${subscriberName} conflicts with default subscribers.`
+				});
+			} else {
+				subscribers.push(pluginSubscriber);
+			}
+		}
+
+		return subscribers;
+	} catch (error) {
+		console.error('Error registering subscribers:', error.message);
+	}
+}
+
+/**
+ * GET migrations directory & CLI paths.
  *
- * @returns
+ * @returns Object containing migrations and CLI paths.
  */
 export function getMigrationsSetting() {
-	console.log(`Reporting __dirname: ${__dirname} `);
+	// Consider removing this debug statement in the final implementation
+	console.log(`Reporting __dirname: ${__dirname}`);
 
-	//TODO: We need to define some dynamic path here
+	// Define dynamic paths for migrations and CLI
+	const migrationsPath = join(__dirname, '../database/migrations/*{.ts,.js}');
+	const cliMigrationsDir = join(__dirname, '../../src/database/migrations');
+
 	return {
-		migrations: [
-			// join(__dirname, '../../src/database/migrations/*{.ts,.js}'),
-			join(__dirname, '../database/migrations/*{.ts,.js}')
-		],
+		migrations: [migrationsPath],
 		cli: {
-			migrationsDir: join(__dirname, '../../src/database/migrations')
+			migrationsDir: cliMigrationsDir
 		}
 	};
 }

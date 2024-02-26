@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { IPluginConfig } from '@gauzy/common';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { environment as env } from '@gauzy/config';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { copyFileSync, mkdirSync, readdir } from 'fs';
@@ -12,7 +12,7 @@ import { AppsNames } from './../activity/activity.seed';
 let fileList: string[] = [];
 
 export const createRandomScreenshot = async (
-	config: Partial<IPluginConfig>,
+	config: Partial<ApplicationPluginConfig>,
 	tenantId: string,
 	organizationId: string,
 	startedAt: Date,

@@ -1,8 +1,11 @@
-import { Column, ManyToOne } from 'typeorm';
+import { Column, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
+	IJobPreset,
 	IJobPresetUpworkJobSearchCriterion,
+	IJobSearchCategory,
+	IJobSearchOccupation,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
 import {
@@ -18,47 +21,59 @@ import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from './repositor
 export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEntity implements IJobPresetUpworkJobSearchCriterion {
 
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsNotEmpty()
-	@Column()
-	jobPresetId?: string;
-
-	@ManyToOne(() => JobPreset, (jobPreset) => jobPreset.jobPresetCriterions)
-	jobPreset?: JobPreset;
-
-	@ApiProperty({ type: () => String })
 	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	occupationId?: string;
-
-	@ManyToOne(
-		() => JobSearchOccupation,
-		(occupation) => occupation.jobPresetCriterions
-	)
-	occupation?: JobSearchOccupation;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
-	@Column({ nullable: true })
-	categoryId?: string;
-
-	@ManyToOne(
-		() => JobSearchCategory,
-		(category) => category.jobPresetCriterions
-	)
-	category?: JobSearchCategory;
-
-	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
 	@Column({ nullable: true })
 	keyword?: string;
 
 	@ApiProperty({ type: () => Boolean })
-	@IsString()
 	@IsNotEmpty()
+	@IsEnum(JobPostTypeEnum)
 	@Column({ type: 'text', nullable: true })
 	jobType?: JobPostTypeEnum;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobPreset, (it) => it.jobPresetCriterions)
+	jobPreset?: IJobPreset;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: JobPresetUpworkJobSearchCriterion) => it.jobPreset)
+	@Column()
+	jobPresetId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobSearchOccupation, (it) => it.jobPresetCriterions)
+	occupation?: IJobSearchOccupation;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: JobPresetUpworkJobSearchCriterion) => it.occupation)
+	@Column({ nullable: true })
+	occupationId?: string;
+
+	/**
+	 *
+	 */
+	@ManyToOne(() => JobSearchCategory, (it) => it.jobPresetCriterions)
+	category?: IJobSearchCategory;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@RelationId((it: JobPresetUpworkJobSearchCriterion) => it.category)
+	@Column({ nullable: true })
+	categoryId?: string;
 }

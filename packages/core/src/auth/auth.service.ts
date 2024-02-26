@@ -24,12 +24,12 @@ import {
 	IUserTokenInput,
 	IOrganizationTeam,
 	IWorkspaceResponse,
-	ITenant,
+	ITenant
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
-import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
+import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
@@ -120,8 +120,10 @@ export class AuthService extends SocialAuthService {
 	 * @returns A promise that resolves to a response with user workspaces.
 	 * @throws UnauthorizedException if authentication fails.
 	 */
-	async signinWorkspacesByEmailPassword({ email, password }: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
-
+	async signinWorkspacesByEmailPassword({
+		email,
+		password
+	}: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
 			where: {
@@ -143,11 +145,10 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Filter users based on password match
-		users = users.filter((user: IUser) =>
-			!!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive)
+		users = users.filter(
+			(user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive)
 		);
 
-		/** */
 		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
@@ -155,15 +156,18 @@ export class AuthService extends SocialAuthService {
 		for await (const user of users) {
 			const id = user.id;
 			/** */
-			await this.typeOrmUserRepository.update({
-				id,
-				email,
-				isActive: true,
-				isArchived: false
-			}, {
-				code,
-				codeExpireAt
-			});
+			await this.typeOrmUserRepository.update(
+				{
+					id,
+					email,
+					isActive: true,
+					isArchived: false
+				},
+				{
+					code,
+					codeExpireAt
+				}
+			);
 		}
 
 		// Create an array of user objects with relevant data
@@ -212,7 +216,7 @@ export class AuthService extends SocialAuthService {
 			code
 		};
 		return sign(payload, environment.JWT_SECRET, {
-			expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`,
+			expiresIn: `${environment.JWT_TOKEN_EXPIRATION_TIME}s`
 		});
 	}
 
@@ -300,12 +304,12 @@ export class AuthService extends SocialAuthService {
 			where: {
 				email,
 				isActive: true,
-				isArchived: false,
+				isArchived: false
 			},
 			relations: {
 				tenant: true,
 				role: true
-			},
+			}
 		});
 	}
 
@@ -363,7 +367,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	async register(
 		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
-		languageCode: LanguagesEnum,
+		languageCode: LanguagesEnum
 	): Promise<User> {
 		let tenant = input.user.tenant;
 		// 1. If createdById is provided, get the creating user and use their tenant
@@ -420,24 +424,23 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// Extract integration information
-		let integration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'appEmailConfirmationUrl', 'companyLink', 'companyName']);
+		let integration = pick(input, [
+			'appName',
+			'appLogo',
+			'appSignature',
+			'appLink',
+			'appEmailConfirmationUrl',
+			'companyLink',
+			'companyName'
+		]);
 
 		// 7. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
-			this.emailConfirmationService.sendEmailVerification(
-				user,
-				integration
-			);
+			this.emailConfirmationService.sendEmailVerification(user, integration);
 		}
 
 		// 8. Send a welcome email to the user
-		this.emailService.welcomeUser(
-			input.user,
-			languageCode,
-			input.organizationId,
-			input.originalUrl,
-			integration
-		);
+		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 
 		return user;
 	}
@@ -665,8 +668,11 @@ export class AuthService extends SocialAuthService {
 
 		// Check if the email is provided
 		if (!email) {
+			console.log('Error while sending workspace magic login code: Email is required');
 			return;
 		}
+
+		console.log('Email: ', email);
 
 		try {
 			// Count the number of users with the given email
@@ -676,41 +682,84 @@ export class AuthService extends SocialAuthService {
 
 			// If no user found with the email, return
 			if (count === 0) {
+				console.log(`Error while sending workspace magic login code: No user found with the email ${email}`);
 				return;
 			}
 
 			// Generate a random alphanumeric code
-			const magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			let magicCode: string;
+
+			let isDemoCode = false;
+
+			// Check if the environment variable 'DEMO' is set to 'true' and the Node.js environment is set to 'development'
+			const IS_DEMO = process.env.DEMO === 'true' && process.env.NODE_ENV === 'development';
+
+			console.log('Auth Is Demo: ', IS_DEMO);
+
+			// If it's a demo environment, handle special cases
+			if (IS_DEMO) {
+				const demoEmployeeEmail = environment.demoCredentialConfig?.employeeEmail || 'employee@ever.co';
+				const demoAdminEmail = environment.demoCredentialConfig?.adminEmail || 'local.admin@ever.co';
+
+				console.log('Demo Employee Email: ', demoEmployeeEmail);
+				console.log('Demo Admin Email: ', demoAdminEmail);
+
+				// Check the value of the 'email' variable against certain demo email addresses
+				if (email === demoEmployeeEmail || email === demoAdminEmail) {
+					magicCode = environment.demoCredentialConfig?.employeePassword || '123456';
+					isDemoCode = true;
+				}
+			}
+
+			if (!isDemoCode) {
+				magicCode = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+			}
 
 			// Calculate the expiration time for the code
-			const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+			const codeExpireAt = moment()
+				.add(environment.MAGIC_CODE_EXPIRATION_TIME || 600, 'seconds')
+				.toDate();
 
 			// Update the user record with the generated code and expiration time
 			await this.typeOrmUserRepository.update({ email }, { code: magicCode, codeExpireAt });
 
-			// Extract integration information
-			let appIntegration = pick(input, ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName', 'appMagicSignUrl']);
+			console.log(`Email: '${email}' magic code: '${magicCode}' expires at: '${codeExpireAt}'`);
 
-			// Override the default config by merging in the provided values.
-			const integration = deepMerge(environment.appIntegrationConfig, appIntegration);
+			// If it's not a demo code, send the magic code to the user's email
+			if (!isDemoCode) {
+				// Extract integration information
+				let appIntegration = pick(input, [
+					'appName',
+					'appLogo',
+					'appSignature',
+					'appLink',
+					'companyLink',
+					'companyName',
+					'appMagicSignUrl'
+				]);
 
-			/** */
-			let magicLink: string;
-			if (integration.appMagicSignUrl) {
-				magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
+				// Override the default config by merging in the provided values.
+				const integration = deepMerge(environment.appIntegrationConfig, appIntegration);
+
+				let magicLink: string;
+
+				if (integration.appMagicSignUrl) {
+					magicLink = `${integration.appMagicSignUrl}?email=${email}&code=${magicCode}`;
+				}
+
+				console.log('Magic Link: ', magicLink);
+
+				// Send the magic code to the user's email
+				this.emailService.sendMagicLoginCode({
+					email,
+					magicCode,
+					magicLink,
+					locale,
+					integration
+				});
 			}
-
-			// Send the magic code to the user's email
-			this.emailService.sendMagicLoginCode({
-				email,
-				magicCode,
-				magicLink,
-				locale,
-				integration
-			});
 		} catch (error) {
-			// Handle errors during the process
-			console.log('Error while sending workspace magic login code', error?.message);
+			console.log(`Error while sending workspace magic login code for email: ${email}`, error?.message);
 		}
 	}
 
@@ -765,9 +814,9 @@ export class AuthService extends SocialAuthService {
 							id: user.tenant ? user.tenantId : null,
 							name: user.tenant?.name || null,
 							logo: user.tenant?.logo || null
-						}),
+						})
 					}),
-					token: this.generateToken(user, code),
+					token: this.generateToken(user, code)
 				};
 
 				try {
@@ -835,19 +884,22 @@ export class AuthService extends SocialAuthService {
 					relations: {
 						employee: true,
 						role: true
-					},
+					}
 				});
 
-				await this.typeOrmUserRepository.update({
-					email,
-					id: userId,
-					tenantId,
-					code,
-					isActive: true
-				}, {
-					code: null,
-					codeExpireAt: null
-				});
+				await this.typeOrmUserRepository.update(
+					{
+						email,
+						id: userId,
+						tenantId,
+						code,
+						isActive: true
+					},
+					{
+						code: null,
+						codeExpireAt: null
+					}
+				);
 
 				// If employees are inactive
 				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
@@ -905,8 +957,12 @@ export class AuthService extends SocialAuthService {
 		userId: string,
 		employeeId: string | null
 	): Promise<IOrganizationTeam[]> {
-		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder("organization_team");
-		query.innerJoin(`organization_team_employee`, `team_member`, p('"team_member"."organizationTeamId" = "organization_team"."id"'));
+		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder('organization_team');
+		query.innerJoin(
+			`organization_team_employee`,
+			`team_member`,
+			p('"team_member"."organizationTeamId" = "organization_team"."id"')
+		);
 
 		query.select([
 			p(`"${query.alias}"."id" AS "team_id"`),
@@ -923,7 +979,10 @@ export class AuthService extends SocialAuthService {
 
 		// Sub Query to get only assigned teams for specific organizations
 		const orgSubQuery = (cb: SelectQueryBuilder<OrganizationTeam>): string => {
-			const subQuery = cb.subQuery().select(p('"user_organization"."organizationId"')).from("user_organization", "user_organization");
+			const subQuery = cb
+				.subQuery()
+				.select(p('"user_organization"."organizationId"'))
+				.from('user_organization', 'user_organization');
 			subQuery.andWhere(p(`"${subQuery.alias}"."isActive" = :isActive`), { isActive: true });
 			subQuery.andWhere(p(`"${subQuery.alias}"."isArchived" = :isArchived`), { isArchived: false });
 			subQuery.andWhere(p(`"${subQuery.alias}"."userId" = :userId`), { userId });
@@ -933,12 +992,15 @@ export class AuthService extends SocialAuthService {
 
 		// Sub Query to get only assigned teams for specific organizations
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			return (p(`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb)));
+			return p(`"${query.alias}"."organizationId" IN ` + orgSubQuery(cb));
 		});
 
 		// Sub Query to get only assigned teams for a specific employee for specific tenant
 		query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-			const subQuery = cb.subQuery().select(p('"organization_team_employee"."organizationTeamId"')).from("organization_team_employee", "organization_team_employee");
+			const subQuery = cb
+				.subQuery()
+				.select(p('"organization_team_employee"."organizationTeamId"'))
+				.from('organization_team_employee', 'organization_team_employee');
 			subQuery.andWhere(p(`"${subQuery.alias}"."isActive" = :isActive`), { isActive: true });
 			subQuery.andWhere(p(`"${subQuery.alias}"."isArchived" = :isArchived`), { isArchived: false });
 			subQuery.andWhere(p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -949,10 +1011,10 @@ export class AuthService extends SocialAuthService {
 
 			// Sub Query to get only assigned teams for specific organizations
 			subQuery.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				return (p(`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb)));
+				return p(`"${subQuery.alias}"."organizationId" IN ` + orgSubQuery(cb));
 			});
 
-			return (p(`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery()));
+			return p(`"${query.alias}"."id" IN ` + subQuery.distinct(true).getQuery());
 		});
 
 		query.addGroupBy(p(`"${query.alias}"."id"`));

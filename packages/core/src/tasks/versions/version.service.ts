@@ -1,6 +1,8 @@
-import { DeleteResult } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import {
 	IOrganization,
 	IPagination,
@@ -9,8 +11,10 @@ import {
 	ITaskVersionFindInput,
 	ITenant,
 } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
+import { MultiORMEnum } from '../../core/utils';
 import { TaskVersion } from './version.entity';
 import { DEFAULT_GLOBAL_VERSIONS } from './default-global-versions';
 import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
@@ -20,11 +24,14 @@ import { TypeOrmTaskVersionRepository } from './repository/type-orm-task-version
 export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersion> {
 	constructor(
 		@InjectRepository(TaskVersion)
-		typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
+		readonly typeOrmTaskVersionRepository: TypeOrmTaskVersionRepository,
 
-		mikroOrmTaskVersionRepository: MikroOrmTaskVersionRepository
+		readonly mikroOrmTaskVersionRepository: MikroOrmTaskVersionRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmTaskVersionRepository, mikroOrmTaskVersionRepository);
+		super(typeOrmTaskVersionRepository, mikroOrmTaskVersionRepository, knexConnection);
 	}
 
 	/**
@@ -34,13 +41,16 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	 * @param params
 	 * @returns
 	 */
-	async findTaskVersions(
-		params: ITaskVersionFindInput
-	): Promise<IPagination<TaskVersion>> {
+	async fetchAll(params: ITaskVersionFindInput): Promise<IPagination<TaskVersion>> {
 		try {
-			return await this.findEntitiesByParams(params);
+			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
+				return await super.fetchAllByKnex(params);
+			} else {
+				return await super.fetchAll(params);
+			}
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.log('Failed to retrieve task versions. Ensure that the provided parameters are valid and complete.', error);
+			throw new BadRequestException('Failed to retrieve task versions. Ensure that the provided parameters are valid and complete.', error);
 		}
 	}
 
@@ -53,7 +63,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 	async delete(id: ITaskVersion['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
+				isSystem: false
 			},
 		});
 	}
@@ -91,16 +101,12 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 		organization: IOrganization
 	): Promise<ITaskVersion[] & TaskVersion[]> {
 		try {
-			const versions: ITaskVersion[] = [];
-
 			const tenantId = RequestContext.currentTenantId();
-			const { items = [] } = await this.findEntitiesByParams({
-				tenantId,
-			});
+			const { items = [] } = await super.fetchAll({ tenantId });
 
+			const versions: ITaskVersion[] = [];
 			for (const item of items) {
-				const { tenantId, name, value, description, icon, color } =
-					item;
+				const { tenantId, name, value, description, icon, color } = item;
 				const version = new TaskVersion({
 					tenantId,
 					name,
@@ -132,12 +138,12 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 			const { organizationId } = entity;
 			const tenantId = RequestContext.currentTenantId();
 
-			const versions: ITaskVersion[] = [];
-			const { items = [] } = await this.findEntitiesByParams({
+			const { items = [] } = await this.fetchAll({
 				tenantId,
-				organizationId,
+				organizationId
 			});
 
+			const versions: ITaskVersion[] = [];
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
 
@@ -152,7 +158,6 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				});
 				versions.push(version);
 			}
-
 			return versions;
 		} catch (error) {
 			throw new BadRequestException(error);

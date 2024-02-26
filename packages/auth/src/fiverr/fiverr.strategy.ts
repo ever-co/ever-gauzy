@@ -3,11 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-google-oauth20';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import passport from 'passport';
-import { IApiServerOptions } from '@gauzy/common';
 
 @Injectable()
 export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
-	constructor(private readonly configService: ConfigService) {
+	constructor(readonly configService: ConfigService) {
 		super(config(configService));
 	}
 
@@ -29,11 +28,14 @@ export class FiverrStrategy extends PassportStrategy(Strategy, 'fiverr') {
 	}
 }
 
+/**
+ *
+ * @param configService
+ * @returns
+ */
 export const config = (configService: ConfigService) => {
-	const FIVERR_CONFIG = configService.get(
-		'fiverrConfig'
-	) as IEnvironment['fiverrConfig'];
-	const { baseUrl } = configService.apiConfigOptions as IApiServerOptions;
+	const FIVERR_CONFIG = configService.get('fiverrConfig') as IEnvironment['fiverrConfig'];
+	const { baseUrl } = configService.apiConfigOptions;
 
 	return {
 		clientID: FIVERR_CONFIG.clientId || 'disabled',

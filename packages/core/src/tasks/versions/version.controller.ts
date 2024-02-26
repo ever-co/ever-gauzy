@@ -61,6 +61,8 @@ export class TaskVersionController extends CrudFactory<
 	async findTaskVersions(
 		@Query() params: VersionQuerDTO
 	): Promise<IPagination<ITaskVersion>> {
-		return await this.queryBus.execute(new FindVersionsQuery(params));
+		return await this.queryBus.execute(
+			new FindVersionsQuery(params)
+		);
 	}
 }

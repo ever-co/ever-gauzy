@@ -1,6 +1,8 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
+import { Knex as KnexConnection } from 'knex';
+import { InjectConnection } from 'nest-knexjs';
 import {
 	IOrganization,
 	IPagination,
@@ -9,22 +11,29 @@ import {
 	ITaskStatusFindInput,
 	ITenant
 } from '@gauzy/contracts';
+import { isPostgres } from '@gauzy/config';
 import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
-import { RequestContext } from './../../core/context';
+import { RequestContext } from '../../core/context';
+import { MultiORMEnum } from '../../core/utils';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
 	constructor(
 		@InjectRepository(TaskStatus)
-		typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
+		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
 
-		mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository
+		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
+
+		@InjectConnection()
+		readonly knexConnection: KnexConnection
 	) {
-		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository);
+		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
+		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
 	}
 
 	/**
@@ -34,13 +43,22 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 * @param params
 	 * @returns
 	 */
-	async findTaskStatuses(
-		params: ITaskStatusFindInput
-	): Promise<IPagination<TaskStatus>> {
+	async fetchAll(params: ITaskStatusFindInput): Promise<IPagination<TaskStatus>> {
 		try {
-			return await this.findEntitiesByParams(params);
+			if (this.ormType == MultiORMEnum.TypeORM && isPostgres()) {
+				return await super.fetchAllByKnex(params);
+			} else {
+				return await super.fetchAll(params);
+			}
 		} catch (error) {
-			throw new HttpException(`Error while retrieve task statuses: ${error.message}`, HttpStatus.BAD_REQUEST);
+			console.log(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 
@@ -53,8 +71,8 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	async delete(id: ITaskStatus['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
 			where: {
-				isSystem: false,
-			},
+				isSystem: false
+			}
 		});
 	}
 
@@ -78,7 +96,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 						...status,
 						icon: `ever-icons/${status.icon}`,
 						isSystem: false,
-						tenant,
+						tenant
 					});
 
 					// Add the new status to the array.
@@ -109,14 +127,13 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			const tenantId = RequestContext.currentTenantId();
 
 			// Find entities by parameters, filtering by tenant ID.
-			const { items = [] } = await this.findEntitiesByParams({ tenantId });
+			const { items = [] } = await super.fetchAll({ tenantId });
 
 			// Initialize an index variable.
 			let index = 0;
 
 			// Iterate over each found entity.
 			for (const item of items) {
-
 				// Extract relevant properties from the entity.
 				const { tenantId, name, value, description, icon, color, order, isCollapsed } = item;
 
@@ -131,7 +148,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					organization,
 					isSystem: false,
 					order: order || index,
-					isCollapsed,
+					isCollapsed
 				});
 
 				// Increment the index.
@@ -165,7 +182,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			const statuses: ITaskStatus[] = [];
 
 			// Find entities by parameters, filtering by tenant ID and organization ID.
-			const { items = [] } = await this.findEntitiesByParams({ tenantId, organizationId });
+			const { items = [] } = await super.fetchAll({ tenantId, organizationId });
 
 			// Initialize an index variable.
 			let index = 0;
@@ -185,7 +202,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 					color,
 					isSystem: false,
 					order: order || index,
-					isCollapsed,
+					isCollapsed
 				});
 
 				// Increment the index.
