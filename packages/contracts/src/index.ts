@@ -60,6 +60,7 @@ export * from './image-asset.model';
 export * from './import-export.model';
 export * from './income.model';
 export * from './integration.model';
+export * from './integration-setting.model';
 export * from './invite.model';
 export * from './invoice-estimate-history.model';
 export * from './invoice-item.model';

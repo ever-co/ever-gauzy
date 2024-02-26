@@ -10,7 +10,6 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
-import { FiltersModule } from '../../timesheet/filters/filters.module';
 import { CounterPointModule } from '../../counter-point/counter-point.module';
 
 @NgModule({
@@ -23,10 +22,9 @@ import { CounterPointModule } from '../../counter-point/counter-point.module';
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FiltersModule,
 		NbSelectModule,
 		FormsModule,
-        CounterPointModule,
+		CounterPointModule,
 	]
 })
-export class DailyStatisticsModule {}
+export class DailyStatisticsModule { }

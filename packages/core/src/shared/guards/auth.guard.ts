@@ -5,7 +5,6 @@ import { PUBLIC_METHOD_METADATA } from '@gauzy/common';
 
 @Injectable()
 export class AuthGuard extends PassportAuthGuard('jwt') {
-
 	constructor(private readonly _reflector: Reflector) {
 		super();
 	}
@@ -16,17 +15,18 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
 	 * @returns A boolean indicating whether access is allowed.
 	 */
 	canActivate(context: ExecutionContext) {
+		const request = context.switchToHttp().getRequest();
+
+		// Allow preflight requests to pass without Auth
+		if (request.method === 'OPTIONS') {
+			return true;
+		}
+
 		// Check if the class has a PUBLIC decorator
-		const isClassPublic = this._reflector.get<boolean>(
-			PUBLIC_METHOD_METADATA,
-			context.getClass()
-		);
+		const isClassPublic = this._reflector.get<boolean>(PUBLIC_METHOD_METADATA, context.getClass());
 
 		// Check if the method has a PUBLIC decorator
-		const isMethodPublic = this._reflector.get<boolean>(
-			PUBLIC_METHOD_METADATA,
-			context.getHandler()
-		);
+		const isMethodPublic = this._reflector.get<boolean>(PUBLIC_METHOD_METADATA, context.getHandler());
 
 		// Allow access if the method or class has the PUBLIC decorator
 		if (isClassPublic || isMethodPublic) {

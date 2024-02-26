@@ -3,9 +3,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
 	JobPostSourceEnum,
-	IJobPreset,
 	IEmployeeUpworkJobsSearchCriterion,
-	IJobPresetUpworkJobSearchCriterion
+	IJobPresetUpworkJobSearchCriterion,
+	IJobSearchCategory
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -17,7 +17,7 @@ import { MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 
 @MultiORMEntity('job_search_category', { mikroOrmRepository: () => MikroOrmJobSearchCategoryRepository })
-export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobPreset {
+export class JobSearchCategory extends TenantOrganizationBaseEntity implements IJobSearchCategory {
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -53,8 +53,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
-	@ApiProperty({ type: () => EmployeeUpworkJobsSearchCriterion, isArray: true })
-	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
+	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -62,8 +61,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
-	@ApiProperty({ type: () => JobPresetUpworkJobSearchCriterion, isArray: true })
-	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
+	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];

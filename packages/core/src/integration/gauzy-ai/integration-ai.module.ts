@@ -3,10 +3,10 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { GauzyAIModule } from '@gauzy/integration-ai';
 import { TenantModule } from './../../tenant/tenant.module';
 import { UserModule } from './../../user/user.module';
-import { IntegrationAIController } from './integration-ai.controller';
-import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationModule } from './../integration.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
+import { IntegrationAIController } from './integration-ai.controller';
+import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationAIMiddleware } from './integration-ai.middleware';
 
 @Module({
