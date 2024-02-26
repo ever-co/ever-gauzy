@@ -44,10 +44,6 @@ export class TaskStatusPrioritySizeService<
 	 */
 	async fetchAllByKnex(input: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
-			// this call depends on tenant and organization, so we can't make it global
-			const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-			const provider = store.getProviderInstance();
-
 			// Ensure at least one record matches the specified parameters
 			const first = await this.getOneOrFailByKnex(this.knexConnection, input);
 
@@ -59,14 +55,20 @@ export class TaskStatusPrioritySizeService<
 			// Perform the Knex query to fetch entities and their count
 			const items = await this.getManyAndCountByKnex(this.knexConnection, input);
 
-			// Fetch fullIconUrl for items with an icon
-			await Promise.all(
-				items.map(async (item: any) => {
-					if (item.icon) {
-						item.fullIconUrl = await provider.url(item.icon);
-					}
-				})
-			);
+			if (items.length > 0) {
+				// this call depends on tenant and organization, so we can't make it global
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				const provider = store.getProviderInstance();
+
+				// Fetch fullIconUrl for items with an icon
+				await Promise.all(
+					items.map(async (item: any) => {
+						if (item.icon) {
+							item.fullIconUrl = await provider.url(item.icon);
+						}
+					})
+				);
+			}
 
 			// Calculate the total count of items
 			const total = items.length;
