@@ -33,7 +33,7 @@ jobs:
             everco/gauzy-api-demo:latest
             registry.digitalocean.com/ever/gauzy-api-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
-          cache-from: type=registry,ref=everco/gauzy-api-demo:latest
+          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
@@ -98,21 +98,26 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./.deploy/webapp/Dockerfile
           load: true
+          platforms: linux/amd64
           tags: |
             ghcr.io/ever-co/gauzy-webapp-demo:latest
             everco/gauzy-webapp-demo:latest
             registry.digitalocean.com/ever/gauzy-webapp-demo:latest
             ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
-          cache-from: type=registry,ref=everco/gauzy-webapp-demo:latest
+          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
+
+      - name: Docker images list
+        run: |
+          sudo docker image list
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
