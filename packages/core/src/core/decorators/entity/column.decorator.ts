@@ -1,21 +1,8 @@
-import { ColumnType as MikroORMColumnType, PropertyOptions as MikroORMColumnOptions, Property as MikroORMColumn } from '@mikro-orm/core';
+import { Property as MikroORMColumn } from '@mikro-orm/core';
+import { Column as TypeORMColumn } from 'typeorm';
 import { ObjectUtils } from '../../../core/util/object-utils';
-import { ColumnType as TypeORMColumnType, ColumnOptions as TypeORMColumnOptions, Column as TypeORMColumn } from 'typeorm';
-
-type ColumnDataType = TypeORMColumnType | MikroORMColumnType;
-type ColumnOptions<T> = Omit<MikroORMColumnOptions<T>, 'type' | 'default'> & Omit<TypeORMColumnOptions, 'type'> & {
-    type?: ColumnDataType;
-    relationId?: boolean // Need to prevent Mikro-orm property decorator when relationId column
-};
-
-/**
- * Resolve the database column type.
- * @param columnType - The input column type.
- * @returns The resolved column type.
- */
-export function resolveDbType(columnType: ColumnDataType): ColumnDataType {
-    return columnType;
-}
+import { ColumnDataType, ColumnOptions } from './column-options.types';
+import { parseMikroOrmColumnOptions, resolveDbType } from './column.helper';
 
 /**
  * Decorator for creating column definitions for both MikroORM and TypeORM.
@@ -45,37 +32,7 @@ export function MultiORMColumn<T>(
     if (!options) options = {} as ColumnOptions<T>;
 
     return (target: any, propertyKey: string) => {
-        TypeORMColumn({ type: type as ColumnDataType, ...options })(target, propertyKey);
-        MikroORMColumn(mapColumnArgsForMikroORM({ type: type as ColumnDataType, options }))(target, propertyKey);
+        TypeORMColumn({ type, ...options })(target, propertyKey);
+        MikroORMColumn(parseMikroOrmColumnOptions({ type, options }))(target, propertyKey);
     };
-}
-
-/**
- * Options for mapping column arguments in MikroORM.
- * @template T - The type of the column.
- */
-interface MapColumnArgsForMikroORMOptions<T, O> {
-    /** The data type of the column. */
-    type: ColumnDataType;
-
-    /** Additional options for the column. */
-    options?: ColumnOptions<T>;
-}
-
-/**
- * Map column arguments for MikroORM.
- * @param param0 - The options for mapping column arguments.
- * @returns MikroORM column options.
- */
-export function mapColumnArgsForMikroORM<T>({ type, options }): MikroORMColumnOptions<T> {
-    if (typeof options?.default === 'function') {
-        options.default = options.default();
-    }
-    if (options?.relationId) {
-        options.persist = false;
-    }
-    return {
-        type: type,
-        ...options
-    }
 }
