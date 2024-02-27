@@ -22,7 +22,7 @@ export class OrganizationTeamEmployeeSubscriber implements EntitySubscriberInter
                 console.log(`BEFORE TEAM MEMBER ENTITY WITH ID ${event.entityId} REMOVED`);
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterRemove:', error);
         }
     }
 }
