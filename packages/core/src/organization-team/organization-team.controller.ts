@@ -138,13 +138,10 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
-		@Query() query: OrganizationTeamStatisticDTO,
+		@Query() options: OrganizationTeamStatisticDTO,
 	): Promise<IOrganizationTeam> {
 		return await this._queryBus.execute(
-			new GetOrganizationTeamStatisticQuery(
-				id,
-				query
-			)
+			new GetOrganizationTeamStatisticQuery(id, options)
 		);
 	}
 

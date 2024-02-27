@@ -145,7 +145,7 @@ export class ScreenshotSubscriber implements EntitySubscriberInterface<Screensho
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in afterRemove:', error);
         }
     }
 }
