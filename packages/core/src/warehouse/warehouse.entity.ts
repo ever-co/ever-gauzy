@@ -85,7 +85,8 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, {
 		cascade: true,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;

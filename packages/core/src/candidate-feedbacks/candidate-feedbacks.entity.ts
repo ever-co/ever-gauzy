@@ -108,7 +108,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate Interviewers
 	 */
 	@ApiProperty({ type: () => CandidateInterviewers })
-	@MultiORMOneToOne(() => CandidateInterviewers)
+	@MultiORMOneToOne(() => CandidateInterviewers, { owner: true })
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 

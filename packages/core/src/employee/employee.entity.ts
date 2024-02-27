@@ -344,8 +344,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMOneToOne(() => User, (it) => it.employee, {
 		cascade: true,
 		onDelete: 'CASCADE',
-		joinColumn: 'userId',
-		referenceColumnName: 'id',
 		owner: true,
 	})
 	@JoinColumn()

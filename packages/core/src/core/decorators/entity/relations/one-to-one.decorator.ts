@@ -1,4 +1,6 @@
+import { deepClone } from "@gauzy/common";
 import { Cascade, EntityName, OneToOneOptions, OneToOne as MikroOrmOneToOne } from "@mikro-orm/core";
+import { MultiORMEnum } from "core/utils";
 import { ObjectType, RelationOptions, OneToOne as TypeOrmOneToOne } from 'typeorm';
 import { omit } from "underscore";
 
@@ -34,8 +36,8 @@ export function MultiORMOneToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
+        TypeOrmOneToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, mapOneToOneOptionsForTypeORM(options) as TypeORMRelationOptions)(target, propertyKey);
         MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options, propertyKey }))(target, propertyKey);
-        TypeOrmOneToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
     };
 }
 
@@ -49,7 +51,7 @@ export interface MapOneToOneArgsForMikroORMOptions<T, O> {
 
 export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options, propertyKey }: MapOneToOneArgsForMikroORMOptions<T, O>) {
 
-    const typeOrmOptions = options as RelationOptions;
+    const typeOrmOptions = deepClone(options) as RelationOptions;
     let mikroORMCascade = [];
     if (typeOrmOptions?.cascade) {
         if (typeof typeOrmOptions?.cascade === 'boolean') {
@@ -90,11 +92,19 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
         mikroOrmOptions.referenceColumnName = `id`;
     }
 
-    if (mikroOrmOptions.owner === true) {
-        mikroOrmOptions.inversedBy = inverseSide;
-    } else {
-        mikroOrmOptions.mappedBy = inverseSide;
+    if (process.env['DB_ORM'] == MultiORMEnum.MikroORM) {
+        if (mikroOrmOptions.owner === true) {
+            mikroOrmOptions.inversedBy = inverseSide;
+        } else {
+            mikroOrmOptions.mappedBy = inverseSide;
+        }
     }
 
+
     return mikroOrmOptions as MikroORMRelationOptions<any, any>
+}
+
+
+function mapOneToOneOptionsForTypeORM(options) {
+    return options //omit(options, 'joinColumn', 'referenceColumnName', 'owner', 'cascade', 'onDelete', 'onUpdate', 'inversedBy', 'mappedBy', 'eager');
 }
