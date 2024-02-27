@@ -233,83 +233,90 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
-	 * GET organization teams by params
-	 *
-	 * @param options
-	 * @returns
+	 * Retrieves a paginated list of organization teams based on specified options.
+	 * @param options - Pagination and filtering options.
+	 * @returns A Promise resolving to an object containing paginated organization teams.
 	 */
 	public async findAll(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
-		const tenantId = RequestContext.currentTenantId();
-		const employeeId = RequestContext.currentEmployeeId();
+		console.time('Get Organization Teams');
 
-		const members = options?.where.members;
-		if ('members' in options?.where) {
-			delete options.where['members'];
-		}
+		// Retrieve tenantId from RequestContext or options
+		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
+		// Create a query builder for the OrganizationTeam entity
 		const query = this.repository.createQueryBuilder(this.alias);
 
-		// If employee has login and don't have permission to change employee
-		if (employeeId && !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			// Sub query to get only employee assigned teams
-			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-				const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
-				subQuery.from('organization_team_employee', 'team');
+		/**
+		 * Generates a subquery for selecting organization team IDs based on specified conditions.
+		 * @param cb - The SelectQueryBuilder instance for constructing the subquery.
+		 * @param employeeId - The employee ID for filtering the teams.
+		 * @returns A SQL condition string to be used in the main query's WHERE clause.
+		 */
+		const subQueryBuilder = (
+			cb: SelectQueryBuilder<OrganizationTeam>,
+			employeeId: string
+		) => {
+			const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
+			subQuery.from('organization_team_employee', 'team');
 
-				// Apply the tenant filter
-				subQuery.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			// Apply the tenant filter
+			subQuery.andWhere(p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId });
 
-				if (options?.where.organizationId) {
-					const { organizationId } = options.where;
-					subQuery.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-				}
-
-				subQuery.andWhere(p('"team"."employeeId" = :employeeId'), { employeeId });
-				return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
-			});
-		} else {
-			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
-				// Sub query to get only employee assigned teams
-				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => {
-					const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
-					subQuery.from('organization_team_employee', 'team');
-
-					// Apply the tenant filter
-					subQuery.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-
-					if (options?.where.organizationId) {
-						const { organizationId } = options.where;
-						subQuery.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					}
-
-					subQuery.andWhere(p('"team"."employeeId" = :employeeId'), { employeeId: members['employeeId'] });
-					return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
-				});
+			// Apply the organization filter if available
+			if (options?.where?.organizationId) {
+				const { organizationId } = options.where;
+				subQuery.andWhere(p(`"${subQuery.alias}"."organizationId" = :organizationId`), { organizationId });
 			}
+
+			// Additional conditions
+			subQuery.andWhere(p(`"${subQuery.alias}"."isActive" = :isActive`), { isActive: true });
+			subQuery.andWhere(p(`"${subQuery.alias}"."isArchived" = :isArchived`), { isArchived: false });
+			subQuery.andWhere(p(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId });
+
+			return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
+		};
+
+		// If admin has login and doesn't have permission to change employee
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			const members = options?.where?.members;
+			if ('members' in options?.where) {
+				delete options.where['members'];
+			}
+
+			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
+				const employeeId = members['employeeId'];
+				// Sub query to get only employee assigned teams
+				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
+			}
+		} else {
+			// If employee has login and doesn't have permission to change employee
+			const employeeId = RequestContext.currentEmployeeId();
+
+			// Sub query to get only employee assigned teams
+			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
 		}
 
 		// Set query options
 		if (isNotEmpty(options)) {
 			query.setFindOptions({
-				skip: options.skip ? options.take * (options.skip - 1) : 0,
-				take: options.take ? options.take : 10,
+				...(options.skip ? { skip: options.take * (options.skip - 1) } : {}),
+				...(options.take ? { take: options.take } : {}),
 				...(options.select ? { select: options.select } : {}),
 				...(options.relations ? { relations: options.relations } : {}),
 				...(options.where ? { where: options.where } : {}),
-				...(options.order ? { order: options.order } : {})
+				...(options.order ? { order: options.order } : {}),
 			});
 		}
 
 		// Apply the tenant filter
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 
-		// Apply the organization filter
-		if (options?.where.organizationId) {
-			const { organizationId } = options.where;
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-		}
-
+		// Retrieve the items and total count
 		const [items, total] = await query.getManyAndCount();
+
+		console.timeEnd('Get Organization Teams');
+
+		// Return paginated result
 		return { items, total };
 	}
 
