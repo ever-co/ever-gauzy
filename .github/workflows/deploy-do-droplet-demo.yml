@@ -108,6 +108,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
+          envs: APP_NAME
           script: |
             echo 'I am $APP_NAME'
             echo 'Deployment to digital ocean finished'
