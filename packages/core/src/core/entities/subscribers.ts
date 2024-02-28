@@ -21,6 +21,7 @@ import {
 	OrganizationTeamJoinRequestSubscriber,
 	OrganizationTeamSubscriber,
 	PaymentSubscriber,
+	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
@@ -34,7 +35,7 @@ import {
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
+	UserSubscriber
 } from './internal';
 
 /**
@@ -63,6 +64,7 @@ export const coreSubscribers = [
 	OrganizationTeamJoinRequestSubscriber,
 	OrganizationTeamSubscriber,
 	PaymentSubscriber,
+	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
