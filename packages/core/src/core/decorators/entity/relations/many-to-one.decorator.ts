@@ -1,6 +1,7 @@
 import { Cascade, EntityName, ManyToOneOptions, ManyToOne as MikroOrmManyToOne } from "@mikro-orm/core";
 import { ObjectType, RelationOptions as TypeOrmRelationOptions, ManyToOne as TypeOrmManyToOne } from 'typeorm';
 import { omit } from "underscore";
+import { deepClone } from "@gauzy/common";
 import { ObjectUtils } from "../../../../core/util/object-utils";
 
 /**
@@ -62,8 +63,8 @@ export function MultiORMManyToOne<T>(
     return (target: any, propertyKey: string) => {
         if (!options) options = {} as RelationOptions<T>
 
-        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ typeFunctionOrTarget, inverseSideOrOptions: inverseSideProperty as InverseSide<T>, options, propertyKey, target }))(target, propertyKey);
         TypeOrmManyToOne(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideOrOptions as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
+        MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ typeFunctionOrTarget, inverseSideOrOptions: inverseSideProperty as InverseSide<T>, options, propertyKey, target }))(target, propertyKey);
     };
 }
 
@@ -75,7 +76,7 @@ export function MultiORMManyToOne<T>(
  */
 export function mapManyToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, options, propertyKey }: MapManyToOneArgsForMikroORMOptions<T, O>) {
     // Cast options to RelationOptions
-    const typeOrmOptions = options as TypeOrmRelationOptions;
+    const typeOrmOptions = deepClone(options) as TypeOrmRelationOptions;
 
     // Initialize an array to store MikroORM cascade options
     let mikroORMCascade: Cascade[] = [];

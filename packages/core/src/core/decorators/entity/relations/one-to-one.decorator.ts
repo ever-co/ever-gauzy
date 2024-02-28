@@ -1,84 +1,114 @@
 import { deepClone } from "@gauzy/common";
 import { Cascade, EntityName, OneToOneOptions, OneToOne as MikroOrmOneToOne } from "@mikro-orm/core";
-import { MultiORMEnum } from "core/utils";
-import { ObjectType, RelationOptions, OneToOne as TypeOrmOneToOne } from 'typeorm';
+import { ObjectType, RelationOptions as TypeOrmRelationOptions, OneToOne as TypeOrmOneToOne } from 'typeorm';
 import { omit } from "underscore";
+import { MultiORMEnum } from "../../../../core/utils";
+import { ObjectUtils } from "../../../../core/util/object-utils";
 
+/**
+ * Options for mapping OneToOne relationship arguments for MikroORM.
+ *
+ * @template T - The type of the target entity.
+ * @template O - The type of additional options.
+ */
+export interface MapOneToOneArgsForMikroORMOptions<T, O> {
+    // The target entity class or function returning the target entity class.
+    typeFunctionOrTarget: TargetEntity<T>;
+    // The inverse side of the relationship or additional options if provided.
+    inverseSideOrOptions?: InverseSide<T>;
+    // The options for the OneToOne relationship.
+    options?: RelationOptions<T>;
+    // The property key of the target entity.
+    propertyKey?: string;
+    // The target string (optional).
+    target?: string;
+}
 
 type TypeORMTarget<T> = string | ((type?: any) => ObjectType<T>);
-type MikroORMTarget<T, O> = OneToOneOptions<T, O> | string | ((e?: any) => EntityName<T>);
-
-
 type TypeORMInverseSide<T> = string | ((object: T) => any);
+type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'>;
+
+type MikroORMTarget<T, O> = OneToOneOptions<T, O> | string | ((e?: any) => EntityName<T>);
 type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
-
-
-type TypeORMRelationOptions = Omit<RelationOptions, 'cascade'>;
 type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'cascade'>;
-
-
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
 type InverseSide<T> = TypeORMInverseSide<T> & MikroORMInverseSide<T>;
-type Options<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
+type RelationOptions<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptions & {
     cascade?: Cascade[] | (boolean | ("update" | "insert" | "remove" | "soft-remove" | "recover")[]);
 };
 
+/**
+ *
+ * @param targetEntity
+ * @param inverseSide
+ * @param options
+ * @returns
+ */
 export function MultiORMOneToOne<T>(
-    targetEntity: TargetEntity<T>,
-    inverseSide?: InverseSide<T> | Options<T>,
-    options?: Options<T>
+    typeFunctionOrTarget: TargetEntity<T>,
+    inverseSideOrOptions?: InverseSide<T> | RelationOptions<T>,
+    options?: RelationOptions<T>
 ): PropertyDecorator {
-    // If second params is options then set inverseSide as null and options = inverseSide
-    if (typeof inverseSide === 'object') {
-        options = inverseSide;
-        inverseSide = null;
+    // Normalize parameters.
+    let inverseSideProperty: InverseSide<T>;
+
+    if (ObjectUtils.isObject(inverseSideOrOptions)) {
+        options = <RelationOptions<T>>inverseSideOrOptions;
+    } else {
+        inverseSideProperty = inverseSideOrOptions as any;
     }
 
     return (target: any, propertyKey: string) => {
-        TypeOrmOneToOne(targetEntity as TypeORMTarget<T>, inverseSide as TypeORMInverseSide<T>, mapOneToOneOptionsForTypeORM(options) as TypeORMRelationOptions)(target, propertyKey);
-        MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ targetEntity, inverseSide: inverseSide as InverseSide<T>, options, propertyKey }))(target, propertyKey);
+        TypeOrmOneToOne(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideOrOptions as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
+        MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ typeFunctionOrTarget, inverseSideOrOptions: inverseSideProperty as InverseSide<T>, options, propertyKey }))(target, propertyKey);
     };
 }
 
-export interface MapOneToOneArgsForMikroORMOptions<T, O> {
-    targetEntity: TargetEntity<T>;
-    inverseSide?: InverseSide<T>;
-    options?: Options<T>;
-    target?: string;
-    propertyKey?: string;
-}
+/**
+ * Maps TypeORM OneToOne relation options to MikroORM options for MikroORM integration with TypeORM.
+ *
+ * @param param0 - Destructured parameters object.
+ * @returns MikroORMRelationOptions - The mapped MikroORM relation options.
+ */
+export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverseSideOrOptions, options, propertyKey }: MapOneToOneArgsForMikroORMOptions<T, O>) {
+    // Cast options to RelationOptions
+    const typeOrmOptions = deepClone(options) as TypeOrmRelationOptions;
 
-export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, options, propertyKey }: MapOneToOneArgsForMikroORMOptions<T, O>) {
+    // Initialize an array to store MikroORM cascade options
+    let mikroORMCascade: Cascade[] = [];
 
-    const typeOrmOptions = deepClone(options) as RelationOptions;
-    let mikroORMCascade = [];
+    // Check if TypeORM cascade options are provided
     if (typeOrmOptions?.cascade) {
-        if (typeof typeOrmOptions?.cascade === 'boolean') {
-            mikroORMCascade = typeOrmOptions?.cascade === true ? [Cascade.ALL] : [];
+        // Handle boolean cascade option
+        if (typeof typeOrmOptions.cascade === 'boolean') {
+            mikroORMCascade = typeOrmOptions.cascade ? [Cascade.ALL] : [];
         }
 
+        // Handle array cascade options
         if (typeOrmOptions?.cascade instanceof Array) {
-            mikroORMCascade = typeOrmOptions?.cascade.map(c => {
+            mikroORMCascade = typeOrmOptions.cascade.map((c) => {
                 switch (c) {
-                    case "insert":
+                    case 'insert':
                         return Cascade.PERSIST;
-                    case "update":
+                    case 'update':
                         return Cascade.MERGE;
-                    case "remove":
+                    case 'remove':
                         return Cascade.REMOVE;
-                    case "soft-remove":
+                    case 'soft-remove':
+                    case 'recover':
                         return null;
-                    case "recover":
+                    default:
                         return null;
                 }
-            }).filter((c) => c);
+            }).filter((c) => c) as Cascade[];
         }
     }
 
+    // Create MikroORM relation options
     const mikroOrmOptions: Partial<OneToOneOptions<T, any>> = {
         ...omit(options, 'onDelete', 'onUpdate') as Partial<OneToOneOptions<T, any>>,
-        entity: targetEntity as (string | ((e?: any) => EntityName<T>)),
+        entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
         cascade: mikroORMCascade,
         nullable: typeOrmOptions?.nullable,
         deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
@@ -86,25 +116,20 @@ export function mapOneToOneArgsForMikroORM<T, O>({ targetEntity, inverseSide, op
         lazy: !!typeOrmOptions?.lazy,
     };
 
+    // Set default joinColumn if not overwritten in options
     if (mikroOrmOptions.owner === true && !mikroOrmOptions.joinColumn && propertyKey) {
-        // Set default joinColumn if not overwrite in options
         mikroOrmOptions.joinColumn = `${propertyKey}Id`;
         mikroOrmOptions.referenceColumnName = `id`;
     }
 
-    if (process.env['DB_ORM'] == MultiORMEnum.MikroORM) {
+    // Map inverseSideOrOptions based on the DB_ORM environment variable
+    if (process.env.DB_ORM == MultiORMEnum.MikroORM) {
         if (mikroOrmOptions.owner === true) {
-            mikroOrmOptions.inversedBy = inverseSide;
+            mikroOrmOptions.inversedBy = inverseSideOrOptions;
         } else {
-            mikroOrmOptions.mappedBy = inverseSide;
+            mikroOrmOptions.mappedBy = inverseSideOrOptions;
         }
     }
 
-
-    return mikroOrmOptions as MikroORMRelationOptions<any, any>
-}
-
-
-function mapOneToOneOptionsForTypeORM(options) {
-    return options //omit(options, 'joinColumn', 'referenceColumnName', 'owner', 'cascade', 'onDelete', 'onUpdate', 'inversedBy', 'mappedBy', 'eager');
+    return mikroOrmOptions as MikroORMRelationOptions<any, any>;
 }
