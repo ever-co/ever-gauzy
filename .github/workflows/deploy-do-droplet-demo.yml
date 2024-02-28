@@ -24,3 +24,4 @@ jobs:
             cp  .env.compose 
             cp  docker-compose.api.yaml
             echo 'Deployment to digital ocean finished'
+            
