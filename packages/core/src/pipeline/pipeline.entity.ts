@@ -1,12 +1,6 @@
 import { IPipeline, IPipelineStage } from '@gauzy/contracts';
-import {
-	AfterInsert,
-	AfterLoad,
-	AfterUpdate,
-	BeforeInsert,
-} from 'typeorm';
-import { IsNotEmpty, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	PipelineStage,
 	TenantOrganizationBaseEntity
@@ -18,15 +12,10 @@ import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 @MultiORMEntity('pipeline', { mikroOrmRepository: () => MikroOrmPipelineRepository })
 export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline {
 
-	@ApiProperty({ type: () => PipelineStage })
-	@MultiORMOneToMany(() => PipelineStage, ({ pipeline }) => pipeline, {
-		cascade: ['insert']
-	})
-	public stages: IPipelineStage[];
-
-	@MultiORMColumn({ nullable: true, type: 'text' })
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsString()
+	@MultiORMColumn({ type: 'text', nullable: true })
 	public description: string;
 
 	@ApiProperty({ type: () => String })
@@ -35,8 +24,23 @@ export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline 
 	@MultiORMColumn()
 	public name: string;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+	@ApiProperty({ type: () => PipelineStage })
+	@MultiORMOneToMany(() => PipelineStage, (it) => it.pipeline, {
+		cascade: ['insert']
+	})
+	public stages: IPipelineStage[];
 
-	@BeforeInsert()
+	/*
+	|--------------------------------------------------------------------------
+	| EventSubscriber
+	|--------------------------------------------------------------------------
+	*/
+
 	public __before_persist?(): void {
 		const pipelineId = this.id ? { pipelineId: this.id } : {};
 		let index = 0;
@@ -44,14 +48,6 @@ export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline 
 		this.stages?.forEach((stage) => {
 			Object.assign(stage, pipelineId, { index: ++index });
 		});
-	}
-
-	@AfterLoad()
-	@AfterInsert()
-	@AfterUpdate()
-	public __after_fetch?(): void {
-		if (this.stages) {
-			this.stages.sort(({ index: a }, { index: b }) => a - b);
-		}
+		console.log(this.stages);
 	}
 }
