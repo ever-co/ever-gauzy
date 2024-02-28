@@ -1,0 +1,19 @@
+name: Deploy to DigitalOcean Droplet
+
+on:
+  push:
+    branches:
+      - test-do-droplet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to DigitalOcean Droplet
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.DO_DROPLET_HOST}}
+          username: ${{secrets.DO_DROPLET_USERNAME}}
+          key: ${{secrets.DO_DROPLET_KEY}}
+          script: |
+            echo 'Deployment to digital ocean finished'
