@@ -11,6 +11,7 @@ import { Product } from './../core/entities/internal';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
+import { TypeOrmWarehouseRepository } from './repository/type-orm-warehouse.repository';
 
 const entities = [
 	Warehouse,
@@ -30,7 +31,7 @@ const entities = [
 		UserModule
 	],
 	controllers: [WarehouseController],
-	providers: [WarehouseService, WarehouseProductService],
-	exports: [WarehouseService, WarehouseProductService]
+	providers: [WarehouseService, WarehouseProductService, TypeOrmWarehouseRepository],
+	exports: [WarehouseService, WarehouseProductService, TypeOrmWarehouseRepository]
 })
 export class WarehouseModule { }

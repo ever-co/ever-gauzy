@@ -120,16 +120,20 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	*/
 
 	/**
-	 * Tag
+	 * Warehouse Tags
 	 */
-	@ApiProperty({ type: () => Tag, isArray: true })
-	@MultiORMManyToMany(() => Tag, (tag) => tag.warehouses, {
+	@MultiORMManyToMany(() => Tag, (it) => it.warehouses, {
+		/** Defines the database cascade action on update. */
 		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
+		/** Indicates that this entity (Warehouse) is the owner side of the relationship. */
 		owner: true,
+		/** Specifies the name of the pivot table in the database. */
 		pivotTable: 'tag_warehouse'
 	})
 	@JoinTable({
+		/** Specifies the name of the pivot table in the database. */
 		name: 'tag_warehouse'
 	})
 	tags?: ITag[];
@@ -137,8 +141,8 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	/**
 	 * Merchants
 	 */
-	@ApiProperty({ type: () => Warehouse, isArray: true })
 	@MultiORMManyToMany(() => Merchant, (it) => it.warehouses, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	merchants?: IMerchant[];
