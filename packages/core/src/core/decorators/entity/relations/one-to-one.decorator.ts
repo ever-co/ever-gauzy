@@ -1,9 +1,12 @@
 import { deepClone } from "@gauzy/common";
-import { Cascade, EntityName, OneToOneOptions, OneToOne as MikroOrmOneToOne } from "@mikro-orm/core";
-import { ObjectType, RelationOptions as TypeOrmRelationOptions, OneToOne as TypeOrmOneToOne } from 'typeorm';
+import { Cascade, EntityName, OneToOneOptions } from "@mikro-orm/core";
+import { RelationOptions as TypeOrmRelationOptions } from 'typeorm';
 import { omit } from "underscore";
 import { MultiORMEnum } from "../../../../core/utils";
 import { ObjectUtils } from "../../../../core/util/object-utils";
+import { MikroORMInverseSide, TypeORMInverseSide, TypeORMRelationOptions, TypeORMTarget } from "./shared-types";
+import { TypeOrmOneToOne } from "./type-orm";
+import { MikroOrmOneToOne } from "./mikro-orm";
 
 /**
  * Options for mapping OneToOne relationship arguments for MikroORM.
@@ -24,12 +27,7 @@ export interface MapOneToOneArgsForMikroORMOptions<T, O> {
     target?: string;
 }
 
-type TypeORMTarget<T> = string | ((type?: any) => ObjectType<T>);
-type TypeORMInverseSide<T> = string | ((object: T) => any);
-type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'>;
-
 type MikroORMTarget<T, O> = OneToOneOptions<T, O> | string | ((e?: any) => EntityName<T>);
-type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 type MikroORMRelationOptions<T, O> = Omit<Partial<OneToOneOptions<T, O>>, 'cascade'>;
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
@@ -39,11 +37,12 @@ type RelationOptions<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptio
 };
 
 /**
+ * Decorator for defining One-to-One relationships in both TypeORM and MikroORM.
  *
- * @param targetEntity
- * @param inverseSide
- * @param options
- * @returns
+ * @param typeFunctionOrTarget - Type or target function for the related entity.
+ * @param inverseSideOrOptions - Inverse side of the relationship or additional options.
+ * @param options - Additional options for the One-to-One relationship.
+ * @returns PropertyDecorator
  */
 export function MultiORMOneToOne<T>(
     typeFunctionOrTarget: TargetEntity<T>,
@@ -60,7 +59,10 @@ export function MultiORMOneToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
+        // Use TypeORM decorator for One-to-One
         TypeOrmOneToOne(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideOrOptions as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
+
+        // Use MikroORM decorator for One-to-One
         MikroOrmOneToOne(mapOneToOneArgsForMikroORM({ typeFunctionOrTarget, inverseSideOrOptions: inverseSideProperty as InverseSide<T>, options, propertyKey }))(target, propertyKey);
     };
 }
