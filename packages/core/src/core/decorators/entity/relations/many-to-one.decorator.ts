@@ -1,8 +1,11 @@
-import { Cascade, EntityName, ManyToOneOptions, ManyToOne as MikroOrmManyToOne } from "@mikro-orm/core";
-import { ObjectType, RelationOptions as TypeOrmRelationOptions, ManyToOne as TypeOrmManyToOne } from 'typeorm';
+import { Cascade, EntityName, ManyToOneOptions } from "@mikro-orm/core";
+import { RelationOptions as TypeOrmRelationOptions } from 'typeorm';
 import { omit } from "underscore";
 import { deepClone } from "@gauzy/common";
 import { ObjectUtils } from "../../../../core/util/object-utils";
+import { TypeOrmManyToOne } from "./type-orm";
+import { MikroOrmManyToOne } from "./mikro-orm";
+import { MikroORMInverseSide, TypeORMInverseSide, TypeORMRelationOptions, TypeORMTarget } from "./shared-types";
 
 /**
  * Options for mapping ManyToOne relationship arguments for MikroORM.
@@ -23,12 +26,7 @@ export interface MapManyToOneArgsForMikroORMOptions<T, O> {
     target?: string;
 }
 
-type TypeORMTarget<T> = string | ((type?: any) => ObjectType<T>);
-type TypeORMInverseSide<T> = string | ((object: T) => any);
-type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'>;
-
 type MikroORMTarget<T, O> = ManyToOneOptions<T, O> | string | ((e?: any) => EntityName<T>);
-type MikroORMInverseSide<T> = (string & keyof T) | ((object: T) => any);
 type MikroORMRelationOptions<T, O> = Omit<Partial<ManyToOneOptions<T, O>>, 'cascade' | 'onUpdate' | 'onDelete'>;
 
 type TargetEntity<T> = TypeORMTarget<T> | MikroORMTarget<T, any>;
@@ -38,13 +36,12 @@ type RelationOptions<T> = MikroORMRelationOptions<T, any> & TypeORMRelationOptio
 };
 
 /**
- * Decorator for creating ManyToOne relationships for both MikroORM and TypeORM.
+ * Decorator for defining Many-to-One relationships in both TypeORM and MikroORM.
  *
- * @template T - The type of the target entity.
- * @param typeFunctionOrTarget - The target entity class or a function returning the target entity class.
- * @param inverseSideOrOptions - The inverse side of the relationship or additional options if provided.
- * @param options - The options for the ManyToOne relationship.
- * @returns PropertyDecorator.
+ * @param typeFunctionOrTarget - Type or target function for the related entity.
+ * @param inverseSideOrOptions - Inverse side of the relationship or additional options.
+ * @param options - Additional options for the Many-to-One relationship.
+ * @returns PropertyDecorator
  */
 export function MultiORMManyToOne<T>(
     typeFunctionOrTarget: TargetEntity<T>,
@@ -61,9 +58,13 @@ export function MultiORMManyToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
-        if (!options) options = {} as RelationOptions<T>
+        // If options are not provided, initialize an empty object
+        if (!options) options = {} as RelationOptions<T>;
 
+        // Use TypeORM decorator for Many-to-One
         TypeOrmManyToOne(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideOrOptions as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
+
+        // Use MikroORM decorator for Many-to-One
         MikroOrmManyToOne(mapManyToOneArgsForMikroORM({ typeFunctionOrTarget, inverseSideOrOptions: inverseSideProperty as InverseSide<T>, options, propertyKey, target }))(target, propertyKey);
     };
 }
