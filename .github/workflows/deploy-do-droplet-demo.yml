@@ -9,17 +9,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Inject secrets into .env-template.compose
-        run: |
-          # Create a copy of .env-template.compose
-          # cp .deploy/ssh/.env-template.compose .deploy/ssh/.env.compose
-
-          # Loop through each secret and replace its placeholder in .env.compose
-          while IFS= read -r line; do
-            key=$(echo "$line" | cut -d':' -f1)
-            value=$(echo "$line" | cut -d':' -f2)
-            sed -i "s|\${{ secrets.$key }}|$value|g" $GITHUB_WORKSPACE/.deploy/ssh/.env.compose
-          done <<< "$(env | grep -oE '([A-Z_]+)=' | sed 's/=$//')"
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
@@ -27,5 +16,4 @@ jobs:
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
-            scp $GITHUB_WORKSPACE/.deploy/ssh/.env.compose ${{secrets.DO_DROPLET_USERNAME}}@${{secrets.DO_DROPLET_HOST}}:.
             echo 'Deployment to digital ocean finished'
