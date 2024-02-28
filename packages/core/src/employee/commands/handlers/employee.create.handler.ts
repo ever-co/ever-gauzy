@@ -1,10 +1,10 @@
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
 	ComponentLayoutStyleEnum,
 	IEmployee,
 	LanguagesEnum,
 	RolesEnum
 } from '@gauzy/contracts';
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/common';
 import { RequestContext } from './../../../core/context';
@@ -31,6 +31,13 @@ export class EmployeeCreateHandler
 		private readonly _userService: UserService
 	) { }
 
+	/**
+	 * Execute the employee creation command.
+	 *
+	 * @param command - The employee creation command.
+	 * @returns The created employee.
+	 * @throws SomeAppropriateException if an error occurs during the process.
+	 */
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
 		const { input, originUrl = environment.clientBaseUrl } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
@@ -61,29 +68,24 @@ export class EmployeeCreateHandler
 				user
 			});
 
+			const { organizationId } = employee;
+
 			// 3. Assign organizations to the employee user
-			if (employee.organizationId) {
-				await this._userOrganizationService.addUserToOrganization(
-					employee.user,
-					employee.organizationId
-				);
+			if (organizationId) {
+				await this._userOrganizationService.addUserToOrganization(user, organizationId);
 			}
 
 			// 4. Send welcome email to user register employee
-			this._emailService.welcomeUser(
-				employee.user,
-				languageCode,
-				employee.organizationId,
-				originUrl
-			);
+			this._emailService.welcomeUser(user, languageCode, organizationId, originUrl);
 			return employee;
 		} else {
 			try {
 				const user = await this._userService.findOneByIdString(input.userId);
+
 				//2. Create employee for specific user
 				return await this._employeeService.create({
 					...input,
-					userId: user.id
+					user
 				});
 			} catch (error) {
 				console.log('Error while creating employee for existing user', error);
