@@ -386,7 +386,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				const query = this.mikroRepository.findOne(where, mikroOptions);
+				const query = await this.mikroRepository.findOne(where, mikroOptions);
 				record = praseMikroORMEntityToJson(query);
 				break;
 			case MultiORMEnum.TypeORM:
