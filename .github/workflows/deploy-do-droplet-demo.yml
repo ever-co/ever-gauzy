@@ -12,7 +12,7 @@ jobs:
       - name: Inject secrets into .env.template.compose
         run: |
           # Create a copy of .env.template.compose
-          cp .deploy/ssh/.env.template.compose .env.compose
+          cp $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose $GITHUB_WORKSPACE/.env.compose
 
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
@@ -21,7 +21,6 @@ jobs:
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
-            cp  .env.compose 
-            cp  docker-compose.api.yaml
+            cp  $GITHUB_WORKSPACE/.env.compose .
+            cp  $GITHUB_WORKSPACE/docker-compose.api.yaml .
             echo 'Deployment to digital ocean finished'
-            
