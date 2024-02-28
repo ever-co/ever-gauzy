@@ -470,77 +470,64 @@ export const flatten = (input: any): any => {
 	return [];
 };
 
-
-export function praseMikroORMEntityToJson<T>(entity: any | Collection<any, any> | any[]) {
-
+/**
+ * Parse MikroORM entity to JSON by stringifying and parsing.
+ *
+ * @param entity - MikroORM entity, collection, or array of entities.
+ * @returns Parsed JSON representation of the entity.
+ */
+export function praseMikroORMEntityToJson<T>(entity: any | Collection<any, any> | any[]): T {
 	return JSON.parse(JSON.stringify(entity));
-
-	// if (entity instanceof Array) {
-	// 	console.log('entity instanceof Array', entity)
-	// 	return entity.map((item) => praseMikroORMEntityToJson(item)) as T;
-	// } else if (entity instanceof Collection) {
-	// 	console.log('entity instanceof Collection', entity, entity.toArray())
-	// 	return praseMikroORMEntityToJson(entity.toArray()) as T[];
-	// } else {
-	// 	for (const key in entity) {
-	// 		if (Object.prototype.hasOwnProperty.call(entity, key)) {
-	// 			const value = entity[key];
-	// 			if (value instanceof Collection || value instanceof Array) {
-	// 				console.log('value Collection or Array', key, value)
-	// 				entity[key] = praseMikroORMEntityToJson(value) as any;
-	// 			} else {
-	// 				entity[key] = value;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	console.log('entity', entity)
-	// 	return entity;
-	// }
 }
 
-export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>) {
+/**
+ * Concatenate an ID to the given MikroORM where condition.
+ *
+ * @param id - The ID to concatenate to the where condition.
+ * @param where - MikroORM where condition.
+ * @returns Concatenated MikroORM where condition.
+ */
+export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
 	if (where instanceof Array) {
 		where = where.concat({ id } as any);
 	} else {
 		where = {
 			id,
-			...(where ? where : ({} as any))
+			...(where ? where : ({} as any)),
 		};
 	}
 	return where;
 }
 
-export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions) {
+/**
+ * Convert TypeORM's FindManyOptions to MikroORM's equivalent options.
+ *
+ * @param options - TypeORM's FindManyOptions.
+ * @returns An object with MikroORM's where and options.
+ */
+export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where: MikroFilterQuery<T>; mikroOptions: MikroORMFindOptions<T, any, any, any> } {
 	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {};
-	let where: MikroFilterQuery<T> = {}
+	let where: MikroFilterQuery<T> = {};
 
 	if (options) {
-
-
 		if (options.where) {
 			where = options.where as MikroFilterQuery<T>;
 		}
-
 		if (options.relations) {
 			mikroOptions.populate = flatten(options.relations) as any;
 		}
-
 		if (options.order) {
 			mikroOptions.orderBy = Object.entries(options.order).reduce((acc, [key, value]) => {
 				acc[key] = `${value}`.toLowerCase();
 				return acc;
 			}, {});
 		}
-
-		if (options.skip !== undefined) {
+		if (options.skip) {
 			mikroOptions.offset = options.skip;
 		}
-
-		if (options.take !== undefined) {
+		if (options.take) {
 			mikroOptions.limit = options.take;
 		}
-
 	}
 
 	return { where, mikroOptions };
