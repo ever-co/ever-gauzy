@@ -16,7 +16,8 @@ services:
           registry: 'registry.digitalocean.com/ever'
           repository: 'ever/gauzy-api-demo'
           tag: 'latest'
-          deploy_on_push: true
+          deploy_on_push:
+              enabled: true
       envs:
           - key: API_HOST
             scope: RUN_TIME
