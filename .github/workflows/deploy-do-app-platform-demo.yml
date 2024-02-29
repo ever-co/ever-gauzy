@@ -20,6 +20,10 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
+      - name: Modify DB_HOST
+        run: |
+          echo "DB_HOST_PUBLIC=$(echo '${{ secrets.DB_HOST }}' | sed 's/private-//')" >> $GITHUB_ENV
+
       - name: Inject secrets into .do/app.yaml
         run: |
           envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
@@ -36,7 +40,7 @@ jobs:
           CLIENT_BASE_URL: 'https://demo.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
-          DB_HOST: '${{ secrets.DB_HOST }}'
+          DB_HOST: '${{ env.DB_HOST_PUBLIC }}'
           DB_USER: '${{ secrets.DB_USER }}'
           DB_PASS: '${{ secrets.DB_PASS }}'
           DB_NAME: '${{ secrets.DB_NAME }}'
