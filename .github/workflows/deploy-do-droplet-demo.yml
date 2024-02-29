@@ -3,19 +3,17 @@ name: Deploy to DigitalOcean Droplet
 on:
   push:
     branches:
-      - test-do-droplet
+      - develop
 
 jobs:
   deploy:
     runs-on: buildjet-4vcpu-ubuntu-2204
-    
+
     environment: demo
 
     steps:
-      - name: checkout out test-do-droplet branch
+      - name: checkout out code
         uses: actions/checkout@v4
-        with:
-          ref: test-do-droplet
 
       - name: Inject secrets into .env-template.compose
         run: |
@@ -119,14 +117,13 @@ jobs:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: "docker-compose.api.yml,.env.compose"
-          target: "."
+          source: 'docker-compose.api.yml,.env.compose'
+          target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          script: |        
+          script: |
             docker-compose -f docker-compose.api.yml up -d
-

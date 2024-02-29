@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Demo
 on:
   push:
     branches:
-      - test-do-droplet
+      - develop
 
 jobs:
   deploy:
@@ -12,7 +12,7 @@ jobs:
     environment: demo
 
     steps:
-      - name: checkout out test-do-droplet branch
+      - name: checkout out code
         uses: actions/checkout@v4
 
       - name: Install doctl
