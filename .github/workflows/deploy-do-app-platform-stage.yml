@@ -1,4 +1,4 @@
-name: Deploy to DigitalOcean App Platform Demo
+name: Deploy to DigitalOcean App Platform Stage
 
 on:
   push:
@@ -24,13 +24,13 @@ jobs:
         run: |
           envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
         env:
-          ENV_NAME: 'demo'
-          APP_DOMAIN: 'apidemoda.gauzy.co'
-          INSTANCE_COUNT: '1'
+          ENV_NAME: 'stage'
+          APP_DOMAIN: 'apistageda.gauzy.co'
+          INSTANCE_COUNT: '2'
           INSTANCE_SIZE: 'professional-xs'
           API_HOST: '0.0.0.0'
-          DEMO: 'true'
-          NODE_ENV: 'development'
+          DEMO: 'false'
+          NODE_ENV: 'production'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           DB_HOST: '${{ secrets.DB_HOST }}'
@@ -141,7 +141,7 @@ jobs:
           fi
         env:
           DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-          ENV_NAME: 'demo'
+          ENV_NAME: 'stage'
 
       - name: Create App
         if: steps.check-app.outputs.create_app == 'true'

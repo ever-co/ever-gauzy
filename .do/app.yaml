@@ -4,12 +4,12 @@ alerts:
 name: ever-gauzy-$ENV_NAME
 region: sfo
 domains:
-    - domain: apidemoda.gauzy.co
+    - domain: $APP_DOMAIN
       type: ALIAS
 services:
     - name: api
-      instance_count: 2
-      instance_size_slug: professional-xs
+      instance_count: $INSTANCE_COUNT
+      instance_size_slug: $INSTANCE_SIZE
       http_port: 3000
       image:
           registry_type: 'DOCR'
