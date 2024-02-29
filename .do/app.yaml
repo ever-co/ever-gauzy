@@ -9,12 +9,12 @@ domains:
 services:
     - name: api
       instance_count: 1
-      instance_size_slug: basic-xxs
+      instance_size_slug: professional-xl
       http_port: 3000
       image:
           registry_type: 'DOCR'
           registry: ''
-          repository: 'ever/gauzy-api-demo'
+          repository: 'gauzy-api-demo'
           tag: 'latest'
           deploy_on_push:
               enabled: true
