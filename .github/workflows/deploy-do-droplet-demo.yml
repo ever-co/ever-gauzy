@@ -133,3 +133,4 @@ jobs:
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |        
             docker-compose -f docker-compose.api.yml up -d
+
