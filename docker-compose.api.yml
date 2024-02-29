@@ -42,8 +42,8 @@ services:
       COMPANY_LINK: ${COMPANY_LINK:-}
       COMPANY_NAME: ${COMPANY_NAME:-}
 
-    # env_file:
-    #   - .env.compose
+    env_file:
+      - .env.compose
     entrypoint: './entrypoint.compose.sh'
     command: ['node', 'main.js']
     restart: on-failure   
