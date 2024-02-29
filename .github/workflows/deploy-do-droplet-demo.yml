@@ -15,7 +15,7 @@ jobs:
           ref: improve-test-do-droplet
       - name: Inject secrets into .env-template.compose
         run: |
-          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env-template.compose > $GITHUB_WORKSPACE/.env.compose
+          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose > $GITHUB_WORKSPACE/.env.compose
         env:
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
