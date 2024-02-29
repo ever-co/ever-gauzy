@@ -20,13 +20,13 @@ services:
       envs:
           - key: API_HOST
             scope: RUN_TIME
-            value: $API_HOST
+            value: '$API_HOST'
           - key: DEMO
             scope: RUN_TIME
-            value: $DEMO
+            value: '$DEMO'
           - key: NODE_ENV
             scope: RUN_TIME
-            value: $NODE_ENV
+            value: '$NODE_ENV'
           - key: DB_NAME
             scope: RUN_TIME
-            value: $DB_NAME
+            value: '$DB_NAME'
