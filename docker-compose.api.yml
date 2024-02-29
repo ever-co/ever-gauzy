@@ -45,15 +45,15 @@ services:
 
     env_file:
       - .env.compose
-    entrypoint: './entrypoint.compose.sh'
+    entrypoint: './entrypoint.prod.sh'
     command: ['node', 'main.js']
-    restart: on-failure   
+    restart: on-failure
     ports:
       - '3000:${API_PORT:-3000}'
     networks:
       - overlay
 
-volumes:  
+volumes:
   certificates: {}
 
 networks:
