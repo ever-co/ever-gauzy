@@ -110,9 +110,9 @@ jobs:
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
         with:
-          input: $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose
-          output: $GITHUB_WORKSPACE/.env.compose
-          
+          input: .deploy/ssh/.env.template.compose
+          output: .env.compose
+
       - name: Copy file via scp
         uses: appleboy/scp-action@master
         with:
