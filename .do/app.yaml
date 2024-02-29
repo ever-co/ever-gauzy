@@ -8,8 +8,8 @@ domains:
       type: ALIAS
 services:
     - name: api
-      instance_count: 1
-      instance_size_slug: professional-xl
+      instance_count: 2
+      instance_size_slug: professional-xs
       http_port: 3000
       image:
           registry_type: 'DOCR'
