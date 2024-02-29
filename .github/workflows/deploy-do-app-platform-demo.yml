@@ -127,7 +127,7 @@ jobs:
           APP_NAME="ever-gauzy-${ENV_NAME}"
           echo "Looking for app with name: $APP_NAME"
           doctl apps list --no-header
-          APP_ID=$(doctl apps list --format ID,Name --no-header | grep "$APP_NAME" | awk '{print $1}')
+          APP_ID=$(doctl apps list --no-header | awk -v appName="$APP_NAME" '$2 == appName {print $1}')
           if [ -z "$APP_ID" ]; then
             echo "App does not exist, setting CREATE_APP to true"
             echo "::set-output name=create_app::true"
