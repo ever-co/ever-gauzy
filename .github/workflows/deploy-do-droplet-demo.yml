@@ -9,10 +9,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout out improve-test-do-droplet branch
+      - name: checkout out test-do-droplet branch
         uses: actions/checkout@v4
         with:
-          ref: improve-test-do-droplet
+          ref: test-do-droplet
       - name: Inject secrets into .env-template.compose
         run: |
           envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose > $GITHUB_WORKSPACE/.env.compose
