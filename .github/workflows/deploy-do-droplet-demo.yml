@@ -18,9 +18,8 @@ jobs:
           ref: test-do-droplet
 
       - name: Inject secrets into .env-template.compose
-        # run: |
-        #   envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose > $GITHUB_WORKSPACE/.env.compose
-        uses: danielr1996/envsubst-action@1.0.0
+        run: |
+          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose > $GITHUB_WORKSPACE/.env.compose
         env:
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
@@ -113,9 +112,6 @@ jobs:
           APP_MAGIC_SIGN_URL: '${{ secrets.APP_MAGIC_SIGN_URL }}'
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
-        with:
-          input: .deploy/ssh/.env.template.compose
-          output: .env.compose
 
       - name: Copy file via scp
         uses: appleboy/scp-action@master
