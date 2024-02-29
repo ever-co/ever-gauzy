@@ -21,7 +21,8 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Inject secrets into .do/app.yaml
-        uses: danielr1996/envsubst-action@1.0.0
+        run: |
+          envsubst < $GITHUB_WORKSPACE/.do/app.yaml > $GITHUB_WORKSPACE/.do/app.yaml
         env:
           ENV_NAME: 'demo'
           API_HOST: '0.0.0.0'
@@ -118,9 +119,6 @@ jobs:
           APP_MAGIC_SIGN_URL: '${{ secrets.APP_MAGIC_SIGN_URL }}'
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
-        with:
-          input: .do/app.yaml
-          output: .do/app.yaml
 
       - name: Check if App Exists
         id: check-app
