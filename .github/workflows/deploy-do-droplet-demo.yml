@@ -11,9 +11,15 @@ jobs:
     steps:
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
+        env:
+          FOO: "BAR"
+          BAR: "FOO"
         with:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
+          envs: FOO,BAR
           script: |
+            echo "I am $FOO"
+            echo "I am $BAR"
             echo 'Deployment to digital ocean finished'
