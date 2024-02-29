@@ -22,7 +22,7 @@ jobs:
 
       - name: Inject secrets into .do/app.yaml
         run: |
-          envsubst < $GITHUB_WORKSPACE/.do/app.yaml > $GITHUB_WORKSPACE/.do/app.yaml
+          envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
         env:
           ENV_NAME: 'demo'
           API_HOST: '0.0.0.0'
