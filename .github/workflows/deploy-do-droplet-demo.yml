@@ -111,11 +111,10 @@ jobs:
 
       - name: Copy file via scp
         uses: appleboy/scp-action@master
-        env:
+        with:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-        with:
           source: "docker-compose.api.yml,.env.compose"
           target: "."
       - name: Deploy to DigitalOcean Droplet
