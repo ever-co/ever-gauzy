@@ -126,5 +126,5 @@ jobs:
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
-            sudo sed -i 's/container_name: api,/container_name: api-stage,/' /docker-compose.api.yml
+            sudo sed -i 's/container_name: api,/container_name: api-stage,/' docker-compose.api.yml
             docker-compose -f docker-compose.api.yml up -d
