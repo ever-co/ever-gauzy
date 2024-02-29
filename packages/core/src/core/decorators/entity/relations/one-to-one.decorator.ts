@@ -59,6 +59,9 @@ export function MultiORMOneToOne<T>(
     }
 
     return (target: any, propertyKey: string) => {
+        // If options are not provided, initialize an empty object
+        if (!options) options = {} as RelationOptions<T>;
+
         // Use TypeORM decorator for One-to-One
         TypeOrmOneToOne(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideOrOptions as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
 
@@ -112,10 +115,10 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
         ...omit(options, 'onDelete', 'onUpdate') as Partial<OneToOneOptions<T, any>>,
         entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions?.nullable,
         deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
         updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
-        lazy: !!typeOrmOptions?.lazy,
+        ...(typeOrmOptions?.nullable ? { nullable: typeOrmOptions?.nullable } : {}),
+        ...(typeOrmOptions?.lazy ? { lazy: typeOrmOptions?.lazy } : {}),
     };
 
     // Set default joinColumn if not overwritten in options

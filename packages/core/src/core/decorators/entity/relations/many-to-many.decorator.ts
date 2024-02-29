@@ -53,6 +53,9 @@ export function MultiORMManyToMany<T>(
     }
 
     return (target: any, propertyKey: string) => {
+        // If options are not provided, initialize an empty object
+        if (!options) options = {} as RelationOptions<T>;
+
         // Use TypeORM decorator for Many-to-Many
         TypeOrmManyToMany(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideProperty as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
 
@@ -108,8 +111,8 @@ function mapManyToManyArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverseSide,
         ...omit(options, 'onDelete', 'onUpdate') as any,
         entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions?.nullable,
-        lazy: !!typeOrmOptions?.lazy,
+        ...(typeOrmOptions?.nullable ? { nullable: typeOrmOptions?.nullable } : {}),
+        ...(typeOrmOptions?.lazy ? { lazy: typeOrmOptions?.lazy } : {}),
     };
 
     // Map inverseSideOrOptions based on the DB_ORM environment variable

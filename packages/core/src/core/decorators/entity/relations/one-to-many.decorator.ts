@@ -52,6 +52,9 @@ export function MultiORMOneToMany<T>(
 
     // The decorator function applied to the target property
     return (target: any, propertyKey: string) => {
+        // If options are not provided, initialize an empty object
+        if (!options) options = {} as RelationOptions<T>;
+
         // Apply TypeORM One-to-Many decorator
         TypeOrmOneToMany(typeFunctionOrTarget as TypeORMTarget<T>, inverseSideProperty as TypeORMInverseSide<T>, options as TypeORMRelationOptions)(target, propertyKey);
 
@@ -108,8 +111,8 @@ function mapOneToManyArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverseSide, 
         entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
         mappedBy: inverseSide,
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions?.nullable,
-        lazy: !!typeOrmOptions?.lazy,
+        ...(typeOrmOptions?.nullable ? { nullable: typeOrmOptions?.nullable } : {}),
+        ...(typeOrmOptions?.lazy ? { lazy: typeOrmOptions?.lazy } : {}),
     };
 
     return mikroOrmOptions as OneToManyOptions<T, any>;

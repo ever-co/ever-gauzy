@@ -114,10 +114,10 @@ export function mapManyToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, option
         ...omit(options, 'onDelete', 'onUpdate') as any,
         entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
         cascade: mikroORMCascade,
-        nullable: typeOrmOptions?.nullable,
         deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
         updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
-        lazy: !!typeOrmOptions?.lazy,
+        ...(typeOrmOptions?.nullable ? { nullable: typeOrmOptions?.nullable } : {}),
+        ...(typeOrmOptions?.lazy ? { lazy: typeOrmOptions?.lazy } : {}),
     };
 
     // Set default joinColumn and referenceColumnName if not provided
