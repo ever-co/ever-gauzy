@@ -138,9 +138,6 @@ jobs:
           DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
           ENV_NAME: 'demo'
 
-      - name: Display app.yaml for debugging
-        run: cat .do/app.yaml
-
       - name: Create App
         if: steps.check-app.outputs.create_app == 'true'
         run: doctl apps create --spec .do/app.yaml
