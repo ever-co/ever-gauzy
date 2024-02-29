@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Stage
 on:
   push:
     branches:
-      - stage
+      - test-do-droplet2
 
 jobs:
   deploy:
@@ -31,6 +31,9 @@ jobs:
           API_HOST: '0.0.0.0'
           DEMO: 'false'
           NODE_ENV: 'production'
+          ADMIN_PASSWORD_RESET: 'true'
+          API_BASE_URL: 'https://apistageda.gauzy.co'
+          CLIENT_BASE_URL: 'https://stage.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           DB_HOST: '${{ secrets.DB_HOST }}'

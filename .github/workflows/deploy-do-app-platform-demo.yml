@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Demo
 on:
   push:
     branches:
-      - develop
+      - test-do-droplet2
 
 jobs:
   deploy:
@@ -31,6 +31,9 @@ jobs:
           API_HOST: '0.0.0.0'
           DEMO: 'true'
           NODE_ENV: 'development'
+          ADMIN_PASSWORD_RESET: 'true'
+          API_BASE_URL: 'https://apidemoda.gauzy.co'
+          CLIENT_BASE_URL: 'https://demo.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           DB_HOST: '${{ secrets.DB_HOST }}'
