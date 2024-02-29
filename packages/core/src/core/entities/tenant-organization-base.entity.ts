@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Index, RelationId } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	IOrganization,
@@ -11,20 +11,24 @@ import { MultiORMColumn } from '../decorators';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 
-	@ApiProperty({ type: () => Organization })
+	@ApiPropertyOptional({ type: () => Organization })
+	@IsOptional()
 	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
-	@IsOptional()
 	organization?: IOrganization;
 
-	@ApiProperty({ type: () => String })
-	@RelationId((it: TenantOrganizationBaseEntity) => it.organization)
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsString()
+	@RelationId((it: TenantOrganizationBaseEntity) => it.organization)
 	@Index()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationId?: IOrganization['id'];

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Index, RelationId } from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 import { BaseEntity, Tenant } from '../entities/internal';
@@ -8,19 +8,21 @@ import { MultiORMColumn } from '../decorators';
 
 export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
 
-	@ApiProperty({ type: () => Tenant })
+	@ApiPropertyOptional({ type: () => Tenant })
+	@IsOptional()
 	@MultiORMManyToOne(() => Tenant, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
-	@IsOptional()
 	tenant?: ITenant;
 
 	@ApiProperty({ type: () => String })
-	@RelationId((t: TenantBaseEntity) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@RelationId((t: TenantBaseEntity) => t.tenant)
 	@Index()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	tenantId?: ITenant['id'];

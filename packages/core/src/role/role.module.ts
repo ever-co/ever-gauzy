@@ -10,6 +10,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 
 @Module({
 	imports: [
@@ -24,11 +25,16 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [RoleController],
-	providers: [RoleService, ...CommandHandlers],
+	providers: [
+		...CommandHandlers,
+		RoleService,
+		TypeOrmRoleRepository
+	],
 	exports: [
 		TypeOrmModule,
 		MikroOrmModule,
-		RoleService
+		RoleService,
+		TypeOrmRoleRepository
 	]
 })
 export class RoleModule { }
