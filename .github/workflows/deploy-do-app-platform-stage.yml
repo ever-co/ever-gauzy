@@ -9,7 +9,7 @@ jobs:
   deploy:
     runs-on: buildjet-4vcpu-ubuntu-2204
 
-    environment: prod
+    environment: stage
 
     steps:
       - name: checkout out code
