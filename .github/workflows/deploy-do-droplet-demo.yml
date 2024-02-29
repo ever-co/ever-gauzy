@@ -111,7 +111,7 @@ jobs:
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
         with:
           input: .deploy/ssh/.env.template.compose
-          output: .env.api.compose
+          output: .env.compose
 
       - name: Copy file via scp
         uses: appleboy/scp-action@master
@@ -119,7 +119,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: "docker-compose.api.yml,.env.api.compose"
+          source: "docker-compose.api.yml,.env.compose"
           target: "."
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
