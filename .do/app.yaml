@@ -1,0 +1,33 @@
+alerts:
+    - rule: DEPLOYMENT_FAILED
+    - rule: DOMAIN_FAILED
+name: ever-gauzy-$ENV_NAME
+region: sfo
+domains:
+    - domain: $APP_DOMAIN
+      type: ALIAS
+services:
+    - name: api
+      instance_count: $INSTANCE_COUNT
+      instance_size_slug: $INSTANCE_SIZE
+      http_port: 3000
+      image:
+          registry_type: 'DOCR'
+          registry: ''
+          repository: 'gauzy-api-demo'
+          tag: 'latest'
+          deploy_on_push:
+              enabled: true
+      envs:
+          - key: API_HOST
+            scope: RUN_TIME
+            value: '$API_HOST'
+          - key: DEMO
+            scope: RUN_TIME
+            value: '$DEMO'
+          - key: NODE_ENV
+            scope: RUN_TIME
+            value: '$NODE_ENV'
+          - key: DB_NAME
+            scope: RUN_TIME
+            value: '$DB_NAME'
