@@ -9,6 +9,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: checkout out improve-test-do-droplet branch
+        uses: actions/checkout@v4
+        with:
+          ref: improve-test-do-droplet
       - name: Inject secrets into .env-template.compose
         run: |
           envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env-template.compose > $GITHUB_WORKSPACE/.env.compose
@@ -104,7 +108,7 @@ jobs:
           APP_MAGIC_SIGN_URL: '${{ secrets.APP_MAGIC_SIGN_URL }}'
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
-          
+
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
