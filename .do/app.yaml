@@ -18,6 +18,15 @@ services:
           tag: 'latest'
           deploy_on_push: true
       envs:
+          - key: API_HOST
+            scope: RUN_TIME
+            value: $API_HOST
+          - key: DEMO
+            scope: RUN_TIME
+            value: $DEMO
+          - key: NODE_ENV
+            scope: RUN_TIME
+            value: $NODE_ENV
           - key: DB_NAME
             scope: RUN_TIME
             value: $DB_NAME

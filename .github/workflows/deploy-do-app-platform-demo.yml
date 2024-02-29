@@ -14,8 +14,6 @@ jobs:
     steps:
       - name: checkout out test-do-droplet branch
         uses: actions/checkout@v4
-        with:
-          ref: test-do-droplet
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -26,6 +24,9 @@ jobs:
         uses: danielr1996/envsubst-action@1.0.0
         env:
           ENV_NAME: 'demo'
+          API_HOST: '0.0.0.0'
+          DEMO: 'true'
+          NODE_ENV: 'development'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           DB_HOST: '${{ secrets.DB_HOST }}'
@@ -140,8 +141,8 @@ jobs:
 
       - name: Create App
         if: steps.check-app.outputs.create_app == 'true'
-        run: doctl apps create --spec .do/app.yml
+        run: doctl apps create --spec .do/app.yaml
 
       - name: Update App
         if: steps.check-app.outputs.create_app == 'false'
-        run: doctl apps update ${{ steps.check-app.outputs.app_id }} --spec .do/app.yml
+        run: doctl apps update ${{ steps.check-app.outputs.app_id }} --spec .do/app.yaml
