@@ -109,12 +109,20 @@ jobs:
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
 
+      - name: Copy file via scp
+        uses: appleboy/scp-action@master
+        env:
+          host: ${{secrets.DO_DROPLET_HOST}}
+          username: ${{secrets.DO_DROPLET_USERNAME}}
+          key: ${{secrets.DO_DROPLET_KEY}}
+        with:
+          source: "docker-compose.api.yml,.env.compose"
+          target: "."
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          script: |
-            cat $GITHUB_WORKSPACE/docker-compose.api.yml            
+          script: |        
             echo 'Deployment to digital ocean finished'
