@@ -1,0 +1,23 @@
+alerts:
+    - rule: DEPLOYMENT_FAILED
+    - rule: DOMAIN_FAILED
+name: ever-gauzy-$ENV_NAME
+region: sfo2
+domains:
+    - domain: apidemoda.gauzy.co
+      type: ALIAS
+services:
+    - name: api
+      instance_count: 1
+	  instance_size_slug: basic-xxs
+      http_port: 3000
+      image:
+          registry_type: 'DOCR'
+          registry: 'registry.digitalocean.com/ever'
+          repository: 'ever/gauzy-api-demo'
+          tag: 'latest'
+          deploy_on_push: true
+      envs:
+          - key: DB_NAME
+            scope: RUN_TIME
+            value: $DB_NAME
