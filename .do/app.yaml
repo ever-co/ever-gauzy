@@ -2,7 +2,7 @@ alerts:
     - rule: DEPLOYMENT_FAILED
     - rule: DOMAIN_FAILED
 name: ever-gauzy-$ENV_NAME
-region: sfo2
+region: sfo
 domains:
     - domain: apidemoda.gauzy.co
       type: ALIAS
