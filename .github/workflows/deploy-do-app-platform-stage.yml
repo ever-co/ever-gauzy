@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Stage
 on:
   push:
     branches:
-      - test-do-droplet2
+      - stage
 
 jobs:
   deploy:

@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Demo
 on:
   push:
     branches:
-      - test-do-droplet2
+      - develop
 
 jobs:
   deploy:
