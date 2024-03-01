@@ -4,6 +4,9 @@ services:
   api:
     container_name: api-${ENV_NAME}
     image: ghcr.io/ever-co/gauzy-api-stage:latest
+    deploy:
+      mode: replicated
+      replicas: 2
     environment:
       API_HOST: '0.0.0.0'
       DEMO: ${DEMO:-true}
