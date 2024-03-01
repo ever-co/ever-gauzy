@@ -1,4 +1,4 @@
-name: Deploy to DigitalOcean Droplet
+name: Deploy to DigitalOcean Droplet Stage
 
 on:
   push:
