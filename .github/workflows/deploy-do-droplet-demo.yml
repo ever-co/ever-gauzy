@@ -130,7 +130,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/docker-compose.api-demo.yml,.deploy/ssh/nginx-demo.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
+          source: '.deploy/ssh/docker-compose.api-demo.yml,.deploy/ssh/nginx.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
