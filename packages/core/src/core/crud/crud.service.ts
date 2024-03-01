@@ -94,7 +94,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async countBy(options?: ICountByOptions<T>): Promise<number> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
 				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
 				return await this.repository.countBy(options as FindOptionsWhere<T>);
@@ -111,7 +111,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options
 	 * @returns
 	 */
-	public async findAll(options?: ICountOptions<T>): Promise<IPagination<T>> {
+	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
 		let total: number;
 		let items: T[];
 
@@ -414,7 +414,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as any);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
 				record = await this.mikroRepository.findOne(where, mikroOptions) as any;
 				record = praseMikroORMEntityToJson(record);
 				break;
