@@ -1,6 +1,6 @@
-import { environment as env } from '@gauzy/config';
 import { CanActivate, ExecutionContext, Injectable, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { environment as env } from '@gauzy/config';
 import { verify } from 'jsonwebtoken';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
@@ -37,7 +37,13 @@ export class PermissionGuard implements CanActivate {
 		};
 
 		// Retrieve user with role and rolePermissions relations
-		const user = await this.userService.findOneByIdString(id, { relations: { role: { rolePermissions: true } } });
+		const user = await this.userService.findOneByIdString(id, {
+			relations: {
+				role: {
+					rolePermissions: true
+				}
+			}
+		});
 
 		// Check if user has the required permissions
 		const isAuthorized = user?.role?.rolePermissions.some((p) => permissions.includes(p.permission) && p.enabled) || false;

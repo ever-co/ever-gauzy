@@ -11,7 +11,7 @@ import { DataSourceOptions } from 'typeorm';
 import { KnexModuleOptions } from 'nest-knexjs';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { DatabaseTypeEnum, getLoggingOptions, getTlsOptions } from './database-helpers';
+import { DatabaseTypeEnum, getLoggingMikroOptions, getLoggingOptions, getTlsOptions } from './database-helpers';
 
 /**
  * Type representing the ORM types.
@@ -101,7 +101,8 @@ switch (dbType) {
 				min: 0,
 				max: dbPoolSize
 			},
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmMySqlOptions;
 
@@ -194,7 +195,8 @@ switch (dbType) {
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
 				acquireTimeoutMillis: dbConnectionTimeout
 			},
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmPostgresOptions;
 
@@ -276,7 +278,8 @@ switch (dbType) {
 		const mikroOrmSqliteConfig: MikroOrmSqliteOptions = {
 			driver: SqliteDriver,
 			dbName: dbPath,
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmSqliteConfig;
 
@@ -305,15 +308,15 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)
 		const mikroOrmBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
 			driver: BetterSqliteDriver,
 			dbName: betterSqlitePath,
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmBetterSqliteConfig;
 
