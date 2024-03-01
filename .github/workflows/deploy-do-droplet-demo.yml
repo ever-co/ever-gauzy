@@ -19,6 +19,13 @@ jobs:
         run: |
           envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose > $GITHUB_WORKSPACE/.env.compose
         env:
+          ENV_NAME: 'demo'
+          DEMO: 'true'
+          NODE_ENV: 'development'
+          ADMIN_PASSWORD_RESET: 'true'
+          API_HOST: $API_HOST
+          API_BASE_URL: 'https://apistagedt.gauzy.co' 
+          CLIENT_BASE_URL: 'https://stage.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           DB_HOST: '${{ secrets.DB_HOST }}'
