@@ -115,20 +115,20 @@ services:
     networks:
       - overlay
 
-  nginx-demo:
-    image: nginx:latest
-    volumes:
-      - ./nginx-demo.conf:/etc/nginx/nginx.conf:ro
-      - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
-      - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
-    depends_on:
-      - api-demo
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - overlay
+  # nginx-demo:
+  #   image: nginx:latest
+  #   volumes:
+  #     - ./nginx-demo.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
+  #     - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
+  #   depends_on:
+  #     - api-demo
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   networks:
+  #     - overlay
 
 volumes:
   certificates: {}
