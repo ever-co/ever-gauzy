@@ -119,6 +119,8 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
+      - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
     depends_on:
       - api
     ports:
