@@ -22,6 +22,7 @@ jobs:
           ENV_NAME: 'stage'
           DEMO: 'false'
           NODE_ENV: 'production'
+          ADMIN_PASSWORD_RESET: 'true'
           API_HOST: $API_HOST
           API_BASE_URL: 'https://apistagedt.gauzy.co' 
           CLIENT_BASE_URL: 'https://stage.gauzy.co'
