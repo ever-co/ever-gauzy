@@ -17,10 +17,14 @@ jobs:
 
       - name: Inject secrets into .env-template.compose
         run: |
-          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/.env.template.compose > $GITHUB_WORKSPACE/.env.compose
+          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/docker-compose.api.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/docker-compose.api.yml
         env:
+          ENV_NAME: 'stage'
           DEMO: 'false'
           NODE_ENV: 'production'
+          API_HOST: $API_HOST
+          API_BASE_URL: 'https://apistagedt.gauzy.co' 
+          CLIENT_BASE_URL: 'https://stage.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
           DB_HOST: '${{ secrets.DB_HOST }}'
@@ -119,7 +123,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: 'docker-compose.api.yml,.env.compose'
+          source: '.deploy/ssh/docker-compose.api.yml'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
@@ -128,5 +132,4 @@ jobs:
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
-            sudo sed -i 's/container_name: api/container_name: api-stage/g' docker-compose.api.yml
-            docker-compose -f docker-compose.api.yml up -d
+            docker-compose -f .deploy/ssh/docker-compose.api.yml up -d
