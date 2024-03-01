@@ -133,4 +133,4 @@ jobs:
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
-            docker-compose -f .deploy/ssh/docker-compose.api.yml up --force-recreate --build -d
+            docker-compose -f .deploy/ssh/docker-compose.api.yml up -d
