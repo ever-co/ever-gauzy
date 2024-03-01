@@ -107,7 +107,7 @@ services:
     command: ['node', 'main.js']
     restart: on-failure
     ports:
-      - '3000:${API_PORT:-3000:-}'
+      - '3000:${API_PORT:-3000}'
     networks:
       - overlay
 
