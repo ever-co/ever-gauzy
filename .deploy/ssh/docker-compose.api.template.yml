@@ -123,6 +123,7 @@ services:
       - ./ingress.api.key:/etc/nginx/ssl/ingress.api.key
     depends_on:
       - api
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
