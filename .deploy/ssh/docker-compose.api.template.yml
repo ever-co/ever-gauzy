@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   api:
-    container_name: api-${ENV_NAME:-}
+    container_name: api-${ENV_NAME}
     image: ghcr.io/ever-co/gauzy-api-stage:latest
     environment:
       API_HOST: '0.0.0.0'
