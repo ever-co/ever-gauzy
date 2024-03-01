@@ -13,7 +13,7 @@ services:
       CLIENT_BASE_URL: ${CLIENT_BASE_URL:-http://localhost:4200}
       DB_TYPE: ${DB_TYPE:-better-sqlite3}
       DB_URI: ${DB_URI:-}
-      DB_HOST: ${env.DB_HOST:-}
+      DB_HOST: ${DB_HOST:-}
       DB_USER: ${DB_USER:-}
       DB_PASS: ${DB_PASS:-}
       DB_NAME: ${DB_NAME:-}
@@ -23,7 +23,7 @@ services:
       DB_POOL_SIZE: ${DB_POOL_SIZE:-}
       DB_POOL_SIZE_KNEX: ${DB_POOL_SIZE_KNEX:-}
       REDIS_ENABLED: ${REDIS_ENABLED:-}
-      REDIS_URL: ${env.REDIS_URL:-}
+      REDIS_URL: ${REDIS_URL:-}
       CLOUD_PROVIDER: 'DO'
       SENTRY_DSN: ${SENTRY_DSN:-}
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-}
