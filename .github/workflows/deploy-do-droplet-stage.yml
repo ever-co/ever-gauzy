@@ -118,13 +118,19 @@ jobs:
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
 
+      - name: Generate TLS Secrets for DO Droplet
+        run: |
+          rm -f ${HOME}/ingress.api.crt ${HOME}/ingress.api.key ${HOME}/ingress.webapp.crt ${HOME}/ingress.webapp.key
+          echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > ${HOME}/ingress.api.crt
+          echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > ${HOME}/ingress.api.key
+
       - name: Copy file via scp
         uses: appleboy/scp-action@master
         with:
           host: ${{secrets.DO_DROPLET_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/docker-compose.api.yml,.deploy/ssh/nginx.conf'
+          source: '.deploy/ssh/docker-compose.api.yml,.deploy/ssh/nginx.conf,${HOME}/ingress.api.crt,${HOME}/ingress.api.key'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
