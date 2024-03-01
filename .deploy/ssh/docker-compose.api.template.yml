@@ -9,7 +9,7 @@ services:
       replicas: 2
     environment:
       API_HOST: '0.0.0.0'
-      DEMO: ${DEMO}
+      DEMO: '${DEMO}'
       NODE_ENV: ${NODE_ENV}
       ADMIN_PASSWORD_RESET: ${ADMIN_PASSWORD_RESET}
       API_BASE_URL: ${API_BASE_URL}
