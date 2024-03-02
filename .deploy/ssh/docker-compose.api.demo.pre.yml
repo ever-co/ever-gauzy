@@ -27,4 +27,5 @@ volumes:
 
 networks:
   overlay:
-    driver: bridge
+    external: true
+      
