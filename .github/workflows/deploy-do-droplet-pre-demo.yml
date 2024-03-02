@@ -15,6 +15,12 @@ jobs:
       - name: checkout out code
         uses: actions/checkout@v4
 
+      - name: Globalise Ingress certificate type env
+        run: |
+          echo "INGRESS_CERT_TYPE=${{ env.INGRESS_CERT_TYPE }}" >> $GITHUB_ENV
+        env:
+          INGRESS_CERT_TYPE: 'cloudflare'
+
       - name: Generate TLS Secrets for DO Droplet
         run: |
           rm -f $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.crt $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.key
@@ -27,7 +33,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/docker-compose.api.demo.pre.yml,.deploy/ssh/nginx.demo.pre.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
+          source: '.deploy/ssh/docker-compose.api.demo.pre.yml,docker-compose.api.demo.letsencrypt.pre.yml,.deploy/ssh/nginx.demo.pre.conf,.deploy/ssh/nginx.demo.pre.letsencrypt.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
@@ -36,5 +42,11 @@ jobs:
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
-            docker-compose -f .deploy/ssh/docker-compose.api.demo.pre.yml up -d
-
+            if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
+                docker-compose -f .deploy/ssh/docker-compose.api.demo.pre.yml up -d
+            elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
+                docker-compose -f .deploy/ssh/docker-compose.api.demo.letsencrypt.pre.yml up -d
+            else
+                echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
+                exit 1
+            fi

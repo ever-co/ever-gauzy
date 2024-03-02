@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.demo.pre.letsencrypt.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+      - ./certbot/www:/var/www/certbot/:ro
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - with-letsencrypt_overlay
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes: 
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+      - ./certbot/www/:/var/www/certbot/:rw
+    command: certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ever@ever.tech -d apidemodts.gauzy.co --agree-tos
+volumes:
+  certificates: {}
+
+networks:
+  with-letsencrypt_overlay:
+    external: true
+      
