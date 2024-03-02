@@ -147,7 +147,6 @@ jobs:
             if [ '$INGRESS_CERT_TYPE' = 'cloudflare' ]; then
                 docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.demo.yml up -d
             elif [ '$INGRESS_CERT_TYPE' = 'letsencrypt' ]; then
-                
                 docker-compose -f .deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml up -d
             else
                 echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"

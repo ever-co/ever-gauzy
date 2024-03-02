@@ -24,7 +24,7 @@ jobs:
       - name: Copy file via scp
         uses: appleboy/scp-action@master
         with:
-          host: ${{secrets.DO_DROPLET_HOST}}
+          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           source: '.deploy/ssh/docker-compose.api.demo.pre.yml,.deploy/ssh/nginx.demo.pre.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
@@ -32,7 +32,7 @@ jobs:
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
-          host: ${{secrets.DO_DROPLET_HOST}}
+          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
