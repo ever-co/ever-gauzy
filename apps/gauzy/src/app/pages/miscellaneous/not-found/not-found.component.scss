@@ -53,8 +53,14 @@ nb-card-body {
   font-weight: bold;
 }
 
+.redirect-home-title {
+  color: var(--color-basic-600);
+  font-weight: bold;
+  margin-bottom: 0;
+}
+
 .btn {
   margin-bottom: 2rem;
   color: var(--color-primary-500);
-  font-weight: 500;
+  font-weight: bold;
 }
