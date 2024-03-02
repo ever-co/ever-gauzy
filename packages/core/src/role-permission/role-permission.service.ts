@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { UpdateResult, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
 import { pluck } from 'underscore';
@@ -27,11 +26,8 @@ import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-perm
 @Injectable()
 export class RolePermissionService extends TenantAwareCrudService<RolePermission> {
 	constructor(
-		@InjectRepository(RolePermission)
-		typeOrmRolePermissionRepository: TypeOrmRolePermissionRepository,
-
-		mikroOrmRolePermissionRepository: MikroOrmRolePermissionRepository,
-
+		readonly typeOrmRolePermissionRepository: TypeOrmRolePermissionRepository,
+		readonly mikroOrmRolePermissionRepository: MikroOrmRolePermissionRepository,
 		private readonly roleService: RoleService,
 		private readonly _commandBus: CommandBus
 	) {

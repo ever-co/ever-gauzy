@@ -9,6 +9,7 @@ import { RolePermissionService } from './role-permission.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
+import { TypeOrmRolePermissionRepository } from './repository';
 
 @Module({
 	imports: [
@@ -23,11 +24,15 @@ import { RoleModule } from './../role/role.module';
 		CqrsModule
 	],
 	controllers: [RolePermissionController],
-	providers: [RolePermissionService],
+	providers: [
+		RolePermissionService,
+		TypeOrmRolePermissionRepository
+	],
 	exports: [
 		TypeOrmModule,
 		MikroOrmModule,
-		RolePermissionService
+		RolePermissionService,
+		TypeOrmRolePermissionRepository
 	]
 })
 export class RolePermissionModule { }
