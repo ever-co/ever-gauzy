@@ -22,15 +22,20 @@ jobs:
           elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
             echo "API_BASE_URL=https://apidemodts.gauzy.co" >> $GITHUB_ENV
           else
-            echo "API_BASE_URL UNKNOWN INGRESS_CERT_TYPE"
+            echo "UNKNOWN INGRESS_CERT_TYPE"
           fi
         env:
           INGRESS_CERT_TYPE: 'cloudflare'
       
       - name: Inject secrets into .env-template.compose
-        run: |          
-          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml
-          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml
+        run: |        
+          if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then  
+            envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml
+          elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
+            envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml
+          else
+            echo "UNKNOWN INGRESS_CERT_TYPE"
+          fi        
         env:
           ENV_NAME: 'demo'
           DEMO: 'true'
