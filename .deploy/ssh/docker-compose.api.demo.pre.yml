@@ -14,7 +14,7 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      - overlay
+      - with-cloudflare_overlay
   certbot:
     image: certbot/certbot
     container_name: certbot
