@@ -17,14 +17,16 @@ jobs:
 
       - name: Inject secrets into .env-template.compose
         run: |
-          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/docker-compose.api-demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/docker-compose.api-demo.yml
+          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml
+          envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml
         env:
+          INGRESS_CERT_TYPE: 'cloudflare'
           ENV_NAME: 'demo'
           DEMO: 'true'
           NODE_ENV: 'development'
           ADMIN_PASSWORD_RESET: 'true'
           API_HOST: $API_HOST
-          API_BASE_URL: 'https://apidemodt.gauzy.co' 
+          API_BASE_URL: ${{ if eq(env.INGRESS_CERT_TYPE, 'cloudflare') }} 'https://apidemodt.gauzy.co' ${{ else if eq(env.INGRESS_CERT_TYPE, 'letsencrypt') }} 'https://apidemodts.gauzy.co' ${{ else }} 'UNKNOWN INGRESS_CERT_TYPE' ${{ endif }}
           CLIENT_BASE_URL: 'https://demo.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
@@ -118,25 +120,37 @@ jobs:
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
 
-      - name: Generate TLS Secrets for DO Droplet
-        run: |
-          rm -f $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.crt $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.key $GITHUB_WORKSPACE/.deploy/ssh/ingress.webapp.crt $GITHUB_WORKSPACE/.deploy/ssh/ingress.webapp.key
-          echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.crt
-          echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.key
-
-      - name: Copy file via scp
+      - name: Copy file via scp - with-cloudflare
         uses: appleboy/scp-action@master
         with:
-          host: ${{secrets.DO_DROPLET_HOST}}
+          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/docker-compose.api-demo.yml,.deploy/ssh/nginx.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
+          source: '.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml'
+          target: '.'
+      - name: Copy file via scp - with-letsencrypt
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
+          username: ${{secrets.DO_DROPLET_USERNAME}}
+          key: ${{secrets.DO_DROPLET_KEY}}
+          source: '.deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
-          host: ${{secrets.DO_DROPLET_HOST}}
+          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
+          envs: INGRESS_CERT_TYPE
           script: |
-            docker-compose -f .deploy/ssh/docker-compose.api-demo.yml up -d
+            if [ '$INGRESS_CERT_TYPE' = 'cloudflare' ]; then
+                docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.demo.yml up -d
+            elif [ '$INGRESS_CERT_TYPE' = 'letsencrypt' ]; then
+                
+                docker-compose -f .deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml up -d
+            else
+                echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
+                exit 1
+            fi
+            

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.demo.pre.conf:/etc/nginx/nginx.conf:ro
+      - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
+      - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
+      - ./etc/letsencrypt:/etc/letsencrypt:ro 
+      - ./certbot/data:/var/www/certbot
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - overlay
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes: 
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apidemodts.gauzy.co --agree-tos
+volumes:
+  certificates: {}
+
+networks:
+  overlay:
+    driver: bridge
