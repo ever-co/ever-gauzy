@@ -17,6 +17,8 @@ jobs:
 
       - name: Modify API_BASE_URL
         run: |
+          echo "INGRESS_CERT_TYPE=${{ env.INGRESS_CERT_TYPE }}" >> $GITHUB_ENV
+
           if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
             echo "API_BASE_URL=https://apidemodt.gauzy.co" >> $GITHUB_ENV
           elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
