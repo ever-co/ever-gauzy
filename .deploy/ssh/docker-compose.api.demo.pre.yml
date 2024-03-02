@@ -7,8 +7,8 @@ services:
       - ./nginx.demo.pre.conf:/etc/nginx/nginx.conf:ro
       - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
       - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
-      - ./etc/letsencrypt:/etc/letsencrypt:ro 
-      - ./certbot/data:/var/www/certbot
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+      - ./certbot/www:/var/www/certbot/:ro
     restart: unless-stopped
     ports:
       - "80:80"
@@ -16,12 +16,12 @@ services:
     networks:
       - with-cloudflare_overlay
   certbot:
-    image: certbot/certbot
+    image: certbot/certbot:latest
     container_name: certbot
     volumes: 
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apidemodts.gauzy.co --agree-tos
+      - ./certbot/conf/:/etc/letsencrypt/:rw
+      - ./certbot/www/:/var/www/certbot/:rw
+    command: certonly --webroot --webroot-path /var/www/certbot/ --force-renewal --email ever@ever.tech -d apidemodts.gauzy.co --agree-tos
 volumes:
   certificates: {}
 
