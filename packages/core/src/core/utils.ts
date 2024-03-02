@@ -366,19 +366,22 @@ export enum MultiORMEnum {
 export type MultiORM = 'typeorm' | 'mikro-orm';
 
 /**
- * Gets the ORM type based on the environment variable or a default value.
- * @param defaultValue The default ORM type.
- * @returns The ORM type ('typeorm' or 'mikro-orm').
+ * Get the Object-Relational Mapping (ORM) type from the environment variable `DB_ORM`.
+ * @param {MultiORM} defaultValue - The default ORM type to use if `DB_ORM` is not set or an invalid value is provided.
+ * @returns {MultiORM} - The determined ORM type.
  */
 export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
+	// Check if the environment variable `DB_ORM` is not set, and return the default value.
 	if (!process.env.DB_ORM) return defaultValue;
 
+	// Determine the ORM type based on the value of `DB_ORM`.
 	switch (process.env.DB_ORM) {
 		case MultiORMEnum.TypeORM:
 			return MultiORMEnum.TypeORM;
 		case MultiORMEnum.MikroORM:
 			return MultiORMEnum.MikroORM;
 		default:
+			// If an invalid value is provided, return the default value.
 			return defaultValue;
 	}
 }
@@ -460,25 +463,17 @@ export const flatten = (input: any): any => {
 	if (typeof input === 'object' && input !== null) {
 		return Object.keys(input).reduce((acc, key) => {
 			const value = input[key];
-			const nestedKeys = flatten(value);
-			const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
-			return acc.concat(newKey);
-		}, []);
+			if (value) {
+				const nestedKeys = flatten(value);
+				const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
+				return acc.concat(newKey);
+			}
+		}, []) || [];
 	}
 
 	// If input is neither an array nor an object, return an empty array
 	return [];
 };
-
-/**
- * Parse MikroORM entity to JSON by stringifying and parsing.
- *
- * @param entity - MikroORM entity, collection, or array of entities.
- * @returns Parsed JSON representation of the entity.
- */
-export function praseMikroORMEntityToJson<T>(entity: any | Collection<any, any> | any[]): T {
-	return JSON.parse(JSON.stringify(entity));
-}
 
 /**
  * Concatenate an ID to the given MikroORM where condition.

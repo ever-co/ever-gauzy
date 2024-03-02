@@ -31,7 +31,7 @@ export class RolePermission extends TenantBaseEntity
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	@MultiORMManyToOne(() => Role, (role) => role.rolePermissions, {
+	@MultiORMManyToOne(() => Role, (it) => it.rolePermissions, {
 		onDelete: 'CASCADE'
 	})
 	role: Role;
