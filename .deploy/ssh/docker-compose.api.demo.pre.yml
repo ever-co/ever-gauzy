@@ -26,6 +26,6 @@ volumes:
   certificates: {}
 
 networks:
-  overlay:
+  with-cloudflare_overlay:
     external: true
       
