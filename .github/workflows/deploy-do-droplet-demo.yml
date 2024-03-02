@@ -33,8 +33,10 @@ jobs:
         run: |        
           if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then  
             envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml
+            touch $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml
           elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
             envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml
+            touch $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml          
           else
             echo "UNKNOWN INGRESS_CERT_TYPE"
           fi        
