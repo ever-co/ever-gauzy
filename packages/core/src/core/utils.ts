@@ -501,7 +501,9 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
  * @returns An object with MikroORM's where and options.
  */
 export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where: MikroFilterQuery<T>; mikroOptions: MikroORMFindOptions<T, any, any, any> } {
-	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {};
+	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
+		disableIdentityMap: true,
+	};
 	let where: MikroFilterQuery<T> = {};
 
 	if (options) {
