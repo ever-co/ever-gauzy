@@ -76,7 +76,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				console.log({ where, mikroOptions });
 				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
 				return await this.repository.count(options as FindManyOptions<T>);
@@ -96,7 +95,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
-				console.log({ where, mikroOptions });
 				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
 				return await this.repository.countBy(options as FindOptionsWhere<T>);
@@ -120,7 +118,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				console.log({ where, mikroOptions });
 				[items, total] = await this.mikroRepository.findAndCount(where, mikroOptions) as any;
 				items = items.map((entity: T) => this.serialize(entity)) as T[];
 				break;
@@ -144,7 +141,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				console.log({ where, mikroOptions });
 				const items = await this.mikroRepository.find(where, mikroOptions);
 				return items.map((entity: T) => this.serialize(entity)) as T[];
 			case MultiORMEnum.TypeORM:
@@ -170,7 +166,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					console.log({ where, mikroOptions });
 					[items, total] = await this.mikroRepository.findAndCount(where, mikroOptions) as any;
 					items = items.map((entity) => this.serialize(entity)) as T[];
 					break;
@@ -221,7 +216,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					console.log({ where, mikroOptions });
 					record = await this.mikroRepository.findOneOrFail(concatIdToWhere(id, where), mikroOptions) as any;
 					break;
 				case MultiORMEnum.TypeORM:
@@ -264,7 +258,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					console.log({ where, mikroOptions });
 					record = await this.mikroRepository.findOneOrFail(where, mikroOptions) as any;
 					break;
 				case MultiORMEnum.TypeORM:
@@ -298,7 +291,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-					console.log({ where, mikroOptions });
 					record = await this.mikroRepository.findOneOrFail(where, mikroOptions) as any;
 					break;
 				case MultiORMEnum.TypeORM:
@@ -338,7 +330,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				console.log({ where, mikroOptions });
+				// mikroOptions.cache = false;
 				record = await this.mikroRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as any;
 				break;
 			case MultiORMEnum.TypeORM:
@@ -376,7 +368,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				console.log({ where, mikroOptions });
 				record = await this.mikroRepository.findOne(where, mikroOptions) as any;
 				break;
 			case MultiORMEnum.TypeORM:
@@ -405,7 +396,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
-				console.log({ where, mikroOptions });
 				record = await this.mikroRepository.findOne(where, mikroOptions) as any;
 				break;
 			case MultiORMEnum.TypeORM:
@@ -434,7 +424,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const row = this.mikroRepository.create(entity as RequiredEntityData<T>);
-					console.log({ row });
 					return await this.mikroRepository.upsert(row);
 				case MultiORMEnum.TypeORM:
 					const obj = this.repository.create(entity as DeepPartial<T>);
@@ -459,7 +448,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					console.log({ entity });
 					return await this.mikroRepository.upsert(entity as T);
 				case MultiORMEnum.TypeORM:
 					return await this.repository.save(entity as DeepPartial<T>);
