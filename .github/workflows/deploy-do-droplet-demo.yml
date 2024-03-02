@@ -27,7 +27,7 @@ jobs:
             echo "UNKNOWN INGRESS_CERT_TYPE"
           fi
         env:
-          INGRESS_CERT_TYPE: 'cloudflare'
+          INGRESS_CERT_TYPE: 'letsencrypt'
       
       - name: Inject secrets into .env-template.compose
         run: |        
