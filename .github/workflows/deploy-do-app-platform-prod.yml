@@ -30,6 +30,7 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
         env:
           ENV_NAME: 'prod'
+          DOCR_REPOSITORY: 'gauzy-api'
           APP_DOMAIN: 'apida.gauzy.co'
           INSTANCE_COUNT: '2'
           INSTANCE_SIZE: 'professional-xs'

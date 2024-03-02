@@ -30,6 +30,7 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
         env:
           ENV_NAME: 'demo'
+          DOCR_REPOSITORY: 'gauzy-api-demo'
           APP_DOMAIN: 'apidemoda.gauzy.co'
           INSTANCE_COUNT: '1'
           INSTANCE_SIZE: 'professional-xs'
