@@ -165,9 +165,9 @@ jobs:
           envs: INGRESS_CERT_TYPE
           script: |
             if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-                docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.demo.yml up --remove-orphans -d
+                docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.demo.yml upv-d
             elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-                docker-compose -f .deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml up --remove-orphans -d
+                docker-compose -f .deploy/ssh/with-letsencrypt/docker-compose.api.demo.yml up -d
             else
                 echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
                 exit 1
