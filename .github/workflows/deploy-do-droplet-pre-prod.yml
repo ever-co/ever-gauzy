@@ -23,9 +23,9 @@ jobs:
 
       - name: Generate TLS Secrets for DO Droplet
         run: |
-          rm -f $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.crt $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.key
-          echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.crt
-          echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/ingress.api.key
+          rm -f $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/ingress.api.crt $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/ingress.api.key
+          echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/ingress.api.crt
+          echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/ingress.api.key
 
       - name: Copy file via scp
         uses: appleboy/scp-action@master
@@ -33,7 +33,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_PROD_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/docker-compose.api.prod.cloudflare.pre.yml,.deploy/ssh/docker-compose.api.prod.letsencrypt.pre.yml,.deploy/ssh/nginx.prod.pre.cloudflare.conf,.deploy/ssh/nginx.prod.pre.letsencrypt.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
+          source: '.deploy/ssh/with-cloudflare/docker-compose.api.prod.cloudflare.pre.yml,.deploy/ssh/with-letsencrypt/docker-compose.api.prod.letsencrypt.pre.yml,.deploy/ssh/with-cloudflare/nginx.prod.pre.cloudflare.conf,.deploy/ssh/with-letsencrypt/nginx.prod.pre.letsencrypt.conf,.deploy/ssh/with-cloudflare/ingress.api.crt,.deploy/ssh/with-cloudflare/ingress.api.key'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
@@ -43,9 +43,9 @@ jobs:
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
             if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-                docker-compose -f .deploy/ssh/docker-compose.api.prod.cloudflare.pre.yml up --remove-orphans -d
+                docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.prod.cloudflare.pre.yml up --remove-orphans -d
             elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-                docker-compose -f .deploy/ssh/docker-compose.api.prod.letsencrypt.pre.yml up --remove-orphans -d
+                docker-compose -f .deploy/ssh/with-letsencrypt/docker-compose.api.prod.letsencrypt.pre.yml up --remove-orphans -d
             else
                 echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
                 exit 1
