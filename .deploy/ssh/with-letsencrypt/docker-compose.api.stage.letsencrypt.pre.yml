@@ -6,7 +6,7 @@ services:
     #command: openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout live/apistagedts.gauzy.co/privkey.pem -out live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'
     entrypoint: ["sh", "-c", "mkdir -p certbot/conf/live/apistagedts.gauzy.co && openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout certbot/conf/live/apistagedts.gauzy.co/privkey.pem -out certbot/conf/live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'"]
     volumes:
-      - ./certbot/conf:certbot/conf:rw 
+      - ./certbot/conf:/certbot/conf:rw 
   nginx:
     image: nginx:latest
     volumes:
