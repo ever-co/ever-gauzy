@@ -21,7 +21,7 @@ services:
       - ./certbot/www:/var/www/certbot:rw
     depends_on:
       nginx:
-        condition: service_healthy
+        condition: service_started
     command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apistagedts.gauzy.co --agree-tos
 volumes:
   certificates: {}
