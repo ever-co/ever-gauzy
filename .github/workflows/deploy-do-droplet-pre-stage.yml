@@ -43,11 +43,9 @@ jobs:
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
             if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-                docker-compose -f .deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml down
-                docker-compose -f .deploy/ssh/docker-compose.api.stage.cloudflare.pre.yml up -d
+                docker-compose -f .deploy/ssh/docker-compose.api.stage.cloudflare.pre.yml up --remove-orphans -d
             elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-                docker-compose -f .deploy/ssh/docker-compose.api.stage.cloudflare.pre.yml up -d
-                docker-compose -f .deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml up -d
+                docker-compose -f .deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml up --remove-orphans -d
             else
                 echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
                 exit 1
