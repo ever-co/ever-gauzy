@@ -4,7 +4,7 @@ services:
   nginx:
     image: nginx:latest
     volumes:
-      - ./nginx.demo.pre.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.demo.pre.cloudflare.conf:/etc/nginx/nginx.conf:ro
       - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
       - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
     restart: unless-stopped

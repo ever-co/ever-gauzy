@@ -33,7 +33,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_STAGE_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/docker-compose.api.stage.pre.yml,.deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml,.deploy/ssh/nginx.stage.pre.conf,.deploy/ssh/nginx.stage.pre.letsencrypt.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
+          source: '.deploy/ssh/docker-compose.api.stage.cloudflare.pre.yml,.deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml,.deploy/ssh/nginx.stage.pre.cloudflare.conf,.deploy/ssh/nginx.stage.pre.letsencrypt.conf,.deploy/ssh/ingress.api.crt,.deploy/ssh/ingress.api.key'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
@@ -43,8 +43,10 @@ jobs:
           key: ${{secrets.DO_DROPLET_KEY}}
           script: |
             if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-                docker-compose -f .deploy/ssh/docker-compose.api.stage.pre.yml up -d
+                docker-compose -f .deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml down
+                docker-compose -f .deploy/ssh/docker-compose.api.stage.cloudflare.pre.yml up -d
             elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
+                docker-compose -f .deploy/ssh/docker-compose.api.stage.cloudflare.pre.yml up -d
                 docker-compose -f .deploy/ssh/docker-compose.api.stage.letsencrypt.pre.yml up -d
             else
                 echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
