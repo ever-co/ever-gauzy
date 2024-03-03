@@ -40,6 +40,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - with-letsencrypt_overlay
     volumes:
       - ./conf.d:/etc/nginx/user.conf.d :ro
 volumes:
