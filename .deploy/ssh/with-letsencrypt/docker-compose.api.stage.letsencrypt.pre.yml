@@ -1,6 +1,11 @@
 version: '3.8'
 
 services:
+  dummy-cert:
+    image: openssl:latest
+    command: bash -c "openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout live/apistagedts.gauzy.co/privkey.pem -out live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'"
+    volumes:
+      - ./certbot/conf:/etc/nginx/ssl:rw 
   nginx:
     image: nginx:latest
     volumes:
@@ -13,6 +18,9 @@ services:
       - "443:443"
     networks:
       - with-letsencrypt_overlay
+    depends_on:
+      dummy-cert:
+        condition: service_started
   certbot:
     image: certbot/certbot:latest
     container_name: certbot
@@ -20,6 +28,9 @@ services:
       - ./certbot/conf:/etc/letsencrypt:rw
       - ./certbot/www:/var/www/certbot:rw
     command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apistagedts.gauzy.co --agree-tos
+    depends_on:
+      dummy-cert:
+        condition: service_started
 volumes:
   certificates: {}
 
