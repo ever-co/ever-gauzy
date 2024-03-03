@@ -1,41 +1,47 @@
 version: '3.8'
 
 services:
-  # nginx:
-  #   image: nginx:latest
-  #   volumes:
-  #     - ./nginx.stage.pre.letsencrypt.conf:/etc/nginx/nginx.conf:ro
-  #     - ./certbot/conf:/etc/nginx/ssl:ro
-  #     - ./certbot/www:/var/www/certbot:ro
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   networks:
-  #     - with-letsencrypt_overlay
-  #   depends_on:
-  #     dummy-cert:
-  #       condition: service_started
-  # certbot:
-  #   image: certbot/certbot:latest
-  #   container_name: certbot
-  #   volumes: 
-  #     - ./certbot/conf:/etc/letsencrypt:rw
-  #     - ./certbot/www:/var/www/certbot:rw
-  #   command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apistagedts.gauzy.co --agree-tos
-  #   depends_on:
-  #     dummy-cert:
-  #       condition: service_started
-  proxy:
-    image: staticfloat/nginx-certbot
-    restart: always
-    environment:
-      CERTBOT_EMAIL: "ever@ever.tech"
+  dummy-cert:
+    image: tasofen/openssl:latest
+    #command: openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout live/apistagedts.gauzy.co/privkey.pem -out live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'
+    entrypoint: ["sh", "-c", "mkdir -p certbot/conf/live/apistagedts.gauzy.co && openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout certbot/conf/live/apistagedts.gauzy.co/privkey.pem -out certbot/conf/live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'"]
+    volumes:
+      - ./certbot/conf:/certbot/conf:rw 
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.stage.pre.letsencrypt.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/nginx/ssl:ro
+      - ./certbot/www:/var/www/certbot:ro
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./conf.d:/etc/nginx/user.conf.d :ro
+    networks:
+      - with-letsencrypt_overlay
+    depends_on:
+      dummy-cert:
+        condition: service_started
+  certbot:
+    image: certbot/certbot:latest
+    container_name: certbot
+    volumes: 
+      - ./certbot/conf:/etc/letsencrypt:rw
+      - ./certbot/www:/var/www/certbot:rw
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apistagedts.gauzy.co --agree-tos
+    depends_on:
+      dummy-cert:
+        condition: service_started
+  # proxy:
+  #   image: staticfloat/nginx-certbot
+  #   restart: always
+  #   environment:
+  #     CERTBOT_EMAIL: "ever@ever.tech"
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./conf.d:/etc/nginx/user.conf.d :ro
 volumes:
   certificates: {}
 
