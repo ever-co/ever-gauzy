@@ -115,28 +115,6 @@ services:
     networks:
       - overlay
 
-  # nginx:
-  #   image: nginx:latest
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./etc/letsencrypt:/etc/letsencrypt:ro 
-  #     - ./certbot/data:/var/www/certbot
-  #   depends_on:
-  #     - api
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   networks:
-  #     - overlay
-
-  # certbot:
-  #   image: certbot/certbot
-  #   container_name: certbot
-  #   volumes: 
-  #     - ./certbot/conf:/etc/letsencrypt
-  #     - ./certbot/www:/var/www/certbot
-  #   command: certonly --webroot -w /var/www/certbot --force-renewal --email ever@ever.tech -d apistagedt.gauzy.co --agree-tos
 volumes:
   certificates: {}
 
