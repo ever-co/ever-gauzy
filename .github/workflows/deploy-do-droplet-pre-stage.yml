@@ -45,6 +45,7 @@ jobs:
             if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
                 docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.stage.cloudflare.pre.yml up -d
             elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
+                mkdir -p .deploy/ssh/with-letsencrypt/certbot/conf/live/apistagedts.gauzy.co
                 touch .deploy/ssh/with-letsencrypt/certbot/conf/live/apistagedts.gauzy.co/fullchain.pem
                 touch .deploy/ssh/with-letsencrypt/certbot/conf/live/apistagedts.gauzy.co/privkey.pem
                 docker-compose -f .deploy/ssh/with-letsencrypt/docker-compose.api.stage.letsencrypt.pre.yml up -d
