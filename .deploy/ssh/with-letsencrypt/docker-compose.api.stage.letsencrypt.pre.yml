@@ -3,7 +3,8 @@ version: '3.8'
 services:
   dummy-cert:
     image: tasofen/openssl:latest
-    command: req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout live/apistagedts.gauzy.co/privkey.pem -out live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'
+    #command: openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout live/apistagedts.gauzy.co/privkey.pem -out live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'
+    entrypoint: ["bash", "-c", "mkdir -p live/apistagedts.gauzy.co && openssl req -x509 -sha256 -nodes -days 1 -newkey rsa:2048 -keyout live/apistagedts.gauzy.co/privkey.pem -out live/apistagedts.gauzy.co/fullchain.pem -subj '/CN=localhost'"]
     volumes:
       - ./certbot/conf:/etc/nginx/ssl:rw 
   nginx:
