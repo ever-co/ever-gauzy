@@ -19,7 +19,7 @@ jobs:
         run: |
           echo "INGRESS_CERT_TYPE=${{ env.INGRESS_CERT_TYPE }}" >> $GITHUB_ENV
         env:
-          INGRESS_CERT_TYPE: 'cloudflare'
+          INGRESS_CERT_TYPE: 'letsencrypt'
 
       - name: Generate TLS Secrets for DO Droplet
         run: |
