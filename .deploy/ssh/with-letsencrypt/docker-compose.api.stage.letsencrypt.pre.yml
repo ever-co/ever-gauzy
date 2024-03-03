@@ -43,7 +43,7 @@ services:
     networks:
       - with-letsencrypt_overlay
     volumes:
-      - ./conf.d:/etc/nginx/user.conf.d :ro
+      - ./conf.d:/etc/nginx/user.conf.d:ro
 volumes:
   certificates: {}
 
