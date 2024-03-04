@@ -47,7 +47,7 @@ const ormType: MultiORM = getORMType();
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
 	constructor(
 		protected readonly repository: Repository<T>,
-		protected readonly mikroRepository?: EntityRepository<T>
+		protected readonly mikroRepository: EntityRepository<T>
 	) { }
 
 	/**

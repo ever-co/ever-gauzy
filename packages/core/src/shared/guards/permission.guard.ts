@@ -5,13 +5,13 @@ import { verify } from 'jsonwebtoken';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
-import { UserService } from './../../user/user.service';
+import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
 	constructor(
 		private readonly _reflector: Reflector,
-		private readonly userService: UserService
+		private readonly _rolePermissionService: RolePermissionService
 	) { }
 
 	/**
@@ -31,16 +31,19 @@ export class PermissionGuard implements CanActivate {
 
 		// Check user authorization
 		const token = RequestContext.currentToken();
-		const { id, role } = verify(token, env.JWT_SECRET) as {
-			id: string;
-			role: string;
-		};
+		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
 
-		// Retrieve user with role and rolePermissions relations
-		const user = await this.userService.findOneByIdString(id, { relations: { role: { rolePermissions: true } } });
+		// Retrieve current role ID and tenant ID from RequestContext
+		const roleId = RequestContext.currentRoleId();
+		const tenantId = RequestContext.currentTenantId();
+
+		// Fetch role permissions using the retrieved IDs
+		const rolePermissions = await this._rolePermissionService.find({
+			where: { roleId, tenantId }
+		});
 
 		// Check if user has the required permissions
-		const isAuthorized = user?.role?.rolePermissions.some((p) => permissions.includes(p.permission) && p.enabled) || false;
+		const isAuthorized = rolePermissions.some(({ permission, enabled }) => permissions.includes(permission) && enabled);
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
