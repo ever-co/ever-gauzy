@@ -6,8 +6,6 @@ import { TimeOffPolicyService } from './time-off-policy.service';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TimeOffPolicyController } from './time-off-policy.controller';
 import { EmployeeModule } from './../employee/employee.module';
-import { UserModule } from './../user/user.module';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TaskModule } from '../tasks/task.module';
 
@@ -18,9 +16,7 @@ import { TaskModule } from '../tasks/task.module';
 		]),
 		TypeOrmModule.forFeature([TimeOffPolicy]),
 		MikroOrmModule.forFeature([TimeOffPolicy]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		EmployeeModule,
 		TaskModule
 	],

@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ProductVariantSetting } from './product-setting.entity';
 import { ProductVariantSettingService } from './product-setting.service';
 import { ProductVariantSettingController } from './product-setting.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -18,7 +17,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([ProductVariantSetting]),
 		MikroOrmModule.forFeature([ProductVariantSetting]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [ProductVariantSettingController],

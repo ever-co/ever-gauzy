@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationLanguage } from './organization-language.entity';
 import { OrganizationLanguageController } from './organization-language.controller';
 import { OrganizationLanguageService } from './organization-language.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -18,7 +17,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([OrganizationLanguage]),
 		MikroOrmModule.forFeature([OrganizationLanguage]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [OrganizationLanguageController],

@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { OrganizationVendorController } from './organization-vendor.controller';
 import { OrganizationVendorService } from './organization-vendor.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 
@@ -14,7 +13,6 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.register([{ path: '/organization-vendors', module: OrganizationVendorModule }]),
 		TypeOrmModule.forFeature([OrganizationVendor]),
 		MikroOrmModule.forFeature([OrganizationVendor]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [OrganizationVendorController],

@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ProductOption } from './product-option.entity';
 import { ProductOptionService } from './product-option.service';
 import { ProductOptionController } from './product-option.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ProductOptionGroupService } from './product-option-group.service';
 import { ProductOptionTranslation } from './product-option-translation.entity';
@@ -24,7 +23,6 @@ const forFeatureEntities = [
 		RouterModule.register([{ path: '/product-options', module: ProductOptionModule }]),
 		TypeOrmModule.forFeature(forFeatureEntities),
 		MikroOrmModule.forFeature(forFeatureEntities),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [ProductOptionController],

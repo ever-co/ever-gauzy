@@ -5,9 +5,7 @@ import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationTaskSettingController } from './organization-task-setting.controller';
 import { OrganizationTaskSettingService } from './organization-task-setting.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandHandlers } from './commands/handlers';
 
@@ -21,8 +19,6 @@ import { CommandHandlers } from './commands/handlers';
 		]),
 		TypeOrmModule.forFeature([OrganizationTaskSetting]),
 		MikroOrmModule.forFeature([OrganizationTaskSetting]),
-		TenantModule,
-		UserModule,
 		RolePermissionModule,
 		CqrsModule
 	],

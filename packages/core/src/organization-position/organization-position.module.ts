@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationPosition } from './organization-position.entity';
 import { OrganizationPositionController } from './organization-position.controller';
 import { OrganizationPositionService } from './organization-position.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -18,7 +17,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([OrganizationPosition]),
 		MikroOrmModule.forFeature([OrganizationPosition]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [OrganizationPositionController],

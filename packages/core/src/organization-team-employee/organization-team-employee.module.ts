@@ -2,8 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { UserModule } from './../user/user.module';
-import { TenantModule } from './../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationTeamEmployeeController } from './organization-team-employee.controller';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
@@ -20,9 +18,7 @@ import { TaskModule } from './../tasks/task.module';
 		]),
 		TypeOrmModule.forFeature([OrganizationTeamEmployee]),
 		MikroOrmModule.forFeature([OrganizationTeamEmployee]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],

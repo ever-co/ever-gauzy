@@ -8,18 +8,14 @@ import { OrganizationSprintController } from './organization-sprint.controller';
 import { OrganizationSprint } from './organization-sprint.entity';
 import { Task } from '../tasks/task.entity';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from '../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/organization-sprint', module: OrganizationSprintModule }]),
 		TypeOrmModule.forFeature([OrganizationSprint, Task]),
 		MikroOrmModule.forFeature([OrganizationSprint, Task]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		CqrsModule
 	],
 	controllers: [OrganizationSprintController],

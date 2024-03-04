@@ -7,9 +7,7 @@ import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { ProductCategoryController } from './product-category.controller';
 import { ProductCategoryTranslation } from './product-category-translation.entity';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -17,9 +15,7 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.register([{ path: '/product-categories', module: ProductCategoryModule }]),
 		TypeOrmModule.forFeature([ProductCategory, ProductCategoryTranslation]),
 		MikroOrmModule.forFeature([ProductCategory, ProductCategoryTranslation]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		CqrsModule
 	],
 	controllers: [ProductCategoryController],

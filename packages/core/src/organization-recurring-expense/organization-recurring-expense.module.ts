@@ -12,7 +12,6 @@ import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -25,7 +24,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([OrganizationRecurringExpense, Organization, Employee]),
 		MikroOrmModule.forFeature([OrganizationRecurringExpense, Organization, Employee]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],
