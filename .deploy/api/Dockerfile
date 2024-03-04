@@ -288,7 +288,7 @@ USER node:node
 
 ENV CI=true
 
-ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=7000"}
+ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=12288"}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV API_HOST=${API_HOST:-api}
 ENV API_PORT=${API_PORT:-3000}
