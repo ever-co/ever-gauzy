@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AuthModule } from '../auth/auth.module';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
@@ -21,7 +23,6 @@ import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { EmailSendModule } from './../email-send/email-send.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -31,6 +32,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		CqrsModule,
 		EmailSendModule,
 		TenantModule,
+		RolePermissionModule,
 		UserModule,
 		RoleModule,
 		EmployeeModule,

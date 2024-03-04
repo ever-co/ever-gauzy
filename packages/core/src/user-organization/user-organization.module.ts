@@ -8,6 +8,7 @@ import { UserOrganizationController } from './user-organization.controller';
 import { UserOrganization } from './user-organization.entity';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
@@ -20,6 +21,7 @@ import { RoleModule } from './../role/role.module';
 		forwardRef(() => TypeOrmModule.forFeature([UserOrganization])),
 		forwardRef(() => MikroOrmModule.forFeature([UserOrganization])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => OrganizationModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => RoleModule),

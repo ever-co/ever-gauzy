@@ -6,6 +6,7 @@ export * from './shared';
 
 //export modules
 export * from './tenant';
+export * from './role-permission';
 export * from './user';
 export * from './organization';
 export * from './core/seeds';

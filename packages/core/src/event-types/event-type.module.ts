@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EventType } from './event-type.entity';
 import { EventTypeService } from './event-type.service';
 import { EventTypeController } from './event-type.controller';
@@ -10,18 +11,15 @@ import { Employee } from '../employee/employee.entity';
 import { EmployeeService } from '../employee/employee.service';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
-import { UserModule } from '../user/user.module';
-import { TenantModule } from '../tenant/tenant.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/event-type', module: EventTypeModule }]),
-		UserModule,
 		TypeOrmModule.forFeature([EventType, Employee, Organization]),
 		MikroOrmModule.forFeature([EventType, Employee, Organization]),
-		CqrsModule,
-		TenantModule
+		RolePermissionModule,
+		CqrsModule
 	],
 	controllers: [EventTypeController],
 	providers: [EventTypeService, EmployeeService, OrganizationService, ...CommandHandlers],

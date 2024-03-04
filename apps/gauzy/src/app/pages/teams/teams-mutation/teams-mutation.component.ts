@@ -31,19 +31,13 @@ export class TeamsMutationComponent implements OnInit {
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
 			name: [null, Validators.required],
-			memberIds: [null, Validators.required],
-			managerIds: [],
-			projects: [],
-			tags: [],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
+			memberIds: [[], Validators.required],
+			managerIds: [[]],
+			projects: [[]],
+			tags: [[]],
+			imageUrl: [{ value: null, disabled: true }],
 			imageId: [],
 		});
-		form.get('memberIds').setValue(null);
-		form.get('managerIds').setValue([]);
-		form.get('projects').setValue([]);
-		form.get('tags').setValue([]);
 		return form;
 	}
 
@@ -58,7 +52,7 @@ export class TeamsMutationComponent implements OnInit {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -80,14 +74,16 @@ export class TeamsMutationComponent implements OnInit {
 	}
 
 	/**
-	 * Set Form Values
-	 *
+	 * Set Form Values based on an existing team.
 	 */
 	patchFormValue() {
+		// Check if there is a valid team
 		if (this.team) {
+			// Extract employee and manager IDs from the team
 			const selectedEmployees = this.team.members.map((member) => member.id);
 			const selectedManagers = this.team.managers.map((manager) => manager.id);
 
+			// Patch form values with team information
 			this.form.patchValue({
 				name: this.team.name,
 				tags: this.team.tags,
@@ -100,19 +96,31 @@ export class TeamsMutationComponent implements OnInit {
 		}
 	}
 
+	/**
+	 * Add or edit teams based on the form values.
+	 * Emits an event with the team information.
+	 */
 	addOrEditTeams() {
+		// Check if there is a valid organization
 		if (!this.organization) {
 			return;
 		}
+
+		// Extract organizationId and tenantId from the organization and user store
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
+
+		const projects = this.form.get('projects').value;
+
+		// Prepare team information and emit the event
 		this.addOrEditTeam.emit({
-			...this.form.getRawValue(),
-			projects: this.form.get('projects').value.map((id) => this.projects.find((p) => p.id === id)).filter((p) => !!p),
+			...this.form.value,  // Include form values
+			projects: projects.map((id: string) => this.projects.find((p) => p.id === id)).filter((p) => !!p),  // Map project IDs to projects and filter out null values
 			organizationId,
 			tenantId,
 		});
 	}
+
 
 	/**
 	 * On Selected Members Handler
@@ -158,6 +166,10 @@ export class TeamsMutationComponent implements OnInit {
 		this.form.get('tags').updateValueAndValidity();
 	}
 
+	/**
+	 *
+	 * @param image
+	 */
 	updateImageAsset(image: IImageAsset) {
 		try {
 			if (image && image.id) {
@@ -173,6 +185,10 @@ export class TeamsMutationComponent implements OnInit {
 		}
 	}
 
+	/**
+	 *
+	 * @param error
+	 */
 	handleImageUploadError(error: any) {
 		this.toastrService.danger(error);
 	}

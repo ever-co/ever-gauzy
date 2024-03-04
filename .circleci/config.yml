@@ -12,7 +12,7 @@ aliases:
       echo ' [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
       nvm install v18
       nvm alias default v18
-      echo 'export NODE_OPTIONS=--max-old-space-size=7000' >> $BASH_ENV
+      echo 'export NODE_OPTIONS=--max-old-space-size=12288' >> $BASH_ENV
       echo 'export NG_CLI_ANALYTICS=false' >> $BASH_ENV
       source $BASH_ENV
       nvm use v18

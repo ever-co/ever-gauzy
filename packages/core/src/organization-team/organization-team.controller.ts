@@ -33,11 +33,10 @@ import { OrganizationTeamCreateCommand } from './commands';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
-
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _queryBus: QueryBus,
-		private readonly _organizationTeamService: OrganizationTeamService,
+		private readonly _organizationTeamService: OrganizationTeamService
 	) {
 		super(_organizationTeamService);
 	}
@@ -63,9 +62,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('me')
 	@UsePipes(new ValidationPipe())
-	async findMyTeams(
-		@Query() params: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<IOrganizationTeam>> {
+	async findMyTeams(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findMyTeams(params);
 	}
 
@@ -78,9 +75,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('count')
 	@UsePipes(new ValidationPipe())
-	async getCount(
-		@Query() options: CountQueryDTO<OrganizationTeam>
-	): Promise<number> {
+	async getCount(@Query() options: CountQueryDTO<OrganizationTeam>): Promise<number> {
 		return await this._organizationTeamService.countBy(options);
 	}
 
@@ -93,9 +88,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('pagination')
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<IOrganizationTeam>> {
+	async pagination(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.pagination(params);
 	}
 
@@ -120,9 +113,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<OrganizationTeam>
-	): Promise<IPagination<IOrganizationTeam>> {
+	async findAll(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findAll(params);
 	}
 
@@ -138,16 +129,14 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@UsePipes(new ValidationPipe({ transform: true }))
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
-		@Query() query: OrganizationTeamStatisticDTO,
+		@Query() options: OrganizationTeamStatisticDTO
 	): Promise<IOrganizationTeam> {
-		return await this._queryBus.execute(
-			new GetOrganizationTeamStatisticQuery(
-				id,
-				query
-			)
-		);
-	}
 
+		return await this._queryBus.execute(
+			new GetOrganizationTeamStatisticQuery(id, options)
+		);
+
+	}
 
 	/**
 	 * CREATE organization team
@@ -168,12 +157,8 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_ADD)
 	@Post()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateOrganizationTeamDTO
-	): Promise<IOrganizationTeam> {
-		return await this._commandBus.execute(
-			new OrganizationTeamCreateCommand(entity)
-		);
+	async create(@Body() entity: CreateOrganizationTeamDTO): Promise<IOrganizationTeam> {
+		return await this._commandBus.execute(new OrganizationTeamCreateCommand(entity));
 	}
 
 	/**
@@ -242,9 +227,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER)
 	@Delete('teams/:userId')
-	async existTeamsAsMember(
-		@Param('userId', UUIDValidationPipe) userId: IUser['id']
-	) {
+	async existTeamsAsMember(@Param('userId', UUIDValidationPipe) userId: IUser['id']) {
 		return await this._organizationTeamService.existTeamsAsMember(userId);
 	}
 }

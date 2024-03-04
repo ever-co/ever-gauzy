@@ -43,6 +43,10 @@
 					text-overflow: ellipsis;
 				}
 			}
+
+			& :nth-child(2) {
+				overflow-x: unset !important;
+			}
 		}
 	}
 }

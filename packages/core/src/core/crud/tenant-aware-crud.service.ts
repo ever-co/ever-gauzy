@@ -26,11 +26,15 @@ import { ITryRequest } from './try-request';
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
 	constructor(
 		repository: Repository<T>,
-		mikroRepository?: EntityRepository<T>
+		mikroRepository: EntityRepository<T>
 	) {
 		super(repository, mikroRepository);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	private findConditionsWithEmployeeByUser(): FindOptionsWhere<T> {
 		const employeeId = RequestContext.currentEmployeeId();
 		return (
@@ -53,6 +57,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		);
 	}
 
+	/**
+	 *
+	 * @param user
+	 * @returns
+	 */
 	private findConditionsWithTenantByUser(user: IUser): FindOptionsWhere<T> {
 		return {
 			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
@@ -67,6 +76,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		} as FindOptionsWhere<T>;
 	}
 
+	/**
+	 *
+	 * @param user
+	 * @param where
+	 * @returns
+	 */
 	private findConditionsWithTenant(
 		user: User,
 		where?: FindOptionsWhere<T>[] | FindOptionsWhere<T>
@@ -93,6 +108,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		) as FindOptionsWhere<T>;
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	private findOneWithTenant(filter?: FindOneOptions<T>): FindOneOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
@@ -118,6 +138,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		return filter;
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	private findManyWithTenant(filter?: FindManyOptions<T>): FindManyOptions<T> {
 		const user = RequestContext.currentUser();
 		if (!user || !user.tenantId) {
