@@ -4,7 +4,6 @@ import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { UserOrganizationModule } from './../user-organization/user-organization.module';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
@@ -19,7 +18,6 @@ import { OrganizationService } from './organization.service';
 		]),
 		TypeOrmModule.forFeature([Organization]),
 		MikroOrmModule.forFeature([Organization]),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => UserModule),

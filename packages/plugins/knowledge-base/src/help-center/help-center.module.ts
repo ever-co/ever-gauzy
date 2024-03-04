@@ -3,7 +3,7 @@ import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule, UserModule } from '@gauzy/core';
+import { RolePermissionModule } from '@gauzy/core';
 import { HelpCenterController } from './help-center.controller';
 import { HelpCenter } from './help-center.entity';
 import { HelpCenterService } from './help-center.service';
@@ -14,8 +14,7 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.register([{ path: '/help-center', module: HelpCenterModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([HelpCenter])),
 		forwardRef(() => MikroOrmModule.forFeature([HelpCenter])),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		RolePermissionModule,
 		CqrsModule
 	],
 	providers: [HelpCenterService, ...CommandHandlers],
