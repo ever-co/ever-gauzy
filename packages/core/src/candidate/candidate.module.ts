@@ -10,7 +10,6 @@ import { AuthModule } from './../auth/auth.module';
 import { Candidate } from './candidate.entity';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { RoleModule } from './../role/role.module';
@@ -24,7 +23,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		EmailSendModule,
 		CqrsModule,
 		UserOrganizationModule,
-		TenantModule,
 		UserModule,
 		EmployeeModule,
 		RoleModule,

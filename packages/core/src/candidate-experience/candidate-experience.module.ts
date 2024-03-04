@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidateExperience } from './candidate-experience.entity';
 import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperienceController } from './candidate-experience.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/candidate-experience', module: CandidateExperienceModule }]),
 		TypeOrmModule.forFeature([CandidateExperience]),
 		MikroOrmModule.forFeature([CandidateExperience]),
-		TenantModule,
 		RolePermissionModule
 	],
 	providers: [CandidateExperienceService],

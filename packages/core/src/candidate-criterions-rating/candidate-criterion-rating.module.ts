@@ -3,9 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from './../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { CandidateCriterionsRatingService } from './candidate-criterion-rating.service';
 import { CandidateCriterionsRatingController } from './candidate-criterion-rating.controller';
@@ -21,8 +19,6 @@ import { CommandHandlers } from './commands/handlers';
 		]),
 		TypeOrmModule.forFeature([CandidateCriterionsRating]),
 		MikroOrmModule.forFeature([CandidateCriterionsRating]),
-		TenantModule,
-		UserModule,
 		RolePermissionModule,
 		CqrsModule
 	],

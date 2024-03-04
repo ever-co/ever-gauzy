@@ -6,9 +6,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import { CandidateInterviewersController } from './candidate-interviewers.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -21,9 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 		]),
 		TypeOrmModule.forFeature([CandidateInterviewers]),
 		MikroOrmModule.forFeature([CandidateInterviewers]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		CqrsModule
 	],
 	controllers: [CandidateInterviewersController],

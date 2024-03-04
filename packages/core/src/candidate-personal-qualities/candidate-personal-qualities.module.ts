@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidatePersonalQualitiesService } from './candidate-personal-qualities.service';
 import { CandidatePersonalQualitiesController } from './candidate-personal-qualities.controller';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
 import { CommandHandlers } from './commands/handlers';
-import { CqrsModule } from '@nestjs/cqrs';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -20,7 +19,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([CandidatePersonalQualities]),
 		MikroOrmModule.forFeature([CandidatePersonalQualities]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],
