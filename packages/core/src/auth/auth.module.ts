@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { SocialAuthModule } from '@gauzy/auth';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Organization, OrganizationTeam, UserOrganization } from './../core/entities/internal';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { AuthController } from './auth.controller';
@@ -17,7 +16,7 @@ import { PasswordResetModule } from './../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from './../feature/feature.module';
-import { OrganizationModule } from '../organization/organization.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
 
@@ -29,12 +28,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			{
 				path: '/auth',
 				module: AuthModule,
-				children: [
-					{
-						path: '/',
-						module: SocialAuthModule
-					}
-				]
+				children: [{ path: '/', module: SocialAuthModule }]
 			}
 		]),
 		SocialAuthModule.registerAsync({
@@ -57,7 +51,6 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		RoleModule,
 		PasswordResetModule,
 		FeatureModule,
-		OrganizationModule,
 		CqrsModule
 	],
 	controllers: [AuthController, EmailVerificationController],
