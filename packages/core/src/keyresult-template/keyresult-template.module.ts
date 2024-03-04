@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { KeyresultTemplateController } from './keyresult-template.controller';
 import { KeyresultTemplateService } from './keyresult-template.service';
 import { KeyResultTemplate } from './keyresult-template.entity';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/key-result-templates', module: KeyresultTemplateModule }]),
 		TypeOrmModule.forFeature([KeyResultTemplate]),
 		MikroOrmModule.forFeature([KeyResultTemplate]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [KeyresultTemplateController],

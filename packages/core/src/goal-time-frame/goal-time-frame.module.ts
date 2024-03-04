@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { GoalTimeFrameController } from './goal-time-frame.controller';
 import { GoalTimeFrameService } from './goal-time-frame.service';
 import { GoalTimeFrame } from './goal-time-frame.entity';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/goal-time-frame', module: GoalTimeFrameModule }]),
 		TypeOrmModule.forFeature([GoalTimeFrame]),
 		MikroOrmModule.forFeature([GoalTimeFrame]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [GoalTimeFrameController],

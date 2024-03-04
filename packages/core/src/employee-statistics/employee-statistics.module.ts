@@ -18,7 +18,6 @@ import { EmployeeStatisticsService } from './employee-statistics.service';
 import { QueryHandlers } from './queries/handlers';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense/organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from '../organization-recurring-expense/organization-recurring-expense.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 const forFeatureEntities = [
@@ -35,7 +34,6 @@ const forFeatureEntities = [
 		RouterModule.register([{ path: '/employee-statistics', module: EmployeeStatisticsModule }]),
 		TypeOrmModule.forFeature(forFeatureEntities),
 		MikroOrmModule.forFeature(forFeatureEntities),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],

@@ -5,11 +5,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EquipmentSharingPolicyController } from './equipment-sharing-policy.controller';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
-import { User } from '../user/user.entity';
-import { UserService } from '../user/user.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
@@ -19,14 +15,12 @@ import { TaskModule } from '../tasks/task.module';
 				module: EquipmentSharingPolicyModule
 			}
 		]),
-		TypeOrmModule.forFeature([User, EquipmentSharingPolicy]),
-		MikroOrmModule.forFeature([User, EquipmentSharingPolicy]),
-		TenantModule,
-		RolePermissionModule,
-		TaskModule
+		TypeOrmModule.forFeature([EquipmentSharingPolicy]),
+		MikroOrmModule.forFeature([EquipmentSharingPolicy]),
+		RolePermissionModule
 	],
 	controllers: [EquipmentSharingPolicyController],
-	providers: [EquipmentSharingPolicyService, UserService],
+	providers: [EquipmentSharingPolicyService],
 	exports: [TypeOrmModule, MikroOrmModule, EquipmentSharingPolicyService]
 })
 export class EquipmentSharingPolicyModule { }

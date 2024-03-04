@@ -7,16 +7,12 @@ import { TaskModule } from './../../tasks/task.module';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { ActivityModule } from './../activity/activity.module';
 import { TimeLogModule } from './../time-log/time-log.module';
-import { TenantModule } from './../../tenant/tenant.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
-import { UserModule } from './../../user/user.module';
 
 @Module({
 	controllers: [StatisticController],
 	imports: [
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		OrganizationProjectModule,
 		TaskModule,
 		TimeSlotModule,

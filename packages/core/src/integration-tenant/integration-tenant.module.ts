@@ -9,18 +9,14 @@ import { IntegrationTenant } from './integration-tenant.entity';
 import { IntegrationSettingModule } from './../integration-setting/integration-setting.module';
 import { IntegrationEntitySettingModule } from './../integration-entity-setting/integration-entity-setting.module';
 import { RoleModule } from '../role/role.module';
-import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/integration-tenant', module: IntegrationTenantModule }]),
 		TypeOrmModule.forFeature([IntegrationTenant]),
 		MikroOrmModule.forFeature([IntegrationTenant]),
-		TenantModule,
-		UserModule,
 		RoleModule,
 		RolePermissionModule,
 		forwardRef(() => IntegrationSettingModule),

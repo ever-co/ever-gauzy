@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { GoalController } from './goal.controller';
 import { Goal } from './goal.entity';
 import { GoalService } from './goal.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/goals', module: GoalModule }]),
 		TypeOrmModule.forFeature([Goal]),
 		MikroOrmModule.forFeature([Goal]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [GoalController],

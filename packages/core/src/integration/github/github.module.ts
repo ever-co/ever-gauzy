@@ -3,9 +3,7 @@ import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../../tenant/tenant.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
-import { UserModule } from '../../user/user.module';
 import { IntegrationModule } from '../../integration/integration.module';
 import { IntegrationTenantModule } from '../../integration-tenant/integration-tenant.module';
 import { IntegrationSettingModule } from '../../integration-setting/integration-setting.module';
@@ -32,9 +30,7 @@ import { GithubRepositoryIssueService } from './repository/issue/github-reposito
 		TypeOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
 		MikroOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
 		HttpModule,
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),

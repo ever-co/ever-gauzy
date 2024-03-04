@@ -7,7 +7,6 @@ import { KeyResultUpdateService } from './keyresult-update.service';
 import { KeyResultUpdateController } from './keyresult-update.controller';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -15,7 +14,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/key-result-updates', module: KeyResultUpdateModule }]),
 		TypeOrmModule.forFeature([KeyResultUpdate]),
 		MikroOrmModule.forFeature([KeyResultUpdate]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],
