@@ -1,6 +1,6 @@
 import { EntityRepository, QueryBuilder, QueryOrder } from '@mikro-orm/knex';
 import { IQueryBuilder } from './iquery-builder';
-import { SelectQueryBuilder, EntityTarget, FindManyOptions } from 'typeorm';
+import { EntityTarget, FindManyOptions } from 'typeorm';
 import { convertTypeOrmConationAndParamsToMikroOrm } from '../utils';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
@@ -14,13 +14,19 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
     private havingParameters: any[] = [];
 
 
+    get alias() {
+        return this.qb.alias;
+    }
 
     constructor(
         private readonly repo: EntityRepository<Entity>,
         alias?: string
     ) {
-        this.qb = this.repo.createQueryBuilder(alias);
 
+
+        console.log('MikroOrmQueryBuilder', this.repo, this.repo.qb)
+        this.qb = this.repo.qb(alias);
+        // this.qb = this.repo.createQueryBuilder(alias) as QueryBuilder<Entity>;
     }
 
     setFindOptions(findOptions: FindManyOptions<Entity>): this {
@@ -84,12 +90,12 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
             this.qb = this.repo.createQueryBuilder().from(subQuery, aliasName);
         } else {
             // Handle direct entity
-            this.qb = this.repo.createQueryBuilder(aliasName);
+            this.qb = this.repo.createQueryBuilder(aliasName) as QueryBuilder<Entity>;
         }
         return this;
     }
 
-    addFrom(entityTarget: ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>) | EntityTarget<Entity>, aliasName?: string): this {
+    addFrom(entityTarget: ((qb: QueryBuilder<any>) => QueryBuilder<any>) | EntityTarget<Entity>, aliasName?: string): this {
         throw new Error(`Note: This is conceptual; MikrORM typically don't support multiple FROMs like typeORM. You might use this for sub-queries or additional joins instead.`);
     }
 
@@ -249,13 +255,36 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return this;
     }
 
-
-
-    async getMany(): Promise<Entity[]> {
-        return this.qb.getResultList();
+    getSql(): string {
+        return this.qb.getQuery();
     }
 
-    async getOne(): Promise<Entity | null> {
-        return this.qb.getSingleResult();
+    getCount(): Promise<number> {
+        return this.qb.getCount();
     }
+
+    getRawMany(): Promise<any[]> {
+        return this.qb.execute('all', false);
+    }
+
+    getMany(): Promise<Entity[]> {
+        return this.qb.execute('all', true);
+    }
+
+    getOne(): Promise<Entity | null> {
+        return this.qb.execute('get', true);
+    }
+
+    getRawOne(): Promise<any> {
+        return this.qb.execute('get', false);
+    }
+
+    async getManyAndCount(): Promise<[Entity[], number]> {
+        console.log(this.qb.getResultAndCount);
+        const count = await this.qb.limit(0).getCount();
+        const items = await this.qb.execute('all', true);
+        return [items, count]
+    }
+
+
 }

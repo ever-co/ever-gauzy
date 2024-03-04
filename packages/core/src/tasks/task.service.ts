@@ -90,7 +90,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-			const query = this.repository.createQueryBuilder(this.tableName);
+
+			const query = this.createQueryBuilder();
+
 			query.innerJoin(`${query.alias}.members`, 'members');
 			/**
 			 * If find options
@@ -157,6 +159,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					}
 				})
 			);
+
+			console.log('query.getSql', query.getSql())
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {

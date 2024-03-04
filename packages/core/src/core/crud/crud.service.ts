@@ -40,6 +40,7 @@ import {
 	IUpdateCriteria
 } from './icrud.service';
 import { ITryRequest } from './try-request';
+import { multiORMCreateQueryBuilder } from 'core/orm/query-builder/query-builder.factory';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -64,6 +65,19 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	protected get ormType(): MultiORM {
 		return ormType;
+	}
+
+	createQueryBuilder(entity?: any) {
+
+		console.log('this.mikroRepository.getEntityManager', this.mikroRepository.getEntityName());
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return multiORMCreateQueryBuilder<T>(this.repository, this.ormType as MultiORMEnum);
+
+			case MultiORMEnum.TypeORM:
+				return multiORMCreateQueryBuilder<T>(this.mikroRepository as any, this.ormType as MultiORMEnum);
+		}
 	}
 
 	/**

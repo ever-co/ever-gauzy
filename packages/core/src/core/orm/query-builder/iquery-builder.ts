@@ -1,11 +1,12 @@
 import { EntityTarget, FindManyOptions, SelectQueryBuilder } from "typeorm";
 
-export interface IQueryBuilder<T> {
-    setFindOptions(findOptions: FindManyOptions<T>): this;
+export interface IQueryBuilder<Entity> {
+    alias: string;
+    setFindOptions(findOptions: FindManyOptions<Entity>): this;
     select(selection: string, selectionAliasName?: string): this;
     addSelect(selection: string, selectionAliasName?: string): this;
-    from(entityTarget: EntityTarget<T> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this;
-    addFrom(entityTarget: EntityTarget<T> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this;
+    from(entityTarget: EntityTarget<Entity> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this;
+    addFrom(entityTarget: EntityTarget<Entity> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this;
     innerJoin(relation: string, alias: string, condition?: string): this;
     innerJoinAndSelect(relation: string, alias: string, condition?: string): this;
     leftJoin(relation: string, alias: string, condition?: string): this;
@@ -24,5 +25,12 @@ export interface IQueryBuilder<T> {
     offset(offset?: number): this;
     take(take?: number): this;
     skip(skip?: number): this;
-    getMany(): Promise<any[]>;
+
+    getSql(): string
+    getCount(): Promise<number>;
+    getRawMany(): Promise<any[]>;
+    getMany(): Promise<Entity[]>;
+    getOne(): Promise<Entity | null>;
+    getRawOne(): Promise<any>;
+    getManyAndCount(): Promise<[Entity[], number]>;
 }

@@ -2,15 +2,19 @@
 import { EntityTarget, FindManyOptions, Repository, SelectQueryBuilder } from 'typeorm';
 import { IQueryBuilder } from './iquery-builder';
 
-export class TypeOrmQueryBuilder<T extends Object> implements IQueryBuilder<T> {
+export class TypeOrmQueryBuilder<Entity extends Object> implements IQueryBuilder<Entity> {
 
-    private qb: SelectQueryBuilder<T>;
+    private qb: SelectQueryBuilder<Entity>;
 
-    constructor(private readonly repo: Repository<T>) {
+    get alias() {
+        return this.qb.alias;
+    }
+
+    constructor(private readonly repo: Repository<Entity>) {
         this.qb = this.repo.createQueryBuilder();
     }
 
-    setFindOptions(findOptions: FindManyOptions<T>) {
+    setFindOptions(findOptions: FindManyOptions<Entity>) {
         this.qb.setFindOptions(findOptions);
         return this;
     }
@@ -25,12 +29,12 @@ export class TypeOrmQueryBuilder<T extends Object> implements IQueryBuilder<T> {
         return this;
     }
 
-    from(entityTarget: EntityTarget<T> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this {
+    from(entityTarget: EntityTarget<Entity> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this {
         this.qb.from(entityTarget, aliasName);
         return this;
     }
 
-    addFrom(entityTarget: EntityTarget<T> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this {
+    addFrom(entityTarget: EntityTarget<Entity> | ((qb: SelectQueryBuilder<any>) => SelectQueryBuilder<any>), aliasName?: string): this {
         this.qb.addFrom(entityTarget, aliasName);
         return this;
     }
@@ -125,8 +129,8 @@ export class TypeOrmQueryBuilder<T extends Object> implements IQueryBuilder<T> {
         return this;
     };
 
-    getManyAndCount() {
-        return this.qb.getManyAndCount();
+    getSql(): string {
+        return this.qb.getSql();
     }
 
     getCount() {
@@ -147,6 +151,10 @@ export class TypeOrmQueryBuilder<T extends Object> implements IQueryBuilder<T> {
 
     getRawOne(): Promise<any> {
         return this.qb.getRawOne();
+    }
+
+    getManyAndCount(): Promise<[Entity[], number]> {
+        return this.qb.getManyAndCount();
     }
 
 
