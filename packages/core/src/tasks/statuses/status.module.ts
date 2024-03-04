@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../../tenant/tenant.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskStatus } from './status.entity';
 import { TaskStatusController } from './status.controller';
@@ -16,7 +15,6 @@ import { QueryHandlers } from './queries/handlers';
 		RouterModule.register([{ path: '/task-statuses', module: TaskStatusModule }]),
 		TypeOrmModule.forFeature([TaskStatus]),
 		MikroOrmModule.forFeature([TaskStatus]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],

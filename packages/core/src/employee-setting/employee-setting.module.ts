@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeSetting } from './employee-setting.entity';
 import { EmployeeSettingService } from './employee-setting.service';
 import { EmployeeSettingController } from './employee-setting.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/employee-settings', module: EmployeeSettingModule }]),
 		TypeOrmModule.forFeature([EmployeeSetting]),
 		MikroOrmModule.forFeature([EmployeeSetting]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [EmployeeSettingController],

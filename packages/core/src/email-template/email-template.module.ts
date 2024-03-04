@@ -9,18 +9,14 @@ import { EmailTemplateReaderService } from './email-template-reader.service';
 import { EmailTemplateController } from './email-template.controller';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/email-template', module: EmailTemplateModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => MikroOrmModule.forFeature([EmailTemplate])),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [EmailTemplateController],

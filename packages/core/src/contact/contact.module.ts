@@ -7,7 +7,6 @@ import { Contact } from './contact.entity';
 import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -15,7 +14,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/contact', module: ContactModule }]),
 		TypeOrmModule.forFeature([Contact]),
 		MikroOrmModule.forFeature([Contact]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],

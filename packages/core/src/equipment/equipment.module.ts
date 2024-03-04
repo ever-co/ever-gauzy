@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Equipment } from './equipment.entity';
 import { EquipmentController } from './equipment.controller';
 import { EquipmentService } from './equipment.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/equipment', module: EquipmentModule }]),
 		TypeOrmModule.forFeature([Equipment]),
 		MikroOrmModule.forFeature([Equipment]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [EquipmentController],

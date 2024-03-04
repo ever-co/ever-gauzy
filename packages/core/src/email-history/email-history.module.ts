@@ -5,9 +5,7 @@ import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmailHistory } from './email-history.entity';
 import { EmailHistoryController } from './email-history.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { EmailHistoryService } from './email-history.service';
 import { CommandHandlers } from './commands/handler';
 import { EmailSendModule } from './../email-send/email-send.module';
@@ -19,8 +17,6 @@ import { EmailSendModule } from './../email-send/email-send.module';
 		]),
 		TypeOrmModule.forFeature([EmailHistory]),
 		MikroOrmModule.forFeature([EmailHistory]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => EmailSendModule),
 		CqrsModule

@@ -3,19 +3,15 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TimeLogModule } from './../time-log/time-log.module';
 import { EmployeeModule } from './../../employee/employee.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
-import { TenantModule } from './../../tenant/tenant.module';
-import { UserModule } from './../../user/user.module';
 import { TimerController } from './timer.controller';
 import { TimerService } from './timer.service';
 
 @Module({
 	controllers: [TimerController],
 	imports: [
-		TenantModule,
 		RolePermissionModule,
 		TimeLogModule,
 		EmployeeModule,
-		UserModule,
 		CqrsModule
 	],
 	providers: [TimerService],
