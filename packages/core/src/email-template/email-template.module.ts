@@ -2,23 +2,21 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import { EmailTemplateReaderService } from './email-template-reader.service';
 import { EmailTemplateController } from './email-template.controller';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/email-template', module: EmailTemplateModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => MikroOrmModule.forFeature([EmailTemplate])),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		forwardRef(() => RolePermissionModule),
 		CqrsModule
 	],
 	controllers: [EmailTemplateController],
@@ -28,10 +26,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		EmailTemplateService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, EmailTemplateService]
 })
 export class EmailTemplateModule { }

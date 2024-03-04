@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationPosition } from './organization-position.entity';
 import { OrganizationPositionController } from './organization-position.controller';
 import { OrganizationPositionService } from './organization-position.service';
-import { TenantModule } from '../tenant/tenant.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -17,7 +17,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		]),
 		TypeOrmModule.forFeature([OrganizationPosition]),
 		MikroOrmModule.forFeature([OrganizationPosition]),
-		TenantModule
+		RolePermissionModule
 	],
 	controllers: [OrganizationPositionController],
 	providers: [OrganizationPositionService],

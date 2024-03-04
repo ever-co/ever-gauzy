@@ -7,16 +7,12 @@ import { TaskModule } from './../../tasks/task.module';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { ActivityModule } from './../activity/activity.module';
 import { TimeLogModule } from './../time-log/time-log.module';
-import { TenantModule } from './../../tenant/tenant.module';
-import { UserModule } from './../../user/user.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 
 @Module({
-	controllers: [
-		StatisticController
-	],
+	controllers: [StatisticController],
 	imports: [
-		TenantModule,
-		UserModule,
+		RolePermissionModule,
 		OrganizationProjectModule,
 		TaskModule,
 		TimeSlotModule,
@@ -24,11 +20,7 @@ import { UserModule } from './../../user/user.module';
 		ActivityModule,
 		TimeLogModule,
 	],
-	providers: [
-        StatisticService
-    ],
-	exports: [
-        StatisticService
-    ]
+	providers: [StatisticService],
+	exports: [StatisticService]
 })
-export class StatisticModule {}
+export class StatisticModule { }

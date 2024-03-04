@@ -1,8 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GauzyAIModule } from '@gauzy/integration-ai';
-import { TenantModule } from './../../tenant/tenant.module';
-import { UserModule } from './../../user/user.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { IntegrationModule } from './../integration.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
 import { IntegrationAIController } from './integration-ai.controller';
@@ -10,15 +9,14 @@ import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationAIMiddleware } from './integration-ai.middleware';
 
 @Module({
+	controllers: [IntegrationAIController],
 	imports: [
-		TenantModule,
-		UserModule,
+		RolePermissionModule,
 		IntegrationTenantModule,
 		GauzyAIModule.forRoot(),
 		forwardRef(() => IntegrationModule),
 		CqrsModule
 	],
-	controllers: [IntegrationAIController],
 	providers: [IntegrationAIService, IntegrationAIMiddleware]
 })
 export class IntegrationAIModule implements NestModule {
