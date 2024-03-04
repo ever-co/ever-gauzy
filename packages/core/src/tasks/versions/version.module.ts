@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../../tenant/tenant.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskVersion } from './version.entity';
 import { TaskVersionController } from './version.controller';
@@ -16,7 +15,6 @@ import { QueryHandlers } from './queries/handlers';
 		RouterModule.register([{ path: '/task-versions', module: TaskVersionModule }]),
 		TypeOrmModule.forFeature([TaskVersion]),
 		MikroOrmModule.forFeature([TaskVersion]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],

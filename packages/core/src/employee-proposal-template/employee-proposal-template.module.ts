@@ -3,8 +3,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { UserModule } from './../user/user.module';
-import { TenantModule } from './../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { EmployeeProposalTemplateController } from './employee-proposal-template.controller';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
@@ -15,9 +13,7 @@ import { EmployeeProposalTemplateService } from './employee-proposal-template.se
 		RouterModule.register([{ path: '/employee-proposal-template', module: EmployeeProposalTemplateModule }]),
 		TypeOrmModule.forFeature([EmployeeProposalTemplate]),
 		MikroOrmModule.forFeature([EmployeeProposalTemplate]),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [EmployeeProposalTemplateController],

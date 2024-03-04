@@ -3,7 +3,6 @@ import { RouterModule } from '@nestjs/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from './../../tenant/tenant.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { IssueTypeController } from './issue-type.controller';
 import { IssueType } from './issue-type.entity';
@@ -15,7 +14,6 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.register([{ path: '/issue-types', module: IssueTypeModule }]),
 		TypeOrmModule.forFeature([IssueType]),
 		MikroOrmModule.forFeature([IssueType]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],

@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SkillService } from './skill.service';
 import { SkillController } from './skill.controller';
 import { Skill } from './skill.entity';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/skills', module: SkillModule }]),
 		TypeOrmModule.forFeature([Skill]),
 		MikroOrmModule.forFeature([Skill]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [SkillController],

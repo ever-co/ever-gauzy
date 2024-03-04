@@ -6,7 +6,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeLevelController } from './employee-level.controller';
 import { EmployeeLevelService } from './employee-level.service';
 import { EmployeeLevel } from './employee-level.entity';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -14,7 +13,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/employee-level', module: EmployeeLevelModule }]),
 		TypeOrmModule.forFeature([EmployeeLevel]),
 		MikroOrmModule.forFeature([EmployeeLevel]),
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],
