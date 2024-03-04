@@ -7,7 +7,7 @@ services:
     environment:
       - CERTBOT_EMAIL
     env_file:
-      - ./stage.conf.d/nginx-certbot.env
+      - ./nginx-certbot.env
     ports:
       - "80:80"
       - "443:443"
