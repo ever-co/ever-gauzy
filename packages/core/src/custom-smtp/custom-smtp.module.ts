@@ -7,6 +7,7 @@ import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpController } from './custom-smtp.controller';
 import { CustomSmtpService } from './custom-smtp.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands';
 
@@ -15,22 +16,15 @@ import { CommandHandlers } from './commands';
 		RouterModule.register([
 			{ path: '/smtp', module: CustomSmtpModule }
 		]),
-		TypeOrmModule.forFeature([
-			CustomSmtp
-		]),
-		MikroOrmModule.forFeature([
-			CustomSmtp
-		]),
+		TypeOrmModule.forFeature([CustomSmtp]),
+		MikroOrmModule.forFeature([CustomSmtp]),
 		forwardRef(() => TenantModule),
 		forwardRef(() => UserModule),
+		forwardRef(() => RolePermissionModule),
 		CqrsModule
 	],
 	controllers: [CustomSmtpController],
 	providers: [CustomSmtpService, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		CustomSmtpService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, CustomSmtpService]
 })
 export class CustomSmtpModule { }

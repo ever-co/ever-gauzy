@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmailTemplate } from './email-template.entity';
 import { EmailTemplateService } from './email-template.service';
 import { EmailTemplateReaderService } from './email-template-reader.service';
@@ -10,7 +11,6 @@ import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from './../user/user.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [

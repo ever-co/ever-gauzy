@@ -9,6 +9,7 @@ import { OrganizationProjectService } from './organization-project.service';
 import { CommandHandlers } from './commands/handlers';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -20,9 +21,10 @@ import { TenantModule } from '../tenant/tenant.module';
 		]),
 		TypeOrmModule.forFeature([OrganizationProject]),
 		MikroOrmModule.forFeature([OrganizationProject]),
-		CqrsModule,
 		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule)
+		forwardRef(() => RolePermissionModule),
+		forwardRef(() => UserModule),
+		CqrsModule
 	],
 	controllers: [OrganizationProjectController],
 	providers: [OrganizationProjectService, ...CommandHandlers],
