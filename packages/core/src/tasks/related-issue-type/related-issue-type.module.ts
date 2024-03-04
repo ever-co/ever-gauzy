@@ -4,6 +4,7 @@ import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TenantModule } from '../../tenant/tenant.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { TaskRelatedIssueTypeController } from './related-issue-type.controller';
 import { TaskRelatedIssueTypeService } from './related-issue-type.service';
@@ -18,13 +19,10 @@ import { QueryHandlers } from './queries/handlers';
 				module: TaskRelatedIssueTypeModule
 			}
 		]),
-		TypeOrmModule.forFeature([
-			TaskRelatedIssueType
-		]),
-		MikroOrmModule.forFeature([
-			TaskRelatedIssueType
-		]),
+		TypeOrmModule.forFeature([TaskRelatedIssueType]),
+		MikroOrmModule.forFeature([TaskRelatedIssueType]),
 		TenantModule,
+		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [
@@ -35,10 +33,6 @@ import { QueryHandlers } from './queries/handlers';
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		TaskRelatedIssueTypeService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, TaskRelatedIssueTypeService]
 })
 export class TaskRelatedIssueTypeModule { }

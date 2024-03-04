@@ -2,13 +2,14 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TenantModule } from '../../tenant/tenant.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskStatus } from './status.entity';
 import { TaskStatusController } from './status.controller';
 import { TaskStatusService } from './status.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		TypeOrmModule.forFeature([TaskStatus]),
 		MikroOrmModule.forFeature([TaskStatus]),
 		TenantModule,
+		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [TaskStatusController],

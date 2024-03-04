@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { TenantModule } from './../../tenant/tenant.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskPriorityController } from './priority.controller';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
@@ -14,8 +15,9 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		RouterModule.register([{ path: '/task-priorities', module: TaskPriorityModule }]),
 		TypeOrmModule.forFeature([TaskPriority]),
 		MikroOrmModule.forFeature([TaskPriority]),
-		CqrsModule,
-		TenantModule
+		TenantModule,
+		RolePermissionModule,
+		CqrsModule
 	],
 	controllers: [TaskPriorityController],
 	providers: [TaskPriorityService, ...CommandHandlers],

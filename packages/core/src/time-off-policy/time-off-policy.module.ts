@@ -8,6 +8,7 @@ import { TimeOffPolicyController } from './time-off-policy.controller';
 import { EmployeeModule } from './../employee/employee.module';
 import { UserModule } from './../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TaskModule } from '../tasks/task.module';
 
 @Module({
@@ -15,13 +16,10 @@ import { TaskModule } from '../tasks/task.module';
 		RouterModule.register([
 			{ path: 'time-off-policy', module: TimeOffPolicyModule }
 		]),
-		TypeOrmModule.forFeature([
-			TimeOffPolicy
-		]),
-		MikroOrmModule.forFeature([
-			TimeOffPolicy
-		]),
+		TypeOrmModule.forFeature([TimeOffPolicy]),
+		MikroOrmModule.forFeature([TimeOffPolicy]),
 		TenantModule,
+		RolePermissionModule,
 		UserModule,
 		EmployeeModule,
 		TaskModule
