@@ -11,8 +11,9 @@ import { Product } from './../core/entities/internal';
 import { WarehouseProductVariant } from './warehouse-product-variant.entity';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { WarehouseProductService } from './warehouse-product-service';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
-const entities = [
+const forFeatureEntities = [
 	Warehouse,
 	Product,
 	WarehouseProduct,
@@ -24,8 +25,9 @@ const entities = [
 		RouterModule.register([
 			{ path: '/warehouses', module: WarehouseModule }
 		]),
-		TypeOrmModule.forFeature(entities),
-		MikroOrmModule.forFeature(entities),
+		TypeOrmModule.forFeature(forFeatureEntities),
+		MikroOrmModule.forFeature(forFeatureEntities),
+		RolePermissionModule,
 		TenantModule,
 		UserModule
 	],

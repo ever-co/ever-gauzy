@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { AppointmentEmployee } from './appointment-employees.entity';
 import { AppointmentEmployeesController } from './appointment-employees.controller';
 import { AppointmentEmployeesService } from './appointment-employees.service';
 import { TenantModule } from '../tenant/tenant.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -17,7 +18,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		]),
 		TypeOrmModule.forFeature([AppointmentEmployee]),
 		MikroOrmModule.forFeature([AppointmentEmployee]),
-		TenantModule
+		TenantModule,
+		RolePermissionModule
 	],
 	controllers: [AppointmentEmployeesController],
 	providers: [AppointmentEmployeesService],

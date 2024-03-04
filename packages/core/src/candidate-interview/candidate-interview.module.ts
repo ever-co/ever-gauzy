@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidateInterviewService } from './candidate-interview.service';
 import { CandidateInterviewController } from './candidate-interview.controller';
 import { CandidateInterview } from './candidate-interview.entity';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -14,6 +15,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		TypeOrmModule.forFeature([CandidateInterview]),
 		MikroOrmModule.forFeature([CandidateInterview]),
 		TenantModule,
+		RolePermissionModule,
 		UserModule
 	],
 	providers: [CandidateInterviewService],
