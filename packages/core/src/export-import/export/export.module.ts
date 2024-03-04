@@ -6,9 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { getConfig } from '@gauzy/config';
 import { coreEntities } from '../../core/entities';
-import { TenantModule } from '../../tenant/tenant.module';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
-import { UserModule } from '../../user/user.module';
 import { ExportController } from './export.controller';
 import { ExportService } from './export.service';
 
@@ -25,9 +23,7 @@ import { ExportService } from './export.service';
 			...coreEntities,
 			...getEntitiesFromPlugins(getConfig().plugins)
 		]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		CqrsModule
 	],
 	controllers: [ExportController],

@@ -8,9 +8,7 @@ import { EquipmentSharingController } from './equipment-sharing.controller';
 import { EquipmentSharingService } from './equipment-sharing.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -18,9 +16,7 @@ import { UserModule } from './../user/user.module';
 		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		MikroOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		CqrsModule,
-		TenantModule,
-		RolePermissionModule,
-		UserModule
+		RolePermissionModule
 	],
 	controllers: [EquipmentSharingController],
 	providers: [EquipmentSharingService, ...CommandHandlers],

@@ -7,7 +7,6 @@ import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { EventHandlers } from './events/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
@@ -29,7 +28,6 @@ const forFeatureEntities = [
 		]),
 		TypeOrmModule.forFeature(forFeatureEntities),
 		MikroOrmModule.forFeature(forFeatureEntities),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		RoleModule,
