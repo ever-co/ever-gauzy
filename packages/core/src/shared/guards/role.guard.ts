@@ -6,10 +6,7 @@ import { RequestContext } from './../../core/context';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
-
-	constructor(
-		private readonly _reflector: Reflector
-	) { }
+	constructor(private readonly _reflector: Reflector) {}
 
 	/**
 	 * Determines if the user associated with the request has the required roles.
@@ -21,11 +18,15 @@ export class RoleGuard implements CanActivate {
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
 		/*
-		* Retrieve metadata for a specified key for a specified set of roles
-		*/
+		 * Retrieve metadata for a specified key for a specified set of roles
+		 */
 		const roles = this._reflector.getAllAndOverride<RolesEnum[]>(ROLES_METADATA, targets) || [];
 
 		// Check if roles are empty or if the request context has the required roles
-		return isEmpty(roles) || RequestContext.hasRoles(roles);
+		const check = isEmpty(roles) || RequestContext.hasRoles(roles);
+
+		console.log('Guard: Role', roles, check);
+
+		return check;
 	}
 }

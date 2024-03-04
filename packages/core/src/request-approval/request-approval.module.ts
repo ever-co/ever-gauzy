@@ -17,6 +17,8 @@ import { EquipmentSharingModule } from './../equipment-sharing/equipment-sharing
 import { TimeOffRequestModule } from './../time-off-request/time-off-request.module';
 import { CommandHandlers } from './commands/handlers';
 import { TaskModule } from './../tasks/task.module';
+import { StatisticModule } from '../time-tracking/statistic/statistic.module';
+import { TimerModule } from '../time-tracking/timer/timer.module';
 
 @Module({
 	imports: [
@@ -33,10 +35,12 @@ import { TaskModule } from './../tasks/task.module';
 		OrganizationModule,
 		EquipmentSharingModule,
 		TimeOffRequestModule,
-		TaskModule
+		TaskModule,
+		TimerModule,
+		StatisticModule
 	],
 	controllers: [RequestApprovalController],
 	providers: [RequestApprovalService, ...CommandHandlers],
 	exports: [RequestApprovalService]
 })
-export class RequestApprovalModule { }
+export class RequestApprovalModule {}

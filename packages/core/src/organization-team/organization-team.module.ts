@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
@@ -31,11 +31,11 @@ import { TaskModule } from './../tasks/task.module';
 		EmployeeModule,
 		TimerModule,
 		CqrsModule,
-		StatisticModule,
+		forwardRef(() => StatisticModule),
 		TaskModule
 	],
 	controllers: [OrganizationTeamController],
 	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
 	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService]
 })
-export class OrganizationTeamModule { }
+export class OrganizationTeamModule {}

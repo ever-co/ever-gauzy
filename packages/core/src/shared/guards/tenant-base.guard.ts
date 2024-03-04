@@ -5,7 +5,6 @@ import { RequestContext } from './../../core/context';
 
 @Injectable()
 export class TenantBaseGuard implements CanActivate {
-
 	/**
 	 *
 	 * @param context
@@ -18,24 +17,19 @@ export class TenantBaseGuard implements CanActivate {
 		const { query, headers, rawHeaders } = request;
 
 		let isAuthorized = false;
+
 		if (!currentTenantId) {
+			console.log('Guard TenantBase: Unauthorized access blocked. TenantId:', currentTenantId);
 			return isAuthorized;
 		}
 
 		// Get tenant-id from request headers
 		const headerTenantId = headers['tenant-id'];
-		if (
-			headerTenantId &&
-			(rawHeaders.includes('tenant-id') ||
-				rawHeaders.includes('Tenant-Id'))
-		) {
+		if (headerTenantId && (rawHeaders.includes('tenant-id') || rawHeaders.includes('Tenant-Id'))) {
 			isAuthorized = currentTenantId === headerTenantId;
 		} else {
 			//If request to get/delete data using another tenantId then reject request.
-			const httpMethods = [
-				RequestMethodEnum.GET,
-				RequestMethodEnum.DELETE
-			];
+			const httpMethods = [RequestMethodEnum.GET, RequestMethodEnum.DELETE];
 			if (httpMethods.includes(method)) {
 				if ('tenantId' in query) {
 					const queryTenantId = query['tenantId'];
@@ -47,10 +41,7 @@ export class TenantBaseGuard implements CanActivate {
 						try {
 							const parse = JSON.parse(data);
 							//Match provided tenantId with logged in tenantId
-							if (
-								'findInput' in parse &&
-								'tenantId' in parse['findInput']
-							) {
+							if ('findInput' in parse && 'tenantId' in parse['findInput']) {
 								const queryTenantId = parse['findInput']['tenantId'];
 								isAuthorized = currentTenantId === queryTenantId;
 							} else {
@@ -63,17 +54,14 @@ export class TenantBaseGuard implements CanActivate {
 						}
 					}
 				} else {
-					//If tenantId not found in query params
+					// If tenantId not found in query params
 					isAuthorized = false;
 				}
 			}
 
 			// If request to save/update data using another tenantId then reject request.
-			const payloadMethods = [
-				RequestMethodEnum.POST,
-				RequestMethodEnum.PUT,
-				RequestMethodEnum.PATCH
-			];
+			const payloadMethods = [RequestMethodEnum.POST, RequestMethodEnum.PUT, RequestMethodEnum.PATCH];
+
 			if (payloadMethods.includes(method)) {
 				const body: any = request.body;
 				let bodyTenantId: string;
@@ -85,8 +73,11 @@ export class TenantBaseGuard implements CanActivate {
 				isAuthorized = currentTenantId === bodyTenantId;
 			}
 		}
+
 		if (!isAuthorized) {
-			console.log('Unauthorized access blocked. TenantId:', headerTenantId);
+			console.log('Guard TenantBase: Unauthorized access blocked. TenantId:', headerTenantId);
+		} else {
+			console.log('Guard TenantBase: Access Allowed. TenantId:', headerTenantId);
 		}
 		return isAuthorized;
 	}

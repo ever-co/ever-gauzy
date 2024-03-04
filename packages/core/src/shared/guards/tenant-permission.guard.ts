@@ -8,9 +8,7 @@ import { TenantBaseGuard } from './tenant-base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 @Injectable()
-export class TenantPermissionGuard extends TenantBaseGuard
-	implements CanActivate {
-
+export class TenantPermissionGuard extends TenantBaseGuard implements CanActivate {
 	constructor(
 		private readonly _reflector: Reflector,
 		private readonly _rolePermissionService: RolePermissionService
@@ -46,7 +44,8 @@ export class TenantPermissionGuard extends TenantBaseGuard
 
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {
@@ -56,7 +55,11 @@ export class TenantPermissionGuard extends TenantBaseGuard
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
-			console.log(`Unauthorized access blocked. Tenant ID:', ${currentTenantId}, Permissions Checked: ${permissions.join(', ')}`);
+			console.log(
+				`Unauthorized access blocked. Tenant ID:', ${currentTenantId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
 		}
 
 		return isAuthorized;

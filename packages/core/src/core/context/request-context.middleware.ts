@@ -32,6 +32,7 @@ export class RequestContextMiddleware implements NestMiddleware {
 		// request so all data is isolated without any potential conflicts
 		// for concurrent requests
 		session.run(async () => {
+			console.log('RequestContextMiddleware: setting context ...');
 			session.set(RequestContext.name, context);
 			next();
 		});
