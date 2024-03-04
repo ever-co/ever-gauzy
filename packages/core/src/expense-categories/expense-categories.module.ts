@@ -6,7 +6,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { ExpenseCategory } from './expense-category.entity';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategoriesController } from './expense-categories.controller';
-import { UserModule } from './../user/user.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 
