@@ -33,7 +33,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_STAGE_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/with-cloudflare/docker-compose.api.stage.cloudflare.pre.yml,.deploy/ssh/with-letsencrypt/docker-compose.api.stage.letsencrypt.pre.yml,.deploy/ssh/with-cloudflare/nginx.stage.pre.cloudflare.conf,.deploy/ssh/with-letsencrypt/nginx.stage.pre.letsencrypt.conf,.deploy/ssh/with-letsencrypt/conf.d,.deploy/ssh/with-cloudflare/ingress.api.crt,.deploy/ssh/with-cloudflare/ingress.api.key'
+          source: '.deploy/ssh/with-cloudflare/docker-compose.api.stage.cloudflare.pre.yml,.deploy/ssh/with-letsencrypt/docker-compose.api.stage.letsencrypt.pre.yml,.deploy/ssh/with-cloudflare/nginx.stage.pre.cloudflare.conf,.deploy/ssh/with-letsencrypt/nginx.stage.pre.letsencrypt.conf,.deploy/ssh/with-letsencrypt/stage.conf.d,.deploy/ssh/with-cloudflare/ingress.api.crt,.deploy/ssh/with-cloudflare/ingress.api.key'
           target: '.'
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
