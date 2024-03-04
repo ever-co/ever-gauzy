@@ -13,7 +13,6 @@ import { EmployeeService } from './employee.service';
 import { AuthModule } from './../auth/auth.module';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
-import { TenantModule } from '../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
@@ -26,13 +25,12 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		MikroOrmModule.forFeature([Employee, TimeLog]),
 		forwardRef(() => EmailSendModule),
 		forwardRef(() => UserOrganizationModule),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => AuthModule),
 		RoleModule,
-		CqrsModule,
-		GauzyAIModule.forRoot()
+		GauzyAIModule.forRoot(),
+		CqrsModule
 	],
 	controllers: [EmployeeController],
 	providers: [EmployeeService, ...CommandHandlers],
