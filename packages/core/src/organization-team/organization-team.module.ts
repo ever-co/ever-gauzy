@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from './../role/role.module';
 import { UserModule } from './../user/user.module';
@@ -25,7 +24,6 @@ import { TaskModule } from './../tasks/task.module';
 		TypeOrmModule.forFeature([OrganizationTeam]),
 		MikroOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
-		TenantModule,
 		RolePermissionModule,
 		RoleModule,
 		UserModule,
