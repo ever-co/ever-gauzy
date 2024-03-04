@@ -141,6 +141,7 @@ jobs:
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
 
       - name: Copy file via scp - with-cloudflare
+        if: ${{ env.INGRESS_CERT_TYPE == 'cloudflare' }}
         uses: appleboy/scp-action@master
         with:
           host: ${{secrets.DO_DROPLET_DEMO_HOST}}
@@ -149,6 +150,7 @@ jobs:
           source: '.deploy/ssh/with-cloudflare/docker-compose.api.demo.yml'
           target: '.'
       - name: Copy file via scp - with-letsencrypt
+        if: ${{ env.INGRESS_CERT_TYPE == 'letsencrypt' }}
         uses: appleboy/scp-action@master
         with:
           host: ${{secrets.DO_DROPLET_DEMO_HOST}}
