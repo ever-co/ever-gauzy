@@ -9,6 +9,7 @@ import { FeatureToggleController } from './feature-toggle.controller';
 import { FeatureService } from './feature.service';
 import { FeatureOrganizationService } from './feature-organization.service';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 
@@ -18,6 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
 		MikroOrmModule.forFeature([Feature, FeatureOrganization]),
 		forwardRef(() => TenantModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		CqrsModule
 	],

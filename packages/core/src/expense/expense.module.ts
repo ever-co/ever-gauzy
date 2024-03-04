@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { ExpenseController } from './expense.controller';
@@ -12,10 +13,10 @@ import { EmployeeStatisticsModule } from './../employee-statistics/employee-stat
 import { EmployeeRecurringExpenseModule } from './../employee-recurring-expense/employee-recurring-expense.module';
 import { IncomeModule } from './../income/income.module';
 import { TenantModule } from './../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ExpenseMapService } from './expense.map.service';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -27,6 +28,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		forwardRef(() => OrganizationRecurringExpenseModule),
 		forwardRef(() => IncomeModule),
 		forwardRef(() => TenantModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		CqrsModule
