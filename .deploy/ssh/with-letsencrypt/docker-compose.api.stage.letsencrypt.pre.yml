@@ -5,13 +5,16 @@ services:
     image: jonasal/nginx-certbot:latest
     restart: always
     environment:
-      CERTBOT_EMAIL: "ever@ever.tech"
+      - CERTBOT_EMAIL
+    env_file:
+      - ./stage.conf.d/nginx-certbot.env
     ports:
       - "80:80"
       - "443:443"
     networks:
       - with-letsencrypt_overlay
     volumes:
+      - nginx_secrets:/etc/letsencrypt
       - ./stage.conf.d:/etc/nginx/user.conf.d:ro
 volumes:
   certificates: {}
