@@ -33,17 +33,8 @@ export class PermissionGuard implements CanActivate {
 		const token = RequestContext.currentToken();
 		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
 
-		// Retrieve current role ID and tenant ID from RequestContext
-		const roleId = RequestContext.currentRoleId();
-		const tenantId = RequestContext.currentTenantId();
-
-		// Fetch role permissions using the retrieved IDs
-		const rolePermissions = await this._rolePermissionService.find({
-			where: { roleId, tenantId }
-		});
-
 		// Check if user has the required permissions
-		const isAuthorized = rolePermissions.some(({ permission, enabled }) => permissions.includes(permission) && enabled);
+		const isAuthorized = await this._rolePermissionService.checkRolePermission(permissions, true);
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {

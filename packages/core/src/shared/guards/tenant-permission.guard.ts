@@ -50,15 +50,9 @@ export class TenantPermissionGuard extends TenantBaseGuard
 
 		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {
-			const tenantId = RequestContext.currentTenantId();
-
-			// Fetch role permissions for the current tenant
-			const rolePermissions = await this._rolePermissionService.find({ where: { tenantId } });
-
 			// Check if the tenant has the required permissions
-			isAuthorized = rolePermissions.some(({ permission, enabled }) => permissions.includes(permission) && enabled);
+			isAuthorized = await this._rolePermissionService.checkRolePermission(permissions);
 		}
-		console.log({ isAuthorized });
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
