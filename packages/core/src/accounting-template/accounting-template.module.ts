@@ -2,13 +2,14 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { AccountingTemplate } from './accounting-template.entity';
 import { AccountingTemplateController } from './accounting-template.controller';
 import { AccountingTemplateService } from './accounting-template.service';
 import { QueryHandlers } from './queries/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		forwardRef(() => TypeOrmModule.forFeature([AccountingTemplate])),
 		forwardRef(() => MikroOrmModule.forFeature([AccountingTemplate])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		CqrsModule
 	],

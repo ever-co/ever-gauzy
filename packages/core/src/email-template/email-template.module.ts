@@ -10,6 +10,7 @@ import { EmailTemplateController } from './email-template.controller';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 
 @Module({
@@ -18,6 +19,7 @@ import { UserModule } from './../user/user.module';
 		forwardRef(() => TypeOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => MikroOrmModule.forFeature([EmailTemplate])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		CqrsModule
 	],
@@ -28,10 +30,6 @@ import { UserModule } from './../user/user.module';
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		EmailTemplateService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, EmailTemplateService]
 })
 export class EmailTemplateModule { }

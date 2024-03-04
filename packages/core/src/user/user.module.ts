@@ -12,6 +12,7 @@ import { User } from './user.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
 
@@ -23,6 +24,7 @@ import { TaskModule } from './../tasks/task.module';
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => TenantModule),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => TaskModule),
 		CqrsModule,
 		FactoryResetModule
