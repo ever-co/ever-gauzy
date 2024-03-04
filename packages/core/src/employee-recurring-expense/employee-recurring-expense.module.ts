@@ -8,8 +8,6 @@ import { EmployeeRecurringExpenseController } from './employee-recurring-expense
 import { EmployeeRecurringExpense } from './employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from './employee-recurring-expense.service';
 import { QueryHandlers } from './queries/handlers';
-import { UserModule } from './../user/user.module';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { TaskModule } from '../tasks/task.module';
 
@@ -23,11 +21,9 @@ import { TaskModule } from '../tasks/task.module';
 		]),
 		TypeOrmModule.forFeature([EmployeeRecurringExpense]),
 		MikroOrmModule.forFeature([EmployeeRecurringExpense]),
-		CqrsModule,
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
-		TaskModule
+		TaskModule,
+		CqrsModule
 	],
 	controllers: [EmployeeRecurringExpenseController],
 	providers: [EmployeeRecurringExpenseService, ...QueryHandlers, ...CommandHandlers],

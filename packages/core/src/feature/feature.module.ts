@@ -8,9 +8,7 @@ import { FeatureOrganization } from './feature-organization.entity';
 import { FeatureToggleController } from './feature-toggle.controller';
 import { FeatureService } from './feature.service';
 import { FeatureOrganizationService } from './feature-organization.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
@@ -18,9 +16,7 @@ import { CommandHandlers } from './commands/handlers';
 		RouterModule.register([{ path: '/feature/toggle', module: FeatureModule }]),
 		TypeOrmModule.forFeature([Feature, FeatureOrganization]),
 		MikroOrmModule.forFeature([Feature, FeatureOrganization]),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [FeatureToggleController],

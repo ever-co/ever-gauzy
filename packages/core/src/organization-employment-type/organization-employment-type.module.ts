@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationEmploymentTypeController } from './organization-employment-type.controller';
 import { OrganizationEmploymentType } from './organization-employment-type.entity';
@@ -18,7 +17,6 @@ import { OrganizationEmploymentTypeService } from './organization-employment-typ
 		]),
 		TypeOrmModule.forFeature([OrganizationEmploymentType]),
 		MikroOrmModule.forFeature([OrganizationEmploymentType]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [OrganizationEmploymentTypeController],

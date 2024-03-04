@@ -10,8 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { EmailSendModule } from 'email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
-import { TenantModule } from '../tenant/tenant.module';
-import { RolePermissionModule } from 'role-permission/role-permission.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -21,7 +20,6 @@ import { RolePermissionModule } from 'role-permission/role-permission.module';
 		EmailSendModule,
 		EmployeeModule,
 		OrganizationModule,
-		TenantModule,
 		RolePermissionModule,
 		CqrsModule
 	],

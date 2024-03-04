@@ -8,11 +8,9 @@ import { ExpenseService } from './expense.service';
 import { ExpenseController } from './expense.controller';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
-import { UserModule } from './../user/user.module';
 import { EmployeeStatisticsModule } from './../employee-statistics/employee-statistics.module';
 import { EmployeeRecurringExpenseModule } from './../employee-recurring-expense/employee-recurring-expense.module';
 import { IncomeModule } from './../income/income.module';
-import { TenantModule } from './../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ExpenseMapService } from './expense.map.service';
 import { EmployeeModule } from './../employee/employee.module';
@@ -27,9 +25,7 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 		forwardRef(() => EmployeeRecurringExpenseModule),
 		forwardRef(() => OrganizationRecurringExpenseModule),
 		forwardRef(() => IncomeModule),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		CqrsModule
 	],

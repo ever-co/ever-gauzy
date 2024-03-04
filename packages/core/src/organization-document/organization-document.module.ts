@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationDocument } from './organization-document.entity';
 import { OrganizationDocumentService } from './organization-document.service';
 import { OrganizationDocumentController } from './organization-document.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -18,7 +17,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([OrganizationDocument]),
 		MikroOrmModule.forFeature([OrganizationDocument]),
-		TenantModule,
 		RolePermissionModule
 	],
 	providers: [OrganizationDocumentService],
