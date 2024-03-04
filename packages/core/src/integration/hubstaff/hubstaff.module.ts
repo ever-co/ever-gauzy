@@ -4,7 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { HUBSTAFF_API_URL } from '@gauzy/integration-hubstaff';
 import { UserModule } from 'user/user.module';
 import { RoleModule } from 'role/role.module';
-import { RolePermissionModule } from 'role-permission/role-permission.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TenantModule } from 'tenant/tenant.module';
 import { OrganizationModule } from 'organization/organization.module';
 import { IntegrationEntitySettingModule } from 'integration-entity-setting/integration-entity-setting.module';

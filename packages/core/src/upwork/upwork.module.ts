@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { UpworkJobService, UpworkOffersService, UpworkReportService } from '@gauzy/integration-upwork';
 import { TenantModule } from './../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
 import { OrganizationModule } from '../organization/organization.module';
@@ -35,6 +36,7 @@ const entities = [
 		TypeOrmModule.forFeature(entities),
 		MikroOrmModule.forFeature(entities),
 		TenantModule,
+		RolePermissionModule,
 		UserModule,
 		EmployeeModule,
 		RoleModule,

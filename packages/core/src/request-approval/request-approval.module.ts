@@ -11,6 +11,7 @@ import { OrganizationTeamService } from '../organization-team/organization-team.
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationTeamEmployeeModule } from '../organization-team-employee/organization-team-employee.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
 import { OrganizationModule } from './../organization/organization.module';
@@ -28,6 +29,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		CqrsModule,
 		OrganizationTeamEmployeeModule,
 		TenantModule,
+		RolePermissionModule,
 		UserModule,
 		RoleModule,
 		OrganizationModule,

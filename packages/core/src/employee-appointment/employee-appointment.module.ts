@@ -2,6 +2,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentController } from './employee-appointment.controller';
 import { EmployeeAppointmentService } from './employee-appointment.service';
@@ -10,7 +11,7 @@ import { EmailSendModule } from 'email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { TenantModule } from '../tenant/tenant.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from 'role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -20,8 +21,9 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		EmailSendModule,
 		EmployeeModule,
 		OrganizationModule,
-		CqrsModule,
-		TenantModule
+		TenantModule,
+		RolePermissionModule,
+		CqrsModule
 	],
 	controllers: [EmployeeAppointmentController],
 	providers: [EmployeeAppointmentService, ...CommandHandlers],
