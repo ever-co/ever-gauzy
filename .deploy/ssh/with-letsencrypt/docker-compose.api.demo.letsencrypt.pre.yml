@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   proxy:
-    image: staticfloat/nginx-certbot
+    image: jonasal/nginx-certbot:latest
     restart: always
     environment:
       CERTBOT_EMAIL: "ever@ever.tech"
