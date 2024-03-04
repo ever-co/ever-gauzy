@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { GoalKpiTemplateController } from './goal-kpi-template.controller';
 import { GoalKpiTemplateService } from './goal-kpi-template.service';
 import { GoalKPITemplate } from './goal-kpi-template.entity';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/goal-kpi-template', module: GoalKpiTemplateModule }]),
 		TypeOrmModule.forFeature([GoalKPITemplate]),
 		MikroOrmModule.forFeature([GoalKPITemplate]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [GoalKpiTemplateController],

@@ -5,7 +5,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationAward } from './organization-award.entity';
 import { OrganizationAwardController } from './organization-award.controller';
 import { OrganizationAwardService } from './organization-award.service';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -13,7 +12,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		RouterModule.register([{ path: '/organization-awards', module: OrganizationAwardModule }]),
 		TypeOrmModule.forFeature([OrganizationAward]),
 		MikroOrmModule.forFeature([OrganizationAward]),
-		TenantModule,
 		RolePermissionModule
 	],
 	controllers: [OrganizationAwardController],

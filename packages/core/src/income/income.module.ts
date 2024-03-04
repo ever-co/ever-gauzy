@@ -10,8 +10,6 @@ import { CommandHandlers } from './commands/handlers';
 import { EmployeeRecurringExpenseModule } from './../employee-recurring-expense/employee-recurring-expense.module';
 import { EmployeeStatisticsModule } from './../employee-statistics/employee-statistics.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { TenantModule } from './../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
 import { ExpenseModule } from './../expense/expense.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationRecurringExpenseModule } from './../organization-recurring-expense/organization-recurring-expense.module';
@@ -21,9 +19,7 @@ import { OrganizationRecurringExpenseModule } from './../organization-recurring-
 		RouterModule.register([{ path: '/income', module: IncomeModule }]),
 		TypeOrmModule.forFeature([Income]),
 		MikroOrmModule.forFeature([Income]),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => UserModule),
 		forwardRef(() => EmployeeModule),
 		forwardRef(() => ExpenseModule),
 		forwardRef(() => EmployeeRecurringExpenseModule),

@@ -3,9 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from '../user/user.module';
 import { TaskModule } from '../tasks/task.module';
 import { TagModule } from '../tags/tag.module';
 import { CommandHandlers } from './commands/handlers';
@@ -23,9 +21,7 @@ import { IntegrationMap } from './integration-map.entity';
 		]),
 		TypeOrmModule.forFeature([IntegrationMap]),
 		MikroOrmModule.forFeature([IntegrationMap]),
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		TaskModule,
 		TagModule,
 		CqrsModule

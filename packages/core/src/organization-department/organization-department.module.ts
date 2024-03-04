@@ -7,9 +7,7 @@ import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentController } from './organization-department.controller';
 import { OrganizationDepartmentService } from './organization-department.service';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -21,10 +19,8 @@ import { UserModule } from './../user/user.module';
 		]),
 		TypeOrmModule.forFeature([OrganizationDepartment]),
 		MikroOrmModule.forFeature([OrganizationDepartment]),
-		CqrsModule,
-		TenantModule,
 		RolePermissionModule,
-		UserModule
+		CqrsModule
 	],
 	controllers: [OrganizationDepartmentController],
 	providers: [OrganizationDepartmentService, ...CommandHandlers],

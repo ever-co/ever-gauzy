@@ -3,9 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { UserModule } from '../user/user.module';
 import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { IntegrationType } from './integration-type.entity';
 import { Integration } from './integration.entity';
@@ -33,9 +31,7 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 		TypeOrmModule.forFeature([Integration, IntegrationType]),
 		MikroOrmModule.forFeature([Integration, IntegrationType]),
 		IntegrationTenantModule,
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		forwardRef(() => GithubModule),
 		forwardRef(() => HubstaffModule),
 		forwardRef(() => IntegrationAIModule),

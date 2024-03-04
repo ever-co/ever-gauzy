@@ -10,10 +10,8 @@ import { Invoice } from './invoice.entity';
 import { CommandHandlers } from './commands';
 import { EmailSendModule } from '../email-send/email-send.module';
 import { EstimateEmailModule } from '../estimate-email/estimate-email.module';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationModule } from './../organization/organization.module';
-import { UserModule } from './../user/user.module';
 import { PdfmakerService } from './pdfmaker.service';
 
 @Module({
@@ -23,9 +21,7 @@ import { PdfmakerService } from './pdfmaker.service';
 		MikroOrmModule.forFeature([Invoice]),
 		EmailSendModule,
 		EstimateEmailModule,
-		TenantModule,
 		RolePermissionModule,
-		UserModule,
 		OrganizationModule,
 		CqrsModule
 	],
