@@ -2,6 +2,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Product } from './product.entity';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
@@ -9,11 +10,11 @@ import { ProductVariantModule } from './../product-variant/product-variant.modul
 import { ProductVariantPriceModule } from './../product-variant-price/product-variant-price-module';
 import { ProductVariantSettingModule } from './../product-setting/product-setting.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { ProductTranslation } from './product-translation.entity';
 import { ProductOptionModule } from './../product-option/product-option-module';
 import { CommandHandlers } from './commands/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -22,6 +23,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		MikroOrmModule.forFeature([Product, ProductTranslation]),
 		CqrsModule,
 		TenantModule,
+		RolePermissionModule,
 		UserModule,
 		ProductVariantSettingModule,
 		ProductVariantPriceModule,

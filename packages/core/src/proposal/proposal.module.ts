@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Proposal } from './proposal.entity';
 import { ProposalController } from './proposal.controller';
 import { ProposalService } from './proposal.service';
@@ -8,7 +9,7 @@ import { Employee } from '../employee/employee.entity';
 import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { TenantModule } from '../tenant/tenant.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -16,6 +17,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		TypeOrmModule.forFeature([Proposal, Employee]),
 		MikroOrmModule.forFeature([Proposal, Employee]),
 		TenantModule,
+		RolePermissionModule,
 		UserModule
 	],
 	controllers: [ProposalController],
