@@ -1,5 +1,5 @@
 import { environment as env } from '@gauzy/config';
-import { CanActivate, ExecutionContext, Injectable, Type } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { verify } from 'jsonwebtoken';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -8,14 +8,16 @@ import * as camelCase from 'camelcase';
 import { RequestContext } from './../../core/context';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class OrganizationPermissionGuard implements CanActivate {
-
 	constructor(
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		readonly _reflector: Reflector,
 		readonly _typeOrmEmployeeRepository: TypeOrmEmployeeRepository
-	) { }
+	) {}
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
@@ -25,7 +27,9 @@ export class OrganizationPermissionGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {
@@ -50,17 +54,51 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 		// Check permissions based on user role
 		if (role === RolesEnum.EMPLOYEE) {
-			console.log(`Guard: Organization Permissions for Employee ID: ${employeeId}`);
-			// Check if user has the required permissions
-			isAuthorized = await this.checkOrganizationPermission(employeeId, permissions);
+			const tenantId = RequestContext.currentTenantId();
+
+			const cacheKey = `orgPermissions_${tenantId}_${employeeId}_${permissions.join('_')}`;
+
+			console.log(
+				`Guard: Checking Org Permissions for Employee ID: ${employeeId} from Cache with key ${cacheKey}`
+			);
+
+			const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
+
+			if (fromCache == null) {
+				console.log('Organization Permissions NOT loaded from Cache with key:', cacheKey);
+
+				// Check if user has the required permissions
+				isAuthorized = await this.checkOrganizationPermission(tenantId, employeeId, permissions);
+
+				await this.cacheManager.set(
+					cacheKey,
+					isAuthorized,
+					5 * 60 * 1000 // 5 minutes caching period for Organization Permissions
+				);
+			} else {
+				isAuthorized = fromCache;
+				console.log(`Organization Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`);
+			}
 		} else {
 			// For non-employee roles, consider it authorized
+			// TODO: why!? This should be handled differently I think...
+			// If it's not Employee, but say Viewer, it should still check the permissions...
 			isAuthorized = true;
 		}
 
 		if (!isAuthorized) {
 			// Log unauthorized access attempts
-			console.log(`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(', ')}`);
+			console.log(
+				`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
+		} else {
+			console.log(
+				`Access granted.  User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
 		}
 
 		return isAuthorized;
@@ -72,10 +110,9 @@ export class OrganizationPermissionGuard implements CanActivate {
 	 * @param permissions - An array of permission strings to check.
 	 * @returns A Promise that resolves to a boolean indicating if at least one permission is allowed in the organization.
 	 */
-	async checkOrganizationPermission(employeeId: string, permissions: string[]): Promise<boolean> {
+	async checkOrganizationPermission(tenantId: string, employeeId: string, permissions: string[]): Promise<boolean> {
 		try {
 			console.time('Organization Permission Guard Time');
-			const tenantId = RequestContext.currentTenantId();
 			// Create a query builder for the 'employee' entity
 			const query = this._typeOrmEmployeeRepository.createQueryBuilder('employee');
 			// Inner join with the 'organization' entity

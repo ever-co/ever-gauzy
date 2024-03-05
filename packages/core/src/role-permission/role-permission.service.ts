@@ -441,11 +441,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 * @returns A Promise with a boolean indicating if the role permissions are valid.
 	 * @throws Error if the ORM type is not implemented.
 	 */
-	public async checkRolePermission(permissions: string[], includeRole: boolean = false): Promise<boolean> {
-		// Retrieve current role ID and tenant ID from RequestContext
-		const tenantId = RequestContext.currentTenantId();
-		const roleId = RequestContext.currentRoleId();
-
+	public async checkRolePermission(
+		tenantId: string,
+		roleId: string,
+		permissions: string[],
+		includeRole: boolean = false
+	): Promise<boolean> {
 		switch (this.ormType) {
 			case MultiORMEnum.TypeORM:
 				// Create a query builder for the 'role_permission' entity
@@ -454,7 +455,9 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				query.where('rp.tenantId = :tenantId', { tenantId });
 
 				// If includeRole is true, add the condition for the current role ID
-				if (includeRole) { query.andWhere('rp.roleId = :roleId', { roleId }); }
+				if (includeRole) {
+					query.andWhere('rp.roleId = :roleId', { roleId });
+				}
 
 				// Add conditions for permissions, enabled, isActive, and isArchived
 				query.andWhere('rp.permission IN (:...permissions)', { permissions });
