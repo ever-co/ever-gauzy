@@ -134,11 +134,11 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * ImageAsset
 	 */
 	@ManyToOne(() => ImageAsset, {
-		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
 
-		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	image?: IImageAsset;
