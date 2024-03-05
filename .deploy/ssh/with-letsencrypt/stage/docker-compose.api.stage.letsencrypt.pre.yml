@@ -6,14 +6,18 @@ services:
     restart: always
     environment:
       CERTBOT_EMAIL: "ever@ever.tech"
+    env_file:
+      - ./nginx-certbot.env
     ports:
       - "80:80"
       - "443:443"
     networks:
       - with-letsencrypt_overlay
     volumes:
-      - ./prod.conf.d:/etc/nginx/user.conf.d:ro
+      - nginx_secrets:/etc/letsencrypt
+      - ./user_conf.d:/etc/nginx/user_conf.d
 volumes:
+  nginx_secrets: {}
   certificates: {}
 
 networks:
