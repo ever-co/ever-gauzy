@@ -1,8 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, NotFoundException, Type } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { FEATURE_METADATA } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { FeatureService } from './../../feature/feature.service';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 /**
  * Feature enabled/disabled guard
@@ -11,7 +13,11 @@ import { FeatureService } from './../../feature/feature.service';
  */
 @Injectable()
 export class FeatureFlagGuard implements CanActivate {
-	constructor(private readonly _reflector: Reflector, private readonly featureFlagService: FeatureService) {}
+	constructor(
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		private readonly _reflector: Reflector,
+		private readonly featureFlagService: FeatureService
+	) {}
 
 	/**
 	 * Determines if the current request can be activated based on feature flag metadata.
@@ -30,8 +36,22 @@ export class FeatureFlagGuard implements CanActivate {
 
 		console.log('Guard: FeatureFlag checking', flag);
 
+		const cacheKey = `featureFlag_${flag}`;
+
+		const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
+
+		let isEnabled: boolean;
+
+		if (fromCache == null) {
+			isEnabled = await this.featureFlagService.isFeatureEnabled(flag);
+
+			await this.cacheManager.set(cacheKey, isEnabled);
+		} else {
+			isEnabled = fromCache;
+		}
+
 		// Check if the feature is enabled
-		if (await this.featureFlagService.isFeatureEnabled(flag)) {
+		if (isEnabled) {
 			console.log(`Guard: FeatureFlag ${flag} enabled`);
 			return true;
 		}
