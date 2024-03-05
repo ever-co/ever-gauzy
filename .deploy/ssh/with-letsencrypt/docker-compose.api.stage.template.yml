@@ -114,7 +114,6 @@ services:
      # '3000-3001:${API_PORT}'
     networks:
       - overlay
-
 volumes:
   certificates: {}
 
