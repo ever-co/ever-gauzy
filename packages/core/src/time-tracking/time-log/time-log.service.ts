@@ -979,8 +979,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			);
 			query.andWhere(
 				new Brackets(qb => {
-					qb.where(`"${query.alias}"."startedAt" >= :startDate`, { startDate });
-					qb.andWhere(`"${query.alias}"."startedAt" < :endDate`, { endDate });
+					qb.where(p(`"${query.alias}"."startedAt" >= :startDate`), { startDate });
+					qb.andWhere(p(`"${query.alias}"."startedAt" < :endDate`), { endDate });
 				})
 			);
 		}
