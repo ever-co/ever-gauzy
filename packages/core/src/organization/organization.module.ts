@@ -28,10 +28,6 @@ import { OrganizationService } from './organization.service';
 		OrganizationService,
 		...CommandHandlers
 	],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		OrganizationService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationService]
 })
 export class OrganizationModule { }

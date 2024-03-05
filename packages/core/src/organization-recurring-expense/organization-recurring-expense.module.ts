@@ -8,10 +8,8 @@ import { OrganizationRecurringExpenseController } from './organization-recurring
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import { QueryHandlers } from './queries/handlers';
-import { Employee } from '../employee/employee.entity';
-import { EmployeeService } from '../employee/employee.service';
-import { Organization } from '../organization/organization.entity';
-import { OrganizationService } from '../organization/organization.service';
+import { EmployeeModule } from '../employee/employee.module';
+import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
@@ -22,16 +20,16 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 				module: OrganizationRecurringExpenseModule
 			}
 		]),
-		TypeOrmModule.forFeature([OrganizationRecurringExpense, Organization, Employee]),
-		MikroOrmModule.forFeature([OrganizationRecurringExpense, Organization, Employee]),
+		TypeOrmModule.forFeature([OrganizationRecurringExpense]),
+		MikroOrmModule.forFeature([OrganizationRecurringExpense]),
 		RolePermissionModule,
+		EmployeeModule,
+		OrganizationModule,
 		CqrsModule
 	],
 	controllers: [OrganizationRecurringExpenseController],
 	providers: [
 		OrganizationRecurringExpenseService,
-		EmployeeService,
-		OrganizationService,
 		...QueryHandlers,
 		...CommandHandlers
 	],
