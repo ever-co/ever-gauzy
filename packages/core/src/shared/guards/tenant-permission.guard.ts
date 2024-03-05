@@ -4,18 +4,16 @@ import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
-import { TenantService } from './../../tenant/tenant.service';
 import { TenantBaseGuard } from './tenant-base.guard';
+import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 @Injectable()
-export class TenantPermissionGuard extends TenantBaseGuard
-	implements CanActivate {
-
+export class TenantPermissionGuard extends TenantBaseGuard implements CanActivate {
 	constructor(
-		protected readonly _reflector: Reflector,
-		private readonly _tenantService: TenantService
+		private readonly _reflector: Reflector,
+		private readonly _rolePermissionService: RolePermissionService
 	) {
-		super(_reflector);
+		super();
 	}
 
 	/**
@@ -46,23 +44,22 @@ export class TenantPermissionGuard extends TenantBaseGuard
 
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
+		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {
-			// Retrieve tenant with rolePermissions relations
-			const tenant = await this._tenantService.findOneByIdString(currentTenantId, {
-				relations: { rolePermissions: true },
-			});
-
 			// Check if the tenant has the required permissions
-			isAuthorized = !!tenant?.rolePermissions.find(
-				(p) => permissions.includes(p.permission) && p.enabled
-			);
+			isAuthorized = await this._rolePermissionService.checkRolePermission(permissions);
 		}
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
-			console.log(`Unauthorized access blocked. Tenant ID:', ${currentTenantId}, Permissions Checked: ${permissions.join(', ')}`);
+			console.log(
+				`Unauthorized access blocked. Tenant ID:', ${currentTenantId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
 		}
 
 		return isAuthorized;

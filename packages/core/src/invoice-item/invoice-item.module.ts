@@ -6,29 +6,21 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceItemController } from './invoice-item.controller';
 import { InvoiceItemService } from './invoice-item.service';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from '../user/user.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { TaskModule } from '../tasks/task.module';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/invoice-item', module: InvoiceItemModule }
-		]),
+		RouterModule.register([{ path: '/invoice-item', module: InvoiceItemModule }]),
 		TypeOrmModule.forFeature([InvoiceItem]),
 		MikroOrmModule.forFeature([InvoiceItem]),
-		CqrsModule,
-		TenantModule,
-		UserModule,
-		TaskModule
+		RolePermissionModule,
+		TaskModule,
+		CqrsModule
 	],
 	controllers: [InvoiceItemController],
 	providers: [InvoiceItemService, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		InvoiceItemService
-	]
+	exports: [InvoiceItemService]
 })
 export class InvoiceItemModule { }

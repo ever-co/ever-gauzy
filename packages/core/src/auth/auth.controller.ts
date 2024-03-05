@@ -37,8 +37,6 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
-import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @ApiTags('Auth')
 @Controller()

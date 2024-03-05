@@ -6,7 +6,6 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import * as moment from 'moment';
 import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
@@ -15,13 +14,11 @@ import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
-import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './repository';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
-		@InjectRepository(Employee)
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
@@ -29,22 +26,29 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}
 
+	/**
+	 * Retrieves all active employees with their associated user and organization details.
+	 * @returns A Promise that resolves to an array of active employees.
+	 */
 	public async findAllActive(): Promise<Employee[]> {
-		const user = RequestContext.currentUser();
-
-		if (user && user.tenantId) {
-			return await this.repository.find({
+		try {
+			return await super.find({
 				where: {
 					isActive: true,
-					tenantId: user.tenantId
+					isArchived: false,
 				},
 				relations: {
 					user: true,
 					organization: true
-				}
+				},
 			});
+		} catch (error) {
+			// Handle any potential errors, log, and optionally rethrow or return a default value.
+			console.error('Error occurred while fetching active employees:', error);
+			return [];
 		}
 	}
+
 
 	/**
 	 * Find the employees working in the organization for a particular date range.

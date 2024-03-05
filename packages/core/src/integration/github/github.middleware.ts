@@ -1,13 +1,18 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { isNotEmpty } from '@gauzy/common';
-import { IntegrationEnum } from '@gauzy/contracts';
+import { IIntegrationSetting, IntegrationEnum } from '@gauzy/contracts';
 import { arrayToObject } from 'core/utils';
 import { IntegrationTenantService } from 'integration-tenant/integration-tenant.service';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class GithubMiddleware implements NestMiddleware {
-	constructor(private readonly _integrationTenantService: IntegrationTenantService) {}
+	constructor(
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
+		private readonly _integrationTenantService: IntegrationTenantService
+	) {}
 
 	async use(request: Request, _response: Response, next: NextFunction) {
 		try {
@@ -28,9 +33,21 @@ export class GithubMiddleware implements NestMiddleware {
 				if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
 					try {
 						// Fetch integration settings from the service
-						const integrationTenant = await this._integrationTenantService.findOneByIdString(
-							integrationId,
-							{
+
+						console.log(
+							`Getting Gauzy integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+						);
+
+						let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(
+							`integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`
+						);
+
+						if (!integrationTenantSettings) {
+							console.log(
+								`Gauzy integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+							);
+
+							const fromDb = await this._integrationTenantService.findOneByIdString(integrationId, {
 								where: {
 									tenantId,
 									organizationId,
@@ -44,17 +61,35 @@ export class GithubMiddleware implements NestMiddleware {
 								relations: {
 									settings: true
 								}
-							}
-						);
+							});
 
-						if (integrationTenant && integrationTenant.settings.length > 0) {
+							if (fromDb && fromDb.settings) {
+								integrationTenantSettings = fromDb.settings;
+
+								await this.cacheManager.set(
+									`integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`,
+									integrationTenantSettings,
+									60 * 1000 // 60 seconds caching period for Tenants Settings
+								);
+
+								console.log(
+									`Gauzy integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+								);
+							}
+						} else {
+							console.log(
+								`Gauzy integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+							);
+						}
+
+						if (integrationTenantSettings && integrationTenantSettings.length > 0) {
 							/** Create an 'integration' object and assign properties to it. */
 							request['integration'] = new Object({
 								// Assign properties to the integration object
 								id: integrationId,
 								name: IntegrationEnum.GITHUB,
 								// Convert the 'settings' array to an object using the 'settingsName' and 'settingsValue' properties
-								settings: arrayToObject(integrationTenant.settings, 'settingsName', 'settingsValue')
+								settings: arrayToObject(integrationTenantSettings, 'settingsName', 'settingsValue')
 							});
 						}
 					} catch (error) {

@@ -1,8 +1,44 @@
 .flex-centered {
-  margin: auto;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex-grow: 1;
 }
+
+::ng-deep {
+  ngx-not-found {
+    height: 100%;
+  }
+}
+
+.row {
+  height: 100%;
+}
+
+nb-card {
+  height: 100%;
+  background-color: transparent;
+}
+
 nb-card-body {
   display: flex;
+
+  margin: auto;
+  width: 70%;
+  height: 70%;
+  background-color: var(--card-background-color);
+  flex-grow: 0;
+  flex-basis: auto;
+  flex-shrink: 1;
+  border-radius: var(--border-radius);
+}
+
+.not-found-num {
+  text-align: center;
+  font-size: 8rem;
+  margin: 3rem 0;
 }
 
 .title {
@@ -13,8 +49,18 @@ nb-card-body {
   text-align: center;
   display: block;
   margin-bottom: 3rem;
+  color: var(--color-basic-600);
+  font-weight: bold;
+}
+
+.redirect-home-title {
+  color: var(--color-basic-600);
+  font-weight: bold;
+  margin-bottom: 0;
 }
 
 .btn {
   margin-bottom: 2rem;
+  color: var(--color-primary-500);
+  font-weight: bold;
 }

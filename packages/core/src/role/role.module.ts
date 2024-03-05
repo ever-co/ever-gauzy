@@ -6,9 +6,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Role } from './role.entity';
 import { RoleService } from './role.service';
 import { RoleController } from './role.controller';
-import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
-import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 
@@ -19,9 +17,7 @@ import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 		]),
 		forwardRef(() => TypeOrmModule.forFeature([Role])),
 		forwardRef(() => MikroOrmModule.forFeature([Role])),
-		forwardRef(() => TenantModule),
 		forwardRef(() => RolePermissionModule),
-		forwardRef(() => UserModule),
 		CqrsModule
 	],
 	controllers: [RoleController],

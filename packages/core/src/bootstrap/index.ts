@@ -1,4 +1,5 @@
 // import * as csurf from 'csurf';
+import * as v8 from 'v8';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -23,7 +24,15 @@ import { AppModule } from '../app.module';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
+function logMemoryLimit() {
+	const heapStats = v8.getHeapStatistics();
+	const heapSizeLimit = heapStats.heap_size_limit;
+	console.log(`Heap size limit: ${heapSizeLimit / 1024 / 1024} MB`);
+}
+
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
+	logMemoryLimit();
+
 	console.time('Application Bootstrap Time');
 	startTracing(); // Start tracing using Signoz if OTEL is enabled.
 

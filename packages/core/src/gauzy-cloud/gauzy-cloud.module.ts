@@ -1,11 +1,9 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { HttpModule } from '@nestjs/axios';
 import { RouterModule } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@gauzy/config';
-import { TenantModule } from './../tenant/tenant.module';
 import { RoleModule } from './../role/role.module';
-import { UserModule } from './../user/user.module';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
 import { GauzyCloudController } from './gauzy-cloud.controller';
 import { GauzyCloudService } from './gauzy-cloud.service';
@@ -27,8 +25,6 @@ import { CommandHandlers } from './commands/handlers';
 			inject: [ConfigService]
 		}),
 		CqrsModule,
-		forwardRef(() => UserModule),
-		TenantModule,
 		RoleModule,
 		RolePermissionModule
 	],
@@ -36,4 +32,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [GauzyCloudService, ...CommandHandlers],
 	exports: []
 })
-export class GauzyCloudModule {}
+export class GauzyCloudModule { }

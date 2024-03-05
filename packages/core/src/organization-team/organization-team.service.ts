@@ -1,4 +1,10 @@
-import { Injectable, BadRequestException, UnauthorizedException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	UnauthorizedException,
+	ForbiddenException,
+	NotFoundException
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
 import {
@@ -9,9 +15,13 @@ import {
 	IOrganizationTeamUpdateInput,
 	PermissionsEnum,
 	IBasePerTenantAndOrganizationEntityModel,
-	IUser
+	IUser,
+	IDateRangePicker,
+	IOrganizationTeamEmployee,
+	IOrganizationTeamStatisticInput,
+	ITimerStatus
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common';
+import { isNotEmpty, parseToBoolean } from '@gauzy/common';
 import { Employee, OrganizationTeamEmployee } from './../core/entities/internal';
 import { OrganizationTeam } from './organization-team.entity';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
@@ -24,6 +34,9 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TimerService } from '../time-tracking/timer/timer.service';
+import { StatisticService } from '../time-tracking/statistic';
+import { GetOrganizationTeamStatisticQuery } from './queries';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
@@ -36,12 +49,121 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		@InjectRepository(Employee)
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
+		private readonly statisticService: StatisticService,
+		private readonly timerService: TimerService,
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private readonly userService: UserService,
 		private readonly taskService: TaskService
 	) {
 		super(typeOrmOrganizationTeamRepository, mikroOrmOrganizationTeamRepository);
+	}
+
+	/**
+	 * Execute the GetOrganizationTeamStatisticQuery.
+	 *
+	 * @param input - The input query for getting organization team statistics.
+	 * @returns The organization team with optional statistics.
+	 */
+	async getOrganizationTeamStatistic(input: GetOrganizationTeamStatisticQuery): Promise<IOrganizationTeam> {
+		try {
+			const { organizationTeamId, query } = input;
+			const { withLaskWorkedTask } = query;
+
+			/**
+			 * Find the organization team by ID with optional relations.
+			 */
+			const organizationTeam = await this.findOneByIdString(
+				organizationTeamId,
+				query['relations'] ? { relations: query['relations'] } : {}
+			);
+
+			/**
+			 * If the organization team has 'members', sync last worked tasks based on the query.
+			 */
+			if ('members' in organizationTeam && Boolean(withLaskWorkedTask)) {
+				organizationTeam['members'] = await this.syncLastWorkedTask(
+					organizationTeamId,
+					organizationTeam['members'],
+					query
+				);
+			}
+
+			return organizationTeam;
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Synchronize last worked task information for members of an organization team.
+	 *
+	 * @param members - Array of organization team members.
+	 * @param input - Input parameters including date range and statistics options.
+	 * @returns A promise resolving to an array of organization team members with updated statistics.
+	 */
+	private async syncLastWorkedTask(
+		organizationTeamId: IOrganizationTeam['id'],
+		members: IOrganizationTeamEmployee[],
+		input: IDateRangePicker & IOrganizationTeamStatisticInput
+	): Promise<IOrganizationTeamEmployee[]> {
+		try {
+			const { organizationId, startDate, endDate, withLaskWorkedTask, source } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			//
+			const employeeIds = members.map(({ employeeId }) => employeeId);
+
+			//
+			const statistics = await this.timerService.getTimerWorkedStatus({
+				source,
+				employeeIds,
+				organizationId,
+				tenantId,
+				organizationTeamId,
+				...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {})
+			});
+
+			//
+			const memberPromises = members.map(async (member: IOrganizationTeamEmployee) => {
+				const { employeeId } = member;
+				//
+				const timerWorkedStatus = statistics.find(
+					(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
+				);
+				//
+				const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
+					this.statisticService.getTasks({
+						organizationId,
+						tenantId,
+						organizationTeamId,
+						employeeIds: [employeeId]
+					}),
+					this.statisticService.getTasks({
+						organizationId,
+						tenantId,
+						organizationTeamId,
+						employeeIds: [employeeId],
+						startDate,
+						endDate
+					})
+				]);
+				return {
+					...member,
+					lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
+					running: timerWorkedStatus?.running,
+					duration: timerWorkedStatus?.duration,
+					timerStatus: timerWorkedStatus?.timerStatus,
+					totalWorkedTasks,
+					totalTodayTasks
+				};
+			});
+
+			return await Promise.all(memberPromises);
+		} catch (error) {
+			console.error('Error while retrieving team members last worked task', error);
+			return []; // or handle the error in an appropriate way
+		}
 	}
 
 	/**
@@ -105,15 +227,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					// If not included, add the employeeId to the managerIds array
 					managerIds.push(employeeId);
 				}
-			} catch (error) { }
+			} catch (error) {}
 
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(
-				memberIds,
-				managerIds,
-				organizationId,
-				tenantId
-			);
+			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 			// Find the manager role
 			const manager = await this.roleService.findOneByWhereOptions({
@@ -201,12 +318,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				});
 
 				// Retrieves a collection of employees based on specified criteria.
-				const employees = await this.retrieveEmployees(
-					memberIds,
-					managerIds,
-					organizationId,
-					tenantId
-				);
+				const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 				// Update nested entity
 				await this.organizationTeamEmployeeService.updateOrganizationTeam(
@@ -289,10 +401,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		 * @param employeeId - The employee ID for filtering the teams.
 		 * @returns A SQL condition string to be used in the main query's WHERE clause.
 		 */
-		const subQueryBuilder = (
-			cb: SelectQueryBuilder<OrganizationTeam>,
-			employeeId: string
-		) => {
+		const subQueryBuilder = (cb: SelectQueryBuilder<OrganizationTeam>, employeeId: string) => {
 			const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
 			subQuery.from('organization_team_employee', 'team');
 
@@ -341,7 +450,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				...(options.select ? { select: options.select } : {}),
 				...(options.relations ? { relations: options.relations } : {}),
 				...(options.where ? { where: options.where } : {}),
-				...(options.order ? { order: options.order } : {}),
+				...(options.order ? { order: options.order } : {})
 			});
 		}
 
@@ -379,13 +488,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationId,
 					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
-							members: {
-								employeeId: RequestContext.currentEmployeeId(),
-								role: {
-									name: RolesEnum.MANAGER
+								members: {
+									employeeId: RequestContext.currentEmployeeId(),
+									role: {
+										name: RolesEnum.MANAGER
+									}
 								}
-							}
-						}
+						  }
 						: {})
 				}
 			});

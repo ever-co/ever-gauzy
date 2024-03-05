@@ -5,13 +5,13 @@ import { verify } from 'jsonwebtoken';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
-import { UserService } from './../../user/user.service';
+import { RolePermissionService } from '../../role-permission/role-permission.service';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
 	constructor(
 		private readonly _reflector: Reflector,
-		private readonly userService: UserService
+		private readonly _rolePermissionService: RolePermissionService
 	) { }
 
 	/**
@@ -31,16 +31,10 @@ export class PermissionGuard implements CanActivate {
 
 		// Check user authorization
 		const token = RequestContext.currentToken();
-		const { id, role } = verify(token, env.JWT_SECRET) as {
-			id: string;
-			role: string;
-		};
-
-		// Retrieve user with role and rolePermissions relations
-		const user = await this.userService.findOneByIdString(id, { relations: { role: { rolePermissions: true } } });
+		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
 
 		// Check if user has the required permissions
-		const isAuthorized = user?.role?.rolePermissions.some((p) => permissions.includes(p.permission) && p.enabled) || false;
+		const isAuthorized = await this._rolePermissionService.checkRolePermission(permissions, true);
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
