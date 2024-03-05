@@ -31,11 +31,7 @@ import { IGetConflictTimeLogCommand } from './commands';
 
 @ApiTags('TimeLog')
 @UseGuards(TenantBaseGuard, PermissionGuard)
-@Permissions(
-	PermissionsEnum.TIME_TRACKER,
-	PermissionsEnum.ALL_ORG_EDIT,
-	PermissionsEnum.ALL_ORG_VIEW
-)
+@Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeLogController {
 

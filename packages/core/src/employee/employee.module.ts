@@ -15,6 +15,7 @@ import { EmailSendModule } from './../email-send/email-send.module';
 import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 
 @Module({
 	imports: [
@@ -33,7 +34,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		CqrsModule
 	],
 	controllers: [EmployeeController],
-	providers: [EmployeeService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmployeeService]
+	providers: [EmployeeService, TypeOrmEmployeeRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, EmployeeService, TypeOrmEmployeeRepository]
 })
 export class EmployeeModule { }

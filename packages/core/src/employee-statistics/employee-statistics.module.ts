@@ -13,6 +13,7 @@ import { Income } from '../income/income.entity';
 import { IncomeService } from '../income/income.service';
 import { Organization } from '../organization/organization.entity';
 import { OrganizationService } from '../organization/organization.service';
+import { EmployeeModule } from '../employee/employee.module';
 import { EmployeeStatisticsController } from './employee-statistics.controller';
 import { EmployeeStatisticsService } from './employee-statistics.service';
 import { QueryHandlers } from './queries/handlers';
@@ -23,7 +24,6 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 const forFeatureEntities = [
 	Income,
 	Expense,
-	Employee,
 	Organization,
 	EmployeeRecurringExpense,
 	OrganizationRecurringExpense
@@ -35,6 +35,7 @@ const forFeatureEntities = [
 		TypeOrmModule.forFeature(forFeatureEntities),
 		MikroOrmModule.forFeature(forFeatureEntities),
 		RolePermissionModule,
+		EmployeeModule,
 		CqrsModule
 	],
 	controllers: [EmployeeStatisticsController],
@@ -42,7 +43,6 @@ const forFeatureEntities = [
 		EmployeeStatisticsService,
 		IncomeService,
 		ExpenseService,
-		EmployeeService,
 		OrganizationService,
 		EmployeeRecurringExpenseService,
 		OrganizationRecurringExpenseService,
