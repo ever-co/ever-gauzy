@@ -3,8 +3,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Employee } from '../employee/employee.entity';
-import { EmployeeService } from '../employee/employee.service';
 import { EmployeeRecurringExpense } from '../employee-recurring-expense/employee-recurring-expense.entity';
 import { EmployeeRecurringExpenseService } from '../employee-recurring-expense/employee-recurring-expense.service';
 import { Expense } from '../expense/expense.entity';
