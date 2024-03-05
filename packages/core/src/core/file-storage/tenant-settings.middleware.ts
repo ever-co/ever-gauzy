@@ -33,7 +33,9 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 				if (decodedToken && decodedToken.tenantId) {
 					console.log('Getting Tenant settings from Cache for tenantId: %s', decodedToken.tenantId);
 
-					tenantSettings = await this.cacheManager.get('tenantSettings_' + decodedToken.tenantId);
+					const cacheKey = 'tenantSettings_' + decodedToken.tenantId;
+
+					tenantSettings = await this.cacheManager.get(cacheKey);
 
 					if (!tenantSettings) {
 						console.log('Tenant settings NOT loaded from Cache for tenantId: %s', decodedToken.tenantId);
@@ -47,9 +49,9 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 
 						if (tenantSettings) {
 							await this.cacheManager.set(
-								'tenantSettings_' + decodedToken.tenantId,
+								cacheKey,
 								tenantSettings,
-								60 * 1000 // 60 seconds caching period for Tenants Settings
+								5 * 60 * 1000 // 5 min caching period for Tenants Settings
 							);
 
 							console.log(

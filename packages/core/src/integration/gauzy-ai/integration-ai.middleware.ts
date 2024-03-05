@@ -45,10 +45,10 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 					`Getting Gauzy AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
 				);
 
+				const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${IntegrationEnum.GAUZY_AI}`;
+
 				// Fetch integration settings from the service
-				let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(
-					`integrationTenantSettings_${tenantId}_${organizationId}_${IntegrationEnum.GAUZY_AI}`
-				);
+				let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(cacheKey);
 
 				if (!integrationTenantSettings) {
 					console.log(
@@ -65,9 +65,9 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 						integrationTenantSettings = fromDb.settings;
 
 						await this.cacheManager.set(
-							`integrationTenantSettings_${tenantId}_${organizationId}_${IntegrationEnum.GAUZY_AI}`,
+							cacheKey,
 							integrationTenantSettings,
-							60 * 1000 // 60 seconds caching period for Integration Tenant Settings
+							5 * 60 * 1000 // 5 min caching period for Integration Tenant Settings
 						);
 
 						console.log(

@@ -38,9 +38,9 @@ export class GithubMiddleware implements NestMiddleware {
 							`Getting Gauzy integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
 						);
 
-						let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(
-							`integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`
-						);
+						const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`;
+
+						let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(cacheKey);
 
 						if (!integrationTenantSettings) {
 							console.log(
@@ -67,9 +67,9 @@ export class GithubMiddleware implements NestMiddleware {
 								integrationTenantSettings = fromDb.settings;
 
 								await this.cacheManager.set(
-									`integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`,
+									cacheKey,
 									integrationTenantSettings,
-									60 * 1000 // 60 seconds caching period for Tenants Settings
+									5 * 60 * 1000 // 5 min caching period for GitHub Integration Tenant Settings
 								);
 
 								console.log(
