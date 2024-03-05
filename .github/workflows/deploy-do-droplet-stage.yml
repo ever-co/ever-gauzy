@@ -158,6 +158,36 @@ jobs:
           key: ${{secrets.DO_DROPLET_KEY}}
           source: '.deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.yml'
           target: '.'
+      - name: Install Docker
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.DO_DROPLET_STAGE_HOST}}
+          username: ${{secrets.DO_DROPLET_USERNAME}}
+          key: ${{secrets.DO_DROPLET_KEY}}
+          script: |
+            if ! command -v docker &> /dev/null; then
+                echo "Docker not installed. Installing..."
+                sudo apt-get update
+                sudo apt-get install -y docker.io
+                sudo systemctl start docker
+                sudo systemctl enable docker
+            else
+                echo "Docker is already installed."
+            fi
+      - name: Install Docker Compose
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.DO_DROPLET_STAGE_HOST}}
+          username: ${{secrets.DO_DROPLET_USERNAME}}
+          key: ${{secrets.DO_DROPLET_KEY}}
+          script: |
+            if ! command -v docker-compose &> /dev/null; then
+                echo "Docker Compose not installed. Installing..."
+                sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+            else
+                echo "Docker Compose is already installed."
+            fi
       - name: Deploy to DigitalOcean Droplet
         uses: appleboy/ssh-action@master
         with:
