@@ -15,7 +15,8 @@ services:
       - with-letsencrypt_overlay
     volumes:
       - nginx_secrets:/etc/letsencrypt
-      - ./stage.conf.d:/etc/nginx/user.conf.d:ro
+      - ./stage.conf.d:/etc/nginx/user.conf.d
+      #- ./user_conf.d:/etc/nginx/user_conf.d
 volumes:
   nginx_secrets: {}
   certificates: {}
