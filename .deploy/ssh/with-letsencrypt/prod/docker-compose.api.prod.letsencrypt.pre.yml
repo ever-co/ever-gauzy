@@ -12,7 +12,7 @@ services:
       - "80:80"
       - "443:443"
     networks:
-      - with-letsencrypt_overlay
+      - prod_overlay
     volumes:
       - nginx_secrets:/etc/letsencrypt
       - ./user_conf.d:/etc/nginx/user_conf.d
@@ -21,6 +21,6 @@ volumes:
   certificates: {}
 
 networks:
-  with-letsencrypt_overlay:
+  prod_overlay:
     external: true
       
