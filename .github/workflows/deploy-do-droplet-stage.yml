@@ -32,11 +32,11 @@ jobs:
       - name: Inject secrets into .env-template.compose
         run: |        
           if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then  
-            envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.stage.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.stage.yml
+            envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.yml
             touch $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.yml
           elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
             envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.yml
-            touch $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/docker-compose.api.stage.yml          
+            touch $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.yml          
           else
             echo "UNKNOWN INGRESS_CERT_TYPE"
           fi        
@@ -147,7 +147,7 @@ jobs:
           host: ${{secrets.DO_DROPLET_STAGE_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/with-cloudflare/docker-compose.api.stage.yml'
+          source: '.deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.yml'
           target: '.'
       - name: Copy file via scp - with-letsencrypt
         if: ${{ env.INGRESS_CERT_TYPE == 'letsencrypt' }}
@@ -198,9 +198,9 @@ jobs:
           script: |
             if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
                 docker-compose -f .deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.yml down
-                docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.stage.yml up -d
+                docker-compose -f .deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.yml up -d
             elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-                docker-compose -f .deploy/ssh/with-cloudflare/docker-compose.api.stage.yml down
+                docker-compose -f .deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.yml down
                 docker-compose -f .deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.yml up -d
             else
                 echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
