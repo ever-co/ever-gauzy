@@ -14,7 +14,7 @@ services:
       image:
           registry_type: 'DOCR'
           registry: ''
-          repository: 'gauzy-api-demo'
+          repository: $DOCR_REPOSITORY
           tag: 'latest'
           deploy_on_push:
               enabled: true
@@ -235,6 +235,9 @@ services:
           - key: OTEL_ENABLED
             scope: RUN_TIME
             value: '$OTEL_ENABLED'
+          - key: OTEL_PROVIDER
+            scope: RUN_TIME
+            value: '$OTEL_PROVIDER'
           - key: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
             scope: RUN_TIME
             value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'

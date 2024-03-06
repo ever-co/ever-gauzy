@@ -1,4 +1,11 @@
-import { IIssueType, IIssueTypeCreateInput, IIssueTypeFindInput, IIssueTypeUpdateInput, IPagination, IPaginationParam } from '@gauzy/contracts';
+import {
+	IIssueType,
+	IIssueTypeCreateInput,
+	IIssueTypeFindInput,
+	IIssueTypeUpdateInput,
+	IPagination,
+	IPaginationParam
+} from '@gauzy/contracts';
 import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CountQueryDTO } from './../../shared/dto';
@@ -6,7 +13,7 @@ import { TenantPermissionGuard } from './../../shared/guards';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
-import { CreateIssueTypeDTO, IssueTypeQuerDTO, UpdateIssueTypeDTO } from './dto';
+import { CreateIssueTypeDTO, IssueTypeQueryDTO, UpdateIssueTypeDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Issue Type')
@@ -18,10 +25,7 @@ export class IssueTypeController extends CrudFactory<
 	IIssueTypeUpdateInput,
 	IIssueTypeFindInput
 >(PaginationParams, CreateIssueTypeDTO, UpdateIssueTypeDTO, CountQueryDTO) {
-
-	constructor(
-		protected readonly issueTypeService: IssueTypeService
-	) {
+	constructor(protected readonly issueTypeService: IssueTypeService) {
 		super(issueTypeService);
 	}
 
@@ -40,9 +44,8 @@ export class IssueTypeController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findAllIssueTypes(
-		@Query() params: IssueTypeQuerDTO
-	): Promise<IPagination<IIssueType>> {
+	async findAllIssueTypes(@Query() params: IssueTypeQueryDTO): Promise<IPagination<IIssueType>> {
+		console.log('IssueTypeController -> findAllIssueTypes -> params', params);
 		return await this.issueTypeService.fetchAll(params);
 	}
 }

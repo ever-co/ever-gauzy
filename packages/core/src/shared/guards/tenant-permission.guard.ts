@@ -26,6 +26,7 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
+		const roleId = RequestContext.currentRoleId();
 
 		let isAuthorized = false;
 
@@ -54,9 +55,6 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 
 		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {
-			// Retrieve current role ID and tenant ID from RequestContext
-			const roleId = RequestContext.currentRoleId();
-
 			const cacheKey = `tenantPermissions_${tenantId}_${roleId}_${permissions.join('_')}`;
 
 			console.log('Checking Tenant Permissions from Cache with key:', cacheKey);
@@ -83,11 +81,15 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
 			console.log(
-				`Unauthorized access blocked. Tenant ID:', ${tenantId}, Permissions Checked: ${permissions.join(', ')}`
+				`Unauthorized access blocked. Tenant ID: ${tenantId}, Role ID: ${roleId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
 			);
 		} else {
 			console.log(
-				`Authorized access granted. Tenant ID:', ${tenantId}, Permissions Checked: ${permissions.join(', ')}`
+				`Authorized access granted. Tenant ID: ${tenantId}, Role ID: ${roleId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
 			);
 		}
 
