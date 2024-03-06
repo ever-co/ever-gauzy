@@ -1,7 +1,16 @@
-import { bootstrap } from './bootstrap';
-import { devConfig } from './dev-config';
+console.log('Core Starting...');
 
-bootstrap(devConfig).catch((error) => {
-	console.error(error);
-	process.exit(1);
-});
+import { bootstrap } from './bootstrap';
+console.log('Core Bootstrap loaded');
+
+import { devConfig } from './dev-config';
+console.log('Core Dev Config loaded');
+
+bootstrap(devConfig)
+	.then(() => {
+		console.log('Core is running');
+	})
+	.catch(async (error) => {
+		console.error(error);
+		process.exit(1);
+	});

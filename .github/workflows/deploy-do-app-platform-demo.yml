@@ -105,6 +105,7 @@ jobs:
           JITSU_SERVER_URL: '${{ secrets.JITSU_SERVER_URL }}'
           JITSU_SERVER_WRITE_KEY: '${{ secrets.JITSU_SERVER_WRITE_KEY }}'
           OTEL_ENABLED: '${{ secrets.OTEL_ENABLED }}'
+          OTEL_PROVIDER: '${{ secrets.OTEL_PROVIDER }}'
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
           OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
           GAUZY_GITHUB_CLIENT_ID: '${{ secrets.GAUZY_GITHUB_CLIENT_ID }}'

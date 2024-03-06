@@ -5,6 +5,6 @@
 		"incremental": true,
 		"tsBuildInfoFile": "./tsconfig.tsbuildinfo"
 	},
-	"include": ["**/*.ts"],
+	"include": ["**/*.ts", "../../packages/core/src/bootstrap/tracer.ts"],
 	"exclude": ["jest.config.ts"]
 }
