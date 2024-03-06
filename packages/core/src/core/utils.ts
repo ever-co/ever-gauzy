@@ -1,11 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SqliteDriver } from '@mikro-orm/sqlite';
-import { Collection, FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery } from '@mikro-orm/core';
+import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
-import { FindManyOptions } from 'typeorm';
+import { FindManyOptions, FindOptionsOrder } from 'typeorm';
 import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -506,26 +506,47 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where
 	};
 	let where: MikroFilterQuery<T> = {};
 
-	if (options) {
-		if (options.where) {
-			where = options.where as MikroFilterQuery<T>;
-		}
-		if (options.relations) {
-			mikroOptions.populate = flatten(options.relations) as any;
-		}
-		if (options.order) {
-			mikroOptions.orderBy = Object.entries(options.order).reduce((acc, [key, value]) => {
-				acc[key] = `${value}`.toLowerCase();
-				return acc;
-			}, {});
-		}
-		if (options.skip) {
-			mikroOptions.offset = options.skip;
-		}
-		if (options.take) {
-			mikroOptions.limit = options.take;
-		}
+	// Parses TypeORM `where` option to MikroORM `where` option
+	if (options && options.where) {
+		where = options.where as MikroFilterQuery<T>;
+	}
+
+	// Parses TypeORM `select` option to MikroORM `fields` option
+	if (options && options.select) {
+		mikroOptions.fields = flatten(options.select) as string[];
+	}
+
+	// Parses TypeORM `relations` option to MikroORM `populate` option
+	if (options && options.relations) {
+		mikroOptions.populate = flatten(options.relations) as string[];
+	}
+
+	// Parses TypeORM `order` option to MikroORM `orderBy` option
+	if (options && options.order) {
+		mikroOptions.orderBy = parseOrderOptions(options.order) as OrderDefinition<T>;
+	}
+
+	// Parses TypeORM `skip` option to MikroORM `offset` option
+	if (options && options.skip) {
+		mikroOptions.offset = options.skip;
+	}
+
+	// Parses TypeORM `take` option to MikroORM `limit` option
+	if (options && options.take) {
+		mikroOptions.limit = options.take;
 	}
 
 	return { where, mikroOptions };
+}
+
+/**
+ * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
+ * @param order TypeORM 'order' option
+ * @returns Parsed MikroORM 'orderBy' option
+ */
+export function parseOrderOptions<T>(order: FindOptionsOrder<any>) {
+	return Object.entries(order).reduce((acc, [key, value]) => {
+		acc[key] = `${value}`.toLowerCase();
+		return acc;
+	}, {});
 }

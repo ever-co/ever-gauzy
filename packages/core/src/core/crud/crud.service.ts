@@ -344,7 +344,6 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
-				// mikroOptions.cache = false;
 				record = await this.mikroRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as any;
 				break;
 			case MultiORMEnum.TypeORM:
@@ -541,14 +540,16 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 *
-	 * @param entity
-	 * @returns
+	 * Serializes the provided entity based on the ORM type.
+	 * @param entity The entity to be serialized.
+	 * @returns The serialized entity.
 	 */
 	private serialize(entity: T): T {
 		if (this.ormType === MultiORMEnum.MikroORM) {
+			// If using MikroORM, use wrap(entity).toJSON() for serialization
 			return wrap(entity).toJSON() as T;
 		}
+		// If using other ORM types, return the entity as is
 		return entity;
 	}
 }
