@@ -27,13 +27,21 @@ jobs:
           echo ${{ secrets.INGRESS_API_CERT }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/stage/ingress.api.crt
           echo ${{ secrets.INGRESS_API_CERT_KEY }} | base64 --decode > $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/stage/ingress.api.key
 
-      - name: Copy file via scp
+      - name: Copy file via scp - cloudflare
         uses: appleboy/scp-action@master
         with:
           host: ${{secrets.DO_DROPLET_STAGE_HOST}}
           username: ${{secrets.DO_DROPLET_USERNAME}}
           key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.cloudflare.pre.yml,.deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.letsencrypt.pre.yml,.deploy/ssh/with-cloudflare/stage/nginx.stage.pre.cloudflare.conf,.deploy/ssh/with-letsencrypt/stage/user_conf.d,.deploy/ssh/with-letsencrypt/stage/nginx-certbot.env,.deploy/ssh/with-cloudflare/stage/ingress.api.crt,.deploy/ssh/with-cloudflare/stage/ingress.api.key'
+          source: '.deploy/ssh/with-cloudflare/stage/docker-compose.api.stage.cloudflare.pre.yml,.deploy/ssh/with-cloudflare/stage/nginx.stage.pre.cloudflare.conf,.deploy/ssh/with-cloudflare/stage/ingress.api.crt,.deploy/ssh/with-cloudflare/stage/ingress.api.key'
+          target: '.'
+      - name: Copy file via scp - letsencrypt
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{secrets.DO_DROPLET_STAGE_HOST}}
+          username: ${{secrets.DO_DROPLET_USERNAME}}
+          key: ${{secrets.DO_DROPLET_KEY}}
+          source: '.deploy/ssh/with-letsencrypt/stage/docker-compose.api.stage.letsencrypt.pre.yml,.deploy/ssh/with-letsencrypt/stage/user_conf.d,.deploy/ssh/with-letsencrypt/stage/nginx-certbot.env'
           target: '.'
       - name: Install Docker
         uses: appleboy/ssh-action@master
