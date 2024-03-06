@@ -43,8 +43,8 @@ export class EmployeesService {
 	getAll(
 		relations: string[] = [],
 		where?: IEmployeeFindInput
-	): Observable<{ items: IEmployee[]; total: number }> {
-		return this.http.get<{ items: IEmployee[]; total: number }>(`${API_PREFIX}/employee`, {
+	): Observable<IPagination<IEmployee>> {
+		return this.http.get<IPagination<IEmployee>>(`${API_PREFIX}/employee`, {
 			params: toParams({ where, relations })
 		});
 	}
@@ -62,7 +62,7 @@ export class EmployeesService {
 		tenantId: string,
 		forRange: IDateRangePicker,
 		withUser: boolean
-	): Promise<{ items: IEmployee[]; total: number }> {
+	): Promise<IPagination<IEmployee>> {
 		const query = {
 			organizationId,
 			tenantId,
@@ -71,12 +71,9 @@ export class EmployeesService {
 		};
 		const data = JSON.stringify({ findInput: query });
 		return firstValueFrom(
-			this.http.get<{ items: IEmployee[]; total: number }>(
-				`${API_PREFIX}/employee/working`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IPagination<IEmployee>>(`${API_PREFIX}/employee/working`, {
+				params: { data }
+			})
 		);
 	}
 
@@ -92,7 +89,7 @@ export class EmployeesService {
 		};
 		const data = JSON.stringify({ findInput: query });
 		return firstValueFrom(
-			this.http.get<{ items: IEmployee[]; total: number }>(`${API_PREFIX}/employee/working/count`, {
+			this.http.get<{ total: number }>(`${API_PREFIX}/employee/working/count`, {
 				params: { data }
 			})
 		);

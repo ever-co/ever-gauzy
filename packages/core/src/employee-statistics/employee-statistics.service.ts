@@ -195,8 +195,7 @@ export class EmployeeStatisticsService {
 	}
 
 	private _formatDate(date: Date) {
-		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() - 2000
-			}`;
+		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() - 2000}`;
 	}
 	/**
 	 * Return bonus value based on the bonus type and percentage
