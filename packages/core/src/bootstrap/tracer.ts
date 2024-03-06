@@ -13,6 +13,8 @@ import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
 import { BatchSpanProcessor, SimpleSpanProcessor, SpanExporter } from '@opentelemetry/sdk-trace-base';
 import { HoneycombSDK } from '@honeycombio/opentelemetry-node';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
+import { PeriodicExportingMetricReader, ConsoleMetricExporter } from '@opentelemetry/sdk-metrics';
 
 let sdk: any;
 
@@ -62,7 +64,8 @@ if (process.env.OTEL_ENABLED === 'true') {
 		if (!url) url = isGrpc ? 'grpc://localhost:14250' : 'http://localhost:14268/api/traces';
 
 		const exporterOptions = {
-			url: url
+			url: url,
+			serviceName: serviceName
 		};
 
 		if (!isGrpc) {
@@ -83,7 +86,8 @@ if (process.env.OTEL_ENABLED === 'true') {
 		if (!url) url = 'https://ingest.us.signoz.cloud:443/v1/traces';
 
 		const exporterOptions = {
-			url: url
+			url: url,
+			serviceName: serviceName
 		};
 
 		traceExporter = new OTLPTraceExporter(exporterOptions);
@@ -98,6 +102,7 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 		const exporterOptions = {
 			url: url,
+			serviceName: serviceName,
 			headers: {
 				'x-honeycomb-team': process.env.HONEYCOMB_API_KEY
 			}
@@ -108,6 +113,19 @@ if (process.env.OTEL_ENABLED === 'true') {
 		traceExporter = new OTLPTraceExporter(exporterOptions);
 
 		console.log('Tracing Enabled with Honeycomb');
+	}
+
+	if (process.env.OTEL_PROVIDER === 'zipkin') {
+		if (!url) url = 'http://localhost:9411/api/v2/spans';
+
+		const exporterOptions = {
+			url: url,
+			serviceName: serviceName
+		};
+
+		traceExporter = new ZipkinExporter(exporterOptions);
+
+		console.log('Tracing Enabled with Zipkin runnung on URL: ' + url);
 	}
 
 	console.log('Tracing URL: ' + url);
@@ -173,32 +191,36 @@ if (process.env.OTEL_ENABLED === 'true') {
 	console.log('Tracing Enabled Instrumentations:', instrumentationNames.join(', '));
 
 	if (process.env.OTEL_PROVIDER === 'honeycomb') {
-		const HoneycombSDKConfig = {
+		/*
+		const metricReader = new PeriodicExportingMetricReader({
+			exporter: new ConsoleMetricExporter()
+		});
+		*/
+
+		sdk = new HoneycombSDK({
 			apiKey: process.env.HONEYCOMB_API_KEY,
 			serviceName: serviceName,
-			traceExporter: traceExporter,
-			// spanProcessors: [spanProcessor],
+			spanProcessor: spanProcessor,
 			instrumentations: instrumentations,
+			// metricReader: metricReader,
 			localVisualizations: process.env.NODE_ENV === 'development'
-		};
-
-		sdk = new HoneycombSDK(HoneycombSDKConfig);
+		});
 
 		console.log('Tracing SDK initialized for Honeycomb');
 	} else {
-		// configure the SDK to export telemetry data to the console (for debugging purposes only)
-		// const consoleExporter = new ConsoleSpanExporter(); // deepscan-disable-line UNUSED_DECL
-		// traceExporter = consoleExporter
+		/*
+		const metricReader = new PeriodicExportingMetricReader({
+			exporter: new ConsoleMetricExporter()
+		});
+		*/
 
-		const nodeSDKConfig = {
+		sdk = new NodeSDK({
 			serviceName: serviceName,
-			traceExporter: traceExporter,
-			// spanProcessors: [spanProcessor],
-			instrumentations: instrumentations,
-			localVisualizations: process.env.NODE_ENV === 'development'
-		};
-
-		sdk = new NodeSDK(nodeSDKConfig);
+			// traceExporter: new ConsoleSpanExporter(),
+			spanProcessor: spanProcessor,
+			// metricReader: metricReader,
+			instrumentations: instrumentations
+		});
 
 		console.log('Tracing SDK initialized');
 	}
