@@ -116,11 +116,10 @@ export class EmployeeController extends CrudController<Employee> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<{ total: number }> {
 		const { findInput } = data;
-		const { organizationId, forRange, withUser } = findInput;
+		const { organizationId, forRange } = findInput;
 		return await this.employeeService.findWorkingEmployeesCount(
 			organizationId,
-			forRange,
-			withUser
+			forRange
 		);
 	}
 

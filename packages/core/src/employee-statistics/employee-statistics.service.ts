@@ -39,7 +39,7 @@ export class EmployeeStatisticsService {
 		private readonly employeeRecurringExpenseService: EmployeeRecurringExpenseService,
 		private readonly employeeService: EmployeeService,
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
-	) {}
+	) { }
 
 	async getStatisticsByEmployeeId(
 		employeeId: string,
@@ -195,9 +195,8 @@ export class EmployeeStatisticsService {
 	}
 
 	private _formatDate(date: Date) {
-		return `${this._monthNames[date.getMonth()]} '${
-			date.getFullYear() - 2000
-		}`;
+		return `${this._monthNames[date.getMonth()]} '${date.getFullYear() - 2000
+			}`;
 	}
 	/**
 	 * Return bonus value based on the bonus type and percentage
@@ -249,7 +248,7 @@ export class EmployeeStatisticsService {
 				'notes',
 				'isBonus'
 			],
-			join : {
+			join: {
 				alias: 'income',
 				leftJoinAndSelect: {
 					client: 'income.client'
@@ -399,12 +398,9 @@ export class EmployeeStatisticsService {
 				stat.expense.push(expense);
 			} else {
 				// Add a new map entry if the key(month-year) does not already exist
-				const {
-					total: splitAmong
-				} = await this.employeeService.findWorkingEmployees(
+				const { total: splitAmong } = await this.employeeService.findWorkingEmployees(
 					employee.organization.id,
-					expense.valueDate,
-					false
+					expense.valueDate
 				);
 
 				const newStat = {
@@ -515,13 +511,7 @@ export class EmployeeStatisticsService {
 					stat.recurringExpense.push(expense);
 					stat.valueDate = date;
 				} else {
-					const {
-						total: splitAmong
-					} = await this.employeeService.findWorkingEmployees(
-						employee.organization.id,
-						date,
-						false
-					);
+					const { total: splitAmong } = await this.employeeService.findWorkingEmployees(employee.organization.id, date);
 
 					// Add a new map entry if the key(month-year) does not already exist
 					const newStat: IMonthAggregatedSplitExpense = {

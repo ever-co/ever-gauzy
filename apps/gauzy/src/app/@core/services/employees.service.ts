@@ -19,7 +19,7 @@ import { API_PREFIX } from '../constants/app.constants';
 export class EmployeesService {
 	constructor(
 		private readonly http: HttpClient
-	) {}
+	) { }
 
 	getAllPublic(
 		request: IEmployeeFindInput,
@@ -44,7 +44,7 @@ export class EmployeesService {
 		relations: string[] = [],
 		where?: IEmployeeFindInput
 	): Observable<{ items: IEmployee[]; total: number }> {
-		return this.http.get<{ items: IEmployee[]; total: number }>( `${API_PREFIX}/employee`, {
+		return this.http.get<{ items: IEmployee[]; total: number }>(`${API_PREFIX}/employee`, {
 			params: toParams({ where, relations })
 		});
 	}
@@ -83,19 +83,17 @@ export class EmployeesService {
 	getWorkingCount(
 		organizationId: string,
 		tenantId: string,
-		forRange: IDateRangePicker,
-		withUser: boolean
+		forRange: IDateRangePicker
 	): Promise<{ total: number }> {
 		const query = {
 			organizationId,
 			tenantId,
-			forRange,
-			withUser
+			forRange
 		};
 		const data = JSON.stringify({ findInput: query });
 		return firstValueFrom(
-			this.http.get<{ items: IEmployee[]; total: number }>( `${API_PREFIX}/employee/working/count`, {
-				params: { data}
+			this.http.get<{ items: IEmployee[]; total: number }>(`${API_PREFIX}/employee/working/count`, {
+				params: { data }
 			})
 		);
 	}

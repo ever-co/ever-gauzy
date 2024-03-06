@@ -87,6 +87,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			case MultiORMEnum.MikroORM:
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
 			case MultiORMEnum.TypeORM:
+				options = Object.assign({}, options, { loadEagerRelations: false });
 				return await this.repository.count(options as FindManyOptions<T>);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
