@@ -114,10 +114,13 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 	console.log('Tracing Headers: ' + process.env.OTEL_EXPORTER_OTLP_HEADERS);
 
-	const spanProcessor =
-		process.env.NODE_ENV === `development`
-			? new SimpleSpanProcessor(traceExporter)
-			: new BatchSpanProcessor(traceExporter);
+	let spanProcessor;
+
+	if (process.env.NODE_ENV === `development`) {
+		spanProcessor = new SimpleSpanProcessor(traceExporter);
+	} else {
+		spanProcessor = new BatchSpanProcessor(traceExporter);
+	}
 
 	const isAuto = true;
 
@@ -183,11 +186,16 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 		console.log('Tracing SDK initialized for Honeycomb');
 	} else {
+		// configure the SDK to export telemetry data to the console (for debugging purposes only)
+		// const consoleExporter = new ConsoleSpanExporter(); // deepscan-disable-line UNUSED_DECL
+		// traceExporter = consoleExporter
+
 		const nodeSDKConfig = {
 			serviceName: serviceName,
 			traceExporter: traceExporter,
 			// spanProcessors: [spanProcessor],
-			instrumentations: instrumentations
+			instrumentations: instrumentations,
+			localVisualizations: process.env.NODE_ENV === 'development'
 		};
 
 		sdk = new NodeSDK(nodeSDKConfig);
