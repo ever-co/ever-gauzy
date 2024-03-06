@@ -429,8 +429,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			const { total: employeeCount } = await this.employeesService.getWorkingCount(
 				organizationId,
 				tenantId,
-				this.selectedDateRange,
-				true
+				this.selectedDateRange
 			);
 			this.showEmployeesSelector = employeeCount > 0;
 			if (this.showEmployeesSelector && !this.store.selectedEmployee) {
