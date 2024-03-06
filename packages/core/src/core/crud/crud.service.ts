@@ -29,6 +29,7 @@ import {
 	getORMType,
 	parseTypeORMFindToMikroOrm
 } from './../../core/utils';
+import { parseTypeORMFindCountOptions } from './utils';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -92,8 +93,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
 				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
-				options = Object.assign({}, options, { loadEagerRelations: false });
-				return await this.repository.count(options as FindManyOptions<T>);
+				const typeormOptions = parseTypeORMFindCountOptions<T>(options as FindManyOptions);
+				return await this.repository.count(typeormOptions as FindManyOptions);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -112,7 +113,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
 				return await this.mikroRepository.count(where, mikroOptions);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.countBy(options as FindOptionsWhere<T>);
+				const typeormOptions = parseTypeORMFindCountOptions<T>({ where: options } as FindManyOptions);
+				return await this.repository.count(typeormOptions as FindManyOptions);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
