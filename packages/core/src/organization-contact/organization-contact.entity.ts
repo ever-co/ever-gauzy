@@ -1,13 +1,8 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
-	ManyToMany,
-	OneToMany,
 	JoinTable,
-	RelationId,
-	OneToOne,
-	ManyToOne
+	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
@@ -41,8 +36,9 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_contact', { mikroOrmRepository: () => MikroOrmOrganizationContactRepository })
 export class OrganizationContact extends TenantOrganizationBaseEntity
@@ -50,19 +46,19 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	primaryEmail: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	primaryPhone: string;
 
 	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: ContactOrganizationInviteStatus
@@ -70,11 +66,11 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	inviteStatus?: ContactOrganizationInviteStatus;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => String, enum: ContactType })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: false,
 		enum: ContactType,
@@ -83,15 +79,15 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	contactType: ContactType;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: OrganizationContactBudgetTypeEnum,
@@ -100,7 +96,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	budgetType?: OrganizationContactBudgetTypeEnum;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdBy?: string;
 
 	/*
@@ -113,11 +109,12 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * Contact
 	 */
 	@ApiProperty({ type: () => Contact })
-	@OneToOne(() => Contact, (contact) => contact.organizationContact, {
+	@MultiORMOneToOne(() => Contact, (contact) => contact.organizationContact, {
 		cascade: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'SET NULL'
+		onDelete: 'SET NULL',
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
@@ -127,13 +124,13 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -148,7 +145,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*
@@ -160,20 +157,20 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * Organization Projects Relationship
 	 */
 	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
-	@OneToMany(() => OrganizationProject, (it) => it.organizationContact, {
+	@MultiORMOneToMany(() => OrganizationProject, (it) => it.organizationContact, {
 		cascade: true
 	})
 	projects?: IOrganizationProject[];
 
 	// Organization Invoices
 	@ApiPropertyOptional({ type: () => Invoice, isArray: true })
-	@OneToMany(() => Invoice, (it) => it.toContact)
+	@MultiORMOneToMany(() => Invoice, (it) => it.toContact)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
 	// Organization Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (it) => it.organizationContact, {
+	@MultiORMOneToMany(() => Payment, (it) => it.organizationContact, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -181,7 +178,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 
 	// Organization Proposals
 	@ApiPropertyOptional({ type: () => Proposal, isArray: true })
-	@OneToMany(() => Proposal, (it) => it.organizationContact)
+	@MultiORMOneToMany(() => Proposal, (it) => it.organizationContact)
 	@JoinColumn()
 	proposals?: IOrganizationProject[];
 
@@ -189,7 +186,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * Expense
 	 */
 	@ApiPropertyOptional({ type: () => Expense, isArray: true })
-	@OneToMany(() => Expense, (it) => it.organizationContact, {
+	@MultiORMOneToMany(() => Expense, (it) => it.organizationContact, {
 		onDelete: 'SET NULL'
 	})
 	expenses?: IExpense[];
@@ -198,7 +195,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * Income
 	 */
 	@ApiPropertyOptional({ type: () => Income, isArray: true })
-	@OneToMany(() => Income, (it) => it.client, {
+	@MultiORMOneToMany(() => Income, (it) => it.client, {
 		onDelete: 'SET NULL'
 	})
 	incomes?: IIncome[];
@@ -207,7 +204,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * TimeLog
 	 */
 	@ApiPropertyOptional({ type: () => TimeLog, isArray: true })
-	@OneToMany(() => TimeLog, (it) => it.organizationContact)
+	@MultiORMOneToMany(() => TimeLog, (it) => it.organizationContact)
 	timeLogs?: ITimeLog[];
 
 	/*
@@ -216,9 +213,11 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	|--------------------------------------------------------------------------
 	*/
 	// Organization Contact Tags
-	@ManyToMany(() => Tag, (tag) => tag.organizationContacts, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.organizationContacts, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_contact',
 	})
 	@JoinTable({
 		name: 'tag_organization_contact'
@@ -226,9 +225,11 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	tags: ITag[];
 
 	// Organization Contact Employees
-	@ManyToMany(() => Employee, (it) => it.organizationContacts, {
+	@MultiORMManyToMany(() => Employee, (it) => it.organizationContacts, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'organization_contact_employee',
 	})
 	@JoinTable({
 		name: 'organization_contact_employee'

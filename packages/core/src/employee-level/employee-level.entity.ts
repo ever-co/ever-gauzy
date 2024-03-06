@@ -1,10 +1,11 @@
-import { Column, ManyToMany, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { IEmployeeLevel, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeLevelRepository } from './repository/mikro-orm-employee-level.repository';
+import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_level', { mikroOrmRepository: () => MikroOrmEmployeeLevelRepository })
 export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmployeeLevel {
@@ -12,7 +13,7 @@ export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmpl
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	level: string;
 
 	/*
@@ -24,9 +25,11 @@ export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmpl
 	/**
 	 * Tag
 	 */
-	@ManyToMany(() => Tag, (it) => it.employeeLevels, {
+	@MultiORMManyToMany(() => Tag, (it) => it.employeeLevels, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_employee_level',
 	})
 	@JoinTable({
 		name: 'tag_employee_level'

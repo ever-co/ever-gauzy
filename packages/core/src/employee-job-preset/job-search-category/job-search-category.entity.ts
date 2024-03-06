@@ -1,4 +1,4 @@
-import { Column, Index, OneToMany } from 'typeorm';
+import { Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import {
@@ -13,7 +13,7 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../../core/decorators/entity';
 import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 
 @MultiORMEntity('job_search_category', { mikroOrmRepository: () => MikroOrmJobSearchCategoryRepository })
@@ -23,7 +23,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	// Id of category in the job source (e.g. upwork)
@@ -31,14 +31,14 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	jobSourceCategoryId?: string;
 
 	@ApiProperty({ type: () => String, enum: JobPostSourceEnum })
 	@IsNotEmpty()
 	@IsEnum(JobPostSourceEnum)
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		default: JobPostSourceEnum.UPWORK,
 		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
@@ -53,7 +53,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * EmployeeUpworkJobsSearchCriterion
 	 */
-	@OneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.category, {
+	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -61,7 +61,7 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 	/**
 	 * JobPresetUpworkJobSearchCriterion
 	 */
-	@OneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.category, {
+	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.category, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];

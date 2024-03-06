@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { RelationId, JoinColumn, Index } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
@@ -13,39 +13,40 @@ import {
 	GoalTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result_template', { mikroOrmRepository: () => MikroOrmKeyResultTemplateRepository })
 export class KeyResultTemplate extends TenantOrganizationBaseEntity implements IKeyResultTemplate {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String, enum: KeyResultTypeEnum })
 	@IsEnum(KeyResultTypeEnum)
-	@Column()
+	@MultiORMColumn()
 	type: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	targetValue?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	initialValue: number;
 
 	@ApiProperty({ type: () => String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
-	@Column()
+	@MultiORMColumn()
 	deadline: string;
 
 	/*
@@ -54,7 +55,7 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => GoalKPITemplate })
-	@ManyToOne(() => GoalKPITemplate, { nullable: true })
+	@MultiORMManyToOne(() => GoalKPITemplate, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: IGoalKPITemplate;
@@ -63,12 +64,12 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@RelationId((it: KeyResultTemplate) => it.kpi)
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	kpiId?: string;
 
 
 	@ApiProperty({ type: () => GoalTemplate })
-	@ManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
+	@MultiORMManyToOne(() => GoalTemplate, (goalTemplate) => goalTemplate.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
@@ -79,6 +80,6 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly goalId?: string;
 }

@@ -1,6 +1,14 @@
 import { ManyToOne, OneToMany, OneToOne, ManyToMany } from "@mikro-orm/core";
 
-export const MikroManyToOne = ManyToOne;
-export const MikroOneToMany = OneToMany;
-export const MikroOneToOne = OneToOne;
-export const MikroManyToMany = ManyToMany;
+/**
+ * Mikro-ORM Decorator Aliases.
+ *
+ * This module provides aliases for commonly used Mikro-ORM decorators.
+ * It simplifies import statements and enhances code readability.
+ */
+export {
+    ManyToOne as MikroOrmManyToOne,
+    OneToMany as MikroOrmOneToMany,
+    OneToOne as MikroOrmOneToOne,
+    ManyToMany as MikroOrmManyToMany,
+};

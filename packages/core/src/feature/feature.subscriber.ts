@@ -16,25 +16,22 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after an entity is loaded from the database.
      *
-     * @param entity
+     * @param entity - The loaded Feature entity.
+     * @param event - The LoadEvent associated with the entity loading.
      */
-    async afterLoad(
-        entity: Feature,
-        event?: LoadEvent<Feature>
-    ): Promise<any | void> {
+    async afterLoad(entity: Feature, event?: LoadEvent<Feature>): Promise<void> {
         try {
+            // Set a default status if not present
             if (!entity.status) {
                 entity.status = shuffle(Object.values(FeatureStatusEnum))[0];
             }
 
-            if (gauzyToggleFeatures.hasOwnProperty(entity.code)) {
-                entity.isEnabled = !!gauzyToggleFeatures[entity.code];
-            } else {
-                entity.isEnabled = true;
-            }
+            // Check and set isEnabled based on gauzyToggleFeatures
+            entity.isEnabled = gauzyToggleFeatures.hasOwnProperty(entity.code) ? !!gauzyToggleFeatures[entity.code] : true;
 
+            // Set imageUrl based on the entity's image property
             if (entity.image) {
                 const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
                 entity.imageUrl = await store.getProviderInstance().url(entity.image);

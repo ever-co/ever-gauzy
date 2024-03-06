@@ -1,10 +1,7 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
-	ManyToOne,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -21,8 +18,9 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
 export class Proposal extends TenantOrganizationBaseEntity
@@ -30,23 +28,23 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	jobPostUrl: string;
 
 	@ApiPropertyOptional({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	jobPostContent?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	proposalContent?: string;
 
 	@ApiProperty({ type: () => String, enum: ProposalStatusEnum })
-	@Column()
+	@MultiORMColumn()
 	status?: ProposalStatusEnum;
 
 	/*
@@ -56,17 +54,17 @@ export class Proposal extends TenantOrganizationBaseEntity
 	*/
 
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee: IEmployee;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Proposal) => it.employee)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	@ApiPropertyOptional({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.proposals, {
+	@MultiORMManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.proposals, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -75,7 +73,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Proposal) => it.organizationContact)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: string;
 
 	/*
@@ -85,9 +83,11 @@ export class Proposal extends TenantOrganizationBaseEntity
 	*/
 	// Tags
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.proposals, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.proposals, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_proposal'
 	})
 	@JoinTable({
 		name: 'tag_proposal'

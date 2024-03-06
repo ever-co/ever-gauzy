@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, isNotNullOrUndefined } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -616,13 +616,13 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		const { status, name, stages } = this.searchForm.getRawValue();
 
 		// Set filters based on the extracted values
-		if (status) {
+		if (isNotNullOrUndefined(status)) {
 			this.setFilter({ field: 'isActive', search: status }, false);
 		}
-		if (name) {
+		if (isNotNullOrUndefined(name)) {
 			this.setFilter({ field: 'name', search: name }, false);
 		}
-		if (stages) {
+		if (isNotNullOrUndefined(stages)) {
 			this.setFilter({ field: 'stages', search: stages }, false);
 		}
 

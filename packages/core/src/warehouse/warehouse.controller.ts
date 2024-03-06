@@ -88,8 +88,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('inventory/:warehouseId')
 	async addWarehouseProducts(
@@ -239,9 +238,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Param('id', UUIDValidationPipe) id: IWarehouse['id'],
 		@Query() query: RelationsQueryDTO
 	): Promise<IWarehouse> {
-		return await this.warehouseService.findOneByIdString(id, {
-			relations: query.relations
-		});
+		return await this.warehouseService.findById(id, query.relations);
 	}
 
 	/**
@@ -279,8 +276,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -290,7 +286,10 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Body() entity: UpdateWarehouseDTO
 	): Promise<IWarehouse | UpdateResult> {
 		try {
-			return await this.warehouseService.update(id, entity);
+			return await this.warehouseService.create({
+				...entity,
+				id
+			});
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

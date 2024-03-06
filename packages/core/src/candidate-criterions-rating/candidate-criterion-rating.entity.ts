@@ -1,4 +1,4 @@
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidateCriterionsRating,
@@ -12,15 +12,16 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-orm-candidate-criterions-rating.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_criterion_rating', { mikroOrmRepository: () => MikroOrmCandidateCriterionsRatingRepository })
 export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	implements ICandidateCriterionsRating {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	rating: number;
 
 	/*
@@ -33,7 +34,7 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	 * Candidate Technologies
 	 */
 	@ApiProperty({ type: () => CandidateTechnologies })
-	@ManyToOne(() => CandidateTechnologies, (quality) => quality.criterionsRatings, {
+	@MultiORMManyToOne(() => CandidateTechnologies, (quality) => quality.criterionsRatings, {
 		onDelete: 'CASCADE'
 	})
 	technology?: ICandidateTechnologies;
@@ -41,14 +42,14 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.technology)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	technologyId?: string;
 
 	/**
 	 * Candidate Personal Qualities
 	 */
 	@ApiProperty({ type: () => CandidatePersonalQualities })
-	@ManyToOne(() => CandidatePersonalQualities, (quality) => quality.criterionsRatings, {
+	@MultiORMManyToOne(() => CandidatePersonalQualities, (quality) => quality.criterionsRatings, {
 		onDelete: 'CASCADE'
 	})
 	personalQuality?: ICandidatePersonalQualities;
@@ -56,14 +57,14 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.personalQuality)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	personalQualityId?: string;
 
 	/**
 	 * Candidate Feedback
 	 */
 	@ApiProperty({ type: () => CandidateFeedback })
-	@ManyToOne(() => CandidateFeedback, (feedback) => feedback.criterionsRating, {
+	@MultiORMManyToOne(() => CandidateFeedback, (feedback) => feedback.criterionsRating, {
 		onDelete: 'CASCADE'
 	})
 	feedback?: ICandidateFeedback;
@@ -71,6 +72,6 @@ export class CandidateCriterionsRating extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateCriterionsRating) => it.feedback)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	feedbackId?: string;
 }

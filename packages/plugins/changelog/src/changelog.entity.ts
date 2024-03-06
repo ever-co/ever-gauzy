@@ -1,8 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
-import { Column } from 'typeorm';
 import { IChangelog } from '@gauzy/contracts';
-import { MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { MultiORMEntity, TenantOrganizationBaseEntity, MultiORMColumn } from '@gauzy/core';
 import { MikroOrmChangelogRepository } from './repository/mikro-orm-changelog.repository';
 
 @MultiORMEntity('changelog', { mikroOrmRepository: () => MikroOrmChangelogRepository })
@@ -10,41 +9,41 @@ export class Changelog extends TenantOrganizationBaseEntity implements IChangelo
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	title?: string;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	date?: Date;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	content?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	isFeature?: boolean;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	learnMoreUrl?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageUrl?: string;
 }

@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index } from 'typeorm';
+import { Index } from 'typeorm';
 import { IEmailTemplate } from '@gauzy/contracts';
 import { isMySQL } from "@gauzy/config";
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
 
 @MultiORMEntity('email_template', { mikroOrmRepository: () => MikroOrmEmailTemplateRepository })
@@ -12,20 +12,20 @@ export class EmailTemplate extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	languageCode: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: 'text', nullable: true })
 	mjml: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ ...(isMySQL() ? { type: "longtext" } : {}) })
+	@MultiORMColumn({ ...(isMySQL() ? { type: "longtext" } : {}) })
 	hbs: string;
 
 	title?: string;

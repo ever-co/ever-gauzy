@@ -196,22 +196,22 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { items: existedInvites } = await this.findAll({
 			...(isNotEmpty(teamIds)
 				? {
-						relations: {
-							teams: true
-						}
-				  }
+					relations: {
+						teams: true
+					}
+				}
 				: {}),
 			where: {
 				tenantId: RequestContext.currentTenantId(),
 				...(isNotEmpty(organizationId)
 					? {
-							organizationId
-					  }
+						organizationId
+					}
 					: {}),
 				...(isNotEmpty(emailIds)
 					? {
-							email: In(emailIds)
-					  }
+						email: In(emailIds)
+					}
 					: {})
 			}
 		});
@@ -502,7 +502,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 
 			if (typeof payload === 'object' && 'email' in payload) {
 				if (payload.email === email) {
-					const query = this.repository.createQueryBuilder(this.alias);
+					const query = this.repository.createQueryBuilder(this.tableName);
 					query.setFindOptions({
 						select: {
 							id: true,
@@ -523,8 +523,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							status: InviteStatusEnum.INVITED,
 							...(payload['code']
 								? {
-										code: payload['code']
-								  }
+									code: payload['code']
+								}
 								: {})
 						});
 						qb.andWhere([
@@ -555,7 +555,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		const { email, code } = where;
 
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				select: {
 					id: true,
@@ -607,18 +607,18 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return await super.findAll({
 				...(options && options.skip
 					? {
-							skip: options.take * (options.skip - 1)
-					  }
+						skip: options.take * (options.skip - 1)
+					}
 					: {}),
 				...(options && options.take
 					? {
-							take: options.take
-					  }
+						take: options.take
+					}
 					: {}),
 				...(options && options.relations
 					? {
-							relations: options.relations
-					  }
+						relations: options.relations
+					}
 					: {}),
 				where: {
 					tenantId: RequestContext.currentTenantId(),
@@ -626,15 +626,15 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.role)
 							? {
-									role: {
-										...options.where.role
-									}
-							  }
+								role: {
+									...options.where.role
+								}
+							}
 							: {
-									role: {
-										name: Not(RolesEnum.EMPLOYEE)
-									}
-							  }
+								role: {
+									name: Not(RolesEnum.EMPLOYEE)
+								}
+							}
 						: {}),
 					/**
 					 * Organization invites filter by specific projects
@@ -642,10 +642,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.projects)
 							? {
-									projects: {
-										id: In(options.where.projects.id)
-									}
-							  }
+								projects: {
+									id: In(options.where.projects.id)
+								}
+							}
 							: {}
 						: {}),
 					/**
@@ -654,10 +654,10 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 					...(isNotEmpty(options) && isNotEmpty(options.where)
 						? isNotEmpty(options.where.teams)
 							? {
-									teams: {
-										id: In(options.where.teams.id)
-									}
-							  }
+								teams: {
+									id: In(options.where.teams.id)
+								}
+							}
 							: {}
 						: {})
 				}
@@ -674,7 +674,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	async findInviteOfCurrentUser() {
 		const user = RequestContext.currentUser();
 
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -713,7 +713,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	async acceptMyInvitation(id: string, action: InviteActionEnum, origin: string, languageCode: LanguagesEnum) {
 		const user = RequestContext.currentUser();
 
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 		query.innerJoin(`${query.alias}.teams`, 'teams');
 		query.setFindOptions({
 			select: {
@@ -906,8 +906,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			tenant,
 			...(input.password
 				? {
-						hash: await this.authService.getPasswordHash(input.password)
-				  }
+					hash: await this.authService.getPasswordHash(input.password)
+				}
 				: {})
 		});
 		const entity = await this.typeOrmUserRepository.save(create);
@@ -918,8 +918,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		await this.typeOrmUserRepository.update(entity.id, {
 			...(input.inviteId
 				? {
-						emailVerifiedAt: freshTimestamp()
-				  }
+					emailVerifiedAt: freshTimestamp()
+				}
 				: {})
 		});
 

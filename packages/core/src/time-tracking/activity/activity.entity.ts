@@ -1,4 +1,4 @@
-import { Column, RelationId, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -19,8 +19,9 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { MultiORMEntity } from '../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('activity', { mikroOrmRepository: () => MikroOrmActivityRepository })
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {
@@ -29,13 +30,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	title: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'longtext' } : {})
 	})
@@ -46,49 +47,49 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	})
 	@IsOptional()
 	@IsString()
-	@Column({
-		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json',
-		nullable: true
+	@MultiORMColumn({
+		nullable: true,
+		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
 	metaData?: string | IURLMetaData;
 
 	@ApiProperty({ type: () => 'date' })
 	@IsString()
 	@Index()
-	@Column({ type: 'date', nullable: true })
+	@MultiORMColumn({ type: 'date', nullable: true })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
 	@IsString()
 	@Index()
-	@Column({ type: 'time', nullable: true })
+	@MultiORMColumn({ type: 'time', nullable: true })
 	time: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
 	@ApiPropertyOptional({ type: () => String, enum: ActivityType })
 	@IsOptional()
 	@IsEnum(ActivityType)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	type?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
 	@Index()
-	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
+	@MultiORMColumn({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	recordedAt?: Date;
 
 	/*
@@ -99,11 +100,9 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	/**
 	 * Employee
 	 */
-	@ManyToOne(() => Employee, {
-		/** Indicates if the relation column value can be nullable or not. */
+	@ApiProperty({ type: () => Employee })
+	@MultiORMManyToOne(() => Employee, {
 		nullable: false,
-
-		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -116,13 +115,14 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.activities, {
+	@ApiProperty({ type: () => OrganizationProject })
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.activities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -140,13 +140,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@Index()
 	@RelationId((it: Activity) => it.project)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Time Slot Activity
 	 */
-	@ManyToOne(() => TimeSlot, (it) => it.activities, {
+	@MultiORMManyToOne(() => TimeSlot, (it) => it.activities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -160,13 +160,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@Index()
 	@RelationId((it: Activity) => it.timeSlot)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
 	 * Task Activity
 	 */
-	@ManyToOne(() => Task, (it) => it.activities, {
+	@MultiORMManyToOne(() => Task, (it) => it.activities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -181,6 +181,6 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@IsUUID()
 	@Index()
 	@RelationId((it: Activity) => it.task)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
 }

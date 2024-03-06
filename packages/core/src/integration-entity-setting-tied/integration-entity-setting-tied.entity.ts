@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, JoinColumn, RelationId, ManyToOne, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
@@ -10,8 +10,9 @@ import {
 	IntegrationEntitySetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationEntitySettingTiedRepository } from './repository/mikro-orm-integration-entity-setting-tied.repository';
+import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('integration_entity_setting_tied', { mikroOrmRepository: () => MikroOrmIntegrationEntitySettingTiedRepository })
 export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity implements IIntegrationEntitySettingTied {
@@ -19,13 +20,13 @@ export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity i
 	@ApiProperty({ type: () => String, enum: IntegrationEntity })
 	@IsNotEmpty()
 	@IsEnum(IntegrationEntity)
-	@Column()
+	@MultiORMColumn()
 	entity: IntegrationEntity;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsNotEmpty()
 	@IsBoolean()
-	@Column()
+	@MultiORMColumn()
 	sync: boolean;
 
 	/*
@@ -37,7 +38,7 @@ export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity i
 	/**
 	 * IntegrationEntitySetting
 	 */
-	@ManyToOne(() => IntegrationEntitySetting, (it) => it.tiedEntities, {
+	@MultiORMManyToOne(() => IntegrationEntitySetting, (it) => it.tiedEntities, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -49,6 +50,6 @@ export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity i
 	@IsUUID()
 	@RelationId((it: IntegrationEntitySettingTied) => it.integrationEntitySetting)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
 }

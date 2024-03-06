@@ -77,9 +77,9 @@ export class ReportService extends CrudService<Report> {
 
 		return await this.repository.find({
 			join: {
-				alias: this.alias,
+				alias: this.tableName,
 				innerJoin: {
-					reportOrganizations: `${this.alias}.reportOrganizations`,
+					reportOrganizations: `${this.tableName}.reportOrganizations`,
 				}
 			},
 			where: {

@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId, JoinColumn } from 'typeorm';
+import { RelationId, JoinColumn } from 'typeorm';
 import { IKeyResult, IKeyResultUpdate, KeyResultUpdateStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
@@ -6,31 +6,32 @@ import {
 	KeyResult,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultUpdateRepository } from './repository/mikro-orm-keyresult-update.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result_update', { mikroOrmRepository: () => MikroOrmKeyResultUpdateRepository })
 export class KeyResultUpdate extends TenantOrganizationBaseEntity
 	implements IKeyResultUpdate {
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	update: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	progress: number;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	owner: string;
 
 	@ApiProperty({ type: () => String, enum: KeyResultUpdateStatusEnum })
 	@IsEnum(KeyResultUpdateStatusEnum)
-	@Column()
+	@MultiORMColumn()
 	status: string;
 
 	@ApiProperty({ type: () => KeyResult })
-	@ManyToOne(() => KeyResult, (keyResult) => keyResult.update, {
+	@MultiORMManyToOne(() => KeyResult, (keyResult) => keyResult.updates, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'keyResultId' })
@@ -38,6 +39,6 @@ export class KeyResultUpdate extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: KeyResultUpdate) => it.keyResult)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	keyResultId?: string;
 }

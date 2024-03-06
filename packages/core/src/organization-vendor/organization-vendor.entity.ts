@@ -1,10 +1,11 @@
-import { Column, Index, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Index, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IExpense, IOrganizationVendor, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
+import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_vendor', { mikroOrmRepository: () => MikroOrmOrganizationVendorRepository })
 export class OrganizationVendor extends TenantOrganizationBaseEntity implements IOrganizationVendor {
@@ -13,25 +14,25 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	email?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	phone?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	website?: string;
 
 	/*
@@ -44,7 +45,7 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 	 * Expense
 	 */
 	@ApiPropertyOptional({ type: () => Expense, isArray: true })
-	@OneToMany(() => Expense, (it) => it.vendor)
+	@MultiORMOneToMany(() => Expense, (it) => it.vendor)
 	expenses?: IExpense[];
 
 	/*
@@ -57,9 +58,11 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 	 * Tag
 	 */
 	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.organizationVendors, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.organizationVendors, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_vendor'
 	})
 	@JoinTable({
 		name: 'tag_organization_vendor'

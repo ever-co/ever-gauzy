@@ -1,28 +1,27 @@
-import { Column } from 'typeorm';
 import { IGoalTimeFrame, TimeFrameStatusEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalTimeFrameRepository } from './repository/mikro-orm-goal-time-frame.repository';
 
 @MultiORMEntity('goal_time_frame', { mikroOrmRepository: () => MikroOrmGoalTimeFrameRepository })
 export class GoalTimeFrame extends TenantOrganizationBaseEntity implements IGoalTimeFrame {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String, enum: TimeFrameStatusEnum })
 	@IsEnum(TimeFrameStatusEnum)
-	@Column()
+	@MultiORMColumn()
 	status: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column()
+	@MultiORMColumn()
 	startDate: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column()
+	@MultiORMColumn()
 	endDate: Date;
 }

@@ -1,8 +1,5 @@
 import {
-	ManyToOne,
 	JoinColumn,
-	Column,
-	OneToMany,
 	RelationId,
 	Index
 } from 'typeorm';
@@ -20,15 +17,16 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseProductRepository } from './repository/mikro-orm-warehouse-product.repository ';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('warehouse_product', { mikroOrmRepository: () => MikroOrmWarehouseProductRepository })
 export class WarehouseProduct extends TenantOrganizationBaseEntity
 	implements IWarehouseProduct {
 
 	@ApiPropertyOptional({ type: Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		default: 0,
@@ -46,7 +44,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	 * Warehouse
 	 */
 	@ApiProperty({ type: () => Warehouse })
-	@ManyToOne(() => Warehouse, (warehouse) => warehouse.products, {
+	@MultiORMManyToOne(() => Warehouse, (warehouse) => warehouse.products, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -55,14 +53,14 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.warehouse)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	warehouseId: string;
 
 	/**
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.warehouses, {
+	@MultiORMManyToOne(() => Product, (product) => product.warehouses, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -71,7 +69,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProduct) => it.product)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	productId: string;
 
 	/*
@@ -80,7 +78,7 @@ export class WarehouseProduct extends TenantOrganizationBaseEntity
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })
-	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.warehouseProduct, {
+	@MultiORMOneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.warehouseProduct, {
 		cascade: true
 	})
 	@JoinColumn()

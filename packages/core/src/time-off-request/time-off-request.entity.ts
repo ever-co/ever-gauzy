@@ -1,8 +1,5 @@
 import {
-	Column,
 	JoinColumn,
-	ManyToMany,
-	ManyToOne,
 	RelationId,
 	Index
 } from 'typeorm';
@@ -28,8 +25,9 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffPolicy
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('time_off_request', { mikroOrmRepository: () => MikroOrmTimeOffRequestRepository })
 export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {
@@ -37,39 +35,39 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	documentUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	start: Date;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	end: Date;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	requestDate: Date;
 
 	@ApiProperty({ type: () => String, enum: StatusTypesEnum })
 	@IsEnum(StatusTypesEnum)
-	@Column()
+	@MultiORMColumn()
 	status?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	isHoliday?: boolean;
 
 
@@ -80,7 +78,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	*/
 	// TimeOff Policy
 	@ApiProperty({ type: () => TimeOffPolicy })
-	@ManyToOne(() => TimeOffPolicy, (policy) => policy.timeOffRequests, {
+	@MultiORMManyToOne(() => TimeOffPolicy, (policy) => policy.timeOffRequests, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -90,13 +88,13 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.policy)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	policyId?: string;
 
 	/**
 	 * Document Asset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -111,7 +109,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.document)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	documentId?: IDocumentAsset['id'];
 
 	/*
@@ -120,7 +118,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Employee })
-	@ManyToMany(() => Employee, (employee) => employee.timeOffRequests, {
+	@MultiORMManyToMany(() => Employee, (employee) => employee.timeOffRequests, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})

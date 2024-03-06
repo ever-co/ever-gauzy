@@ -1,10 +1,7 @@
 import {
-	Column,
 	Index,
-	ManyToOne,
 	RelationId,
 	JoinColumn,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -21,8 +18,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('event_type', { mikroOrmRepository: () => MikroOrmEventTypeRepository })
 export class EventType extends TenantOrganizationBaseEntity implements IEventType {
@@ -31,7 +29,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -40,18 +38,18 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	durationUnit: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	title: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 
@@ -65,7 +63,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -74,7 +72,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 
 	/*
@@ -87,9 +85,11 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.eventTypes, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.eventTypes, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_event_type',
 	})
 	@JoinTable({
 		name: 'tag_event_type'

@@ -1,5 +1,5 @@
 import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { Column, OneToMany, ManyToOne, Index, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
@@ -8,32 +8,33 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmGoalRepository } from './repository/mikro-orm-goal.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal', { mikroOrmRepository: () => MikroOrmGoalRepository })
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	description?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	deadline: string;
 
 	@ApiProperty({ type: () => String, enum: GoalLevelEnum })
 	@IsEnum(GoalLevelEnum)
-	@Column()
+	@MultiORMColumn()
 	level: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	progress: number;
 
 	/*
@@ -46,7 +47,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	 * OrganizationTeam
 	 */
 	@ApiProperty({ type: () => OrganizationTeam })
-	@ManyToOne(() => OrganizationTeam, (team) => team.goals, {
+	@MultiORMManyToOne(() => OrganizationTeam, (team) => team.goals, {
 		onDelete: 'CASCADE'
 	})
 	ownerTeam?: IOrganizationTeam;
@@ -56,14 +57,14 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	ownerTeamId?: string;
 
 	/**
 	 * Owner Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.goals, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.goals, {
 		onDelete: 'CASCADE'
 	})
 	ownerEmployee?: IEmployee;
@@ -73,14 +74,14 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	ownerEmployeeId?: string;
 
 	/**
 	 * Lead Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.leads, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.leads, {
 		onDelete: 'CASCADE'
 	})
 	lead?: IEmployee;
@@ -90,14 +91,14 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 
 	/**
 	 * KeyResult
 	 */
 	@ApiProperty({ type: () => KeyResult })
-	@ManyToOne(() => KeyResult, (keyResult) => keyResult.id)
+	@MultiORMManyToOne(() => KeyResult, (keyResult) => keyResult.id)
 	alignedKeyResult?: IKeyResult;
 
 	@ApiProperty({ type: () => String })
@@ -105,7 +106,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	alignedKeyResultId?: string;
 
 	/*
@@ -118,7 +119,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	 * KeyResult
 	 */
 	@ApiProperty({ type: () => KeyResult, isArray: true })
-	@OneToMany(() => KeyResult, (keyResult) => keyResult.goal, {
+	@MultiORMOneToMany(() => KeyResult, (keyResult) => keyResult.goal, {
 		cascade: true
 	})
 	keyResults?: IKeyResult[];

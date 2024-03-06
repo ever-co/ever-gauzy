@@ -1,10 +1,6 @@
 import {
-	Column,
 	Index,
-	OneToMany,
-	ManyToMany,
 	JoinTable,
-	ManyToOne,
 	JoinColumn,
 	RelationId,
 } from 'typeorm';
@@ -52,8 +48,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team', { mikroOrmRepository: () => MikroOrmOrganizationTeamRepository })
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
@@ -65,7 +62,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/**
@@ -74,7 +71,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	/**
@@ -83,7 +80,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	emoji?: string;
 
 	/**
@@ -92,7 +89,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	teamSize?: string;
 
 	/**
@@ -101,7 +98,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	logo?: string;
 
 	/**
@@ -110,7 +107,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	prefix?: string;
 
 	/**
@@ -120,7 +117,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	public?: boolean;
 
 	/**
@@ -130,7 +127,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
 
@@ -143,7 +140,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, (it) => it.teams, {
+	@MultiORMManyToOne(() => User, (it) => it.teams, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -155,13 +152,13 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 
 	@RelationId((it: OrganizationTeam) => it.createdBy)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	createdById?: IUser['id'];
 
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -179,7 +176,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsUUID()
 	@RelationId((it: OrganizationTeam) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*
@@ -191,7 +188,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * OrganizationTeamEmployee
 	 */
-	@OneToMany(() => OrganizationTeamEmployee, (it) => it.organizationTeam, {
+	@MultiORMOneToMany(() => OrganizationTeamEmployee, (it) => it.organizationTeam, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true
 	})
@@ -200,55 +197,55 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * RequestApprovalTeam
 	 */
-	@OneToMany(() => RequestApprovalTeam, (it) => it.team)
+	@MultiORMOneToMany(() => RequestApprovalTeam, (it) => it.team)
 	requestApprovals?: IRequestApprovalTeam[];
 
 	/**
 	 * Goal
 	 */
-	@OneToMany(() => Goal, (it) => it.ownerTeam)
+	@MultiORMOneToMany(() => Goal, (it) => it.ownerTeam)
 	goals?: IGoal[];
 
 	/**
 	 * Team Statuses
 	 */
-	@OneToMany(() => TaskStatus, (status) => status.organizationTeam)
+	@MultiORMOneToMany(() => TaskStatus, (status) => status.organizationTeam)
 	statuses?: ITaskStatus[];
 
 	/**
 	 * Team Related Status type
 	 */
-	@OneToMany(() => TaskRelatedIssueType, (it) => it.organizationTeam)
+	@MultiORMOneToMany(() => TaskRelatedIssueType, (it) => it.organizationTeam)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
 	 * Team Priorities
 	 */
-	@OneToMany(() => TaskPriority, (it) => it.organizationTeam)
+	@MultiORMOneToMany(() => TaskPriority, (it) => it.organizationTeam)
 	priorities?: ITaskPriority[];
 
 	/**
 	 * Team Sizes
 	 */
-	@OneToMany(() => TaskSize, (it) => it.organizationTeam)
+	@MultiORMOneToMany(() => TaskSize, (it) => it.organizationTeam)
 	sizes?: ITaskSize[];
 
 	/**
 	 * Team Versions
 	 */
-	@OneToMany(() => TaskVersion, (it) => it.organizationTeam)
+	@MultiORMOneToMany(() => TaskVersion, (it) => it.organizationTeam)
 	versions?: ITaskVersion[];
 
 	/**
 	 * Team Labels
 	 */
-	@OneToMany(() => Tag, (it) => it.organizationTeam)
+	@MultiORMOneToMany(() => Tag, (it) => it.organizationTeam)
 	labels?: ITag[];
 
 	/**
 	 * Team Issue Types
 	 */
-	@OneToMany(() => IssueType, (it) => it.organizationTeam)
+	@MultiORMOneToMany(() => IssueType, (it) => it.organizationTeam)
 	issueTypes?: IIssueType[];
 
 	/*
@@ -256,11 +253,13 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ManyToMany(() => Tag, (it) => it.organizationTeams, {
+	@MultiORMManyToMany(() => Tag, (it) => it.organizationTeams, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_team',
 	})
 	@JoinTable({
 		name: 'tag_organization_team'
@@ -270,11 +269,11 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Task
 	 */
-	@ManyToMany(() => Task, (it) => it.teams, {
+	@MultiORMManyToMany(() => Task, (it) => it.teams, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
 	@JoinTable()
 	tasks?: ITask[];
@@ -282,7 +281,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Equipment Sharing
 	 */
-	@ManyToMany(() => EquipmentSharing, (it) => it.teams, {
+	@MultiORMManyToMany(() => EquipmentSharing, (it) => it.teams, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
@@ -293,7 +292,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Organization Project
 	 */
-	@ManyToMany(() => OrganizationProject, (it) => it.teams, {
+	@MultiORMManyToMany(() => OrganizationProject, (it) => it.teams, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */

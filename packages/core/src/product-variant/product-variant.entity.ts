@@ -1,13 +1,8 @@
 import {
-	Column,
-	ManyToOne,
-	OneToOne,
 	RelationId,
 	JoinColumn,
-	ManyToMany,
 	JoinTable,
-	Index,
-	OneToMany
+	Index
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -29,39 +24,40 @@ import {
 	TenantOrganizationBaseEntity,
 	WarehouseProductVariant
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant', { mikroOrmRepository: () => MikroOrmProductVariantRepository })
 export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	taxes: number;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	quantity: number;
 
 	@ApiProperty({ type: () => String })
 	@IsEnum(BillingInvoicingPolicyEnum)
-	@Column({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
+	@MultiORMColumn({ default: BillingInvoicingPolicyEnum.QUANTITY_ORDERED })
 	billingInvoicingPolicy: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	internalReference: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	enabled: boolean;
 
 	/*
@@ -73,27 +69,25 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	/**
 	 * ProductVariantPrice
 	 */
-	@OneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
-	@JoinColumn()
 	price: IProductVariantPrice;
 
 	/**
 	 * ProductVariantSetting
 	 */
-	@OneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
 	})
-	@JoinColumn()
 	setting: IProductVariantSetting;
 
 	/*
@@ -106,7 +100,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.variants, {
+	@MultiORMManyToOne(() => Product, (product) => product.variants, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -116,14 +110,14 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@RelationId((it: ProductVariant) => it.product)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productId?: string;
 
 	/**
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 	})
@@ -134,7 +128,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@RelationId((it: ProductVariant) => it.image)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: string;
 
 	/*
@@ -147,7 +141,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => WarehouseProductVariant, isArray: true })
-	@OneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.variant, {
+	@MultiORMOneToMany(() => WarehouseProductVariant, (warehouseProductVariant) => warehouseProductVariant.variant, {
 		cascade: true
 	})
 	warehouseProductVariants?: IWarehouseProductVariant[];
@@ -162,7 +156,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => ProductOption })
-	@ManyToMany(() => ProductOption, { eager: true })
+	@MultiORMManyToMany(() => ProductOption, { eager: true })
 	@JoinTable()
 	options: IProductOptionTranslatable[];
 }

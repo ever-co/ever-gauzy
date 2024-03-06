@@ -6,7 +6,6 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 	CreateDateColumn,
-	Column,
 	Index,
 	DeleteDateColumn
 } from 'typeorm';
@@ -14,6 +13,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { PrimaryKey, Property } from '@mikro-orm/core';
+import { MultiORMColumn } from '../decorators/entity';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -26,8 +26,8 @@ export abstract class Model {
 }
 export abstract class BaseEntity extends Model implements IBaseEntityModel {
 
-	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
 	@ApiPropertyOptional({ type: () => String })
+	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
 	@PrimaryGeneratedColumn('uuid')
 	id?: string;
 
@@ -68,8 +68,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ nullable: true, default: true })
-	@Property({ nullable: true, default: true })
+	@MultiORMColumn({ nullable: true, default: true })
 	isActive?: boolean;
 
 	// Indicate if record is archived
@@ -77,7 +76,6 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ nullable: true, default: false })
-	@Property({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	isArchived?: boolean;
 }

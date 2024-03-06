@@ -1,4 +1,4 @@
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -13,8 +13,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_setting', { mikroOrmRepository: () => MikroOrmEmployeeSettingRepository })
 export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEmployeeSetting {
@@ -24,34 +25,34 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@IsNotEmpty()
 	@Min(1)
 	@Max(12)
-	@Column()
+	@MultiORMColumn()
 	month: number;
 
 	@ApiProperty({ type: () => Number, minimum: 1 })
 	@IsNumber()
 	@IsNotEmpty()
 	@Min(0)
-	@Column()
+	@MultiORMColumn()
 	year: number;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	settingType: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	value: number;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	/*
@@ -60,7 +61,7 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.settings, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.settings, {
 		onDelete: 'CASCADE'
 	})
 	employee: IEmployee;
@@ -70,6 +71,6 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId: string;
 }

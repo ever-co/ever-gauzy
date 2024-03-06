@@ -1,10 +1,6 @@
 import {
-	Column,
-	OneToMany,
 	RelationId,
 	JoinColumn,
-	ManyToOne,
-	ManyToMany,
 	JoinTable,
 	Index
 } from 'typeorm';
@@ -29,24 +25,25 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product', { mikroOrmRepository: () => MikroOrmProductRepository })
 export class Product extends TranslatableBase implements IProductTranslatable {
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	enabled: boolean;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	imageUrl: string;
 
 	/*
@@ -59,7 +56,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.productFeaturedImage, {
+	@MultiORMManyToOne(() => ImageAsset, (imageAsset) => imageAsset.productFeaturedImage, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -69,14 +66,14 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.featuredImage)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	featuredImageId?: string;
 
 	/**
 	 * ProductType
 	 */
 	@ApiProperty({ type: () => ProductType })
-	@ManyToOne(() => ProductType, (productType) => productType.products, {
+	@MultiORMManyToOne(() => ProductType, (productType) => productType.products, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -86,7 +83,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productType)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productTypeId?: string;
 
 	/**
@@ -94,7 +91,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 
 	@ApiProperty({ type: () => ProductCategory })
-	@ManyToOne(() => ProductCategory, (productCategory) => productCategory.products, {
+	@MultiORMManyToOne(() => ProductCategory, (productCategory) => productCategory.products, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -104,7 +101,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@RelationId((it: Product) => it.productCategory)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	productCategoryId?: string;
 	/*
 	|--------------------------------------------------------------------------
@@ -116,7 +113,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * ProductTranslation
 	 */
 	@ApiProperty({ type: () => ProductTranslation, isArray: true })
-	@OneToMany(() => ProductTranslation, (productTranslation) => productTranslation.reference, {
+	@MultiORMOneToMany(() => ProductTranslation, (productTranslation) => productTranslation.reference, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
@@ -129,7 +126,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * ProductVariant
 	 */
 	@ApiPropertyOptional({ type: () => ProductVariant, isArray: true })
-	@OneToMany(() => ProductVariant, (productVariant) => productVariant.product, {
+	@MultiORMOneToMany(() => ProductVariant, (productVariant) => productVariant.product, {
 		cascade: true
 	})
 	variants?: ProductVariant[];
@@ -138,7 +135,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * ProductOptionGroup
 	 */
 	@ApiPropertyOptional({ type: () => ProductOptionGroup, isArray: true })
-	@OneToMany(() => ProductOptionGroup, (productOptionGroup) => productOptionGroup.product, {
+	@MultiORMOneToMany(() => ProductOptionGroup, (productOptionGroup) => productOptionGroup.product, {
 		cascade: true
 	})
 	optionGroups?: ProductOptionGroup[];
@@ -147,7 +144,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * InvoiceItem
 	 */
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product)
+	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.product)
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
 
@@ -155,7 +152,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * WarehouseProduct
 	 */
 	@ApiPropertyOptional({ type: () => WarehouseProduct, isArray: true })
-	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.product, {
+	@MultiORMOneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.product, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -171,9 +168,11 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.products, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.products, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_product'
 	})
 	@JoinTable({
 		name: 'tag_product'
@@ -184,8 +183,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset, isArray: true })
-	@ManyToMany(() => ImageAsset, (imageAsset) => imageAsset.productGallery, {
-		cascade: false
+	@MultiORMManyToMany(() => ImageAsset, (imageAsset) => imageAsset.productGallery, {
+		cascade: false,
+		owner: true,
+		pivotTable: 'product_gallery_item'
 	})
 	@JoinTable({
 		name: 'product_gallery_item'

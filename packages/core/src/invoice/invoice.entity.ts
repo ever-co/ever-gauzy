@@ -20,12 +20,8 @@ import {
 	IsEnum
 } from 'class-validator';
 import {
-	Column,
 	JoinColumn,
-	OneToMany,
-	ManyToOne,
 	Unique,
-	ManyToMany,
 	RelationId,
 	Index,
 	JoinTable
@@ -40,9 +36,10 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { isMySQL } from '@gauzy/config';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
@@ -50,12 +47,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invoiceDate: Date;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		transformer: new ColumnNumericTransformerPipe(),
 		...(isMySQL() ? { type: 'bigint' } : { type: 'numeric' })
@@ -64,17 +61,17 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	dueDate: Date;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -82,12 +79,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	paid: boolean;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -96,7 +93,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -106,13 +103,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	terms?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -122,62 +119,62 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	status?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	isEstimate?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	isAccepted?: boolean;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	discountType: DiscountTaxTypeEnum;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxType: DiscountTaxTypeEnum;
 
 	@ApiProperty({ type: () => String, enum: DiscountTaxTypeEnum })
 	@IsEnum(DiscountTaxTypeEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	tax2Type: DiscountTaxTypeEnum;
 
 	@ApiPropertyOptional({ type: () => String, enum: InvoiceTypeEnum })
 	@IsEnum(InvoiceTypeEnum)
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	invoiceType?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	sentTo?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	organizationContactId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	internalNote?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -187,7 +184,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -196,13 +193,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true })
+	@MultiORMColumn({ type: Boolean, nullable: true })
 	hasRemainingAmountInvoiced?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: "text" } : {})
 	})
@@ -216,7 +213,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	*/
 	// From Organization
 	@ApiPropertyOptional({ type: () => () => Organization })
-	@ManyToOne(() => Organization)
+	@MultiORMManyToOne(() => Organization)
 	@JoinColumn()
 	fromOrganization?: IOrganization;
 
@@ -224,12 +221,12 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.fromOrganization)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	fromOrganizationId?: string;
 
 	// To Contact
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (contact) => contact.invoices, {
+	@MultiORMManyToOne(() => OrganizationContact, (contact) => contact.invoices, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -239,7 +236,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@RelationId((it: Invoice) => it.toContact)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	toContactId?: string;
 
 	/*
@@ -249,7 +246,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	*/
 	// Invoice Estimate Items
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
+	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.invoice, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -257,13 +254,13 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 
 	// Invoice Estimate Payments
 	@ApiPropertyOptional({ type: () => Payment, isArray: true })
-	@OneToMany(() => Payment, (payment) => payment.invoice)
+	@MultiORMOneToMany(() => Payment, (payment) => payment.invoice)
 	@JoinColumn()
 	payments?: IPayment[];
 
 	// Invoice Estimate History
 	@ApiPropertyOptional({ type: () => InvoiceEstimateHistory, isArray: true })
-	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, {
+	@MultiORMOneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.invoice, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -275,9 +272,11 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Tag })
-	@ManyToMany(() => Tag, (tag) => tag.invoices, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.invoices, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_invoice',
 	})
 	@JoinTable({
 		name: 'tag_invoice'

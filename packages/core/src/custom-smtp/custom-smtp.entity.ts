@@ -1,4 +1,3 @@
-import { Column } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
@@ -6,7 +5,7 @@ import { ICustomSmtp } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { IsSecret } from './../core/decorators';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCustomSmtpRepository } from './repository/mikro-orm-custom-smtp.repository';
 
 @MultiORMEntity('custom_smtp', { mikroOrmRepository: () => MikroOrmCustomSmtpRepository })
@@ -15,36 +14,36 @@ export class CustomSmtp extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String, examples: ['noreply@domain.com'] })
 	@IsEmail()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fromAddress?: string
 
 	@ApiProperty({ type: () => String, examples: ['smtp.postmarkapp.com', 'smtp.gmail.com'] })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	host: string;
 
 	@ApiProperty({ type: () => Number, examples: [587, 465] })
 	@IsNumber()
-	@Column()
+	@MultiORMColumn()
 	port: number;
 
 	@ApiProperty({ type: () => Boolean, examples: [true, false] })
 	@IsBoolean()
-	@Column()
+	@MultiORMColumn()
 	secure: boolean;
 
 	@Exclude({ toPlainOnly: true })
-	@Column()
+	@MultiORMColumn()
 	username: string;
 
 	@Exclude({ toPlainOnly: true })
-	@Column()
+	@MultiORMColumn()
 	password: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isValidate?: boolean;
 
 	/**

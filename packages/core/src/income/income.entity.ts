@@ -1,10 +1,7 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
 	RelationId,
-	ManyToOne,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -31,8 +28,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('income', { mikroOrmRepository: () => MikroOrmIncomeRepository })
 export class Income extends TenantOrganizationBaseEntity implements IIncome {
@@ -41,7 +39,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -51,30 +49,30 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isBonus: boolean;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reference?: string;
 
 	/*
@@ -86,7 +84,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
 	@JoinColumn()
 	employee?: IEmployee;
 
@@ -95,14 +93,14 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	/**
 	 * Client
 	 */
 	@ApiPropertyOptional({ type: () => () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.incomes, {
+	@MultiORMManyToOne(() => OrganizationContact, (organizationContact) => organizationContact.incomes, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -113,7 +111,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	clientId?: string;
 
 	/*
@@ -126,9 +124,11 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	* Tag
 	*/
 	@ApiProperty({ type: () => () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.incomes, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.incomes, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_income',
 	})
 	@JoinTable({
 		name: 'tag_income'

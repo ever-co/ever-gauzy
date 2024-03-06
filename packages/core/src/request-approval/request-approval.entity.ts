@@ -7,12 +7,8 @@
 */
 import {
 	Index,
-	Column,
-	OneToMany,
 	RelationId,
-	ManyToOne,
 	JoinColumn,
-	ManyToMany,
 	JoinTable
 } from 'typeorm';
 import {
@@ -32,8 +28,9 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('request_approval', { mikroOrmRepository: () => MikroOrmRequestApprovalRepository })
 export class RequestApproval extends TenantOrganizationBaseEntity implements IRequestApproval {
@@ -41,37 +38,37 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	status: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdBy: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdByName: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	min_count: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	requestId: string;
 
 	@ApiProperty({ type: () => String, enum: ApprovalPolicyTypesStringEnum })
 	@IsEnum(ApprovalPolicyTypesStringEnum)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	requestType: string;
 
 	/*
@@ -84,7 +81,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	*  ApprovalPolicy
 	*/
 	@ApiProperty({ type: () => ApprovalPolicy })
-	@ManyToOne(() => ApprovalPolicy, {
+	@MultiORMManyToOne(() => ApprovalPolicy, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -95,7 +92,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@RelationId((it: RequestApproval) => it.approvalPolicy)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	approvalPolicyId: string;
 
 	/*
@@ -108,7 +105,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	 * RequestApprovalEmployee
 	 */
 	@ApiPropertyOptional({ type: () => RequestApprovalEmployee, isArray: true })
-	@OneToMany(() => RequestApprovalEmployee, (employeeApprovals) => employeeApprovals.requestApproval, {
+	@MultiORMOneToMany(() => RequestApprovalEmployee, (employeeApprovals) => employeeApprovals.requestApproval, {
 		cascade: true
 	})
 	employeeApprovals?: IRequestApprovalEmployee[];
@@ -117,7 +114,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	 * RequestApprovalTeam
 	 */
 	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
-	@OneToMany(() => RequestApprovalTeam, (teamApprovals) => teamApprovals.requestApproval, {
+	@MultiORMOneToMany(() => RequestApprovalTeam, (teamApprovals) => teamApprovals.requestApproval, {
 		cascade: true
 	})
 	teamApprovals?: IRequestApprovalTeam[];
@@ -128,9 +125,11 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	|--------------------------------------------------------------------------
 	*/
 	@ApiPropertyOptional({ type: () => RequestApprovalTeam, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.requestApprovals, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.requestApprovals, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_request_approval'
 	})
 	@JoinTable({
 		name: 'tag_request_approval'

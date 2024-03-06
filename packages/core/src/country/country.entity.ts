@@ -1,9 +1,9 @@
 import { ICountry } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { Column, Index } from 'typeorm';
+import { Index } from 'typeorm';
 import { BaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCountryRepository } from './repository/mikro-orm-country.repository';
 
 @MultiORMEntity('country', { mikroOrmRepository: () => MikroOrmCountryRepository })
@@ -12,12 +12,12 @@ export class Country extends BaseEntity implements ICountry {
 	@Index()
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: false })
+	@MultiORMColumn({ nullable: false })
 	isoCode: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ nullable: false })
+	@MultiORMColumn({ nullable: false })
 	country: string;
 }

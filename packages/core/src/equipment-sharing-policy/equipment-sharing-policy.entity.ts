@@ -3,13 +3,14 @@
  * E.g. for example, "Business Trip", "Borrow Items", ...
  * Approval Policy table has the many to one relationship to the Organization table and Tenant by organizationId and tenantId
  */
-import { Index, Column, OneToMany } from 'typeorm';
+import { Index } from 'typeorm';
 import { IEquipmentSharing, IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EquipmentSharing, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentSharingPolicyRepository } from './repository/mikro-orm-equipment-sharing-policy.repository';
+import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment_sharing_policy', { mikroOrmRepository: () => MikroOrmEquipmentSharingPolicyRepository })
 export class EquipmentSharingPolicy extends TenantOrganizationBaseEntity implements IEquipmentSharingPolicy {
@@ -18,12 +19,12 @@ export class EquipmentSharingPolicy extends TenantOrganizationBaseEntity impleme
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	/*
@@ -36,7 +37,7 @@ export class EquipmentSharingPolicy extends TenantOrganizationBaseEntity impleme
 	* EquipmentSharing
 	*/
 	@ApiProperty({ type: () => EquipmentSharing, isArray: true })
-	@OneToMany(() => EquipmentSharing, (it) => it.equipmentSharingPolicy, {
+	@MultiORMOneToMany(() => EquipmentSharing, (it) => it.equipmentSharingPolicy, {
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];

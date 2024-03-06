@@ -2,9 +2,7 @@ import { IInvoice, IInvoiceEstimateHistory } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import {
-	Column,
 	JoinColumn,
-	ManyToOne,
 	Index,
 	RelationId,
 } from 'typeorm';
@@ -13,21 +11,22 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmInvoiceEstimateHistoryRepository } from './repository/mikro-orm-invoice-estimate-history.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice_estimate_history', { mikroOrmRepository: () => MikroOrmInvoiceEstimateHistoryRepository })
 export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity implements IInvoiceEstimateHistory {
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	action: string;
 
 	@IsOptional()
 	@ApiProperty({ type: () => String, required: false })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	title?: string;
 
 	/*
@@ -36,7 +35,7 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		onDelete: 'SET NULL',
 	})
 	@JoinColumn()
@@ -46,11 +45,11 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	@RelationId((it: InvoiceEstimateHistory) => it.user)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId: string;
 
 	@ApiProperty({ type: () => Invoice })
-	@ManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
+	@MultiORMManyToOne(() => Invoice, (invoice) => invoice.invoiceItems, {
 		onDelete: 'CASCADE',
 	})
 	invoice: IInvoice;
@@ -59,6 +58,6 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	@RelationId((it: InvoiceEstimateHistory) => it.invoice)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	invoiceId: string;
 }

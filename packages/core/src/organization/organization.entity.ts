@@ -1,4 +1,4 @@
-import { Column, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { Index, JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -40,55 +40,56 @@ import {
 	Tag,
 	TenantBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@Index()
-	@Column('boolean', { default: false })
+	@MultiORMColumn('boolean', { default: false })
 	isDefault: boolean;
 
 	@Index({ unique: false })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	profile_link: string;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	banner: string;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	totalEmployees: number;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	short_description: string;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	client_focus: string;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	overview: string;
 
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: DefaultValueDateTypeEnum,
@@ -96,85 +97,85 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	})
 	defaultValueDateType: DefaultValueDateTypeEnum;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	defaultAlignmentType?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	timeZone?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	regionCode?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	brandColor?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	dateFormat?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	officialName?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startWeekOn?: WeekDaysEnum;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxId?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	numberFormat?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	minimumProjectSize?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	bonusType?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	bonusPercentage?: number;
 
-	@Column({ nullable: true, default: true })
+	@MultiORMColumn({ nullable: true, default: true })
 	invitesAllowed?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_income?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_profits?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_bonuses_paid?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_total_hours?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_minimum_project_size?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_projects_count?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_clients_count?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_clients?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	show_employees_count?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	inviteExpiryPeriod?: number;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fiscalStartDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fiscalEndDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	registrationDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	futureDateAllowed?: boolean;
 
 	/**
@@ -184,7 +185,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	 * @default true
 	 * @type boolean
 	 */
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	allowManualTime?: boolean;
 
 	/**
@@ -194,7 +195,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	 * @default true
 	 * @type boolean
 	 */
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	allowModifyTime?: boolean;
 
 	/**
@@ -204,84 +205,84 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	 * @default true
 	 * @type boolean
 	 */
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	allowDeleteTime?: boolean;
 
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	allowTrackInactivity?: boolean;
 
-	@Column({ default: 10 })
+	@MultiORMColumn({ default: 10 })
 	inactivityTimeLimit?: number;
 
-	@Column({ default: 1 })
+	@MultiORMColumn({ default: 1 })
 	activityProofDuration?: number;
 
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	requireReason?: boolean;
 
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	requireDescription?: boolean;
 
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	requireProject?: boolean;
 
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	requireTask?: boolean;
 
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	requireClient?: boolean;
 
-	@Column({ default: 12 })
+	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	separateInvoiceItemTaxAndDiscount?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	website?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fiscalInformation?: string;
 
-	@Column({ default: CurrencyPosition.LEFT })
+	@MultiORMColumn({ default: CurrencyPosition.LEFT })
 	currencyPosition?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	discountAfterTax?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	defaultStartTime?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	defaultEndTime?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	defaultInvoiceEstimateTerms?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	convertAcceptedEstimates?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	daysUntilDue?: number;
 
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isRemoveIdleTime?: boolean;
 
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	allowScreenshotCapture?: boolean;
 
 	/** Upwork Organization ID */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	upworkOrganizationId?: string;
 
 	/** Upwork Organization Name */
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	upworkOrganizationName?: string;
 
 	/**
@@ -290,7 +291,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	randomScreenshot?: boolean;
 
 	/**
@@ -299,7 +300,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	trackOnSleep?: boolean;
 
 	/**
@@ -308,7 +309,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({ type: 'numeric', default: 10 })
+	@MultiORMColumn({ type: 'numeric', default: 10 })
 	screenshotFrequency?: number;
 
 	/**
@@ -317,7 +318,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ nullable: true, default: false })
+	@MultiORMColumn({ nullable: true, default: false })
 	enforced?: boolean;
 
 	/*
@@ -327,7 +328,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	*/
 
 	// Contact
-	@ManyToOne(() => Contact, (contact) => contact.organization, {
+	@MultiORMManyToOne(() => Contact, (contact) => contact.organization, {
 		cascade: true,
 		onDelete: 'SET NULL'
 	})
@@ -335,13 +336,13 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	@RelationId((it: Organization) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -356,7 +357,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsUUID()
 	@RelationId((it: Organization) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*
@@ -365,52 +366,52 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	|--------------------------------------------------------------------------
 	*/
 
-	@OneToMany(() => Invoice, (invoice) => invoice.fromOrganization)
+	@MultiORMOneToMany(() => Invoice, (invoice) => invoice.fromOrganization)
 	@JoinColumn()
 	invoices?: IInvoice[];
 
-	@OneToMany(() => Employee, (employee) => employee.organization)
+	@MultiORMOneToMany(() => Employee, (employee) => employee.organization)
 	@JoinColumn()
 	employees?: IEmployee[];
 
-	@OneToMany(() => Deal, (deal) => deal.organization)
+	@MultiORMOneToMany(() => Deal, (deal) => deal.organization)
 	@JoinColumn()
 	deals?: IDeal[];
 
-	@OneToMany(() => OrganizationAward, (award) => award.organization)
+	@MultiORMOneToMany(() => OrganizationAward, (award) => award.organization)
 	@JoinColumn()
 	awards?: IOrganizationAward[];
 
-	@OneToMany(() => OrganizationLanguage, (language) => language.organization)
+	@MultiORMOneToMany(() => OrganizationLanguage, (language) => language.organization)
 	@JoinColumn()
 	languages?: IOrganizationLanguage[];
 
-	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.organization)
+	@MultiORMOneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.organization)
 	featureOrganizations?: IFeatureOrganization[];
 
-	@OneToMany(() => Payment, (payment) => payment.organization, {
+	@MultiORMOneToMany(() => Payment, (payment) => payment.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	payments?: IPayment[];
 
-	@OneToMany(() => OrganizationSprint, (sprint) => sprint.organization)
+	@MultiORMOneToMany(() => OrganizationSprint, (sprint) => sprint.organization)
 	@JoinColumn()
 	organizationSprints?: IOrganizationSprint[];
 
-	@OneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, {
+	@MultiORMOneToMany(() => InvoiceEstimateHistory, (invoiceEstimateHistory) => invoiceEstimateHistory.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceEstimateHistories?: IInvoiceEstimateHistory[];
 
-	@OneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, {
+	@MultiORMOneToMany(() => AccountingTemplate, (accountingTemplate) => accountingTemplate.organization, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	accountingTemplates?: IAccountingTemplate[];
 
-	@OneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.organization)
+	@MultiORMOneToMany(() => ReportOrganization, (reportOrganization) => reportOrganization.organization)
 	@JoinColumn()
 	reportOrganizations?: IReportOrganization[];
 
@@ -420,16 +421,18 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	|--------------------------------------------------------------------------
 	*/
 	// Tags
-	@ManyToMany(() => Tag, (it) => it.organizations, {
+	@MultiORMManyToMany(() => Tag, (it) => it.organizations, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization',
 	})
 	@JoinTable({
 		name: 'tag_organization'
 	})
 	tags: ITag[];
 
-	@ManyToMany(() => Skill, (skill) => skill.organizations, {
+	@MultiORMManyToMany(() => Skill, (skill) => skill.organizations, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
