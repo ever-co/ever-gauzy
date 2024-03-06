@@ -1,9 +1,11 @@
 name: Deploy to DigitalOcean App Platform Stage
 
 on:
-  push:
-    branches:
-      - stage
+  workflow_run:
+    workflows: ['Build and Publish Docker Images Stage']
+    branches: [stage]
+    types:
+      - completed
 
 jobs:
   deploy:
@@ -30,6 +32,7 @@ jobs:
           envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
         env:
           ENV_NAME: 'stage'
+          DOCR_REPOSITORY: 'gauzy-api-stage'
           APP_DOMAIN: 'apistageda.gauzy.co'
           INSTANCE_COUNT: '2'
           INSTANCE_SIZE: 'professional-xs'
@@ -105,6 +108,7 @@ jobs:
           JITSU_SERVER_URL: '${{ secrets.JITSU_SERVER_URL }}'
           JITSU_SERVER_WRITE_KEY: '${{ secrets.JITSU_SERVER_WRITE_KEY }}'
           OTEL_ENABLED: '${{ secrets.OTEL_ENABLED }}'
+          OTEL_PROVIDER: '${{ secrets.OTEL_PROVIDER }}'
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${{ secrets.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT }}'
           OTEL_EXPORTER_OTLP_HEADERS: '${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}'
           GAUZY_GITHUB_CLIENT_ID: '${{ secrets.GAUZY_GITHUB_CLIENT_ID }}'

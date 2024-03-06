@@ -1,7 +1,15 @@
 import { bootstrap } from '@gauzy/core';
-import { pluginConfig } from './plugin-config';
+console.log('Bootstrap loaded');
 
-bootstrap(pluginConfig).catch((error) => {
-	console.log(error);
-	process.exit(1);
-});
+import { pluginConfig } from './plugin-config';
+console.log('Plugin Config loaded');
+
+bootstrap(pluginConfig)
+	.then(() => {
+		console.log('API is running');
+	})
+	.catch(async (error) => {
+		console.log(error);
+
+		process.exit(1);
+	});

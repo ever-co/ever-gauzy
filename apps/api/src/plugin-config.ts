@@ -1,7 +1,18 @@
 import * as path from 'path';
 import * as chalk from 'chalk';
-import { ApplicationPluginConfig, DEFAULT_API_PORT, DEFAULT_GRAPHQL_API_PATH, DEFAULT_API_HOST, DEFAULT_API_BASE_URL } from '@gauzy/common';
-import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, environment, dbKnexConnectionConfig } from '@gauzy/config';
+import {
+	ApplicationPluginConfig,
+	DEFAULT_API_PORT,
+	DEFAULT_GRAPHQL_API_PATH,
+	DEFAULT_API_HOST,
+	DEFAULT_API_BASE_URL
+} from '@gauzy/common';
+import {
+	dbTypeOrmConnectionConfig,
+	dbMikroOrmConnectionConfig,
+	environment,
+	dbKnexConnectionConfig
+} from '@gauzy/config';
 import { SentryService } from '@gauzy/sentry-plugin';
 import { SentryTracing as SentryPlugin } from './sentry';
 import { version } from './../version';
@@ -41,7 +52,7 @@ export const pluginConfig: ApplicationPluginConfig = {
 			playground: true,
 			debug: true,
 			apolloServerPlugins: []
-		},
+		}
 	},
 	dbConnectionOptions: {
 		retryAttempts: 100,
@@ -63,5 +74,5 @@ export const pluginConfig: ApplicationPluginConfig = {
 		assetPublicPath: assetPublicPath
 	},
 	...(sentry?.dsn ? { logger: new SentryService(SentryPlugin.options) } : {}),
-	plugins,
+	plugins
 };

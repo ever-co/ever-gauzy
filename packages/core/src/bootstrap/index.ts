@@ -1,5 +1,33 @@
-// import * as csurf from 'csurf';
 import * as v8 from 'v8';
+
+function logMemoryLimit() {
+	const heapStats = v8.getHeapStatistics();
+	const heapSizeLimit = heapStats.heap_size_limit;
+	console.log(`Heap size limit: ${heapSizeLimit / 1024 / 1024} MB`);
+}
+
+logMemoryLimit();
+
+// Note: below code can't be moved to other places because it has to be executed first, before we load any other modules!
+
+import tracer from './tracer';
+
+/**
+ * Start tracing using if OTEL is enabled.
+ */
+export function startTracing(): void {
+	if (process.env.OTEL_ENABLED === 'true' && tracer) {
+		// Start tracing
+		tracer.start();
+		console.log('OTEL Tracing started');
+	} else {
+		console.log('OTEL Tracing not enabled');
+	}
+}
+
+startTracing(); // Start tracing if OTEL is enabled.
+
+// import * as csurf from 'csurf';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -16,7 +44,6 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
-import tracer from './tracer';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
@@ -24,17 +51,8 @@ import { AppModule } from '../app.module';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
 
-function logMemoryLimit() {
-	const heapStats = v8.getHeapStatistics();
-	const heapSizeLimit = heapStats.heap_size_limit;
-	console.log(`Heap size limit: ${heapSizeLimit / 1024 / 1024} MB`);
-}
-
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
-	logMemoryLimit();
-
 	console.time('Application Bootstrap Time');
-	startTracing(); // Start tracing using Signoz if OTEL is enabled.
 
 	const config = await registerPluginConfig(pluginConfig);
 	const { BootstrapModule } = await import('./bootstrap.module');
@@ -268,19 +286,6 @@ function handleUncaughtException(error: Error) {
  */
 function handleUnhandledRejection(reason: any, promise: Promise<any>) {
 	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-}
-
-/**
- * Start tracing using Signoz if OTEL is enabled.
- */
-export function startTracing(): void {
-	if (process.env.OTEL_ENABLED === 'true') {
-		// Start tracing using Signoz first
-		tracer.start();
-		console.log('OTEL/Signoz Tracing started');
-	} else {
-		console.log('OTEL/Signoz Tracing not enabled');
-	}
 }
 
 /**
