@@ -5,12 +5,12 @@ services:
     image: jonasal/nginx-certbot:latest
     restart: always
     environment:
-      CERTBOT_EMAIL: "ever@ever.tech"
+      CERTBOT_EMAIL: 'ever@ever.co'
     env_file:
       - ./nginx-certbot.env
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     networks:
       - demo_overlay
     volumes:
@@ -23,4 +23,3 @@ volumes:
 networks:
   demo_overlay:
     external: true
-      

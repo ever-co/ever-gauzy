@@ -1,9 +1,9 @@
-name: Deploy to DigitalOcean Droplet Prod
+name: Deploy to DigitalOcean Droplet Prod Pre
 
 on:
   push:
     branches:
-      - test-do-droplet2
+      - master
 
 jobs:
   deploy:

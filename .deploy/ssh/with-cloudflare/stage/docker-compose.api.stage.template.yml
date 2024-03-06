@@ -2,7 +2,6 @@ version: '3.8'
 
 services:
   api:
-    #container_name: api-${ENV_NAME}
     image: ghcr.io/ever-co/gauzy-api-stage:latest
     deploy:
       mode: replicated
@@ -15,7 +14,7 @@ services:
       API_BASE_URL: '${API_BASE_URL}'
       CLIENT_BASE_URL: '${CLIENT_BASE_URL}'
       DB_TYPE: '${DB_TYPE}'
-      DB_URI:  '${DB_URI}'
+      DB_URI: '${DB_URI}'
       DB_HOST: '${DB_HOST}'
       DB_USER: '${DB_USER}'
       DB_PASS: '${DB_PASS}'
@@ -80,6 +79,7 @@ services:
       JITSU_SERVER_URL: '${JITSU_SERVER_URL}'
       JITSU_SERVER_WRITE_KEY: '${JITSU_SERVER_WRITE_KEY}'
       OTEL_ENABLED: '${OTEL_ENABLED}'
+      OTEL_PROVIDER: '${OTEL_PROVIDER}'
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: '${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT}'
       OTEL_EXPORTER_OTLP_HEADERS: '${OTEL_EXPORTER_OTLP_HEADERS}'
       GAUZY_GITHUB_CLIENT_ID: '${GAUZY_GITHUB_CLIENT_ID}'
@@ -111,7 +111,6 @@ services:
     restart: on-failure
     ports:
       - '3000'
-     # '3000-3001:${API_PORT}'
     networks:
       - overlay
 

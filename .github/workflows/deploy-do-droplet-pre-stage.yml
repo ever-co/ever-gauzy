@@ -1,9 +1,9 @@
-name: Deploy to DigitalOcean Droplet Stage
+name: Deploy to DigitalOcean Droplet Stage Pre
 
 on:
   push:
     branches:
-      - test-do-droplet2
+      - stage
 
 jobs:
   deploy:
