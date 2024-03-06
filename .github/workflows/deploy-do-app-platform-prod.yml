@@ -1,9 +1,9 @@
-name: Deploy to DigitalOcean Droplet Demo
+name: Deploy to DigitalOcean App Platform Prod
 
 on:
   workflow_run:
-    workflows: ['Deploy to DigitalOcean Droplet Demo Pre']
-    branches: [develop]
+    workflows: ['Build and Publish Docker Images Prod']
+    branches: [master]
     types:
       - completed
 
@@ -11,48 +11,40 @@ jobs:
   deploy:
     runs-on: buildjet-4vcpu-ubuntu-2204
 
-    environment: demo
+    environment: prod
 
     steps:
       - name: checkout out code
         uses: actions/checkout@v4
 
-      - name: Modify API_BASE_URL
-        run: |
-          echo "INGRESS_CERT_TYPE=${{ env.INGRESS_CERT_TYPE }}" >> $GITHUB_ENV
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-          if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-            echo "API_BASE_URL=https://apidemodt.gauzy.co" >> $GITHUB_ENV
-          elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-            echo "API_BASE_URL=https://apidemodts.gauzy.co" >> $GITHUB_ENV
-          else
-            echo "UNKNOWN INGRESS_CERT_TYPE"
-          fi
-        env:
-          INGRESS_CERT_TYPE: 'letsencrypt'
-
-      - name: Inject secrets into .env-template.compose
+      - name: Modify DB_HOST and REDIS_URL
         run: |
-          if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-            envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.yml
-            touch $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.yml
-          elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-            envsubst < $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.template.yml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.yml
-            touch $GITHUB_WORKSPACE/.deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.yml
-          else
-            echo "UNKNOWN INGRESS_CERT_TYPE"
-          fi
+          echo "DB_HOST_PUBLIC=$(echo '${{ secrets.DB_HOST }}' | sed 's/private-//')" >> $GITHUB_ENV
+          echo "REDIS_URL_PUBLIC=$(echo '${{ secrets.REDIS_URL }}' | sed 's/private-//')" >> $GITHUB_ENV
+
+      - name: Inject secrets into .do/app.yaml
+        run: |
+          envsubst < $GITHUB_WORKSPACE/.do/app.yaml > temp.yaml && mv temp.yaml $GITHUB_WORKSPACE/.do/app.yaml
         env:
-          ENV_NAME: 'demo'
-          DEMO: 'true'
-          NODE_ENV: 'development'
-          ADMIN_PASSWORD_RESET: 'true'
-          API_HOST: $API_HOST
-          API_BASE_URL: '${{ env.API_BASE_URL }}'
-          CLIENT_BASE_URL: 'https://demo.gauzy.co'
+          ENV_NAME: 'prod'
+          DOCR_REPOSITORY: 'gauzy-api'
+          APP_DOMAIN: 'apida.gauzy.co'
+          INSTANCE_COUNT: '2'
+          INSTANCE_SIZE: 'professional-s'
+          API_HOST: '0.0.0.0'
+          DEMO: 'false'
+          NODE_ENV: 'production'
+          ADMIN_PASSWORD_RESET: 'false'
+          API_BASE_URL: 'https://apida.gauzy.co'
+          CLIENT_BASE_URL: 'https://app.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'
           DB_URI: '${{ secrets.DB_URI }}'
-          DB_HOST: '${{ secrets.DB_HOST }}'
+          DB_HOST: '${{ env.DB_HOST_PUBLIC }}'
           DB_USER: '${{ secrets.DB_USER }}'
           DB_PASS: '${{ secrets.DB_PASS }}'
           DB_NAME: '${{ secrets.DB_NAME }}'
@@ -62,7 +54,7 @@ jobs:
           DB_POOL_SIZE: '${{ secrets.DB_POOL_SIZE }}'
           DB_POOL_SIZE_KNEX: '${{ secrets.DB_POOL_SIZE_KNEX }}'
           REDIS_ENABLED: '${{ secrets.REDIS_ENABLED }}'
-          REDIS_URL: '${{ secrets.REDIS_URL }}'
+          REDIS_URL: '${{ env.REDIS_URL_PUBLIC }}'
           CLOUD_PROVIDER: 'DO'
           SENTRY_DSN: '${{ secrets.SENTRY_DSN }}'
           SENTRY_TRACES_SAMPLE_RATE: '${{ secrets.SENTRY_TRACES_SAMPLE_RATE }}'
@@ -143,39 +135,30 @@ jobs:
           COMPANY_LINK: '${{ secrets.COMPANY_LINK }}'
           COMPANY_NAME: '${{ secrets.COMPANY_NAME }}'
 
-      - name: Copy file via scp - with-cloudflare
-        if: ${{ env.INGRESS_CERT_TYPE == 'cloudflare' }}
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
-          username: ${{secrets.DO_DROPLET_USERNAME}}
-          key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.yml'
-          target: '.'
-      - name: Copy file via scp - with-letsencrypt
-        if: ${{ env.INGRESS_CERT_TYPE == 'letsencrypt' }}
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
-          username: ${{secrets.DO_DROPLET_USERNAME}}
-          key: ${{secrets.DO_DROPLET_KEY}}
-          source: '.deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.yml'
-          target: '.'
-      - name: Deploy to DigitalOcean Droplet
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{secrets.DO_DROPLET_DEMO_HOST}}
-          username: ${{secrets.DO_DROPLET_USERNAME}}
-          key: ${{secrets.DO_DROPLET_KEY}}
-          envs: INGRESS_CERT_TYPE
-          script: |
-            if [ "${{ env.INGRESS_CERT_TYPE }}" = "cloudflare" ]; then
-                docker-compose -f .deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.yml down
-                docker-compose -f .deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.yml up -d
-            elif [ "${{ env.INGRESS_CERT_TYPE }}" = "letsencrypt" ]; then
-                docker-compose -f .deploy/ssh/with-cloudflare/demo/docker-compose.api.demo.yml down
-                docker-compose -f .deploy/ssh/with-letsencrypt/demo/docker-compose.api.demo.yml up -d
-            else
-                echo "Unknown INGRESS_CERT_TYPE: $INGRESS_CERT_TYPE"
-                exit 1
-            fi
+      - name: Check if App Exists
+        id: check-app
+        run: |
+          echo "ENV_NAME is set to '${ENV_NAME}'"
+          APP_NAME="ever-gauzy-${ENV_NAME}"
+          echo "Looking for app with name: $APP_NAME"
+          doctl apps list --no-header
+          APP_ID=$(doctl apps list --no-header | awk -v appName="$APP_NAME" '$2 == appName {print $1}')
+          if [ -z "$APP_ID" ]; then
+            echo "App does not exist, setting CREATE_APP to true"
+            echo "::set-output name=create_app::true"
+          else
+            echo "App exists with ID $APP_ID, setting APP_ID"
+            echo "::set-output name=app_id::$APP_ID"
+            echo "::set-output name=create_app::false"
+          fi
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+          ENV_NAME: 'prod'
+
+      - name: Create App
+        if: steps.check-app.outputs.create_app == 'true'
+        run: doctl apps create --spec .do/app.yaml
+
+      - name: Update App
+        if: steps.check-app.outputs.create_app == 'false'
+        run: doctl apps update ${{ steps.check-app.outputs.app_id }} --spec .do/app.yaml

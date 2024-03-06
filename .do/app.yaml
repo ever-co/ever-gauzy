@@ -14,7 +14,7 @@ services:
       image:
           registry_type: 'DOCR'
           registry: ''
-          repository: 'gauzy-api-demo'
+          repository: $DOCR_REPOSITORY
           tag: 'latest'
           deploy_on_push:
               enabled: true
