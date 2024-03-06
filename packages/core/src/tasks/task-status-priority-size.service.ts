@@ -34,6 +34,7 @@ export class TaskStatusPrioritySizeService<
 		readonly mikroOrmTaskStatusRepository: EntityRepository<BaseEntity>,
 		readonly knexConnection: KnexConnection
 	) {
+		console.log(`TaskStatusPrioritySizeService initialized.`);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository);
 	}
 
@@ -45,7 +46,7 @@ export class TaskStatusPrioritySizeService<
 	async fetchAllByKnex(input: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
 			// Ensure at least one record matches the specified parameters
-			const first = await this.getOneOrFailByKnex(this.knexConnection, input);
+			const first = await this.getOneOrFailByKnex(input);
 
 			if (!first) {
 				console.log(`No entities found matching the specified parameters ${JSON.stringify(input)}`);
@@ -53,11 +54,12 @@ export class TaskStatusPrioritySizeService<
 			}
 
 			// Perform the Knex query to fetch entities and their count
-			const items = await this.getManyAndCountByKnex(this.knexConnection, input);
+			const items = await this.getManyAndCountByKnex(input);
 
 			if (items.length > 0) {
 				// this call depends on tenant and organization, so we can't make it global
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+
 				const provider = store.getProviderInstance();
 
 				// Fetch fullIconUrl for items with an icon
@@ -111,6 +113,7 @@ export class TaskStatusPrioritySizeService<
 			 * Find task sizes/priorities for given params
 			 */
 			const queryBuilder = this.repository.createQueryBuilder(this.alias);
+
 			queryBuilder.where((qb: SelectQueryBuilder<BaseEntity>) => {
 				// Apply filters based on request parameters
 				this.getFilterQuery(qb, params);
@@ -210,9 +213,9 @@ export class TaskStatusPrioritySizeService<
 	 * @param request - Request parameters for filtering (IFindEntityByParams).
 	 * @returns A Promise that resolves to the first entity or rejects if none is found.
 	 */
-	async getOneOrFailByKnex(knex: KnexConnection, request: IFindEntityByParams) {
+	async getOneOrFailByKnex(request: IFindEntityByParams): Promise<BaseEntity | undefined> {
 		// Create a Knex query builder
-		return this.createKnexQueryBuilder(knex)
+		return await this.createKnexQueryBuilder(this.knexConnection)
 			.modify((qb: KnexConnection.QueryBuilder<any, any>) => {
 				// Apply filters based on request parameters
 				this.getFilterQueryByKnex(qb, request);
@@ -229,18 +232,17 @@ export class TaskStatusPrioritySizeService<
 	 * @param request - Request parameters for filtering (IFindEntityByParams).
 	 * @returns A Knex query builder with applied filters.
 	 */
-	async getManyAndCountByKnex(
-		knex: KnexConnection,
-		request: IFindEntityByParams
-	): Promise<KnexConnection.QueryBuilder<any, any>> {
+	async getManyAndCountByKnex(request: IFindEntityByParams): Promise<KnexConnection.QueryBuilder<any, any>> {
 		// Create a Knex query builder
-		return this.createKnexQueryBuilder(knex).modify((qb: KnexConnection.QueryBuilder<any, any>) => {
-			// Apply filters based on request parameters
-			this.getFilterQueryByKnex(qb, request);
+		return await this.createKnexQueryBuilder(this.knexConnection).modify(
+			(qb: KnexConnection.QueryBuilder<any, any>) => {
+				// Apply filters based on request parameters
+				this.getFilterQueryByKnex(qb, request);
 
-			// Log the generated SQL query (for debugging purposes)
-			console.log('Get Many And Count By Knex', qb.toQuery());
-		});
+				// Log the generated SQL query (for debugging purposes)
+				console.log('Get Many And Count By Knex', qb.toQuery());
+			}
+		);
 	}
 
 	/**

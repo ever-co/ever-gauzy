@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from '../auth/auth.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PipelineStage } from './pipeline-stage.entity';
 import { StageService } from './pipeline-stage.service';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([PipelineStage]),
-		MikroOrmModule.forFeature([PipelineStage]),
-		AuthModule
+		MikroOrmModule.forFeature([PipelineStage])
 	],
 	providers: [StageService],
 	exports: [StageService]

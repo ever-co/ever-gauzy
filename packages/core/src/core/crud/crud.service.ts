@@ -28,6 +28,7 @@ import { mergeMap } from 'rxjs/operators';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
 import { MultiORM, MultiORMEnum, flatten, getORMType } from './../../core/utils';
+import { parseTypeORMFindCountOptions } from './utils';
 import {
 	ICountByOptions,
 	ICountOptions,
@@ -47,7 +48,7 @@ const ormType: MultiORM = getORMType();
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
 	constructor(
 		protected readonly repository: Repository<T>,
-		protected readonly mikroRepository?: EntityRepository<T>
+		protected readonly mikroRepository: EntityRepository<T>
 	) { }
 
 	/**
@@ -87,7 +88,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			case MultiORMEnum.MikroORM:
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.count(options as FindManyOptions<T>);
+				const typeormOptions = parseTypeORMFindCountOptions<T>(options as FindManyOptions);
+				return await this.repository.count(typeormOptions as FindManyOptions);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -105,7 +107,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			case MultiORMEnum.MikroORM:
 				return await this.mikroRepository.count(options as MikroFilterQuery<T>);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.countBy(options as FindOptionsWhere<T>);
+				const typeormOptions = parseTypeORMFindCountOptions<T>({ where: options } as FindManyOptions);
+				return await this.repository.count(typeormOptions as FindManyOptions);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}

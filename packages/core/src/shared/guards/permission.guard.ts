@@ -1,18 +1,21 @@
 import { environment as env } from '@gauzy/config';
-import { CanActivate, ExecutionContext, Injectable, Type } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { verify } from 'jsonwebtoken';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
-import { UserService } from './../../user/user.service';
+import { RolePermissionService } from '../../role-permission/role-permission.service';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
 	constructor(
+		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _reflector: Reflector,
-		private readonly userService: UserService
-	) { }
+		private readonly _rolePermissionService: RolePermissionService
+	) {}
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
@@ -22,7 +25,8 @@ export class PermissionGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {
@@ -31,21 +35,50 @@ export class PermissionGuard implements CanActivate {
 
 		// Check user authorization
 		const token = RequestContext.currentToken();
-		const { id, role } = verify(token, env.JWT_SECRET) as {
-			id: string;
-			role: string;
-		};
+		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
 
-		// Retrieve user with role and rolePermissions relations
-		const user = await this.userService.findOneByIdString(id, { relations: { role: { rolePermissions: true } } });
+		// Retrieve current role ID and tenant ID from RequestContext
+		const tenantId = RequestContext.currentTenantId();
+		const roleId = RequestContext.currentRoleId();
 
-		// Check if user has the required permissions
-		const isAuthorized = user?.role?.rolePermissions.some((p) => permissions.includes(p.permission) && p.enabled) || false;
+		const cacheKey = `userPermissions_${tenantId}_${roleId}_${permissions.join('_')}`;
+
+		console.log('Checking User Permissions from Cache with key:', cacheKey);
+
+		let isAuthorized = false;
+
+		const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
+
+		if (fromCache == null) {
+			console.log('User Permissions NOT loaded from Cache with key:', cacheKey);
+
+			// Check if user has the required permissions
+			isAuthorized = await this._rolePermissionService.checkRolePermission(tenantId, roleId, permissions, true);
+
+			await this.cacheManager.set(
+				cacheKey,
+				isAuthorized,
+				5 * 60 * 1000 // 5 minutes cache expiration time for User Permissions
+			);
+		} else {
+			isAuthorized = fromCache;
+			console.log(`User Permissions loaded from Cache with key: ${cacheKey}. Value: ${isAuthorized}`);
+		}
 
 		// Log unauthorized access attempts
 		if (!isAuthorized) {
 			// Log unauthorized access attempts
-			console.log(`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Permissions Checked: ${permissions.join(', ')}`);
+			console.log(
+				`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Tenant ID:', ${tenantId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
+		} else {
+			console.log(
+				`Access granted.  User ID: ${id}, Role: ${role}, Tenant ID:', ${tenantId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
 		}
 
 		return isAuthorized;

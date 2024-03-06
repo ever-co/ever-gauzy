@@ -1,50 +1,55 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
 	IEmployee,
+	IOrganization,
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { isNotEmpty } from '@gauzy/common';
-import * as moment from 'moment';
-import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { getDateRangeFormat } from './../core/utils';
 import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
-import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './repository';
 
 @Injectable()
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
-		@InjectRepository(Employee)
-		typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
+		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
 	}
 
+	/**
+	 * Retrieves all active employees with their associated user and organization details.
+	 * @returns A Promise that resolves to an array of active employees.
+	 */
 	public async findAllActive(): Promise<Employee[]> {
-		const user = RequestContext.currentUser();
-
-		if (user && user.tenantId) {
-			return await this.repository.find({
+		try {
+			return await super.find({
 				where: {
 					isActive: true,
-					tenantId: user.tenantId
+					isArchived: false,
 				},
 				relations: {
 					user: true,
 					organization: true
-				}
+				},
 			});
+		} catch (error) {
+			// Handle any potential errors, log, and optionally rethrow or return a default value.
+			console.error('Error occurred while fetching active employees:', error);
+			return [];
 		}
 	}
+
 
 	/**
 	 * Find the employees working in the organization for a particular date range.
@@ -57,82 +62,53 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @returns
 	 */
 	async findWorkingEmployees(
-		organizationId: string,
+		organizationId: IOrganization['id'],
 		forRange: IDateRangePicker | any,
-		withUser: boolean
+		withUser: boolean = false
 	): Promise<IPagination<IEmployee>> {
-		const query = this.repository.createQueryBuilder(this.alias);
-		query.innerJoin(`${query.alias}.user`, 'user');
-		query.innerJoin(`user.organizations`, 'organizations');
-		query.setFindOptions({
-			/**
-			 * Load selected table properties/fields for self & relational select.
-			 */
-			select: {
-				id: true,
-				isActive: true,
-				short_description: true,
-				description: true,
-				averageIncome: true,
-				averageExpenses: true,
-				averageBonus: true,
-				startedWorkOn: true,
-				isTrackingEnabled: true,
-				billRateCurrency: true,
-				billRateValue: true,
-				minimumBillingRate: true,
-				user: {
+		try {
+			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
+			query.innerJoin(`${query.alias}.user`, 'user');
+			query.innerJoin(`user.organizations`, 'organizations');
+			query.setFindOptions({
+				/**
+				 * Load selected table properties/fields for self & relational select.
+				 */
+				select: {
 					id: true,
-					firstName: true,
-					lastName: true,
-					email: true,
-					imageUrl: true
+					isActive: true,
+					short_description: true,
+					description: true,
+					averageIncome: true,
+					averageExpenses: true,
+					averageBonus: true,
+					startedWorkOn: true,
+					isTrackingEnabled: true,
+					billRateCurrency: true,
+					billRateValue: true,
+					minimumBillingRate: true,
+					userId: true,
+					user: {
+						id: true,
+						firstName: true,
+						lastName: true,
+						email: true,
+						imageUrl: true
+					}
+				},
+				relations: {
+					...(withUser ? { user: true } : {})
 				}
-			},
-			relations: {
-				...(withUser ? { user: true } : {})
-			}
-		});
-		query.where((qb: SelectQueryBuilder<Employee>) => {
-			const tenantId = RequestContext.currentTenantId();
-			qb.andWhere(
-				new Brackets((web: WhereExpressionBuilder) => {
-					web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-					web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
-					web.andWhere(p(`"${qb.alias}"."isActive" = :isActive`), { isActive: true });
-					web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
-				})
-			);
-			if (isNotEmpty(forRange)) {
-				if (forRange.startDate && forRange.endDate) {
-					const { start: startDate, end: endDate } = getDateRangeFormat(
-						moment.utc(forRange.startDate),
-						moment.utc(forRange.endDate)
-					);
-					qb.andWhere(
-						new Brackets((web: WhereExpressionBuilder) => {
-							web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
-								startedWorkOn: endDate
-							});
-						})
-					);
-					qb.andWhere(
-						new Brackets((web: WhereExpressionBuilder) => {
-							web.where(p(`"${qb.alias}"."endWork" IS NULL`));
-							web.orWhere(p(`"${qb.alias}"."endWork" >= :endWork`), {
-								endWork: startDate
-							});
-						})
-					);
-				}
-			}
-			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				const employeeId = RequestContext.currentEmployeeId();
-				qb.andWhere(p(`"${qb.alias}"."id" = :employeeId`), { employeeId });
-			}
-		});
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
+			});
+			// Set up the where clause using the provided filter function
+			query.where((qb: SelectQueryBuilder<Employee>) => {
+				this.getFilterQuery(qb, organizationId, forRange);
+			});
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			console.log('Error while getting working employees: %s', error);
+		}
 	}
 
 	/**
@@ -142,18 +118,90 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * 2. The endWork date is either null or greater than the first day forMonth
 	 * @param organizationId
 	 * @param forRange
-	 * @param withUser
 	 * @returns
 	 */
 	async findWorkingEmployeesCount(
 		organizationId: string,
-		forRange: IDateRangePicker | any,
-		withUser: boolean
+		forRange: IDateRangePicker | any
 	): Promise<{ total: number }> {
-		const { total } = await this.findWorkingEmployees(organizationId, forRange, withUser);
-		return {
-			total
-		};
+		try {
+			const query = this.typeOrmEmployeeRepository.createQueryBuilder(this.tableName);
+			query.innerJoin(`${query.alias}.user`, 'user');
+			query.innerJoin(`user.organizations`, 'organizations');
+
+			// Set up the where clause using the provided filter function
+			query.where((qb: SelectQueryBuilder<Employee>) => {
+				this.getFilterQuery(qb, organizationId, forRange);
+			});
+
+			const total = await query.getCount();
+			return { total };
+		} catch (error) {
+			console.log('Error while getting working employee counts: %s', error);
+		}
+	}
+
+	/**
+	 * Adds a filter to the TypeORM SelectQueryBuilder for the Employee entity based on specified conditions.
+	 *
+	 * @param qb - The TypeORM SelectQueryBuilder for the Employee entity.
+	 * @param organizationId - The organization ID to filter by.
+	 * @param forRange - An object representing a date range (IDateRangePicker) or any other type.
+	 */
+	getFilterQuery(qb: SelectQueryBuilder<Employee>, organizationId: string, forRange: IDateRangePicker | any) {
+		// Retrieve the current tenant ID from the RequestContext
+		const tenantId = RequestContext.currentTenantId();
+
+		// Apply filter conditions using TypeORM SelectQueryBuilder
+		qb.andWhere(
+			new Brackets((web: WhereExpressionBuilder) => {
+				// Filter by tenant ID, organization ID, isActive, and isArchived
+				web.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+				web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+				web.andWhere(p(`"${qb.alias}"."isActive" = :isActive`), { isActive: true });
+				web.andWhere(p(`"${qb.alias}"."isArchived" = :isArchived`), { isArchived: false });
+
+				// Additional conditions for user isActive and isArchived
+				web.andWhere(p(`"user"."isActive" = :isActive`), { isActive: true });
+				web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
+			})
+		);
+
+		// Check for date range conditions
+		if (isNotEmpty(forRange)) {
+			if (forRange.startDate && forRange.endDate) {
+				const { start: startDate, end: endDate } = getDateRangeFormat(
+					moment.utc(forRange.startDate),
+					moment.utc(forRange.endDate)
+				);
+
+				// Filter by startedWorkOn condition
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.andWhere(p(`"${qb.alias}"."startedWorkOn" <= :startedWorkOn`), {
+							startedWorkOn: endDate
+						});
+					})
+				);
+
+				// Filter by endWork condition (NULL or >= startDate)
+				qb.andWhere(
+					new Brackets((web: WhereExpressionBuilder) => {
+						web.where(p(`"${qb.alias}"."endWork" IS NULL`));
+						web.orWhere(p(`"${qb.alias}"."endWork" >= :endWork`), {
+							endWork: startDate
+						});
+					})
+				);
+			}
+		}
+
+		// Check for permission CHANGE_SELECTED_EMPLOYEE
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// Filter by current employee ID if the permission is not present
+			const employeeId = RequestContext.currentEmployeeId();
+			qb.andWhere(p(`"${qb.alias}"."id" = :employeeId`), { employeeId });
+		}
 	}
 
 	/**

@@ -2,14 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingController } from './equipment-sharing.controller';
 import { EquipmentSharingService } from './equipment-sharing.service';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { CommandHandlers } from './commands/handlers';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 
 @Module({
 	imports: [
@@ -17,8 +16,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		TypeOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		MikroOrmModule.forFeature([RequestApproval, EquipmentSharing]),
 		CqrsModule,
-		TenantModule,
-		UserModule
+		RolePermissionModule
 	],
 	controllers: [EquipmentSharingController],
 	providers: [EquipmentSharingService, ...CommandHandlers],

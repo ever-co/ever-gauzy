@@ -2,13 +2,12 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CandidateInterviewers } from './candidate-interviewers.entity';
 import { CandidateInterviewersService } from './candidate-interviewers.service';
 import { CandidateInterviewersController } from './candidate-interviewers.controller';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -20,8 +19,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		]),
 		TypeOrmModule.forFeature([CandidateInterviewers]),
 		MikroOrmModule.forFeature([CandidateInterviewers]),
-		TenantModule,
-		UserModule,
+		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [CandidateInterviewersController],

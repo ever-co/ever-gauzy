@@ -977,10 +977,12 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				moment.utc(request.startDate || moment().startOf('day')),
 				moment.utc(request.endDate || moment().endOf('day'))
 			);
-			query.andWhere(p(`"${query.alias}"."startedAt" >= :startDate AND "${query.alias}"."startedAt" < :endDate`), {
-				startDate,
-				endDate
-			});
+			query.andWhere(
+				new Brackets(qb => {
+					qb.where(p(`"${query.alias}"."startedAt" >= :startDate`), { startDate });
+					qb.andWhere(p(`"${query.alias}"."startedAt" < :endDate`), { endDate });
+				})
+			);
 		}
 
 		// Filter by organization employee IDs if used in the request

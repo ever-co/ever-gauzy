@@ -1,22 +1,20 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { Payment } from './payment.entity';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { PaymentMapService } from './payment.map.service';
 import { EmailSendModule } from './../email-send/email-send.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/payments', module: PaymentModule }]),
 		TypeOrmModule.forFeature([Payment]),
 		MikroOrmModule.forFeature([Payment]),
-		TenantModule,
-		UserModule,
+		RolePermissionModule,
 		EmailSendModule
 	],
 	controllers: [PaymentController],

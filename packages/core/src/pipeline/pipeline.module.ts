@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
-import { AuthModule } from '../auth/auth.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { PipelineController } from './pipeline.controller';
 import { PipelineService } from './pipeline.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -8,9 +8,8 @@ import { Pipeline } from './pipeline.entity';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { DealModule } from '../deal/deal.module';
 import { Deal } from '../deal/deal.entity';
-import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
@@ -19,8 +18,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 		MikroOrmModule.forFeature([Pipeline, Deal]),
 		StageModule,
 		DealModule,
-		AuthModule,
-		TenantModule,
+		RolePermissionModule,
 		UserModule
 	],
 	controllers: [PipelineController],
