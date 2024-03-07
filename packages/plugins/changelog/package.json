@@ -33,13 +33,13 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
-		"@nestjs/common": "^10.3.0",
-		"@nestjs/cqrs": "^10.2.6",
+		"@nestjs/common": "^10.3.3",
+		"@nestjs/cqrs": "^10.2.7",
 		"@nestjs/passport": "^10.0.3",
-		"@nestjs/swagger": "^7.1.17",
-		"@nestjs/typeorm": "^10.0.1",
+		"@nestjs/swagger": "^7.3.0",
+		"@nestjs/typeorm": "^10.0.2",
 		"class-validator": "^0.14.0",
-		"typeorm": "^0.3.17"
+		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",

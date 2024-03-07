@@ -205,7 +205,7 @@
 		"karma-coverage-istanbul-reporter": "^3.0.3",
 		"karma-jasmine": "^4.0.1",
 		"karma-jasmine-html-reporter": "^1.5.4",
-		"pm2": "^4.5.1",
+		"pm2": "^5.3.1",
 		"terser": "^5.10.0",
 		"terser-webpack-plugin": "^5.2.5",
 		"webpack": "^5.65.0",

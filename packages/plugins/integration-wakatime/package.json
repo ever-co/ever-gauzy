@@ -29,9 +29,9 @@
 	"keywords": [],
 	"dependencies": {
 		"@gauzy/contracts": "^0.1.0",
-		"@nestjs/common": "^10.3.0",
-		"@nestjs/typeorm": "^10.0.1",
-		"typeorm": "^0.3.17"
+		"@nestjs/common": "^10.3.3",
+		"@nestjs/typeorm": "^10.0.2",
+		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
