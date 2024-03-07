@@ -31,10 +31,10 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@jitsu/js": "^1.8.2",
-		"@nestjs/common": "^10.3.0",
+		"@nestjs/common": "^10.3.3",
 		"chalk": "4.1.2",
 		"node-fetch": "^2.6.7",
-		"typeorm": "^0.3.17"
+		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
