@@ -9,11 +9,10 @@ import { SentryInterceptor } from '.';
 let GqlExecutionContext: any;
 try {
 	({ GqlExecutionContext } = require('@nestjs/graphql'));
-} catch (e) { }
+} catch (e) {}
 
 @Injectable()
 export class GraphqlInterceptor extends SentryInterceptor {
-
 	/**
 	 *
 	 * @param context
