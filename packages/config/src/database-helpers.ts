@@ -1,4 +1,4 @@
-import { TlsOptions } from "tls";
+import { TlsOptions } from 'tls';
 
 export type MikroLoggerNamespace = 'query' | 'query-params' | 'schema' | 'discovery' | 'info';
 
@@ -59,7 +59,6 @@ export const getTlsOptions = (dbSslMode: boolean): TlsOptions | undefined => {
 	}
 };
 
-
 /**
  * Get logging options based on the provided dbLogging value.
  * @param {string} dbLogging - The value of process.env.DB_LOGGING
@@ -91,11 +90,12 @@ export const getLoggingOptions = (dbLogging: string): false | 'all' | ['query', 
  */
 export const getLoggingMikroOptions = (dbLogging: string): false | MikroLoggerNamespace[] => {
 	const loggingOptionsMap: Record<string, MikroLoggerNamespace[]> = {
-		'query': ['query'],
+		query: ['query'],
 		'query-params': ['query-params'],
-		'schema': ['schema'],
-		'discovery': ['discovery'],
-		'info': ['info'],
+		schema: ['schema'],
+		discovery: ['discovery'],
+		info: ['info'],
+		all: ['query', 'query-params', 'schema', 'discovery', 'info']
 	};
 
 	return loggingOptionsMap[dbLogging] || false;
