@@ -1,11 +1,11 @@
 import { EventArgs } from "@mikro-orm/core";
 import { EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
-import { Tenant } from "./tenant.entity";
 import { getTenantLogo } from "../core/utils";
-import { GenericEventSubscriber } from "../core/entities/generic-event.subscriber";
+import { Tenant } from "./tenant.entity";
+import { GenericEntityEventSubscriber } from "../core/entities/subscribers/generic-entity-event.subscriber";
 
 @EventSubscriber()
-export class TenantSubscriber extends GenericEventSubscriber<Tenant>(Tenant) {
+export class TenantSubscriber extends GenericEntityEventSubscriber<Tenant> {
 
     /**
     * Indicates that this subscriber only listen to Organization events.
@@ -15,29 +15,14 @@ export class TenantSubscriber extends GenericEventSubscriber<Tenant>(Tenant) {
     }
 
     /**
-     * Called after entity is loaded from the database.
      *
      * @param entity
      */
-    async afterLoad(entity: Tenant): Promise<void> {
+    async afterEntityLoad(entity: Tenant): Promise<void> {
         try {
             await this.processLogo(entity);
         } catch (error) {
-            console.error('Error in afterLoad:', error);
-        }
-    }
-
-    /**
-     * Handles the onLoad event for the Tenant entity.
-     *
-     * @param args - The event arguments containing the entity.
-     * @returns A promise that resolves when the onLoad processing is complete.
-     */
-    async onLoad(args: EventArgs<Tenant>): Promise<void> {
-        try {
-            await this.processLogo(args.entity);
-        } catch (error) {
-            console.error('Error in onLoad:', error);
+            console.error('Error in afterEntityLoad:', error);
         }
     }
 

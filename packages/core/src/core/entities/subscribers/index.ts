@@ -36,7 +36,7 @@ import {
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
 	UserSubscriber
-} from './internal';
+} from '../internal';
 
 /**
  * A map of the core TypeORM Subscribers.
