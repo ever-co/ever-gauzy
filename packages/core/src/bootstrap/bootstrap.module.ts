@@ -1,5 +1,3 @@
-import tracer from './tracer';
-
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
@@ -28,9 +26,13 @@ export class BootstrapModule implements NestModule, OnApplicationShutdown {
 		if (signal) {
 			Logger.log(`Received shutdown signal: ${signal}`);
 
-			if (process.env.OTEL_ENABLED === 'true' && tracer) {
+			if (process.env.OTEL_ENABLED === 'true') {
 				try {
-					await tracer.shutdown();
+					// Dynamically import the tracer module. We need it because otherwise tracer can initialize at different times etc
+					const { default: tracer } = await import('./tracer');
+					if (tracer) {
+						await tracer.shutdown();
+					}
 				} catch (error) {
 					console.error('Error terminating tracing', error);
 				}
