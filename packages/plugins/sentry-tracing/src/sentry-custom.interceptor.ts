@@ -35,7 +35,7 @@ export class SentryCustomInterceptor extends SentryInterceptor {
 				// @ts-ignore
 				if (this.shouldReport(error)) {
 					const http = context.switchToHttp();
-					this.handler(error, http.getRequest(), http.getResponse(), () => { });
+					this.handler(error, http.getRequest(), http.getResponse(), () => {});
 				}
 
 				return throwError(() => error);
