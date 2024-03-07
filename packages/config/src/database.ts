@@ -54,6 +54,7 @@ let knexConnectionConfig: KnexModuleOptions;
 
 // We set default pool size as 40. Usually PG has 100 connections max by default.
 const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40;
+
 // For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
 const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
 
@@ -61,9 +62,7 @@ const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process
 
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-	: 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
