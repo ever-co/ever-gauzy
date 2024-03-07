@@ -3,20 +3,36 @@
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { OTLPTraceExporter as OTLPTraceExporterGrpc } from '@opentelemetry/exporter-trace-otlp-grpc';
-import { NodeSDK } from '@opentelemetry/sdk-node';
+import { NodeSDKConfiguration } from '@opentelemetry/sdk-node';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
-import { BatchSpanProcessor, SimpleSpanProcessor, SpanExporter } from '@opentelemetry/sdk-trace-base';
-import { HoneycombSDK } from '@honeycombio/opentelemetry-node';
+import {
+	BatchSpanProcessor,
+	ConsoleSpanExporter,
+	SimpleSpanProcessor,
+	SpanExporter
+} from '@opentelemetry/sdk-trace-base';
+import { HoneycombOptions, HoneycombSDK } from '@honeycombio/opentelemetry-node';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
-import { PeriodicExportingMetricReader, ConsoleMetricExporter } from '@opentelemetry/sdk-metrics';
+import { TypeormInstrumentation } from 'opentelemetry-instrumentation-typeorm';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+// import { PeriodicExportingMetricReader, ConsoleMetricExporter } from '@opentelemetry/sdk-metrics';
 
-let sdk: any;
+const isConsole = false; // Set to true to use console exporter only (for debugging)
+const isAuto = true; // Set to true to use auto-instrumentations
+
+let provider: NodeTracerProvider;
+let honeycombSDK: HoneycombSDK;
+
+let instrumentations: any[];
 
 let traceExporter: SpanExporter;
 let url: string;
@@ -54,6 +70,14 @@ if (process.env.OTEL_ENABLED === 'true') {
 
 	console.log('Tracing service name: ' + serviceName);
 
+	provider = new NodeTracerProvider({
+		resource: new Resource({
+			[SemanticResourceAttributes.SERVICE_NAME]: serviceName
+		})
+	});
+
+	provider.register();
+
 	url = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT;
 
 	// If OTEL_PROVIDER is not set, use Jaeger by default (as long as OTEL_ENABLED is true of course)
@@ -75,6 +99,22 @@ if (process.env.OTEL_ENABLED === 'true') {
 		}
 
 		console.log('Tracing Enabled with Jaeger');
+	}
+
+	if (process.env.OTEL_PROVIDER === 'aspecto') {
+		if (!url) url = 'https://otelcol.aspecto.io/v1/traces';
+
+		const exporterOptions = {
+			url: url,
+			serviceName: serviceName,
+			headers: {
+				Authorization: process.env.ASPECTO_API_KEY
+			}
+		};
+
+		traceExporter = new OTLPTraceExporter(exporterOptions);
+
+		console.log('Tracing Enabled with Aspecto');
 	}
 
 	if (process.env.OTEL_PROVIDER === 'signoz') {
@@ -140,9 +180,6 @@ if (process.env.OTEL_ENABLED === 'true') {
 		spanProcessor = new BatchSpanProcessor(traceExporter);
 	}
 
-	const isAuto = true;
-
-	let instrumentations: any[];
 	let instrumentationNames: string[];
 
 	if (isAuto) {
@@ -151,11 +188,22 @@ if (process.env.OTEL_ENABLED === 'true') {
 			// and expensive during startup
 			'@opentelemetry/instrumentation-fs': {
 				enabled: false
+			},
+			'@opentelemetry/instrumentation-net': {
+				enabled: false
+			},
+			'@opentelemetry/instrumentation-dns': {
+				enabled: false
 			}
 		});
 
 		instrumentations = [autoInst];
 		instrumentationNames = autoInst.map((i) => i.instrumentationName);
+
+		if (process.env.DB_ORM === 'typeorm') {
+			instrumentations.push(new TypeormInstrumentation());
+			instrumentationNames.push('TypeormInstrumentation');
+		}
 	} else {
 		const ins = [];
 		const insNames: string[] = [];
@@ -184,6 +232,11 @@ if (process.env.OTEL_ENABLED === 'true') {
 			insNames.push('MySQL2Instrumentation');
 		}
 
+		if (process.env.DB_ORM === 'typeorm') {
+			ins.push(new TypeormInstrumentation());
+			insNames.push('TypeormInstrumentation');
+		}
+
 		instrumentations = [ins];
 		instrumentationNames = insNames;
 	}
@@ -191,22 +244,35 @@ if (process.env.OTEL_ENABLED === 'true') {
 	console.log('Tracing Enabled Instrumentations:', instrumentationNames.join(', '));
 
 	if (process.env.OTEL_PROVIDER === 'honeycomb') {
-		/*
-		const metricReader = new PeriodicExportingMetricReader({
-			exporter: new ConsoleMetricExporter()
-		});
-		*/
+		if (process.env.HONEYCOMB_API_KEY) {
+			/*
+			const metricReader = new PeriodicExportingMetricReader({
+					exporter: new ConsoleMetricExporter()
+			});
+			*/
 
-		sdk = new HoneycombSDK({
-			apiKey: process.env.HONEYCOMB_API_KEY,
-			serviceName: serviceName,
-			spanProcessor: spanProcessor,
-			instrumentations: instrumentations,
-			// metricReader: metricReader,
-			localVisualizations: process.env.NODE_ENV === 'development'
-		});
+			const params: HoneycombOptions = {
+				apiKey: process.env.HONEYCOMB_API_KEY,
+				serviceName: serviceName,
+				instrumentations: instrumentations,
+				// metricReader: metricReader,
+				localVisualizations:
+					process.env.NODE_ENV === 'development' ||
+					process.env.HONEYCOMB_ENABLE_LOCAL_VISUALIZATIONS === 'true'
+			};
 
-		console.log('Tracing SDK initialized for Honeycomb');
+			if (isConsole) {
+				params.traceExporter = new ConsoleSpanExporter();
+			} else {
+				params.spanProcessor = spanProcessor;
+			}
+
+			honeycombSDK = new HoneycombSDK(params);
+
+			console.log('Tracing SDK initialized for Honeycomb');
+		} else {
+			console.warn('Honeycomb API Key is not set');
+		}
 	} else {
 		/*
 		const metricReader = new PeriodicExportingMetricReader({
@@ -214,16 +280,42 @@ if (process.env.OTEL_ENABLED === 'true') {
 		});
 		*/
 
-		sdk = new NodeSDK({
+		const params: Partial<NodeSDKConfiguration> = {
 			serviceName: serviceName,
-			// traceExporter: new ConsoleSpanExporter(),
-			spanProcessor: spanProcessor,
 			// metricReader: metricReader,
 			instrumentations: instrumentations
-		});
+		};
+
+		if (isConsole) {
+			params.traceExporter = new ConsoleSpanExporter();
+		} else {
+			params.spanProcessor = spanProcessor;
+		}
+
+		provider.addSpanProcessor(spanProcessor);
 
 		console.log('Tracing SDK initialized');
 	}
 }
 
-export default sdk;
+export default {
+	start: () => {
+		if (process.env.OTEL_ENABLED === 'true') {
+			if (provider) {
+				registerInstrumentations({
+					instrumentations: instrumentations
+				});
+			}
+
+			if (honeycombSDK) {
+				honeycombSDK.start();
+			}
+		}
+	},
+	shutdown: () => {
+		if (process.env.OTEL_ENABLED === 'true') {
+			provider?.shutdown();
+			honeycombSDK?.shutdown();
+		}
+	}
+};
