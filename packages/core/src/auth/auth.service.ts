@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, MoreThanOrEqual, SelectQueryBuilder } from 'typeorm';
+import { In, IsNull, MoreThanOrEqual, Not, SelectQueryBuilder } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import * as moment from 'moment';
 import { JsonWebTokenError, JwtPayload, sign, verify } from 'jsonwebtoken';
@@ -126,11 +126,27 @@ export class AuthService extends SocialAuthService {
 	}: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
-			where: {
-				email,
-				isActive: true,
-				isArchived: false
-			},
+			where: [
+				{
+					email,
+					isActive: true,
+					isArchived: false,
+					hash: Not(IsNull()),
+					employee: {
+						id: IsNull()
+					}
+				},
+				{
+					email,
+					isActive: true,
+					isArchived: false,
+					hash: Not(IsNull()),
+					employee: {
+						isActive: true,
+						isArchived: false
+					}
+				}
+			],
 			relations: {
 				tenant: true,
 				employee: true
@@ -140,35 +156,27 @@ export class AuthService extends SocialAuthService {
 			}
 		});
 
+		// Filter users based on password match
+		users = users.filter((user: IUser) => bcrypt.compareSync(password, user.hash));
+
 		if (users.length === 0) {
 			throw new UnauthorizedException();
 		}
 
-		// Filter users based on password match
-		users = users.filter(
-			(user: IUser) => !!bcrypt.compareSync(password, user.hash) && (!user.employee || user.employee?.isActive)
-		);
-
 		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
-		/** */
-		for await (const user of users) {
-			const id = user.id;
-			/** */
-			await this.typeOrmUserRepository.update(
-				{
-					id,
-					email,
-					isActive: true,
-					isArchived: false
-				},
-				{
-					code,
-					codeExpireAt
-				}
-			);
-		}
+		// Update all users with a single query
+		const ids = users.map((user: IUser) => user.id);
+		await this.typeOrmUserRepository.update({
+			id: In(ids),
+			email,
+			isActive: true,
+			isArchived: false
+		}, {
+			code,
+			codeExpireAt
+		});
 
 		// Create an array of user objects with relevant data
 		const workspaces: IWorkspaceResponse[] = users.map((user: IUser) => ({
