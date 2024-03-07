@@ -3,10 +3,10 @@ import { EntityEventSubscriber } from './entity-event.subsciber';
 import { IEntityEventSubscriber } from './entity-event-subscriber.types';
 
 /**
- * An abstract class that implements MikroEntitySubscriberInterface and
- * TypeOrmEntitySubscriberInterface for generic event subscription.
+ * An abstract class that provides a base implementation for IEntityEventSubscriber.
+ * This class can be extended to create specific event subscribers for different entities.
  */
-export abstract class GenericEntityEventSubscriber<Entity> extends EntityEventSubscriber<Entity> implements IEntityEventSubscriber<Entity>   {
+export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubscriber<Entity> implements IEntityEventSubscriber<Entity>   {
 
     /**
      * An abstract method that should be implemented by subclasses.
