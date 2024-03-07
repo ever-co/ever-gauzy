@@ -7,7 +7,7 @@ import { LoadEvent, EntitySubscriberInterface as TypeOrmEntitySubscriberInterfac
  * @param Entity
  * @returns
  */
-export function UniversalSubscriber<T>(Entity: EntityName<T> | ConstructorType) {
+export function GenericEventSubscriber<T>(Entity: EntityName<T> | ConstructorType) {
     abstract class UniversalEventSubscriber implements MikroEntitySubscriberInterface<T>, TypeOrmEntitySubscriberInterface<T> {
 
         /**

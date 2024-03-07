@@ -2,10 +2,10 @@ import { EventArgs } from "@mikro-orm/core";
 import { EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
 import { Tenant } from "./tenant.entity";
 import { getTenantLogo } from "../core/utils";
-import { UniversalSubscriber } from "../core/entities/universal.subscriber";
+import { GenericEventSubscriber } from "../core/entities/generic-event.subscriber";
 
 @EventSubscriber()
-export class TenantSubscriber extends UniversalSubscriber<Tenant>(Tenant) {
+export class TenantSubscriber extends GenericEventSubscriber<Tenant>(Tenant) {
 
     /**
     * Indicates that this subscriber only listen to Organization events.
