@@ -157,7 +157,7 @@ export class AuthService extends SocialAuthService {
 		});
 
 		// Filter users based on password match
-		users = users.filter((user) => bcrypt.compareSync(password, user.hash));
+		users = users.filter((user: IUser) => bcrypt.compareSync(password, user.hash));
 
 		if (users.length === 0) {
 			throw new UnauthorizedException();
@@ -166,23 +166,17 @@ export class AuthService extends SocialAuthService {
 		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
 		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
 
-		/** */
-		for await (const user of users) {
-			const id = user.id;
-			/** */
-			await this.typeOrmUserRepository.update(
-				{
-					id,
-					email,
-					isActive: true,
-					isArchived: false
-				},
-				{
-					code,
-					codeExpireAt
-				}
-			);
-		}
+		// Update all users with a single query
+		const ids = users.map((user: IUser) => user.id);
+		await this.typeOrmUserRepository.update({
+			id: In(ids),
+			email,
+			isActive: true,
+			isArchived: false
+		}, {
+			code,
+			codeExpireAt
+		});
 
 		// Create an array of user objects with relevant data
 		const workspaces: IWorkspaceResponse[] = users.map((user: IUser) => ({
