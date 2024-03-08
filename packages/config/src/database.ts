@@ -37,11 +37,11 @@ function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
 }
 
 console.log(chalk.magenta(`NodeJs Version %s`), process.version);
-console.log('Is DEMO: ', process.env.DEMO);
-console.log('NODE_ENV: ', process.env.NODE_ENV);
+console.log('Is DEMO: %s', process.env.DEMO);
+console.log('NODE_ENV: %s', process.env.NODE_ENV);
 
 const dbORM: MultiORM = getORMType();
-console.log('DB ORM: ' + dbORM);
+console.log('DB ORM: %s', dbORM);
 
 const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
 

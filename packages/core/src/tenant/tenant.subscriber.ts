@@ -1,5 +1,4 @@
-import { EventArgs } from "@mikro-orm/core";
-import { EventSubscriber, InsertEvent, UpdateEvent } from "typeorm";
+import { EventSubscriber, UpdateEvent } from "typeorm";
 import { getTenantLogo } from "../core/utils";
 import { Tenant } from "./tenant.entity";
 import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
@@ -15,61 +14,31 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
     }
 
     /**
+     * Executes after a Tenant entity is loaded. It updates the entity's logo
+     * using `updateTenantLogo`. Errors during this process are logged.
      *
-     * @param entity
+     * @param entity The loaded Tenant entity.
+     * @returns {Promise<void>}
      */
     async afterEntityLoad(entity: Tenant): Promise<void> {
         try {
-            await this.processLogo(entity);
+            await this.updateTenantLogo(entity);
         } catch (error) {
             console.error('Error in afterEntityLoad:', error);
         }
     }
 
     /**
-     * Processes the logo for a Tenant entity.
+     * Invoked before creating a new Tenant entity. It sets or updates the logo
+     * through `updateTenantLogo`. Errors are logged for troubleshooting.
      *
-     * @param entity - The Tenant entity to process the logo for.
-     * @returns A promise that resolves when the logo processing is complete.
+     * @param entity The Tenant entity to be created.
      */
-    async processLogo(entity: Tenant): Promise<void> {
+    async beforeEntityCreate(entity: Tenant) {
         try {
-            if (!entity.logo) {
-                entity.logo = getTenantLogo(entity.name);
-            }
-            if (!!entity['image']) {
-                entity.logo = entity.image.fullUrl || entity.logo;
-            }
+            await this.updateTenantLogo(entity);
         } catch (error) {
-            console.error('Error in processing tenant logo:', error);
-        }
-    }
-
-    /**
-     * Handles actions before creating a new entity.
-     *
-     * @param args - The event arguments.
-     * @returns A promise that resolves when the actions are complete.
-     */
-    async beforeCreate(args: EventArgs<Tenant>): Promise<void> {
-        console.log(args);
-        await this.processLogo(args.entity);
-    }
-
-    /**
-     * Called before a Tenant entity is inserted into the database.
-     *
-     * @param event - The InsertEvent containing information about the entity to be inserted.
-     * @returns A void or a promise that resolves when the actions are complete.
-     */
-    async beforeInsert(event: InsertEvent<Tenant>): Promise<void> {
-        try {
-            if (event) {
-                const { entity } = event;
-                await this.processLogo(entity);
-            }
-        } catch (error) {
-            console.log(error);
+            console.error('Error in beforeEntityCreate:', error);
         }
     }
 
@@ -88,6 +57,25 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
             }
         } catch (error) {
             console.log(error);
+        }
+    }
+
+    /**
+     * Updates the logo for a Tenant entity.
+     *
+     * @param entity - The Tenant entity for which the logo is to be updated.
+     * @returns A promise that resolves when the logo update is complete.
+     */
+    async updateTenantLogo(entity: Tenant): Promise<void> {
+        try {
+            if (!entity.logo) {
+                entity.logo = getTenantLogo(entity.name);
+            }
+            if (!!entity['image']) {
+                entity.logo = entity.image.fullUrl || entity.logo;
+            }
+        } catch (error) {
+            console.error('Error in updating tenant logo:', error);
         }
     }
 }

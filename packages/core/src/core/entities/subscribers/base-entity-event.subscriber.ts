@@ -9,13 +9,16 @@ import { IEntityEventSubscriber } from './entity-event-subscriber.types';
 export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubscriber<Entity> implements IEntityEventSubscriber<Entity>   {
 
     /**
-     * An abstract method that should be implemented by subclasses.
+     * An optional method that can be implemented by subclasses.
      * It should return either a constructor function (a class) or a string
      * representing the name of the entity to which this subscriber will listen.
+     * The default implementation returns undefined.
      *
-     * @returns {Function | string} The entity class or its name.
+     * @returns {Function | string | undefined} The entity class or its name, or undefined.
      */
-    abstract listenTo(): Function | string;
+    listenTo(): Function | string | undefined {
+        return;
+    }
 
     /**
      * Returns the array of entities this subscriber is subscribed to.
@@ -24,10 +27,22 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
      * @returns {EntityName<Entity>[]} An array containing the entities to which this subscriber listens.
      */
     getSubscribedEntities(): EntityName<Entity>[] {
-        if (this.listenTo) {
+        if (this.listenTo()) {
             return [this.listenTo()];
         }
         return [];
+    }
+
+    /**
+     * Default implementation of the before entity creation event.
+     * This method is called before a new entity is persisted.
+     * Subclasses can override this method.
+     *
+     * @param entity The entity that is about to be created.
+     * @returns {Promise<void>}
+     */
+    async beforeEntityCreate(entity: Entity): Promise<void> {
+        // Default empty implementation
     }
 
     /**

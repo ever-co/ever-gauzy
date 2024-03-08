@@ -8,6 +8,41 @@ import { InsertEvent, LoadEvent, EntitySubscriberInterface as TypeOrmEntitySubsc
 export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscriberInterface<Entity>, TypeOrmEntitySubscriberInterface<Entity> {
 
     /**
+     * Handles the event before an entity is created in MikroORM.
+     *
+     * @param args The event arguments provided by MikroORM.
+     * @returns {Promise<void>} - Can perform asynchronous operations.
+     */
+    async beforeCreate(args: EventArgs<Entity>): Promise<void> {
+        try {
+            await this.beforeEntityCreate(args.entity);
+        } catch (error) {
+            console.error("Error in beforeCreate:", error);
+        }
+    }
+
+    /**
+     * Handles the event before an entity is inserted in TypeORM.
+     *
+     * @param event The insert event provided by TypeORM.
+     * @returns {Promise<void>} - Can perform asynchronous operations.
+     */
+    async beforeInsert(event: InsertEvent<Entity>): Promise<void> {
+        try {
+            await this.beforeEntityCreate(event.entity);
+        } catch (error) {
+            console.error("Error in beforeInsert:", error);
+        }
+    }
+
+    /**
+     * Common method invoked before an entity is created or inserted.
+     * Extend this method to implement specific logic before entity creation.
+     * This method should handle any asynchronous operations and errors.
+     */
+    protected abstract beforeEntityCreate(entity: Entity): Promise<void>;
+
+    /**
      * Handles the event after an entity has been created in MikroORM.
      *
      * @param args - The event arguments provided by MikroORM.

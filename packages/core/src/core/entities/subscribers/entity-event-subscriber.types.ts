@@ -12,6 +12,17 @@ export interface IEntityEventSubscriber<Entity> {
     listenTo?(): Function | string;
 
     /**
+     * Optional method that is called before an entity is created.
+     * Implement this method to define specific logic to be executed
+     * just before the creation of an entity
+     *
+     *
+     * @param entity The entity that is about to be created.
+     * @returns {Promise<void>}
+     */
+    beforeEntityCreate?(entity: Entity): Promise<void>;
+
+    /**
      * Optional method that is called after an entity is created.
      * Implement this method to define specific logic to be executed
      * after an entity creation event.
