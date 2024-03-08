@@ -1,4 +1,6 @@
-import { TlsOptions } from "tls";
+import { TlsOptions } from 'tls';
+
+export type MikroLoggerNamespace = 'query' | 'query-params' | 'schema' | 'discovery' | 'info';
 
 export enum DatabaseTypeEnum {
 	mongodb = 'mongodb',
@@ -57,7 +59,6 @@ export const getTlsOptions = (dbSslMode: boolean): TlsOptions | undefined => {
 	}
 };
 
-
 /**
  * Get logging options based on the provided dbLogging value.
  * @param {string} dbLogging - The value of process.env.DB_LOGGING
@@ -79,4 +80,23 @@ export const getLoggingOptions = (dbLogging: string): false | 'all' | ['query', 
 			loggingOptions = ['error'];
 	}
 	return loggingOptions;
+};
+
+/**
+ * Gets MikroORM logging options based on the specified logging type.
+ *
+ * @param dbLogging - The logging type.
+ * @returns False if logging is disabled, or an array of LoggerNamespace for the specified logging type.
+ */
+export const getLoggingMikroOptions = (dbLogging: string): false | MikroLoggerNamespace[] => {
+	const loggingOptionsMap: Record<string, MikroLoggerNamespace[]> = {
+		query: ['query'],
+		'query-params': ['query-params'],
+		schema: ['schema'],
+		discovery: ['discovery'],
+		info: ['info'],
+		all: ['query', 'query-params', 'schema', 'discovery', 'info']
+	};
+
+	return loggingOptionsMap[dbLogging] || false;
 };

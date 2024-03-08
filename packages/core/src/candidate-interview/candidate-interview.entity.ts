@@ -1,4 +1,4 @@
-import { Column, ManyToOne, OneToMany, JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateInterview,
@@ -17,36 +17,37 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateInterviewRepository } from './repository/mikro-orm-candidate-interview.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_interview', { mikroOrmRepository: () => MikroOrmCandidateInterviewRepository })
 export class CandidateInterview extends TenantOrganizationBaseEntity
 	implements ICandidateInterview {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	title: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startTime: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endTime: Date;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	location?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	note?: string;
 
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -59,28 +60,28 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => CandidateFeedback })
-	@OneToMany(() => CandidateFeedback, (feedback) => feedback.interview, {
+	@MultiORMOneToMany(() => CandidateFeedback, (feedback) => feedback.interview, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	feedbacks?: ICandidateFeedback[];
 
 	@ApiProperty({ type: () => CandidateTechnologies })
-	@OneToMany(() => CandidateTechnologies, (technologies) => technologies.interview, {
+	@MultiORMOneToMany(() => CandidateTechnologies, (technologies) => technologies.interview, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	technologies?: ICandidateTechnologies[];
 
 	@ApiProperty({ type: () => CandidatePersonalQualities })
-	@OneToMany(() => CandidatePersonalQualities, (personalQualities) => personalQualities.interview, {
+	@MultiORMOneToMany(() => CandidatePersonalQualities, (personalQualities) => personalQualities.interview, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	personalQualities?: ICandidatePersonalQualities[];
 
 	@ApiProperty({ type: () => CandidateInterviewers })
-	@OneToMany(() => CandidateInterviewers, (interviewers) => interviewers.interview, {
+	@MultiORMOneToMany(() => CandidateInterviewers, (interviewers) => interviewers.interview, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -96,7 +97,7 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	 * Candidate
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@ManyToOne(() => Candidate, (candidate) => candidate.interview, {
+	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.interview, {
 		onDelete: 'CASCADE'
 	})
 	candidate?: ICandidate;
@@ -104,6 +105,6 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateInterview) => it.candidate)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: string;
 }

@@ -1,5 +1,5 @@
 import { ICandidate, IEmployee, IOrganizationEmploymentType, ITag } from '@gauzy/contracts';
-import { Column, JoinTable, ManyToMany } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Candidate,
@@ -7,13 +7,14 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationEmploymentTypeRepository } from './repository/mikro-orm-organization-employment-type.repository';
+import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_employment_type', { mikroOrmRepository: () => MikroOrmOrganizationEmploymentTypeRepository })
 export class OrganizationEmploymentType extends TenantOrganizationBaseEntity implements IOrganizationEmploymentType {
 
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/*
@@ -23,9 +24,11 @@ export class OrganizationEmploymentType extends TenantOrganizationBaseEntity imp
 	*/
 
 	@ApiPropertyOptional({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.organizationEmploymentTypes, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.organizationEmploymentTypes, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_employment_type',
 	})
 	@JoinTable({
 		name: 'tag_organization_employment_type'
@@ -36,8 +39,10 @@ export class OrganizationEmploymentType extends TenantOrganizationBaseEntity imp
 	 * Employee
 	 */
 	@ApiPropertyOptional({ type: () => Employee, isArray: true })
-	@ManyToMany(() => Employee, (employee) => employee.organizationEmploymentTypes, {
-		cascade: ['update']
+	@MultiORMManyToMany(() => Employee, (employee) => employee.organizationEmploymentTypes, {
+		cascade: ['update'],
+		owner: true,
+		pivotTable: 'organization_employment_type_employee',
 	})
 	@JoinTable({
 		name: 'organization_employment_type_employee'
@@ -48,9 +53,11 @@ export class OrganizationEmploymentType extends TenantOrganizationBaseEntity imp
 	 * Candidate
 	 */
 	@ApiPropertyOptional({ type: () => Candidate, isArray: true })
-	@ManyToMany(() => Candidate, (candidate) => candidate.organizationEmploymentTypes, {
+	@MultiORMManyToMany(() => Candidate, (candidate) => candidate.organizationEmploymentTypes, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'candidate_employment_type',
 	})
 	@JoinTable({
 		name: 'candidate_employment_type'

@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
 import { IntegrationSettingController } from './integration-setting.controller';
 import { IntegrationSettingService } from './integration-setting.service';
@@ -11,14 +10,9 @@ import { IntegrationSetting } from './integration-setting.entity';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([
-			IntegrationSetting
-		]),
-		MikroOrmModule.forFeature([
-			IntegrationSetting
-		]),
-		TenantModule,
-		UserModule,
+		TypeOrmModule.forFeature([IntegrationSetting]),
+		MikroOrmModule.forFeature([IntegrationSetting]),
+		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [
@@ -28,10 +22,6 @@ import { IntegrationSetting } from './integration-setting.entity';
 		IntegrationSettingService,
 		...CommandHandlers
 	],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		IntegrationSettingService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationSettingService]
 })
 export class IntegrationSettingModule { }

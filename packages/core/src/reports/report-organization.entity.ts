@@ -1,15 +1,16 @@
-import { Column, RelationId, ManyToOne, JoinColumn } from 'typeorm';
+import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IReport, IReportOrganization } from '@gauzy/contracts';
 import { Report, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmReportOrganizationRepository } from './repository/mikro-orm-report-organization.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('report_organization', { mikroOrmRepository: () => MikroOrmReportOrganizationRepository })
 export class ReportOrganization extends TenantOrganizationBaseEntity implements IReportOrganization {
 
 	@ApiProperty({ type: () => Report })
-	@ManyToOne(() => Report, (report) => report.reportOrganizations, {
+	@MultiORMManyToOne(() => Report, (report) => report.reportOrganizations, {
 		onDelete: 'CASCADE',
 	})
 	@JoinColumn()
@@ -17,9 +18,9 @@ export class ReportOrganization extends TenantOrganizationBaseEntity implements 
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((report: ReportOrganization) => report.report)
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	reportId?: string;
 
-	@Column({ default: true })
+	@MultiORMColumn({ default: true, relationId: true })
 	isEnabled?: boolean;
 }

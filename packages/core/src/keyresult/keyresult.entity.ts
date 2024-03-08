@@ -1,9 +1,6 @@
 import {
-	Column,
-	ManyToOne,
 	RelationId,
 	JoinColumn,
-	OneToMany,
 	Index
 } from 'typeorm';
 import {
@@ -27,72 +24,73 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result', { mikroOrmRepository: () => MikroOrmKeyResultRepository })
 export class KeyResult extends TenantOrganizationBaseEntity
 	implements IKeyResult {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	description?: string;
 
 	@ApiProperty({ type: () => String, enum: KeyResultTypeEnum })
 	@IsEnum(KeyResultTypeEnum)
-	@Column()
+	@MultiORMColumn()
 	type: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	targetValue?: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	initialValue: number;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	unit?: string;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	update: number;
 
 	@ApiProperty({ type: () => Number })
-	@Column()
+	@MultiORMColumn()
 	progress: number;
 
 	@ApiProperty({ type: () => String, enum: KeyResultDeadlineEnum })
 	@IsEnum(KeyResultDeadlineEnum)
-	@Column()
+	@MultiORMColumn()
 	deadline: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	hardDeadline?: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	softDeadline?: Date;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
 	status?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	@IsOptional()
 	weight?: string;
 
@@ -106,7 +104,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	 * Owner Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee)
+	@MultiORMManyToOne(() => Employee)
 	@JoinColumn()
 	owner: IEmployee;
 
@@ -114,14 +112,14 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.owner)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	ownerId: string;
 
 	/**
 	 * Lead Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, { nullable: true })
+	@MultiORMManyToOne(() => Employee, { nullable: true })
 	@JoinColumn()
 	@IsOptional()
 	lead?: IEmployee;
@@ -131,14 +129,14 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 
 	/**
 	 * Organization Project
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, { nullable: true })
+	@MultiORMManyToOne(() => OrganizationProject, { nullable: true })
 	@JoinColumn({ name: 'projectId' })
 	@IsOptional()
 	project?: IOrganizationProject;
@@ -148,14 +146,14 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly projectId?: string;
 
 	/**
 	 * Task
 	 */
 	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, { nullable: true })
+	@MultiORMManyToOne(() => Task, { nullable: true })
 	@JoinColumn({ name: 'taskId' })
 	@IsOptional()
 	task?: ITask;
@@ -165,14 +163,14 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly taskId?: string;
 
 	/**
 	 * GoalKPI
 	 */
 	@ApiProperty({ type: () => GoalKPI })
-	@ManyToOne(() => GoalKPI, { nullable: true })
+	@MultiORMManyToOne(() => GoalKPI, { nullable: true })
 	@JoinColumn({ name: 'kpiId' })
 	@IsOptional()
 	kpi?: IKPI;
@@ -182,14 +180,14 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly kpiId?: string;
 
 	/**
 	 * Goal
 	 */
 	@ApiProperty({ type: () => Goal })
-	@ManyToOne(() => Goal, (goal) => goal.keyResults, {
+	@MultiORMManyToOne(() => Goal, (goal) => goal.keyResults, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn({ name: 'goalId' })
@@ -200,7 +198,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly goalId?: string;
 
 	/*
@@ -210,7 +208,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	*/
 
 	@ApiProperty({ type: () => KeyResultUpdate })
-	@OneToMany(() => KeyResultUpdate, (keyResultUpdate) => keyResultUpdate.keyResult, {
+	@MultiORMOneToMany(() => KeyResultUpdate, (keyResultUpdate) => keyResultUpdate.keyResult, {
 		cascade: true
 	})
 	updates?: KeyResultUpdate[];

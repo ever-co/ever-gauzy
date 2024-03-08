@@ -1,10 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
+
 	JoinColumn,
 	RelationId,
-	ManyToOne,
-	OneToMany,
 	Index
 } from 'typeorm';
 import { IsBoolean, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
@@ -19,8 +17,9 @@ import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration_entity_setting', { mikroOrmRepository: () => MikroOrmIntegrationEntitySettingRepository })
 export class IntegrationEntitySetting extends TenantOrganizationBaseEntity implements IIntegrationEntitySetting {
@@ -28,13 +27,13 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String, enum: IntegrationEntity })
 	@IsNotEmpty()
 	@IsEnum(IntegrationEntity)
-	@Column()
+	@MultiORMColumn()
 	entity: IntegrationEntity;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsNotEmpty()
 	@IsBoolean()
-	@Column()
+	@MultiORMColumn()
 	sync: boolean;
 
 	/*
@@ -47,7 +46,7 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	 * IntegrationTenant
 	 */
 	@ApiPropertyOptional({ type: () => IntegrationTenant })
-	@ManyToOne(() => IntegrationTenant, (it) => it.entitySettings, {
+	@MultiORMManyToOne(() => IntegrationTenant, (it) => it.entitySettings, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
@@ -58,7 +57,7 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: IntegrationEntitySetting) => it.integration)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	integrationId?: IIntegrationTenant['id'];
 
 	/*
@@ -70,7 +69,7 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	/**
 	 * IntegrationEntitySettingTied
 	 */
-	@OneToMany(() => IntegrationEntitySettingTied, (it) => it.integrationEntitySetting, {
+	@MultiORMOneToMany(() => IntegrationEntitySettingTied, (it) => it.integrationEntitySetting, {
 		cascade: true
 	})
 	@JoinColumn()

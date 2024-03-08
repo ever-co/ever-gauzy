@@ -23,6 +23,22 @@ services:
     networks:
       - overlay
 
+  zipkin:
+    image: ghcr.io/openzipkin/zipkin-slim:latest
+    container_name: zipkin
+    # Environment settings are defined here https://github.com/openzipkin/zipkin/blob/master/zipkin-server/README.md#environment-variables
+    environment:
+      - STORAGE_TYPE=mem
+      # Uncomment to enable self-tracing
+      # - SELF_TRACING_ENABLED=true
+      # Uncomment to increase heap size
+      # - JAVA_OPTS=-Xms128m -Xmx128m -XX:+ExitOnOutOfMemoryError
+    ports:
+      # Port used for the Zipkin UI and HTTP Api
+      - 9411:9411
+    networks:
+      - overlay
+
   cube:
     image: cubejs/cube:latest
     container_name: cube
@@ -231,6 +247,7 @@ services:
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
       OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
       OTEL_ENABLED: ${OTEL_ENABLED:-}
+      OTEL_PROVIDER: ${OTEL_PROVIDER:-}
       JITSU_SERVER_WRITE_KEY: ${JITSU_SERVER_WRITE_KEY:-}
       GAUZY_GITHUB_CLIENT_ID: ${GAUZY_GITHUB_CLIENT_ID:-}
       GAUZY_GITHUB_CLIENT_SECRET: ${GAUZY_GITHUB_CLIENT_SECRET:-}
@@ -261,6 +278,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      jaeger:
+        condition: service_started
       redis:
         condition: service_started
       minio:

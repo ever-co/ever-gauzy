@@ -1,0 +1,315 @@
+alerts:
+    - rule: DEPLOYMENT_FAILED
+    - rule: DOMAIN_FAILED
+name: ever-gauzy-$ENV_NAME
+region: sfo
+domains:
+    - domain: $APP_DOMAIN
+      type: ALIAS
+services:
+    - name: api
+      instance_count: $INSTANCE_COUNT
+      instance_size_slug: $INSTANCE_SIZE
+      http_port: 3000
+      image:
+          registry_type: 'DOCR'
+          registry: ''
+          repository: $DOCR_REPOSITORY
+          tag: 'latest'
+          deploy_on_push:
+              enabled: true
+      envs:
+          - key: API_HOST
+            scope: RUN_TIME
+            value: '$API_HOST'
+          - key: DEMO
+            scope: RUN_TIME
+            value: '$DEMO'
+          - key: NODE_ENV
+            scope: RUN_TIME
+            value: '$NODE_ENV'
+          - key: ADMIN_PASSWORD_RESET
+            scope: RUN_TIME
+            value: '$ADMIN_PASSWORD_RESET'
+          - key: API_BASE_URL
+            scope: RUN_TIME
+            value: '$API_BASE_URL'
+          - key: CLIENT_BASE_URL
+            scope: RUN_TIME
+            value: '$CLIENT_BASE_URL'
+          - key: DB_TYPE
+            scope: RUN_TIME
+            value: '$DB_TYPE'
+          - key: DB_URI
+            scope: RUN_TIME
+            value: '$DB_URI'
+          - key: DB_HOST
+            scope: RUN_TIME
+            value: '$DB_HOST'
+          - key: DB_USER
+            scope: RUN_TIME
+            value: '$DB_USER'
+          - key: DB_PASS
+            scope: RUN_TIME
+            value: '$DB_PASS'
+          - key: DB_NAME
+            scope: RUN_TIME
+            value: '$DB_NAME'
+          - key: DB_PORT
+            scope: RUN_TIME
+            value: '$DB_PORT'
+          - key: DB_CA_CERT
+            scope: RUN_TIME
+            value: '$DB_CA_CERT'
+          - key: DB_SSL_MODE
+            scope: RUN_TIME
+            value: '$DB_SSL_MODE'
+          - key: DB_POOL_SIZE
+            scope: RUN_TIME
+            value: '$DB_POOL_SIZE'
+          - key: DB_POOL_SIZE_KNEX
+            scope: RUN_TIME
+            value: '$DB_POOL_SIZE_KNEX'
+          - key: REDIS_ENABLED
+            scope: RUN_TIME
+            value: '$REDIS_ENABLED'
+          - key: REDIS_URL
+            scope: RUN_TIME
+            value: '$REDIS_URL'
+          - key: CLOUD_PROVIDER
+            scope: RUN_TIME
+            value: 'DO'
+          - key: SENTRY_DSN
+            scope: RUN_TIME
+            value: '$SENTRY_DSN'
+          - key: SENTRY_TRACES_SAMPLE_RATE
+            scope: RUN_TIME
+            value: '$SENTRY_TRACES_SAMPLE_RATE'
+          - key: SENTRY_PROFILE_SAMPLE_RATE
+            scope: RUN_TIME
+            value: '$SENTRY_PROFILE_SAMPLE_RATE'
+          - key: SENTRY_HTTP_TRACING_ENABLED
+            scope: RUN_TIME
+            value: '$SENTRY_HTTP_TRACING_ENABLED'
+          - key: SENTRY_POSTGRES_TRACKING_ENABLED
+            scope: RUN_TIME
+            value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
+          - key: SENTRY_PROFILING_ENABLED
+            scope: RUN_TIME
+            value: '$SENTRY_PROFILING_ENABLED'
+          - key: AWS_ACCESS_KEY_ID
+            scope: RUN_TIME
+            value: '$AWS_ACCESS_KEY_ID'
+          - key: AWS_SECRET_ACCESS_KEY
+            scope: RUN_TIME
+            value: '$AWS_SECRET_ACCESS_KEY'
+          - key: AWS_REGION
+            scope: RUN_TIME
+            value: '$AWS_REGION'
+          - key: AWS_S3_BUCKET
+            scope: RUN_TIME
+            value: '$AWS_S3_BUCKET'
+          - key: WASABI_ACCESS_KEY_ID
+            scope: RUN_TIME
+            value: '$WASABI_ACCESS_KEY_ID'
+          - key: WASABI_SECRET_ACCESS_KEY
+            scope: RUN_TIME
+            value: '$WASABI_SECRET_ACCESS_KEY'
+          - key: WASABI_REGION
+            scope: RUN_TIME
+            value: '$WASABI_REGION'
+          - key: WASABI_SERVICE_URL
+            scope: RUN_TIME
+            value: '$WASABI_SERVICE_URL'
+          - key: WASABI_S3_BUCKET
+            scope: RUN_TIME
+            value: '$WASABI_S3_BUCKET'
+          - key: EXPRESS_SESSION_SECRET
+            scope: RUN_TIME
+            value: '$EXPRESS_SESSION_SECRET'
+          - key: JWT_SECRET
+            scope: RUN_TIME
+            value: '$JWT_SECRET'
+          - key: JWT_REFRESH_TOKEN_SECRET
+            scope: RUN_TIME
+            value: '$JWT_REFRESH_TOKEN_SECRET'
+          - key: JWT_REFRESH_TOKEN_EXPIRATION_TIME
+            scope: RUN_TIME
+            value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
+          - key: CLOUDINARY_API_KEY
+            scope: RUN_TIME
+            value: '$CLOUDINARY_API_KEY'
+          - key: CLOUDINARY_API_SECRET
+            scope: RUN_TIME
+            value: '$CLOUDINARY_API_SECRET'
+          - key: CLOUDINARY_CLOUD_NAME
+            scope: RUN_TIME
+            value: '$CLOUDINARY_CLOUD_NAME'
+          - key: MAIL_FROM_ADDRESS
+            scope: RUN_TIME
+            value: '$MAIL_FROM_ADDRESS'
+          - key: MAIL_HOST
+            scope: RUN_TIME
+            value: '$MAIL_HOST'
+          - key: MAIL_PORT
+            scope: RUN_TIME
+            value: '$MAIL_PORT'
+          - key: MAIL_USERNAME
+            scope: RUN_TIME
+            value: '$MAIL_USERNAME'
+          - key: MAIL_PASSWORD
+            scope: RUN_TIME
+            value: '$MAIL_PASSWORD'
+          - key: ALLOW_SUPER_ADMIN_ROLE
+            scope: RUN_TIME
+            value: '$ALLOW_SUPER_ADMIN_ROLE'
+          - key: GOOGLE_CLIENT_ID
+            scope: RUN_TIME
+            value: '$GOOGLE_CLIENT_ID'
+          - key: GOOGLE_CLIENT_SECRET
+            scope: RUN_TIME
+            value: '$GOOGLE_CLIENT_SECRET'
+          - key: GOOGLE_CALLBACK_URL
+            scope: RUN_TIME
+            value: '$GOOGLE_CALLBACK_URL'
+          - key: FACEBOOK_CLIENT_ID
+            scope: RUN_TIME
+            value: '$FACEBOOK_CLIENT_ID'
+          - key: FACEBOOK_CLIENT_SECRET
+            scope: RUN_TIME
+            value: '$FACEBOOK_CLIENT_SECRET'
+          - key: FACEBOOK_GRAPH_VERSION
+            scope: RUN_TIME
+            value: '$FACEBOOK_GRAPH_VERSION'
+          - key: FACEBOOK_CALLBACK_URL
+            scope: RUN_TIME
+            value: '$FACEBOOK_CALLBACK_URL'
+          - key: INTEGRATED_USER_DEFAULT_PASS
+            scope: RUN_TIME
+            value: '$INTEGRATED_USER_DEFAULT_PASS'
+          - key: UPWORK_REDIRECT_URL
+            scope: RUN_TIME
+            value: '$UPWORK_REDIRECT_URL'
+          - key: FILE_PROVIDER
+            scope: RUN_TIME
+            value: '$FILE_PROVIDER'
+          - key: GAUZY_AI_GRAPHQL_ENDPOINT
+            scope: RUN_TIME
+            value: '$GAUZY_AI_GRAPHQL_ENDPOINT'
+          - key: GAUZY_AI_REST_ENDPOINT
+            scope: RUN_TIME
+            value: '$GAUZY_AI_REST_ENDPOINT'
+          - key: UNLEASH_APP_NAME
+            scope: RUN_TIME
+            value: '$UNLEASH_APP_NAME'
+          - key: UNLEASH_API_URL
+            scope: RUN_TIME
+            value: '$UNLEASH_API_URL'
+          - key: UNLEASH_INSTANCE_ID
+            scope: RUN_TIME
+            value: '$UNLEASH_INSTANCE_ID'
+          - key: UNLEASH_REFRESH_INTERVAL
+            scope: RUN_TIME
+            value: '$UNLEASH_REFRESH_INTERVAL'
+          - key: UNLEASH_METRICS_INTERVAL
+            scope: RUN_TIME
+            value: '$UNLEASH_METRICS_INTERVAL'
+          - key: UNLEASH_API_KEY
+            scope: RUN_TIME
+            value: '$UNLEASH_API_KEY'
+          - key: PM2_MACHINE_NAME
+            scope: RUN_TIME
+            value: '$PM2_MACHINE_NAME'
+          - key: PM2_SECRET_KEY
+            scope: RUN_TIME
+            value: '$PM2_SECRET_KEY'
+          - key: PM2_PUBLIC_KEY
+            scope: RUN_TIME
+            value: '$PM2_PUBLIC_KEY'
+          - key: JITSU_SERVER_URL
+            scope: RUN_TIME
+            value: '$JITSU_SERVER_URL'
+          - key: JITSU_SERVER_WRITE_KEY
+            scope: RUN_TIME
+            value: '$JITSU_SERVER_WRITE_KEY'
+          - key: OTEL_ENABLED
+            scope: RUN_TIME
+            value: '$OTEL_ENABLED'
+          - key: OTEL_PROVIDER
+            scope: RUN_TIME
+            value: '$OTEL_PROVIDER'
+          - key: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+            scope: RUN_TIME
+            value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+          - key: OTEL_EXPORTER_OTLP_HEADERS
+            scope: RUN_TIME
+            value: '$OTEL_EXPORTER_OTLP_HEADERS'
+          - key: GAUZY_GITHUB_CLIENT_ID
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_CLIENT_ID'
+          - key: GAUZY_GITHUB_CLIENT_SECRET
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_CLIENT_SECRET'
+          - key: GAUZY_GITHUB_APP_PRIVATE_KEY
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_APP_PRIVATE_KEY'
+          - key: GAUZY_GITHUB_WEBHOOK_URL
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_WEBHOOK_URL'
+          - key: GAUZY_GITHUB_WEBHOOK_SECRET
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_WEBHOOK_SECRET'
+          - key: GAUZY_GITHUB_APP_NAME
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_APP_NAME'
+          - key: GAUZY_GITHUB_REDIRECT_URL
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_REDIRECT_URL'
+          - key: GAUZY_GITHUB_POST_INSTALL_URL
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_POST_INSTALL_URL'
+          - key: GAUZY_GITHUB_APP_ID
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_APP_ID'
+          - key: GAUZY_GITHUB_OAUTH_CLIENT_ID
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_OAUTH_CLIENT_ID'
+          - key: GAUZY_GITHUB_OAUTH_CLIENT_SECRET
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_OAUTH_CLIENT_SECRET'
+          - key: GAUZY_GITHUB_OAUTH_CALLBACK_URL
+            scope: RUN_TIME
+            value: '$GAUZY_GITHUB_OAUTH_CALLBACK_URL'
+          - key: JITSU_BROWSER_URL
+            scope: RUN_TIME
+            value: '$JITSU_BROWSER_URL'
+          - key: JITSU_BROWSER_WRITE_KEY
+            scope: RUN_TIME
+            value: '$JITSU_BROWSER_WRITE_KEY'
+          - key: MAGIC_CODE_EXPIRATION_TIME
+            scope: RUN_TIME
+            value: '$MAGIC_CODE_EXPIRATION_TIME'
+          - key: APP_NAME
+            scope: RUN_TIME
+            value: '$APP_NAME'
+          - key: APP_LOGO
+            scope: RUN_TIME
+            value: '$APP_LOGO'
+          - key: APP_SIGNATURE
+            scope: RUN_TIME
+            value: '$APP_SIGNATURE'
+          - key: APP_LINK
+            scope: RUN_TIME
+            value: '$APP_LINK'
+          - key: APP_EMAIL_CONFIRMATION_URL
+            scope: RUN_TIME
+            value: '$APP_EMAIL_CONFIRMATION_URL'
+          - key: APP_MAGIC_SIGN_URL
+            scope: RUN_TIME
+            value: '$APP_MAGIC_SIGN_URL'
+          - key: COMPANY_LINK
+            scope: RUN_TIME
+            value: '$COMPANY_LINK'
+          - key: COMPANY_NAME
+            scope: RUN_TIME
+            value: '$COMPANY_NAME'

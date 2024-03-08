@@ -16,7 +16,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestRespons
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
 import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gauzy/contracts';
-import { Public, parseToBoolean } from '@gauzy/common';
+import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
 import {
@@ -26,6 +26,7 @@ import {
 	WorkspaceSigninVerifyTokenCommand
 } from './commands';
 import { RequestContext } from '../core/context';
+import { convertNativeParameters } from '../core/crud/pagination.helper';
 import { AuthRefreshGuard } from './../shared/guards';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
@@ -37,8 +38,6 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
-import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
-import { Throttle } from '@nestjs/throttler/dist/throttler.decorator';
 
 @ApiTags('Auth')
 @Controller()
@@ -140,8 +139,12 @@ export class AuthController {
 	@Post('/login')
 	@Public()
 	@UsePipes(new ValidationPipe({ transform: true }))
-	async login(@Body() input: UserLoginDTO): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(new AuthLoginCommand(input));
+	async login(
+		@Body() input: UserLoginDTO
+	): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(
+			new AuthLoginCommand(input)
+		);
 	}
 
 	/**
@@ -154,8 +157,14 @@ export class AuthController {
 	@Post('/signin.email.password')
 	@Public()
 	@UsePipes(new ValidationPipe())
-	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.signinWorkspacesByEmailPassword(input);
+	async signinWorkspacesByPassword(
+		@Query() query: Record<string, boolean>,
+		@Body() input: UserSigninWorkspaceDTO
+	): Promise<IUserSigninWorkspaceResponse> {
+		return await this.authService.signinWorkspacesByEmailPassword(
+			input,
+			convertNativeParameters(query.includeTeams)
+		);
 	}
 
 	/**
@@ -193,7 +202,7 @@ export class AuthController {
 	): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.confirmWorkspaceSigninByCode(
 			input,
-			parseToBoolean(query.includeTeams)
+			convertNativeParameters(query.includeTeams)
 		);
 	}
 

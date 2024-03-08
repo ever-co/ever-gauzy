@@ -1,10 +1,11 @@
-import { Column, Index, ManyToMany, JoinTable } from 'typeorm';
+import { Index, JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationPosition, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationPositionRepository } from './repository/mikro-orm-organization-position.repository';
+import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_position', { mikroOrmRepository: () => MikroOrmOrganizationPositionRepository })
 export class OrganizationPosition extends TenantOrganizationBaseEntity implements IOrganizationPosition {
@@ -13,7 +14,7 @@ export class OrganizationPosition extends TenantOrganizationBaseEntity implement
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/*
@@ -22,9 +23,11 @@ export class OrganizationPosition extends TenantOrganizationBaseEntity implement
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.organizationPositions, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.organizationPositions, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_position',
 	})
 	@JoinTable({
 		name: 'tag_organization_position'

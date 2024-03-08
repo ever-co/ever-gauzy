@@ -36,7 +36,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getPayments(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		// Set up the find options for the query
 		query.setFindOptions({
@@ -47,9 +47,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 				}
 				: {}),
 			join: {
-				alias: `${this.alias}`,
+				alias: `${this.tableName}`,
 				leftJoin: {
-					project: `${this.alias}.project`
+					project: `${this.tableName}.project`
 				}
 			},
 			select: {
@@ -91,7 +91,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getDailyReportCharts(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		// Set up the find options for the query
 		query.setFindOptions({

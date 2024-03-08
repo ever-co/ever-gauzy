@@ -1,10 +1,7 @@
 import {
 	RelationId,
-	Column,
-	ManyToMany,
 	JoinTable,
 	JoinColumn,
-	ManyToOne,
 	Index
 } from 'typeorm';
 import {
@@ -22,38 +19,39 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment_sharing', { mikroOrmRepository: () => MikroOrmEquipmentSharingRepository })
 export class EquipmentSharing extends TenantOrganizationBaseEntity
 	implements IEquipmentSharing {
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	name: string;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	shareRequestDay: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	shareStartDay: Date;
 
 	@ApiProperty({ type: () => Date })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	shareEndDay: Date;
 
-	@Column()
+	@MultiORMColumn()
 	status: number;
 
 	@ApiProperty({ type: () => String, readOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdBy: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	createdByName: string;
 
 	/*
@@ -66,7 +64,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	 * Equipment
 	 */
 	@ApiProperty({ type: () => Equipment })
-	@ManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings, {
+	@MultiORMManyToOne(() => Equipment, (equipment) => equipment.equipmentSharings, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -75,14 +73,14 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipment)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	equipmentId: IEquipment['id'];
 
 	/**
 	* Equipment
 	*/
 	@ApiProperty({ type: () => EquipmentSharingPolicy })
-	@ManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
+	@MultiORMManyToOne(() => EquipmentSharingPolicy, (it) => it.equipmentSharings, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -91,7 +89,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipmentSharingPolicy)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
 
 	/*
@@ -103,9 +101,11 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	/**
 	 * Employee
 	 */
-	@ManyToMany(() => Employee, (it) => it.equipmentSharings, {
+	@MultiORMManyToMany(() => Employee, (it) => it.equipmentSharings, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'equipment_shares_employees',
 	})
 	@JoinTable({
 		name: 'equipment_shares_employees'
@@ -115,9 +115,11 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 	/**
 	 * OrganizationTeam
 	 */
-	@ManyToMany(() => OrganizationTeam, (it) => it.equipmentSharings, {
+	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.equipmentSharings, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'equipment_shares_teams',
 	})
 	@JoinTable({
 		name: 'equipment_shares_teams'

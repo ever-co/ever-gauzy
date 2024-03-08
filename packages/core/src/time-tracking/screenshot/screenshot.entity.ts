@@ -1,32 +1,33 @@
-import { Column, RelationId, ManyToOne, Index, JoinColumn } from 'typeorm';
+import { RelationId, Index, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { MultiORMEntity } from '../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('screenshot', { mikroOrmRepository: () => MikroOrmScreenshotRepository })
 export class Screenshot extends TenantOrganizationBaseEntity implements IScreenshot {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	file: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	thumb?: string;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	recordedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
@@ -34,7 +35,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsEnum(FileStorageProviderEnum)
 	@Exclude({ toPlainOnly: true })
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: FileStorageProviderEnum
@@ -57,7 +58,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isWorkRelated?: boolean;
 
 	/**
@@ -70,7 +71,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	/**
@@ -82,7 +83,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	})
 	@IsOptional()
 	@IsString()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: isSqlite() || isBetterSqlite3() ? 'text' : 'json'
 	})
@@ -100,7 +101,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	/**
 	 * TimeSlot
 	 */
-	@ManyToOne(() => TimeSlot, (it) => it.screenshots, {
+	@MultiORMManyToOne(() => TimeSlot, (it) => it.screenshots, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -115,13 +116,13 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.timeSlot)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
 
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -136,6 +137,6 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.user)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 }

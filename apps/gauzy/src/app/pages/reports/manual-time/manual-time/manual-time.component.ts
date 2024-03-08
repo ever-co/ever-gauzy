@@ -152,7 +152,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent
 
 			// Process the fetched logs and update the component's state
 			this.dailyData = chain(logs)
-				.groupBy((log: ITimeLog) => moment(log.updatedAt).format('YYYY-MM-DD'))
+				.groupBy((log: ITimeLog) => moment(log.startedAt).format('YYYY-MM-DD'))
 				.map((timeLogs, date) => ({ date, timeLogs }))
 				.value();
 		} catch (error) {

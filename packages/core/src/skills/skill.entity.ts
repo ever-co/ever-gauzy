@@ -1,4 +1,4 @@
-import { Column, ManyToMany, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -6,23 +6,24 @@ import {
 	Organization,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmSkillRepository } from './repository/mikro-orm-skill.repository';
+import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('skill', { mikroOrmRepository: () => MikroOrmSkillRepository })
 export class Skill extends TenantOrganizationBaseEntity
 	implements ISkill {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	color?: string;
 
 	/*
@@ -34,9 +35,11 @@ export class Skill extends TenantOrganizationBaseEntity
 	/**
 	 * employees skills
 	 */
-	@ManyToMany(() => Employee, (employee) => employee.skills, {
+	@MultiORMManyToMany(() => Employee, (employee) => employee.skills, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'skill_employee'
 	})
 	@JoinTable({
 		name: 'skill_employee'
@@ -46,9 +49,11 @@ export class Skill extends TenantOrganizationBaseEntity
 	/**
 	 * organizations skills
 	 */
-	@ManyToMany(() => Organization, (organization) => organization.skills, {
+	@MultiORMManyToMany(() => Organization, (organization) => organization.skills, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'skill_organization'
 	})
 	@JoinTable({
 		name: 'skill_organization'

@@ -34,7 +34,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		options: IOrganizationContactFindInput
 	): Promise<IOrganizationContact[]> {
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				select: {
 					id: true,

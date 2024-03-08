@@ -4,7 +4,7 @@ import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { UpworkJobService, UpworkOffersService, UpworkReportService } from '@gauzy/integration-upwork';
-import { TenantModule } from './../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from '../user/user.module';
 import { RoleModule } from '../role/role.module';
 import { OrganizationModule } from '../organization/organization.module';
@@ -22,7 +22,7 @@ import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
 import { UpworkAuthorizationController } from './upwork-authorization.controller';
 
-const entities = [
+const forFeatureEntities = [
 	TimeSlot,
 	Activity,
 	TimeLog,
@@ -32,9 +32,9 @@ const entities = [
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/integrations/upwork', module: UpworkModule }]),
-		TypeOrmModule.forFeature(entities),
-		MikroOrmModule.forFeature(entities),
-		TenantModule,
+		TypeOrmModule.forFeature(forFeatureEntities),
+		MikroOrmModule.forFeature(forFeatureEntities),
+		RolePermissionModule,
 		UserModule,
 		EmployeeModule,
 		RoleModule,

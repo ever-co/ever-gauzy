@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
 import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPipelineStage } from '@gauzy/contracts';
+import { IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { Pipeline } from './pipeline.entity';
 import { Deal, PipelineStage, User } from './../core/entities/internal';
@@ -59,6 +59,12 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		return { items, total };
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	public async update(
 		id: string | number | FindOptionsWhere<Pipeline>,
 		entity: QueryDeepPartialEntity<Pipeline>
@@ -79,17 +85,13 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			const pipeline: Pipeline = await queryRunner.manager.create(Pipeline, { id: id as any, ...entity } as any);
 			const updatedStages: IPipelineStage[] = pipeline.stages?.filter((stage: IPipelineStage) => stage.id) || [];
 
-			const deletedStages = await queryRunner.manager
-				.findBy(PipelineStage, {
-					pipelineId: id as any
-				})
-				.then((stages: IPipelineStage[]) => {
-					const requestStageIds = updatedStages.map((updatedStage: IPipelineStage) => updatedStage.id);
-					return stages.filter((stage: IPipelineStage) => !requestStageIds.includes(stage.id));
-				});
+			const stages: IPipelineStage[] = await queryRunner.manager.findBy(PipelineStage, {
+				pipelineId: id as any
+			});
 
-			const createdStages =
-				pipeline.stages?.filter((stage: IPipelineStage) => !updatedStages.includes(stage)) || [];
+			const requestStageIds = updatedStages.map((updatedStage: IPipelineStage) => updatedStage.id);
+			const deletedStages = stages.filter((stage: IPipelineStage) => !requestStageIds.includes(stage.id));
+			const createdStages = pipeline.stages?.filter((stage: IPipelineStage) => !updatedStages.includes(stage)) || [];
 
 			pipeline.__before_persist();
 			delete pipeline.stages;
@@ -117,11 +119,12 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	}
 
 	/**
+	 * Perform pagination with filtering based on the provided options.
 	 *
-	 * @param filter
-	 * @returns
+	 * @param filter - The filtering options.
+	 * @returns The paginated result.
 	 */
-	public pagination(filter: FindManyOptions) {
+	public async pagination(filter: FindManyOptions): Promise<IPagination<IPipeline>> {
 		if ('where' in filter) {
 			const { where } = filter;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
@@ -133,15 +136,6 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				const { description } = where;
 				filter['where']['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
 			}
-			if ('isActive' in where) {
-				const { isActive } = where;
-				if (isActive === 'active') {
-					filter['where']['isActive'] = 1;
-				}
-				if (isActive === 'inactive') {
-					filter['where']['isActive'] = 0;
-				}
-			}
 			if ('stages' in where) {
 				const { stages } = where;
 				filter['where']['stages'] = {
@@ -149,6 +143,6 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				};
 			}
 		}
-		return super.paginate(filter);
+		return await super.paginate(filter);
 	}
 }

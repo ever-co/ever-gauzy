@@ -102,24 +102,15 @@
 										<div class="w-100">
 											<nb-select
 												fullWidth
-												[placeholder]="
-													'PIPELINES_PAGE.ALL_STATUS'
-														| translate
-												"
+												[placeholder]="'PIPELINES_PAGE.ALL_STATUS' | translate"
 												id="status"
 												formControlName="status"
 											>
-												<nb-option [value]="'active'">
-													{{
-														'PIPELINES_PAGE.ACTIVE'
-															| translate
-													}}
+												<nb-option [value]="true">
+													{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
 												</nb-option>
-												<nb-option [value]="'inactive'">
-													{{
-														'PIPELINES_PAGE.INACTIVE'
-															| translate
-													}}
+												<nb-option [value]="false">
+													{{ 'PIPELINES_PAGE.INACTIVE' | translate }}
 												</nb-option>
 											</nb-select>
 										</div>

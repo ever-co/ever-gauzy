@@ -6,8 +6,7 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpController } from './custom-smtp.controller';
 import { CustomSmtpService } from './custom-smtp.service';
-import { TenantModule } from '../tenant/tenant.module';
-import { UserModule } from './../user/user.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands';
 
 @Module({
@@ -15,22 +14,13 @@ import { CommandHandlers } from './commands';
 		RouterModule.register([
 			{ path: '/smtp', module: CustomSmtpModule }
 		]),
-		TypeOrmModule.forFeature([
-			CustomSmtp
-		]),
-		MikroOrmModule.forFeature([
-			CustomSmtp
-		]),
-		forwardRef(() => TenantModule),
-		forwardRef(() => UserModule),
+		TypeOrmModule.forFeature([CustomSmtp]),
+		MikroOrmModule.forFeature([CustomSmtp]),
+		forwardRef(() => RolePermissionModule),
 		CqrsModule
 	],
 	controllers: [CustomSmtpController],
 	providers: [CustomSmtpService, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		CustomSmtpService
-	]
+	exports: [TypeOrmModule, MikroOrmModule, CustomSmtpService]
 })
 export class CustomSmtpModule { }

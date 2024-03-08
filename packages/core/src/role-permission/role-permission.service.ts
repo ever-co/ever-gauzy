@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException, NotAcceptableException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { UpdateResult, FindManyOptions, Not, In, DeepPartial, FindOptionsWhere } from 'typeorm';
 import { pluck } from 'underscore';
@@ -16,6 +15,7 @@ import {
 import { environment } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
+import { MultiORMEnum } from '../core/utils';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
@@ -27,11 +27,8 @@ import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-perm
 @Injectable()
 export class RolePermissionService extends TenantAwareCrudService<RolePermission> {
 	constructor(
-		@InjectRepository(RolePermission)
-		typeOrmRolePermissionRepository: TypeOrmRolePermissionRepository,
-
-		mikroOrmRolePermissionRepository: MikroOrmRolePermissionRepository,
-
+		readonly typeOrmRolePermissionRepository: TypeOrmRolePermissionRepository,
+		readonly mikroOrmRolePermissionRepository: MikroOrmRolePermissionRepository,
 		private readonly roleService: RoleService,
 		private readonly _commandBus: CommandBus
 	) {
@@ -431,5 +428,61 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			}
 		}
 		return records;
+	}
+
+	/**
+	 * Checks if the given role permissions are valid for the current tenant.
+	 * @param permissions - An array of role permissions to check.
+	 * @param includeRole - Optional parameter to include role-specific checks.
+	 * @returns A Promise with a boolean indicating if the role permissions are valid.
+	 * @throws Error if the ORM type is not implemented.
+	 */
+	public async checkRolePermission(
+		tenantId: string,
+		roleId: string,
+		permissions: string[],
+		includeRole: boolean = false
+	): Promise<boolean> {
+		switch (this.ormType) {
+			case MultiORMEnum.TypeORM:
+				// Create a query builder for the 'role_permission' entity
+				const query = this.repository.createQueryBuilder('rp');
+				// Add the condition for the current tenant ID
+				query.where('rp.tenantId = :tenantId', { tenantId });
+
+				// If includeRole is true, add the condition for the current role ID
+				if (includeRole) {
+					query.andWhere('rp.roleId = :roleId', { roleId });
+				}
+
+				// Add conditions for permissions, enabled, isActive, and isArchived
+				query.andWhere('rp.permission IN (:...permissions)', { permissions });
+				query.andWhere('rp.enabled = :enabled', { enabled: true });
+				query.andWhere('rp.isActive = :isActive', { isActive: true });
+				query.andWhere('rp.isArchived = :isArchived', { isArchived: false });
+
+				// Execute the query and get the count
+				const count = await query.getCount();
+
+				// Return true if the count is greater than 0, indicating valid permissions
+				return count > 0;
+
+			// MikroORM implementation
+			case MultiORMEnum.MikroORM:
+				// Create a query builder for the 'RolePermission' entity
+				const totalCount = await this.mikroRepository.count({
+					tenantId,
+					...(includeRole ? { roleId } : {}),
+					permission: { $in: [...permissions] },
+					enabled: true,
+					isActive: true,
+					isArchived: false
+				});
+
+				// Return true if the count is greater than 0, indicating valid permissions
+				return totalCount > 0;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 }

@@ -2,20 +2,20 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TenantModule } from './../../tenant/tenant.module';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { TaskSize } from './size.entity';
 import { TaskSizeService } from './size.service';
 import { TaskSizeController } from './size.controller';
 import { CommandHandlers } from './commands/handlers';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/task-sizes', module: TaskSizeModule }]),
 		TypeOrmModule.forFeature([TaskSize]),
 		MikroOrmModule.forFeature([TaskSize]),
-		CqrsModule,
-		TenantModule
+		RolePermissionModule,
+		CqrsModule
 	],
 	controllers: [TaskSizeController],
 	providers: [TaskSizeService, ...CommandHandlers],

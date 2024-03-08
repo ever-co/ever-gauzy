@@ -1,22 +1,23 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ICandidateDocument, ICandidate } from '@gauzy/contracts';
 import { IsString } from 'class-validator';
 import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateDocumentRepository } from './repository/mikro-orm-candidate-document.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_document', { mikroOrmRepository: () => MikroOrmCandidateDocumentRepository })
 export class CandidateDocument extends TenantOrganizationBaseEntity implements ICandidateDocument {
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	documentUrl: string;
 
 	/*
@@ -25,7 +26,7 @@ export class CandidateDocument extends TenantOrganizationBaseEntity implements I
 	|--------------------------------------------------------------------------
 	*/
 	@ApiPropertyOptional({ type: () => Candidate })
-	@ManyToOne(() => Candidate, (candidate) => candidate.documents, {
+	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.documents, {
 		onDelete: 'CASCADE'
 	})
 	candidate?: ICandidate;
@@ -34,6 +35,6 @@ export class CandidateDocument extends TenantOrganizationBaseEntity implements I
 	@RelationId((it: CandidateDocument) => it.candidate)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: string;
 }

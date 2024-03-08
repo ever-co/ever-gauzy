@@ -1,7 +1,37 @@
+import * as v8 from 'v8';
+
+function logMemoryLimit() {
+	const heapStats = v8.getHeapStatistics();
+	const heapSizeLimit = heapStats.heap_size_limit;
+	console.log(`Heap size limit: ${heapSizeLimit / 1024 / 1024} MB`);
+}
+
+logMemoryLimit();
+
+// Note: below code can't be moved to other places because it has to be executed first, before we load any other modules!
+
+import tracer from './tracer';
+
+/**
+ * Start tracing using if OTEL is enabled.
+ */
+export function startTracing(): void {
+	if (process.env.OTEL_ENABLED === 'true' && tracer) {
+		// Start tracing
+		tracer.start();
+		console.log('OTEL Tracing started');
+	} else {
+		console.log('OTEL Tracing not enabled');
+	}
+}
+
+startTracing(); // Start tracing if OTEL is enabled.
+
 // import * as csurf from 'csurf';
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { EventSubscriber } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import RedisStore from 'connect-redis';
@@ -15,7 +45,6 @@ import { EntitySubscriberInterface } from 'typeorm';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
-import tracer from './tracer';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { AppService } from '../app.service';
@@ -25,7 +54,6 @@ import { SharedModule } from './../shared/shared.module';
 
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time('Application Bootstrap Time');
-	startTracing(); // Start tracing using Signoz if OTEL is enabled.
 
 	const config = await registerPluginConfig(pluginConfig);
 	const { BootstrapModule } = await import('./bootstrap.module');
@@ -116,7 +144,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 				username: username,
 				password: password,
 				isolationPoolOptions: {
-					min: 10,
+					min: 1,
 					max: 100
 				},
 				socket: {
@@ -125,24 +153,25 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 					port: port,
 					passphrase: password,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'
-				}
+				},
+				ttl: 60 * 60 * 24 * 7 // 1 week
 			};
 
 			const redisClient = createClient(redisConnectionOptions)
 				.on('error', (err) => {
-					console.log('Redis Client Error: ', err);
+					console.log('Redis Session Store Client Error: ', err);
 				})
 				.on('connect', () => {
-					console.log('Redis Client Connected');
+					console.log('Redis Session Store Client Connected');
 				})
 				.on('ready', () => {
-					console.log('Redis Client Ready');
+					console.log('Redis Session Store Client Ready');
 				})
 				.on('reconnecting', () => {
-					console.log('Redis Client Reconnecting');
+					console.log('Redis Session Store Client Reconnecting');
 				})
 				.on('end', () => {
-					console.log('Redis Client End');
+					console.log('Redis Session Store Client End');
 				});
 
 			// connecting to Redis
@@ -150,7 +179,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 			// ping Redis
 			const res = await redisClient.ping();
-			console.log('Redis Client Sessions Ping: ', res);
+			console.log('Redis Session Store Client Sessions Ping: ', res);
 
 			const redisStore = new RedisStore({
 				client: redisClient,
@@ -169,7 +198,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 			redisWorked = true;
 		} catch (error) {
-			console.log(error);
+			console.error(error);
 		}
 	}
 
@@ -261,19 +290,6 @@ function handleUnhandledRejection(reason: any, promise: Promise<any>) {
 }
 
 /**
- * Start tracing using Signoz if OTEL is enabled.
- */
-export function startTracing(): void {
-	if (process.env.OTEL_ENABLED === 'true') {
-		// Start tracing using Signoz first
-		tracer.start();
-		console.log('OTEL/Signoz Tracing started');
-	} else {
-		console.log('OTEL/Signoz Tracing not enabled');
-	}
-}
-
-/**
  * Setting the global config must be done prior to loading the Bootstrap Module.
  */
 export async function registerPluginConfig(pluginConfig: Partial<ApplicationPluginConfig>) {
@@ -284,7 +300,7 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 * Configure migration settings
 	 */
-	await setConfig({
+	setConfig({
 		dbConnectionOptions: {
 			...getMigrationsSetting()
 		}
@@ -301,13 +317,14 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 *
 	 */
-	await setConfig({
+	setConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>,
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
 		},
 		dbMikroOrmConnectionOptions: {
-			entities: entities as Array<Type<any>>
+			entities: entities as Array<Type<any>>,
+			subscribers: subscribers as Array<EventSubscriber>
 		}
 	});
 

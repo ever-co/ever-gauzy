@@ -11,7 +11,7 @@ import { DataSourceOptions } from 'typeorm';
 import { KnexModuleOptions } from 'nest-knexjs';
 import { PostgresConnectionOptions } from 'typeorm/driver/postgres/PostgresConnectionOptions';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
-import { DatabaseTypeEnum, getLoggingOptions, getTlsOptions } from './database-helpers';
+import { DatabaseTypeEnum, getLoggingMikroOptions, getLoggingOptions, getTlsOptions } from './database-helpers';
 
 /**
  * Type representing the ORM types.
@@ -37,11 +37,11 @@ function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
 }
 
 console.log(chalk.magenta(`NodeJs Version %s`), process.version);
-console.log('Is DEMO: ', process.env.DEMO);
-console.log('NODE_ENV: ', process.env.NODE_ENV);
+console.log('Is DEMO: %s', process.env.DEMO);
+console.log('NODE_ENV: %s', process.env.NODE_ENV);
 
 const dbORM: MultiORM = getORMType();
-console.log('DB ORM: ' + dbORM);
+console.log('DB ORM: %s', dbORM);
 
 const dbType = process.env.DB_TYPE || DatabaseTypeEnum.betterSqlite3;
 
@@ -54,6 +54,7 @@ let knexConnectionConfig: KnexModuleOptions;
 
 // We set default pool size as 40. Usually PG has 100 connections max by default.
 const dbPoolSize = process.env.DB_POOL_SIZE ? parseInt(process.env.DB_POOL_SIZE) : 40;
+
 // For now we limit Knex to 10 connections max because it's only used in few places and we don't want to overload the DB.
 const dbPoolSizeKnex = process.env.DB_POOL_SIZE_KNEX ? parseInt(process.env.DB_POOL_SIZE_KNEX) : 10;
 
@@ -61,9 +62,7 @@ const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process
 
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-	: 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
@@ -101,7 +100,8 @@ switch (dbType) {
 				min: 0,
 				max: dbPoolSize
 			},
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmMySqlOptions;
 
@@ -194,7 +194,8 @@ switch (dbType) {
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
 				acquireTimeoutMillis: dbConnectionTimeout
 			},
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmPostgresOptions;
 
@@ -276,7 +277,8 @@ switch (dbType) {
 		const mikroOrmSqliteConfig: MikroOrmSqliteOptions = {
 			driver: SqliteDriver,
 			dbName: dbPath,
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmSqliteConfig;
 
@@ -305,15 +307,15 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)
 		const mikroOrmBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
 			driver: BetterSqliteDriver,
 			dbName: betterSqlitePath,
-			namingStrategy: EntityCaseNamingStrategy
+			namingStrategy: EntityCaseNamingStrategy,
+			debug: getLoggingMikroOptions(process.env.DB_LOGGING), // by default set to false only
 		};
 		mikroOrmConnectionConfig = mikroOrmBetterSqliteConfig;
 

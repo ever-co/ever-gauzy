@@ -168,7 +168,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { email, token, code, organizationTeamId } = options;
 		try {
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				select: {
 					id: true,

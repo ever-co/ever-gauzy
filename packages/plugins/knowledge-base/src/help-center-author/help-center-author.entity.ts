@@ -1,10 +1,11 @@
-import { Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { RelationId, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IEmployee, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
 import { MultiORMEntity, Employee, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
 import { MikroOrmHelpCenterAuthorRepository } from './repository/mikro-orm-help-center-author.repository';
+import { MultiORMManyToOne, MultiORMColumn } from '@gauzy/core';
 
 @MultiORMEntity('knowledge_base_author', { mikroOrmRepository: () => MikroOrmHelpCenterAuthorRepository })
 export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IHelpCenterAuthor {
@@ -15,7 +16,7 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
+	@MultiORMManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;
@@ -24,11 +25,11 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	@RelationId((it: HelpCenterAuthor) => it.employee)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId: string;
 
 	@ApiProperty({ type: () => HelpCenterArticle })
-	@ManyToOne(() => HelpCenterArticle, (article) => article.authors, {
+	@MultiORMManyToOne(() => HelpCenterArticle, (article) => article.authors, {
 		onDelete: 'CASCADE'
 	})
 	article?: IHelpCenterArticle;
@@ -37,6 +38,6 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	@RelationId((it: HelpCenterAuthor) => it.article)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	articleId: string;
 }

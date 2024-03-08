@@ -7,7 +7,7 @@ import { IntegrationMap, TaskStatus } from 'core/entities/internal';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
 import { CommandHandlers } from './commands/handlers';
 import { EventHandlers } from './events/handlers';
-import { TenantModule } from '../tenant/tenant.module';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
 import { RoleModule } from './../role/role.module';
 import { EmployeeModule } from './../employee/employee.module';
@@ -15,22 +15,20 @@ import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 
+const forFeatureEntities = [
+	Task,
+	TaskStatus,
+	IntegrationMap
+];
+
 @Module({
 	imports: [
 		RouterModule.register([
 			{ path: '/tasks', module: TaskModule }
 		]),
-		TypeOrmModule.forFeature([
-			Task,
-			TaskStatus,
-			IntegrationMap
-		]),
-		MikroOrmModule.forFeature([
-			Task,
-			TaskStatus,
-			IntegrationMap
-		]),
-		forwardRef(() => TenantModule),
+		TypeOrmModule.forFeature(forFeatureEntities),
+		MikroOrmModule.forFeature(forFeatureEntities),
+		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserModule),
 		RoleModule,
 		EmployeeModule,

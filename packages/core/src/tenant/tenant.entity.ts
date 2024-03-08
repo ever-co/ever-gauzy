@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, OneToMany, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
@@ -17,19 +17,20 @@ import {
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	logo?: string;
 
 	/*
@@ -41,7 +42,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -56,7 +57,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	@IsUUID()
 	@RelationId((it: Tenant) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*
@@ -65,26 +66,29 @@ export class Tenant extends BaseEntity implements ITenant {
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Organization })
-	@OneToMany(() => Organization, (organization) => organization.tenant, {
+	@MultiORMOneToMany(() => Organization, (it) => it.tenant, {
 		cascade: true
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
 	@ApiProperty({ type: () => RolePermission })
-	@OneToMany(() => RolePermission, (rolePermission) => rolePermission.tenant, {
+	@MultiORMOneToMany(() => RolePermission, (it) => it.tenant, {
 		cascade: true
 	})
 	rolePermissions?: IRolePermission[];
 
+	/**
+	 * Array of feature organizations associated with the entity.
+	 */
 	@ApiProperty({ type: () => FeatureOrganization })
-	@OneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.tenant, {
-		cascade: true
+	@MultiORMOneToMany(() => FeatureOrganization, (it) => it.tenant, {
+		cascade: true,
 	})
 	featureOrganizations?: IFeatureOrganization[];
 
 	@ApiProperty({ type: () => ImportRecord })
-	@OneToMany(() => ImportRecord, (importRecord) => importRecord.tenant, {
+	@MultiORMOneToMany(() => ImportRecord, (importRecord) => importRecord.tenant, {
 		cascade: true
 	})
 	importRecords?: IImportRecord[];

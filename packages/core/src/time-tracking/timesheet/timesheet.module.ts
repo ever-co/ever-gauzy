@@ -3,8 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmailSendModule } from './../../email-send/email-send.module';
-import { TenantModule } from './../../tenant/tenant.module';
-import { UserModule } from './../../user/user.module';
+import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { EmployeeModule } from './../../employee/employee.module';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
 import { CommandHandlers } from './commands/handlers';
@@ -21,10 +20,9 @@ import { Timesheet } from './timesheet.entity';
 		MikroOrmModule.forFeature([Timesheet]),
 		CqrsModule,
 		EmailSendModule,
-		TenantModule,
+		RolePermissionModule,
 		TimeSlotModule,
-		EmployeeModule,
-		UserModule
+		EmployeeModule
 	],
 	providers: [
 		TimeSheetService,

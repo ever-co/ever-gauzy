@@ -4,6 +4,26 @@ import * as timezone from 'moment-timezone';
 import { distinctUntilChanged } from 'rxjs/operators';
 import slugify from 'slugify';
 
+/**
+ * Check string is null or undefined
+ * From https://github.com/typeorm/typeorm/issues/873#issuecomment-502294597
+ *
+ * @param obj
+ * @returns
+ */
+export function isNullOrUndefined<T>(value: T | null | undefined): value is null | undefined {
+	return value === undefined || value === null;
+}
+
+/**
+ * Checks if a value is not null or undefined.
+ * @param value The value to be checked.
+ * @returns true if the value is not null or undefined, false otherwise.
+ */
+export function isNotNullOrUndefined<T>(value: T | undefined | null): value is T {
+	return value !== undefined && value !== null;
+}
+
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query) {
 	let params: HttpParams = new HttpParams();

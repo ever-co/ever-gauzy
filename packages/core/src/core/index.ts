@@ -5,4 +5,5 @@ export * from './context';
 export * from './entities';
 export * from './entities/internal';
 export * from './decorators';
+export * from './orm-type';
 export * from './plugin-common.module';

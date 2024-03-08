@@ -1,4 +1,4 @@
-import { Column, ManyToOne, RelationId, JoinColumn, Index } from 'typeorm';
+import { RelationId, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -16,44 +16,39 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
+import { MultiORMManyToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('availability_slot', { mikroOrmRepository: () => MikroOrmAvailabilitySlotRepository })
 export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IAvailabilitySlot {
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	startTime: Date;
 
 	@ApiProperty({ type: () => Date })
 	@IsDate()
-	@Column()
+	@MultiORMColumn()
 	endTime: Date;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@Column()
+	@MultiORMColumn()
 	allDay: boolean;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: 'text', nullable: true })
 	type: AvailabilitySlotType;
-
-	/*
-	|--------------------------------------------------------------------------
-	| @ManyToOne
-	|--------------------------------------------------------------------------
-	*/
 
 	/**
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
+	@MultiORMManyToOne(() => Employee, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -65,6 +60,6 @@ export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IA
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 }

@@ -1,4 +1,3 @@
-import { Column, OneToOne } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsNumber } from 'class-validator';
 import {
@@ -14,63 +13,64 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
+import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	name?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	firstName?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastName?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	country?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	city?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	address?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	address2?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	postcode?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -80,7 +80,7 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	@ApiPropertyOptional({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -88,27 +88,27 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	longitude?: number;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	regionCode?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fax?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	fiscalInformation?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	website?: string;
 
 	/*
@@ -121,8 +121,8 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@OneToOne(() => Employee, (employee) => employee.contact, {
-		onDelete: 'SET NULL'
+	@MultiORMOneToOne(() => Employee, (employee) => employee.contact, {
+		onDelete: 'SET NULL',
 	})
 	employee?: IEmployee;
 
@@ -130,8 +130,8 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@OneToOne(() => Candidate, (candidate) => candidate.contact, {
-		onDelete: 'SET NULL'
+	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.contact, {
+		onDelete: 'SET NULL',
 	})
 	candidate?: ICandidate;
 
@@ -139,8 +139,8 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	 * Organization Contact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@OneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
-		onDelete: 'SET NULL'
+	@MultiORMOneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
+		onDelete: 'SET NULL',
 	})
 	organizationContact?: IOrganizationContact;
 }

@@ -66,7 +66,7 @@ function addPostgresTrackingIntegration(integrations: Integration[]): void {
 		process.env.DB_TYPE === 'postgres'
 	) {
 		integrations.push(new Integrations.Postgres());
-		console.log('Sentry Postgres Tracking Enabled');
+		console.log('Sentry Postgres Tracing Enabled');
 	}
 }
 

@@ -1,12 +1,13 @@
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_proposal_template', { mikroOrmRepository: () => MikroOrmEmployeeProposalTemplateRepository })
 export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
@@ -14,17 +15,17 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name?: string;
 
 	@ApiProperty({ type: () => String })
 	@Index({ fulltext: true })
-	@Column({ type: 'text', nullable: true })
+	@MultiORMColumn({ type: 'text', nullable: true })
 	content?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@Index()
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isDefault?: boolean;
 
 	/*
@@ -33,7 +34,7 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	|--------------------------------------------------------------------------
 	*/
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, {
+	@MultiORMManyToOne(() => Employee, {
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;
@@ -41,6 +42,6 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeProposalTemplate) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId?: string;
 }

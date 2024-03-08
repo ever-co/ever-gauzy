@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.stage.pre.cloudflare.conf:/etc/nginx/nginx.conf:ro
+      - ./ingress.api.crt:/etc/nginx/ssl/fullchain.pem
+      - ./ingress.api.key:/etc/nginx/ssl/privkey.pem
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - with-cloudflare_overlay
+volumes:
+  certificates: {}
+
+networks:
+  with-cloudflare_overlay:
+    external: true
+      

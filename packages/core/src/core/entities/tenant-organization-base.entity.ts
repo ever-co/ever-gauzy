@@ -1,38 +1,35 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Property } from '@mikro-orm/core';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Index, RelationId } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	IOrganization,
 	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { Organization, TenantBaseEntity } from '../entities/internal';
-import { MikroManyToOne } from '../../core/decorators/entity/relations/mikro-orm';
+import { MultiORMManyToOne } from '../decorators/entity/relations';
+import { MultiORMColumn } from '../decorators';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 
-	@ApiProperty({ type: () => Organization })
-	@ManyToOne(() => Organization, {
+	@ApiPropertyOptional({ type: () => Organization })
+	@IsOptional()
+	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@MikroManyToOne(() => Organization, {
-		nullable: true,
-		deleteRule: 'cascade',
-		updateRule: 'cascade',
-		persist: false
-	})
-	@JoinColumn()
-	@IsOptional()
 	organization?: IOrganization;
 
-	@ApiProperty({ type: () => String })
-	@RelationId((it: TenantOrganizationBaseEntity) => it.organization)
-	@IsString()
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
+	@IsString()
+	@RelationId((it: TenantOrganizationBaseEntity) => it.organization)
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationId?: IOrganization['id'];
 }

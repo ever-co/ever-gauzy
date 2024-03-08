@@ -1,13 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	UseGuards,
-	HttpCode,
-	Delete,
-	Param
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards, HttpCode, Delete, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination, IUser } from '@gauzy/contracts';
@@ -43,9 +34,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IUserOrganization>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IUserOrganization>> {
 		const { relations, findInput } = data;
 		return this.userOrganizationService.findAll({
 			where: findInput,
@@ -89,9 +78,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findOrganizationCount(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<number> {
+	async findOrganizationCount(@Param('id', UUIDValidationPipe) id: string): Promise<number> {
 		const { userId } = await this.findById(id);
 		const { total } = await this.userOrganizationService.findAll({
 			where: {
@@ -105,15 +92,4 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 		});
 		return total;
 	}
-
-	// This was not being used and it overrides the default unnecessarily, so removed until required.
-	// Please do not user Get() for findOne and use something like @Get(/organization/id)
-	// @ApiOperation({ summary: 'Find one from the search input' })
-	// @ApiResponse({ status: HttpStatus.OK, description: 'Found user organization', type: UserOrganization })
-	// @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
-	// @Get()
-	// async findOne(@Query('findInputStr') findInputStr: string): Promise<IUserOrganization> {
-	//     const findInput = JSON.parse(findInputStr);
-	//     return this.userOrganizationService.findOneByIdString({ where: findInput });
-	// }
 }
