@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskPriority } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -7,8 +7,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_priority', { mikroOrmRepository: () => MikroOrmTaskPriorityRepository })
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
@@ -17,31 +18,31 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false, update: false })
+	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
 	fullIconUrl?: string;
@@ -54,7 +55,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.priorities, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.priorities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -71,13 +72,13 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@IsUUID()
 	@RelationId((it: TaskPriority) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (team) => team.priorities, {
+	@MultiORMManyToOne(() => OrganizationTeam, (team) => team.priorities, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -94,6 +95,6 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@IsUUID()
 	@RelationId((it: TaskPriority) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

@@ -161,13 +161,11 @@ More information about our Server & Desktop Apps:
 
 ## 🧱 Technology Stack and Requirements
 
--   [TypeScript](https://www.typescriptlang.org) language
+-   [TypeScript](https://www.typescriptlang.org)
 -   [NodeJs](https://nodejs.org) / [NestJs](https://github.com/nestjs/nest)
--   [Nx](https://nx.dev)
--   [Angular](https://angular.io)
--   [RxJS](http://reactivex.io/rxjs)
--   [TypeORM](https://github.com/typeorm/typeorm)
--   [Ngx-admin](https://github.com/akveo/ngx-admin)
+-   [Nx](https://nx.dev) / [Lerna](https://github.com/lerna/lerna)
+-   [Angular](https://angular.io) / [RxJS](http://reactivex.io/rxjs) / [Ngx-admin](https://github.com/akveo/ngx-admin)
+-   [TypeORM](https://github.com/typeorm/typeorm) / [MikroORM](https://github.com/mikro-orm/mikro-orm) / [Knex](https://github.com/knex/knex)
 
 For Production, we recommend:
 
@@ -232,7 +230,7 @@ Notes:
 
 #### Optional / Recommended for Production
 
--   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later. Note: other DB can be configured manually in TypeORM. The default DB is set to SQLite (recommended for testing/demo purposes only).
+-   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later (16.x recommended for production). Note: other DB can be configured manually in TypeORM / MikroORM / Knex. The default DB is set to SQLite (recommended for testing/demo purposes only).
 -   Optionally (recommended for production) install and run [Redis](https://github.com/redis/redis). Notes: the platform will work without Redis using an in-memory caching strategy instead of a distributed one (recommended for testing/demo purposes only). Please note however that Redis is required for Jitsu.
 -   Optionally (recommended for production) install and run [ElasticSearch](https://github.com/elastic/elasticsearch). Note: the platform will work without ElasticSearch using DB build-in search capabilities (recommended for testing/demo purposes only).
 -   Optionally install and run [MinIO](https://github.com/minio/minio) or [LocalStack](https://github.com/localstack/localstack). Note: the platform will work without MinIO / LocalStack or other S3-compatible storage using local filesystem-based storage (recommended for testing/demo purposes only). For production, we recommend using Wasabi or AWS S3 storage or another S3-compatible cloud storage.
@@ -244,7 +242,7 @@ Notes:
 -   See [Setup Gauzy for Client Server](https://github.com/ever-co/ever-gauzy/wiki/Setup-Gauzy-for-Client-Server) for more information about production setup on your servers.
 -   We recommend deploying to Kubernetes (k8s), either manually (see below) or with our [Ever Helm Charts](https://github.com/ever-co/ever-charts).
 -   For the most simple deployment scenarios (e.g. for yourself or your small organization), check our [DigitalOcean App Platform configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.do) and corresponding [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-app-platform-stage.yml).
--   Another variant to deploy Gauzy is to use DigitalOcean Droplets or any other virtual instance (with Ubuntu OS) and deploy using SCP/SSH, see for example following [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-droplet-demo.yml)
+-   Another variant to deploy Gauzy is to use DigitalOcean Droplets or any other virtual instance (with Ubuntu OS) and deploy using SCP/SSH, for example following [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-droplet-demo.yml)
 -   For more complex deployment scenarios, please see [Kubernetes configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.deploy/k8s), which we are using to deploy Gauzy into [DigitalOcean k8s cluster](https://www.digitalocean.com/products/kubernetes).
 -   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 

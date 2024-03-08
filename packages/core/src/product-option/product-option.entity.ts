@@ -1,4 +1,4 @@
-import { Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import { IProductOptionTranslatable, IProductOptionTranslation } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
@@ -7,20 +7,21 @@ import {
 	ProductOptionTranslation
 } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_option', { mikroOrmRepository: () => MikroOrmProductOptionRepository })
 export class ProductOption extends TenantOrganizationBaseEntity implements IProductOptionTranslatable {
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	code: string;
 
 	/*
@@ -33,7 +34,7 @@ export class ProductOption extends TenantOrganizationBaseEntity implements IProd
 	 * ProductOptionGroup
 	 */
 	@ApiPropertyOptional({ type: () => ProductOptionGroup })
-	@ManyToOne(() => ProductOptionGroup, (group) => group.options)
+	@MultiORMManyToOne(() => ProductOptionGroup, (group) => group.options)
 	@JoinColumn()
 	group?: ProductOptionGroup;
 
@@ -41,7 +42,7 @@ export class ProductOption extends TenantOrganizationBaseEntity implements IProd
 	@RelationId((it: ProductOption) => it.group)
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	groupId?: string;
 
 	/*
@@ -51,7 +52,7 @@ export class ProductOption extends TenantOrganizationBaseEntity implements IProd
 	*/
 
 	@ApiProperty({ type: () => ProductOptionTranslation, isArray: true })
-	@OneToMany(() => ProductOptionTranslation, (translation) => translation.reference, {
+	@MultiORMOneToMany(() => ProductOptionTranslation, (translation) => translation.reference, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 	})

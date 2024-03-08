@@ -312,10 +312,10 @@ export default {
 			}
 		}
 	},
-	shutdown: () => {
+	shutdown: async () => {
 		if (process.env.OTEL_ENABLED === 'true') {
-			provider?.shutdown();
-			honeycombSDK?.shutdown();
+			await provider?.shutdown();
+			await honeycombSDK?.shutdown();
 		}
 	}
 };

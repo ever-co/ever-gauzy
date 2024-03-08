@@ -1,33 +1,35 @@
 import { IPipeline, IPipelineStage as IStage } from '@gauzy/contracts';
-import { Column, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { JoinColumn, RelationId } from 'typeorm';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	Pipeline,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPipelineStageRepository } from './repository/mikro-orm-pipeline-stage.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('pipeline_stage', { mikroOrmRepository: () => MikroOrmPipelineStageRepository })
 export class PipelineStage extends TenantOrganizationBaseEntity implements IStage {
 
-	@ApiProperty({ type: () => String })
-	@Column({ nullable: true, type: 'text' })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsString()
+	@MultiORMColumn({ type: 'text', nullable: true })
 	public description: string;
 
 	@ApiProperty({ type: () => Number, minimum: 1 })
-	@Column({ type: 'int' })
-	@Min(1)
 	@IsNotEmpty()
+	@Min(1)
+	@MultiORMColumn({ type: 'int' })
 	@IsNumber()
 	public index: number;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	public name: string;
 
 	/*
@@ -35,16 +37,21 @@ export class PipelineStage extends TenantOrganizationBaseEntity implements IStag
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => Pipeline })
-	@ManyToOne(() => Pipeline, { onDelete: 'CASCADE' })
-	@ApiProperty({ type: () => Pipeline })
+
+	/**
+	 * Pipeline
+	 */
+	@MultiORMManyToOne(() => Pipeline, (it) => it.stages, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	public pipeline: IPipeline;
 
 	@ApiProperty({ type: () => String })
-	@RelationId((it: PipelineStage) => it.pipeline)
 	@IsNotEmpty()
 	@IsString()
-	@Column()
-	public pipelineId: string;
+	@RelationId((it: PipelineStage) => it.pipeline)
+	@MultiORMColumn({ relationId: true })
+	public pipelineId: IPipeline['id'];
 }

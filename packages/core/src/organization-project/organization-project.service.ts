@@ -38,7 +38,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		employeeId: IEmployee['id'],
 		options: IOrganizationProjectsFindInput
 	): Promise<IOrganizationProject[]> {
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 		query.setFindOptions({
 			select: {
 				id: true,
@@ -169,7 +169,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		options?: PaginationParams<OrganizationProject>
 	): Promise<IPagination<OrganizationProject>> {
 		// Create a query builder for the `OrganizationProject` entity
-		const query = this.repository.createQueryBuilder(this.alias);
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		// Set find options (skip, take, and relations)
 		query.skip(options && options.skip ? options.take * (options.skip - 1) : 0);

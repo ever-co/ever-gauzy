@@ -1,7 +1,5 @@
 import {
-	Column,
 	RelationId,
-	ManyToOne,
 	JoinColumn,
 	Index,
 	AfterLoad
@@ -14,8 +12,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
+import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
@@ -23,81 +22,81 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	mouse?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	stoppedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	approvedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	submittedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lockedAt?: Date;
 
 	/**
 	 * Edited timestamp column
 	 */
-	@Column({ type: 'timestamp' })
+	@MultiORMColumn({ type: 'timestamp' })
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	editedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isBilled?: boolean;
 
 	@ApiPropertyOptional({ type: () => String, enum: TimesheetStatus, default: TimesheetStatus.PENDING })
 	@IsOptional()
 	@IsEnum(TimesheetStatus)
 	@Index()
-	@Column({ default: TimesheetStatus.PENDING })
+	@MultiORMColumn({ default: TimesheetStatus.PENDING })
 	status: string;
 
 	/** Additional fields */
@@ -118,7 +117,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	/**
 	 * Employee
 	 */
-	@ManyToOne(() => Employee, (it) => it.timesheets, {
+	@MultiORMManyToOne(() => Employee, (it) => it.timesheets, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -129,13 +128,13 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@IsUUID()
 	@RelationId((it: Timesheet) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 
 	/**
 	 * Approve By User
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 	})
@@ -147,7 +146,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@IsUUID()
 	@RelationId((it: Timesheet) => it.approvedBy)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	approvedById?: IUser['id'];
 
 	/**

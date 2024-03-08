@@ -7,6 +7,7 @@ import { RolePermissionController } from './role-permission.controller';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
 import { RoleModule } from './../role/role.module';
+import { TypeOrmRolePermissionRepository } from './repository';
 
 @Module({
 	imports: [
@@ -19,7 +20,7 @@ import { RoleModule } from './../role/role.module';
 		CqrsModule
 	],
 	controllers: [RolePermissionController],
-	providers: [RolePermissionService],
-	exports: [TypeOrmModule, MikroOrmModule, RolePermissionService]
+	providers: [RolePermissionService, TypeOrmRolePermissionRepository],
+	exports: [TypeOrmModule, MikroOrmModule, RolePermissionService, TypeOrmRolePermissionRepository]
 })
 export class RolePermissionModule { }

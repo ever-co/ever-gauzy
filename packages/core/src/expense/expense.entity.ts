@@ -1,12 +1,8 @@
 import {
-	Column,
 	Index,
-	ManyToOne,
 	RelationId,
 	JoinColumn,
-	ManyToMany,
-	JoinTable,
-	OneToMany
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -41,8 +37,9 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('expense', { mikroOrmRepository: () => MikroOrmExpenseRepository })
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {
@@ -51,7 +48,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsNumber()
 	@IsNotEmpty()
 	@Index()
-	@Column({
+	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
 	})
@@ -61,51 +58,51 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	typeOfExpense: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	notes?: string;
 
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsDate()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	purpose?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxType?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	taxLabel?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@Index()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -115,22 +112,22 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@ApiPropertyOptional({ type: () => String })
 	@Index()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	receipt?: string;
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	splitExpense: boolean;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 256 })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reference?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: ExpenseStatusesEnum })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: ExpenseStatusesEnum
@@ -146,7 +143,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.expenses, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.expenses, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -158,14 +155,14 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
 	/**
 	 * OrganizationVendor
 	 */
 	@ApiProperty({ type: () => OrganizationVendor })
-	@ManyToOne(() => OrganizationVendor, (vendor) => vendor.expenses, {
+	@MultiORMManyToOne(() => OrganizationVendor, (vendor) => vendor.expenses, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -175,14 +172,14 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@RelationId((it: Expense) => it.vendor)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	vendorId: string;
 
 	/**
 	 * ExpenseCategory
 	 */
 	@ApiProperty({ type: () => ExpenseCategory })
-	@ManyToOne(() => ExpenseCategory, (category) => category.expenses, {
+	@MultiORMManyToOne(() => ExpenseCategory, (category) => category.expenses, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -192,14 +189,14 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@RelationId((it: Expense) => it.category)
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	categoryId: string;
 
 	/**
 	 * Organization Project Relationship
 	 */
 	@ApiProperty({ type: () => OrganizationProject })
-	@ManyToOne(() => OrganizationProject, (project) => project.expenses, {
+	@MultiORMManyToOne(() => OrganizationProject, (project) => project.expenses, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -217,14 +214,14 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsUUID()
 	@RelationId((it: Expense) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: string;
 
 	/**
 	 * OrganizationContact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@ManyToOne(() => OrganizationContact, (contact) => contact.expenses, {
+	@MultiORMManyToOne(() => OrganizationContact, (contact) => contact.expenses, {
 		nullable: true,
 		onDelete: 'CASCADE'
 	})
@@ -236,7 +233,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: string;
 
 	/*
@@ -249,7 +246,7 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * InvoiceItem
 	 */
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
-	@OneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
+	@MultiORMOneToMany(() => InvoiceItem, (invoiceItem) => invoiceItem.expense, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -265,9 +262,11 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.expenses, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.expenses, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_expense',
 	})
 	@JoinTable({
 		name: 'tag_expense'

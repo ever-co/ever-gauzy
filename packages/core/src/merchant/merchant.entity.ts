@@ -7,12 +7,8 @@ import {
 	IContact
 } from '@gauzy/contracts';
 import {
-	Column,
-	ManyToOne,
 	JoinColumn,
 	JoinTable,
-	ManyToMany,
-	OneToOne,
 	Index,
 	RelationId
 } from 'typeorm';
@@ -24,38 +20,39 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('merchant', { mikroOrmRepository: () => MikroOrmMerchantRepository })
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	phone: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	active: boolean;
 
 	@ApiProperty({ type: () => String })
-	@Column({ default: CurrenciesEnum.USD })
+	@MultiORMColumn({ default: CurrenciesEnum.USD })
 	currency: CurrenciesEnum;
 
 	/*
@@ -68,9 +65,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * Contact
 	 */
 	@ApiProperty({ type: () => Contact })
-	@OneToOne(() => Contact, {
+	@MultiORMOneToOne(() => Contact, {
 		cascade: true,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
@@ -78,7 +76,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
 	/*
@@ -91,14 +89,14 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, { cascade: true })
+	@MultiORMManyToOne(() => ImageAsset, { cascade: true })
 	@JoinColumn()
 	logo?: IImageAsset;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: IImageAsset['id'];
 
 	/*
@@ -111,9 +109,11 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * Tag
 	 */
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.merchants, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.merchants, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_merchant',
 	})
 	@JoinTable({
 		name: 'tag_merchant'
@@ -124,8 +124,10 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * Warehouses
 	 */
 	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@ManyToMany(() => Warehouse, (it) => it.merchants, {
-		onDelete: 'CASCADE'
+	@MultiORMManyToMany(() => Warehouse, (it) => it.merchants, {
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'warehouse_merchant',
 	})
 	@JoinTable({
 		name: 'warehouse_merchant'

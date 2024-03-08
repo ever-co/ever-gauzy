@@ -35,7 +35,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	async deleteScreenshot(id: IScreenshot['id'], options?: FindOptionsWhere<Screenshot>): Promise<IScreenshot> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				where: {
 					...(options ? options : {}),

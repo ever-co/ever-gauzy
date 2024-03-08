@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTeam,
@@ -11,8 +11,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from '../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_related_issue_type', { mikroOrmRepository: () => MikroOrmTaskRelatedIssueTypeRepository })
 export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implements ITaskRelatedIssueType {
@@ -21,31 +22,31 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false, update: false })
+	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
 	fullIconUrl?: string;
@@ -58,7 +59,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.relatedIssueTypes, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.relatedIssueTypes, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -75,13 +76,13 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	@IsUUID()
 	@RelationId((it: TaskRelatedIssueType) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (it) => it.relatedIssueTypes, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.relatedIssueTypes, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -98,6 +99,6 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	@IsUUID()
 	@RelationId((it: TaskRelatedIssueType) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

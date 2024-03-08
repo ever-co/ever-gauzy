@@ -1,9 +1,5 @@
 import {
-	Column,
 	RelationId,
-	ManyToOne,
-	OneToMany,
-	ManyToMany,
 	JoinTable,
 	Index
 } from 'typeorm';
@@ -25,8 +21,9 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity
@@ -36,33 +33,33 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsNumber()
 	@Index()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	keyboard?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	mouse?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
 	@Index()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsNotEmpty()
 	@IsDateString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	startedAt: Date;
 
 	/** Additional fields */
@@ -79,7 +76,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * Employee
 	 */
-	@ManyToOne(() => Employee, (it) => it.timeSlots, {
+	@MultiORMManyToOne(() => Employee, (it) => it.timeSlots, {
 		onDelete: 'CASCADE'
 	})
 	employee?: IEmployee;
@@ -89,7 +86,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
 	/*
@@ -101,13 +98,13 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * Screenshot
 	 */
-	@OneToMany(() => Screenshot, (it) => it.timeSlot)
+	@MultiORMOneToMany(() => Screenshot, (it) => it.timeSlot)
 	screenshots?: IScreenshot[];
 
 	/**
 	 * Activity
 	 */
-	@OneToMany(() => Activity, (it) => it.timeSlot, {
+	@MultiORMOneToMany(() => Activity, (it) => it.timeSlot, {
 		cascade: true
 	})
 	activities?: IActivity[];
@@ -115,7 +112,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * TimeSlotMinute
 	 */
-	@OneToMany(() => TimeSlotMinute, (it) => it.timeSlot, {
+	@MultiORMOneToMany(() => TimeSlotMinute, (it) => it.timeSlot, {
 		cascade: true
 	})
 	timeSlotMinutes?: ITimeSlotMinute[];
@@ -129,9 +126,11 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	/**
 	 * TimeLog
 	 */
-	@ManyToMany(() => TimeLog, (it) => it.timeSlots, {
+	@MultiORMManyToMany(() => TimeLog, (it) => it.timeSlots, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'time_slot_time_logs'
 	})
 	@JoinTable({
 		name: 'time_slot_time_logs'

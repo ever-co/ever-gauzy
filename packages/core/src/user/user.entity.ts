@@ -4,17 +4,11 @@
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
-	ManyToMany,
-	JoinTable,
-	OneToOne,
-	OneToMany
+	JoinTable
 } from 'typeorm';
-import { Property } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -41,10 +35,9 @@ import {
 	TenantBaseEntity,
 	UserOrganization
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
-import { MikroManyToOne } from './../core/decorators/entity/relations/mikro-orm';
-import { TypeManyToOne } from './../core/decorators/entity/relations/type-orm';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
@@ -53,97 +46,85 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lastName?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsOptional()
 	@IsEmail()
-	@Index({ unique: false })
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@Index()
+	@MultiORMColumn({ nullable: true })
 	email?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 4, maxLength: 12 })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@IsOptional()
 	@IsString()
 	@Index({ unique: false })
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	username?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	timeZone?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	hash?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ nullable: true })
-	public refreshToken?: string;
+	@MultiORMColumn({ insert: false, nullable: true })
+	refreshToken?: string;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@IsString()
-	@Column({ length: 500, nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: LanguagesEnum })
 	@IsOptional()
 	@IsEnum(LanguagesEnum)
-	@Column({ nullable: true, default: LanguagesEnum.ENGLISH })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true, default: LanguagesEnum.ENGLISH })
 	preferredLanguage?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: ComponentLayoutStyleEnum })
 	@IsOptional()
 	@IsEnum(ComponentLayoutStyleEnum)
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		default: ComponentLayoutStyleEnum.TABLE,
 		enum: ComponentLayoutStyleEnum
 	})
-	@Property({ nullable: true })
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
 
@@ -151,30 +132,26 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsString()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
-	public code?: string;
+	@MultiORMColumn({ insert: false, nullable: true })
+	code?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
-	public codeExpireAt?: Date;
+	@MultiORMColumn({ insert: false, nullable: true })
+	codeExpireAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
-	public emailVerifiedAt?: Date;
+	@MultiORMColumn({ insert: false, nullable: true })
+	emailVerifiedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ insert: false, nullable: true })
-	@Property({ default: false, nullable: true })
-	public emailToken?: string;
+	@MultiORMColumn({ insert: false, nullable: true })
+	emailToken?: string;
 
 	name?: string;
 	employeeId?: string;
@@ -189,19 +166,12 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Role
 	 */
-	@MikroManyToOne(() => Role, {
+	@MultiORMManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		deleteRule: 'set null'
-	})
-	@TypeManyToOne(() => Role, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	role?: IRole;
@@ -211,14 +181,13 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsUUID()
 	@RelationId((it: User) => it.role)
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId?: string;
 
 	/**
 	 * ImageAsset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -233,8 +202,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsUUID()
 	@RelationId((it: User) => it.image)
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*
@@ -246,13 +214,13 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@OneToOne(() => Employee, (employee: Employee) => employee.user)
+	@MultiORMOneToOne(() => Employee, (it: Employee) => it.user)
 	employee?: IEmployee;
 
 	/**
 	 * Candidate
 	 */
-	@OneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
+	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
 	candidate?: ICandidate;
 
 	/*
@@ -261,9 +229,11 @@ export class User extends TenantBaseEntity implements IUser {
 	|--------------------------------------------------------------------------
 	*/
 	// Tags
-	@ManyToMany(() => Tag, (tag) => tag.users, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.users, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_user'
 	})
 	@JoinTable({
 		name: 'tag_user'
@@ -279,7 +249,7 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * UserOrganization
 	 */
-	@OneToMany(() => UserOrganization, (it) => it.user, {
+	@MultiORMOneToMany(() => UserOrganization, (it) => it.user, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -288,13 +258,13 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * User belongs to invites
 	 */
-	@OneToMany(() => Invite, (it) => it.user)
+	@MultiORMOneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
 
 	/**
 	 * User belongs to teams
 	 */
-	@OneToMany(() => OrganizationTeam, (it) => it.createdBy, {
+	@MultiORMOneToMany(() => OrganizationTeam, (it) => it.createdBy, {
 		onDelete: 'CASCADE'
 	})
 	teams?: IOrganizationTeam[];

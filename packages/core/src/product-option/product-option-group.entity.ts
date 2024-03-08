@@ -1,4 +1,4 @@
-import { Column, ManyToOne, JoinColumn, OneToMany, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId, Index } from 'typeorm';
 import {
 	Product,
 	TenantOrganizationBaseEntity
@@ -10,14 +10,15 @@ import {
 	ProductOption,
 	ProductOptionGroupTranslation
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmProductOptionGroupRepository } from './repository/mikro-orm-product-option-group.repository';
+import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_option_group', { mikroOrmRepository: () => MikroOrmProductOptionGroupRepository })
 export class ProductOptionGroup extends TenantOrganizationBaseEntity implements IProductOptionGroupTranslatable {
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	/*
@@ -30,7 +31,7 @@ export class ProductOptionGroup extends TenantOrganizationBaseEntity implements 
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product })
-	@ManyToOne(() => Product, (product) => product.optionGroups)
+	@MultiORMManyToOne(() => Product, (product) => product.optionGroups)
 	@JoinColumn()
 	product: Product;
 
@@ -39,7 +40,7 @@ export class ProductOptionGroup extends TenantOrganizationBaseEntity implements 
 	@IsString()
 	@IsOptional()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	productId: string;
 
 	/*
@@ -52,7 +53,7 @@ export class ProductOptionGroup extends TenantOrganizationBaseEntity implements 
 	 * ProductOption
 	 */
 	@ApiProperty({ type: () => ProductOption, isArray: true })
-	@OneToMany(() => ProductOption, (productOption) => productOption.group, {
+	@MultiORMOneToMany(() => ProductOption, (productOption) => productOption.group, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 	})
@@ -62,7 +63,7 @@ export class ProductOptionGroup extends TenantOrganizationBaseEntity implements 
 	 * ProductOptionGroupTranslation
 	 */
 	@ApiProperty({ type: () => ProductOptionGroupTranslation, isArray: true })
-	@OneToMany(() => ProductOptionGroupTranslation, (translation) => translation.reference, {
+	@MultiORMOneToMany(() => ProductOptionGroupTranslation, (translation) => translation.reference, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 	})

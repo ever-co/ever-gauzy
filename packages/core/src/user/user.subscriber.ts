@@ -13,40 +13,47 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Called before the entity is inserted into the database.
      *
-     * @param event
+     * @param event - The insert event.
      */
-    beforeInsert(event: InsertEvent<User>): void | Promise<any> {
+    async beforeInsert(event: InsertEvent<User>): Promise<void> {
         try {
             const entity = event.entity;
-            if (!entity.imageUrl) {
-                entity.imageUrl = getUserDummyImage(entity);
-            }
+
+            // Set a default imageUrl using a dummy image if not provided
+            entity.imageUrl = entity.imageUrl || getUserDummyImage(entity);
         } catch (error) {
-            console.log(error);
+            console.error('Error in UserSubscriber beforeInsert hook:', error);
         }
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after the entity is loaded from the database.
      *
-     * @param entity
-     * @param event
+     * @param entity - The loaded entity.
+     * @param event - The load event.
      */
-    afterLoad(entity: User, event?: LoadEvent<User>): void | Promise<any> {
+    async afterLoad(entity: User, event?: LoadEvent<User>): Promise<void> {
         try {
+            // Combine first name and last name into a single "name" property
             entity.name = [entity.firstName, entity.lastName].filter(Boolean).join(' ');
-            entity.employeeId = entity.employee ? entity.employee.id : null;
 
+            // Set employeeId based on the existence of the "employee" property
+            entity.employeeId = entity.employee?.id || null;
+
+            // Set isEmailVerified based on the existence of "emailVerifiedAt" property
             if ('emailVerifiedAt' in entity) {
                 entity.isEmailVerified = !!entity.emailVerifiedAt;
             }
-            if (!!entity['image']) {
-                entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+
+            // Set imageUrl based on the existence of the "image" property
+            if (entity['image']) {
+                // Fall back to the existing imageUrl property if fullUrl is not available
+                entity.imageUrl = entity['image'].fullUrl || entity.imageUrl;
             }
         } catch (error) {
-            console.log('Error while retrieve user subscriber', error);
+            console.error('Error in UserSubscriber afterLoad hook:', error);
         }
     }
 }

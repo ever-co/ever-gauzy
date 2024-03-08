@@ -216,7 +216,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Create a query builder for the Employee entity
-			const query = this.repository.createQueryBuilder(this.alias);
+			const query = this.repository.createQueryBuilder(this.tableName);
 
 			// Tables joins with relations
 			query.innerJoin(`${query.alias}.user`, 'user');

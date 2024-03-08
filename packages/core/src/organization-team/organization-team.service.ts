@@ -392,8 +392,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
-		// Create a query builder for the OrganizationTeam entity
-		const query = this.repository.createQueryBuilder(this.alias);
+    // Create a query builder for the OrganizationTeam entity
+		const query = this.repository.createQueryBuilder(this.tableName);
 
 		/**
 		 * Generates a subquery for selecting organization team IDs based on specified conditions.

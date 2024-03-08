@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, In, Not } from 'typeorm';
 import { IRole, ITenant, RolesEnum, IRoleMigrateInput, IImportRecord, SYSTEM_DEFAULT_ROLES } from '@gauzy/contracts';
@@ -7,22 +6,24 @@ import { TenantAwareCrudService } from './../core/crud';
 import { Role } from './role.entity';
 import { RequestContext } from './../core/context';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
-import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
+import { MikroOrmRoleRepository, TypeOrmRoleRepository } from './repository';
 
 @Injectable()
 export class RoleService extends TenantAwareCrudService<Role> {
+
 	constructor(
-		@InjectRepository(Role)
-		typeOrmRoleRepository: TypeOrmRoleRepository,
-
-		mikroOrmRoleRepository: MikroOrmRoleRepository,
-
+		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 		private readonly _commandBus: CommandBus
 	) {
 		super(typeOrmRoleRepository, mikroOrmRoleRepository);
 	}
 
+	/**
+	 * Creates multiple roles for each tenant and saves them.
+	 * @param tenants - An array of tenants for which roles will be created.
+	 * @returns A promise that resolves to an array of created roles.
+	 */
 	async createBulk(tenants: ITenant[]): Promise<IRole[] & Role[]> {
 		const roles: IRole[] = [];
 		const rolesNames = Object.values(RolesEnum);

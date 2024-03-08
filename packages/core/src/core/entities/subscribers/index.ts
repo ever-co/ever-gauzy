@@ -21,6 +21,7 @@ import {
 	OrganizationTeamJoinRequestSubscriber,
 	OrganizationTeamSubscriber,
 	PaymentSubscriber,
+	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,
@@ -34,8 +35,8 @@ import {
 	TenantSubscriber,
 	TimeOffRequestSubscriber,
 	TimeSlotSubscriber,
-	UserSubscriber,
-} from './internal';
+	UserSubscriber
+} from '../internal';
 
 /**
  * A map of the core TypeORM Subscribers.
@@ -63,6 +64,7 @@ export const coreSubscribers = [
 	OrganizationTeamJoinRequestSubscriber,
 	OrganizationTeamSubscriber,
 	PaymentSubscriber,
+	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
 	ScreenshotSubscriber,

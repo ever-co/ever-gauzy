@@ -1,33 +1,29 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Property } from '@mikro-orm/core';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Index, RelationId } from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
 import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
 import { BaseEntity, Tenant } from '../entities/internal';
-import { MikroManyToOne } from '../../core/decorators/entity/relations/mikro-orm';
+import { MultiORMManyToOne } from '../decorators/entity/relations';
+import { MultiORMColumn } from '../decorators';
 
 export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
 
-	@ApiProperty({ type: () => Tenant })
-	@ManyToOne(() => Tenant, {
+	@ApiPropertyOptional({ type: () => Tenant })
+	@IsOptional()
+	@MultiORMManyToOne(() => Tenant, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@MikroManyToOne(() => Tenant, {
-		nullable: true,
-		deleteRule: 'cascade',
-		persist: false,
-	})
-	@JoinColumn()
-	@IsOptional()
 	tenant?: ITenant;
 
 	@ApiProperty({ type: () => String })
-	@RelationId((t: TenantBaseEntity) => t.tenant)
 	@IsString()
 	@IsOptional()
+	@RelationId((t: TenantBaseEntity) => t.tenant)
 	@Index()
-	@Column({ nullable: true })
-	@Property({ nullable: true, })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	tenantId?: ITenant['id'];
 }

@@ -6,11 +6,7 @@ import {
 	IImageAsset
 } from '@gauzy/contracts';
 import {
-	Column,
-	OneToMany,
-	ManyToMany,
 	JoinTable,
-	ManyToOne,
 	JoinColumn
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -29,8 +25,9 @@ import {
 	ImageAsset
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment', { mikroOrmRepository: () => MikroOrmEquipmentRepository })
 export class Equipment extends TenantOrganizationBaseEntity implements IEquipment {
@@ -38,24 +35,24 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	type: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	serialNumber?: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -65,7 +62,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -75,13 +72,13 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	currency: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsOptional()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -91,7 +88,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
 	@IsOptional()
-	@Column()
+	@MultiORMColumn()
 	autoApproveShare: boolean;
 
 	/*
@@ -104,7 +101,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage, {
+	@MultiORMManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -120,7 +117,7 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	 * EquipmentSharing
 	 */
 	@ApiProperty({ type: () => EquipmentSharing, isArray: true })
-	@OneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment, {
+	@MultiORMOneToMany(() => EquipmentSharing, (equipmentSharing) => equipmentSharing.equipment, {
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings: IEquipmentSharing[];
@@ -132,9 +129,11 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	*/
 
 	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.equipments, {
+	@MultiORMManyToMany(() => Tag, (tag) => tag.equipments, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_equipment',
 	})
 	@JoinTable({ name: 'tag_equipment' })
 	tags: ITag[];
