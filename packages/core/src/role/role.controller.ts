@@ -95,7 +95,7 @@ export class RoleController extends CrudController<Role> {
 	})
 	@Get()
 	async findAll(): Promise<IPagination<IRole>> {
-		return this.roleService.findAll();
+		return await this.roleService.findAll();
 	}
 
 	/**

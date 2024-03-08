@@ -1,7 +1,6 @@
 import {
 	Index,
-	Column,
-	ManyToOne,
+
 	JoinColumn,
 	RelationId
 } from 'typeorm';
@@ -10,8 +9,9 @@ import { IsEmail, IsOptional, IsUUID } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('email_reset', { mikroOrmRepository: () => MikroOrmEmailResetRepository })
 export class EmailReset extends TenantBaseEntity implements IEmailReset {
@@ -19,27 +19,27 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@ApiProperty({ type: () => String })
 	@IsEmail()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String })
 	@IsEmail()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	oldEmail: string;
 
 	@Exclude({ toPlainOnly: true })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@Exclude({ toPlainOnly: true })
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	token: string;
 
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	expiredAt: Date;
 
 	isExpired: boolean;
@@ -53,7 +53,7 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	/**
 	 * User
 	 */
-	@ManyToOne(() => User, {
+	@MultiORMManyToOne(() => User, {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -64,6 +64,6 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@IsUUID()
 	@RelationId((it: EmailReset) => it.user)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 }

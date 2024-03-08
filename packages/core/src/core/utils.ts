@@ -1,18 +1,21 @@
-import { sample } from 'underscore';
 import { BadRequestException } from '@nestjs/common';
-import { IDateRange, IUser } from '@gauzy/contracts';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { SqliteDriver } from '@mikro-orm/sqlite';
+import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition } from '@mikro-orm/core';
+import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
+import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { MySqlDriver } from '@mikro-orm/mysql';
+import { FindManyOptions, FindOptionsOrder } from 'typeorm';
+import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
-import { SqliteDriver } from '@mikro-orm/sqlite';
-import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
-import { MySqlDriver } from '@mikro-orm/mysql';
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -363,19 +366,22 @@ export enum MultiORMEnum {
 export type MultiORM = 'typeorm' | 'mikro-orm';
 
 /**
- * Gets the ORM type based on the environment variable or a default value.
- * @param defaultValue The default ORM type.
- * @returns The ORM type ('typeorm' or 'mikro-orm').
+ * Get the Object-Relational Mapping (ORM) type from the environment variable `DB_ORM`.
+ * @param {MultiORM} defaultValue - The default ORM type to use if `DB_ORM` is not set or an invalid value is provided.
+ * @returns {MultiORM} - The determined ORM type.
  */
 export function getORMType(defaultValue: MultiORM = MultiORMEnum.TypeORM): MultiORM {
+	// Check if the environment variable `DB_ORM` is not set, and return the default value.
 	if (!process.env.DB_ORM) return defaultValue;
 
+	// Determine the ORM type based on the value of `DB_ORM`.
 	switch (process.env.DB_ORM) {
 		case MultiORMEnum.TypeORM:
 			return MultiORMEnum.TypeORM;
 		case MultiORMEnum.MikroORM:
 			return MultiORMEnum.MikroORM;
 		default:
+			// If an invalid value is provided, return the default value.
 			return defaultValue;
 	}
 }
@@ -457,12 +463,90 @@ export const flatten = (input: any): any => {
 	if (typeof input === 'object' && input !== null) {
 		return Object.keys(input).reduce((acc, key) => {
 			const value = input[key];
-			const nestedKeys = flatten(value);
-			const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
-			return acc.concat(newKey);
-		}, []);
+			if (value) {
+				const nestedKeys = flatten(value);
+				const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
+				return acc.concat(newKey);
+			}
+		}, []) || [];
 	}
 
 	// If input is neither an array nor an object, return an empty array
 	return [];
 };
+
+/**
+ * Concatenate an ID to the given MikroORM where condition.
+ *
+ * @param id - The ID to concatenate to the where condition.
+ * @param where - MikroORM where condition.
+ * @returns Concatenated MikroORM where condition.
+ */
+export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
+	if (where instanceof Array) {
+		where = where.concat({ id } as any);
+	} else {
+		where = {
+			id,
+			...(where ? where : ({} as any)),
+		};
+	}
+	return where;
+}
+
+/**
+ * Convert TypeORM's FindManyOptions to MikroORM's equivalent options.
+ *
+ * @param options - TypeORM's FindManyOptions.
+ * @returns An object with MikroORM's where and options.
+ */
+export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where: MikroFilterQuery<T>; mikroOptions: MikroORMFindOptions<T, any, any, any> } {
+	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
+		disableIdentityMap: true,
+	};
+	let where: MikroFilterQuery<T> = {};
+
+	// Parses TypeORM `where` option to MikroORM `where` option
+	if (options && options.where) {
+		where = options.where as MikroFilterQuery<T>;
+	}
+
+	// Parses TypeORM `select` option to MikroORM `fields` option
+	if (options && options.select) {
+		mikroOptions.fields = flatten(options.select) as string[];
+	}
+
+	// Parses TypeORM `relations` option to MikroORM `populate` option
+	if (options && options.relations) {
+		mikroOptions.populate = flatten(options.relations) as string[];
+	}
+
+	// Parses TypeORM `order` option to MikroORM `orderBy` option
+	if (options && options.order) {
+		mikroOptions.orderBy = parseOrderOptions(options.order) as OrderDefinition<T>;
+	}
+
+	// Parses TypeORM `skip` option to MikroORM `offset` option
+	if (options && options.skip) {
+		mikroOptions.offset = options.skip;
+	}
+
+	// Parses TypeORM `take` option to MikroORM `limit` option
+	if (options && options.take) {
+		mikroOptions.limit = options.take;
+	}
+
+	return { where, mikroOptions };
+}
+
+/**
+ * Parses TypeORM 'order' option to MikroORM 'orderBy' option.
+ * @param order TypeORM 'order' option
+ * @returns Parsed MikroORM 'orderBy' option
+ */
+export function parseOrderOptions<T>(order: FindOptionsOrder<any>) {
+	return Object.entries(order).reduce((acc, [key, value]) => {
+		acc[key] = `${value}`.toLowerCase();
+		return acc;
+	}, {});
+}

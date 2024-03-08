@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Index, ManyToOne, RelationId } from 'typeorm';
+import { Index, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskSize } from '@gauzy/contracts';
 import {
@@ -7,8 +7,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_size', { mikroOrmRepository: () => MikroOrmTaskSizeRepository })
 export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {
@@ -17,31 +18,31 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false, update: false })
+	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
 	fullIconUrl?: string;
@@ -54,7 +55,7 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.sizes, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.sizes, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -68,13 +69,13 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@IsUUID()
 	@RelationId((it: TaskSize) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Organization Team Relationship
 	 */
-	@ManyToOne(() => OrganizationTeam, (it) => it.sizes, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.sizes, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -91,6 +92,6 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@IsUUID()
 	@RelationId((it: TaskSize) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

@@ -31,6 +31,7 @@ startTracing(); // Start tracing if OTEL is enabled.
 import { ConflictException, INestApplication, Type } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { EventSubscriber } from '@mikro-orm/core';
 import { useContainer } from 'class-validator';
 import * as expressSession from 'express-session';
 import RedisStore from 'connect-redis';
@@ -299,7 +300,7 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 * Configure migration settings
 	 */
-	await setConfig({
+	setConfig({
 		dbConnectionOptions: {
 			...getMigrationsSetting()
 		}
@@ -316,13 +317,14 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	/**
 	 *
 	 */
-	await setConfig({
+	setConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>,
 			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
 		},
 		dbMikroOrmConnectionOptions: {
-			entities: entities as Array<Type<any>>
+			entities: entities as Array<Type<any>>,
+			subscribers: subscribers as Array<EventSubscriber>
 		}
 	});
 

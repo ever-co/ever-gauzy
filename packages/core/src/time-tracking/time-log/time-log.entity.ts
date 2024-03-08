@@ -1,4 +1,4 @@
-import { Column, RelationId, ManyToOne, JoinColumn, ManyToMany, Index, AfterLoad } from 'typeorm';
+import { RelationId, JoinColumn, Index, AfterLoad } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -25,8 +25,9 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { MultiORMEntity } from '../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
+import { MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
@@ -34,40 +35,40 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	stoppedAt?: Date;
 
 	/**
 	 * Edited timestamp column
 	 */
-	@Column({ type: 'timestamp' })
+	@MultiORMColumn({ type: 'timestamp' })
 	@IsDateString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	editedAt?: Date;
 
 	@ApiProperty({ type: () => String, enum: TimeLogType, default: TimeLogType.TRACKED })
 	@IsEnum(TimeLogType)
 	@Index()
-	@Column({ default: TimeLogType.TRACKED })
+	@MultiORMColumn({ default: TimeLogType.TRACKED })
 	logType: TimeLogType;
 
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsEnum(TimeLogSourceEnum)
 	@Index()
-	@Column({ default: TimeLogSourceEnum.WEB_TIMER })
+	@MultiORMColumn({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: TimeLogSourceEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'longtext' } : {})
 	})
@@ -76,28 +77,28 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	reason?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isBillable: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	isRunning?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ update: false, nullable: true })
+	@MultiORMColumn({ update: false, nullable: true })
 	version?: string;
 
 	/** Additional fields */
@@ -119,7 +120,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	/**
 	 * Employee relationship
 	 */
-	@ManyToOne(() => Employee, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => Employee, (it) => it.timeLogs, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -130,13 +131,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
 	/**
 	 * Timesheet relationship
 	 */
-	@ManyToOne(() => Timesheet, {
+	@MultiORMManyToOne(() => Timesheet, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -151,13 +152,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.timesheet)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	timesheetId?: ITimesheet['id'];
 
 	/**
 	 * Organization Project Relationship
 	 */
-	@ManyToOne(() => OrganizationProject, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => OrganizationProject, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -175,13 +176,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Task
 	 */
-	@ManyToOne(() => Task, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => Task, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -196,13 +197,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.task)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
 
 	/**
 	 * OrganizationContact
 	 */
-	@ManyToOne(() => OrganizationContact, (it) => it.timeLogs, {
+	@MultiORMManyToOne(() => OrganizationContact, (it) => it.timeLogs, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -217,13 +218,13 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.organizationContact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: IOrganizationContact['id'];
 
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, {
+	@MultiORMManyToOne(() => OrganizationTeam, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -238,7 +239,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 
 	/*
@@ -251,7 +252,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * TimeSlot
 	 */
 	@ApiProperty({ type: () => TimeSlot, isArray: true })
-	@ManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+	@MultiORMManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
 		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */

@@ -1,9 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
 } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -19,8 +17,9 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
+import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
@@ -29,31 +28,31 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	value: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	icon?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@Column({ default: false, update: false })
+	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
 	fullIconUrl?: string;
@@ -67,7 +66,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	/**
 	 * Image Asset
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -82,13 +81,13 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsUUID()
 	@RelationId((it: IssueType) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/**
 	 * Organization Project
 	 */
-	@ManyToOne(() => OrganizationProject, {
+	@MultiORMManyToOne(() => OrganizationProject, {
 		onDelete: 'CASCADE',
 	})
 	project?: IOrganizationProject;
@@ -98,13 +97,13 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsUUID()
 	@RelationId((it: IssueType) => it.project)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
 	/**
 	 * Organization Team
 	 */
-	@ManyToOne(() => OrganizationTeam, {
+	@MultiORMManyToOne(() => OrganizationTeam, {
 		onDelete: 'CASCADE',
 	})
 	organizationTeam?: IOrganizationTeam;
@@ -114,6 +113,6 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsUUID()
 	@RelationId((it: IssueType) => it.organizationTeam)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

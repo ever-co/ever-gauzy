@@ -1,6 +1,14 @@
 import { ManyToOne, OneToMany, OneToOne, ManyToMany } from "typeorm";
 
-export const TypeManyToOne = ManyToOne;
-export const TypeOneToMany = OneToMany;
-export const TypeOneToOne = OneToOne;
-export const TypeManyToMany = ManyToMany;
+/**
+ * TypeORM Decorator Aliases.
+ *
+ * This module provides aliases for commonly used TypeORM decorators.
+ * It simplifies import statements and enhances code readability.
+ */
+export {
+    ManyToOne as TypeOrmManyToOne,
+    OneToMany as TypeOrmOneToMany,
+    OneToOne as TypeOrmOneToOne,
+    ManyToMany as TypeOrmManyToMany,
+};

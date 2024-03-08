@@ -5,11 +5,8 @@ import {
 	IOrganizationContact
 } from '@gauzy/contracts';
 import {
-	Column,
 	JoinColumn,
-	ManyToOne,
 	RelationId,
-	OneToOne,
 	Index
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
@@ -27,8 +24,9 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
+import { MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
@@ -36,7 +34,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	public title: string;
 
 	@ApiProperty({ type: () => Number })
@@ -44,7 +42,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsInt()
 	@Min(0)
 	@Max(5)
-	@Column()
+	@MultiORMColumn()
 	public probability?: number;
 
 	/*
@@ -57,7 +55,9 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@ManyToOne(() => User)
+	@MultiORMManyToOne(() => User, {
+		joinColumn: 'createdByUserId',
+	})
 	@JoinColumn({ name: 'createdByUserId' })
 	public createdBy: IUser;
 
@@ -66,14 +66,14 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsString()
 	@IsNotEmpty()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	public createdByUserId: string;
 
 	/**
 	 * PipelineStage
 	 */
 	@ApiProperty({ type: () => PipelineStage })
-	@ManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
 	@JoinColumn()
 	public stage: IPipelineStage;
 
@@ -82,7 +82,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsNotEmpty()
 	@IsString()
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	public stageId: string;
 
 	/*
@@ -95,7 +95,11 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	 * OrganizationContact
 	 */
 	@ApiProperty({ type: () => OrganizationContact })
-	@OneToOne(() => OrganizationContact, { onDelete: 'CASCADE' })
+	@MultiORMOneToOne(() => OrganizationContact, {
+		onDelete: 'CASCADE',
+		owner: true,
+		joinColumn: 'clientId',
+	})
 	@JoinColumn()
 	public client: IOrganizationContact;
 
@@ -103,6 +107,6 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@RelationId((it: Deal) => it.client)
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	public clientId: string;
 }

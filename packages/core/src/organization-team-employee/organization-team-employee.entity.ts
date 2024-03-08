@@ -1,10 +1,11 @@
 import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
-import { Column, ManyToOne, RelationId, Index } from 'typeorm';
+import { RelationId, Index } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Employee, OrganizationTeam, Role, Task, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
+import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team_employee', { mikroOrmRepository: () => MikroOrmOrganizationTeamEmployeeRepository })
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity implements IOrganizationTeamEmployee {
@@ -14,7 +15,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Column({ type: Boolean, nullable: true, default: true })
+	@MultiORMColumn({ type: Boolean, nullable: true, default: true })
 	public isTrackingEnabled?: boolean;
 
 	/*
@@ -27,7 +28,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	 * member's active task
 	 */
 	@ApiProperty({ type: () => Task })
-	@ManyToOne(() => Task, (it) => it.organizationTeamEmployees, {
+	@MultiORMManyToOne(() => Task, (it) => it.organizationTeamEmployees, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -38,14 +39,14 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.activeTask)
 	@Index()
-	@Column({ type: String, nullable: true })
+	@MultiORMColumn({ type: String, nullable: true, relationId: true })
 	public activeTaskId?: ITask['id'];
 
 	/**
 	 * OrganizationTeam
 	 */
 	@ApiProperty({ type: () => OrganizationTeam })
-	@ManyToOne(() => OrganizationTeam, (it) => it.members, {
+	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.members, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -56,14 +57,14 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	public organizationTeamId: IOrganizationTeam['id'];
 
 	/**
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@ManyToOne(() => Employee, (employee) => employee.teams, {
+	@MultiORMManyToOne(() => Employee, (employee) => employee.teams, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
@@ -72,14 +73,14 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String })
 	@RelationId((it: OrganizationTeamEmployee) => it.employee)
 	@Index()
-	@Column()
+	@MultiORMColumn({ relationId: true })
 	public employeeId: IEmployee['id'];
 
 	/**
 	 * Role
 	 */
 	@ApiPropertyOptional({ type: () => Role })
-	@ManyToOne(() => Role, {
+	@MultiORMManyToOne(() => Role, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -93,11 +94,11 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.role)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	public roleId?: IRole['id'];
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	public order: number;
 }

@@ -1,15 +1,6 @@
 import slugify from 'slugify';
 
 /**
- * Checks if a value is not null or undefined.
- * @param value The value to be checked.
- * @returns true if the value is not null or undefined, false otherwise.
- */
-export function isNotNullOrUndefined<T>(value: T | undefined | null): boolean {
-	return value !== undefined && value !== null;
-}
-
-/**
  * Check is function .
  * @param item
  * @returns {boolean}
@@ -134,8 +125,17 @@ export function removeDuplicates(data: string[]) {
  * @param obj
  * @returns
  */
-export function isNullOrUndefined<T>(string: T | null | undefined): string is null | undefined {
-	return typeof string === 'undefined' || string === null;
+export function isNullOrUndefined<T>(value: T | null | undefined): value is null | undefined {
+	return value === undefined || value === null;
+}
+
+/**
+ * Checks if a value is not null or undefined.
+ * @param value The value to be checked.
+ * @returns true if the value is not null or undefined, false otherwise.
+ */
+export function isNotNullOrUndefined<T>(value: T | undefined | null): value is T {
+	return value !== undefined && value !== null;
 }
 
 /**

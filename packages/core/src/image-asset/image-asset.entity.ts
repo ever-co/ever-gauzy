@@ -2,7 +2,6 @@ import { FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@g
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { Column, ManyToMany, OneToMany } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	Product,
@@ -10,8 +9,9 @@ import {
 	Equipment,
 	Warehouse
 } from './../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
+import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
@@ -19,37 +19,37 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	name: string;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Column()
+	@MultiORMColumn()
 	url: string
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	thumb?: string;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	width?: number;
 
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Column({ default: 0 })
+	@MultiORMColumn({ default: 0 })
 	height?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -58,18 +58,18 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 
 	@ApiProperty({ type: () => Boolean })
 	@IsBoolean()
-	@Column({ default: false })
+	@MultiORMColumn({ default: false })
 	isFeatured?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	externalProviderId?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
 	@Exclude({ toPlainOnly: true })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: FileStorageProviderEnum
@@ -91,7 +91,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product, isArray: true })
-	@OneToMany(() => Product, (product) => product.featuredImage, {
+	@MultiORMOneToMany(() => Product, (product) => product.featuredImage, {
 		onDelete: 'SET NULL'
 	})
 	productFeaturedImage?: Product[];
@@ -100,7 +100,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Equipment
 	 */
 	@ApiProperty({ type: () => Equipment, isArray: true })
-	@OneToMany(() => Equipment, (equipment) => equipment.image, {
+	@MultiORMOneToMany(() => Equipment, (equipment) => equipment.image, {
 		onDelete: 'SET NULL'
 	})
 	equipmentImage?: IEquipment[];
@@ -109,7 +109,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Warehouse
 	 */
 	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@OneToMany(() => Warehouse, (warehouse) => warehouse.logo, {
+	@MultiORMOneToMany(() => Warehouse, (warehouse) => warehouse.logo, {
 		onDelete: 'SET NULL'
 	})
 	warehouses?: IWarehouse[];
@@ -124,6 +124,6 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	 * Product
 	 */
 	@ApiProperty({ type: () => Product, isArray: true })
-	@ManyToMany(() => Product, (product) => product.gallery)
+	@MultiORMManyToMany(() => Product, (product) => product.gallery)
 	productGallery?: Product[];
 }

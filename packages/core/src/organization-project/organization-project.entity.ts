@@ -1,10 +1,6 @@
 import {
-	Column,
 	Index,
 	JoinColumn,
-	ManyToOne,
-	ManyToMany,
-	OneToMany,
 	RelationId,
 	JoinTable,
 } from 'typeorm';
@@ -58,66 +54,67 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
 
 	@Index()
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	startDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billing: ProjectBillingEnum;
 
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	currency: CurrenciesEnum;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	public: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	owner: ProjectOwnerEnum;
 
-	@Column({ default: TaskListTypeEnum.GRID })
+	@MultiORMColumn({ default: TaskListTypeEnum.GRID })
 	taskListType: TaskListTypeEnum;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	code?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	color?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billable?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	billingFlat?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	openSource?: boolean;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projectUrl?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	openSourceProjectUrl?: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		default: OrganizationProjectBudgetTypeEnum.COST,
 		...(isMySQL() ?
@@ -127,31 +124,31 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 
-	@Column({ nullable: true, default: 0 })
+	@MultiORMColumn({ nullable: true, default: 0 })
 	membersCount?: number;
 
-	@Column({ length: 500, nullable: true })
+	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ default: true, nullable: true })
+	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSync?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@Index()
-	@Column({ default: true, nullable: true })
+	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	syncTag?: string;
 
 	/*
@@ -163,7 +160,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * OrganizationGithubRepository Relationship
 	 */
-	@ManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
+	@MultiORMManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -181,13 +178,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.repository)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	repositoryId?: IOrganizationGithubRepository['id'];
 
 	/**
 	 * Organization Contact Relationship
 	 */
-	@ManyToOne(() => OrganizationContact, (it) => it.projects, {
+	@MultiORMManyToOne(() => OrganizationContact, (it) => it.projects, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -208,13 +205,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.organizationContact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: IOrganizationContact['id'];
 
 	/**
 	 * ImageAsset Relationship
 	 */
-	@ManyToOne(() => ImageAsset, {
+	@MultiORMManyToOne(() => ImageAsset, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -235,7 +232,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.image)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
 	/*
@@ -247,73 +244,73 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Organization Tasks Relationship
 	 */
-	@OneToMany(() => Task, (it) => it.project)
+	@MultiORMOneToMany(() => Task, (it) => it.project)
 	tasks?: ITask[];
 
 	/**
 	 * TimeLog Relationship
 	 */
-	@OneToMany(() => TimeLog, (it) => it.project)
+	@MultiORMOneToMany(() => TimeLog, (it) => it.project)
 	timeLogs?: ITimeLog[];
 
 	/**
 	 * Organization Invoice Items Relationship
 	 */
-	@OneToMany(() => InvoiceItem, (it) => it.project)
+	@MultiORMOneToMany(() => InvoiceItem, (it) => it.project)
 	invoiceItems?: IInvoiceItem[];
 
 	/**
 	 * Organization Sprints Relationship
 	 */
-	@OneToMany(() => OrganizationSprint, (it) => it.project)
+	@MultiORMOneToMany(() => OrganizationSprint, (it) => it.project)
 	organizationSprints?: IOrganizationSprint[];
 
 	/**
 	 * Organization Payments Relationship
 	 */
-	@OneToMany(() => Payment, (it) => it.project)
+	@MultiORMOneToMany(() => Payment, (it) => it.project)
 	payments?: IPayment[];
 
 	/**
 	 * Expense Relationship
 	 */
-	@OneToMany(() => Expense, (it) => it.project)
+	@MultiORMOneToMany(() => Expense, (it) => it.project)
 	expenses?: IExpense[];
 
 	/**
 	 * Activity Relationship
 	 */
-	@OneToMany(() => Activity, (it) => it.project)
+	@MultiORMOneToMany(() => Activity, (it) => it.project)
 	activities?: IActivity[];
 
 	/**
 	 * Project Statuses
 	 */
-	@OneToMany(() => TaskStatus, (it) => it.project)
+	@MultiORMOneToMany(() => TaskStatus, (it) => it.project)
 	statuses?: ITaskStatus[];
 
 	/**
 	 * Project Related Issue Type Relationship
 	 */
-	@OneToMany(() => TaskRelatedIssueType, (it) => it.project)
+	@MultiORMOneToMany(() => TaskRelatedIssueType, (it) => it.project)
 	relatedIssueTypes?: ITaskRelatedIssueType[];
 
 	/**
 	 * Project Priorities Relationship
 	 */
-	@OneToMany(() => TaskPriority, (it) => it.project)
+	@MultiORMOneToMany(() => TaskPriority, (it) => it.project)
 	priorities?: ITaskPriority[];
 
 	/**
 	 * Project Sizes Relationship
 	 */
-	@OneToMany(() => TaskSize, (it) => it.project)
+	@MultiORMOneToMany(() => TaskSize, (it) => it.project)
 	sizes?: ITaskSize[];
 
 	/**
 	 * Project Versions Relationship
 	 */
-	@OneToMany(() => TaskVersion, (it) => it.project)
+	@MultiORMOneToMany(() => TaskVersion, (it) => it.project)
 	versions?: ITaskVersion[];
 
 	/*
@@ -325,11 +322,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Tags Relationship
 	 */
-	@ManyToMany(() => Tag, (it) => it.organizationProjects, {
+	@MultiORMManyToMany(() => Tag, (it) => it.organizationProjects, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'tag_organization_project',
 	})
 	@JoinTable({
 		name: 'tag_organization_project',
@@ -339,7 +338,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Project Members Relationship
 	 */
-	@ManyToMany(() => Employee, (it) => it.projects, {
+	@MultiORMManyToMany(() => Employee, (it) => it.projects, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
@@ -350,11 +349,13 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * Organization Teams Relationship
 	 */
-	@ManyToMany(() => OrganizationTeam, (it) => it.projects, {
+	@MultiORMManyToMany(() => OrganizationTeam, (it) => it.projects, {
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'organization_project_team',
 	})
 	@JoinTable({
 		name: 'organization_project_team'

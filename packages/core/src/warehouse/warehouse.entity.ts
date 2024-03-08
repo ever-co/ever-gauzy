@@ -1,13 +1,8 @@
 import {
-	Column,
-	ManyToOne,
 	JoinColumn,
-	ManyToMany,
 	JoinTable,
-	OneToOne,
 	Index,
-	RelationId,
-	OneToMany
+	RelationId
 } from 'typeorm';
 import {
 	ApiProperty,
@@ -29,30 +24,31 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
+import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('warehouse', { mikroOrmRepository: () => MikroOrmWarehouseRepository })
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	code: string;
 
 	@ApiProperty({ type: () => String })
-	@Column()
+	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Boolean })
-	@Column({ default: true })
+	@MultiORMColumn({ default: true })
 	active: boolean;
 
 	/*
@@ -65,7 +61,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@ManyToOne(() => ImageAsset, (imageAsset) => imageAsset.warehouses, {
+	@MultiORMManyToOne(() => ImageAsset, (imageAsset) => imageAsset.warehouses, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
@@ -74,7 +70,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: string;
 
 	/*
@@ -87,9 +83,10 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * Contact
 	 */
 	@ApiProperty({ type: () => Contact })
-	@OneToOne(() => Contact, {
+	@MultiORMOneToOne(() => Contact, {
 		cascade: true,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
@@ -97,7 +94,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: string;
 
 	/*
@@ -110,7 +107,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	 * WarehouseProduct
 	 */
 	@ApiProperty({ type: () => WarehouseProduct, isArray: true })
-	@OneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.warehouse, {
+	@MultiORMOneToMany(() => WarehouseProduct, (warehouseProduct) => warehouseProduct.warehouse, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -123,14 +120,20 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	*/
 
 	/**
-	 * Tag
+	 * Warehouse Tags
 	 */
-	@ApiProperty({ type: () => Tag, isArray: true })
-	@ManyToMany(() => Tag, (tag) => tag.warehouses, {
+	@MultiORMManyToMany(() => Tag, (it) => it.warehouses, {
+		/** Defines the database cascade action on update. */
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE'
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE',
+		/** Indicates that this entity (Warehouse) is the owner side of the relationship. */
+		owner: true,
+		/** Specifies the name of the pivot table in the database. */
+		pivotTable: 'tag_warehouse'
 	})
 	@JoinTable({
+		/** Specifies the name of the pivot table in the database. */
 		name: 'tag_warehouse'
 	})
 	tags?: ITag[];
@@ -138,8 +141,8 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 	/**
 	 * Merchants
 	 */
-	@ApiProperty({ type: () => Warehouse, isArray: true })
-	@ManyToMany(() => Merchant, (it) => it.warehouses, {
+	@MultiORMManyToMany(() => Merchant, (it) => it.warehouses, {
+		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	merchants?: IMerchant[];

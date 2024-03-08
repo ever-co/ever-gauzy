@@ -1,9 +1,5 @@
 import {
-	Column,
-	OneToOne,
 	JoinColumn,
-	OneToMany,
-	ManyToOne,
 	RelationId,
 	Index
 } from 'typeorm';
@@ -24,19 +20,20 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
+import { MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_feedback', { mikroOrmRepository: () => MikroOrmCandidateFeedbackRepository })
 export class CandidateFeedback extends TenantOrganizationBaseEntity
 	implements ICandidateFeedback {
 
 	@ApiProperty({ type: () => String })
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	description: string;
 
 	@ApiPropertyOptional({ type: () => Number })
-	@Column({
+	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -44,7 +41,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	rating: number;
 
 	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
-	@Column({
+	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
 		enum: CandidateStatusEnum
@@ -61,7 +58,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@ManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
+	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
 		onDelete: 'CASCADE'
 	})
 	candidate?: ICandidate;
@@ -69,14 +66,14 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.candidate)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	candidateId?: ICandidate['id'];
 
 	/**
 	 * Candidate Interview
 	 */
 	@ApiProperty({ type: () => CandidateInterview })
-	@ManyToOne(() => CandidateInterview, (candidateInterview) => candidateInterview.feedbacks, {
+	@MultiORMManyToOne(() => CandidateInterview, (candidateInterview) => candidateInterview.feedbacks, {
 		onDelete: 'CASCADE'
 	})
 	interview?: ICandidateInterview;
@@ -84,7 +81,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.interview)
 	@Index()
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewId?: ICandidateInterview['id'];
 	/*
 	|--------------------------------------------------------------------------
@@ -96,7 +93,7 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate Criterions Rating
 	 */
 	@ApiProperty({ type: () => CandidateCriterionsRating })
-	@OneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, {
+	@MultiORMOneToMany(() => CandidateCriterionsRating, (criterionsRating) => criterionsRating.feedback, {
 		cascade: true
 	})
 	criterionsRating?: ICandidateCriterionsRating[];
@@ -111,12 +108,12 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	 * Candidate Interviewers
 	 */
 	@ApiProperty({ type: () => CandidateInterviewers })
-	@OneToOne(() => CandidateInterviewers)
+	@MultiORMOneToOne(() => CandidateInterviewers, { owner: true })
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.interviewer)
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewerId?: ICandidateInterviewers['id'];
 }

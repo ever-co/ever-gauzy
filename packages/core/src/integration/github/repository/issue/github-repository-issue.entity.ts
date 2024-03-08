@@ -1,11 +1,12 @@
-import { Column, Index, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import { Index, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../../../../core/entities/internal';
-import { MultiORMEntity } from '../../../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity } from '../../../../core/decorators/entity';
 import { OrganizationGithubRepository } from './../github-repository.entity';
 import { MikroOrmOrganizationGithubRepositoryIssueRepository } from './repository/mikro-orm-github-repository-issue.repository';
+import { MultiORMManyToOne } from '../../../../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_github_repository_issue', { mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryIssueRepository })
 export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEntity implements IOrganizationGithubRepositoryIssue {
@@ -14,14 +15,14 @@ export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEnt
     @IsNotEmpty()
     @IsNumber()
     @Index()
-    @Column()
+    @MultiORMColumn()
     issueId: number;
 
     @ApiProperty({ type: () => Number })
     @IsNotEmpty()
     @IsString()
     @Index()
-    @Column()
+    @MultiORMColumn()
     issueNumber: number;
 
     /*
@@ -33,7 +34,7 @@ export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEnt
     /**
      * Organization Github Repository
      */
-    @ManyToOne(() => OrganizationGithubRepository, {
+    @MultiORMManyToOne(() => OrganizationGithubRepository, {
         /** Indicates if relation column value can be nullable or not. */
         nullable: true,
 
@@ -48,6 +49,6 @@ export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEnt
     @IsUUID()
     @RelationId((it: OrganizationGithubRepositoryIssue) => it.repository)
     @Index()
-    @Column({ nullable: true })
+    @MultiORMColumn({ nullable: true, relationId: true })
     repositoryId?: IOrganizationGithubRepository['id'];
 }
