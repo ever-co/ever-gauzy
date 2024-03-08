@@ -20,7 +20,17 @@ export interface IEntityEventSubscriber<Entity> {
      * @param entity The entity that is about to be created.
      * @returns {Promise<void>}
      */
-    beforeEntityCreate?(entity: Entity): Promise<void>;
+    beforeEntityCreate(entity: Entity): Promise<void>;
+
+    /**
+     * Optional method that is called before an entity is updated.
+     * Implement this method to define specific logic to be executed
+     * just before the updation of an entity
+     *
+     * @param entity The entity that is about to be updated.
+     * @returns {Promise<void>}
+     */
+    beforeEntityUpdate(entity: Entity): Promise<void>;
 
     /**
      * Optional method that is called after an entity is created.
@@ -30,7 +40,7 @@ export interface IEntityEventSubscriber<Entity> {
      * @param entity The entity that was created.
      * @returns {Promise<void>}
      */
-    afterEntityCreate?(entity: Entity): Promise<void>;
+    afterEntityCreate(entity: Entity): Promise<void>;
 
     /**
      * Optional method that is called after an entity is loaded.
@@ -40,5 +50,5 @@ export interface IEntityEventSubscriber<Entity> {
      * @param entity The entity that was loaded.
      * @returns {Promise<void>}
      */
-    afterEntityLoad?(entity: Entity): Promise<void>;
+    afterEntityLoad(entity: Entity): Promise<void>;
 }

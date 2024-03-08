@@ -1,5 +1,9 @@
 import { EventArgs, EventSubscriber as MikroEntitySubscriberInterface } from '@mikro-orm/core';
-import { InsertEvent, LoadEvent, EntitySubscriberInterface as TypeOrmEntitySubscriberInterface } from 'typeorm';
+import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
+import { InsertEvent, LoadEvent, EntitySubscriberInterface as TypeOrmEntitySubscriberInterface, UpdateEvent } from 'typeorm';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 /**
  * Implements event handling for entity creation.
@@ -36,11 +40,46 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
     }
 
     /**
-     * Common method invoked before an entity is created or inserted.
-     * Extend this method to implement specific logic before entity creation.
-     * This method should handle any asynchronous operations and errors.
+     * Abstract method for pre-creation logic of an entity. Implement in subclasses for custom actions.
+     *
+     * @param entity The entity that is about to be updated.
+     * @returns {Promise<void>}
      */
     protected abstract beforeEntityCreate(entity: Entity): Promise<void>;
+
+    /**
+     * Handles the 'before update' event for both MikroORM and TypeORM entities. It determines the
+     * type of ORM being used and appropriately casts the event to either EventArgs<Entity> or UpdateEvent<Entity>.
+     *
+     * @param event The event object which can be either EventArgs<Entity> from MikroORM or UpdateEvent<Entity> from TypeORM.
+     * @returns {Promise<void>} A promise that resolves when the pre-update process is complete. Any errors during processing are caught and logged.
+     */
+    async beforeUpdate(event: EventArgs<Entity> | UpdateEvent<Entity>): Promise<void> {
+        try {
+            let entity: Entity;
+            switch (ormType) {
+                case MultiORMEnum.MikroORM:
+                    entity = (event as EventArgs<Entity>).entity;
+                    break;
+                case MultiORMEnum.TypeORM:
+                    entity = (event as UpdateEvent<Entity>).entity as Entity;
+                    break;
+                default:
+                    throw new Error(`Unsupported ORM type: ${ormType}`);
+            }
+            await this.beforeEntityUpdate(entity);
+        } catch (error) {
+            console.error("Error in beforeUpdate:", error);
+        }
+    }
+
+    /**
+     * Abstract method for actions before updating an entity. Override in subclasses for specific logic.
+     *
+     * @param entity The entity that is about to be updated.
+     * @returns {Promise<void>}
+     */
+    protected abstract beforeEntityUpdate(entity: Entity): Promise<void>;
 
     /**
      * Handles the event after an entity has been created in MikroORM.
@@ -71,9 +110,10 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
     }
 
     /**
-     * Common method invoked after an entity is created or inserted.
-     * Extend this method to implement specific logic after entity creation.
-     * This method should handle any asynchronous operations and errors.
+     * Abstract method for post-creation actions on an entity. Override in subclasses to define behavior.
+     *
+     * @param entity The entity that is about to be created.
+     * @returns {Promise<void>}
      */
     protected abstract afterEntityCreate(entity: Entity): Promise<void>;
 
@@ -107,12 +147,10 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
     }
 
     /**
-     * Common method to handle logic after an entity is loaded.
-     * This method should be implemented in subclasses to define specific
-     * operations to be performed when an entity is loaded.
+     * Abstract method for processing after an entity is loaded. Implement in subclasses for custom behavior.
      *
      * @param entity The entity that has been loaded.
-     * @returns {Promise<void>} Can perform asynchronous operations.
+     * @returns {Promise<void>}
      */
     protected abstract afterEntityLoad(entity: Entity): Promise<void>;
 }

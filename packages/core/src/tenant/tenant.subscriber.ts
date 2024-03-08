@@ -1,4 +1,4 @@
-import { EventSubscriber, UpdateEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { getTenantLogo } from "../core/utils";
 import { Tenant } from "./tenant.entity";
 import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
@@ -43,20 +43,14 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
     }
 
     /**
-     * Called before entity is updated in the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeUpdate(event: UpdateEvent<Tenant>): void | Promise<any> {
+    async beforeEntityUpdate(entity: Tenant): Promise<void> {
         try {
-            if (event) {
-                const { entity } = event;
-                if (!entity.logo) {
-                    entity.logo = getTenantLogo(entity.name);
-                }
-            }
+            await this.updateTenantLogo(entity);
         } catch (error) {
-            console.log(error);
+            console.error('Error in beforeEntityUpdate:', error);
         }
     }
 

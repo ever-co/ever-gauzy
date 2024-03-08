@@ -34,11 +34,9 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
     }
 
     /**
-     * Default implementation of the before entity creation event.
-     * This method is called before a new entity is persisted.
-     * Subclasses can override this method.
+     * Called before a new entity is persisted. Override in subclasses to define custom pre-creation logic.
      *
-     * @param entity The entity that is about to be created.
+     * @param entity The entity about to be created.
      * @returns {Promise<void>}
      */
     async beforeEntityCreate(entity: Entity): Promise<void> {
@@ -46,10 +44,19 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
     }
 
     /**
-     * Default implementation of the after entity creation event.
-     * Subclasses can override this method.
+     * Invoked before an entity update. Use in subclasses for specific update preparation.
      *
-     * @param entity The entity that was created.
+     * @param entity The entity being updated.
+     * @returns {Promise<void>}
+     */
+    async beforeEntityUpdate(entity: Entity): Promise<void> {
+        // Default empty implementation
+    }
+
+    /**
+     * Executed after an entity is created. Subclasses can override for post-creation actions.
+     *
+     * @param entity The newly created entity.
      * @returns {Promise<void>}
      */
     async afterEntityCreate(entity: Entity): Promise<void> {
@@ -57,8 +64,7 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
     }
 
     /**
-     * Default implementation of the after entity load event.
-     * Subclasses can override this method.
+     * Called following the loading of an entity. Ideal for post-load processing in subclasses.
      *
      * @param entity The entity that was loaded.
      * @returns {Promise<void>}
