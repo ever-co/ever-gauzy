@@ -74,11 +74,27 @@ export class AuthService extends SocialAuthService {
 	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
 			const user = await this.userService.findOneByOptions({
-				where: {
-					email,
-					isActive: true,
-					isArchived: false
-				},
+				where: [
+					{
+						email,
+						isActive: true,
+						isArchived: false,
+						hash: Not(IsNull()),
+						employee: {
+							id: IsNull()
+						}
+					},
+					{
+						email,
+						isActive: true,
+						isArchived: false,
+						hash: Not(IsNull()),
+						employee: {
+							isActive: true, // If employees are inactive
+							isArchived: false
+						}
+					}
+				],
 				relations: {
 					employee: true,
 					role: true
@@ -87,10 +103,7 @@ export class AuthService extends SocialAuthService {
 					createdAt: 'DESC'
 				}
 			});
-			// If employees are inactive
-			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
-				throw new UnauthorizedException();
-			}
+
 			// If password is not matching with any user
 			if (!(await bcrypt.compare(password, user.hash))) {
 				throw new UnauthorizedException();
@@ -120,10 +133,11 @@ export class AuthService extends SocialAuthService {
 	 * @returns A promise that resolves to a response with user workspaces.
 	 * @throws UnauthorizedException if authentication fails.
 	 */
-	async signinWorkspacesByEmailPassword({
-		email,
-		password
-	}: IUserWorkspaceSigninInput): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesByEmailPassword(
+		input: IUserWorkspaceSigninInput,
+		includeTeams: boolean
+	): Promise<IUserSigninWorkspaceResponse> {
+		const { email, password } = input;
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
 			where: [
@@ -178,31 +192,15 @@ export class AuthService extends SocialAuthService {
 			codeExpireAt
 		});
 
-		// Create an array of user objects with relevant data
-		const workspaces: IWorkspaceResponse[] = users.map((user: IUser) => ({
-			user: new User({
-				id: user.id,
-				email: user.email || null,
-				name: user.name,
-				imageUrl: user.imageUrl,
-				tenant: new Tenant({
-					id: user.tenant ? user.tenantId : null,
-					name: user.tenant?.name || '',
-					logo: user.tenant?.logo || ''
-				})
-			}),
-			token: this.generateToken(user, code)
-		}));
-
 		// Determining the response based on the number of matching users
-		const response: IUserSigninWorkspaceResponse = {
-			workspaces: workspaces,
-			confirmed_email: email,
-			show_popup: workspaces.length > 1,
-			total_workspaces: workspaces.length
-		};
+		const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
+			users,
+			code,
+			email,
+			includeTeams
+		});
 
-		if (workspaces.length > 0) {
+		if (response.total_workspaces > 0) {
 			return response;
 		} else {
 			console.log('Error while signin workspace: %s');
@@ -803,56 +801,16 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
-			// Create an array of user objects with relevant data
-			const workspaces: IWorkspaceResponse[] = [];
-
-			// Create an array of user objects with relevant data
-			for await (const user of users) {
-				const userId = user.id;
-				const tenantId = user.tenant ? user.tenantId : null;
-				const employeeId = user.employee ? user.employeeId : null;
-
-				const workspace: IWorkspaceResponse = {
-					user: new User({
-						id: user.id,
-						email: user.email || null,
-						name: user.name || null,
-						imageUrl: user.imageUrl || null,
-						tenant: new Tenant({
-							id: user.tenant ? user.tenantId : null,
-							name: user.tenant?.name || null,
-							logo: user.tenant?.logo || null
-						})
-					}),
-					token: this.generateToken(user, code)
-				};
-
-				try {
-					if (includeTeams) {
-						console.time('Get teams for a user within a specific tenant');
-
-						const teams = await this.getTeamsForUser(tenantId, userId, employeeId);
-						workspace['current_teams'] = teams;
-
-						console.timeEnd('Get teams for a user within a specific tenant');
-					}
-				} catch (error) {
-					console.log('Error while getting specific teams for specific tenant: %s', error?.message);
-				}
-
-				workspaces.push(workspace);
-			}
-
 			// Determining the response based on the number of matching users
-			const response: IUserSigninWorkspaceResponse = {
-				workspaces,
-				confirmed_email: email,
-				show_popup: workspaces.length > 1,
-				total_workspaces: workspaces.length
-			};
+			const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
+				users,
+				code,
+				email,
+				includeTeams
+			});
 
 			// Return the response if there are matching users
-			if (workspaces.length > 0) {
+			if (response.total_workspaces > 0) {
 				return response;
 			}
 			throw new UnauthorizedException();
@@ -1029,5 +987,95 @@ export class AuthService extends SocialAuthService {
 		query.orderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
 
 		return await query.getRawMany();
+	}
+
+	/**
+	 * Creates workspace response objects for a list of users.
+	 *
+	 * @param {Object} params - The parameters.
+	 * @param {IUser[]} params.users - The list of users.
+	 * @param {string} params.email - The email address.
+	 * @param {string} params.code - The code for workspace signin.
+	 * @param {boolean} params.includeTeams - Flag to include teams in the response.
+	 * @returns {Promise<IUserSigninWorkspaceResponse>} A promise that resolves to the workspace response.
+	 */
+	private async createUserSigninWorkspaceResponse({
+		users,
+		email,
+		code,
+		includeTeams
+	}: {
+		users: IUser[],
+		email: string,
+		code: string,
+		includeTeams: boolean
+	}): Promise<IUserSigninWorkspaceResponse> {
+		const workspaces: IWorkspaceResponse[] = [];
+
+		for (const user of users) {
+			const workspace = await this.createWorkspace(user, code, includeTeams);
+			workspaces.push(workspace);
+		}
+
+		return {
+			workspaces,
+			confirmed_email: email,
+			show_popup: workspaces.length > 1,
+			total_workspaces: workspaces.length
+		};
+	}
+
+	/**
+	 * Creates a workspace response object for a given user.
+	 *
+	 * @param user The user object of type IUser.
+	 * @param code The code used for generating the user token.
+	 * @param includeTeams Flag indicating whether to include team information in the response.
+	 * @returns A promise that resolves to the workspace response object of type IWorkspaceResponse.
+	 */
+	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
+		const tenantId = user.tenant ? user.tenantId : null;
+		const employeeId = user.employee ? user.employeeId : null;
+
+		const workspace: IWorkspaceResponse = {
+			user: this.createUserObject(user),
+			token: this.generateToken(user, code)
+		};
+
+		if (includeTeams) {
+			try {
+				console.time('Get teams for a user within a specific tenant');
+
+				const teams = await this.getTeamsForUser(tenantId, user.id, employeeId);
+				workspace['current_teams'] = teams;
+
+				console.timeEnd('Get teams for a user within a specific tenant');
+			} catch (error) {
+				console.error('Error while getting specific teams for specific tenant:', error?.message);
+				// Optionally, you might want to handle the error more explicitly here.
+			}
+		}
+
+		return workspace;
+	}
+
+	/**
+	 * Creates a new User object from a given IUser object.
+	 *
+	 * @param user The IUser object to be transformed.
+	 * @returns A new User object with properties mapped from the IUser object.
+	 */
+	private createUserObject(user: IUser): User {
+		return new User({
+			id: user.id,
+			email: user.email || null, // Sets email to null if it's undefined
+			name: user.name || null, // Sets name to null if it's undefined
+			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
+			tenant: user.tenant ? new Tenant({
+				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+			}) : null // Sets tenant to null if user.tenant is undefined
+		});
 	}
 }
