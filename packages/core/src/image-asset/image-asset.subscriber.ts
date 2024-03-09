@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { FileStorage } from "./../core/file-storage";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { ImageAsset } from "./image-asset.entity";
 
 @EventSubscriber()
-export class ImageAssetSubscriber implements EntitySubscriberInterface<ImageAsset> {
+export class ImageAssetSubscriber extends BaseEntityEventSubscriber<ImageAsset> {
 
     /**
     * Indicates that this subscriber only listen to ImageAsset events.
@@ -13,15 +14,11 @@ export class ImageAssetSubscriber implements EntitySubscriberInterface<ImageAsse
     }
 
     /**
-    * Called after entity is loaded from the database.
-    *
-    * @param entity
-    * @param event
-    */
-    async afterLoad(
-        entity: ImageAsset | Partial<ImageAsset>,
-        event?: LoadEvent<ImageAsset>
-    ): Promise<any | void> {
+     * Called after entity is loaded from the database.
+     *
+     * @param entity
+     */
+    async afterEntityLoad(entity: ImageAsset): Promise<void> {
         try {
             if (entity instanceof ImageAsset) {
                 const { storageProvider, url, thumb } = entity;
@@ -30,7 +27,7 @@ export class ImageAssetSubscriber implements EntitySubscriberInterface<ImageAsse
                 entity.thumbUrl = await store.url(thumb);
             }
         } catch (error) {
-            console.error('Error in afterLoad:', error);
+            console.error('Error in ImageAssetSubscriber afterLoad:', error);
         }
     }
 }
