@@ -1,11 +1,12 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { faker } from '@faker-js/faker';
 import { sluggable } from "@gauzy/common";
 import { Organization } from "./organization.entity";
-import { getOrganizationDummyImage } from "./../core/utils";
+import { getOrganizationDummyImage } from "../core/utils";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class OrganizationSubscriber implements EntitySubscriberInterface<Organization> {
+export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organization> {
 
     /**
     * Indicates that this subscriber only listen to Organization events.
@@ -18,9 +19,8 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(entity: Organization, event?: LoadEvent<Organization>): void | Promise<any> {
+    async afterEntityLoad(entity: Organization): Promise<void> {
         try {
             if (!entity.imageUrl) {
                 entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
@@ -29,19 +29,18 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
                 entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
             }
         } catch (error) {
-            console.log(error);
+            console.error('OrganizationSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Called before entity is inserted/created to the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<Organization>) {
+    async beforeEntityCreate(entity: Organization): Promise<void> {
         try {
-            if (event) {
-                const { entity } = event;
+            if (entity) {
                 if (entity.name || entity.officialName) {
                     entity.profile_link = sluggable(`${entity.name || entity.officialName}`);
                 }
@@ -53,7 +52,7 @@ export class OrganizationSubscriber implements EntitySubscriberInterface<Organiz
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('OrganizationSubscriber: An error occurred during the beforeEntityCreate process:', error);
         }
     }
 }

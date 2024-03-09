@@ -1,10 +1,11 @@
-import { EntitySubscriberInterface, EventSubscriber } from "typeorm";
-import { InviteStatusEnum } from "@gauzy/contracts";
+import { EventSubscriber } from "typeorm";
 import * as moment from 'moment';
+import { InviteStatusEnum } from "@gauzy/contracts";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { Invite } from "./invite.entity";
 
 @EventSubscriber()
-export class InviteSubscriber implements EntitySubscriberInterface<Invite> {
+export class InviteSubscriber extends BaseEntityEventSubscriber<Invite> {
 
     /**
     * Indicates that this subscriber only listen to Invite events.
@@ -18,7 +19,7 @@ export class InviteSubscriber implements EntitySubscriberInterface<Invite> {
      *
      * @param entity
      */
-    afterLoad(entity: Invite) {
+    async afterEntityLoad(entity: Invite): Promise<void> {
         try {
             if ('expireDate' in entity) {
                 entity.isExpired = entity.expireDate ? moment(entity.expireDate).isBefore(moment()) : false;
@@ -27,7 +28,7 @@ export class InviteSubscriber implements EntitySubscriberInterface<Invite> {
                 entity.status = entity.isExpired ? InviteStatusEnum.EXPIRED : entity.status;
             }
         } catch (error) {
-            console.log(error);
+            console.error('InviteSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 }

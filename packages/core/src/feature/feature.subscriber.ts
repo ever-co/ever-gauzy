@@ -37,7 +37,7 @@ export class FeatureSubscriber extends BaseEntityEventSubscriber<Feature> {
                 entity.imageUrl = await store.getProviderInstance().url(entity.image);
             }
         } catch (error) {
-            console.error('Error in FeatureSubscriber afterEntityLoad:', error);
+            console.error('FeatureSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 }

@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { FileStorage } from "./../../core/file-storage";
+import { BaseEntityEventSubscriber } from "../../core/entities/subscribers/base-entity-event.subscriber";
 import { ImportHistory } from "./import-history.entity";
 
 @EventSubscriber()
-export class ImportHistorySubscriber implements EntitySubscriberInterface<ImportHistory> {
+export class ImportHistorySubscriber extends BaseEntityEventSubscriber<ImportHistory> {
 
     /**
     * Indicates that this subscriber only listen to ImportHistory events.
@@ -16,19 +17,15 @@ export class ImportHistorySubscriber implements EntitySubscriberInterface<Import
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    async afterLoad(
-        entity: ImportHistory,
-        event?: LoadEvent<ImportHistory>
-    ): Promise<any | void> {
+    async afterEntityLoad(entity: ImportHistory): Promise<void> {
         try {
             if (entity instanceof ImportHistory) {
                 const provider = new FileStorage().getProvider();
                 entity.fullUrl = await provider.url(entity.path);
             }
         } catch (error) {
-            console.error('Error in afterLoad:', error);
+            console.error('ImportHistorySubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 }
