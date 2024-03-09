@@ -2,8 +2,8 @@ import { EventSubscriber } from "typeorm";
 import * as moment from 'moment';
 import { average } from "@gauzy/common";
 import { CandidateStatusEnum } from "@gauzy/contracts";
-import { Candidate } from "./candidate.entity";
 import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
+import { Candidate } from "./candidate.entity";
 
 @EventSubscriber()
 export class CandidateSubscriber extends BaseEntityEventSubscriber<Candidate> {

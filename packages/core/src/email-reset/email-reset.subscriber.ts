@@ -1,10 +1,12 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import * as moment from 'moment';
 import { environment } from '@gauzy/config';
+import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { EmailReset } from './email-reset.entity';
 
 @EventSubscriber()
-export class EmailResetSubscriber implements EntitySubscriberInterface<EmailReset> {
+export class EmailResetSubscriber extends BaseEntityEventSubscriber<EmailReset> {
+
     /**
      * Indicates that this subscriber only listen to EmailReset events.
      */
@@ -16,34 +18,29 @@ export class EmailResetSubscriber implements EntitySubscriberInterface<EmailRese
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(
-        entity: EmailReset,
-        event?: LoadEvent<EmailReset>
-    ): void | Promise<any> {
+    async afterEntityLoad(entity: EmailReset): Promise<void> {
         try {
             if ('expiredAt' in entity) {
                 entity.isExpired = entity.expiredAt ? moment(entity.expiredAt).isBefore(moment()) : false;
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in EmailResetSubscriber afterEntityLoad:', error);
         }
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Called before entity is inserted/created to the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<EmailReset>): void | Promise<any> {
+    async beforeEntityCreate(entity: EmailReset): Promise<void> {
         try {
-            if (event.entity) {
-                const entity = event.entity;
+            if (entity) {
                 entity.expiredAt = moment(new Date()).add(environment.EMAIL_RESET_EXPIRATION_TIME, 'seconds').toDate()
             }
         } catch (error) {
-            console.log(error);
+            console.error('Error in EmailResetSubscriber beforeEntityCreate:', error);
         }
     }
 }
