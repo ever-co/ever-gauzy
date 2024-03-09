@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent, UpdateEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { OrganizationContact } from "./organization-contact.entity";
 import { getDummyImage } from "./../core/utils";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class OrganizationContactSubscriber implements EntitySubscriberInterface<OrganizationContact> {
+export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<OrganizationContact> {
     /**
     * Indicates that this subscriber only listen to OrganizationContact events.
     */
@@ -15,9 +16,8 @@ export class OrganizationContactSubscriber implements EntitySubscriberInterface<
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(entity: OrganizationContact, event?: LoadEvent<OrganizationContact>): void | Promise<any> {
+    async afterEntityLoad(entity: OrganizationContact): Promise<void> {
         try {
             if (!!entity['image']) {
                 entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
@@ -26,29 +26,22 @@ export class OrganizationContactSubscriber implements EntitySubscriberInterface<
                 entity.imageUrl = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
             }
         } catch (error) {
-            console.log(error);
+            console.error('OrganizationContactSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Called before entity is inserted/created to the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<OrganizationContact>): void | Promise<any> {
+    async beforeEntityCreate(entity: OrganizationContact): Promise<void> {
         try {
-            if (event.entity && !event.entity.imageUrl && event.entity.name) {
-                event.entity.imageUrl = getDummyImage(330, 300, (event.entity.name).charAt(0).toUpperCase());
+            if (!entity.imageUrl && entity.name) {
+                entity.imageUrl = getDummyImage(330, 300, (entity.name).charAt(0).toUpperCase());
             }
         } catch (error) {
-            console.log(error);
+            console.error('OrganizationContactSubscriber: An error occurred during the beforeEntityCreate process:', error);
         }
     }
-
-    /**
-     * Called before entity is updated in the database.
-     *
-     * @param event
-     */
-    beforeUpdate(event: UpdateEvent<OrganizationContact>): void | Promise<any> { }
 }

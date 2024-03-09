@@ -1,8 +1,9 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { OrganizationDocument } from "./organization-document.entity";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class OrganizationDocumentSubscriber implements EntitySubscriberInterface<OrganizationDocument> {
+export class OrganizationDocumentSubscriber extends BaseEntityEventSubscriber<OrganizationDocument> {
 
     /**
     * Indicates that this subscriber only listen to OrganizationDocument events.
@@ -15,15 +16,14 @@ export class OrganizationDocumentSubscriber implements EntitySubscriberInterface
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(entity: OrganizationDocument, event?: LoadEvent<OrganizationDocument>): void | Promise<any> {
+    async afterEntityLoad(entity: OrganizationDocument): Promise<void> {
         try {
             if (!!entity['document']) {
                 entity.documentUrl = entity.document.fullUrl || entity.documentUrl;
             }
         } catch (error) {
-            console.log(error);
+            console.error('OrganizationDocumentSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 }

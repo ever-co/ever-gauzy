@@ -1,8 +1,9 @@
-import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
+import { EventSubscriber, RemoveEvent } from "typeorm";
 import { OrganizationTeamEmployee } from "./organization-team-employee.entity";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class OrganizationTeamEmployeeSubscriber implements EntitySubscriberInterface<OrganizationTeamEmployee> {
+export class OrganizationTeamEmployeeSubscriber extends BaseEntityEventSubscriber<OrganizationTeamEmployee> {
 
     /**
     * Indicates that this subscriber only listen to OrganizationTeamEmployee events.
