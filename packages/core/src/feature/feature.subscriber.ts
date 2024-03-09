@@ -1,12 +1,13 @@
 import { gauzyToggleFeatures } from "@gauzy/config";
 import { FeatureStatusEnum, FileStorageProviderEnum } from "@gauzy/contracts";
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { shuffle } from 'underscore';
 import { FileStorage } from "./../core/file-storage";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { Feature } from "./feature.entity";
 
 @EventSubscriber()
-export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
+export class FeatureSubscriber extends BaseEntityEventSubscriber<Feature> {
 
     /**
     * Indicates that this subscriber only listen to Feature events.
@@ -19,9 +20,8 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
      * Called after an entity is loaded from the database.
      *
      * @param entity - The loaded Feature entity.
-     * @param event - The LoadEvent associated with the entity loading.
      */
-    async afterLoad(entity: Feature, event?: LoadEvent<Feature>): Promise<void> {
+    async afterEntityLoad(entity: Feature): Promise<void> {
         try {
             // Set a default status if not present
             if (!entity.status) {
@@ -37,7 +37,7 @@ export class FeatureSubscriber implements EntitySubscriberInterface<Feature> {
                 entity.imageUrl = await store.getProviderInstance().url(entity.image);
             }
         } catch (error) {
-            console.error('Error in afterLoad:', error);
+            console.error('Error in FeatureSubscriber afterEntityLoad:', error);
         }
     }
 }
