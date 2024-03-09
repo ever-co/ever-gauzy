@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
-import { getUserDummyImage } from "./../core/utils";
+import { EventSubscriber } from "typeorm";
+import { getUserDummyImage } from "../core/utils";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { User } from "./user.entity";
 
 @EventSubscriber()
-export class UserSubscriber implements EntitySubscriberInterface<User> {
+export class UserSubscriber extends BaseEntityEventSubscriber<User> {
 
     /**
     * Indicates that this subscriber only listen to User events.
@@ -13,47 +14,44 @@ export class UserSubscriber implements EntitySubscriberInterface<User> {
     }
 
     /**
-     * Called before the entity is inserted into the database.
-     *
-     * @param event - The insert event.
-     */
-    async beforeInsert(event: InsertEvent<User>): Promise<void> {
-        try {
-            const entity = event.entity;
-
-            // Set a default imageUrl using a dummy image if not provided
-            entity.imageUrl = entity.imageUrl || getUserDummyImage(entity);
-        } catch (error) {
-            console.error('Error in UserSubscriber beforeInsert hook:', error);
-        }
-    }
-
-    /**
      * Called after the entity is loaded from the database.
      *
-     * @param entity - The loaded entity.
-     * @param event - The load event.
+     * @param entity The User entity that has been loaded.
      */
-    async afterLoad(entity: User, event?: LoadEvent<User>): Promise<void> {
+    async afterEntityLoad(entity: User): Promise<void> {
         try {
-            // Combine first name and last name into a single "name" property
+            // Combine first name and last name into a full name, if they exist.
             entity.name = [entity.firstName, entity.lastName].filter(Boolean).join(' ');
 
-            // Set employeeId based on the existence of the "employee" property
+            // Set the employeeId from the nested employee object, if it exists.
             entity.employeeId = entity.employee?.id || null;
 
-            // Set isEmailVerified based on the existence of "emailVerifiedAt" property
+            // Set isEmailVerified to true if the emailVerifiedAt property exists and has a truthy value.
             if ('emailVerifiedAt' in entity) {
                 entity.isEmailVerified = !!entity.emailVerifiedAt;
             }
 
-            // Set imageUrl based on the existence of the "image" property
+            // Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
             if (entity['image']) {
-                // Fall back to the existing imageUrl property if fullUrl is not available
                 entity.imageUrl = entity['image'].fullUrl || entity.imageUrl;
             }
         } catch (error) {
-            console.error('Error in UserSubscriber afterLoad hook:', error);
+            // Log any errors encountered during the execution of the function.
+            console.error('Error in UserSubscriber afterEntityLoad hook:', error);
+        }
+    }
+
+    /**
+     * Called before the entity is inserted / created into the database.
+     *
+     * @param entity
+     */
+    async beforeEntityCreate(entity: User): Promise<void> {
+        try {
+            // Set a default imageUrl using a dummy image if not provided
+            entity.imageUrl = entity.imageUrl || getUserDummyImage(entity);
+        } catch (error) {
+            console.error('Error in UserSubscriber beforeEntityCreate hook:', error);
         }
     }
 }
