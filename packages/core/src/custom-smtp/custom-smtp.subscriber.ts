@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { WrapSecrets } from "./../core/decorators";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { CustomSmtp } from "./custom-smtp.entity";
 
 @EventSubscriber()
-export class CustomSmtpSubscriber implements EntitySubscriberInterface<CustomSmtp> {
+export class CustomSmtpSubscriber extends BaseEntityEventSubscriber<CustomSmtp> {
 
     /**
     * Indicates that this subscriber only listen to CustomSmtp events.
@@ -13,14 +14,22 @@ export class CustomSmtpSubscriber implements EntitySubscriberInterface<CustomSmt
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Processes a CustomSmtp entity after it's loaded.
+     * This function sets the entity's secretKey and secretPassword based on its username and password, if they are present.
      *
-     * @param entity
-     * @param event
+     * @param entity The CustomSmtp entity that has been loaded.
      */
-    afterLoad(entity: CustomSmtp, event?: LoadEvent<CustomSmtp>): void | Promise<any> {
-        entity.secretKey = entity.username;
-        entity.secretPassword = entity.password;
-        WrapSecrets(entity, entity);
+    async afterEntityLoad(entity: CustomSmtp): Promise<void> {
+        try {
+            if (entity.username) {
+                entity.secretKey = entity.username;
+            }
+            if (entity.password) {
+                entity.secretPassword = entity.password;
+            }
+            WrapSecrets(entity, entity); // Assuming wrapSecrets is a function to securely handle secrets.
+        } catch (error) {
+            console.error("Failed to wrap secrets: ", error);
+        }
     }
 }
