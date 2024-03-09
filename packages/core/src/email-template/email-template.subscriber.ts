@@ -1,8 +1,9 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { EmailTemplate } from "./email-template.entity";
 
 @EventSubscriber()
-export class EmailTemplateSubscriber implements EntitySubscriberInterface<EmailTemplate> {
+export class EmailTemplateSubscriber extends BaseEntityEventSubscriber<EmailTemplate> {
 
     /**
     * Indicates that this subscriber only listen to EmailTemplate events.
@@ -15,9 +16,8 @@ export class EmailTemplateSubscriber implements EntitySubscriberInterface<EmailT
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(entity: EmailTemplate, event?: LoadEvent<EmailTemplate>): void | Promise<any> {
+    async afterEntityLoad(entity: EmailTemplate): Promise<void> {
         try {
             if (entity.name) {
                 entity.title = entity.name.split('/')[0].split('-').join(' ');
