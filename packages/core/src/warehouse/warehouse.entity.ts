@@ -130,7 +130,9 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 		/** Indicates that this entity (Warehouse) is the owner side of the relationship. */
 		owner: true,
 		/** Specifies the name of the pivot table in the database. */
-		pivotTable: 'tag_warehouse'
+		pivotTable: 'tag_warehouse',
+		joinColumn: 'warehouseId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		/** Specifies the name of the pivot table in the database. */

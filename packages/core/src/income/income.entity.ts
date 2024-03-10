@@ -129,6 +129,8 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_income',
+		joinColumn: 'incomeId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_income'

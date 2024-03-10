@@ -114,6 +114,8 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_merchant',
+		joinColumn: 'merchantId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_merchant'
@@ -128,6 +130,8 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'warehouse_merchant',
+		joinColumn: 'merchantId',
+		inverseJoinColumn: 'warehouseId',
 	})
 	@JoinTable({
 		name: 'warehouse_merchant'

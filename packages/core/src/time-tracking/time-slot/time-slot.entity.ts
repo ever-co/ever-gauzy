@@ -130,7 +130,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'time_slot_time_logs'
+		pivotTable: 'time_slot_time_logs',
+		joinColumn: 'timeSlotId',
+		inverseJoinColumn: 'timeLogId',
 	})
 	@JoinTable({
 		name: 'time_slot_time_logs'

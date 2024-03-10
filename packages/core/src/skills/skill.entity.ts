@@ -39,7 +39,9 @@ export class Skill extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'skill_employee'
+		pivotTable: 'skill_employee',
+		joinColumn: 'skillId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'skill_employee'
@@ -53,7 +55,9 @@ export class Skill extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'skill_organization'
+		pivotTable: 'skill_organization',
+		joinColumn: 'skillId',
+		inverseJoinColumn: 'organizationId',
 	})
 	@JoinTable({
 		name: 'skill_organization'

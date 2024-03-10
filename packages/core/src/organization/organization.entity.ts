@@ -426,6 +426,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization',
+		joinColumn: 'organizationId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization'

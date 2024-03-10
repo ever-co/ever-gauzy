@@ -233,7 +233,9 @@ export class User extends TenantBaseEntity implements IUser {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_user'
+		pivotTable: 'tag_user',
+		joinColumn: 'userId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_user'

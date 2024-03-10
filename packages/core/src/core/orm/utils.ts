@@ -15,6 +15,5 @@ export function convertTypeOrmConationAndParamsToMikroOrm(whereCondition: string
         mikroOrmParameters.push(parameters[paramName]);
         return '?'; // Replace named parameters with positional parameters
     });
-
     return [mikroOrmCondition, mikroOrmParameters];
 }

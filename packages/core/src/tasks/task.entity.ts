@@ -360,7 +360,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_task'
+		pivotTable: 'tag_task',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_task',
@@ -377,7 +379,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'task_employee'
+		pivotTable: 'task_employee',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'employeeId',
+
 	})
 	@JoinTable({
 		name: 'task_employee',
@@ -394,7 +399,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'task_team'
+		pivotTable: 'task_team',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'organizationTeamId',
 	})
 	@JoinTable({
 		name: 'task_team',

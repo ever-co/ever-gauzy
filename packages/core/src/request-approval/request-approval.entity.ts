@@ -129,7 +129,9 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_request_approval'
+		pivotTable: 'tag_request_approval',
+		joinColumn: 'requestApprovalId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_request_approval'

@@ -30,6 +30,8 @@ export class EmployeeLevel extends TenantOrganizationBaseEntity implements IEmpl
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_employee_level',
+		joinColumn: 'employeeLevelId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_employee_level'

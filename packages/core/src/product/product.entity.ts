@@ -172,7 +172,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_product'
+		pivotTable: 'tag_product',
+		joinColumn: 'productId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_product'
@@ -186,7 +188,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@MultiORMManyToMany(() => ImageAsset, (imageAsset) => imageAsset.productGallery, {
 		cascade: false,
 		owner: true,
-		pivotTable: 'product_gallery_item'
+		pivotTable: 'product_gallery_item',
+		joinColumn: 'productId',
+		inverseJoinColumn: 'imageAssetId',
 	})
 	@JoinTable({
 		name: 'product_gallery_item'

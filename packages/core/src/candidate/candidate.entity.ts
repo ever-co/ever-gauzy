@@ -254,7 +254,9 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		pivotTable: 'tag_candidate',
-		owner: true
+		owner: true,
+		joinColumn: 'candidateId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_candidate'

@@ -106,6 +106,8 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'equipment_shares_employees',
+		joinColumn: 'equipmentSharingId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'equipment_shares_employees'
@@ -120,6 +122,8 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'equipment_shares_teams',
+		joinColumn: 'equipmentSharingId',
+		inverseJoinColumn: 'organizationTeamId',
 	})
 	@JoinTable({
 		name: 'equipment_shares_teams'

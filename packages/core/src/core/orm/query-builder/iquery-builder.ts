@@ -1,7 +1,11 @@
+import { QueryBuilder } from "@mikro-orm/knex";
 import { EntityTarget, FindManyOptions, SelectQueryBuilder } from "typeorm";
 
 export interface IQueryBuilder<Entity> {
     alias: string;
+    setQueryBuilder(qb: SelectQueryBuilder<Entity> | QueryBuilder<any>): this;
+    getQueryBuilder(): SelectQueryBuilder<Entity> | QueryBuilder<any>;
+    subQuery(): IQueryBuilder<Entity>;
     setFindOptions(findOptions: FindManyOptions<Entity>): this;
     select(selection: string, selectionAliasName?: string): this;
     addSelect(selection: string, selectionAliasName?: string): this;
@@ -25,8 +29,9 @@ export interface IQueryBuilder<Entity> {
     offset(offset?: number): this;
     take(take?: number): this;
     skip(skip?: number): this;
-
-    getSql(): string
+    getParameters(): any;
+    getQuery(): string;
+    getSql(): string;
     getCount(): Promise<number>;
     getRawMany(): Promise<any[]>;
     getMany(): Promise<Entity[]>;

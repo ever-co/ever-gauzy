@@ -218,6 +218,8 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_contact',
+		joinColumn: 'organizationContactId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_contact'
@@ -230,6 +232,8 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'organization_contact_employee',
+		joinColumn: 'organizationContactId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'organization_contact_employee'

@@ -134,6 +134,8 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_equipment',
+		joinColumn: 'equipmentId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({ name: 'tag_equipment' })
 	tags: ITag[];

@@ -90,6 +90,8 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_event_type',
+		joinColumn: 'tagEventId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_event_type'

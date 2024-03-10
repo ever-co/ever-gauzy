@@ -277,6 +277,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_invoice',
+		joinColumn: 'invoiceId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_invoice'

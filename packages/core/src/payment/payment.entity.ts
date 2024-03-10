@@ -169,7 +169,9 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_payment'
+		pivotTable: 'tag_payment',
+		joinColumn: 'paymentId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_payment'

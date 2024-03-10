@@ -93,6 +93,8 @@ export class Integration extends BaseEntity implements IIntegration {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'integration_integration_type',
+		joinColumn: 'integrationId',
+		inverseJoinColumn: 'integrationTypeId',
 	})
 	@JoinTable({
 		name: 'integration_integration_type'
@@ -107,6 +109,8 @@ export class Integration extends BaseEntity implements IIntegration {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_integration',
+		joinColumn: 'integrationId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_integration'

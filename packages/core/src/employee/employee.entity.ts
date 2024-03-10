@@ -500,6 +500,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'organization_project_employee',
+		joinColumn: 'employeeId',
+		inverseJoinColumn: 'organizationProjectId',
 	})
 	@JoinTable({
 		name: 'organization_project_employee',
@@ -514,6 +516,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_employee',
+		joinColumn: 'employeeId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_employee',
@@ -577,6 +581,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 			onDelete: 'CASCADE',
 			pivotTable: 'time_off_policy_employee',
 			owner: true,
+			joinColumn: 'employeeId',
+			inverseJoinColumn: 'timeOffPolicyId',
 		}
 	)
 	@JoinTable({
@@ -595,6 +601,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 			onDelete: 'CASCADE',
 			owner: true,
 			pivotTable: 'time_off_request_employee',
+			joinColumn: 'employeeId',
+			inverseJoinColumn: 'timeOffRequestId',
 		}
 	)
 	@JoinTable({

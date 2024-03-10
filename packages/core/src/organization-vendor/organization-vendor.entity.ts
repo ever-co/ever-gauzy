@@ -62,7 +62,9 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_organization_vendor'
+		pivotTable: 'tag_organization_vendor',
+		joinColumn: 'organizationVendorId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_vendor'

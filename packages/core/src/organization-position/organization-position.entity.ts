@@ -28,6 +28,8 @@ export class OrganizationPosition extends TenantOrganizationBaseEntity implement
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_position',
+		joinColumn: 'organizationPositionId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_position'

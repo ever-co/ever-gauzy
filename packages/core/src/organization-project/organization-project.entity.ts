@@ -329,6 +329,9 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_project',
+
+		joinColumn: 'organizationProjectId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_project',
@@ -356,6 +359,8 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'organization_project_team',
+		joinColumn: 'organizationProjectId',
+		inverseJoinColumn: 'organizationTeamId',
 	})
 	@JoinTable({
 		name: 'organization_project_team'

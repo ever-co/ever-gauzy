@@ -87,7 +87,9 @@ export class Proposal extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_proposal'
+		pivotTable: 'tag_proposal',
+		joinColumn: 'proposalId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_proposal'

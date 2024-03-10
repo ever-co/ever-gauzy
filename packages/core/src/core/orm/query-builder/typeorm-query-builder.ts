@@ -14,6 +14,25 @@ export class TypeOrmQueryBuilder<Entity extends Object> implements IQueryBuilder
         this.qb = this.repo.createQueryBuilder();
     }
 
+    setQueryBuilder(qb: SelectQueryBuilder<Entity>) {
+        this.qb = qb;
+        return this;
+    }
+
+    getQueryBuilder() {
+        return this.qb;
+    }
+
+    subQuery() {
+        const subQuery: any = this.qb.subQuery()
+        return subQuery as IQueryBuilder<Entity>;
+    }
+
+    distinct(isDistinct: boolean = true): this {
+        this.qb.distinct(isDistinct);
+        return this;
+    }
+
     setFindOptions(findOptions: FindManyOptions<Entity>) {
         this.qb.setFindOptions(findOptions);
         return this;
@@ -129,8 +148,16 @@ export class TypeOrmQueryBuilder<Entity extends Object> implements IQueryBuilder
         return this;
     };
 
+    getQuery(): string {
+        return this.qb.getQuery();
+    }
+
     getSql(): string {
         return this.qb.getSql();
+    }
+
+    getParameters(): any {
+        return this.qb.getParameters();
     }
 
     getCount() {

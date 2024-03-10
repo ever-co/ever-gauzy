@@ -63,6 +63,8 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 		cascade: true,
 		owner: true,
 		pivotTable: 'employee_job_preset',
+		joinColumn: 'jobPresetId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'employee_job_preset'

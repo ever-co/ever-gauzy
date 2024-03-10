@@ -267,6 +267,8 @@ export class Expense extends TenantOrganizationBaseEntity implements IExpense {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_expense',
+		joinColumn: 'expenseId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_expense'

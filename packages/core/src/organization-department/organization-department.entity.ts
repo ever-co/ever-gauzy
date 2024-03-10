@@ -41,6 +41,9 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_department',
+		joinColumn: 'organizationDepartmentId',
+		inverseJoinColumn: 'tagId',
+
 	})
 	@JoinTable({
 		name: 'tag_organization_department'
@@ -55,6 +58,8 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 		cascade: ['update'],
 		owner: true,
 		pivotTable: 'organization_department_employee',
+		joinColumn: 'organizationDepartmentId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'organization_department_employee'
@@ -70,6 +75,8 @@ export class OrganizationDepartment extends TenantOrganizationBaseEntity impleme
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'candidate_department',
+		joinColumn: 'organizationDepartmentId',
+		inverseJoinColumn: 'candidateId',
 	})
 	@JoinTable({
 		name: 'candidate_department'
