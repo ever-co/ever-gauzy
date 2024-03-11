@@ -24,7 +24,6 @@
 			"@gauzy/desktop-timer": ["packages/desktop-timer/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
-			"@gauzy/wakatime": ["libs/wakatime/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],

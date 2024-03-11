@@ -44,7 +44,30 @@ module.exports = (config) => {
 		bcrypt: 'bcrypt',
 		sqlite3: 'commonjs sqlite3',
 		ioredis: 'ioredis',
-		debug: 'debug'
+		debug: 'debug',
+		'@as-integrations/fastify': '@as-integrations/fastify',
+		'@apollo/gateway': '@apollo/gateway',
+		'class-transformer/storage': 'class-transformer/storage',
+		'@fastify/static': '@fastify/static',
+		'@nestjs/mongoose': '@nestjs/mongoose',
+		'@nestjs/sequelize': '@nestjs/sequelize',
+		'@nestjs/terminus': '@nestjs/terminus',
+		tedious: 'tedious',
+		oracledb: 'oracledb',
+		hbs: 'hbs',
+		'react-native-sqlite-storage': 'react-native-sqlite-storage',
+		bufferutil: 'bufferutil',
+		'utf-8-validate': 'utf-8-validate',
+		'@mongodb-js/zstd': '@mongodb-js/zstd',
+		'aws-sdk/credential-providers': 'aws-sdk/credential-providers',
+		snappy: 'snappy',
+		kerberos: 'kerberos',
+		'arc-templates': 'arc-templates',
+		'dustjs-helpers': 'dustjs-helpers',
+		'then-jade': 'then-jade',
+		jade: 'jade',
+		tinyliquid: 'tinyliquid',
+		nunjucks: 'nunjucks'
 	};
 
 	return config;

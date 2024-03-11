@@ -7,15 +7,7 @@ Object.assign(console, log.functions);
 
 import * as remoteMain from '@electron/remote/main';
 import * as Sentry from '@sentry/electron';
-import {
-	BrowserWindow,
-	Menu,
-	MenuItemConstructorOptions,
-	app,
-	dialog,
-	ipcMain,
-	shell
-} from 'electron';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import { environment } from './environments/environment';
 
@@ -72,7 +64,6 @@ try {
 	log.error(error);
 }
 
-
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
 process.env.GAUZY_USER_PATH = app.getPath('userData');
@@ -80,8 +71,6 @@ log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 
 process.env.GAUZY_SEED_PATH = path.join(__dirname, 'api', 'assets', 'seed');
 log.info(`GAUZY_SEED_PATH: ${process.env.GAUZY_SEED_PATH}`);
-
-
 
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
@@ -396,7 +385,7 @@ app.on('ready', async () => {
 	splashScreen.show();
 	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
-			const res = await knex.raw(`pragma journal_mode = WAL;`)
+			const res = await knex.raw(`pragma journal_mode = WAL;`);
 			console.log(res);
 		} catch (error) {
 			console.log('ERROR', error);
@@ -426,67 +415,35 @@ app.on('ready', async () => {
 
 	try {
 		/* create window */
-		timeTrackerWindow = await createTimeTrackerWindow(
-			timeTrackerWindow,
-			pathWindow.timeTrackerUi
-		);
-		settingsWindow = await createSettingsWindow(
-			settingsWindow,
-			pathWindow.timeTrackerUi
-		);
-		updaterWindow = await createUpdaterWindow(
-			updaterWindow,
-			pathWindow.timeTrackerUi
-		);
-		imageView = await createImageViewerWindow(
-			imageView,
-			pathWindow.timeTrackerUi
-		);
+		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
+		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
+		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
 
 		/* Set Menu */
-		new AppMenu(
-			timeTrackerWindow,
-			settingsWindow,
-			updaterWindow,
-			knex,
-			pathWindow,
-			null,
-			true
-		);
+		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
 
 		if (configs && configs.isSetup) {
 			if (!configs.serverConfigConnected && !configs?.isLocalServer) {
-				setupWindow = await createSetupWindow(
-					setupWindow,
-					false,
-					pathWindow.timeTrackerUi
-				);
+				setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 				setupWindow.show();
 				splashScreen.close();
 				setupWindow.webContents.send('setup-data', {
-					...configs,
+					...configs
 				});
 			} else {
 				global.variableGlobal = {
 					API_BASE_URL: getApiBaseUrl(configs),
-					IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+					IS_INTEGRATED_DESKTOP: configs.isLocalServer
 				};
-				setupWindow = await createSetupWindow(
-					setupWindow,
-					true,
-					pathWindow.timeTrackerUi
-				);
+				setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
 				await startServer(configs);
 			}
 		} else {
-			setupWindow = await createSetupWindow(
-				setupWindow,
-				false,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 			setupWindow.show();
 			splashScreen.close();
 		}
@@ -501,13 +458,7 @@ app.on('ready', async () => {
 		throw new UIError('400', error, 'MAINWININIT');
 	}
 	removeMainListener();
-	ipcMainHandler(
-		store,
-		startServer,
-		knex,
-		{ ...environment },
-		timeTrackerWindow
-	);
+	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 	if (gauzyWindow) {
 		try {
 			gauzyWindow.webContents.setZoomFactor(1.0);
@@ -528,14 +479,16 @@ app.on('window-all-closed', () => {
 app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('server_is_ready', async () => {
+	console.log('Server is ready event received');
 	LocalStore.setDefaultApplicationSetting();
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
 	store.set({
-		configs: appConfig,
+		configs: appConfig
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
+		console.log('Server is ready, starting the Desktop API...');
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
 		removeTimerListener();
 		ipcTimer(
@@ -639,15 +592,12 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		const driver = await provider.check(arg);
 		event.sender.send('database_status', {
 			status: true,
-			message: TranslateService.instant(
-				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-				{ driver }
-			)
+			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver })
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message,
+			message: error.message
 		});
 	}
 });
@@ -657,19 +607,10 @@ app.on('activate', async () => {
 		if (LocalStore.getStore('configs').gauzyWindow) {
 			gauzyWindow.show();
 		}
-	} else if (
-		!onWaitingServer &&
-		LocalStore.getStore('configs') &&
-		LocalStore.getStore('configs').isSetup
-	) {
+	} else if (!onWaitingServer && LocalStore.getStore('configs') && LocalStore.getStore('configs').isSetup) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		await createGauzyWindow(
-			gauzyWindow,
-			serve,
-			{ ...environment },
-			pathWindow.timeTrackerUi
-		);
+		await createGauzyWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
@@ -720,7 +661,7 @@ function launchAtStartup(autoLaunch, hidden) {
 		case 'darwin':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
+				openAsHidden: hidden
 			});
 			break;
 		case 'win32':
@@ -729,23 +670,14 @@ function launchAtStartup(autoLaunch, hidden) {
 				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
-					? [
-						'--processStart',
-						`"${exeName}"`,
-						'--process-start-args',
-						`"--hidden"`,
-					]
-					: [
-						'--processStart',
-						`"${exeName}"`,
-						'--process-start-args',
-					],
+					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
+					: ['--processStart', `"${exeName}"`, '--process-start-args']
 			});
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
+				openAsHidden: hidden
 			});
 			break;
 		default:
@@ -764,7 +696,7 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 });
 
 app.on('browser-window-created', (_, window) => {
-	require("@electron/remote/main").enable(window.webContents)
+	require('@electron/remote/main').enable(window.webContents);
 });
 
 ipcMain.on('launch_on_startup', (event, arg) => {
@@ -774,7 +706,6 @@ ipcMain.on('launch_on_startup', (event, arg) => {
 ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
-
 
 function closeAllWindows(): void {
 	const windows = [notificationWindow, splashScreen, alwaysOn];

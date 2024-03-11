@@ -3,7 +3,7 @@ import {
 	DEFAULT_API_HOST,
 	DEFAULT_API_PORT,
 	DEFAULT_GRAPHQL_API_PATH,
-	ApplicationPluginConfig,
+	ApplicationPluginConfig
 } from '@gauzy/common';
 import { dbTypeOrmConnectionConfig, dbMikroOrmConnectionConfig, dbKnexConnectionConfig } from '@gauzy/config';
 
@@ -32,6 +32,8 @@ export const devConfig: ApplicationPluginConfig = {
 		...dbMikroOrmConnectionConfig
 	},
 	dbKnexConnectionOptions: {
+		retryAttempts: 100,
+		retryDelay: 3000,
 		...dbKnexConnectionConfig
 	},
 	plugins: []
