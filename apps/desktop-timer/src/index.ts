@@ -6,14 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import {
-	app,
-	BrowserWindow,
-	ipcMain,
-	shell,
-	Menu,
-	MenuItemConstructorOptions,
-} from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
 import { environment } from './environments/environment';
 import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
@@ -50,7 +43,7 @@ import {
 	ErrorEventManager,
 	DialogErrorHandler,
 	AppError,
-	UIError,
+	UIError
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -60,7 +53,7 @@ import {
 	createImageViewerWindow,
 	SplashScreen,
 	AlwaysOn,
-	ScreenCaptureNotification,
+	ScreenCaptureNotification
 } from '@gauzy/desktop-window';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
@@ -91,14 +84,9 @@ const serverGauzy = null;
 const updater = new DesktopUpdater({
 	repository: process.env.REPO_NAME,
 	owner: process.env.REPO_OWNER,
-	typeRelease: 'releases',
+	typeRelease: 'releases'
 });
-const report = new ErrorReport(
-	new ErrorReportRepository(
-		process.env.REPO_OWNER,
-		process.env.REPO_NAME
-	)
-);
+const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 const eventErrorManager = ErrorEventManager.instance;
 args.some((val) => val === '--serve');
 
@@ -119,17 +107,14 @@ let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
 
-console.log(
-	'Time Tracker UI Render Path:',
-	path.join(__dirname, './index.html')
-);
+console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
 
 const pathWindow = {
-	timeTrackerUi: path.join(__dirname, './index.html'),
+	timeTrackerUi: path.join(__dirname, './index.html')
 };
 
 LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png'),
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
 });
 // Instance detection
 const gotTheLock = app.requestSingleInstanceLock();
@@ -177,17 +162,10 @@ log.catchErrors({
 		dialog.options.detail = error.stack;
 		dialog.show().then((result) => {
 			if (result.response === 1) {
-				submitIssue(
-					`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`,
-					{
-						title: `Automatic error report for Desktop Timer App ${versions.app}`,
-						body:
-							'Error:\n```' +
-							error.stack +
-							'\n```\n' +
-							`OS: ${versions.os}`,
-					}
-				);
+				submitIssue(`https://github.com/${process.env.REPO_OWNER}/${process.env.REPO_NAME}/issues/new`, {
+					title: `Automatic error report for Desktop Timer App ${versions.app}`,
+					body: 'Error:\n```' + error.stack + '\n```\n' + `OS: ${versions.os}`
+				});
 				return;
 			}
 
@@ -197,7 +175,7 @@ log.catchErrors({
 			}
 			return;
 		});
-	},
+	}
 });
 
 process.on('uncaughtException', (error) => {
@@ -242,11 +220,11 @@ async function startServer(value, restart = false) {
 	try {
 		const config: any = {
 			...value,
-			isSetup: true,
+			isSetup: true
 		};
 		const aw = {
 			host: value.awHost,
-			isAw: !!value.aw?.isAw,
+			isAw: !!value.aw?.isAw
 		};
 		const projectConfig = store.get('project');
 		store.set({
@@ -258,8 +236,8 @@ async function startServer(value, restart = false) {
 						taskId: null,
 						note: null,
 						aw,
-						organizationContactId: null,
-				  },
+						organizationContactId: null
+				  }
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -270,23 +248,18 @@ async function startServer(value, restart = false) {
 		setupWindow.hide();
 		try {
 			if (!timeTrackerWindow) {
-				timeTrackerWindow = await createTimeTrackerWindow(
-					timeTrackerWindow,
-					pathWindow.timeTrackerUi
-				);
+				timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
 			} else {
 				await timeTrackerWindow.loadURL(
 					Url.format({
 						pathname: pathWindow.timeTrackerUi,
 						protocol: 'file:',
 						slashes: true,
-						hash: '/time-tracker',
+						hash: '/time-tracker'
 					})
 				);
 			}
-			notificationWindow = new ScreenCaptureNotification(
-				pathWindow.timeTrackerUi
-			);
+			notificationWindow = new ScreenCaptureNotification(pathWindow.timeTrackerUi);
 			await notificationWindow.loadURL();
 		} catch (error) {
 			throw new AppError('MAINLOADURL', error);
@@ -297,15 +270,7 @@ async function startServer(value, restart = false) {
 		splashScreen.close();
 	}
 	const auth = store.get('auth');
-	new AppMenu(
-		timeTrackerWindow,
-		settingsWindow,
-		updaterWindow,
-		knex,
-		pathWindow,
-		null,
-		false
-	);
+	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 	if (tray) {
 		tray.destroy();
@@ -324,15 +289,7 @@ async function startServer(value, restart = false) {
 	);
 
 	TranslateService.onLanguageChange(() => {
-		new AppMenu(
-			timeTrackerWindow,
-			settingsWindow,
-			updaterWindow,
-			knex,
-			pathWindow,
-			null,
-			false
-		);
+		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 		if (tray) {
 			tray.destroy();
@@ -356,7 +313,7 @@ async function startServer(value, restart = false) {
 		if (!isAlreadyRun && value && !restart) {
 			onWaitingServer = true;
 			timeTrackerWindow.webContents.send('server_ping', {
-				host: getApiBaseUrl(value),
+				host: getApiBaseUrl(value)
 			});
 		}
 	});
@@ -367,9 +324,7 @@ async function startServer(value, restart = false) {
 const getApiBaseUrl = (configs) => {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
-		return configs.port
-			? `http://localhost:${configs.port}`
-			: `http://localhost:${environment.API_DEFAULT_PORT}`;
+		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${environment.API_DEFAULT_PORT}`;
 	}
 };
 
@@ -385,7 +340,7 @@ app.on('ready', async () => {
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
-		IS_INTEGRATED_DESKTOP: configs?.isLocalServer,
+		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
 	};
 	try {
 		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
@@ -417,55 +372,35 @@ app.on('ready', async () => {
 			submenu: [
 				{
 					role: 'about',
-					label: TranslateService.instant('MENU.ABOUT'),
+					label: TranslateService.instant('MENU.ABOUT')
 				},
 				{ type: 'separator' },
 				{ type: 'separator' },
 				{
 					role: 'quit',
-					label: TranslateService.instant('BUTTONS.EXIT'),
-				},
-			],
-		},
+					label: TranslateService.instant('BUTTONS.EXIT')
+				}
+			]
+		}
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	try {
-		timeTrackerWindow = await createTimeTrackerWindow(
-			timeTrackerWindow,
-			pathWindow.timeTrackerUi
-		);
-		settingsWindow = await createSettingsWindow(
-			settingsWindow,
-			pathWindow.timeTrackerUi
-		);
-		updaterWindow = await createUpdaterWindow(
-			updaterWindow,
-			pathWindow.timeTrackerUi
-		);
-		imageView = await createImageViewerWindow(
-			imageView,
-			pathWindow.timeTrackerUi
-		);
+		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
+		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
+		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
 
 		if (configs && configs.isSetup) {
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(configs),
-				IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+				IS_INTEGRATED_DESKTOP: configs.isLocalServer
 			};
-			setupWindow = await createSetupWindow(
-				setupWindow,
-				true,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = await createSetupWindow(setupWindow, true, pathWindow.timeTrackerUi);
 			await startServer(configs);
 		} else {
-			setupWindow = await createSetupWindow(
-				setupWindow,
-				false,
-				pathWindow.timeTrackerUi
-			);
+			setupWindow = await createSetupWindow(setupWindow, false, pathWindow.timeTrackerUi);
 			setupWindow.show();
 			splashScreen.close();
 		}
@@ -481,13 +416,7 @@ app.on('ready', async () => {
 		throw new UIError('400', error, 'MAINWININIT');
 	}
 	removeMainListener();
-	ipcMainHandler(
-		store,
-		startServer,
-		knex,
-		{ ...environment },
-		timeTrackerWindow
-	);
+	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
 });
 
 app.on('window-all-closed', () => {
@@ -501,14 +430,16 @@ app.on('window-all-closed', () => {
 app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('server_is_ready', async () => {
+	console.log('Server is ready event received');
 	LocalStore.setDefaultApplicationSetting();
 	const appConfig = LocalStore.getStore('configs');
 	appConfig.serverConfigConnected = true;
 	store.set({
-		configs: appConfig,
+		configs: appConfig
 	});
 	onWaitingServer = false;
 	if (!isAlreadyRun) {
+		console.log('Server is ready, starting the Desktop API...');
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
 		removeTimerListener();
 		ipcTimer(
@@ -549,7 +480,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 	const configs = LocalStore.getStore('configs');
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs),
-		IS_INTEGRATED_DESKTOP: configs.isLocalServer,
+		IS_INTEGRATED_DESKTOP: configs.isLocalServer
 	};
 	/* Killing the provider. */
 	await provider.kill();
@@ -608,15 +539,12 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 		const driver = await provider.check(arg);
 		event.sender.send('database_status', {
 			status: true,
-			message: TranslateService.instant(
-				'TIMER_TRACKER.DIALOG.CONNECTION_DRIVER',
-				{ driver }
-			),
+			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver })
 		});
 	} catch (error) {
 		event.sender.send('database_status', {
 			status: false,
-			message: error.message,
+			message: error.message
 		});
 	}
 });
@@ -678,7 +606,7 @@ app.on('before-quit', async (e) => {
 		if (button.response === 0) {
 			willQuit = true;
 			timeTrackerWindow.webContents.send('stop_from_tray', {
-				quitApp: true,
+				quitApp: true
 			});
 		}
 	} else {
@@ -707,7 +635,7 @@ function launchAtStartup(autoLaunch, hidden) {
 		case 'darwin':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
+				openAsHidden: hidden
 			});
 			break;
 		case 'win32':
@@ -716,23 +644,14 @@ function launchAtStartup(autoLaunch, hidden) {
 				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
-					? [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-							`"--hidden"`,
-					  ]
-					: [
-							'--processStart',
-							`"${exeName}"`,
-							'--process-start-args',
-					  ],
+					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
+					: ['--processStart', `"${exeName}"`, '--process-start-args']
 			});
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
+				openAsHidden: hidden
 			});
 			break;
 		default:

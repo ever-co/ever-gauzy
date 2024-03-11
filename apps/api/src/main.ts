@@ -1,3 +1,5 @@
+console.log('API Starting...');
+
 import { bootstrap } from '@gauzy/core';
 console.log('Bootstrap loaded');
 
@@ -10,6 +12,5 @@ bootstrap(pluginConfig)
 	})
 	.catch(async (error) => {
 		console.log(error);
-
 		process.exit(1);
 	});

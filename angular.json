@@ -7,9 +7,7 @@
 		},
 		"packageManager": "yarn",
 		"analytics": false,
-		"schematicCollections": [
-			"@nstudio/xplat"
-		]
+		"schematicCollections": ["@nstudio/xplat"]
 	},
 	"version": 1,
 	"newProjectRoot": "",
@@ -487,14 +485,9 @@
 						"tsConfig": "apps/desktop/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": [
-								"apps/desktop-timer/src/assets/styles"
-							]
+							"includePaths": ["apps/desktop-timer/src/assets/styles"]
 						},
-						"assets": [
-							"apps/desktop/src/favicon.ico",
-							"apps/desktop/src/assets"
-						],
+						"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
 						"styles": [
 							"node_modules/@nebular/theme/styles/prebuilt/default.css",
 							"node_modules/bootstrap/dist/css/bootstrap.css",
@@ -584,19 +577,22 @@
 				"build": {
 					"builder": "@nrwl/node:webpack",
 					"options": {
+						"outputPath": "dist/apps/desktop/desktop-api",
+						"main": "packages/desktop-api/src/main.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
 						"maxWorkers": 4,
 						"memoryLimit": 4000,
 						"webpackConfig": "tools/build/webpack.config.js",
-						"outputPath": "dist/apps/desktop/desktop-api",
-						"main": "packages/desktop-api/src/main.ts",
 						"tsConfig": "packages/desktop-api/tsconfig.app.json",
 						"assets": ["packages/desktop-api/src/assets"]
 					},
 					"configurations": {
 						"production": {
 							"optimization": true,
-							"extractLicenses": false,
+							"extractLicenses": true,
 							"inspect": false,
+							"sourceMap": false,
 							"fileReplacements": [
 								{
 									"replace": "packages/desktop-api/src/environments/environment.ts",
@@ -673,9 +669,7 @@
 						"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": [
-								"apps/desktop-timer/src/assets/styles"
-							]
+							"includePaths": ["apps/desktop-timer/src/assets/styles"]
 						},
 						"assets": [
 							"apps/desktop-timer/src/favicon.ico",
@@ -762,10 +756,7 @@
 				"lint": {
 					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"lintFilePatterns": [
-							"apps/desktop-timer/src/**/*.ts",
-							"apps/desktop-timer/src/**/*.html"
-						]
+						"lintFilePatterns": ["apps/desktop-timer/src/**/*.ts", "apps/desktop-timer/src/**/*.html"]
 					}
 				},
 				"test": {
@@ -884,10 +875,7 @@
 				"lint": {
 					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"lintFilePatterns": [
-							"apps/server/src/**/*.ts",
-							"apps/server/src/**/*.html"
-						]
+						"lintFilePatterns": ["apps/server/src/**/*.ts", "apps/server/src/**/*.html"]
 					}
 				},
 				"test": {

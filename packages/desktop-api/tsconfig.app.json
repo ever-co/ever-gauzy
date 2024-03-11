@@ -2,6 +2,9 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "../../dist/out-tsc",
+		"module": "commonjs",
+		"target": "ES2022",
+		"removeComments": true,
 		"types": ["node"],
 		"experimentalDecorators": true
 	},

@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import * as dotenv from 'dotenv';
 dotenv.config();
 
 import * as path from 'path';
@@ -57,7 +57,7 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		...dbTypeOrmConnectionConfig
 	},
 	dbMikroOrmConnectionOptions: {
-		...dbMikroOrmConnectionConfig,
+		...dbMikroOrmConnectionConfig
 	},
 	dbKnexConnectionOptions: {
 		retryAttempts: 100, // Number of retry attempts in case of connection failures
