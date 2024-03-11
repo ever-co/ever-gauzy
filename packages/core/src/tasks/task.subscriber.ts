@@ -1,9 +1,10 @@
+import { EventSubscriber } from "typeorm";
 import { RequestContext } from "./../core/context";
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { Task } from "./task.entity";
 
 @EventSubscriber()
-export class TaskSubscriber implements EntitySubscriberInterface<Task> {
+export class TaskSubscriber extends BaseEntityEventSubscriber<Task> {
 
     /**
     * Indicates that this subscriber only listen to Task events.
@@ -16,9 +17,8 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(entity: Task, event?: LoadEvent<Task>): void | Promise<any> {
+    async afterEntityLoad(entity: Task): Promise<void> {
         try {
             if (entity) {
                 const list = new Array();
@@ -36,23 +36,22 @@ export class TaskSubscriber implements EntitySubscriberInterface<Task> {
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('TaskSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 
     /**
      * Called before entity is inserted to the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<Task>): void | Promise<any> {
+    async beforeEntityCreate(entity: Task): Promise<void> {
         try {
-            if (event) {
-                const { entity } = event;
+            if (entity) {
                 entity.creatorId = RequestContext.currentUserId();
             }
         } catch (error) {
-            console.log(error);
+            console.error('TaskSubscriber: An error occurred during the beforeEntityCreate process:', error);
         }
     }
 }

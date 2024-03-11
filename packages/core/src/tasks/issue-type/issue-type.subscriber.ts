@@ -1,17 +1,13 @@
-import {
-	EntitySubscriberInterface,
-	EventSubscriber,
-	InsertEvent,
-	LoadEvent,
-} from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from './../../core/file-storage';
+import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { IssueType } from './issue-type.entity';
 
 @EventSubscriber()
-export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType> {
+export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	/**
 	 * Indicates that this subscriber only listen to IssueType events.
 	 */
@@ -23,12 +19,8 @@ export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType>
 	 * Called after entity is loaded from the database.
 	 *
 	 * @param entity
-	 * @param event
 	 */
-	async afterLoad(
-		entity: IssueType | Partial<IssueType>,
-		event?: LoadEvent<IssueType>
-	): Promise<any | void> {
+	async afterEntityLoad(entity: IssueType): Promise<void> {
 		try {
 			if (!!entity['image']) {
 				entity.fullIconUrl = entity.image.fullUrl || entity.icon;
@@ -38,19 +30,18 @@ export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType>
 				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.error('Error in afterLoad:', error);
+			console.error('IssueTypeSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
 	/**
 	 * Called before entity is inserted to the database.
 	 *
-	 * @param event
+	 * @param entity
 	 */
-	beforeInsert(event: InsertEvent<IssueType>) {
+	async beforeEntityCreate(entity: IssueType): Promise<void> {
 		try {
-			if (event) {
-				const { entity } = event;
+			if (entity) {
 				if (!entity.color) {
 					entity.color = faker.internet.color();
 				}
@@ -59,7 +50,7 @@ export class IssueTypeSubscriber implements EntitySubscriberInterface<IssueType>
 				}
 			}
 		} catch (error) {
-			console.log('Error while creating issue type : subscriber : ', error);
+			console.error('IssueTypeSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 }

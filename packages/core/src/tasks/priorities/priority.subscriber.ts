@@ -1,17 +1,13 @@
-import {
-	EntitySubscriberInterface,
-	EventSubscriber,
-	InsertEvent,
-	LoadEvent,
-} from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { FileStorage } from './../../core/file-storage';
+import { FileStorage } from '../../core/file-storage';
+import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskPriority } from './priority.entity';
 
 @EventSubscriber()
-export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPriority> {
+export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriority> {
 	/**
 	 * Indicates that this subscriber only listen to TaskPriority events.
 	 */
@@ -23,31 +19,26 @@ export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPri
 	 * Called after entity is loaded from the database.
 	 *
 	 * @param entity
-	 * @param event
 	 */
-	async afterLoad(
-		entity: TaskPriority | Partial<TaskPriority>,
-		event?: LoadEvent<TaskPriority>
-	): Promise<any | void> {
+	async afterEntityLoad(entity: TaskPriority): Promise<void> {
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.error('Error in afterLoad:', error);
+			console.error('TaskPrioritySubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
 	/**
 	 * Called before entity is inserted to the database.
 	 *
-	 * @param event
+	 * @param entity
 	 */
-	beforeInsert(event: InsertEvent<TaskPriority>) {
+	async beforeEntityCreate(entity: TaskPriority): Promise<void> {
 		try {
-			if (event) {
-				const { entity } = event;
+			if (entity) {
 				if (!entity.color) {
 					entity.color = faker.internet.color();
 				}
@@ -56,7 +47,7 @@ export class TaskPrioritySubscriber implements EntitySubscriberInterface<TaskPri
 				}
 			}
 		} catch (error) {
-			console.log('Error while creating task priority : subscriber : ', error);
+			console.error('TaskRelatedIssueTypeSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 }

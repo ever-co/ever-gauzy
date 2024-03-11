@@ -1,14 +1,11 @@
+import { EventSubscriber } from "typeorm";
 import { isJsObject } from "@gauzy/common";
 import { isBetterSqlite3, isSqlite } from "@gauzy/config";
-import {
-    EntitySubscriberInterface,
-    EventSubscriber,
-    InsertEvent
-} from "typeorm";
+import { BaseEntityEventSubscriber } from "../../core/entities/subscribers/base-entity-event.subscriber";
 import { Activity } from "./activity.entity";
 
 @EventSubscriber()
-export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {
+export class ActivitySubscriber extends BaseEntityEventSubscriber<Activity> {
 
     /**
     * Indicates that this subscriber only listen to Activity events.
@@ -18,27 +15,26 @@ export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {
     }
 
     /**
-     * Called before activity entity is inserted to the database.
+     * Called before activity entity is inserted / created to the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<Activity>): void | Promise<any> {
+    async beforeEntityCreate(entity: Activity): Promise<void> {
         try {
-            if (event) {
+            if (entity) {
                 if (isSqlite() || isBetterSqlite3()) {
-                    const { entity } = event;
                     try {
                         if (isJsObject(entity.metaData)) {
                             entity.metaData = JSON.stringify(entity.metaData);
                         }
                     } catch (error) {
-                        console.log('Before Insert Activity Error:', error);
                         entity.metaData = JSON.stringify({});
+                        console.log('Before Insert Activity Error:', error);
                     }
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('ActivitySubscriber: An error occurred during the beforeEntityCreate process:', error);
         }
     }
 }

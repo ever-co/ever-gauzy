@@ -1,12 +1,13 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent, RemoveEvent } from "typeorm";
+import { EventSubscriber, RemoveEvent } from "typeorm";
 import * as moment from 'moment';
 import { ITimeSlot } from "@gauzy/contracts";
 import { isNotEmpty } from "@gauzy/common";
 import { TimeSlot } from "./time-slot.entity";
 import { FileStorage } from "./../../core/file-storage";
+import { BaseEntityEventSubscriber } from "../../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
+export class TimeSlotSubscriber extends BaseEntityEventSubscriber<TimeSlot> {
     /**
     * Indicates that this subscriber only listen to TimeSlot events.
     */
@@ -20,7 +21,7 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
      * @param entity
      * @param event
      */
-    afterLoad(entity: TimeSlot, event?: LoadEvent<TimeSlot>): void | Promise<any> {
+    async afterEntityLoad(entity: TimeSlot): Promise<void> {
         try {
             if ('startedAt' in entity) {
                 entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
@@ -38,7 +39,7 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
                 entity.mousePercentage = this.calculateMouseActivity(entity);
             }
         } catch (error) {
-            console.log(error);
+            console.error('TimeSlotSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 
@@ -66,7 +67,7 @@ export class TimeSlotSubscriber implements EntitySubscriberInterface<TimeSlot> {
                 }
             }
         } catch (error) {
-            console.error('Error in afterRemove:', error);
+            console.error('TimeSlotSubscriber: An error occurred during the afterRemove process:', error);
         }
     }
 

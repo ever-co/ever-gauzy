@@ -1,8 +1,9 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { TimeOffRequest } from "./time-off-request.entity";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class TimeOffRequestSubscriber implements EntitySubscriberInterface<TimeOffRequest> {
+export class TimeOffRequestSubscriber extends BaseEntityEventSubscriber<TimeOffRequest> {
 
     /**
     * Indicates that this subscriber only listen to TimeOffRequest events.
@@ -15,15 +16,14 @@ export class TimeOffRequestSubscriber implements EntitySubscriberInterface<TimeO
      * Called after entity is loaded from the database.
      *
      * @param entity
-     * @param event
      */
-    afterLoad(entity: TimeOffRequest, event?: LoadEvent<TimeOffRequest>): void | Promise<any> {
+    async afterEntityLoad(entity: TimeOffRequest): Promise<void> {
         try {
             if (!!entity['document']) {
                 entity.documentUrl = entity.document.fullUrl || entity.documentUrl;
             }
         } catch (error) {
-            console.log(error);
+            console.error('ActivitySubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 }

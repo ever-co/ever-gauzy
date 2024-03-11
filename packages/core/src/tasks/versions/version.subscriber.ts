@@ -1,12 +1,13 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from '../../core/file-storage';
+import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 import { TaskVersion } from './version.entity';
 
 @EventSubscriber()
-export class TaskVersionSubscriber implements EntitySubscriberInterface<TaskVersion> {
+export class TaskVersionSubscriber extends BaseEntityEventSubscriber<TaskVersion> {
 	/**
 	 * Indicates that this subscriber only listen to TaskVersion events.
 	 */
@@ -18,31 +19,26 @@ export class TaskVersionSubscriber implements EntitySubscriberInterface<TaskVers
 	 * Called after entity is loaded from the database.
 	 *
 	 * @param entity
-	 * @param event
 	 */
-	async afterLoad(
-		entity: TaskVersion | Partial<TaskVersion>,
-		event?: LoadEvent<TaskVersion>
-	): Promise<any | void> {
+	async afterEntityLoad(entity: TaskVersion): Promise<void> {
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.error('Error in afterLoad:', error);
+			console.error('TaskVersionSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
 	/**
-	 * Called before entity is inserted to the database.
+	 * Called before entity is inserted/created to the database.
 	 *
-	 * @param event
+	 * @param entity
 	 */
-	beforeInsert(event: InsertEvent<TaskVersion>) {
+	async beforeEntityCreate(entity: TaskVersion): Promise<void> {
 		try {
-			if (event) {
-				const { entity } = event;
+			if (entity) {
 				if (!entity.color) {
 					entity.color = faker.internet.color();
 				}
@@ -51,7 +47,7 @@ export class TaskVersionSubscriber implements EntitySubscriberInterface<TaskVers
 				}
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('TaskVersionSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 }
