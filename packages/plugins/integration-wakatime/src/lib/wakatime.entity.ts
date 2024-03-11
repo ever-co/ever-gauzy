@@ -1,54 +1,59 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { PrimaryKey } from '@mikro-orm/core';
+import { MultiORMColumn, MultiORMEntity } from '@gauzy/core';
 import { IWakatime } from '@gauzy/contracts';
+import { MikroOrmWakatimeRepository } from './repository';
 
-@Entity({ name: 'heartbeats' })
+@MultiORMEntity('heartbeats', { mikroOrmRepository: () => MikroOrmWakatimeRepository })
 @Unique(['time', 'entities']) // named; multiple fields
 export class Wakatime implements IWakatime {
+
+	@PrimaryKey()
 	@PrimaryGeneratedColumn()
 	id: number;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	user_agent: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	type: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	employeeId: string;
 
-	@Column({ type: 'real' })
+	@MultiORMColumn({ type: 'real' })
 	time: number;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	categories: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	dependencies: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	languages: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	machine: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	projects: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	branches: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	operating_systems: string;
 
-	@Column()
+	@MultiORMColumn()
 	entities: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	editors: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	lines: string;
 
-	@Column({ nullable: true })
+	@MultiORMColumn({ nullable: true })
 	is_write: boolean;
 }

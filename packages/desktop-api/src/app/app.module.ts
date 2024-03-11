@@ -1,32 +1,17 @@
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
+import { WakatimeModule } from '@gauzy/integration-wakatime';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Wakatime, WakatimeModule } from '@gauzy/integration-wakatime';
+import { DatabaseModule } from './database.module';
 
 require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 
 @Module({
 	imports: [
-		TypeOrmModule.forRoot({
-			type: 'sqlite',
-			database: process.env.GAUZY_USER_PATH ? `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3` : '',
-			keepConnectionAlive: true,
-			logging: 'all',
-			logger: 'file', //Removes console logging, instead logs all queries in a file ormlogs.log
-			synchronize: true,
-			entities: [Wakatime]
-		}),
-		RouterModule.register([
-			{
-				path: '',
-				children: [{ path: '/v1/users/current', module: WakatimeModule }]
-			}
-		]),
+		DatabaseModule,
 		WakatimeModule
 	],
 	controllers: [AppController],
 	providers: [AppService]
 })
-export class AppModule {}
+export class AppModule { }

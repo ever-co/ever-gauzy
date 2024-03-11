@@ -1,29 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import * as moment from 'moment';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Wakatime } from './wakatime.entity';
+import { TypeOrmWakatimeRepository } from './repository';
 
 @Injectable()
 export class WakatimeService {
 	constructor(
-		@InjectRepository(Wakatime)
-		private wakatimeRepository: Repository<Wakatime>
-	) {}
+		private readonly typeOrmWakatimeRepository: TypeOrmWakatimeRepository
+	) { }
 
-	async getSummaries(params): Promise<any> {
-		const result = await this.wakatimeRepository
-			.query(`SELECT SUM(seconds) as seconds from (
-			SELECT COUNT(*) as seconds from heartbeats where DATE(time, 'unixepoch') = date('now') GROUP by entities
-		) t;`);
+	async getSummaries(params: any): Promise<any> {
+		const result = await this.typeOrmWakatimeRepository.query(`
+			SELECT SUM(seconds) AS seconds
+			FROM (
+				SELECT COUNT(*) AS seconds
+				FROM heartbeats
+				WHERE DATE(time, 'unixepoch') = date('now')
+				GROUP BY entities
+			) t;
+		`);
 		return {
 			data: [
 				{
 					categories: [],
 					grand_total: {
-						digital: `${Math.floor(
-							result[0].seconds / 3600
-						)}:${Math.floor(result[0].seconds / 60)}`,
+						digital: `${Math.floor(result[0].seconds / 3600)}:${Math.floor(result[0].seconds / 60)}`,
 						hours: Math.floor(result[0].seconds / 3600),
 						minute: Math.floor(result[0].seconds / 60),
 						total_seconds: result[0].seconds,
@@ -43,7 +44,7 @@ export class WakatimeService {
 	}
 
 	bulkSave(wakatime: Wakatime[]) {
-		return this.wakatimeRepository
+		return this.typeOrmWakatimeRepository
 			.createQueryBuilder()
 			.insert()
 			.values(wakatime)
@@ -52,7 +53,7 @@ export class WakatimeService {
 	}
 
 	save(wakatime: Wakatime) {
-		return this.wakatimeRepository
+		return this.typeOrmWakatimeRepository
 			.createQueryBuilder()
 			.insert()
 			.values(wakatime)
@@ -109,7 +110,7 @@ export class WakatimeService {
 				default:
 					break;
 			}
-		} catch (error) {}
+		} catch (error) { }
 
 		return value;
 	}
