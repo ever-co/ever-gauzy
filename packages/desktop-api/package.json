@@ -27,6 +27,9 @@
 	"keywords": [],
 	"dependencies": {
 		"@grpc/grpc-js": "^1.6.7",
+		"@mikro-orm/core": "^6.1.8",
+		"@mikro-orm/nestjs": "^5.2.3",
+		"@mikro-orm/sqlite": "^6.1.8",
 		"@nestjs/common": "^10.3.3",
 		"@nestjs/core": "^10.3.3",
 		"@nestjs/typeorm": "^10.0.2"

@@ -1,10 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { PrimaryKey } from '@mikro-orm/core';
+import { MultiORMColumn, MultiORMEntity } from '@gauzy/core';
 import { IWakatime } from '@gauzy/contracts';
-import { MultiORMColumn } from '@gauzy/core';
+import { MikroOrmWakatimeRepository } from './repository';
 
-@Entity({ name: 'heartbeats' })
+@MultiORMEntity('heartbeats', { mikroOrmRepository: () => MikroOrmWakatimeRepository })
 @Unique(['time', 'entities']) // named; multiple fields
 export class Wakatime implements IWakatime {
+
+	@PrimaryKey()
 	@PrimaryGeneratedColumn()
 	id: number;
 
