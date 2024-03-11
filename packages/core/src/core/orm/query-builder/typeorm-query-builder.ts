@@ -23,8 +23,15 @@ export class TypeOrmQueryBuilder<Entity extends Object> implements IQueryBuilder
         return this.qb;
     }
 
+    clone(): this {
+        const qb = this.qb.clone();
+        const cloneQb: any = new TypeOrmQueryBuilder(this.repo);
+        cloneQb.setQueryBuilder(qb);
+        return this;
+    }
+
     subQuery() {
-        const subQuery: any = this.qb.subQuery()
+        const subQuery: any = this.qb.subQuery();
         return subQuery as IQueryBuilder<Entity>;
     }
 

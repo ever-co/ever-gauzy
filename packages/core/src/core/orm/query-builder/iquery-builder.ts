@@ -5,6 +5,7 @@ export interface IQueryBuilder<Entity> {
     alias: string;
     setQueryBuilder(qb: SelectQueryBuilder<Entity> | QueryBuilder<any>): this;
     getQueryBuilder(): SelectQueryBuilder<Entity> | QueryBuilder<any>;
+    clone(): this;
     subQuery(): IQueryBuilder<Entity>;
     setFindOptions(findOptions: FindManyOptions<Entity>): this;
     select(selection: string, selectionAliasName?: string): this;

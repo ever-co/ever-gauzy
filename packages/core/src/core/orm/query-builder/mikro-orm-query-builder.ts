@@ -1,7 +1,7 @@
 import { EntityRepository, QueryBuilder, QueryOrder } from '@mikro-orm/knex';
 import { IQueryBuilder } from './iquery-builder';
 import { Brackets, EntityTarget, FindManyOptions, SelectQueryBuilder } from 'typeorm';
-import { convertTypeOrmConationAndParamsToMikroOrm } from '../utils';
+import { convertTypeOrmConationAndParamsToMikroOrm, getConationFromQuery } from '../utils';
 import { uniqueId } from 'underscore';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
@@ -36,6 +36,13 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
 
     getQueryBuilder() {
         return this.qb;
+    }
+
+    clone(): this {
+        const qb = this.qb.clone();
+        const cloneQb: any = new MikroOrmQueryBuilder(this.repo);
+        cloneQb.setQueryBuilder(qb);
+        return this;
     }
 
     subQuery() {
@@ -143,8 +150,13 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
 
     private handleWhereSubQuery(conditionFunction, whereFunction: 'where' | 'orWhere' | 'andWhere' = 'where') {
         let subQuery = this.subQuery();
-        const updatedQb = conditionFunction(subQuery as any);
-        if (updatedQb === 'string') {
+        let updatedQb = conditionFunction(subQuery as any);
+
+        if (updatedQb === undefined) {
+            updatedQb = subQuery;
+        }
+
+        if (typeof updatedQb === 'string') {
             switch (whereFunction) {
                 case 'orWhere':
                     this.orWhere(updatedQb)
@@ -156,31 +168,45 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
                     this.where(updatedQb)
                     break;
             }
-        } else if (updatedQb instanceof MikroOrmQueryBuilder) {
-            switch (whereFunction) {
-                case 'orWhere':
-                    this.orWhere(updatedQb.getSql(), updatedQb.getParameters())
-                    break;
-                case 'andWhere':
-                    this.andWhere(updatedQb.getSql(), updatedQb.getParameters())
-                    break;
-                default:
-                    this.where(updatedQb.getSql(), updatedQb.getParameters())
-                    break;
-            }
         } else {
-            switch (whereFunction) {
-                case 'orWhere':
-                    this.orWhere(subQuery.getSql(), subQuery.getParameters())
-                    break;
-                case 'andWhere':
-                    this.andWhere(subQuery.getSql(), subQuery.getParameters())
-                    break;
-                default:
-                    this.where(subQuery.getSql(), subQuery.getParameters())
-                    break;
+            const sqlQuery = updatedQb.getSql();
+            const params = updatedQb.getParameters();
+            const whereString = getConationFromQuery(sqlQuery);
+            if (whereString) {
+                switch (whereFunction) {
+                    case 'orWhere':
+                        this.orWhere(whereString, params)
+                        break;
+                    case 'andWhere':
+                        this.andWhere(whereString, params)
+                        break;
+                    default:
+                        this.where(whereString, params)
+                        break;
+                }
             }
         }
+    }
+
+    private handleWhereBracketsSubQuery(conditionFunction) {
+
+        let subQuery = this.subQuery();
+        let updatedQb = conditionFunction.whereFactory(subQuery as any)
+
+        if (updatedQb === undefined) {
+            updatedQb = subQuery;
+        }
+
+        const sqlQuery = updatedQb.getSql();
+        const params = updatedQb.getParameters();
+        const whereString = getConationFromQuery(sqlQuery);
+
+        if (whereString) {
+            return [whereString, params];
+        } else {
+            return [];
+        }
+
     }
 
 
@@ -191,7 +217,10 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         } else if (typeof condition === 'function') {
             this.handleWhereSubQuery(condition, 'where');
         } else if (condition instanceof Brackets) {
-            this.handleWhereSubQuery(condition.whereFactory, 'where');
+            const [mikroOrmCondition, mikroOrmParameters] = this.handleWhereBracketsSubQuery(condition);
+            if (mikroOrmCondition) {
+                this.qb.where(mikroOrmCondition, mikroOrmParameters);
+            }
         } else if (typeof condition === 'object') {
             // Handle object conditions
             this.qb.where(condition);
@@ -206,8 +235,10 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         } else if (typeof condition === 'function') {
             this.handleWhereSubQuery(condition, 'andWhere');
         } else if (condition instanceof Brackets) {
-            condition.whereFactory(this.qb as any);
-            this.handleWhereSubQuery(condition.whereFactory, 'andWhere');
+            const [mikroOrmCondition, mikroOrmParameters] = this.handleWhereBracketsSubQuery(condition);
+            if (mikroOrmCondition) {
+                this.qb.andWhere(mikroOrmCondition, mikroOrmParameters);
+            }
         } else if (typeof condition === 'object') {
             // Handle object conditions
             this.qb.andWhere(condition);
@@ -222,7 +253,10 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         } else if (typeof condition === 'function') {
             this.handleWhereSubQuery(condition, 'orWhere');
         } else if (condition instanceof Brackets) {
-            this.handleWhereSubQuery(condition.whereFactory, 'orWhere');
+            const [mikroOrmCondition, mikroOrmParameters] = this.handleWhereBracketsSubQuery(condition);
+            if (mikroOrmCondition) {
+                this.qb.orWhere(mikroOrmCondition, mikroOrmParameters);
+            }
         } else if (typeof condition === 'object') {
             // Handle object conditions
             this.qb.orWhere(condition);
