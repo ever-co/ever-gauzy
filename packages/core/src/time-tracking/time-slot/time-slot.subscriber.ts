@@ -1,4 +1,4 @@
-import { EventSubscriber, RemoveEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import * as moment from 'moment';
 import { ITimeSlot } from "@gauzy/contracts";
 import { isNotEmpty } from "@gauzy/common";
@@ -46,12 +46,13 @@ export class TimeSlotSubscriber extends BaseEntityEventSubscriber<TimeSlot> {
     /**
      * Called after entity is removed from the database.
      *
-     * @param event
+     * @param entity
+     * @param em
      */
-    async afterRemove(event: RemoveEvent<TimeSlot>): Promise<any | void> {
+    async afterEntityDelete(entity: TimeSlot): Promise<void> {
         try {
-            const entityId = event.entityId;
-            const { screenshots } = event.entity ?? {};
+            const { screenshots } = entity ?? {};
+            const entityId = entity?.id;
 
             if (entityId && Array.isArray(screenshots) && isNotEmpty(screenshots)) {
                 console.log(`AFTER TIME_SLOT WITH ID ${entityId} REMOVED`);
@@ -67,7 +68,7 @@ export class TimeSlotSubscriber extends BaseEntityEventSubscriber<TimeSlot> {
                 }
             }
         } catch (error) {
-            console.error('TimeSlotSubscriber: An error occurred during the afterRemove process:', error);
+            console.error('TimeSlotSubscriber: An error occurred during the afterEntityDelete process:', error);
         }
     }
 

@@ -1,4 +1,4 @@
-import { EventSubscriber, RemoveEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { OrganizationTeamEmployee } from "./organization-team-employee.entity";
 import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
@@ -15,15 +15,16 @@ export class OrganizationTeamEmployeeSubscriber extends BaseEntityEventSubscribe
     /**
      * Called after entity is removed from the database.
      *
-     * @param event
+     * @param entity
+     * @param em
      */
-    async afterRemove(event: RemoveEvent<OrganizationTeamEmployee>): Promise<any | void> {
+    async afterEntityDelete(entity: OrganizationTeamEmployee): Promise<void> {
         try {
-            if (event.entityId) {
-                console.log(`BEFORE TEAM MEMBER ENTITY WITH ID ${event.entityId} REMOVED`);
+            if (entity.id) {
+                console.log(`BEFORE TEAM MEMBER ENTITY WITH ID ${entity.id} REMOVED`);
             }
         } catch (error) {
-            console.error('Error in afterRemove:', error);
+            console.error('OrganizationTeamEmployeeSubscriber: An error occurred during the afterEntityDelete process:', error);
         }
     }
 }
