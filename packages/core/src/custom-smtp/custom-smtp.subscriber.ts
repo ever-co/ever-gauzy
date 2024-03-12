@@ -29,7 +29,7 @@ export class CustomSmtpSubscriber extends BaseEntityEventSubscriber<CustomSmtp> 
             }
             WrapSecrets(entity, entity); // Assuming wrapSecrets is a function to securely handle secrets.
         } catch (error) {
-            console.error("Failed to wrap secrets: ", error);
+            console.error('CustomSmtpSubscriber: Error during the afterEntityLoad process:', error);
         }
     }
 }

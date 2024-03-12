@@ -14,30 +14,32 @@ export class OrganizationTeamJoinRequestSubscriber extends BaseEntityEventSubscr
 	}
 
 	/**
-	 * Called after entity is loaded from the database.
+	 * Called after an OrganizationTeamJoinRequest entity is loaded from the database. This method checks
+	 * if the join request is expired based on the 'expiredAt' property and sets the 'isExpired' flag accordingly.
 	 *
-	 * @param entity
+	 * @param entity The OrganizationTeamJoinRequest entity that has been loaded.
+	 * @returns {Promise<void>} A promise that resolves when the post-load processing is complete.
 	 */
 	async afterEntityLoad(entity: OrganizationTeamJoinRequest): Promise<void> {
 		try {
-			if ('expiredAt' in entity) {
-				entity.isExpired = entity.expiredAt ? moment(entity.expiredAt).isBefore(moment()) : false;
-			}
+			// Check if the entity has an 'expiredAt' date and set the 'isExpired' flag
+			entity.isExpired = entity.expiredAt ? moment(entity.expiredAt).isBefore(moment()) : false;
 		} catch (error) {
 			console.error('OrganizationTeamJoinRequestSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
 	/**
-	 * Called before entity is inserted to the database.
+	 * Called before an OrganizationTeamJoinRequest entity is inserted into the database. This method sets
+	 * the expiration date for the join request based on a predefined interval.
 	 *
-	 * @param entity
+	 * @param entity The OrganizationTeamJoinRequest entity about to be created.
+	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
 	 */
 	async beforeEntityCreate(entity: OrganizationTeamJoinRequest): Promise<void> {
 		try {
-			if (entity) {
-				entity.expiredAt = moment(new Date()).add(environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME, 'seconds').toDate();
-			}
+			// Set the expiredAt date by adding the predefined expiration time to the current date
+			entity.expiredAt = moment().add(environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME, 'seconds').toDate();
 		} catch (error) {
 			console.error('OrganizationTeamJoinRequestSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}

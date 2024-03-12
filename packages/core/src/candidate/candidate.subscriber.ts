@@ -34,8 +34,7 @@ export class CandidateSubscriber extends BaseEntityEventSubscriber<Candidate> {
             // Set alreadyHired to true if the candidate's status is HIRED and the hiredDate is a valid date.
             entity.alreadyHired = entity.status === CandidateStatusEnum.HIRED && moment(entity.hiredDate).isValid();
         } catch (error) {
-            // Log any errors encountered during the execution of the function.
-            console.error('Error in afterEntityLoad:', error);
+            console.error('CandidateSubscriber: Error during the afterEntityLoad process:', error);
         }
     }
 
@@ -55,8 +54,7 @@ export class CandidateSubscriber extends BaseEntityEventSubscriber<Candidate> {
                 }
             }
         } catch (error) {
-            // Log any errors encountered during the execution of the function.
-            console.error('Error in beforeEntityCreate:', error);
+            console.error('CandidateSubscriber: Error during the beforeEntityCreate process:', error);
         }
     }
 }

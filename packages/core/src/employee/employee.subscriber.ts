@@ -1,4 +1,4 @@
-import { EventSubscriber, InsertEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { retrieveNameFromEmail, sluggable } from "@gauzy/common";
 import { Employee } from "./employee.entity";
 import { getUserDummyImage } from "../core/utils";
@@ -95,16 +95,21 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
     }
 
     /**
-     * Called after entity is inserted to the database.
+     * Called after entity is inserted/created to the database.
      *
-     * @param event
+     * @param entity
+     * @param em
      */
-    async afterInsert(event: InsertEvent<Employee>): Promise<any | void> {
-        if (event.entity) {
-            const { entity } = event;
-            await this.calculateTotalEmployees(entity, event.manager);
+    async afterEntityCreate(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
+        try {
+            if (entity) {
+                await this.calculateTotalEmployees(entity, em);
+            }
+        } catch (error) {
+            console.error('EmployeeSubscriber: An error occurred during the afterEntityCreate process:', error.message);
         }
     }
+
 
     /**
      * Called after entity is removed from the database.

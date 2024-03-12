@@ -13,15 +13,16 @@ export class OrganizationTeamEmployeeSubscriber extends BaseEntityEventSubscribe
     }
 
     /**
-     * Called after entity is removed from the database.
+     * Called after an OrganizationTeamEmployee entity is removed from the database. This method logs
+     * an action indicating that the team member entity has been removed.
      *
-     * @param entity
-     * @param em
+     * @param entity The OrganizationTeamEmployee entity that was just deleted.
+     * @returns {Promise<void>} A promise that resolves when the post-delete processing is complete.
      */
     async afterEntityDelete(entity: OrganizationTeamEmployee): Promise<void> {
         try {
             if (entity.id) {
-                console.log(`BEFORE TEAM MEMBER ENTITY WITH ID ${entity.id} REMOVED`);
+                console.log(`AFTER TEAM MEMBER ENTITY WITH ID ${entity.id} REMOVED`);
             }
         } catch (error) {
             console.error('OrganizationTeamEmployeeSubscriber: An error occurred during the afterEntityDelete process:', error);

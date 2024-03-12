@@ -23,7 +23,7 @@ export class EmailTemplateSubscriber extends BaseEntityEventSubscriber<EmailTemp
                 entity.title = entity.name.split('/')[0].split('-').join(' ');
             }
         } catch (error) {
-            console.log(error);
+            console.error('EmailTemplateSubscriber: Error during the afterEntityLoad process:', error);
         }
     }
 }

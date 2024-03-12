@@ -13,9 +13,11 @@ export class IntegrationSettingSubscriber extends BaseEntityEventSubscriber<Inte
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after an IntegrationSetting entity is loaded from the database. This method handles
+     * sensitive information by partially masking it before presenting to the user.
      *
-     * @param entity
+     * @param entity The IntegrationSetting entity that has been loaded.
+     * @returns {Promise<void>} A promise that resolves when the post-load processing is complete.
      */
     async afterEntityLoad(entity: IntegrationSetting): Promise<void> {
         try {
@@ -25,16 +27,18 @@ export class IntegrationSettingSubscriber extends BaseEntityEventSubscriber<Inte
             // Specify the percentage of the string to be replaced with the character
             const percentage = 25;
 
-            // Create an object containing the sensitive data
-            const secrets: Record<string, string> = {
-                [settingsName]: settingsValue,
-            };
+            if (sensitiveSecretKeys.includes(settingsName) && typeof settingsValue === 'string') {
+                // Create an object containing the sensitive data
+                const secrets: Record<string, string> = {
+                    [settingsName]: settingsValue,
+                };
 
-            // Apply the wrapping function only to the sensitive keys
-            const wrapped = keysToWrapSecrets(sensitiveSecretKeys, secrets, percentage);
+                // Apply the wrapping function only to the sensitive keys
+                const wrapped = keysToWrapSecrets(sensitiveSecretKeys, secrets, percentage);
 
-            entity.wrapSecretKey = settingsName;
-            entity.wrapSecretValue = wrapped[settingsName];
+                entity.wrapSecretKey = settingsName;
+                entity.wrapSecretValue = wrapped[settingsName];
+            }
         } catch (error) {
             console.error('IntegrationSettingSubscriber: An error occurred during the afterEntityLoad process:', error);
         }

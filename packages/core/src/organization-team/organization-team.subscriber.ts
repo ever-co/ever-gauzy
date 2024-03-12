@@ -15,22 +15,20 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 	}
 
 	/**
-	 * Called after entity is loaded from the database.
+	 * Called after an OrganizationTeam entity is loaded from the database. This method updates
+	 * the entity by setting the prefix and updating the logo URL if an image is available.
 	 *
-	 * @param entity
+	 * @param entity The OrganizationTeam entity that has been loaded.
+	 * @returns {Promise<void>} A promise that resolves when the post-load processing is complete.
 	 */
 	async afterEntityLoad(entity: OrganizationTeam): Promise<void> {
 		try {
-			if (entity) {
-				if (entity.prefix) {
-					entity.prefix = entity.prefix.toUpperCase();
-				} else if (entity.name) {
-					entity.prefix = entity.name.substring(0, 3).toUpperCase();
-				}
+			// Set or update the prefix
+			entity.prefix = entity.prefix ? entity.prefix.toUpperCase() : entity.name?.substring(0, 3).toUpperCase();
 
-				if (entity.image) {
-					entity.logo = entity.image.fullUrl || entity.logo;
-				}
+			// Update the logo URL if an image is available
+			if (entity.image && entity.image.fullUrl) {
+				entity.logo = entity.image.fullUrl;
 			}
 		} catch (error) {
 			console.error('OrganizationTeamSubscriber: An error occurred during the afterEntityLoad process:', error);

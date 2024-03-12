@@ -25,7 +25,7 @@ export class EmailResetSubscriber extends BaseEntityEventSubscriber<EmailReset> 
                 entity.isExpired = entity.expiredAt ? moment(entity.expiredAt).isBefore(moment()) : false;
             }
         } catch (error) {
-            console.error('Error in EmailResetSubscriber afterEntityLoad:', error);
+            console.error('EmailResetSubscriber: Error during the afterEntityLoad process:', error);
         }
     }
 
@@ -40,7 +40,7 @@ export class EmailResetSubscriber extends BaseEntityEventSubscriber<EmailReset> 
                 entity.expiredAt = moment(new Date()).add(environment.EMAIL_RESET_EXPIRATION_TIME, 'seconds').toDate()
             }
         } catch (error) {
-            console.error('Error in EmailResetSubscriber beforeEntityCreate:', error);
+            console.error('EmailResetSubscriber: Error during the beforeEntityCreate process:', error);
         }
     }
 }
