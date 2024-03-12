@@ -57,7 +57,7 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		...dbTypeOrmConnectionConfig
 	},
 	dbMikroOrmConnectionOptions: {
-		...dbMikroOrmConnectionConfig,
+		...dbMikroOrmConnectionConfig
 	},
 	dbKnexConnectionOptions: {
 		retryAttempts: 100, // Number of retry attempts in case of connection failures
