@@ -1,19 +1,17 @@
-import {
-    EntityManager,
-    EntitySubscriberInterface,
-    EventSubscriber,
-    InsertEvent,
-    LoadEvent,
-    RemoveEvent,
-    UpdateEvent
-} from "typeorm";
+import { EventSubscriber, InsertEvent } from "typeorm";
 import { retrieveNameFromEmail, sluggable } from "@gauzy/common";
 import { Employee } from "./employee.entity";
-import { getUserDummyImage } from "./../core/utils";
-import { Organization } from "./../core/entities/internal";
+import { getUserDummyImage } from "../core/utils";
+import { Organization } from "../core/entities/internal";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
+import {
+    MikroOrmEntityManager,
+    MultiOrmEntityManager,
+    TypeOrmEntityManager
+} from "../core/entities/subscribers/entity-event-subscriber.types";
 
 @EventSubscriber()
-export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
+export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 
     /**
     * Indicates that this subscriber only listen to Employee events.
@@ -28,87 +26,71 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
      * @param entity - The loaded Employee entity.
      * @param event - The LoadEvent associated with the entity loading.
      */
-    afterLoad(entity: Employee, event?: LoadEvent<Employee>): void | Promise<any> {
+    async afterEntityLoad(entity: Employee): Promise<void> {
         try {
-            // Set fullName based on user name if available
+            // Set fullName from the associated user's name, if available
             if (entity.user) {
                 entity.fullName = entity.user.name;
             }
 
-            // Set isDeleted based on the presence of deletedAt property
+            // Set isDeleted to true if the deletedAt property is present and not null
             if ('deletedAt' in entity) {
                 entity.isDeleted = !!entity.deletedAt;
             }
 
-            // Ensure billRateValue is initialized to 0 if not set
+            // Default billRateValue to 0 if it's not set
             if ('billRateValue' in entity) {
                 entity.billRateValue = entity.billRateValue || 0;
             }
         } catch (error) {
             // Handle or log the error as needed
-            console.log("Error in afterLoad:", error.message);
+            console.error('EmployeeSubscriber: An error occurred during the afterEntityLoad process:', error.message);
         }
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Called before entity is inserted/created to the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<Employee>): void | Promise<any> {
+    async beforeEntityCreate(entity: Employee): Promise<void> {
         try {
-            if (event.entity) {
-                const { entity } = event;
-                /**
-                 * Use a dummy image avatar if no image is uploaded for any of the employee
-                 */
-                if (entity.user) {
-                    if (!entity.user.imageUrl) {
-                        entity.user.imageUrl = getUserDummyImage(entity.user)
-                    }
-                    this.createSlug(entity);
-                }
-                /**
-                 * If Date when started work filled then enabled time tracking functionality for the employee.
-                 */
-                if (entity.startedWorkOn) {
-                    entity.isTrackingEnabled = true;
-                    entity.isActive = true;
-                    entity.endWork = entity.endWork ? entity.endWork : null;
-                }
+            // Set a default avatar image if none is provided
+            if (entity.user && !entity.user.imageUrl) {
+                entity.user.imageUrl = getUserDummyImage(entity.user);
+                await this.createSlug(entity);
+            }
+
+            // Enable time tracking and set the employee as active if the start work date is provided
+            if (entity.startedWorkOn) {
+                entity.isTrackingEnabled = true;
+                entity.isActive = true;
             }
         } catch (error) {
-            console.log(error);
+            console.error('EmployeeSubscriber: An error occurred during the beforeEntityCreate process:', error.message);
         }
     }
 
     /**
      * Called before entity is updated in the database.
      *
-     * @param event
+     * @param entity
      */
-    beforeUpdate(event: UpdateEvent<Employee>): void | Promise<any> {
+    async beforeEntityUpdate(entity: Employee): Promise<void> {
         try {
-            if (event.entity) {
-                const { entity } = event;
-                /**
-                 * If Date when started work filled then enabled time tracking functionality for the employee.
-                 */
-                if (entity.startedWorkOn) {
-                    entity.isTrackingEnabled = true;
-                    entity.isActive = true;
-                    entity.endWork = entity.endWork ? entity.endWork : null;
-                }
-                /**
-                * If Date when ended work filled then disable time tracking functionality for the employee.
-                */
-                if (entity.endWork) {
-                    entity.isTrackingEnabled = false;
-                    entity.isActive = false;
-                }
+            // Enable time tracking and activate the employee if the start work date is set.
+            if (entity.startedWorkOn) {
+                entity.isTrackingEnabled = true;
+                entity.isActive = true;
+            }
+
+            // Disable time tracking and deactivate the employee if the end work date is set.
+            if (entity.endWork) {
+                entity.isTrackingEnabled = false;
+                entity.isActive = false;
             }
         } catch (error) {
-            console.log(error);
+            console.error('EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:', error.message);
         }
     }
 
@@ -127,59 +109,73 @@ export class EmployeeSubscriber implements EntitySubscriberInterface<Employee> {
     /**
      * Called after entity is removed from the database.
      *
-     * @param event
+     * @param entity
+     * @param em
      */
-    async afterRemove(event: RemoveEvent<Employee>): Promise<any | void> {
-        if (event.entity) {
-            const { entity } = event;
-            await this.calculateTotalEmployees(entity, event.manager);
+    async afterEntityDelete(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
+        try {
+            if (entity) {
+                await this.calculateTotalEmployees(entity, em);
+            }
+        } catch (error) {
+            console.error('EmployeeSubscriber: An error occurred during the afterEntityDelete process:', error);
         }
     }
 
     /**
-     * Generate employee public profile slug
+     * Creates a slug for an Employee entity based on the associated User's information.
+     * The slug is generated using the first and last name, username, or email, in that order of preference.
      *
-     * @param entity
+     * @param {Employee} entity - The Employee entity for which to create the slug.
+     * @throws {Error} If neither entity nor entity.user is defined, or if slug creation fails.
      */
-    createSlug(entity: Employee) {
+    async createSlug(entity: Employee) {
         try {
             if (!entity || !entity.user) {
                 console.error("Entity or User object is not defined.");
                 return;
             }
 
-            const { user } = entity;
+            const { firstName, lastName, username, email } = entity.user;
 
-            if (user.firstName || user.lastName) { // Use first &/or last name to create slug
-                entity.profile_link = sluggable(`${user.firstName || ''} ${user.lastName || ''}`.trim());
-            } else if (user.username) { // Use username to create slug if first & last name not found
-                entity.profile_link = sluggable(user.username);
-            } else { // Use email to create slug if nothing found
-                entity.profile_link = sluggable(retrieveNameFromEmail(user.email));
+            if (firstName || lastName) {
+                // Use first &/or last name to create slug
+                entity.profile_link = sluggable(`${firstName || ''} ${lastName || ''}`.trim());
+            } else if (username) {
+                // Use username to create slug if first & last name not found
+                entity.profile_link = sluggable(username);
+            } else {
+                // Use email to create slug if nothing found
+                entity.profile_link = sluggable(retrieveNameFromEmail(email));
             }
         } catch (error) {
-            console.error(`Error creating slug for entity with id ${entity.id}: `, error);
+            console.error(`EmployeeSubscriber: Error creating slug for entity with id ${entity.id}: `, error);
         }
     }
 
     /**
-     * Handler request for count total employee
+     * Calculates and updates the total number of employees for an organization.
+     * Handles both TypeORM and MikroORM environments.
      *
-     * @param entity
-     * @param manager
+     * @param entity The employee entity with organizationId and tenantId.
+     * @param em The entity manager, either TypeORM's or MikroORM's.
      */
-    async calculateTotalEmployees(entity: Employee, manager: EntityManager) {
+    async calculateTotalEmployees(entity: Employee, em: MultiOrmEntityManager): Promise<void> {
         try {
             const { organizationId, tenantId } = entity;
-            const count = await manager.countBy(Employee, {
-                organizationId,
-                tenantId
-            });
-            await manager.update(Organization, { id: organizationId, tenantId }, {
-                totalEmployees: count
-            });
+
+            // Handle TypeORM specific logic
+            if (em instanceof TypeOrmEntityManager) {
+                const totalEmployees = await em.countBy(Employee, { organizationId, tenantId });
+                await em.update(Organization, { id: organizationId, tenantId }, { totalEmployees });
+            }
+            // Handle MikroORM specific logic
+            else if (em instanceof MikroOrmEntityManager) {
+                const totalEmployees = await em.count(Employee, { organizationId, tenantId });
+                await em.nativeUpdate(Organization, { id: organizationId, tenantId }, { totalEmployees });
+            }
         } catch (error) {
-            console.log('error while updating total employee of the organization', error);
+            console.error('EmployeeSubscriber: Error while updating total employee count of the organization:', error);
         }
     }
 }

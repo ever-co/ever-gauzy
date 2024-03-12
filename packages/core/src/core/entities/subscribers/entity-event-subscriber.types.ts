@@ -1,6 +1,10 @@
-/**
- *
- */
+import { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
+import { EntityManager as TypeOrmEntityManager } from 'typeorm';
+
+export { MikroOrmEntityManager, TypeOrmEntityManager }
+
+export type MultiOrmEntityManager = MikroOrmEntityManager | TypeOrmEntityManager;
+
 export interface IEntityEventSubscriber<Entity> {
     /**
      * Optional method to specify the entity class that this subscriber listens to.
@@ -51,4 +55,18 @@ export interface IEntityEventSubscriber<Entity> {
      * @returns {Promise<void>}
      */
     afterEntityLoad(entity: Entity): Promise<void>;
+
+    /**
+     * Optional method that is called after an entity is deleted.
+     * Implement this method to define specific logic to be executed
+     * after an entity deletion event.
+     *
+     * @param entity The entity that was deleted.
+     * @param entityId The ID of the deleted entity.
+     * @returns {Promise<void>}
+     */
+    afterEntityDelete(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void>;
 }

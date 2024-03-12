@@ -1,6 +1,19 @@
-import { EventArgs, EventSubscriber as MikroEntitySubscriberInterface } from '@mikro-orm/core';
-import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
-import { InsertEvent, LoadEvent, EntitySubscriberInterface as TypeOrmEntitySubscriberInterface, UpdateEvent } from 'typeorm';
+import {
+    EventArgs,
+    EventSubscriber as MikroEntitySubscriberInterface
+} from '@mikro-orm/core';
+import {
+    InsertEvent,
+    RemoveEvent,
+    EntitySubscriberInterface as TypeOrmEntitySubscriberInterface,
+    UpdateEvent
+} from 'typeorm';
+import {
+    MultiORM,
+    MultiORMEnum,
+    getORMType
+} from '../../../core/utils';
+import { MultiOrmEntityManager } from './entity-event-subscriber.types';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -21,7 +34,7 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
         try {
             await this.beforeEntityCreate(args.entity);
         } catch (error) {
-            console.error("Error in beforeCreate:", error);
+            console.error("EntityEventSubscriber: Error in beforeCreate:", error);
         }
     }
 
@@ -35,7 +48,7 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
         try {
             await this.beforeEntityCreate(event.entity);
         } catch (error) {
-            console.error("Error in beforeInsert:", error);
+            console.error("EntityEventSubscriber: Error in beforeInsert:", error);
         }
     }
 
@@ -69,7 +82,7 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
             }
             await this.beforeEntityUpdate(entity);
         } catch (error) {
-            console.error("Error in beforeUpdate:", error);
+            console.error("EntityEventSubscriber: Error in beforeUpdate:", error);
         }
     }
 
@@ -91,7 +104,7 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
         try {
             await this.afterEntityCreate(args.entity);
         } catch (error) {
-            console.error("Error in afterCreate:", error);
+            console.error("EntityEventSubscriber: Error in afterCreate:", error);
         }
     }
 
@@ -105,7 +118,7 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
         try {
             await this.afterEntityCreate(event.entity);
         } catch (error) {
-            console.error("Error in afterInsert:", error);
+            console.error("EntityEventSubscriber: Error in afterInsert:", error);
         }
     }
 
@@ -124,11 +137,11 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
       * @param event The load event details, if available.
       * @returns {void | Promise<any>} Can perform asynchronous operations.
       */
-    async afterLoad(entity: Entity, event?: LoadEvent<Entity>): Promise<void> {
+    async afterLoad(entity: Entity): Promise<void> {
         try {
             await this.afterEntityLoad(entity);
         } catch (error) {
-            console.error("Error in afterLoad:", error);
+            console.error("EntityEventSubscriber: Error in afterLoad:", error);
         }
     }
 
@@ -142,7 +155,7 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
         try {
             await this.afterEntityLoad(args.entity);
         } catch (error) {
-            console.error("Error in onLoad:", error);
+            console.error("EntityEventSubscriber: Error in onLoad:", error);
         }
     }
 
@@ -153,4 +166,49 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      * @returns {Promise<void>}
      */
     protected abstract afterEntityLoad(entity: Entity): Promise<void>;
+
+    /**
+     * Invoked when an entity is deleted in MikroORM.
+     *
+     * @param args The details of the delete event, including the deleted entity.
+     * @returns {void | Promise<any>} Can perform asynchronous operations.
+     */
+    async afterDelete(event: EventArgs<Entity>): Promise<void> {
+        try {
+            if (event.entity) {
+                await this.afterEntityDelete(event.entity, event.em);
+            }
+        } catch (error) {
+            console.error("EntityEventSubscriber: Error in afterDelete:", error);
+        }
+    }
+
+    /**
+     * Invoked when an entity is removed in TypeORM.
+     *
+     * @param event The remove event details, including the removed entity.
+     * @returns {Promise<void>} Can perform asynchronous operations.
+     */
+    async afterRemove(event: RemoveEvent<Entity>): Promise<void> {
+        try {
+            if (event.entity && event.entityId) {
+                event.entity['id'] = event.entityId;
+                await this.afterEntityDelete(event.entity, event.manager);
+            }
+        } catch (error) {
+            console.error("EntityEventSubscriber: Error in afterRemove:", error);
+        }
+    }
+
+    /**
+     * Abstract method for processing after an entity is deleted. Implement in subclasses for custom behavior.
+     *
+     * @param entity The entity that has been deleted.
+     * @param em The EntityManager, which can be either from TypeORM or MikroORM.
+     * @returns {Promise<void>}
+     */
+    protected abstract afterEntityDelete(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void>;
 }

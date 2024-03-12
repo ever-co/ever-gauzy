@@ -522,7 +522,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options
 	 * @returns
 	 */
-	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any[]): Promise<DeleteResult> {
+	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any): Promise<DeleteResult> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -530,7 +530,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					if (typeof criteria === 'string' || typeof criteria === 'number') {
 						where = { id: criteria } as any;
 					}
-					const result = await this.mikroRepository.nativeDelete(where, criteria as DeleteOptions<T>);
+					const result = await this.mikroRepository.nativeDelete(where);
 					return { affected: result } as DeleteResult;
 				case MultiORMEnum.TypeORM:
 					return await this.repository.delete(criteria);
