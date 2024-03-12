@@ -1,8 +1,9 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { Pipeline } from "./pipeline.entity";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class PipelineSubscriber implements EntitySubscriberInterface<Pipeline> {
+export class PipelineSubscriber extends BaseEntityEventSubscriber<Pipeline> {
 
     /**
     * Indicates that this subscriber only listen to Pipeline events.
@@ -12,40 +13,47 @@ export class PipelineSubscriber implements EntitySubscriberInterface<Pipeline> {
     }
 
     /**
-    * Called before entity is inserted to the database.
-    *
-    * @param event
-    */
-    beforeInsert(event: InsertEvent<Pipeline>): void | Promise<any> {
+     * Called after loading the Pipeline entity from the database.
+     *
+     * @param entity - The loaded Pipeline entity.
+     */
+    async afterEntityLoad(entity: Pipeline): Promise<void> {
         try {
-            const pipelineId = event.entity?.id ? { pipelineId: event.entity?.id } : {};
-            let index = 0;
-
-            event.entity?.stages?.forEach((stage) => {
-                Object.assign(stage, pipelineId, { index: ++index });
-            });
+            this.__after_fetch(entity);
         } catch (error) {
-            console.error("Error in beforeInsert:", error.message);
+            console.error('PipelineSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 
     /**
-     * Called after loading the Pipeline entity from the database.
+     * Called before entity is inserted/created to the database.
      *
-     * @param entity - The loaded Pipeline entity.
-     * @param event - The LoadEvent containing information about the load operation.
+     * @param entity
      */
-    afterLoad(entity: Pipeline, event?: LoadEvent<Pipeline>): void | Promise<any> {
-        this.__after_fetch(entity);
+    async beforeEntityCreate(entity: Pipeline): Promise<void> {
+        try {
+            const pipelineId = entity?.id ? { pipelineId: entity?.id } : {};
+            let index = 0;
+
+            entity?.stages?.forEach((stage) => {
+                Object.assign(stage, pipelineId, { index: ++index });
+            });
+        } catch (error) {
+            console.error('PipelineSubscriber: An error occurred during the beforeEntityCreate process:', error);
+        }
     }
 
     /**
      * Called after inserting the Pipeline entity into the database.
      *
-     * @param event - The InsertEvent containing information about the insertion.
+     * @param entity
      */
-    afterInsert(event: InsertEvent<Pipeline>): void | Promise<any> {
-        this.__after_fetch(event.entity);
+    async afterEntityCreate(entity: Pipeline): Promise<void> {
+        try {
+            this.__after_fetch(entity);
+        } catch (error) {
+            console.error('PipelineSubscriber: An error occurred during the afterEntityCreate process:', error);
+        }
     }
 
     /***

@@ -1,6 +1,6 @@
 import { EntityName } from '@mikro-orm/core';
 import { EntityEventSubscriber } from './entity-event.subsciber';
-import { IEntityEventSubscriber } from './entity-event-subscriber.types';
+import { IEntityEventSubscriber, MultiOrmEntityManager } from './entity-event-subscriber.types';
 
 /**
  * An abstract class that provides a base implementation for IEntityEventSubscriber.
@@ -36,10 +36,14 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
     /**
      * Called before a new entity is persisted. Override in subclasses to define custom pre-creation logic.
      *
-     * @param entity The entity about to be created.
+     * @param entity The entity that is about to be created.
+     * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
      * @returns {Promise<void>}
      */
-    async beforeEntityCreate(entity: Entity): Promise<void> {
+    async beforeEntityCreate(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void> {
         // Default empty implementation
     }
 
@@ -47,9 +51,27 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
      * Invoked before an entity update. Use in subclasses for specific update preparation.
      *
      * @param entity The entity being updated.
+     * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
      * @returns {Promise<void>}
      */
-    async beforeEntityUpdate(entity: Entity): Promise<void> {
+    async beforeEntityUpdate(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void> {
+        // Default empty implementation
+    }
+
+    /**
+     * Invoked after an entity update. Use in subclasses for specific update preparation.
+     *
+     * @param entity The entity being updated.
+     * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
+     * @returns {Promise<void>}
+     */
+    async afterEntityUpdate(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void> {
         // Default empty implementation
     }
 
@@ -57,9 +79,13 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
      * Executed after an entity is created. Subclasses can override for post-creation actions.
      *
      * @param entity The newly created entity.
+     * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
      * @returns {Promise<void>}
      */
-    async afterEntityCreate(entity: Entity): Promise<void> {
+    async afterEntityCreate(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void> {
         // Default empty implementation
     }
 
@@ -67,9 +93,27 @@ export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubsc
      * Called following the loading of an entity. Ideal for post-load processing in subclasses.
      *
      * @param entity The entity that was loaded.
+     * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
      * @returns {Promise<void>}
      */
-    async afterEntityLoad(entity: Entity): Promise<void> {
+    async afterEntityLoad(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void> {
+        // Default empty implementation
+    }
+
+    /**
+     * Called following the deletion of an entity. Ideal for post-deletion processing in subclasses.
+     *
+     * @param entity The entity that was deleted.
+     * @param em The optional EntityManager, which can be either from TypeORM or MikroORM.
+     * @returns {Promise<void>}
+     */
+    async afterEntityDelete(
+        entity: Entity,
+        em?: MultiOrmEntityManager
+    ): Promise<void> {
         // Default empty implementation
     }
 }

@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { RequestContext } from "./../core/context";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { Payment } from "./payment.entity";
 
 @EventSubscriber()
-export class PaymentSubscriber implements EntitySubscriberInterface<Payment> {
+export class PaymentSubscriber extends BaseEntityEventSubscriber<Payment> {
 
     /**
     * Indicates that this subscriber only listen to Payment events.
@@ -13,17 +14,17 @@ export class PaymentSubscriber implements EntitySubscriberInterface<Payment> {
     }
 
     /**
-     * Called before an entity is inserted into the database.
+     * Called before an entity is inserted/created into the database.
      *
-     * @param event - The InsertEvent associated with the entity insertion.
+     * @param entity
      */
-    beforeInsert(event: InsertEvent<Payment>): void | Promise<any> {
+    async beforeEntityCreate(entity: Payment): Promise<void> {
         try {
-            if (event.entity) {
-                event.entity.recordedById = RequestContext.currentUserId();
+            if (entity) {
+                entity.recordedById = RequestContext.currentUserId();
             }
         } catch (error) {
-            console.error("Error in beforeInsert:", error.message);
+            console.error("Error in PaymentSubscriber beforeEntityCreate:", error.message);
         }
     }
 }

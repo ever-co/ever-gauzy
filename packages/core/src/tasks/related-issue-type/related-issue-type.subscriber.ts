@@ -1,17 +1,13 @@
-import {
-	EntitySubscriberInterface,
-	EventSubscriber,
-	InsertEvent,
-	LoadEvent,
-} from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from '../../core/file-storage';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
+import { BaseEntityEventSubscriber } from '../../core/entities/subscribers/base-entity-event.subscriber';
 
 @EventSubscriber()
-export class TaskRelatedIssueTypeSubscriber implements EntitySubscriberInterface<TaskRelatedIssueType> {
+export class TaskRelatedIssueTypeSubscriber extends BaseEntityEventSubscriber<TaskRelatedIssueType> {
 	/**
 	 * Indicates that this subscriber only listen to TaskRelatedIssueType events.
 	 */
@@ -23,31 +19,26 @@ export class TaskRelatedIssueTypeSubscriber implements EntitySubscriberInterface
 	 * Called after entity is loaded from the database.
 	 *
 	 * @param entity
-	 * @param event
 	 */
-	async afterLoad(
-		entity: TaskRelatedIssueType | Partial<TaskRelatedIssueType>,
-		event?: LoadEvent<TaskRelatedIssueType>
-	): Promise<any | void> {
+	async afterEntityLoad(entity: TaskRelatedIssueType): Promise<void> {
 		try {
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.error('Error in afterLoad:', error);
+			console.error('TaskRelatedIssueTypeSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
 	/**
 	 * Called before entity is inserted to the database.
 	 *
-	 * @param event
+	 * @param entity
 	 */
-	beforeInsert(event: InsertEvent<TaskRelatedIssueType>) {
+	async beforeEntityCreate(entity: TaskRelatedIssueType): Promise<void> {
 		try {
-			if (event) {
-				const { entity } = event;
+			if (entity) {
 				if (!entity.color) {
 					entity.color = faker.internet.color();
 				}
@@ -56,7 +47,7 @@ export class TaskRelatedIssueTypeSubscriber implements EntitySubscriberInterface
 				}
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('TaskRelatedIssueTypeSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 }
