@@ -55,12 +55,13 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
      */
     async beforeEntityCreate(entity: Employee): Promise<void> {
         try {
-            // Set a default avatar image if none is provided
-            if (entity.user && !entity.user.imageUrl) {
-                entity.user.imageUrl = getUserDummyImage(entity.user);
+            if (entity.user) {
                 await this.createSlug(entity);
             }
-
+            // Set a default avatar image if none is provided
+            if (!entity.user.imageUrl) {
+                entity.user.imageUrl = getUserDummyImage(entity.user);
+            }
             // Enable time tracking and set the employee as active if the start work date is provided
             if (entity.startedWorkOn) {
                 entity.isTrackingEnabled = true;
