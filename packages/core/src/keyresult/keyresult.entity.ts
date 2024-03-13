@@ -1,7 +1,6 @@
 import {
 	RelationId,
-	JoinColumn,
-	Index
+	JoinColumn
 } from 'typeorm';
 import {
 	IKeyResult,
@@ -25,6 +24,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -111,7 +111,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: KeyResult) => it.owner)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	ownerId: string;
 
@@ -128,7 +128,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.lead)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 
@@ -145,7 +145,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.project)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly projectId?: string;
 
@@ -162,7 +162,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.task)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly taskId?: string;
 
@@ -179,7 +179,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.kpi)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly kpiId?: string;
 
@@ -197,7 +197,7 @@ export class KeyResult extends TenantOrganizationBaseEntity
 	@RelationId((it: KeyResult) => it.goal)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly goalId?: string;
 

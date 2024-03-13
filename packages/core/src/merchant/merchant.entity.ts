@@ -9,7 +9,6 @@ import {
 import {
 	JoinColumn,
 	JoinTable,
-	Index,
 	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -21,6 +20,7 @@ import {
 	Warehouse,
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -75,7 +75,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
@@ -95,7 +95,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: IImageAsset['id'];
 

@@ -1,8 +1,7 @@
 import {
 	RelationId,
 	JoinColumn,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
@@ -26,6 +25,7 @@ import {
 	WarehouseProduct
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -65,7 +65,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Product) => it.featuredImage)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	featuredImageId?: string;
 
@@ -82,7 +82,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Product) => it.productType)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productTypeId?: string;
 
@@ -100,7 +100,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Product) => it.productCategory)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productCategoryId?: string;
 	/*

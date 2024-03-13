@@ -2,8 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	JoinColumn,
 	JoinTable,
-	RelationId,
-	Index,
+	RelationId
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
@@ -70,6 +69,7 @@ import {
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
@@ -256,7 +256,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	jobSuccess?: number;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@Index({ unique: false })
+	@ColumnIndex({ unique: false })
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
@@ -349,7 +349,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Employee) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	readonly userId: string;
 
@@ -367,7 +367,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
@@ -391,7 +391,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.organizationPosition)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly organizationPositionId?: string;
 

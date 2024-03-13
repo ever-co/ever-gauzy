@@ -1,4 +1,4 @@
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	ICandidatePersonalQualities,
@@ -13,6 +13,7 @@ import {
 import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -47,7 +48,7 @@ export class CandidatePersonalQualities extends TenantOrganizationBaseEntity imp
 	@RelationId((it: CandidatePersonalQualities) => it.interview)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewId?: string;
 

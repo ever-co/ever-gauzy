@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	IOrganization,
@@ -8,6 +8,7 @@ import {
 import { Organization, TenantBaseEntity } from '../entities/internal';
 import { MultiORMManyToOne } from '../decorators/entity/relations';
 import { MultiORMColumn } from '../decorators';
+import { ColumnIndex } from './../decorators/entity/index.decorator';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 
@@ -29,7 +30,7 @@ export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity impl
 	@IsOptional()
 	@IsString()
 	@RelationId((it: TenantOrganizationBaseEntity) => it.organization)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationId?: IOrganization['id'];
 }

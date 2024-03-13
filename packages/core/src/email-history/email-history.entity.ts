@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { isMySQL } from '@gauzy/config';
 import { IEmailHistory, IEmailTemplate, IUser, EmailStatusEnum } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import {
 	User,
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -17,7 +18,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	name: string;
 
@@ -30,7 +31,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	content: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	email: string;
 
@@ -54,7 +55,7 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: EmailHistory) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 
@@ -68,11 +69,11 @@ export class EmailHistory extends TenantOrganizationBaseEntity implements IEmail
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: EmailHistory) => it.emailTemplate)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	emailTemplateId: IEmailTemplate['id'];
 
-	@Index()
+	@ColumnIndex()
 	@ApiPropertyOptional({ type: () => String, enum: EmailStatusEnum })
 	@IsOptional()
 	@IsEnum(EmailStatusEnum)

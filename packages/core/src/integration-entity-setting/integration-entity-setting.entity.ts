@@ -2,8 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 
 	JoinColumn,
-	RelationId,
-	Index
+	RelationId
 } from 'typeorm';
 import { IsBoolean, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import {
@@ -18,6 +17,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -56,7 +56,7 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: IntegrationEntitySetting) => it.integration)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	integrationId?: IIntegrationTenant['id'];
 

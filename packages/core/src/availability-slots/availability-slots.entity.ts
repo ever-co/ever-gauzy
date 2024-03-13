@@ -1,4 +1,4 @@
-import { RelationId, JoinColumn, Index } from 'typeorm';
+import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -19,7 +19,7 @@ import {
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
 import { MultiORMManyToOne } from './../core/decorators/entity/relations';
-
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 @MultiORMEntity('availability_slot', { mikroOrmRepository: () => MikroOrmAvailabilitySlotRepository })
 export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IAvailabilitySlot {
 
@@ -59,7 +59,7 @@ export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IA
 	@RelationId((it: AvailabilitySlot) => it.employee)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 }

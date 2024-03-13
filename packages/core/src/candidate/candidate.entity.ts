@@ -21,7 +21,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	JoinColumn,
 	RelationId,
-	Index,
 	JoinTable
 } from 'typeorm';
 import {
@@ -45,6 +44,7 @@ import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 
 @MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
@@ -128,7 +128,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Candidate) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
@@ -144,7 +144,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.organizationPosition)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationPositionId?: IOrganizationPosition['id'];
 
@@ -166,7 +166,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.source)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	sourceId?: ICandidateSource['id'];
 
@@ -184,7 +184,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	userId: IUser['id'];
 
@@ -198,7 +198,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: IEmployee['id'];
 

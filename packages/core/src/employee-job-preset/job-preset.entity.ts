@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
@@ -16,6 +15,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
 import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -25,7 +25,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name?: string;
 

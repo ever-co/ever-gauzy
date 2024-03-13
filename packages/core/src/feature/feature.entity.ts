@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	RelationId
 } from 'typeorm';
@@ -11,6 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -18,12 +18,12 @@ import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/
 export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	code: FeatureEnum;
 
@@ -71,7 +71,7 @@ export class Feature extends BaseEntity implements IFeature {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Feature) => it.parent)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: string;
 

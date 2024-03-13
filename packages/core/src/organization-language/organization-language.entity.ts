@@ -1,4 +1,4 @@
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { IOrganizationLanguage } from '@gauzy/contracts';
@@ -7,6 +7,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationLanguageRepository } from './repository/mikro-orm-organization-language.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -27,7 +28,7 @@ export class OrganizationLanguage extends TenantOrganizationBaseEntity implement
 	@RelationId((it: OrganizationLanguage) => it.language)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: false, relationId: true })
 	languageCode: string;
 

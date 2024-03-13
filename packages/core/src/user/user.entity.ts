@@ -4,7 +4,6 @@
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 	JoinTable
@@ -36,6 +35,7 @@ import {
 	UserOrganization
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
@@ -45,42 +45,42 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	lastName?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsOptional()
 	@IsEmail()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	email?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 4, maxLength: 12 })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@IsOptional()
 	@IsString()
-	@Index({ unique: false })
+	@ColumnIndex({ unique: false })
 	@MultiORMColumn({ nullable: true })
 	username?: string;
 
@@ -180,7 +180,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: User) => it.role)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId?: string;
 
@@ -201,7 +201,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: User) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 

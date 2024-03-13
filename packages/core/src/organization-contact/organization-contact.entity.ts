@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	JoinTable,
 	RelationId
@@ -37,6 +36,7 @@ import {
 	TimeLog
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -45,7 +45,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -123,7 +123,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
@@ -144,7 +144,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 

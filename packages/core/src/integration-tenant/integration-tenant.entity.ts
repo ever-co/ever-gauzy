@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsDateString, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import { IIntegration, IIntegrationEntitySetting, IIntegrationMap, IIntegrationSetting, IIntegrationTenant, IntegrationEnum } from '@gauzy/contracts';
 import {
@@ -10,6 +10,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-integration-tenant.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -29,7 +30,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: () => 'CURRENT_TIMESTAMP' })
 	lastSyncedAt?: Date;
 
@@ -56,7 +57,7 @@ export class IntegrationTenant extends TenantOrganizationBaseEntity implements I
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: IntegrationTenant) => it.integration)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	integrationId?: IIntegration['id'];
 

@@ -1,6 +1,4 @@
 import {
-	Index,
-
 	RelationId,
 	JoinColumn
 } from 'typeorm';
@@ -11,6 +9,7 @@ import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -20,14 +19,14 @@ export class Report extends BaseEntity implements IReport {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	slug?: string;
 
@@ -69,7 +68,7 @@ export class Report extends BaseEntity implements IReport {
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: Report) => it.category)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	categoryId?: IReportCategory['id'];
 

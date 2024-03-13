@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IsNumber } from 'class-validator';
 import { IEmployee, ITask, ITaskEstimation } from '@gauzy/contracts';
 import {
@@ -8,6 +8,7 @@ import {
 	Task,
 } from './../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { MikroOrmTaskEstimationRepository } from './repository/mikro-orm-estimation.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -20,13 +21,13 @@ export class TaskEstimation extends TenantOrganizationBaseEntity implements ITas
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: TaskEstimation) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: TaskEstimation) => it.task)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	taskId: ITask['id'];
 

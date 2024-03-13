@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RelationId, Index } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IAppointmentEmployee, IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { IsString, IsNotEmpty } from 'class-validator';
 import {
@@ -10,6 +10,7 @@ import {
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmAppointmentEmployeeRepository } from './repository/mikro-orm-appointment-employee.repository';
 import { MultiORMManyToOne } from './../core/decorators/entity/relations';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 
 @MultiORMEntity('appointment_employee', { mikroOrmRepository: () => MikroOrmAppointmentEmployeeRepository })
 export class AppointmentEmployee extends TenantOrganizationBaseEntity implements IAppointmentEmployee {
@@ -34,7 +35,7 @@ export class AppointmentEmployee extends TenantOrganizationBaseEntity implements
 	@RelationId((it: AppointmentEmployee) => it.employee)
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public employeeId?: string;
 
@@ -50,7 +51,7 @@ export class AppointmentEmployee extends TenantOrganizationBaseEntity implements
 	@ApiProperty({ type: () => String })
 	@RelationId((it: AppointmentEmployee) => it.employeeAppointment)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	public employeeAppointmentId?: string;
 }

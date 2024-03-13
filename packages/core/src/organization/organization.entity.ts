@@ -1,4 +1,4 @@
-import { Index, JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -41,54 +41,55 @@ import {
 	TenantBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn('boolean', { default: false })
 	isDefault: boolean;
 
-	@Index({ unique: false })
+	@ColumnIndex({ unique: false })
 	@MultiORMColumn({ nullable: true })
 	profile_link: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	banner: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	totalEmployees: number;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	short_description: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	client_focus: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	overview: string;
 
 	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
 
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
@@ -335,7 +336,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	contact: IContact;
 
 	@RelationId((it: Organization) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
@@ -356,7 +357,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Organization) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 

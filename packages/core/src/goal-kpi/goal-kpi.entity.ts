@@ -1,4 +1,4 @@
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IEmployee, IKPI, KpiMetricEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
@@ -7,6 +7,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmGoalKPIRepository } from './repository/mikro-orm-goal-kpi.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -59,7 +60,7 @@ export class GoalKPI extends TenantOrganizationBaseEntity implements IKPI {
 	@RelationId((it: GoalKPI) => it.lead)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 }

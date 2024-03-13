@@ -1,6 +1,4 @@
 import {
-	Index,
-
 	JoinColumn,
 	RelationId
 } from 'typeorm';
@@ -10,6 +8,7 @@ import { Exclude } from 'class-transformer';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -18,23 +17,23 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 
 	@ApiProperty({ type: () => String })
 	@IsEmail()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	email: string;
 
 	@ApiProperty({ type: () => String })
 	@IsEmail()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	oldEmail: string;
 
 	@Exclude({ toPlainOnly: true })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	code: string;
 
 	@Exclude({ toPlainOnly: true })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	token: string;
 
@@ -63,7 +62,7 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: EmailReset) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 }

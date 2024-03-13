@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import {
@@ -8,6 +8,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -17,12 +18,12 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
 
@@ -83,7 +84,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskStatus) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -103,7 +104,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskStatus) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

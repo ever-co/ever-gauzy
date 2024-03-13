@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@gauzy/contracts';
@@ -6,6 +6,7 @@ import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/i
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -41,7 +42,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProductVariant) => it.variant)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	variantId: string;
 
@@ -56,7 +57,7 @@ export class WarehouseProductVariant extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@RelationId((it: WarehouseProductVariant) => it.warehouseProduct)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	warehouseProductId: string;
 }

@@ -1,7 +1,6 @@
 import {
 	JoinColumn,
 	JoinTable,
-	Index,
 	RelationId
 } from 'typeorm';
 import {
@@ -25,6 +24,7 @@ import {
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -69,7 +69,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: string;
 
@@ -93,7 +93,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: string;
 

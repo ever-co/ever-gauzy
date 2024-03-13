@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 	JoinTable
@@ -19,6 +18,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -27,7 +27,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 	implements IProposal {
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	jobPostUrl: string;
 

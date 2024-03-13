@@ -1,4 +1,4 @@
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -14,6 +14,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmEmployeeSettingRepository } from './repository/mikro-orm-employee-setting.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -38,7 +39,7 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	settingType: string;
 
@@ -51,7 +52,7 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
 
@@ -70,7 +71,7 @@ export class EmployeeSetting extends TenantOrganizationBaseEntity implements IEm
 	@RelationId((it: EmployeeSetting) => it.employee)
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId: string;
 }

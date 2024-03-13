@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 	JoinTable
@@ -29,6 +28,7 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -38,7 +38,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -48,7 +48,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
 
@@ -59,7 +59,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	notes?: string;
@@ -92,7 +92,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@RelationId((it: Income) => it.employee)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
@@ -110,7 +110,7 @@ export class Income extends TenantOrganizationBaseEntity implements IIncome {
 	@RelationId((it: Income) => it.client)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	clientId?: string;
 

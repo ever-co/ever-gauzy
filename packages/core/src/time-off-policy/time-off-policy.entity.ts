@@ -1,4 +1,3 @@
-import { Index } from 'typeorm';
 import {
 	IEmployee,
 	ITimeOff as ITimeOffRequest,
@@ -12,6 +11,7 @@ import {
 	TimeOffRequest
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
 import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -21,7 +21,7 @@ export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITime
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 

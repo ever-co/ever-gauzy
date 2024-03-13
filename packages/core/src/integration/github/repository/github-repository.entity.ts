@@ -1,9 +1,10 @@
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue, IOrganizationProject } from '@gauzy/contracts';
 import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from '../../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from '../../../core/decorators/entity';
+import { ColumnIndex } from './../../../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-candidate.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../../../core/decorators/entity/relations';
 
@@ -13,55 +14,55 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     @ApiProperty({ type: () => Number })
     @IsNotEmpty()
     @IsNumber()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn()
     repositoryId: number;
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn()
     name: string;
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn()
     fullName: string;
 
     @ApiProperty({ type: () => String })
     @IsNotEmpty()
     @IsString()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn()
     owner: string;
 
     @ApiPropertyOptional({ type: () => Number })
     @IsNotEmpty()
     @IsNumber()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn({ nullable: true })
     issuesCount: number;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn({ nullable: true, default: true })
     hasSyncEnabled: boolean;
 
     @ApiPropertyOptional({ type: () => Boolean })
     @IsOptional()
     @IsBoolean()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn({ nullable: true, default: false })
     private: boolean;
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn({ nullable: true })
     status: string;
 
@@ -86,7 +87,7 @@ export class OrganizationGithubRepository extends TenantOrganizationBaseEntity i
     @ApiProperty({ type: () => String })
     @IsUUID()
     @RelationId((it: OrganizationGithubRepository) => it.integration)
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn({ nullable: true, relationId: true })
     integrationId: IIntegrationTenant['id'];
 

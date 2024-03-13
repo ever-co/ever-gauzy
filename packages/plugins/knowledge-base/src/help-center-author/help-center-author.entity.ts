@@ -1,11 +1,11 @@
-import { RelationId, Index } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { IEmployee, IHelpCenterArticle, IHelpCenterAuthor } from '@gauzy/contracts';
 import { MultiORMEntity, Employee, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { HelpCenterArticle } from './../entities';
 import { MikroOrmHelpCenterAuthorRepository } from './repository/mikro-orm-help-center-author.repository';
-import { MultiORMManyToOne, MultiORMColumn } from '@gauzy/core';
+import { MultiORMManyToOne, MultiORMColumn, ColumnIndex } from '@gauzy/core';
 
 @MultiORMEntity('knowledge_base_author', { mikroOrmRepository: () => MikroOrmHelpCenterAuthorRepository })
 export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IHelpCenterAuthor {
@@ -24,7 +24,7 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	@ApiProperty({ type: () => String })
 	@RelationId((it: HelpCenterAuthor) => it.employee)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId: string;
 
@@ -37,7 +37,7 @@ export class HelpCenterAuthor extends TenantOrganizationBaseEntity implements IH
 	@ApiProperty({ type: () => String })
 	@RelationId((it: HelpCenterAuthor) => it.article)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	articleId: string;
 }

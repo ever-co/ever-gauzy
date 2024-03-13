@@ -1,10 +1,11 @@
-import { RelationId, Index, JoinColumn } from 'typeorm';
+import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
@@ -26,7 +27,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	recordedAt?: Date;
 
@@ -34,7 +35,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsOptional()
 	@IsEnum(FileStorageProviderEnum)
 	@Exclude({ toPlainOnly: true })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
@@ -57,7 +58,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	})
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	isWorkRelated?: boolean;
 
@@ -70,7 +71,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	})
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	description?: string;
 
@@ -115,7 +116,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.timeSlot)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
 
@@ -136,7 +137,7 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Screenshot) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 }

@@ -1,10 +1,11 @@
 import { IProduct, IProductTranslation, LanguagesEnum } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { TranslationBase } from '../core/entities/internal';
 import { Product } from './product.entity';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -45,7 +46,7 @@ export class ProductTranslation extends TranslationBase implements IProductTrans
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductTranslation) => it.reference)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	referenceId: string;
 }

@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import {
 	Product,
 	TenantOrganizationBaseEntity
@@ -11,6 +11,7 @@ import {
 	ProductOptionGroupTranslation
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProductOptionGroupRepository } from './repository/mikro-orm-product-option-group.repository';
 import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -39,7 +40,7 @@ export class ProductOptionGroup extends TenantOrganizationBaseEntity implements 
 	@RelationId((it: ProductOptionGroup) => it.product)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	productId: string;
 

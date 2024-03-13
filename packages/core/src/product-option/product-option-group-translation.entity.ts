@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import {
 	IProductOptionGroupTranslation,
 	LanguagesEnum
@@ -8,6 +8,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProductOptionGroupTranslationRepository } from './repository/mikro-orm-product-option-group-translation.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -40,7 +41,7 @@ export class ProductOptionGroupTranslation extends TenantOrganizationBaseEntity 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductOptionGroupTranslation) => it.reference)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	referenceId: string;
 }

@@ -6,7 +6,6 @@
   - Request Approval table has the many to many relationships to the Employee table through the RequestApprovalEmployee table.
 */
 import {
-	Index,
 	RelationId,
 	JoinColumn,
 	JoinTable
@@ -29,6 +28,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -37,7 +37,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -91,7 +91,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@ApiProperty({ type: () => String })
 	@RelationId((it: RequestApproval) => it.approvalPolicy)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	approvalPolicyId: string;
 

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RelationId, Index } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
@@ -60,6 +60,7 @@ import {
 	Warehouse
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -120,7 +121,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Tag) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 

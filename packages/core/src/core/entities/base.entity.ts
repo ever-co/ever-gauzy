@@ -6,7 +6,6 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 	CreateDateColumn,
-	Index,
 	DeleteDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -14,6 +13,7 @@ import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { MultiORMColumn } from '../decorators/entity';
+import { ColumnIndex } from './../decorators/entity/index.decorator';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -67,7 +67,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: Boolean, default: true })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: true })
 	isActive?: boolean;
 
@@ -75,7 +75,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: false })
 	isArchived?: boolean;
 }

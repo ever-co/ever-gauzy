@@ -1,4 +1,4 @@
-import { RelationId, JoinColumn, Index } from 'typeorm';
+import { RelationId, JoinColumn } from 'typeorm';
 import {
 	IKeyResultTemplate,
 	KeyResultTypeEnum,
@@ -14,6 +14,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmKeyResultTemplateRepository } from './repository/mikro-orm-keyresult-template.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -79,7 +80,7 @@ export class KeyResultTemplate extends TenantOrganizationBaseEntity implements I
 	@RelationId((it: KeyResultTemplate) => it.goal)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly goalId?: string;
 }

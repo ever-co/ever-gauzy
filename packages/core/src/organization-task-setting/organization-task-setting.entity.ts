@@ -1,4 +1,4 @@
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTaskSetting,
@@ -19,6 +19,7 @@ import {
 	TenantOrganizationBaseEntity,
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationTaskSettingRepository } from './repository/mikro-orm-organization-task-setting.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -238,7 +239,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTaskSetting) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -258,7 +259,7 @@ export class OrganizationTaskSetting extends TenantOrganizationBaseEntity implem
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTaskSetting) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

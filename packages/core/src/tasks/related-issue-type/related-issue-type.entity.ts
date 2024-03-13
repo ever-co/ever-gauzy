@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import {
 	IOrganizationProject,
 	IOrganizationTeam,
@@ -12,6 +12,7 @@ import {
 	TenantOrganizationBaseEntity,
 } from '../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { MikroOrmTaskRelatedIssueTypeRepository } from './repository/mikro-orm-related-issue-type.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -21,12 +22,12 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
 
@@ -75,7 +76,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskRelatedIssueType) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -98,7 +99,7 @@ export class TaskRelatedIssueType extends TenantOrganizationBaseEntity implement
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskRelatedIssueType) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

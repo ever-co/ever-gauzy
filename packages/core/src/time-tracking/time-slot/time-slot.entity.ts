@@ -1,7 +1,6 @@
 import {
 	RelationId,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import {
 	ITimeSlot,
@@ -22,6 +21,7 @@ import {
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
@@ -32,7 +32,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
@@ -51,14 +51,14 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsNotEmpty()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	startedAt: Date;
 
@@ -85,7 +85,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsNotEmpty()
 	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 

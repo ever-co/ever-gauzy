@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 	JoinTable,
@@ -55,13 +54,14 @@ import {
 	TimeLog
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -74,7 +74,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@MultiORMColumn({ nullable: true })
 	billing: ProjectBillingEnum;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	currency: CurrenciesEnum;
 
@@ -133,21 +133,21 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSync?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	syncTag?: string;
 
@@ -177,7 +177,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.repository)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	repositoryId?: IOrganizationGithubRepository['id'];
 
@@ -204,7 +204,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.organizationContact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: IOrganizationContact['id'];
 
@@ -231,7 +231,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationProject) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 

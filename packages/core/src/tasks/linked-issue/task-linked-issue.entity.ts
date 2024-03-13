@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 } from 'typeorm';
@@ -13,6 +12,7 @@ import {
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked-issue.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -36,7 +36,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: TaskLinkedIssue) => it.taskFrom)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	taskFromId: ITask['id'];
 
@@ -51,7 +51,7 @@ export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITa
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: TaskLinkedIssue) => it.taskTo)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	taskToId: ITask['id'];
 }

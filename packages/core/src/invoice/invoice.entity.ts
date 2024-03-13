@@ -23,7 +23,6 @@ import {
 	JoinColumn,
 	Unique,
 	RelationId,
-	Index,
 	JoinTable
 } from 'typeorm';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
@@ -37,6 +36,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { isMySQL } from '@gauzy/config';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
@@ -220,7 +220,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invoice) => it.fromOrganization)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	fromOrganizationId?: string;
 
@@ -235,7 +235,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invoice) => it.toContact)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	toContactId?: string;
 

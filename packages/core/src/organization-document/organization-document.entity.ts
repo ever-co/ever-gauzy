@@ -1,9 +1,10 @@
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IImageAsset as IDocumentAsset, IOrganizationDocument } from '@gauzy/contracts';
 import { ImageAsset, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationDocumentRepository } from './repository/mikro-orm-organization-document.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -45,7 +46,7 @@ export class OrganizationDocument extends TenantOrganizationBaseEntity implement
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationDocument) => it.document)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	documentId?: IDocumentAsset['id'];
 }

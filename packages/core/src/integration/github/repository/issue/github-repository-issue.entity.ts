@@ -1,9 +1,10 @@
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '../../../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from '../../../../core/decorators/entity';
+import { ColumnIndex } from './../../../../core/decorators/entity/index.decorator';
 import { OrganizationGithubRepository } from './../github-repository.entity';
 import { MikroOrmOrganizationGithubRepositoryIssueRepository } from './repository/mikro-orm-github-repository-issue.repository';
 import { MultiORMManyToOne } from '../../../../core/decorators/entity/relations';
@@ -14,14 +15,14 @@ export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEnt
     @ApiProperty({ type: () => Number })
     @IsNotEmpty()
     @IsNumber()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn()
     issueId: number;
 
     @ApiProperty({ type: () => Number })
     @IsNotEmpty()
     @IsString()
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn()
     issueNumber: number;
 
@@ -48,7 +49,7 @@ export class OrganizationGithubRepositoryIssue extends TenantOrganizationBaseEnt
     @IsOptional()
     @IsUUID()
     @RelationId((it: OrganizationGithubRepositoryIssue) => it.repository)
-    @Index()
+    @ColumnIndex()
     @MultiORMColumn({ nullable: true, relationId: true })
     repositoryId?: IOrganizationGithubRepository['id'];
 }

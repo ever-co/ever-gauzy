@@ -1,8 +1,7 @@
 import {
 	RelationId,
 	JoinColumn,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -25,6 +24,7 @@ import {
 	WarehouseProductVariant
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
@@ -109,7 +109,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductVariant) => it.product)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productId?: string;
 
@@ -127,7 +127,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductVariant) => it.image)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: string;
 

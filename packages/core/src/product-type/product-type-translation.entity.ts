@@ -1,8 +1,9 @@
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IProductTypeTranslation } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductType, TranslationBase } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmProductTypeTranslationRepository } from './repository/mikro-orm-product-type-translation.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -41,7 +42,7 @@ export class ProductTypeTranslation extends TranslationBase
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductTypeTranslation) => it.reference)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	referenceId: string;
 }

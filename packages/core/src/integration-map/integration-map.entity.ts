@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IIntegrationMap, IIntegrationTenant, IntegrationEntity } from '@gauzy/contracts';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import {
@@ -7,6 +7,7 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
 import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
@@ -45,7 +46,7 @@ export class IntegrationMap extends TenantOrganizationBaseEntity implements IInt
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: IntegrationMap) => it.integration)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	integrationId: IIntegrationTenant['id'];
 }

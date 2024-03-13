@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import {
 	IActivity,
 	ActivityType,
@@ -20,6 +20,7 @@ import {
 	TimeSlot
 } from './../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
@@ -29,7 +30,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	title: string;
 
@@ -55,13 +56,13 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	@ApiProperty({ type: () => 'date' })
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ type: 'date', nullable: true })
 	date: string;
 
 	@ApiProperty({ type: () => 'time' })
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ type: 'time', nullable: true })
 	time: string;
 
@@ -74,21 +75,21 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String, enum: ActivityType })
 	@IsOptional()
 	@IsEnum(ActivityType)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	type?: string;
 
 	@ApiPropertyOptional({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsOptional()
 	@IsEnum(TimeLogSourceEnum)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: string;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	recordedAt?: Date;
 
@@ -114,7 +115,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: Activity) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 
@@ -138,7 +139,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@Index()
+	@ColumnIndex()
 	@RelationId((it: Activity) => it.project)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
@@ -158,7 +159,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
-	@Index()
+	@ColumnIndex()
 	@RelationId((it: Activity) => it.timeSlot)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	timeSlotId?: ITimeSlot['id'];
@@ -179,7 +180,7 @@ export class Activity extends TenantOrganizationBaseEntity implements IActivity 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	@Index()
+	@ColumnIndex()
 	@RelationId((it: Activity) => it.task)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];

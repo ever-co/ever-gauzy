@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinTable,
 	JoinColumn,
 	RelationId,
@@ -49,6 +48,7 @@ import {
 	User,
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -61,7 +61,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -126,7 +126,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
@@ -151,7 +151,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	createdBy?: IUser;
 
 	@RelationId((it: OrganizationTeam) => it.createdBy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	createdById?: IUser['id'];
 
@@ -175,7 +175,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTeam) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 

@@ -11,7 +11,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import {
-	Index,
 	JoinColumn,
 	JoinTable,
 	RelationId
@@ -26,6 +25,7 @@ import {
 	User
 } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
 import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -78,7 +78,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invite) => it.invitedBy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	invitedById: string;
 
@@ -92,7 +92,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.role)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId: string;
 
@@ -108,7 +108,7 @@ export class Invite extends TenantOrganizationBaseEntity implements IInvite {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((invite: Invite) => invite.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 

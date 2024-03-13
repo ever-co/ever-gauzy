@@ -1,9 +1,10 @@
-import { Index, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IExpense, IOrganizationVendor, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
 import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
@@ -13,7 +14,7 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 

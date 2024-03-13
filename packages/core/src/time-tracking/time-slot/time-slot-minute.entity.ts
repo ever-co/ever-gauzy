@@ -1,7 +1,6 @@
 import {
 	RelationId,
 	Unique,
-	Index,
 	JoinColumn
 } from 'typeorm';
 import { ITimeSlot, ITimeSlotMinute } from '@gauzy/contracts';
@@ -9,6 +8,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsDateString, IsString } from 'class-validator';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
 import { TimeSlot } from './time-slot.entity';
 import { MikroOrmTimeSlotMinuteRepository } from './repository/mikro-orm-time-slot-minute.repository';
 import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
@@ -48,7 +48,7 @@ export class TimeSlotMinute extends TenantOrganizationBaseEntity implements ITim
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: TimeSlotMinute) => it.timeSlot)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	readonly timeSlotId?: string;
 }

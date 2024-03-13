@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IFeature, IFeatureOrganization } from '@gauzy/contracts';
 import {
 	Feature,
@@ -7,6 +7,7 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
@@ -35,7 +36,7 @@ export class FeatureOrganization extends TenantOrganizationBaseEntity implements
 	@ApiProperty({ type: () => String })
 	@RelationId((it: FeatureOrganization) => it.feature)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	featureId: IFeature['id'];
 }
