@@ -13,13 +13,20 @@ export class ProductCategorySubscriber extends BaseEntityEventSubscriber<Product
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after a ProductCategory entity is loaded from the database. This method updates
+     * the entity's imageUrl if an associated image with a full URL is present.
      *
-     * @param entity
+     * @param entity The ProductCategory entity that has been loaded.
+     * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
      */
     async afterEntityLoad(entity: ProductCategory): Promise<void> {
-        if (!!entity['image']) {
-            entity.imageUrl = entity.image.fullUrl || entity.imageUrl;
+        try {
+            // Update the imageUrl if an associated image with a full URL is present
+            if (entity.image && entity.image.fullUrl) {
+                entity.imageUrl = entity.image.fullUrl;
+            }
+        } catch (error) {
+            console.error(`ProductCategorySubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`, error);
         }
     }
 }

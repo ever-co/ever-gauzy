@@ -16,26 +16,27 @@ export class TimeSlotSubscriber extends BaseEntityEventSubscriber<TimeSlot> {
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after a TimeSlot entity is loaded from the database. This method updates
+     * the entity with additional calculated properties.
      *
-     * @param entity
-     * @param event
+     * @param entity The TimeSlot entity that has been loaded.
+     * @returns {Promise<void>} A promise that resolves when the post-load processing is complete.
      */
     async afterEntityLoad(entity: TimeSlot): Promise<void> {
         try {
-            if ('startedAt' in entity) {
+            // Update 'stoppedAt' time based on 'startedAt'
+            if (typeof entity.startedAt === 'object') {
                 entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
             }
-            /***
-             * Calculate activities in percentage
-             */
-            if ('overall' in entity) {
+
+            // Calculate activity percentages
+            if (typeof entity.overall === 'number') {
                 entity.percentage = this.calculateOverallActivity(entity);
             }
-            if ('keyboard' in entity) {
+            if (typeof entity.keyboard === 'number') {
                 entity.keyboardPercentage = this.calculateKeyboardActivity(entity);
             }
-            if ('mouse' in entity) {
+            if (typeof entity.mouse === 'number') {
                 entity.mousePercentage = this.calculateMouseActivity(entity);
             }
         } catch (error) {
@@ -44,10 +45,11 @@ export class TimeSlotSubscriber extends BaseEntityEventSubscriber<TimeSlot> {
     }
 
     /**
-     * Called after entity is removed from the database.
+     * Called after a TimeSlot entity is removed from the database. This method handles the
+     * deletion of associated screenshot files from the storage.
      *
-     * @param entity
-     * @param em
+     * @param entity The TimeSlot entity that was just deleted.
+     * @returns {Promise<void>} A promise that resolves when the file deletion operations are complete.
      */
     async afterEntityDelete(entity: TimeSlot): Promise<void> {
         try {

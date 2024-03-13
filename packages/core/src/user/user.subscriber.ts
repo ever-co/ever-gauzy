@@ -14,6 +14,22 @@ export class UserSubscriber extends BaseEntityEventSubscriber<User> {
     }
 
     /**
+     * Called before a User entity is inserted or created in the database. This method ensures
+     * that a default image URL is set if one is not provided.
+     *
+     * @param entity The User entity about to be created.
+     * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
+     */
+    async beforeEntityCreate(entity: User): Promise<void> {
+        try {
+            // Set a default imageUrl using a dummy image if not already provided
+            entity.imageUrl = entity.imageUrl || getUserDummyImage(entity);
+        } catch (error) {
+            console.error('UserSubscriber: Error during the beforeEntityCreate process:', error);
+        }
+    }
+
+    /**
      * Called after the entity is loaded from the database.
      *
      * @param entity The User entity that has been loaded.
@@ -38,20 +54,6 @@ export class UserSubscriber extends BaseEntityEventSubscriber<User> {
         } catch (error) {
             // Log any errors encountered during the execution of the function.
             console.error('Error in UserSubscriber afterEntityLoad hook:', error);
-        }
-    }
-
-    /**
-     * Called before the entity is inserted / created into the database.
-     *
-     * @param entity
-     */
-    async beforeEntityCreate(entity: User): Promise<void> {
-        try {
-            // Set a default imageUrl using a dummy image if not provided
-            entity.imageUrl = entity.imageUrl || getUserDummyImage(entity);
-        } catch (error) {
-            console.error('Error in UserSubscriber beforeEntityCreate hook:', error);
         }
     }
 }

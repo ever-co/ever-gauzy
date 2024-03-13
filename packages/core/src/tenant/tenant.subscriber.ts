@@ -24,7 +24,7 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
         try {
             await this.updateTenantLogo(entity);
         } catch (error) {
-            console.error('Error in afterEntityLoad:', error);
+            console.error('TenantSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 
@@ -38,21 +38,26 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
         try {
             await this.updateTenantLogo(entity);
         } catch (error) {
-            console.error('Error in beforeEntityCreate:', error);
+            console.error('TenantSubscriber: An error occurred during the beforeEntityCreate process:', error);
         }
     }
 
     /**
+     * Called before a Tenant entity is updated in the database. This method updates
+     * the tenant's logo as necessary before the actual database update occurs.
      *
-     * @param entity
+     * @param entity The Tenant entity that is about to be updated.
+     * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
      */
     async beforeEntityUpdate(entity: Tenant): Promise<void> {
         try {
+            // Update the tenant's logo, if applicable
             await this.updateTenantLogo(entity);
         } catch (error) {
-            console.error('Error in beforeEntityUpdate:', error);
+            console.error('TenantSubscriber: An error occurred during the beforeEntityUpdate process:', error);
         }
     }
+
 
     /**
      * Updates the logo for a Tenant entity.
@@ -69,7 +74,7 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
                 entity.logo = entity.image.fullUrl || entity.logo;
             }
         } catch (error) {
-            console.error('Error in updating tenant logo:', error);
+            console.error('TenantSubscriber: An error occurred during the updateTenantLogo process:', error);
         }
     }
 }
