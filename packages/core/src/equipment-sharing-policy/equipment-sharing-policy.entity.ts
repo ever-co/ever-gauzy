@@ -7,10 +7,8 @@ import { IEquipmentSharing, IEquipmentSharingPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty } from 'class-validator';
 import { EquipmentSharing, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmEquipmentSharingPolicyRepository } from './repository/mikro-orm-equipment-sharing-policy.repository';
-import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment_sharing_policy', { mikroOrmRepository: () => MikroOrmEquipmentSharingPolicyRepository })
 export class EquipmentSharingPolicy extends TenantOrganizationBaseEntity implements IEquipmentSharingPolicy {

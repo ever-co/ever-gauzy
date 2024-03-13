@@ -53,10 +53,8 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {

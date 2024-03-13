@@ -36,10 +36,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('expense', { mikroOrmRepository: () => MikroOrmExpenseRepository })
 export class Expense extends TenantOrganizationBaseEntity implements IExpense {

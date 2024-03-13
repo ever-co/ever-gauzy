@@ -19,10 +19,8 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeSlot
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmActivityRepository } from './repository/mikro-orm-activity.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('activity', { mikroOrmRepository: () => MikroOrmActivityRepository })
 export class Activity extends TenantOrganizationBaseEntity implements IActivity {

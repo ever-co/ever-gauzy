@@ -23,8 +23,7 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 

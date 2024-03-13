@@ -16,8 +16,7 @@ import {
 } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationRecurringExpenseRepository } from './repository/mikro-orm-organization-recurring-expense.repository';
 
 @MultiORMEntity('organization_recurring_expense', { mikroOrmRepository: () => MikroOrmOrganizationRecurringExpenseRepository })

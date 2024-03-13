@@ -24,10 +24,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmInviteRepository } from './repository/mikro-orm-invite.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invite', { mikroOrmRepository: () => MikroOrmInviteRepository })
 export class Invite extends TenantOrganizationBaseEntity implements IInvite {

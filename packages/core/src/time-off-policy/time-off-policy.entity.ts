@@ -10,10 +10,8 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffRequest
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
-import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('time_off_policy', { mikroOrmRepository: () => MikroOrmTimeOffPolicyRepository })
 export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITimeOffPolicy {

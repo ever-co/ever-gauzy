@@ -11,10 +11,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
-import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {

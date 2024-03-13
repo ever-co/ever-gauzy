@@ -14,10 +14,8 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
-import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('job_preset', { mikroOrmRepository: () => MikroOrmJobPresetRepository })
 export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {

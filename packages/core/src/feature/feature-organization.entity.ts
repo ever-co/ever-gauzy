@@ -6,10 +6,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-feature-organization.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('feature_organization', { mikroOrmRepository: () => MikroOrmFeatureOrganizationRepository })
 export class FeatureOrganization extends TenantOrganizationBaseEntity implements IFeatureOrganization {

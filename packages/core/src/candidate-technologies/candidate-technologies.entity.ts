@@ -8,10 +8,8 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_technology', { mikroOrmRepository: () => MikroOrmCandidateTechnologiesRepository })
 export class CandidateTechnologies extends TenantOrganizationBaseEntity implements ICandidateTechnologies {

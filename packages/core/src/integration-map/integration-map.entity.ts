@@ -6,10 +6,8 @@ import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmIntegrationMapRepository } from './repository/mikro-orm-integration-map.repository';
-import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('integration_map', { mikroOrmRepository: () => MikroOrmIntegrationMapRepository })
 export class IntegrationMap extends TenantOrganizationBaseEntity implements IIntegrationMap {

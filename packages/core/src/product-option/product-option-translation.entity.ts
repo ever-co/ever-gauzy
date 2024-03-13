@@ -6,10 +6,8 @@ import {
 } from '../core/entities/internal';
 import { IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmProductOptionTranslationRepository } from './repository/mikro-orm-product-option-translation.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_option_translation', { mikroOrmRepository: () => MikroOrmProductOptionTranslationRepository })
 export class ProductOptionTranslation extends TenantOrganizationBaseEntity implements IProductOptionTranslation {

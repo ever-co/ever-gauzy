@@ -8,7 +8,7 @@ import {
 import { Organization, TenantBaseEntity } from '../entities/internal';
 import { MultiORMManyToOne } from '../decorators/entity/relations';
 import { MultiORMColumn } from '../decorators';
-import { ColumnIndex } from './../decorators/entity/index.decorator';
+import { ColumnIndex } from '../decorators/entity/column-index.decorator';
 
 export abstract class TenantOrganizationBaseEntity extends TenantBaseEntity implements IBasePerTenantAndOrganizationEntityModel {
 

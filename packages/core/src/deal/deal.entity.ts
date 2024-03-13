@@ -23,10 +23,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
-import { MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {

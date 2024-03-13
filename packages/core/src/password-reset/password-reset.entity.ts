@@ -4,8 +4,7 @@ import * as moment from 'moment';
 import { IPasswordReset } from '@gauzy/contracts';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { TenantBaseEntity } from './../core/entities/tenant-base.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPasswordResetRepository } from './repository/mikro-orm-password-reset.repository';
 
 @MultiORMEntity('password_reset', { mikroOrmRepository: () => MikroOrmPasswordResetRepository })

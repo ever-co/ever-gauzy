@@ -34,8 +34,7 @@ import {
 	TenantBaseEntity,
 	UserOrganization
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 

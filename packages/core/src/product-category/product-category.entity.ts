@@ -8,10 +8,8 @@ import {
 	ProductCategoryTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmProductCategoryRepository } from './repository/mikro-orm-product-category.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_category', { mikroOrmRepository: () => MikroOrmProductCategoryRepository })
 export class ProductCategory extends TranslatableBase

@@ -16,10 +16,9 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmAvailabilitySlotRepository } from './repository/mikro-orm-availability-slot.repository';
-import { MultiORMManyToOne } from './../core/decorators/entity/relations';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+
 @MultiORMEntity('availability_slot', { mikroOrmRepository: () => MikroOrmAvailabilitySlotRepository })
 export class AvailabilitySlot extends TenantOrganizationBaseEntity implements IAvailabilitySlot {
 

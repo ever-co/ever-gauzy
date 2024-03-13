@@ -7,10 +7,8 @@ import { IsEmail, IsOptional, IsUUID } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('email_reset', { mikroOrmRepository: () => MikroOrmEmailResetRepository })
 export class EmailReset extends TenantBaseEntity implements IEmailReset {

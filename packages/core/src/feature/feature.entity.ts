@@ -9,10 +9,8 @@ import {
 	IFeatureOrganization
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('feature', { mikroOrmRepository: () => MikroOrmFeatureRepository })
 export class Feature extends BaseEntity implements IFeature {

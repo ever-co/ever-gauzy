@@ -23,10 +23,8 @@ import {
 	Task,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmKeyResultRepository } from './repository/mikro-orm-keyresult.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('key_result', { mikroOrmRepository: () => MikroOrmKeyResultRepository })
 export class KeyResult extends TenantOrganizationBaseEntity

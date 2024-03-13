@@ -17,10 +17,8 @@ import {
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {

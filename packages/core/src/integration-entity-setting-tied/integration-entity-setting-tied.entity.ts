@@ -10,10 +10,8 @@ import {
 	IntegrationEntitySetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmIntegrationEntitySettingTiedRepository } from './repository/mikro-orm-integration-entity-setting-tied.repository';
-import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('integration_entity_setting_tied', { mikroOrmRepository: () => MikroOrmIntegrationEntitySettingTiedRepository })
 export class IntegrationEntitySettingTied extends TenantOrganizationBaseEntity implements IIntegrationEntitySettingTied {

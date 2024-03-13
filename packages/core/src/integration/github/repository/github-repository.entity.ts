@@ -3,10 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IIntegrationTenant, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue, IOrganizationProject } from '@gauzy/contracts';
 import { IntegrationTenant, OrganizationGithubRepositoryIssue, OrganizationProject, TenantOrganizationBaseEntity } from '../../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from '../../../core/decorators/entity';
-import { ColumnIndex } from './../../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from '../../../core/decorators/entity';
 import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-candidate.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../../../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_github_repository', { mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryRepository })
 export class OrganizationGithubRepository extends TenantOrganizationBaseEntity implements IOrganizationGithubRepository {

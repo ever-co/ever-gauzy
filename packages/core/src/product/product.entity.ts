@@ -24,10 +24,8 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product', { mikroOrmRepository: () => MikroOrmProductRepository })
 export class Product extends TranslatableBase implements IProductTranslatable {

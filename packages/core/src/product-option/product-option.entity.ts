@@ -7,10 +7,8 @@ import {
 	ProductOptionTranslation
 } from '../core/entities/internal';
 import { ProductOptionGroup } from './product-option-group.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_option', { mikroOrmRepository: () => MikroOrmProductOptionRepository })
 export class ProductOption extends TenantOrganizationBaseEntity implements IProductOptionTranslatable {

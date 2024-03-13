@@ -19,10 +19,8 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('merchant', { mikroOrmRepository: () => MikroOrmMerchantRepository })
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {

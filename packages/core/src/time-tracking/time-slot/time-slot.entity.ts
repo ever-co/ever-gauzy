@@ -20,10 +20,8 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity

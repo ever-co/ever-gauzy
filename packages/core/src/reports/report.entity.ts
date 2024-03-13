@@ -8,10 +8,8 @@ import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts'
 import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('report', { mikroOrmRepository: () => MikroOrmReportRepository })
 export class Report extends BaseEntity implements IReport {

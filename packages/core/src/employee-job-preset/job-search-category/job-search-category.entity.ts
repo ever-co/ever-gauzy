@@ -12,8 +12,7 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../../core/decorators/entity';
 import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 
 @MultiORMEntity('job_search_category', { mikroOrmRepository: () => MikroOrmJobSearchCategoryRepository })

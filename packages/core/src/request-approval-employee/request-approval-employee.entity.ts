@@ -11,10 +11,8 @@ import {
 	RequestApproval,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmRequestApprovalEmployeeRepository } from './repository/mikro-orm-request-approval-employee.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('request_approval_employee', { mikroOrmRepository: () => MikroOrmRequestApprovalEmployeeRepository })
 export class RequestApprovalEmployee extends TenantOrganizationBaseEntity implements IRequestApprovalEmployee {

@@ -8,10 +8,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmailHistoryRepository } from './repository/mikro-orm-email-history.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('email_sent', { mikroOrmRepository: () => MikroOrmEmailHistoryRepository })
 export class EmailHistory extends TenantOrganizationBaseEntity implements IEmailHistory {

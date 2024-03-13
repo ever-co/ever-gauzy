@@ -7,10 +7,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_size', { mikroOrmRepository: () => MikroOrmTaskSizeRepository })
 export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {

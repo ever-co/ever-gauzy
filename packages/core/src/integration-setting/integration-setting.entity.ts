@@ -8,10 +8,8 @@ import {
 	TenantOrganizationBaseEntity
 } from './../core/entities/internal';
 import { IsSecret } from './../core/decorators';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-integration-setting.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration_setting', { mikroOrmRepository: () => MikroOrmIntegrationSettingRepository })
 export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {

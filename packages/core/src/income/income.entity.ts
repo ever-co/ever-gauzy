@@ -27,10 +27,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('income', { mikroOrmRepository: () => MikroOrmIncomeRepository })
 export class Income extends TenantOrganizationBaseEntity implements IIncome {

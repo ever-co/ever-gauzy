@@ -47,10 +47,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team', { mikroOrmRepository: () => MikroOrmOrganizationTeamRepository })
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {

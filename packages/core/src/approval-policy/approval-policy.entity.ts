@@ -6,8 +6,7 @@
 import { IApprovalPolicy } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmApprovalPolicyRepository } from './repository/mikro-orm-approval-policy.repository';
 
 @MultiORMEntity('approval_policy', { mikroOrmRepository: () => MikroOrmApprovalPolicyRepository })

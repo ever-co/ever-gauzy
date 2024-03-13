@@ -9,10 +9,8 @@ import {
 	IntegrationSetting,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmIntegrationTenantRepository } from './repository/mikro-orm-integration-tenant.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration_tenant', { mikroOrmRepository: () => MikroOrmIntegrationTenantRepository })
 export class IntegrationTenant extends TenantOrganizationBaseEntity implements IIntegrationTenant {

@@ -6,8 +6,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IUser, IUserOrganization } from '@gauzy/contracts';
 import { IsUUID } from 'class-validator';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 

@@ -25,10 +25,8 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {

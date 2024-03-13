@@ -52,10 +52,8 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @Index('taskNumber', ['projectId', 'number'], { unique: true })

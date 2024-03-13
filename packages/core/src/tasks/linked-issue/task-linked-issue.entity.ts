@@ -11,10 +11,8 @@ import {
 } from '@gauzy/contracts';
 import { Task } from './../task.entity';
 import { TenantOrganizationBaseEntity } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTaskLinkedIssueRepository } from './repository/mikro-orm-linked-issue.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_linked_issues', { mikroOrmRepository: () => MikroOrmTaskLinkedIssueRepository })
 export class TaskLinkedIssue extends TenantOrganizationBaseEntity implements ITaskLinkedIssue {

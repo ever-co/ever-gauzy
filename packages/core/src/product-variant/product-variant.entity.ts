@@ -23,10 +23,8 @@ import {
 	TenantOrganizationBaseEntity,
 	WarehouseProductVariant
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant', { mikroOrmRepository: () => MikroOrmProductVariantRepository })
 export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {

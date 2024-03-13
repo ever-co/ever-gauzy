@@ -8,10 +8,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmGoalRepository } from './repository/mikro-orm-goal.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal', { mikroOrmRepository: () => MikroOrmGoalRepository })
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {

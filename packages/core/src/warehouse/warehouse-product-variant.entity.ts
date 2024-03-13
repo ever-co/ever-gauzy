@@ -5,8 +5,7 @@ import { IProductVariant, IWarehouseProduct, IWarehouseProductVariant } from '@g
 import { ProductVariant, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmWarehouseProductVariantRepository } from './repository/mikro-orm-warehouse-product-variant.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 

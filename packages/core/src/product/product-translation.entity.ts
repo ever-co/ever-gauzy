@@ -4,10 +4,8 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { JoinColumn, RelationId } from 'typeorm';
 import { TranslationBase } from '../core/entities/internal';
 import { Product } from './product.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmProductTranslationRepository } from './repository/mikro-orm-product-translation.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_translation', { mikroOrmRepository: () => MikroOrmProductTranslationRepository })
 export class ProductTranslation extends TranslationBase implements IProductTranslation {

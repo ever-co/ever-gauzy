@@ -12,10 +12,9 @@ import {
 	CandidateTechnologies,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmCandidateCriterionsRatingRepository } from './repository/mikro-orm-candidate-criterions-rating.repository';
 import { MultiORMManyToOne } from '../core/decorators/entity/relations';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 
 @MultiORMEntity('candidate_criterion_rating', { mikroOrmRepository: () => MikroOrmCandidateCriterionsRatingRepository })
 export class CandidateCriterionsRating extends TenantOrganizationBaseEntity

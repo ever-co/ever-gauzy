@@ -7,10 +7,8 @@ import {
 	TenantOrganizationBaseEntity,
 	Task,
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
-import { ColumnIndex } from './../../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTaskEstimationRepository } from './repository/mikro-orm-estimation.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_estimation', { mikroOrmRepository: () => MikroOrmTaskEstimationRepository })
 export class TaskEstimation extends TenantOrganizationBaseEntity implements ITaskEstimation {

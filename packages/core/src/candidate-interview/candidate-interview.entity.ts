@@ -17,10 +17,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmCandidateInterviewRepository } from './repository/mikro-orm-candidate-interview.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 
 @MultiORMEntity('candidate_interview', { mikroOrmRepository: () => MikroOrmCandidateInterviewRepository })
 export class CandidateInterview extends TenantOrganizationBaseEntity

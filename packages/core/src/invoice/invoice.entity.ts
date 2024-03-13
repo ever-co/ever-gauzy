@@ -1,3 +1,18 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	JoinColumn,
+	Unique,
+	RelationId,
+	JoinTable
+} from 'typeorm';
+import {
+	IsString,
+	IsNumber,
+	IsBoolean,
+	IsDate,
+	IsOptional,
+	IsEnum
+} from 'class-validator';
 import {
 	IInvoice,
 	CurrenciesEnum,
@@ -10,21 +25,7 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsString,
-	IsNumber,
-	IsBoolean,
-	IsDate,
-	IsOptional,
-	IsEnum
-} from 'class-validator';
-import {
-	JoinColumn,
-	Unique,
-	RelationId,
-	JoinTable
-} from 'typeorm';
+import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	InvoiceEstimateHistory,
@@ -35,11 +36,8 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
-import { isMySQL } from '@gauzy/config';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])

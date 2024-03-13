@@ -17,10 +17,8 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
 export class Proposal extends TenantOrganizationBaseEntity

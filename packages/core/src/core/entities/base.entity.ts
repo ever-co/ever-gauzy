@@ -13,7 +13,7 @@ import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { MultiORMColumn } from '../decorators/entity';
-import { ColumnIndex } from './../decorators/entity/index.decorator';
+import { ColumnIndex } from '../decorators/entity/column-index.decorator';
 
 export abstract class Model {
 	constructor(input?: any) {

@@ -12,10 +12,8 @@ import {
 } from '../core/entities/internal';
 import { IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_personal_quality', { mikroOrmRepository: () => MikroOrmCandidatePersonalQualitiesRepository })
 export class CandidatePersonalQualities extends TenantOrganizationBaseEntity implements ICandidatePersonalQualities {

@@ -5,7 +5,7 @@ import {
 	RelationId
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -68,8 +68,6 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {

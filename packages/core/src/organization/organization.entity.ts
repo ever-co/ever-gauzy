@@ -40,10 +40,8 @@ import {
 	Tag,
 	TenantBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {

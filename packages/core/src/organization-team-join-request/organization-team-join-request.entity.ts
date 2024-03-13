@@ -9,10 +9,8 @@ import {
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team_join_request', { mikroOrmRepository: () => MikroOrmOrganizationTeamJoinRequestRepository })
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity

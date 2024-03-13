@@ -2,8 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IEmailTemplate } from '@gauzy/contracts';
 import { isMySQL } from "@gauzy/config";
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { ColumnIndex } from './../core/decorators/entity/index.decorator';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
 
 @MultiORMEntity('email_template', { mikroOrmRepository: () => MikroOrmEmailTemplateRepository })
