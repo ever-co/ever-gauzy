@@ -1,4 +1,4 @@
-import { EventSubscriber } from "typeorm"; // deepscan-disable-line
+import { EventSubscriber } from "typeorm";
 import { FileStorageProviderEnum } from "@gauzy/contracts";
 import { Report } from "./report.entity";
 import { FileStorage } from "./../core/file-storage";

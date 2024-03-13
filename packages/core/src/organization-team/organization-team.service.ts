@@ -67,6 +67,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 */
 	async getOrganizationTeamStatistic(input: GetOrganizationTeamStatisticQuery): Promise<IOrganizationTeam> {
 		try {
+			console.time('Get Organization Team ID Query');
+
 			const { organizationTeamId, query } = input;
 			const { withLaskWorkedTask } = query;
 
@@ -89,6 +91,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				);
 			}
 
+			console.timeEnd('Get Organization Team ID Query');
 			return organizationTeam;
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -227,7 +230,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					// If not included, add the employeeId to the managerIds array
 					managerIds.push(employeeId);
 				}
-			} catch (error) {}
+			} catch (error) { }
 
 			// Retrieves a collection of employees based on specified criteria.
 			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
@@ -392,7 +395,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
-    // Create a query builder for the OrganizationTeam entity
+		// Create a query builder for the OrganizationTeam entity
 		const query = this.repository.createQueryBuilder(this.tableName);
 
 		/**
@@ -488,13 +491,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationId,
 					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
-								members: {
-									employeeId: RequestContext.currentEmployeeId(),
-									role: {
-										name: RolesEnum.MANAGER
-									}
+							members: {
+								employeeId: RequestContext.currentEmployeeId(),
+								role: {
+									name: RolesEnum.MANAGER
 								}
-						  }
+							}
+						}
 						: {})
 				}
 			});
