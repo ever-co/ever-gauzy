@@ -14,17 +14,18 @@ export class PaymentSubscriber extends BaseEntityEventSubscriber<Payment> {
     }
 
     /**
-     * Called before an entity is inserted/created into the database.
+     * Called before a Payment entity is inserted or created in the database. This method assigns
+     * the ID of the current user to the recordedById property of the entity, tracking who created the payment.
      *
-     * @param entity
+     * @param entity The Payment entity about to be created.
+     * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
      */
     async beforeEntityCreate(entity: Payment): Promise<void> {
         try {
-            if (entity) {
-                entity.recordedById = RequestContext.currentUserId();
-            }
+            // Assign the current user's ID to recordedById
+            entity.recordedById = RequestContext.currentUserId();
         } catch (error) {
-            console.error("Error in PaymentSubscriber beforeEntityCreate:", error.message);
+            console.error('Error in PaymentSubscriber beforeEntityCreate:', error.message);
         }
     }
 }

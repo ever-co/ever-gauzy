@@ -34,7 +34,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      */
     async afterLoad(entity: Entity, event?: LoadEvent<Entity>): Promise<void> {
         try {
-            await this.afterEntityLoad(entity, event.manager);
+            if (entity) {
+                await this.afterEntityLoad(entity, event.manager);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in afterLoad:", error);
         }
@@ -48,7 +50,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      */
     async onLoad(args: EventArgs<Entity>): Promise<void> {
         try {
-            await this.afterEntityLoad(args.entity, args.em);
+            if (args.entity) {
+                await this.afterEntityLoad(args.entity, args.em);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in onLoad:", error);
         }
@@ -74,7 +78,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      */
     async beforeCreate(args: EventArgs<Entity>): Promise<void> {
         try {
-            await this.beforeEntityCreate(args.entity, args.em);
+            if (args.entity) {
+                await this.beforeEntityCreate(args.entity, args.em);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in beforeCreate:", error);
         }
@@ -88,7 +94,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      */
     async beforeInsert(event: InsertEvent<Entity>): Promise<void> {
         try {
-            await this.beforeEntityCreate(event.entity, event.manager);
+            if (event.entity) {
+                await this.beforeEntityCreate(event.entity, event.manager);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in beforeInsert:", error);
         }
@@ -114,7 +122,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      */
     async afterCreate(args: EventArgs<Entity>): Promise<void> {
         try {
-            await this.afterEntityCreate(args.entity, args.em);
+            if (args.entity) {
+                await this.afterEntityCreate(args.entity, args.em);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in afterCreate:", error);
         }
@@ -128,7 +138,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
      */
     async afterInsert(event: InsertEvent<Entity>): Promise<void> {
         try {
-            await this.afterEntityCreate(event.entity, event.manager);
+            if (event.entity) {
+                await this.afterEntityCreate(event.entity, event.manager);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in afterInsert:", error);
         }
@@ -171,7 +183,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
                     throw new Error(`Unsupported ORM type: ${ormType}`);
             }
 
-            await this.beforeEntityUpdate(entity, entityManager);
+            if (entity) {
+                await this.beforeEntityUpdate(entity, entityManager);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in beforeUpdate:", error);
         }
@@ -214,7 +228,9 @@ export abstract class EntityEventSubscriber<Entity> implements MikroEntitySubscr
                     throw new Error(`Unsupported ORM type: ${ormType}`);
             }
 
-            await this.afterEntityUpdate(entity, entityManager);
+            if (entity) {
+                await this.afterEntityUpdate(entity, entityManager);
+            }
         } catch (error) {
             console.error("EntityEventSubscriber: Error in afterUpdate:", error);
         }

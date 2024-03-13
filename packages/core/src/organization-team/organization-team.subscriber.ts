@@ -36,23 +36,25 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 	}
 
 	/**
-	 * Called before entity is inserted to the database.
+	 * Called before an OrganizationTeam entity is inserted into the database. This method sets the
+	 * creator ID, generates a slug for the profile link, and assigns a default logo if necessary.
 	 *
-	 * @param entity
+	 * @param entity The OrganizationTeam entity about to be created.
+	 * @returns {Promise<void>} A promise that resolves when the pre-insertion processing is complete.
 	 */
 	async beforeEntityCreate(entity: OrganizationTeam): Promise<void> {
 		try {
-			if (entity) {
-				entity.createdById = RequestContext.currentUserId();
+			// Assign the current user's ID as the creator
+			entity.createdById = RequestContext.currentUserId();
 
-				// organization team slug based on name or profile link
-				if (entity.profile_link || entity.name) {
-					entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);
-				}
+			// Generate a slug for the profile link
+			if (entity.profile_link || entity.name) {
+				entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);
+			}
 
-				if (!entity.logo) {
-					entity.logo = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
-				}
+			// Set a default logo if not provided
+			if (!entity.logo && entity.name) {
+				entity.logo = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
 		} catch (error) {
 			console.error('OrganizationTeamSubscriber: An error occurred during the beforeEntityCreate process:', error);
@@ -60,17 +62,17 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 	}
 
 	/**
-	 * Called before entity is updated to the database.
+	 * Called before an OrganizationTeam entity is updated in the database. This method updates
+	 * the slug for the profile link based on the team's name.
 	 *
-	 * @param entity
+	 * @param entity The OrganizationTeam entity that is about to be updated.
+	 * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
 	 */
 	async beforeEntityUpdate(entity: OrganizationTeam): Promise<void> {
 		try {
-			if (entity) {
-				// organization team slug based on name
-				if (entity.name) {
-					entity.profile_link = sluggable(`${entity.name}`);
-				}
+			// Update the profile link slug if the name is provided
+			if (entity.name) {
+				entity.profile_link = sluggable(entity.name);
 			}
 		} catch (error) {
 			console.error('OrganizationTeamSubscriber: An error occurred during the beforeEntityUpdate process:', error);

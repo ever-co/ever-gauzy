@@ -6,7 +6,7 @@ import { IEntityEventSubscriber, MultiOrmEntityManager } from './entity-event-su
  * An abstract class that provides a base implementation for IEntityEventSubscriber.
  * This class can be extended to create specific event subscribers for different entities.
  */
-export abstract class BaseEntityEventSubscriber<Entity> extends EntityEventSubscriber<Entity> implements IEntityEventSubscriber<Entity>   {
+export abstract class BaseEntityEventSubscriber<Entity = any> extends EntityEventSubscriber<Entity> implements IEntityEventSubscriber<Entity>   {
 
     /**
      * An optional method that can be implemented by subclasses.

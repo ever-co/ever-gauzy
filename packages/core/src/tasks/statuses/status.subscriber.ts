@@ -16,12 +16,15 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 	}
 
 	/**
-	 * Called after entity is loaded from the database.
+	 * Called after a TaskStatus entity is loaded from the database. This method updates
+	 * the entity by setting the full icon URL using the FileStorage provider.
 	 *
-	 * @param entity
+	 * @param entity The TaskStatus entity that has been loaded.
+	 * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
 	 */
 	async afterEntityLoad(entity: TaskStatus): Promise<void> {
 		try {
+			// Update the fullIconUrl if an icon is present
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
@@ -32,19 +35,20 @@ export class TaskStatusSubscriber extends BaseEntityEventSubscriber<TaskStatus> 
 	}
 
 	/**
-	 * Called before entity is inserted to the database.
+	 * Called before a TaskStatus entity is inserted into the database. This method ensures
+	 * default values for color and value properties are set.
 	 *
-	 * @param entity
+	 * @param entity The TaskStatus entity about to be created.
+	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
 	 */
 	async beforeEntityCreate(entity: TaskStatus): Promise<void> {
 		try {
-			if (entity) {
-				if (!entity.color) {
-					entity.color = faker.internet.color();
-				}
-				if ('name' in entity) {
-					entity.value = sluggable(entity.name);
-				}
+			// Set a default color using faker if not provided
+			entity.color = entity.color || faker.internet.color();
+
+			// Set a sluggable value based on the name, if provided
+			if ('name' in entity) {
+				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
 			console.error('TaskStatusSubscriber: An error occurred during the beforeEntityCreate process:', error);

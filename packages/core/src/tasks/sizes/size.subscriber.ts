@@ -16,35 +16,39 @@ export class TaskSizeSubscriber extends BaseEntityEventSubscriber<TaskSize> {
 	}
 
 	/**
-	 * Called after entity is loaded from the database.
+	 * Called after a TaskSize entity is loaded from the database. This method updates
+	 * the entity by setting the full icon URL using the FileStorage provider.
 	 *
-	 * @param entity
+	 * @param entity The TaskSize entity that has been loaded.
+	 * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
 	 */
 	async afterEntityLoad(entity: TaskSize): Promise<void> {
 		try {
+			// Update the fullIconUrl if an icon property is present
 			if (entity.icon) {
 				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
-			console.error('TaskSizeSubscriber: An error occurred during the afterEntityLoad process:', error);
+			console.error(`TaskSizeSubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`, error);
 		}
 	}
 
 	/**
-	 * Called before entity is inserted to the database.
+	 * Called before a TaskSize entity is inserted into the database. This method sets default
+	 * values for certain properties of the entity.
 	 *
-	 * @param entity
+	 * @param entity The TaskSize entity about to be created.
+	 * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
 	 */
 	async beforeEntityCreate(entity: TaskSize): Promise<void> {
 		try {
-			if (entity) {
-				if (!entity.color) {
-					entity.color = faker.internet.color();
-				}
-				if ('name' in entity) {
-					entity.value = sluggable(entity.name);
-				}
+			// Set a default color using faker if not provided
+			entity.color = entity.color || faker.internet.color();
+
+			// Set a sluggable value based on the name, if provided
+			if ('name' in entity) {
+				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
 			console.error('TaskSizeSubscriber: An error occurred during the beforeEntityCreate process:', error);
