@@ -1,3 +1,5 @@
+export * from './base-entity-event.subscriber';
+
 import {
 	ActivitySubscriber,
 	CandidateSubscriber,
