@@ -79,7 +79,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@IsOptional()
 	@IsString()
-	@ColumnIndex({ unique: false })
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	username?: string;
 

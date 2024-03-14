@@ -53,7 +53,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn('boolean', { default: false })
 	isDefault: boolean;
 
-	@ColumnIndex({ unique: false })
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link: string;
 

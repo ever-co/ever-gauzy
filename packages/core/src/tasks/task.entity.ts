@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	JoinTable,
 	RelationId,
@@ -56,7 +55,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiO
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
-@Index('taskNumber', ['projectId', 'number'], { unique: true })
+@ColumnIndex('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({
 		nullable: true,

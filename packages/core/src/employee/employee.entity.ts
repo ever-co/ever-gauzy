@@ -254,7 +254,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	jobSuccess?: number;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@ColumnIndex({ unique: false })
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
