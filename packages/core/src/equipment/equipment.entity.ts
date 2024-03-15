@@ -25,9 +25,8 @@ import {
 	ImageAsset
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmEquipmentRepository } from './repository/mikro-orm-equipment.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment', { mikroOrmRepository: () => MikroOrmEquipmentRepository })
 export class Equipment extends TenantOrganizationBaseEntity implements IEquipment {

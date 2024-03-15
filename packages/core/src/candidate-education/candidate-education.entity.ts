@@ -5,9 +5,8 @@ import {
 	Candidate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmCandidateEducationRepository } from './repository/mikro-orm-candidate-education.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_education', { mikroOrmRepository: () => MikroOrmCandidateEducationRepository })
 export class CandidateEducation extends TenantOrganizationBaseEntity

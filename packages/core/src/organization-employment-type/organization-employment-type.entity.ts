@@ -1,15 +1,14 @@
-import { ICandidate, IEmployee, IOrganizationEmploymentType, ITag } from '@gauzy/contracts';
 import { JoinTable } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ICandidate, IEmployee, IOrganizationEmploymentType, ITag } from '@gauzy/contracts';
 import {
 	Candidate,
 	Employee,
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationEmploymentTypeRepository } from './repository/mikro-orm-organization-employment-type.repository';
-import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_employment_type', { mikroOrmRepository: () => MikroOrmOrganizationEmploymentTypeRepository })
 export class OrganizationEmploymentType extends TenantOrganizationBaseEntity implements IOrganizationEmploymentType {

@@ -1,4 +1,6 @@
 import { JoinColumn, RelationId } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNumber, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import {
 	IEmployee,
 	IExpense,
@@ -8,8 +10,6 @@ import {
 	IProductTranslatable,
 	ITask
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsString, IsOptional, IsBoolean, IsUUID } from 'class-validator';
 import {
 	Employee,
 	Expense,
@@ -20,9 +20,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmInvoiceItemRepository } from './repository/mikro-orm-invoice-item.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice_item', { mikroOrmRepository: () => MikroOrmInvoiceItemRepository })
 export class InvoiceItem extends TenantOrganizationBaseEntity implements IInvoiceItem {

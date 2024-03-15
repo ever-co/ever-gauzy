@@ -23,9 +23,8 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('warehouse', { mikroOrmRepository: () => MikroOrmWarehouseRepository })
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {

@@ -1,13 +1,12 @@
-import { IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IPipeline, IPipelineStage } from '@gauzy/contracts';
 import {
 	PipelineStage,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
-import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('pipeline', { mikroOrmRepository: () => MikroOrmPipelineRepository })
 export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline {

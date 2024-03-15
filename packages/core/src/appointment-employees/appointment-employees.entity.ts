@@ -7,9 +7,8 @@ import {
 	EmployeeAppointment,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmAppointmentEmployeeRepository } from './repository/mikro-orm-appointment-employee.repository';
-import { MultiORMManyToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('appointment_employee', { mikroOrmRepository: () => MikroOrmAppointmentEmployeeRepository })
 export class AppointmentEmployee extends TenantOrganizationBaseEntity implements IAppointmentEmployee {

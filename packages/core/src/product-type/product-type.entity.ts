@@ -5,9 +5,8 @@ import {
 	ProductTypeTranslation,
 	TranslatableBase
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmProductTypeRepository } from './repository/mikro-orm-product-type.repository';
-import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_type', { mikroOrmRepository: () => MikroOrmProductTypeRepository })
 export class ProductType extends TranslatableBase {

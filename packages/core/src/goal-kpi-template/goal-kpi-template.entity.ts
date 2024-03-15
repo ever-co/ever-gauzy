@@ -10,9 +10,8 @@ import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmGoalKPITemplateRepository } from './repository/mikro-orm-goal-kpi-template.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal_kpi_template', { mikroOrmRepository: () => MikroOrmGoalKPITemplateRepository })
 export class GoalKPITemplate extends TenantOrganizationBaseEntity implements IGoalKPITemplate {
