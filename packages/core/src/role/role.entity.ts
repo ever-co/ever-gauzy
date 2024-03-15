@@ -1,3 +1,4 @@
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
 import { RolesEnum, IRolePermission, IRole } from '@gauzy/contracts';
@@ -7,6 +8,9 @@ import { MikroOrmRoleRepository } from './repository/mikro-orm-role.repository';
 
 @MultiORMEntity('role', { mikroOrmRepository: () => MikroOrmRoleRepository })
 export class Role extends TenantBaseEntity implements IRole {
+
+	// to allow inference in `em.getRepository()`
+	[EntityRepositoryType]?: MikroOrmRoleRepository;
 
 	@ApiProperty({ type: () => String, enum: RolesEnum })
 	@IsNotEmpty()

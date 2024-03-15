@@ -38,7 +38,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@CreateDateColumn()
-	@Property()
+	@Property({ onCreate: () => new Date() })
 	createdAt?: Date = new Date();
 
 	// Date when the record was last updated
