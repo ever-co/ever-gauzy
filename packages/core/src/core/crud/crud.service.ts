@@ -57,7 +57,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Get the table name from the repository metadata.
 	 * @returns {string} The table name.
 	 */
-	protected get tableName(): string {
+	public get tableName(): string {
 		return this.repository.metadata.tableName;
 	}
 
@@ -65,7 +65,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Get the ORM type.
 	 * @returns {MultiORM} The ORM type.
 	 */
-	protected get ormType(): MultiORM {
+	public get ormType(): MultiORM {
 		return ormType;
 	}
 

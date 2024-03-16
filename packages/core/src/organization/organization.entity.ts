@@ -40,11 +40,19 @@ import {
 	Tag,
 	TenantBaseEntity
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
+
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -328,7 +336,11 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	// Contact
 	@MultiORMManyToOne(() => Contact, (contact) => contact.organization, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
 		cascade: true,
+
 		onDelete: 'SET NULL'
 	})
 	contact: IContact;
@@ -336,12 +348,15 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@RelationId((it: Organization) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly contactId?: string;
+	contactId?: string;
 
 	/**
 	 * ImageAsset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 

@@ -30,7 +30,7 @@ import { TypeOrmEmailHistoryRepository } from './../email-history/repository/typ
 import { MikroOrmEmailHistoryRepository } from './../email-history/repository/mikro-orm-email-history.repository';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
 import { MikroOrmEmailTemplateRepository } from './../email-template/repository/mikro-orm-email-template.repository';
-import { TypeOrmOrganizationRepository } from './../organization/repository/type-orm-organization.repository';
+import { TypeOrmOrganizationRepository } from './../organization/repository';
 import { MikroOrmOrganizationRepository } from './../organization/repository/mikro-orm-organization.repository';
 
 const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
@@ -40,21 +40,17 @@ export class EmailService {
 	constructor(
 		@InjectRepository(EmailHistory)
 		private typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
-
-		mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
+		readonly mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
 
 		@InjectRepository(EmailTemplate)
-		private typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+		private readonly typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+		readonly mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
 
-		mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
-
-		@InjectRepository(Organization)
-		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-
-		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
+		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
 
 		private readonly _emailSendService: EmailSendService
-	) {}
+	) { }
 
 	/**
 	 *

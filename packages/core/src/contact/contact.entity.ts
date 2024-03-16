@@ -18,6 +18,7 @@ import { MikroOrmContactRepository } from './repository/mikro-orm-contact.reposi
 
 @MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
@@ -87,7 +88,6 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	longitude?: number;
 
 	@ApiProperty({ type: () => String })
-	@MultiORMColumn()
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	regionCode?: string;

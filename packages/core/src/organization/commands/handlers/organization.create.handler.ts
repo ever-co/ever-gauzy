@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { faker } from '@faker-js/faker';
 import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
@@ -10,15 +9,12 @@ import { OrganizationCreateCommand } from '../organization.create.command';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 import { RequestContext } from '../../../core/context';
 import { UserOrganization } from './../../../core/entities/internal';
-import { Organization } from './../../organization.entity';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
 import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
 import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
-import { TypeOrmOrganizationRepository } from '../../repository/type-orm-organization.repository';
-import { TypeOrmUserOrganizationRepository } from '../../../user-organization/repository/type-orm-user-organization.repository';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
@@ -27,31 +23,26 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		private readonly commandBus: CommandBus,
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
-		private readonly userService: UserService,
-
-		@InjectRepository(Organization)
-		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-
-		@InjectRepository(UserOrganization)
-		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository
+		private readonly userService: UserService
 	) { }
 
+	/**
+	 *
+	 * @param command
+	 * @returns
+	 */
 	public async execute(
 		command: OrganizationCreateCommand
 	): Promise<IOrganization> {
 		try {
 			const { input } = command;
-			const {
-				isImporting = false,
-				sourceId = null,
-				userOrganizationSourceId = null,
-			} = input;
+			const { isImporting = false, sourceId = null, userOrganizationSourceId = null, } = input;
 			const tenantId = RequestContext.currentTenantId();
 
 			const admins: IUser[] = [];
 
 			// 1. Get all Super Admin Users of the Tenant
-			const { items: superAdminUsers } = await this.userService.findAll({
+			const superAdminUsers = await this.userService.find({
 				where: {
 					tenantId,
 					role: {
@@ -64,7 +55,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 
 			// 2. Organization will add to all SUPER_ADMIN/ADMIN users, if ADMIN create organization.
 			if (RequestContext.hasRole(RolesEnum.ADMIN)) {
-				const { items: adminUsers } = await this.userService.findAll({
+				const adminUsers = await this.userService.find({
 					where: {
 						tenantId,
 						role: {
@@ -112,7 +103,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.typeOrmUserOrganizationRepository.metadata.tableName,
+								entityType: this.userOrganizationService.tableName,
 								sourceId: userOrganizationSourceId,
 								destinationId: userOrganization.id,
 								tenantId,
@@ -173,7 +164,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				const { sourceId } = input;
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand({
-						entityType: this.typeOrmOrganizationRepository.metadata.tableName,
+						entityType: this.organizationService.tableName,
 						sourceId,
 						destinationId: organization.id,
 						tenantId,
