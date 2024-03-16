@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CrudService } from '../core/crud/crud.service';
-import { Tenant } from './tenant.entity';
+
 import {
 	ITenantCreateInput,
 	RolesEnum,
@@ -11,44 +9,36 @@ import {
 	FileStorageProviderEnum,
 } from '@gauzy/contracts';
 import { ConfigService, IEnvironment } from '@gauzy/config';
+import { CrudService } from '../core/crud/crud.service';
 import { TenantFeatureOrganizationCreateCommand } from './commands';
 import { TenantRoleBulkCreateCommand } from '../role/commands';
 import { TenantStatusBulkCreateCommand } from './../tasks/statuses/commands';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
-import { Role, User } from './../core/entities/internal';
 import { TenantSettingSaveCommand } from './tenant-setting/commands';
 import { TenantTaskSizeBulkCreateCommand } from './../tasks/sizes/commands';
 import { TenantTaskPriorityBulkCreateCommand } from './../tasks/priorities/commands';
 import { TenantIssueTypeBulkCreateCommand } from './../tasks/issue-type/commands';
-import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
-import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
-import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
-import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
-import { MikroOrmRoleRepository } from '../role/repository/mikro-orm-role.repository';
-import { TypeOrmRoleRepository } from '../role/repository/type-orm-role.repository';
+import { MikroOrmTenantRepository, TypeOrmTenantRepository } from './repository';
+import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
+import { MikroOrmRoleRepository, TypeOrmRoleRepository } from '../role/repository';
+import { Tenant } from './tenant.entity';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
 	constructor(
-		@InjectRepository(Tenant)
-		private typeOrmTenantRepository: TypeOrmTenantRepository,
+		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
+		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
 
-		MikroOrmTenantRepository: MikroOrmTenantRepository,
+		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
 
-		@InjectRepository(User)
-		private typeOrmUserRepository: TypeOrmUserRepository,
-
-		mikroOrmUserRepository: MikroOrmUserRepository,
-
-		@InjectRepository(Role)
-		private typeOrmRoleRepository: TypeOrmRoleRepository,
-
-		mikroOrmRoleRepository: MikroOrmRoleRepository,
+		readonly typeOrmUserRepository: TypeOrmUserRepository,
+		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {
-		super(typeOrmTenantRepository, MikroOrmTenantRepository);
+		super(typeOrmTenantRepository, mikroOrmTenantRepository);
 	}
 
 	public async onboardTenant(
@@ -92,9 +82,7 @@ export class TenantService extends CrudService<Tenant> {
 
 		// Create tenant default file storage setting (LOCAL)
 		const tenantId = tenant.id;
-		const fileSystem = this.configService.get(
-			'fileSystem'
-		) as IEnvironment['fileSystem'];
+		const fileSystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
 		await this.commandBus.execute(
 			new TenantSettingSaveCommand(
 				{

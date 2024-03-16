@@ -14,6 +14,7 @@ import { UserController } from './user.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
+import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 
 @Module({
 	imports: [
@@ -28,11 +29,7 @@ import { TaskModule } from './../tasks/task.module';
 		FactoryResetModule
 	],
 	controllers: [UserController],
-	providers: [UserService, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		UserService
-	]
+	providers: [UserService, TypeOrmUserRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, UserService, TypeOrmUserRepository]
 })
 export class UserModule { }

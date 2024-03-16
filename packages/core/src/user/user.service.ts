@@ -10,7 +10,6 @@ import {
 	NotFoundException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import {
 	InsertResult,
 	SelectQueryBuilder,
@@ -36,8 +35,7 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { TaskService } from './../tasks/task.service';
-import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
-import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
+import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
 import { User } from './user.entity';
 
 @Injectable()
@@ -45,13 +43,11 @@ export class UserService extends TenantAwareCrudService<User> {
 	constructor(
 		private readonly _configService: ConfigService,
 
-		@Inject(forwardRef(() => TaskService))
-		private readonly _taskService: TaskService,
+		@Inject(forwardRef(() => TaskService)) private readonly _taskService: TaskService,
 
-		@InjectRepository(User)
-		typeOrmUserRepository: TypeOrmUserRepository,
+		readonly typeOrmUserRepository: TypeOrmUserRepository,
 
-		mikroOrmUserRepository: MikroOrmUserRepository,
+		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}

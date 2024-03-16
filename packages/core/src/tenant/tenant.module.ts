@@ -12,6 +12,7 @@ import { TenantController } from './tenant.controller';
 import { Tenant } from './tenant.entity';
 import { TenantService } from './tenant.service';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmTenantRepository } from './repository';
 
 @Module({
 	imports: [
@@ -28,11 +29,7 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => FeatureModule)
 	],
 	controllers: [TenantController],
-	providers: [TenantService, ...CommandHandlers],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		TenantService
-	]
+	providers: [TenantService, TypeOrmTenantRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, TenantService, TypeOrmTenantRepository]
 })
 export class TenantModule { }

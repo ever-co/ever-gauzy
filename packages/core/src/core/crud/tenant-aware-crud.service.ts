@@ -1,6 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import {
-	DeepPartial,
 	DeleteResult,
 	FindOptionsWhere,
 	FindManyOptions,
@@ -12,13 +11,11 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { EntityRepository } from '@mikro-orm/core';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { User } from '../../user/user.entity';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
 import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
-import { MultiORMEnum } from 'core/utils';
 
 /**
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
@@ -88,7 +85,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @returns The find conditions based on the user's relationship with the tenant and additional options.
 	 */
 	private findConditionsWithTenant(
-		user: User,
+		user: IUser,
 		where?: FindOptionsWhere<T>[] | FindOptionsWhere<T>
 	): FindOptionsWhere<T>[] | FindOptionsWhere<T> {
 		if (where && Array.isArray(where)) {
@@ -337,13 +334,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			...entity,
 			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-					...(
-						this.ormType === MultiORMEnum.TypeORM ? {
-							tenant: {
-								id: tenantId
-							}
-						} : {}
-					),
+					tenant: {
+						id: tenantId
+					},
 					tenantId
 				}
 				: {}),
@@ -354,13 +347,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
 					this.repository.metadata?.hasColumnWithPropertyPath('employeeId')
 					? {
-						...(
-							this.ormType === MultiORMEnum.TypeORM ? {
-								employee: {
-									id: employeeId
-								}
-							} : {}
-						),
+						employee: {
+							id: employeeId
+						},
 						employeeId: employeeId
 					}
 					: {}
@@ -381,13 +370,9 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			...entity,
 			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-					...(
-						this.ormType === MultiORMEnum.TypeORM ? {
-							tenant: {
-								id: tenantId
-							}
-						} : {}
-					),
+					tenant: {
+						id: tenantId
+					},
 					tenantId
 				}
 				: {})
