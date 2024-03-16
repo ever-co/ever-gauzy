@@ -1,5 +1,5 @@
 import { IGoal, GoalLevelEnum, IKeyResult, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString } from 'class-validator';
 import {
@@ -8,9 +8,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmGoalRepository } from './repository/mikro-orm-goal.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal', { mikroOrmRepository: () => MikroOrmGoalRepository })
 export class Goal extends TenantOrganizationBaseEntity implements IGoal {
@@ -56,7 +55,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@RelationId((it: Goal) => it.ownerTeam)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	ownerTeamId?: string;
 
@@ -73,7 +72,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@RelationId((it: Goal) => it.ownerEmployee)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	ownerEmployeeId?: string;
 
@@ -90,7 +89,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@RelationId((it: Goal) => it.lead)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	leadId?: string;
 
@@ -105,7 +104,7 @@ export class Goal extends TenantOrganizationBaseEntity implements IGoal {
 	@RelationId((it: Goal) => it.alignedKeyResult)
 	@IsString()
 	@IsOptional()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	alignedKeyResultId?: string;
 

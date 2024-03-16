@@ -1,11 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskVersion } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmTaskVersionRepository } from './repository/mikro-orm-task-version.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_version', { mikroOrmRepository: () => MikroOrmTaskVersionRepository })
 export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVersion {
@@ -13,12 +12,12 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
 
@@ -67,7 +66,7 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskVersion) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -90,7 +89,7 @@ export class TaskVersion extends TenantOrganizationBaseEntity implements ITaskVe
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskVersion) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

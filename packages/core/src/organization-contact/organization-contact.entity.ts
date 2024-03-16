@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	JoinTable,
 	RelationId
@@ -36,16 +35,15 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_contact', { mikroOrmRepository: () => MikroOrmOrganizationContactRepository })
 export class OrganizationContact extends TenantOrganizationBaseEntity
 	implements IOrganizationContact {
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -123,7 +121,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
@@ -144,7 +142,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
@@ -218,6 +216,8 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_contact',
+		joinColumn: 'organizationContactId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_contact'
@@ -230,6 +230,8 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'organization_contact_employee',
+		joinColumn: 'organizationContactId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'organization_contact_employee'

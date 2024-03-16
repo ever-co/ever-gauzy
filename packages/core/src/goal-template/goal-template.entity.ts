@@ -10,9 +10,8 @@ import {
 	KeyResultTemplate,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmGoalTemplateRepository } from './repository/mikro-orm-goal-template.repository';
-import { MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('goal_template', { mikroOrmRepository: () => MikroOrmGoalTemplateRepository })
 export class GoalTemplate extends TenantOrganizationBaseEntity implements IGoalTemplate {
@@ -31,7 +30,12 @@ export class GoalTemplate extends TenantOrganizationBaseEntity implements IGoalT
 	@MultiORMColumn()
 	category: string;
 
-	@ApiProperty({ type: () => KeyResultTemplate })
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+
 	@MultiORMOneToMany(() => KeyResultTemplate, (keyResult) => keyResult.goal)
 	keyResults?: IKeyResultTemplate[];
 }

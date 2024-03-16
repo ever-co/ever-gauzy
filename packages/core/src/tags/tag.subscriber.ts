@@ -1,16 +1,13 @@
-import {
-    EntitySubscriberInterface,
-    EventSubscriber,
-    InsertEvent,
-    LoadEvent,
-} from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from './../core/file-storage';
+import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { Tag } from './tag.entity';
 
 @EventSubscriber()
-export class TagSubscriber implements EntitySubscriberInterface<Tag> {
+export class TagSubscriber extends BaseEntityEventSubscriber<Tag> {
+
     /**
      * Indicates that this subscriber only listen to Tag events.
      */
@@ -19,40 +16,37 @@ export class TagSubscriber implements EntitySubscriberInterface<Tag> {
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after a Tag entity is loaded from the database. This method updates
+     * the entity by setting the full icon URL using the FileStorage provider.
      *
-     * @param entity
-     * @param event
+     * @param entity The Tag entity that has been loaded.
+     * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
      */
-    async afterLoad(
-        entity: Tag | Partial<Tag>,
-        event?: LoadEvent<Tag>
-    ): Promise<any | void> {
+    async afterEntityLoad(entity: Tag): Promise<void> {
         try {
+            // Update the fullIconUrl if an icon property is present
             if (entity.icon) {
                 const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
                 entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
             }
         } catch (error) {
-            console.error('Error in afterLoad:', error);
+            console.error(`TagSubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`, error);
         }
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Called before a Tag entity is inserted into the database. This method sets a default color
+     * for the tag if one isn't provided.
      *
-     * @param event
+     * @param entity The Tag entity about to be created.
+     * @returns {Promise<void>} A promise that resolves when the pre-insertion processing is complete.
      */
-    beforeInsert(event: InsertEvent<Tag>) {
+    async beforeEntityCreate(entity: Tag): Promise<void> {
         try {
-            if (event) {
-                const { entity } = event;
-                if (!entity.color) {
-                    entity.color = faker.internet.color();
-                }
-            }
+            // Set a default color using faker if not provided
+            entity.color = entity.color || faker.internet.color();
         } catch (error) {
-            console.log('Error while creating tags', error);
+            console.error('TagSubscriber: An error occurred during the beforeEntityCreate process:', error);
         }
     }
 }

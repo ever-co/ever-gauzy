@@ -1,7 +1,6 @@
 import {
 	JoinColumn,
 	JoinTable,
-	Index,
 	RelationId
 } from 'typeorm';
 import {
@@ -24,9 +23,8 @@ import {
 	Merchant
 } from '../core/entities/internal';
 import { WarehouseProduct } from './warehouse-product.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmWarehouseRepository } from './repository/mikro-orm-warehouse.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('warehouse', { mikroOrmRepository: () => MikroOrmWarehouseRepository })
 export class Warehouse extends TenantOrganizationBaseEntity implements IWarehouse {
@@ -69,7 +67,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.logo)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: string;
 
@@ -93,7 +91,7 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Warehouse) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: string;
 
@@ -130,7 +128,9 @@ export class Warehouse extends TenantOrganizationBaseEntity implements IWarehous
 		/** Indicates that this entity (Warehouse) is the owner side of the relationship. */
 		owner: true,
 		/** Specifies the name of the pivot table in the database. */
-		pivotTable: 'tag_warehouse'
+		pivotTable: 'tag_warehouse',
+		joinColumn: 'warehouseId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		/** Specifies the name of the pivot table in the database. */

@@ -13,12 +13,12 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
-import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
@@ -88,7 +88,6 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	longitude?: number;
 
 	@ApiProperty({ type: () => String })
-	@MultiORMColumn()
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	regionCode?: string;

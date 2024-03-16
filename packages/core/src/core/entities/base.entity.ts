@@ -6,7 +6,6 @@ import {
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
 	CreateDateColumn,
-	Index,
 	DeleteDateColumn
 } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -14,6 +13,7 @@ import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { MultiORMColumn } from '../decorators/entity';
+import { ColumnIndex } from '../decorators/entity/column-index.decorator';
 
 export abstract class Model {
 	constructor(input?: any) {
@@ -38,7 +38,10 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@CreateDateColumn()
-	@Property()
+	@Property({
+		// Automatically set the property value when entity gets created, executed during flush operation.
+		onCreate: () => new Date()
+	})
 	createdAt?: Date = new Date();
 
 	// Date when the record was last updated
@@ -48,7 +51,12 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@UpdateDateColumn()
-	@Property({ onUpdate: () => new Date() })
+	@Property({
+		// Automatically set the property value when entity gets created, executed during flush operation.
+		onCreate: () => new Date(),
+		// Automatically update the property value every time entity gets updated, executed during flush operation.
+		onUpdate: () => new Date()
+	})
 	updatedAt?: Date = new Date();;
 
 	// Soft Delete
@@ -67,7 +75,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: Boolean, default: true })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: true })
 	isActive?: boolean;
 
@@ -75,7 +83,7 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: false })
 	isArchived?: boolean;
 }

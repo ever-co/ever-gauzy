@@ -62,9 +62,7 @@ const dbConnectionTimeout = process.env.DB_CONNECTION_TIMEOUT ? parseInt(process
 
 const idleTimeoutMillis = process.env.DB_IDLE_TIMEOUT ? parseInt(process.env.DB_IDLE_TIMEOUT) : 10000; // 10 seconds
 
-const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT
-	? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT)
-	: 10000; // 10 seconds default
+const dbSlowQueryLoggingTimeout = process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT ? parseInt(process.env.DB_SLOW_QUERY_LOGGING_TIMEOUT) : 10000; // 10 seconds default
 
 const dbSslMode = process.env.DB_SSL_MODE === 'true';
 
@@ -103,6 +101,7 @@ switch (dbType) {
 				min: 0,
 				max: dbPoolSize
 			},
+			persistOnCreate: true,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -197,6 +196,7 @@ switch (dbType) {
 				// connection timeout - number of milliseconds to wait before timing out when connecting a new client
 				acquireTimeoutMillis: dbConnectionTimeout
 			},
+			persistOnCreate: true,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -280,6 +280,7 @@ switch (dbType) {
 		const mikroOrmSqliteConfig: MikroOrmSqliteOptions = {
 			driver: SqliteDriver,
 			dbName: dbPath,
+			persistOnCreate: true,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -310,14 +311,14 @@ switch (dbType) {
 		break;
 
 	case DatabaseTypeEnum.betterSqlite3:
-		const betterSqlitePath =
-			process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
+		const betterSqlitePath = process.env.DB_PATH || path.join(process.cwd(), ...['apps', 'api', 'data'], 'gauzy.sqlite3');
 		console.log('Better Sqlite DB Path: ' + betterSqlitePath);
 
 		// MikroORM DB Config (Better-SQLite3)
 		const mikroOrmBetterSqliteConfig: MikroOrmBetterSqliteOptions = {
 			driver: BetterSqliteDriver,
 			dbName: betterSqlitePath,
+			persistOnCreate: true,
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};

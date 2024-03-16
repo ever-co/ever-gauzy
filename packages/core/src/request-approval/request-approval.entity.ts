@@ -6,7 +6,6 @@
   - Request Approval table has the many to many relationships to the Employee table through the RequestApprovalEmployee table.
 */
 import {
-	Index,
 	RelationId,
 	JoinColumn,
 	JoinTable
@@ -28,16 +27,15 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-request-approval.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('request_approval', { mikroOrmRepository: () => MikroOrmRequestApprovalRepository })
 export class RequestApproval extends TenantOrganizationBaseEntity implements IRequestApproval {
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -91,7 +89,7 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 	@ApiProperty({ type: () => String })
 	@RelationId((it: RequestApproval) => it.approvalPolicy)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	approvalPolicyId: string;
 
@@ -129,7 +127,9 @@ export class RequestApproval extends TenantOrganizationBaseEntity implements IRe
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_request_approval'
+		pivotTable: 'tag_request_approval',
+		joinColumn: 'requestApprovalId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_request_approval'

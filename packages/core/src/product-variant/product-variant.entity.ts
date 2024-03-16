@@ -1,8 +1,7 @@
 import {
 	RelationId,
 	JoinColumn,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -24,9 +23,8 @@ import {
 	TenantOrganizationBaseEntity,
 	WarehouseProductVariant
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant', { mikroOrmRepository: () => MikroOrmProductVariantRepository })
 export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {
@@ -76,6 +74,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
+	@JoinColumn()
 	price: IProductVariantPrice;
 
 	/**
@@ -88,6 +87,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 	})
+	@JoinColumn()
 	setting: IProductVariantSetting;
 
 	/*
@@ -109,7 +109,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductVariant) => it.product)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productId?: string;
 
@@ -127,7 +127,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductVariant) => it.image)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: string;
 

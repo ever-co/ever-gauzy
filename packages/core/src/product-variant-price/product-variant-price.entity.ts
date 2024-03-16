@@ -6,9 +6,8 @@ import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmProductVariantPriceRepository } from './repository/mikro-orm-product-variant-price.repository';
-import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant_price', { mikroOrmRepository: () => MikroOrmProductVariantPriceRepository })
 export class ProductVariantPrice extends TenantOrganizationBaseEntity implements IProductVariantPrice {

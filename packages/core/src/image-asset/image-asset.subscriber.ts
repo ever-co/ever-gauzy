@@ -1,9 +1,10 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { FileStorage } from "./../core/file-storage";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { ImageAsset } from "./image-asset.entity";
 
 @EventSubscriber()
-export class ImageAssetSubscriber implements EntitySubscriberInterface<ImageAsset> {
+export class ImageAssetSubscriber extends BaseEntityEventSubscriber<ImageAsset> {
 
     /**
     * Indicates that this subscriber only listen to ImageAsset events.
@@ -13,24 +14,28 @@ export class ImageAssetSubscriber implements EntitySubscriberInterface<ImageAsse
     }
 
     /**
-    * Called after entity is loaded from the database.
-    *
-    * @param entity
-    * @param event
-    */
-    async afterLoad(
-        entity: ImageAsset | Partial<ImageAsset>,
-        event?: LoadEvent<ImageAsset>
-    ): Promise<any | void> {
+     * Called after an ImageAsset entity is loaded from the database.
+     * This method updates the entity by setting the full and thumbnail URLs using the provided storage provider.
+     *
+     * @param entity The ImageAsset entity that has been loaded.
+     * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
+     */
+    async afterEntityLoad(entity: ImageAsset): Promise<void> {
         try {
             if (entity instanceof ImageAsset) {
                 const { storageProvider, url, thumb } = entity;
                 const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
-                entity.fullUrl = await store.url(url);
-                entity.thumbUrl = await store.url(thumb);
+
+                // Retrieve full and thumbnail URLs concurrently
+                const [fullUrl, thumbUrl] = await Promise.all([
+                    store.url(url),
+                    store.url(thumb)
+                ]);
+                entity.fullUrl = fullUrl;
+                entity.thumbUrl = thumbUrl;
             }
         } catch (error) {
-            console.error('Error in afterLoad:', error);
+            console.error('ImageAssetSubscriber: Error during the afterEntityLoad process:', error);
         }
     }
 }

@@ -10,6 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { OrganizationController } from './organization.controller';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
+import { TypeOrmOrganizationRepository } from './repository';
 
 @Module({
 	imports: [
@@ -24,10 +25,7 @@ import { OrganizationService } from './organization.service';
 		CqrsModule
 	],
 	controllers: [OrganizationController],
-	providers: [
-		OrganizationService,
-		...CommandHandlers
-	],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationService]
+	providers: [OrganizationService, TypeOrmOrganizationRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationService, TypeOrmOrganizationRepository]
 })
 export class OrganizationModule { }

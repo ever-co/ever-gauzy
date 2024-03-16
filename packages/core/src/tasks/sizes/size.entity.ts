@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskSize } from '@gauzy/contracts';
 import {
@@ -7,9 +7,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_size', { mikroOrmRepository: () => MikroOrmTaskSizeRepository })
 export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize {
@@ -17,12 +16,12 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
 
@@ -68,7 +67,7 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskSize) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -91,7 +90,7 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskSize) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

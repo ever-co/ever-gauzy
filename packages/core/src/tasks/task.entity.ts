@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinColumn,
 	JoinTable,
 	RelationId,
@@ -52,13 +51,13 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
-@Index('taskNumber', ['projectId', 'number'], { unique: true })
+@ColumnIndex('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
+
 	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'bigint' } : {})
@@ -86,28 +85,28 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	status?: TaskStatusEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	priority?: TaskPriorityEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	size?: TaskSizeEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	issueType?: string;
 
@@ -195,7 +194,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -210,7 +209,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	creator?: IUser;
 
 	@RelationId((it: Task) => it.creator)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	creatorId?: IUser['id'];
 
@@ -228,7 +227,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.organizationSprint)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationSprintId?: IOrganizationSprint['id'];
 
@@ -248,7 +247,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.taskStatus)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskStatusId?: ITaskStatus['id'];
 
@@ -268,7 +267,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.taskSize)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskSizeId?: ITaskSize['id'];
 
@@ -288,7 +287,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Task) => it.taskPriority)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, type: 'varchar', relationId: true })
 	taskPriorityId?: ITaskPriority['id'];
 
@@ -360,7 +359,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_task'
+		pivotTable: 'tag_task',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_task',
@@ -377,7 +378,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'task_employee'
+		pivotTable: 'task_employee',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'employeeId',
+
 	})
 	@JoinTable({
 		name: 'task_employee',
@@ -394,7 +398,9 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'task_team'
+		pivotTable: 'task_team',
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'organizationTeamId',
 	})
 	@JoinTable({
 		name: 'task_team',

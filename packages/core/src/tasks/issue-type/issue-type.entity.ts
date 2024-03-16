@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 } from 'typeorm';
@@ -17,9 +16,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
@@ -27,12 +25,12 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
 
@@ -80,7 +78,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: IssueType) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
@@ -96,7 +94,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: IssueType) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -112,7 +110,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: IssueType) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

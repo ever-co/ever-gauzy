@@ -2,11 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	JoinColumn,
 	JoinTable,
-	RelationId,
-	Index,
+	RelationId
 } from 'typeorm';
 import { IsOptional, IsString } from 'class-validator';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -69,7 +68,6 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
@@ -256,7 +254,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	jobSuccess?: number;
 
 	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
-	@Index({ unique: false })
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
@@ -349,7 +347,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Employee) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	readonly userId: string;
 
@@ -367,7 +365,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly contactId?: string;
 
@@ -391,7 +389,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiProperty({ type: () => String, readOnly: true })
 	@RelationId((it: Employee) => it.organizationPosition)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly organizationPositionId?: string;
 
@@ -500,6 +498,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'organization_project_employee',
+		joinColumn: 'employeeId',
+		inverseJoinColumn: 'organizationProjectId',
 	})
 	@JoinTable({
 		name: 'organization_project_employee',
@@ -514,6 +514,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_employee',
+		joinColumn: 'employeeId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_employee',
@@ -577,6 +579,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 			onDelete: 'CASCADE',
 			pivotTable: 'time_off_policy_employee',
 			owner: true,
+			joinColumn: 'employeeId',
+			inverseJoinColumn: 'timeOffPolicyId',
 		}
 	)
 	@JoinTable({
@@ -595,6 +599,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 			onDelete: 'CASCADE',
 			owner: true,
 			pivotTable: 'time_off_request_employee',
+			joinColumn: 'employeeId',
+			inverseJoinColumn: 'timeOffRequestId',
 		}
 	)
 	@JoinTable({

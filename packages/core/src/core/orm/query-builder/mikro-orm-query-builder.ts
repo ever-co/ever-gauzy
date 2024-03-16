@@ -1,7 +1,7 @@
 import { EntityRepository, QueryBuilder, QueryOrder } from '@mikro-orm/knex';
 import { IQueryBuilder } from './iquery-builder';
-import { EntityTarget, FindManyOptions } from 'typeorm';
-import { convertTypeOrmConationAndParamsToMikroOrm } from '../utils';
+import { Brackets, EntityTarget, FindManyOptions } from 'typeorm';
+import { convertTypeOrmConationAndParamsToMikroOrm, getConationFromQuery } from '../utils';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
     private qb: QueryBuilder<Entity>;
@@ -13,6 +13,8 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
     private havingConditions: string[] = [];
     private havingParameters: any[] = [];
 
+    // private aliasNo = uniqueId('sq_')
+
 
     get alias() {
         return this.qb.alias;
@@ -22,11 +24,31 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         private readonly repo: EntityRepository<Entity>,
         alias?: string
     ) {
-
-
-        console.log('MikroOrmQueryBuilder', this.repo, this.repo.qb)
         this.qb = this.repo.qb(alias);
         // this.qb = this.repo.createQueryBuilder(alias) as QueryBuilder<Entity>;
+    }
+
+    setQueryBuilder(qb: QueryBuilder<Entity>) {
+        this.qb = qb;
+        return this;
+    }
+
+    getQueryBuilder() {
+        return this.qb;
+    }
+
+    clone(): this {
+        const qb = this.qb.clone();
+        const cloneQb: any = new MikroOrmQueryBuilder(this.repo);
+        cloneQb.setQueryBuilder(qb);
+        return this;
+    }
+
+    subQuery() {
+        //  console.log('sq_alisa', this.aliasNo);
+        const subQb: any = new MikroOrmQueryBuilder(this.repo);
+        const qb = subQb as IQueryBuilder<Entity>;
+        return qb;
     }
 
     setFindOptions(findOptions: FindManyOptions<Entity>): this {
@@ -50,7 +72,8 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         }
 
         if (relations) {
-            this.qb.populate(relations as any);
+            this.applyRelationsToQueryBuilder(this.qb, relations as any);
+            //    this.qb.populate(relations as any);
         }
 
         if (skip) {
@@ -73,6 +96,11 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return this;
     }
 
+    distinct(isDistinct?: boolean): this {
+        this.qb.distinct()
+        return this;
+    }
+
     addSelect(selection: string, selectionAliasName?: string): this {
         if (selectionAliasName) {
             this.qb.addSelect(`${selection} AS ${selectionAliasName}`);
@@ -86,7 +114,7 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         if (typeof entityTarget === 'function') {
             // Handle subquery function
             const subQueryFunction = entityTarget as any;
-            const subQuery = subQueryFunction(this.repo.createQueryBuilder()).getKnexQuery();
+            const subQuery = subQueryFunction(this.subQuery()).getKnexQuery();
             this.qb = this.repo.createQueryBuilder().from(subQuery, aliasName);
         } else {
             // Handle direct entity
@@ -95,7 +123,7 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return this;
     }
 
-    addFrom(entityTarget: ((qb: QueryBuilder<any>) => QueryBuilder<any>) | EntityTarget<Entity>, aliasName?: string): this {
+    addFrom(_entityTarget: ((qb: QueryBuilder<any>) => QueryBuilder<any>) | EntityTarget<Entity>, _aliasName?: string): this {
         throw new Error(`Note: This is conceptual; MikrORM typically don't support multiple FROMs like typeORM. You might use this for sub-queries or additional joins instead.`);
     }
 
@@ -119,48 +147,118 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return this;
     }
 
+    private handleWhereSubQuery(conditionFunction, whereFunction: 'where' | 'orWhere' | 'andWhere' = 'where') {
+        let subQuery = this.subQuery();
+        let updatedQb = conditionFunction(subQuery as any);
 
-    where(condition: string | object | ((qb: QueryBuilder<Entity>) => QueryBuilder<Entity>), parameters?: Record<string, any>): this {
+        if (updatedQb === undefined) {
+            updatedQb = subQuery;
+        }
+
+        if (typeof updatedQb === 'string') {
+            switch (whereFunction) {
+                case 'orWhere':
+                    this.orWhere(updatedQb)
+                    break;
+                case 'andWhere':
+                    this.andWhere(updatedQb)
+                    break;
+                default:
+                    this.where(updatedQb)
+                    break;
+            }
+        } else {
+            const sqlQuery = updatedQb.getSql();
+            const params = updatedQb.getParameters();
+            const whereString = getConationFromQuery(sqlQuery);
+            if (whereString) {
+                switch (whereFunction) {
+                    case 'orWhere':
+                        this.orWhere(whereString, params)
+                        break;
+                    case 'andWhere':
+                        this.andWhere(whereString, params)
+                        break;
+                    default:
+                        this.where(whereString, params)
+                        break;
+                }
+            }
+        }
+    }
+
+    private handleWhereBracketsSubQuery(conditionFunction) {
+
+        let subQuery = this.subQuery();
+        let updatedQb = conditionFunction.whereFactory(subQuery as any)
+
+        if (updatedQb === undefined) {
+            updatedQb = subQuery;
+        }
+
+        const sqlQuery = updatedQb.getSql();
+        const params = updatedQb.getParameters();
+        const whereString = getConationFromQuery(sqlQuery);
+
+        if (whereString) {
+            return [whereString, params];
+        } else {
+            return [];
+        }
+
+    }
+
+
+    where(condition: string | object | ((qb: IQueryBuilder<Entity>) => IQueryBuilder<Entity>), parameters?: Record<string, any>): this {
         if (typeof condition === 'string') {
             const [mikroOrmCondition, mikroOrmParameters] = convertTypeOrmConationAndParamsToMikroOrm(condition, parameters);
             this.qb.where(mikroOrmCondition, mikroOrmParameters);
         } else if (typeof condition === 'function') {
-            // Handle function-based subqueries
-            const subQuery = condition(this.repo.createQueryBuilder());
-            this.qb.where(subQuery);
+            this.handleWhereSubQuery(condition, 'where');
+        } else if (condition instanceof Brackets) {
+            const [mikroOrmCondition, mikroOrmParameters] = this.handleWhereBracketsSubQuery(condition);
+            if (mikroOrmCondition) {
+                this.qb.where(mikroOrmCondition, mikroOrmParameters);
+            }
         } else if (typeof condition === 'object') {
             // Handle object conditions
-            this.qb.where(condition); // Mikro-ORM handles object conditions directly
+            this.qb.where(condition);
         }
         return this;
     }
 
-    andWhere(condition: string | object | ((qb: QueryBuilder<Entity>) => QueryBuilder<Entity>), parameters?: Record<string, any>): this {
+    andWhere(condition: string | object | ((qb: IQueryBuilder<Entity>) => IQueryBuilder<Entity>), parameters?: Record<string, any>): this {
         if (typeof condition === 'string') {
             const [mikroOrmCondition, mikroOrmParameters] = convertTypeOrmConationAndParamsToMikroOrm(condition, parameters);
             this.qb.andWhere(mikroOrmCondition, mikroOrmParameters);
         } else if (typeof condition === 'function') {
-            // Handle function-based subqueries
-            const subQuery = condition(this.repo.createQueryBuilder());
-            this.qb.andWhere(subQuery);
+            this.handleWhereSubQuery(condition, 'andWhere');
+        } else if (condition instanceof Brackets) {
+            const [mikroOrmCondition, mikroOrmParameters] = this.handleWhereBracketsSubQuery(condition);
+            if (mikroOrmCondition) {
+                this.qb.andWhere(mikroOrmCondition, mikroOrmParameters);
+            }
         } else if (typeof condition === 'object') {
             // Handle object conditions
-            this.qb.andWhere(condition); // Mikro-ORM handles object conditions directly
+            this.qb.andWhere(condition);
         }
         return this;
     }
 
-    orWhere(condition: string | object | ((qb: QueryBuilder<Entity>) => QueryBuilder<Entity>), parameters?: Record<string, any>): this {
+    orWhere(condition: string | object | ((qb: IQueryBuilder<Entity>) => IQueryBuilder<Entity>), parameters?: Record<string, any>): this {
         if (typeof condition === 'string') {
             const [mikroOrmCondition, mikroOrmParameters] = convertTypeOrmConationAndParamsToMikroOrm(condition, parameters);
             this.qb.orWhere(mikroOrmCondition, mikroOrmParameters);
         } else if (typeof condition === 'function') {
-            // Handle function-based subqueries
-            const subQuery = condition(this.repo.createQueryBuilder());
-            this.qb.orWhere(subQuery);
+            this.handleWhereSubQuery(condition, 'orWhere');
+        } else if (condition instanceof Brackets) {
+            const [mikroOrmCondition, mikroOrmParameters] = this.handleWhereBracketsSubQuery(condition);
+            if (mikroOrmCondition) {
+                this.qb.orWhere(mikroOrmCondition, mikroOrmParameters);
+            }
         } else if (typeof condition === 'object') {
             // Handle object conditions
-            this.qb.orWhere(condition); // Mikro-ORM handles object conditions directly
+            this.qb.orWhere(condition);
         }
         return this;
     }
@@ -255,8 +353,16 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return this;
     }
 
+    getQuery(): string {
+        return this.qb.getQuery();
+    }
+
     getSql(): string {
         return this.qb.getQuery();
+    }
+
+    getParameters(): any {
+        return this.qb.getParams();
     }
 
     getCount(): Promise<number> {
@@ -279,12 +385,42 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
         return this.qb.execute('get', false);
     }
 
-    async getManyAndCount(): Promise<[Entity[], number]> {
+    getManyAndCount(): Promise<[Entity[], number]> {
         console.log(this.qb.getResultAndCount);
-        const count = await this.qb.limit(0).getCount();
-        const items = await this.qb.execute('all', true);
-        return [items, count]
+        return this.qb.getResultAndCount();
     }
 
 
+
+    private applyRelationsToQueryBuilder<Entity>(
+        qb: QueryBuilder<any>,
+        relations: string[]
+    ) {
+        // A set to keep track of joined paths to avoid duplicates
+        const joinedPaths = new Set<string>();
+
+        relations.forEach((relationPath) => {
+            // Split the path to get individual relations
+            const parts = relationPath.split('.');
+            let currentPath = '';
+
+            parts.forEach((part, index) => {
+                // Build the path incrementally to support nested relations
+                currentPath += (index ? '.' : '') + part;
+
+                // Avoid joining the same path more than once
+                if (!joinedPaths.has(currentPath)) {
+                    const [parentAlias, relation] = index === 0 ? [qb.alias, part] : currentPath.split('.').slice(-2);
+                    const alias = currentPath.replace(/\./g, '_'); // Replace dots with underscores to create a unique alias
+
+                    console.log('leftJoinAndSelect', `${parentAlias}.${relation}`, alias);
+                    // Apply the join; you might choose between leftJoinAndSelect or innerJoinAndSelect based on your needs
+                    qb.leftJoinAndSelect(`${parentAlias}.${relation}`, alias);
+
+                    // Mark this path as joined
+                    joinedPaths.add(currentPath);
+                }
+            });
+        });
+    }
 }

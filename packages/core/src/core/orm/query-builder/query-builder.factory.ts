@@ -22,7 +22,7 @@ export function multiORMCreateQueryBuilder<Entity>(repository: Repository<Entity
             return new MikroOrmQueryBuilder(repository as EntityRepository<any>);
 
         case MultiORMEnum.TypeORM:
-            return new MikroOrmQueryBuilder(repository as EntityRepository<any>);
+            return new TypeOrmQueryBuilder(repository as Repository<Entity>);
 
         default:
             throw new Error(`Unsupported orm type "${ormType}"`);

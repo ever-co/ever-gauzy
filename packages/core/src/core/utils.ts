@@ -5,7 +5,7 @@ import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, Or
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
-import { FindManyOptions, FindOptionsOrder } from 'typeorm';
+import { FindManyOptions, FindOperator, FindOptionsOrder } from 'typeorm';
 import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -500,7 +500,10 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
  * @param options - TypeORM's FindManyOptions.
  * @returns An object with MikroORM's where and options.
  */
-export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where: MikroFilterQuery<T>; mikroOptions: MikroORMFindOptions<T, any, any, any> } {
+export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
+	where: MikroFilterQuery<T>;
+	mikroOptions: MikroORMFindOptions<T, any, any, any>
+} {
 	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
 		disableIdentityMap: true,
 	};
@@ -508,7 +511,7 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where
 
 	// Parses TypeORM `where` option to MikroORM `where` option
 	if (options && options.where) {
-		where = options.where as MikroFilterQuery<T>;
+		where = convertTypeORMWhereToMikroORM(options.where as MikroFilterQuery<T>);
 	}
 
 	// Parses TypeORM `select` option to MikroORM `fields` option
@@ -544,9 +547,100 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): { where
  * @param order TypeORM 'order' option
  * @returns Parsed MikroORM 'orderBy' option
  */
-export function parseOrderOptions<T>(order: FindOptionsOrder<any>) {
+export function parseOrderOptions(order: FindOptionsOrder<any>) {
 	return Object.entries(order).reduce((acc, [key, value]) => {
 		acc[key] = `${value}`.toLowerCase();
 		return acc;
 	}, {});
+}
+
+/**
+ * Transforms a FindOperator object into a query condition suitable for database operations.
+ * It handles simple conditions such as 'equal', 'in' and 'between',
+ * as well as complex conditions like recursive 'not' operators and range queries with 'between'.
+ *
+ * @param operator A FindOperator object containing the type of condition and its corresponding value.
+ * @returns A query condition in the format of a Record<string, any> that represents the translated condition.
+ *
+ */
+export function processFindOperator<T>(operator: FindOperator<T>) {
+	switch (operator.type) {
+		case 'isNull': {
+			return { $eq: null };
+		}
+		case 'not': {
+			const nested = operator.value || null;
+			// If the nested value is also a FindOperator, process it recursively
+			if (nested instanceof FindOperator) {
+				return { $ne: processFindOperator(nested) };
+			} else {
+				return { $ne: nested };
+			}
+		}
+		case 'in': {
+			return { $in: operator.value };
+		}
+		case 'equal': {
+			return { $eq: operator.value };
+		}
+		case 'between': {
+			// Assuming the value for 'between' is an array with two elements
+			return {
+				$gte: operator.value[0],
+				$lte: operator.value[1]
+			};
+		}
+		// Add additional cases for other operator types if needed
+		default: {
+			// Handle unknown or unimplemented operator types
+			console.warn(`Unsupported FindOperator type: ${operator.type}`);
+			return {};
+		}
+	}
+}
+
+/**
+ * Converts a TypeORM query condition into a format that is compatible with MikroORM.
+ * This function recursively processes each condition, handling both simple key-value
+ * pairs and complex nested objects including FindOperators.
+ *
+ * @param where The TypeORM condition to be converted, typically as a filter query object.
+ * @returns An object representing the MikroORM compatible condition.
+ */
+export function convertTypeORMConditionToMikroORM<T>(where: MikroFilterQuery<T>) {
+	const mikroORMCondition = {};
+
+	for (const [key, value] of Object.entries(where)) {
+		if (typeof value === 'object' && value !== null && !(value instanceof Array)) {
+			if (value instanceof FindOperator) {
+				// Convert nested FindOperators
+				mikroORMCondition[key] = processFindOperator(value);
+			} else {
+				// Recursively convert nested objects
+				mikroORMCondition[key] = convertTypeORMConditionToMikroORM(value);
+			}
+		} else {
+			// Assign simple key-value pairs directly
+			mikroORMCondition[key] = value;
+		}
+	}
+
+	return mikroORMCondition;
+}
+
+/**
+ * Converts TypeORM 'where' conditions into a format compatible with MikroORM.
+ * This function can handle both individual condition objects and arrays of conditions,
+ * applying the necessary conversion to each condition.
+ *
+ * @param where The TypeORM 'where' condition or an array of conditions to be converted.
+ * @returns A MikroORM compatible condition or array of conditions.
+ */
+export function convertTypeORMWhereToMikroORM<T>(where: MikroFilterQuery<T>) {
+	// If 'where' is an array, process each condition in the array
+	if (Array.isArray(where)) {
+		return where.map((condition: MikroFilterQuery<T>) => convertTypeORMConditionToMikroORM(condition));
+	}
+	// Otherwise, just convert the single condition object
+	return convertTypeORMConditionToMikroORM(where);
 }

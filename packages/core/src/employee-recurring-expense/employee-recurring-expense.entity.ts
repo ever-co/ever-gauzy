@@ -11,15 +11,14 @@ import {
 	IsDate,
 	IsOptional
 } from 'class-validator';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import {
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmployeeRecurringExpenseRepository } from './repository/mikro-orm-employee-recurring-expense.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_recurring_expense', { mikroOrmRepository: () => MikroOrmEmployeeRecurringExpenseRepository })
 export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity implements IEmployeeRecurringExpense {
@@ -84,7 +83,7 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	categoryName: string;
 
@@ -100,13 +99,13 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	parentRecurringExpenseId?: string;
 
@@ -124,7 +123,7 @@ export class EmployeeRecurringExpense extends TenantOrganizationBaseEntity imple
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeRecurringExpense) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId: string;
 }

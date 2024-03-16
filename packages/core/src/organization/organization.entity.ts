@@ -1,4 +1,4 @@
-import { Index, JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -40,55 +40,62 @@ import {
 	Tag,
 	TenantBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organization.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
-	@Index()
+
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn('boolean', { default: false })
 	isDefault: boolean;
 
-	@Index({ unique: false })
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	banner: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	totalEmployees: number;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	short_description: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	client_focus: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	overview: string;
 
 	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
 
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({
 		type: 'simple-enum',
 		nullable: true,
@@ -329,20 +336,27 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	// Contact
 	@MultiORMManyToOne(() => Contact, (contact) => contact.organization, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
 		cascade: true,
+
 		onDelete: 'SET NULL'
 	})
 	contact: IContact;
 
 	@RelationId((it: Organization) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly contactId?: string;
+	contactId?: string;
 
 	/**
 	 * ImageAsset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -356,7 +370,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Organization) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
@@ -426,6 +440,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization',
+		joinColumn: 'organizationId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization'

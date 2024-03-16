@@ -1,7 +1,6 @@
 import {
 	JoinColumn,
-	RelationId,
-	Index
+	RelationId
 } from 'typeorm';
 import {
 	IEmployee,
@@ -25,9 +24,8 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeOffPolicy
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('time_off_request', { mikroOrmRepository: () => MikroOrmTimeOffRequestRepository })
 export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITimeOffRequest {
@@ -87,7 +85,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.policy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	policyId?: string;
 
@@ -108,7 +106,7 @@ export class TimeOffRequest extends TenantOrganizationBaseEntity implements ITim
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeOffRequest) => it.document)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	documentId?: IDocumentAsset['id'];
 

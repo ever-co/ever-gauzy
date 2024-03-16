@@ -6,8 +6,7 @@ import {
 } from '@gauzy/contracts';
 import {
 	JoinColumn,
-	RelationId,
-	Index
+	RelationId
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -24,9 +23,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
-import { MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
@@ -65,7 +63,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@RelationId((it: Deal) => it.createdBy)
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public createdByUserId: string;
 
@@ -81,7 +79,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@RelationId((it: Deal) => it.stage)
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public stageId: string;
 

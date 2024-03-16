@@ -9,7 +9,6 @@ import {
 import {
 	JoinColumn,
 	JoinTable,
-	Index,
 	RelationId
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -20,9 +19,8 @@ import {
 	Contact,
 	Warehouse,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmMerchantRepository } from './repository/mikro-orm-merchant.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('merchant', { mikroOrmRepository: () => MikroOrmMerchantRepository })
 export class Merchant extends TenantOrganizationBaseEntity implements IMerchant {
@@ -75,7 +73,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	contactId?: IContact['id'];
 
@@ -95,7 +93,7 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Merchant) => it.logo)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	logoId?: IImageAsset['id'];
 
@@ -114,6 +112,8 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_merchant',
+		joinColumn: 'merchantId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_merchant'
@@ -128,6 +128,8 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'warehouse_merchant',
+		joinColumn: 'merchantId',
+		inverseJoinColumn: 'warehouseId',
 	})
 	@JoinTable({
 		name: 'warehouse_merchant'

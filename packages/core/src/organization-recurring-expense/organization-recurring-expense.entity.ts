@@ -15,9 +15,8 @@ import {
 	IsBoolean
 } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { Index } from 'typeorm';
 import { TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmOrganizationRecurringExpenseRepository } from './repository/mikro-orm-organization-recurring-expense.repository';
 
 @MultiORMEntity('organization_recurring_expense', { mikroOrmRepository: () => MikroOrmOrganizationRecurringExpenseRepository })
@@ -82,7 +81,7 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	categoryName: string;
 
@@ -98,7 +97,7 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
 	@IsEnum(CurrenciesEnum)
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	currency: string;
 
@@ -110,7 +109,7 @@ export class OrganizationRecurringExpense extends TenantOrganizationBaseEntity i
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	parentRecurringExpenseId?: string;
 }
