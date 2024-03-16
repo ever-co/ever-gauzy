@@ -1,19 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
 	IFeatureOrganization,
-	IImportRecord,
 	IImageAsset
 } from '@gauzy/contracts';
 import {
 	BaseEntity,
 	FeatureOrganization,
 	ImageAsset,
-	ImportRecord,
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
@@ -22,6 +21,9 @@ import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.reposito
 
 @MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
+
+	// to allow inference in `em.getRepository()`
+	[EntityRepositoryType]?: MikroOrmTenantRepository;
 
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
@@ -42,6 +44,9 @@ export class Tenant extends BaseEntity implements ITenant {
 	 * ImageAsset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -64,14 +69,12 @@ export class Tenant extends BaseEntity implements ITenant {
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => Organization })
 	@MultiORMOneToMany(() => Organization, (it) => it.tenant, {
 		cascade: true
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
-	@ApiProperty({ type: () => RolePermission })
 	@MultiORMOneToMany(() => RolePermission, (it) => it.tenant, {
 		cascade: true
 	})
@@ -80,15 +83,8 @@ export class Tenant extends BaseEntity implements ITenant {
 	/**
 	 * Array of feature organizations associated with the entity.
 	 */
-	@ApiProperty({ type: () => FeatureOrganization })
 	@MultiORMOneToMany(() => FeatureOrganization, (it) => it.tenant, {
 		cascade: true,
 	})
 	featureOrganizations?: IFeatureOrganization[];
-
-	@ApiProperty({ type: () => ImportRecord })
-	@MultiORMOneToMany(() => ImportRecord, (importRecord) => importRecord.tenant, {
-		cascade: true
-	})
-	importRecords?: IImportRecord[];
 }

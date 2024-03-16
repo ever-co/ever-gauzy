@@ -38,7 +38,10 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@CreateDateColumn()
-	@Property({ onCreate: () => new Date() })
+	@Property({
+		// Automatically set the property value when entity gets created, executed during flush operation.
+		onCreate: () => new Date()
+	})
 	createdAt?: Date = new Date();
 
 	// Date when the record was last updated
@@ -48,7 +51,12 @@ export abstract class BaseEntity extends Model implements IBaseEntityModel {
 		example: '2018-11-21T06:20:32.232Z'
 	})
 	@UpdateDateColumn()
-	@Property({ onUpdate: () => new Date() })
+	@Property({
+		// Automatically set the property value when entity gets created, executed during flush operation.
+		onCreate: () => new Date(),
+		// Automatically update the property value every time entity gets updated, executed during flush operation.
+		onUpdate: () => new Date()
+	})
 	updatedAt?: Date = new Date();;
 
 	// Soft Delete
