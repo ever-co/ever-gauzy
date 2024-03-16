@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
-import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
@@ -21,9 +20,6 @@ import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.reposito
 
 @MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
-
-	// to allow inference in `em.getRepository()`
-	[EntityRepositoryType]?: MikroOrmTenantRepository;
 
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()

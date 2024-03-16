@@ -1,8 +1,7 @@
 import { EntityRepository, QueryBuilder, QueryOrder } from '@mikro-orm/knex';
 import { IQueryBuilder } from './iquery-builder';
-import { Brackets, EntityTarget, FindManyOptions, SelectQueryBuilder } from 'typeorm';
+import { Brackets, EntityTarget, FindManyOptions } from 'typeorm';
 import { convertTypeOrmConationAndParamsToMikroOrm, getConationFromQuery } from '../utils';
-import { uniqueId } from 'underscore';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
     private qb: QueryBuilder<Entity>;
