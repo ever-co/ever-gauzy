@@ -57,6 +57,7 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @ColumnIndex('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
+
 	@MultiORMColumn({
 		nullable: true,
 		...(isMySQL() ? { type: 'bigint' } : {})

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
+import { EntityManager } from '@mikro-orm/knex';
 import { isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
@@ -14,29 +14,30 @@ import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { MultiORMEnum } from '../core/utils';
 import { multiORMCreateQueryBuilder } from '../core/orm/query-builder/query-builder.factory';
-import { EntityManager } from '@mikro-orm/knex';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
-		@InjectRepository(Task)
-		typeOrmTaskRepository: TypeOrmTaskRepository,
-
-		private mikroOrmTaskRepository: MikroOrmTaskRepository,
-		private em: EntityManager,
+		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
+		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
+		private readonly em: EntityManager,
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	createQueryBuilder(entity?: any) {
-
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const repo = this.em.getRepository(this.mikroRepository.getEntityName());
 				return multiORMCreateQueryBuilder<Task>(repo as any, this.ormType as MultiORMEnum);
 
 			case MultiORMEnum.TypeORM:
-				return multiORMCreateQueryBuilder<Task>(this.mikroRepository as any, this.ormType as MultiORMEnum);
+				return multiORMCreateQueryBuilder<Task>(this.repository as any, this.ormType as MultiORMEnum);
 		}
 	}
 
@@ -106,9 +107,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-
-			const query = this.createQueryBuilder();
-
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 			/**
 			 * If find options
@@ -176,7 +175,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				})
 			);
 
-			//console.log('query.getSql', query.getSql())
+			console.log('query.getSql', query.getSql())
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {

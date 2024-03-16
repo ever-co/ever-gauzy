@@ -14,6 +14,7 @@ import { EmployeeModule } from './../employee/employee.module';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
+import { TypeOrmTaskRepository } from './repository';
 
 const forFeatureEntities = [
 	Task,
@@ -36,7 +37,7 @@ const forFeatureEntities = [
 		CqrsModule
 	],
 	controllers: [TaskController],
-	providers: [TaskService, ...CommandHandlers, ...EventHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, TaskService]
+	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers, ...EventHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, TaskService, TypeOrmTaskRepository]
 })
 export class TaskModule { }
