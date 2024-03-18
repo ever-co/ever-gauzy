@@ -13979,7 +13979,7 @@ better-sqlite3@8.7.0:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
 
-better-sqlite3@^9.2.2:
+better-sqlite3@^9.4.3:
   version "9.4.3"
   resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-9.4.3.tgz#7df39ba3273fbb7c0561cf913572547142868cc4"
   integrity sha512-ud0bTmD9O3uWJGuXDltyj3R47Nz0OHX8iqPOT5PMspGqlu/qQFn+5S2eFBUCrySpavTjFXbi4EgrfVvPAHlImw==

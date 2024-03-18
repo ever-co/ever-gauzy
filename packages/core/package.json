@@ -124,7 +124,7 @@
 		"atlassian-connect-express": "^8.5.0",
 		"axios": "^1.6.5",
 		"bcrypt": "^5.1.0",
-		"better-sqlite3": "^9.2.2",
+		"better-sqlite3": "^9.4.3",
 		"cache-manager": "^5.3.2",
 		"cache-manager-redis-yet": "^4.1.2",
 		"camelcase": "^6.2.1",
