@@ -1,4 +1,5 @@
 import { EventSubscriber } from "typeorm";
+import { DatabaseTypeEnum, getConfig } from "@gauzy/config";
 import { getDummyImage } from "./../core/utils";
 import { OrganizationProject } from "./organization-project.entity";
 import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
@@ -109,6 +110,23 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
                     "organization_project"."organizationId" = $2 AND
                     "organization_project"."tenantId" = $3
             `);
+            let updateQuery = p(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`);
+
+            //
+            switch (getConfig().dbConnectionOptions.type) {
+                case DatabaseTypeEnum.mysql:
+                    // Replace $ placeholders with ? for MySQL
+                    query = query.replace(/\$\d/g, '?');
+                    updateQuery = updateQuery.replace(/\$\d/g, '?');
+                    break;
+                case DatabaseTypeEnum.sqlite || DatabaseTypeEnum.betterSqlite3:
+                    // Replace $ placeholders with ? for SQL Lite & Better SQLite3
+                    query = query.replace(/\$\d/g, '?');
+                    updateQuery = updateQuery.replace(/\$\d/g, '?');
+                    break;
+                default:
+                    break;
+            }
 
             let totalMembers = 0;
 
@@ -116,7 +134,7 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
             if (em instanceof TypeOrmEntityManager) {
                 const result = await em.query(query, [projectId, organizationId, tenantId]);
                 // Extract count from result - the structure of this may vary based on the database and driver
-                totalMembers = parseInt(result[0].count ?? 0, 10);
+                totalMembers = parseInt(result[0]?.count ?? 0, 10);
             }
             // Handle MikroORM specific logic
             else if (em instanceof MikroOrmEntityManager) {
@@ -128,12 +146,12 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 
             // Update members count in both TypeORM and MikroORM
             if (totalMembers >= 0) {
-                let updateQuery = p(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`);
-
                 // Common update logic for both ORMs
                 if (em instanceof TypeOrmEntityManager) {
                     await em.query(updateQuery, [totalMembers, projectId]);
                 } else if (em instanceof MikroOrmEntityManager) {
+                    // Replace $ placeholders with ? for MikroORM
+                    updateQuery = updateQuery.replace(/\$\d/g, '?');
                     await em.getConnection().execute(updateQuery, [totalMembers, projectId]);
                 }
             }
