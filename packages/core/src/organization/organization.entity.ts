@@ -333,14 +333,12 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	// Contact
-	@MultiORMManyToOne(() => Contact, (contact) => contact.organization, {
+	@MultiORMManyToOne(() => Contact, (it) => it.organization, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
-		cascade: true,
-
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	contact: IContact;
@@ -348,7 +346,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@RelationId((it: Organization) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	contactId?: string;
+	contactId?: IContact['id'];
 
 	/**
 	 * ImageAsset

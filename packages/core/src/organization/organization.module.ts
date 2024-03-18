@@ -3,8 +3,9 @@ import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { UserOrganizationModule } from './../user-organization/user-organization.module';
+import { UserOrganizationModule } from '../user-organization/user-organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { ContactModule } from '../contact/contact.module';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { OrganizationController } from './organization.controller';
@@ -22,6 +23,7 @@ import { TypeOrmOrganizationRepository } from './repository';
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => UserOrganizationModule),
 		forwardRef(() => UserModule),
+		ContactModule,
 		CqrsModule
 	],
 	controllers: [OrganizationController],
