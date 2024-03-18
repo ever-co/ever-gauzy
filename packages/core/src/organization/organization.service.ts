@@ -5,7 +5,6 @@ import { TypeOrmOrganizationRepository, MikroOrmOrganizationRepository } from '.
 
 @Injectable()
 export class OrganizationService extends TenantAwareCrudService<Organization> {
-
 	constructor(
 		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 		readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository

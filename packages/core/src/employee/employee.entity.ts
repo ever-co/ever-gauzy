@@ -339,8 +339,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, (it) => it.employee, {
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
-		owner: true,
+
+		owner: true
 	})
 	@JoinColumn()
 	user: IUser;
@@ -349,7 +352,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@RelationId((it: Employee) => it.user)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	readonly userId: string;
+	userId: string;
 
 	/**
 	 * Contact
@@ -357,8 +360,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.employee, {
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
-		owner: true,
+
+		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
@@ -367,7 +373,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@RelationId((it: Employee) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly contactId?: string;
+	contactId?: string;
 
 	/**
 	 * Candidate
@@ -391,7 +397,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@RelationId((it: Employee) => it.organizationPosition)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly organizationPositionId?: string;
+	organizationPositionId?: string;
 
 	/*
 	|--------------------------------------------------------------------------

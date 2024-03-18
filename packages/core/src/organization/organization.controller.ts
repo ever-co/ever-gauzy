@@ -168,8 +168,7 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Put(':id')

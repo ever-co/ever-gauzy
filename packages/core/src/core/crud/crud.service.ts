@@ -467,7 +467,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 					// If the entity doesn't have an ID, it's new and should be persisted
 					if (!entity['id']) {
-						await em.flush();
+						// Persisting the entities
+						await em.persistAndFlush(newEntity); // This will also persist the relations
 						return this.serialize(newEntity);
 					}
 

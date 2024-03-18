@@ -11,6 +11,13 @@ export class OrganizationTaskSettingCreateHandler implements ICommandHandler<Org
 		private readonly _organizationTaskSettingService: OrganizationTaskSettingService
 	) { }
 
+	/**
+	 * The execution of a command to create organization task settings.
+	 * This method tries to create a new organization task setting using the provided command and inputs.
+	 *
+	 * @param command An instance of OrganizationTaskSettingCreateCommand containing the necessary information to create an organization task setting.
+	 * @returns A promise that resolves to an instance of IOrganizationTaskSetting, representing the newly created organization task setting.
+	 */
 	public async execute(
 		command: OrganizationTaskSettingCreateCommand
 	): Promise<IOrganizationTaskSetting> {
