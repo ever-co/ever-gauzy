@@ -11,7 +11,7 @@ import {
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
-import { Entity, OptionalProps, PrimaryKey, Property } from '@mikro-orm/core';
+import { PrimaryKey, Property } from '@mikro-orm/core';
 import { MultiORMColumn } from '../decorators/entity';
 import { ColumnIndex } from '../decorators/entity/column-index.decorator';
 
@@ -25,10 +25,7 @@ export abstract class Model {
 	}
 }
 
-@Entity({ abstract: true })
-export abstract class BaseEntity<Optional = never> extends Model implements IBaseEntityModel {
-
-	[OptionalProps]?: 'createdAt' | 'updatedAt' | Optional;
+export abstract class BaseEntity extends Model implements IBaseEntityModel {
 
 	@ApiPropertyOptional({ type: () => String })
 	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' })
