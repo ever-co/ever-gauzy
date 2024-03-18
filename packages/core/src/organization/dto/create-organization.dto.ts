@@ -1,5 +1,5 @@
-import { CurrenciesEnum, IOrganizationCreateInput } from "@gauzy/contracts";
 import { ApiProperty, IntersectionType, PickType } from "@nestjs/swagger";
+import { CurrenciesEnum, IOrganizationCreateInput } from "@gauzy/contracts";
 import { IsEnum, IsNotEmpty, IsString } from "class-validator";
 import { Organization } from "./../organization.entity";
 import { RelationalTagDTO } from "./../../tags/dto";
