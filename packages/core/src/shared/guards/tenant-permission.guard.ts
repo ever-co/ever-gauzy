@@ -3,11 +3,11 @@ import { Reflector } from '@nestjs/core';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { RequestContext } from './../../core/context';
 import { TenantBaseGuard } from './tenant-base.guard';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TenantPermissionGuard extends TenantBaseGuard implements CanActivate {
