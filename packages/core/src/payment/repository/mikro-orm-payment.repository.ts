@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/knex';
 import { Payment } from '../payment.entity';
 
 export class MikroOrmPaymentRepository extends EntityRepository<Payment> { }

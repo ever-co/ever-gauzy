@@ -2,7 +2,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { Injectable } from '@nestjs/common';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/knex';
 import {
 	FileStorageProviderEnum,
 	IIssueTypeFindInput,
