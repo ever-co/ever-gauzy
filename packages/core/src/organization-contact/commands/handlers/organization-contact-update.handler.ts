@@ -11,19 +11,27 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 		private readonly _organizationContactService: OrganizationContactService
 	) { }
 
-	public async execute(
-		command: OrganizationContactUpdateCommand
-	): Promise<IOrganizationContact> {
+	/**
+	 * Updates an organization contact based on a given command and retrieves the updated contact.
+	 *
+	 * @param command Contains the ID and new data for updating the organization contact.
+	 * @returns A Promise resolving to the updated organization contact.
+	 * @throws BadRequestException for any errors during the update process.
+	 */
+	public async execute(command: OrganizationContactUpdateCommand): Promise<IOrganizationContact> {
 		try {
 			const { id, input } = command;
-			//We are using create here because create calls the method save()
-			//We need save() to save ManyToMany relations
+
+			// Update the organization contact using the provided ID and input data.
 			await this._organizationContactService.create({
 				...input,
 				id
 			});
-			return await this._organizationContactService.findOneByIdString(id);
+
+			// Retrieve and return the updated organization contact.
+			return this._organizationContactService.findOneByIdString(id);
 		} catch (error) {
+			// Re-throw the error as a BadRequestException.
 			throw new BadRequestException(error);
 		}
 	}

@@ -4,8 +4,8 @@ import { IBaseEntityWithMembers } from './entity-with-members.model';
 import { IOrganizationCreateInput } from './organization.model';
 import { IUser, LanguagesEnum } from './user.model';
 import { ITag } from './tag.model';
-import { IContact } from './contact.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IContact, IContactCreateInput } from './contact.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantAndOrganizationEntityMutationInput } from './base-entity.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 
@@ -49,9 +49,8 @@ export interface IOrganizationContactFindInput
 	createdBy?: string;
 }
 
-export interface IOrganizationContactCreateInput extends IContact, IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationContactCreateInput extends IContactCreateInput, IBasePerTenantAndOrganizationEntityMutationInput, IRelationalImageAsset {
 	name: string;
-	contactId?: string;
 	primaryEmail?: string;
 	primaryPhone?: string;
 	phones?: string[];
@@ -61,6 +60,8 @@ export interface IOrganizationContactCreateInput extends IContact, IBasePerTenan
 	imageUrl?: string;
 	contactType?: ContactType;
 	createdBy?: string;
+	contact?: IContact;
+	contactId?: IContact['id'];
 }
 
 export interface IOrganizationContactUpdateInput extends IOrganizationContactCreateInput {
@@ -80,8 +81,7 @@ export interface IOrganizationContactRegistrationInput {
 	contactOrganization: IOrganizationCreateInput;
 }
 
-export interface IOrganizationContactAcceptInviteInput
-	extends IOrganizationContactRegistrationInput {
+export interface IOrganizationContactAcceptInviteInput extends IOrganizationContactRegistrationInput {
 	inviteId: string;
 	originalUrl?: string;
 }

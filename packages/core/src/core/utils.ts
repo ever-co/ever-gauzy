@@ -531,7 +531,7 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
 
 	// Parses TypeORM `skip` option to MikroORM `offset` option
 	if (options && options.skip) {
-		mikroOptions.offset = options.skip;
+		mikroOptions.offset = options.take * (options.skip - 1);
 	}
 
 	// Parses TypeORM `take` option to MikroORM `limit` option
