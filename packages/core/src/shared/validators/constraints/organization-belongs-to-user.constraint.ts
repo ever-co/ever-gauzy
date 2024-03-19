@@ -9,8 +9,7 @@ import { IOrganization } from "@gauzy/contracts";
 import { isEmpty } from "@gauzy/common";
 import { UserOrganization } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
-import { TypeOrmUserOrganizationRepository } from "../../../user-organization/repository/type-orm-user-organization.repository";
-import { MikroOrmUserOrganizationRepository } from "../../../user-organization/repository/mikro-orm-user-organization.repository";
+import { MikroOrmUserOrganizationRepository, TypeOrmUserOrganizationRepository } from "../../../user-organization/repository";
 
 /**
  * Validator constraint for checking if a user belongs to the organization.
