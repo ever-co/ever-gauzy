@@ -1,6 +1,5 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
-import { EntityManager } from '@mikro-orm/knex';
 import { isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
@@ -12,33 +11,14 @@ import { GetTaskByIdDTO } from './dto';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
-import { MultiORMEnum } from '../core/utils';
-import { multiORMCreateQueryBuilder } from '../core/orm/query-builder/query-builder.factory';
 
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
 		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
-		readonly mikroOrmTaskRepository: MikroOrmTaskRepository,
-		private readonly em: EntityManager,
+		readonly mikroOrmTaskRepository: MikroOrmTaskRepository
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
-	}
-
-	/**
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	createQueryBuilder(entity?: any) {
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				const repo = this.em.getRepository(this.mikroRepository.getEntityName());
-				return multiORMCreateQueryBuilder<Task>(repo as any, this.ormType as MultiORMEnum);
-
-			case MultiORMEnum.TypeORM:
-				return multiORMCreateQueryBuilder<Task>(this.repository as any, this.ormType as MultiORMEnum);
-		}
 	}
 
 	/**
