@@ -101,8 +101,7 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
             const { organizationId, tenantId, id: projectId } = entity;
 
             let query = p(`
-                SELECT COUNT(*) as count
-                    FROM organization_project_employee
+                SELECT COUNT(*) AS count FROM organization_project_employee
                 INNER JOIN organization_project
                     ON "organization_project"."id" = "organization_project_employee"."organizationProjectId"
                 WHERE
@@ -110,17 +109,14 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
                     "organization_project"."organizationId" = $2 AND
                     "organization_project"."tenantId" = $3
             `);
-            let updateQuery = p(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2`);
+            let updateQuery = p(`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2 AND "organizationId" = $3 AND "tenantId" = $4`);
 
             //
             switch (getConfig().dbConnectionOptions.type) {
                 case DatabaseTypeEnum.mysql:
-                    // Replace $ placeholders with ? for MySQL
-                    query = query.replace(/\$\d/g, '?');
-                    updateQuery = updateQuery.replace(/\$\d/g, '?');
-                    break;
-                case DatabaseTypeEnum.sqlite || DatabaseTypeEnum.betterSqlite3:
-                    // Replace $ placeholders with ? for SQL Lite & Better SQLite3
+                case DatabaseTypeEnum.sqlite:
+                case DatabaseTypeEnum.betterSqlite3:
+                    // Replace $ placeholders with ? for mysql, sqlite & better-sqlite3
                     query = query.replace(/\$\d/g, '?');
                     updateQuery = updateQuery.replace(/\$\d/g, '?');
                     break;
@@ -148,15 +144,15 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
             if (totalMembers >= 0) {
                 // Common update logic for both ORMs
                 if (em instanceof TypeOrmEntityManager) {
-                    await em.query(updateQuery, [totalMembers, projectId]);
+                    await em.query(updateQuery, [totalMembers, projectId, organizationId, tenantId]);
                 } else if (em instanceof MikroOrmEntityManager) {
                     // Replace $ placeholders with ? for MikroORM
                     updateQuery = updateQuery.replace(/\$\d/g, '?');
-                    await em.getConnection().execute(updateQuery, [totalMembers, projectId]);
+                    await em.getConnection().execute(updateQuery, [totalMembers, projectId, organizationId, tenantId]);
                 }
             }
         } catch (error) {
-            console.error('OrganizationProjectSubscriber: An error occurred during the updateProjectMembersCount process:', error.message);
+            console.error('OrganizationProjectSubscriber: An error occurred during the updateProjectMembersCount process:', error);
         }
     }
 }
