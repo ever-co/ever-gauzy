@@ -4,6 +4,7 @@ import {
 	JoinTable,
 	RelationId
 } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import {
@@ -71,6 +72,8 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
+
+	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@MultiORMColumn({ nullable: true })
