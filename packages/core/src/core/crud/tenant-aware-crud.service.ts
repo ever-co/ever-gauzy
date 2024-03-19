@@ -8,7 +8,7 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { EntityRepository } from '@mikro-orm/core';
+import { EntityRepository } from '@mikro-orm/knex';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../context';

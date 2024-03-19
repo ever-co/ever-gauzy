@@ -8,6 +8,7 @@ import {
 	RelationId,
 	JoinTable
 } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -37,8 +38,11 @@ import {
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
+
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
+
+	[EntityRepositoryType]?: MikroOrmUserRepository;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

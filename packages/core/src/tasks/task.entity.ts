@@ -3,6 +3,7 @@ import {
 	JoinTable,
 	RelationId,
 } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	IsArray,
@@ -57,6 +58,8 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @ColumnIndex('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
+
+	[EntityRepositoryType]?: MikroOrmTaskRepository;
 
 	@MultiORMColumn({
 		nullable: true,
