@@ -23,6 +23,8 @@ import {
 } from '@mikro-orm/core';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
+import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
+import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
 import {
 	MultiORM,
 	MultiORMEnum,
@@ -42,12 +44,12 @@ import {
 	IUpdateCriteria
 } from './icrud.service';
 import { ITryRequest } from './try-request';
-import { multiORMCreateQueryBuilder } from 'core/orm/query-builder/query-builder.factory';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
+
 	constructor(
 		protected readonly repository: Repository<T>,
 		protected readonly mikroRepository: EntityRepository<T>
@@ -70,17 +72,20 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
+	 * Creates an ORM-specific query builder for the repository, supporting MikroORM and TypeORM.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param alias - Optional alias for the primary table in the query.
+	 * @returns An `IQueryBuilder<T>` instance suitable for the repository's ORM type.
+	 * @throws Error if the ORM type is not implemented.
 	 */
-	createQueryBuilder(entity?: any) {
-		console.log('this.mikroRepository.getEntityManager', this.mikroRepository.getEntityName());
+	public createQueryBuilder(alias?: string): IQueryBuilder<T> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return multiORMCreateQueryBuilder<T>(this.repository, this.ormType as MultiORMEnum);
+				return multiORMCreateQueryBuilder<T>(this.mikroRepository as any, this.ormType as MultiORMEnum, alias);
+
 			case MultiORMEnum.TypeORM:
-				return multiORMCreateQueryBuilder<T>(this.mikroRepository as any, this.ormType as MultiORMEnum);
+				return multiORMCreateQueryBuilder<T>(this.repository, this.ormType as MultiORMEnum, alias);
+
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
