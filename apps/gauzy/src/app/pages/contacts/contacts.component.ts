@@ -10,7 +10,8 @@ import {
 	IContact,
 	ICountry,
 	ContactType,
-	ContactOrganizationInviteStatus
+	ContactOrganizationInviteStatus,
+	IContactCreateInput
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -362,20 +363,19 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			.subscribe();
 	}
 
+	/**
+	 *
+	 * @param organizationContact
+	 * @returns
+	 */
 	public async addOrEditOrganizationContact(organizationContact: IOrganizationContactCreateInput) {
-		const contact: IContact = {
-			country: organizationContact.country,
-			city: organizationContact.city,
-			address: organizationContact.address,
-			address2: organizationContact.address2,
-			postcode: organizationContact.postcode,
-			fax: organizationContact.fax,
-			fiscalInformation: organizationContact.fiscalInformation,
-			website: organizationContact.website,
-			latitude: organizationContact.latitude,
-			longitude: organizationContact.longitude
-		};
-		const payload = {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
+		const contact: IContactCreateInput = this.extractLocation(organizationContact, organizationId, tenantId);
+
+		const request = {
 			...organizationContact,
 			contact
 		};
@@ -383,17 +383,15 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		try {
 			if (organizationContact.name) {
 				const { name } = organizationContact;
+
 				if (organizationContact.id) {
-					await this.organizationContactService.update(organizationContact.id, payload);
-					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT', {
-						name
-					});
+					await this.organizationContactService.update(organizationContact.id, request);
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT', { name });
 				} else {
-					await this.organizationContactService.create(payload);
-					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', {
-						name
-					});
+					await this.organizationContactService.create(request);
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', { name });
 				}
+
 				this.showAddCard = !this.showAddCard;
 				this._refresh$.next(true);
 				this.contacts$.next(true);
@@ -403,6 +401,36 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	/**
+	 *
+	 * @param organizationContact
+	 * @param organizationId
+	 * @param tenantId
+	 * @returns
+	 */
+	private extractLocation(
+		organizationContact: IOrganizationContactCreateInput,
+		organizationId: string,
+		tenantId: string
+	): IContactCreateInput {
+		return {
+			country: organizationContact.country,
+			city: organizationContact.city,
+			address: organizationContact.address,
+			address2: organizationContact.address2,
+			postcode: organizationContact.postcode,
+			fax: organizationContact.fax,
+			fiscalInformation: organizationContact.fiscalInformation,
+			website: organizationContact.website,
+			latitude: organizationContact.latitude,
+			longitude: organizationContact.longitude,
+			organizationId,
+			organization: { id: organizationId },
+			tenantId,
+			tenant: { id: tenantId }
+		};
 	}
 
 	/*

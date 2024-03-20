@@ -60,8 +60,8 @@ export interface IOrganizationContactCreateInput extends IContactCreateInput, IB
 	imageUrl?: string;
 	contactType?: ContactType;
 	createdBy?: string;
-	contact?: IContact;
-	contactId?: IContact['id'];
+	contact?: IContactCreateInput;
+	contactId?: IContactCreateInput['id'];
 }
 
 export interface IOrganizationContactUpdateInput extends IOrganizationContactCreateInput {

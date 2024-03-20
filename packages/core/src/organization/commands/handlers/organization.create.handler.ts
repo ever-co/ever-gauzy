@@ -122,9 +122,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			try {
 				contact = await this.contactService.create({
 					...contact,
-					organization: {
-						id: organizationId
-					}
+					organization: { id: organizationId }
 				});
 				await this.organizationService.update(organizationId, {
 					contactId: contact.id
