@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { GoalTemplate } from '../goal-template.entity';
 
-export class MikroOrmGoalTemplateRepository extends EntityRepository<GoalTemplate> { }
+export class MikroOrmGoalTemplateRepository extends MikroOrmBaseEntityRepository<GoalTemplate> { }

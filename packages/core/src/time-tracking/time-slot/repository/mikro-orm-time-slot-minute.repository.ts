@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../../core/repository/mikro-orm-base-entity.repository';
 import { TimeSlotMinute } from '../time-slot-minute.entity';
 
-export class MikroOrmTimeSlotMinuteRepository extends EntityRepository<TimeSlotMinute> { }
+export class MikroOrmTimeSlotMinuteRepository extends MikroOrmBaseEntityRepository<TimeSlotMinute> { }

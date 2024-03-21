@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { CustomSmtp } from '../custom-smtp.entity';
 
-export class MikroOrmCustomSmtpRepository extends EntityRepository<CustomSmtp> { }
+export class MikroOrmCustomSmtpRepository extends MikroOrmBaseEntityRepository<CustomSmtp> { }

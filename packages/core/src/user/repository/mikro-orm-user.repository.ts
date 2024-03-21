@@ -1,7 +1,7 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { User } from '../user.entity';
 
-export class MikroOrmUserRepository extends EntityRepository<User> {
+export class MikroOrmUserRepository extends MikroOrmBaseEntityRepository<User> {
     /**
      * Checks if an entity with the given email already exists in the database.
      * This method counts the number of entities with the specified email and

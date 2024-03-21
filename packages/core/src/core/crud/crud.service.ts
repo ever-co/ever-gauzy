@@ -13,18 +13,12 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import {
-	CreateOptions,
-	EntityRepository,
-	FilterQuery as MikroFilterQuery,
-	RequiredEntityData,
-	UpsertOptions,
-	wrap
-} from '@mikro-orm/core';
+import { CreateOptions, EntityData, FilterQuery as MikroFilterQuery, RequiredEntityData, UpsertOptions, wrap } from '@mikro-orm/core';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import {
 	MultiORM,
 	MultiORMEnum,
@@ -52,7 +46,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 	constructor(
 		protected readonly repository: Repository<T>,
-		protected readonly mikroRepository: EntityRepository<T>
+		protected readonly mikroRepository: MikroOrmBaseEntityRepository<T>
 	) { }
 
 	/**
@@ -461,33 +455,30 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					// Returns the name of the entity associated with this repository.
-					const entityName = this.mikroRepository.getEntityName();
+					try {
+						// Create a new entity using MikroORM
+						const newEntity = this.mikroRepository.create(entity as RequiredEntityData<T>, createOptions);
 
-					// Returns the underlying EntityManager instance from the repository.
-					const em = this.mikroRepository.getEntityManager();
+						// If the entity doesn't have an ID, it's new and should be persisted
+						if (!entity['id']) {
+							// Persisting the entities
+							await this.mikroRepository.persistAndFlush(newEntity); // This will also persist the relations
+							return this.serialize(newEntity);
+						}
 
-					// Create a new entity using MikroORM
-					const newEntity = em.create(entityName, entity as RequiredEntityData<T>, createOptions);
-
-					// If the entity doesn't have an ID, it's new and should be persisted
-					if (!entity['id']) {
-						// Persisting the entities
-						await em.persistAndFlush(newEntity); // This will also persist the relations
-						return this.serialize(newEntity);
+						// If the entity has an ID, perform an upsert operation
+						// This block will only be reached if the entity is existing
+						const upsertedEntity = await this.mikroRepository.upsert(
+							entity as EntityData<T> | T,
+							upsertOptions
+						);
+						return this.serialize(upsertedEntity);
+					} catch (error) {
+						console.error('Error during mikro orm create crud transaction:', error);
 					}
-
-					// If the entity has an ID, perform an upsert operation
-					// This block will only be reached if the entity is existing
-					const upsertedEntity = await em.upsert(
-						entityName,
-						newEntity,
-						upsertOptions
-					);
-					return this.serialize(upsertedEntity);
 				case MultiORMEnum.TypeORM:
-					const obj = this.repository.create(entity as DeepPartial<T>);
-					return await this.repository.save(obj);
+					const newEntity = this.repository.create(entity as DeepPartial<T>);
+					return await this.repository.save(newEntity);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}

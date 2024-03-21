@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { OrganizationPosition } from '../organization-position.entity';
 
-export class MikroOrmOrganizationPositionRepository extends EntityRepository<OrganizationPosition> { }
+export class MikroOrmOrganizationPositionRepository extends MikroOrmBaseEntityRepository<OrganizationPosition> { }

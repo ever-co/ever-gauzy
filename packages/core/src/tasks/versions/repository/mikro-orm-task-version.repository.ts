@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../../core/repository/mikro-orm-base-entity.repository';
 import { TaskVersion } from '../version.entity';
 
-export class MikroOrmTaskVersionRepository extends EntityRepository<TaskVersion> { }
+export class MikroOrmTaskVersionRepository extends MikroOrmBaseEntityRepository<TaskVersion> { }
