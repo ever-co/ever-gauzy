@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { PipelineStage } from '../pipeline-stage.entity';
 
-export class MikroOrmPipelineStageRepository extends EntityRepository<PipelineStage> { }
+export class MikroOrmPipelineStageRepository extends MikroOrmBaseEntityRepository<PipelineStage> { }

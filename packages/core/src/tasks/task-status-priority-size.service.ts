@@ -2,7 +2,7 @@ import { isNotEmpty } from '@gauzy/common';
 import { Injectable } from '@nestjs/common';
 import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
 import {
 	FileStorageProviderEnum,
 	IIssueTypeFindInput,
@@ -31,7 +31,7 @@ export class TaskStatusPrioritySizeService<
 > extends TenantAwareCrudService<BaseEntity> {
 	constructor(
 		readonly typeOrmTaskStatusRepository: Repository<BaseEntity>,
-		readonly mikroOrmTaskStatusRepository: EntityRepository<BaseEntity>,
+		readonly mikroOrmTaskStatusRepository: MikroOrmBaseEntityRepository<BaseEntity>,
 		readonly knexConnection: KnexConnection
 	) {
 		console.log(`TaskStatusPrioritySizeService initialized.`);

@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { Candidate } from '../candidate.entity';
 
-export class MikroOrmCandidateRepository extends EntityRepository<Candidate> { }
+export class MikroOrmCandidateRepository extends MikroOrmBaseEntityRepository<Candidate> { }

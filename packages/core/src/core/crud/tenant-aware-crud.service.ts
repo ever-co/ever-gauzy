@@ -8,9 +8,9 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { EntityRepository } from '@mikro-orm/knex';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
@@ -24,7 +24,7 @@ import { ITryRequest } from './try-request';
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
 	constructor(
 		repository: Repository<T>,
-		mikroRepository: EntityRepository<T>
+		mikroRepository: MikroOrmBaseEntityRepository<T>
 	) {
 		super(repository, mikroRepository);
 	}

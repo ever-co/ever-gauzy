@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { InvoiceItem } from '../invoice-item.entity';
 
-export class MikroOrmInvoiceItemRepository extends EntityRepository<InvoiceItem> { }
+export class MikroOrmInvoiceItemRepository extends MikroOrmBaseEntityRepository<InvoiceItem> { }
