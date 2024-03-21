@@ -6755,27 +6755,27 @@
   resolved "https://registry.yarnpkg.com/@microsoft/tsdoc/-/tsdoc-0.14.2.tgz#c3ec604a0b54b9a9b87e9735dfc59e1a5da6a5fb"
   integrity sha512-9b8mPpKrfeGRuhFH5iO1iwCLeIIsV6+H1sRfxbkoGXIyQE2BTsPd9zqSqQJ+pv5sJ/hT5M1zvOFL02MnEezFug==
 
-"@mikro-orm/better-sqlite@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/better-sqlite/-/better-sqlite-6.1.10.tgz#ea1acbb6ad679c1816bf63effbdf884ec6ba3eb1"
-  integrity sha512-GdmBoWIM9IInYa62EI1juSwhHVRWS/mFik90QAlyPvibC0/BJba12fY7kEk2f/S+SlUAprpzf9s7htotgbk/gQ==
+"@mikro-orm/better-sqlite@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/better-sqlite/-/better-sqlite-6.1.11.tgz#dcc6585daf9baae8d6d2ace2488cc4cbd0dabd26"
+  integrity sha512-IuxXkZYk++9SjVCKYCB40ZSsWNjHDmVXT3bLoXyK4l61W8xN9YgwopmyAPN8hdopduOXdA4B14/yA8Q9l4yemA==
   dependencies:
-    "@mikro-orm/knex" "6.1.10"
+    "@mikro-orm/knex" "6.1.11"
     better-sqlite3 "8.7.0"
     fs-extra "11.2.0"
     sqlstring-sqlite "0.1.1"
 
-"@mikro-orm/core@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.1.10.tgz#5267bd9de22bbd27a16f639c6c66d1a10187b816"
-  integrity sha512-a2pdi0EJwazVf/4DUGnlcOaXn83HbopdORZUKppNkqmCjavdFocDhIwhOjdZCa0DNaudubsEqYUhDW0XkTQnZg==
+"@mikro-orm/core@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/core/-/core-6.1.11.tgz#f01a2db9adfa45d15c9e6e6d2504ab7f376b6947"
+  integrity sha512-hwbjgT875JrC+0A5GOOjHCZaseZavGEgoZAyVhjJ/A76l6rz3zpq0mUxcaFmyYZYZD/t2fQcFXpJOp9/f8GUJA==
   dependencies:
     dataloader "2.2.2"
     dotenv "16.4.5"
     esprima "4.0.1"
     fs-extra "11.2.0"
     globby "11.1.0"
-    mikro-orm "6.1.10"
+    mikro-orm "6.1.11"
     reflect-metadata "0.2.1"
 
 "@mikro-orm/core@^6.1.8":
@@ -6791,10 +6791,10 @@
     mikro-orm "6.1.8"
     reflect-metadata "0.2.1"
 
-"@mikro-orm/knex@6.1.10", "@mikro-orm/knex@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.1.10.tgz#313ca59fdceb6e8147a06f01b829cf91fa8e84c1"
-  integrity sha512-Nv5BMJm45kRYcelZxYJ3RAX5WjjFENc0V/Efj4D2S46Md/kWwrjIlKiDPMbC43aBcZ8+K6AbzT5zzbY0nxIkgw==
+"@mikro-orm/knex@6.1.11", "@mikro-orm/knex@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/knex/-/knex-6.1.11.tgz#ac58932635cb9532d3df8677e3b8e378b8503c40"
+  integrity sha512-smzlQB7MDHROk3CqVajWpiH5kfuVJz9lRzzyZCVAg58HzDzGYByJcsGP1wkRrryTSS2ym/gAQG4Ea9Hz1eUpuw==
   dependencies:
     fs-extra "11.2.0"
     knex "3.1.0"
@@ -6809,20 +6809,20 @@
     knex "3.1.0"
     sqlstring "2.3.3"
 
-"@mikro-orm/mongodb@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/mongodb/-/mongodb-6.1.10.tgz#5a8a3bb3caddbf34c3ba81ecc139fc8460c8a02b"
-  integrity sha512-ndaB+mDvBFN1s9r1H3nq32iMRojKeTxB3nX++SKXOoJEf/cInRDkg9MpN3vqfDY+vevrdVefs/7XSlm065zylw==
+"@mikro-orm/mongodb@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/mongodb/-/mongodb-6.1.11.tgz#b1292060ef575b523ddaad169eb087d010f6dbfb"
+  integrity sha512-nYeh2PUPVVG/87RZmcxLi8s+ykIQSIgYGrGD+/o5TyTYcbeSqu3MbONILMRuCEkap8PF7VdNjXpJ5ZUAPGwYyw==
   dependencies:
     bson "^6.4.0"
     mongodb "6.5.0"
 
-"@mikro-orm/mysql@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/mysql/-/mysql-6.1.10.tgz#7261c392087513d12e45356163a99f36d55698eb"
-  integrity sha512-jh9HOFEaER5yjD5FoLu+7qDf7Io+Wxu6CLZrppN9Rj5oaMz7O6u9ezWjZULoA930y9dsRtF09dVLkaaGTeaHjQ==
+"@mikro-orm/mysql@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/mysql/-/mysql-6.1.11.tgz#d4f20aaa64ba7c472cb04c107350799d14bf1481"
+  integrity sha512-MiAWuSaltARxhxOxpTgaGcZkwJVJ5Y2fUYMIapZXuV8Dcal4Yp1zL3a/yI/XSB0JF364WFqz7pEok+xXqZUiBg==
   dependencies:
-    "@mikro-orm/knex" "6.1.10"
+    "@mikro-orm/knex" "6.1.11"
     mysql2 "3.9.2"
 
 "@mikro-orm/nestjs@^5.2.3":
@@ -6830,23 +6830,23 @@
   resolved "https://registry.yarnpkg.com/@mikro-orm/nestjs/-/nestjs-5.2.3.tgz#204ef21781fce6b6e2423019bad515186228064d"
   integrity sha512-JMxaXrNXlo6j59D3LWMC1tEC1a5JanCtqdfv91JUH0sfVZh97SsjQ9K794BY3JWIUKSFyQwpnLxYZ0Ash/BlPA==
 
-"@mikro-orm/postgresql@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/postgresql/-/postgresql-6.1.10.tgz#49ed0eda60a540323ce62c85aa89e4ee54966f4c"
-  integrity sha512-ShBT7ykZhxaWGTY+u25baNSaLNMHni9RxaD6fy7gSj1kE89bHGJGUMjlJo7PpnBzuRxPZ0OYxHpXYjh0GFLMWA==
+"@mikro-orm/postgresql@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/postgresql/-/postgresql-6.1.11.tgz#88b4b666dd98302560eb0473b313e4ea0ba0e097"
+  integrity sha512-lyw6YvK0Qox7o/AvjepAol+Mcpr/MmZI71qUV7cdTQ0CzgHpPJGFZVa8bKmboK0CLjxc0PwB3K0DAMeCr6sjbw==
   dependencies:
-    "@mikro-orm/knex" "6.1.10"
+    "@mikro-orm/knex" "6.1.11"
     pg "8.11.3"
     postgres-array "3.0.2"
     postgres-date "2.1.0"
     postgres-interval "4.0.2"
 
-"@mikro-orm/sqlite@^6.1.10":
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/@mikro-orm/sqlite/-/sqlite-6.1.10.tgz#2ad054e2b99f0e52940f2138b1897591ad4c3173"
-  integrity sha512-czHRiWBBf/kW+MGi6O1syYzm82ppPdWXVBywB7cg/+rWyW8GhTAg1af82ySQqathn244NHZ4IvW/Dk+nEgVngw==
+"@mikro-orm/sqlite@^6.1.11":
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/@mikro-orm/sqlite/-/sqlite-6.1.11.tgz#38fd26408d8e9be1f2a55661342053f42c4b5080"
+  integrity sha512-a+szU2DgDoe2pNo5gw20FhmQVHzLhJ34YT/7HXlfhsKhLw2i7UDAwaAyKLx2PL7wgiiGmtnQxxJPtECsNovPDw==
   dependencies:
-    "@mikro-orm/knex" "6.1.10"
+    "@mikro-orm/knex" "6.1.11"
     fs-extra "11.2.0"
     sqlite3 "5.1.7"
     sqlstring-sqlite "0.1.1"
@@ -27347,10 +27347,10 @@ micromatch@^4.0.0, micromatch@^4.0.2, micromatch@^4.0.4, micromatch@^4.0.5:
     braces "^3.0.2"
     picomatch "^2.3.1"
 
-mikro-orm@6.1.10:
-  version "6.1.10"
-  resolved "https://registry.yarnpkg.com/mikro-orm/-/mikro-orm-6.1.10.tgz#db13ac7fb61d00b2db73a5e7e718991ed69a2cff"
-  integrity sha512-3/A1FTEv7afRXQb8uFY6nBFelQtH5FjQHd/XCpCEqL07zgXSzq3ZKG80W3+RB5mVodzJoBjsimi29PPS8truWQ==
+mikro-orm@6.1.11:
+  version "6.1.11"
+  resolved "https://registry.yarnpkg.com/mikro-orm/-/mikro-orm-6.1.11.tgz#eddd629807681d19acbeb8c76f5ab1d8ee6bd069"
+  integrity sha512-ZT05YT0Rd1YKahxbKETtcIN2eA2IVpoY15/+O80azLkqP6mLy8SPv8SF5SRjIg/G2a2ZC0IjBWrRg5n7zg9aDg==
 
 mikro-orm@6.1.8:
   version "6.1.8"
