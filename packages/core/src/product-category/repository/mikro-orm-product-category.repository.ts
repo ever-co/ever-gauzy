@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { ProductCategory } from '../product-category.entity';
 
-export class MikroOrmProductCategoryRepository extends EntityRepository<ProductCategory> { }
+export class MikroOrmProductCategoryRepository extends MikroOrmBaseEntityRepository<ProductCategory> { }

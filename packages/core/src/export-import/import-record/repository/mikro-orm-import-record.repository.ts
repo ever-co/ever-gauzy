@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../../core/repository/mikro-orm-base-entity.repository';
 import { ImportRecord } from '../import-record.entity';
 
-export class MikroOrmImportRecordRepository extends EntityRepository<ImportRecord> { }
+export class MikroOrmImportRecordRepository extends MikroOrmBaseEntityRepository<ImportRecord> { }

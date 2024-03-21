@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { Currency } from '../currency.entity';
 
-export class MikroOrmCurrencyRepository extends EntityRepository<Currency> { }
+export class MikroOrmCurrencyRepository extends MikroOrmBaseEntityRepository<Currency> { }

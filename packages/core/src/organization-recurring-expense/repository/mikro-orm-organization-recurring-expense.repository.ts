@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { OrganizationRecurringExpense } from '../organization-recurring-expense.entity';
 
-export class MikroOrmOrganizationRecurringExpenseRepository extends EntityRepository<OrganizationRecurringExpense> { }
+export class MikroOrmOrganizationRecurringExpenseRepository extends MikroOrmBaseEntityRepository<OrganizationRecurringExpense> { }

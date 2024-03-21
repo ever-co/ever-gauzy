@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/knex';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { Changelog } from '../changelog.entity';
 
-export class MikroOrmChangelogRepository extends EntityRepository<Changelog> { }
+export class MikroOrmChangelogRepository extends MikroOrmBaseEntityRepository<Changelog> { }

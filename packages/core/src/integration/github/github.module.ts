@@ -24,6 +24,8 @@ import { GithubRepositoryService } from './repository/github-repository.service'
 import { OrganizationGithubRepository } from './repository/github-repository.entity';
 import { OrganizationGithubRepositoryIssue } from './repository/issue/github-repository-issue.entity';
 import { GithubRepositoryIssueService } from './repository/issue/github-repository-issue.service';
+import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/repository';
+import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository';
 
 @Module({
 	imports: [
@@ -54,10 +56,15 @@ import { GithubRepositoryIssueService } from './repository/issue/github-reposito
 		GithubRepositoryIssueService,
 		// Define middleware heres
 		GithubMiddleware,
+		TypeOrmOrganizationGithubRepositoryRepository,
+		TypeOrmOrganizationGithubRepositoryIssueRepository,
 		// Define handlers heres
 		...CommandHandlers
 	],
-	exports: [],
+	exports: [
+		TypeOrmOrganizationGithubRepositoryRepository,
+		TypeOrmOrganizationGithubRepositoryIssueRepository
+	],
 })
 export class GithubModule implements NestModule {
 	/**
