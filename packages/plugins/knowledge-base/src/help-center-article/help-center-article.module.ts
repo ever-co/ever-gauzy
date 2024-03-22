@@ -8,6 +8,7 @@ import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { HelpCenterArticleController } from './help-center-article.controller';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmHelpCenterArticleRepository } from './repository';
 
 @Module({
 	imports: [
@@ -17,9 +18,9 @@ import { CommandHandlers } from './commands/handlers';
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [HelpCenterArticleService, ...CommandHandlers],
+	providers: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository, ...CommandHandlers],
 	controllers: [HelpCenterArticleController],
-	exports: [HelpCenterArticleService]
+	exports: [HelpCenterArticleService, TypeOrmHelpCenterArticleRepository]
 })
 export class HelpCenterArticleModule implements OnModuleInit {
 	constructor() { }

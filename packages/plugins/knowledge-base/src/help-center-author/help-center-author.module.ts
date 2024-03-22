@@ -8,6 +8,7 @@ import { HelpCenterAuthorService } from './help-center-author.service';
 import { HelpCenterAuthorController } from './help-center-author.controller';
 import { HelpCenterAuthor } from './help-center-author.entity';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmHelpCenterAuthorRepository } from './repository';
 
 @Module({
 	imports: [
@@ -17,9 +18,9 @@ import { CommandHandlers } from './commands/handlers';
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [HelpCenterAuthorService, ...CommandHandlers],
 	controllers: [HelpCenterAuthorController],
-	exports: [HelpCenterAuthorService]
+	providers: [HelpCenterAuthorService, TypeOrmHelpCenterAuthorRepository, ...CommandHandlers],
+	exports: [HelpCenterAuthorService, TypeOrmHelpCenterAuthorRepository]
 })
 export class HelpCenterAuthorModule implements OnModuleInit {
 	constructor() { }

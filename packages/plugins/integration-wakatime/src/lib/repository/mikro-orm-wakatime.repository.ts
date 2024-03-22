@@ -1,4 +1,4 @@
-import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
+import { MikroOrmBaseEntityRepository } from '@gauzy/core';
 import { Wakatime } from '../wakatime.entity';
 
 export class MikroOrmWakatimeRepository extends MikroOrmBaseEntityRepository<Wakatime> { }
