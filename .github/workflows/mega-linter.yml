@@ -28,7 +28,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0 # If you use VALIDATE_ALL_CODEBASE = true, you can remove this line to improve performances
 
       # MegaLinter
@@ -41,7 +41,7 @@ jobs:
           # All available variables are described in documentation
           # https://megalinter.github.io/configuration/
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }} # Validates all source when push on master, else just the git diff with master. Override with true if you always want to lint all sources
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISABLE: COPYPASTE,SPELL # Uncomment to disable copy-paste and spell checks
 
       # Upload MegaLinter artifacts
@@ -60,7 +60,7 @@ jobs:
         if: steps.ml.outputs.has_updated_sources == 1 && (env.APPLY_FIXES_EVENT == 'all' || env.APPLY_FIXES_EVENT == github.event_name) && env.APPLY_FIXES_MODE == 'pull_request' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository) && !contains(github.event.head_commit.message, 'skip fix')
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: '[MegaLinter] Apply linters automatic fixes'
           title: '[MegaLinter] Apply linters automatic fixes'
           labels: bot

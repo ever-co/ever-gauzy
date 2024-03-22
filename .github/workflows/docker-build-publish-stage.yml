@@ -71,7 +71,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GH_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to Github Registry
         run: |
@@ -148,7 +148,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GH_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to Github Registry
         run: |

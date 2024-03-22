@@ -18,6 +18,6 @@ jobs:
       - uses: streetsidesoftware/cspell-action@v2
         with:
           # Github token used to fetch the list of changed files in the commit.
-          github_token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           strict: true
           config: '.cspell.json'
