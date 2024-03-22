@@ -1,14 +1,17 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { IOrganizationContact } from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context';
 import { OrganizationContactUpdateCommand } from '../organization-contact-update.command';
 import { OrganizationContactService } from '../../organization-contact.service';
+import { ContactService } from '../../../contact/contact.service';
 
 @CommandHandler(OrganizationContactUpdateCommand)
 export class OrganizationContactUpdateHandler implements ICommandHandler<OrganizationContactUpdateCommand> {
 
 	constructor(
-		private readonly _organizationContactService: OrganizationContactService
+		private readonly _organizationContactService: OrganizationContactService,
+		private readonly _contactService: ContactService,
 	) { }
 
 	/**
@@ -21,6 +24,19 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 	public async execute(command: OrganizationContactUpdateCommand): Promise<IOrganizationContact> {
 		try {
 			const { id, input } = command;
+
+			// Destructure organizationId from the input, and get tenantId either from the current RequestContext or from the input.
+			let { organizationId } = input;
+
+			// Create/Update contact details of created organization
+			try {
+				input.contact = await this._contactService.create({
+					...input.contact,
+					organization: { id: organizationId }
+				});
+			} catch (error) {
+				console.log('Error occurred during creation of contact details or creating the organization contact:', error);
+			}
 
 			// Update the organization contact using the provided ID and input data.
 			await this._organizationContactService.create({

@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, Raw, WhereExpressionBuilder } from 'typeorm';
 import { IEmployee, IOrganizationContact, IOrganizationContactFindInput, IPagination } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
@@ -14,7 +13,6 @@ import { TypeOrmOrganizationContactRepository } from './repository/type-orm-orga
 @Injectable()
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(
-		@InjectRepository(OrganizationContact)
 		typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 
 		mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository

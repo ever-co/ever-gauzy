@@ -138,8 +138,10 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	@MultiORMManyToOne(() => ImageAsset, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true
 	})

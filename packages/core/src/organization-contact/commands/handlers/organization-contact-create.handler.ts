@@ -6,13 +6,15 @@ import { OrganizationContactCreateCommand } from '../organization-contact-create
 import { OrganizationContactService } from '../../organization-contact.service';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { RequestContext } from './../../../core/context';
+import { ContactService } from 'contact/contact.service';
 
 @CommandHandler(OrganizationContactCreateCommand)
 export class OrganizationContactCreateHandler implements ICommandHandler<OrganizationContactCreateCommand> {
 
 	constructor(
-		private readonly organizationContactService: OrganizationContactService,
-		private readonly organizationProjectService: OrganizationProjectService
+		private readonly _organizationContactService: OrganizationContactService,
+		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly _contactService: ContactService,
 	) { }
 
 	/**
@@ -26,7 +28,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 			// Destructure the input from the command.
 			const { input } = command;
 			// Destructure organizationId from the input, and get tenantId either from the current RequestContext or from the input.
-			const { organizationId } = input;
+			let { organizationId } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 			// Check if the input members are empty and projects are defined.
@@ -35,7 +37,7 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 				const projectIds = input.projects.map((project) => project.id);
 
 				// Retrieve projects with specified IDs, belonging to the given organization and tenant.
-				const projects = await this.organizationProjectService.find({
+				const projects = await this._organizationProjectService.find({
 					where: {
 						id: In(projectIds),
 						organization: { id: organizationId },
@@ -48,8 +50,18 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 				input.members = projects.flatMap((project: IOrganizationProject) => project.members);
 			}
 
+			// Create contact details of organization
+			try {
+				input.contact = await this._contactService.create({
+					...input.contact,
+					organization: { id: organizationId }
+				});
+			} catch (error) {
+				console.log('Error occurred during creation of contact details or creating the organization contact:', error);
+			}
+
 			// Create a new organization contact with the modified input.
-			return await this.organizationContactService.create({
+			return await this._organizationContactService.create({
 				...input,
 				organization: { id: organizationId }
 			});

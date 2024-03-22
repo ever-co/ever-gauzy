@@ -10,6 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { OrganizationProjectModule } from './../organization-project/organization-project.module';
+import { ContactModule } from '../contact/contact.module';
 import { TypeOrmOrganizationContactRepository } from './repository';
 
 @Module({
@@ -25,6 +26,7 @@ import { TypeOrmOrganizationContactRepository } from './repository';
 		RolePermissionModule,
 		OrganizationModule,
 		OrganizationProjectModule,
+		ContactModule,
 		CqrsModule
 	],
 	controllers: [OrganizationContactController],
