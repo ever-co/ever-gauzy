@@ -28,14 +28,20 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	}
 
 	private async checkConnection() {
+		const url = this.environment.API_BASE_URL;
+		console.log('Checking server connection to URL: ', url);
+
 		this.interval = setInterval(async () => {
-			await this.serverConnectionService.checkServerConnection(
-				this.environment.API_BASE_URL
-			);
+			console.log('Checking server connection...');
+
+			await this.serverConnectionService.checkServerConnection(url);
 
 			if (Number(this.store.serverConnection) === 200) {
+				console.log('Server is online');
 				clearInterval(this.interval);
 				this.location.back();
+			} else {
+				console.log('Server is offline');
 			}
 		}, 5000);
 	}

@@ -12,11 +12,13 @@ export class DesktopActiveWindow extends EventEmitter {
 	 * @private
 	 */
 	private _currentApplication: ICurrentApplication;
+
 	/**
 	 * Interval ID of polling timer
 	 * @private
 	 */
 	private _pollingTimerId: any;
+
 	/**
 	 * Polling interval
 	 * Delay between pools in milliseconds
@@ -27,11 +29,9 @@ export class DesktopActiveWindow extends EventEmitter {
 	constructor() {
 		super();
 		this._pollingTimerId = null;
-		this._currentApplication = new CurrentApplication(
-			moment(new Date()).utc().toISOString(),
-			0,
-			new DataApplication(null, null, null, null)
-		);
+		const t = moment(new Date()).utc().toISOString();
+		console.log('DesktopActiveWindow -> constructor -> timestamp', t);
+		this._currentApplication = new CurrentApplication(t, 0, new DataApplication(null, null, null, null));
 	}
 
 	/**
@@ -46,14 +46,18 @@ export class DesktopActiveWindow extends EventEmitter {
 	 * @returns  True if successfully started, false otherwise
 	 */
 	public start(): boolean {
+		console.log('DesktopActiveWindow -> start -> this.active', this.active);
 		if (this.active) return false;
-		this._currentApplication.timestamp = moment(new Date())
-			.utc()
-			.toISOString();
+
+		const t = moment(new Date()).utc().toISOString();
+
+		this._currentApplication.timestamp = t;
+
 		this._pollingTimerId = setInterval(async () => {
 			if (this.isActivityWatch) return;
 			await this.getWindow();
 		}, this._ACTIVE_WINDOW_POLLING_INTERVAL);
+
 		return true;
 	}
 
@@ -61,9 +65,10 @@ export class DesktopActiveWindow extends EventEmitter {
 	 * Stops the active window polling
 	 */
 	public async stop() {
+		console.log('DesktopActiveWindow -> stop -> this.active', this.active);
 		if (!this._pollingTimerId) return;
 		await this.getWindow(true);
-		clearInterval(this._pollingTimerId);
+		if (this._pollingTimerId) clearInterval(this._pollingTimerId);
 		this._pollingTimerId = null;
 	}
 
@@ -73,6 +78,7 @@ export class DesktopActiveWindow extends EventEmitter {
 	 * @private
 	 */
 	private applyNewWindow(window: any) {
+		console.log('DesktopActiveWindow -> applyNewWindow');
 		const end = moment(new Date(this._currentApplication.timestamp));
 		const now = moment(new Date());
 		this._currentApplication.duration = now.diff(end, 'seconds');
@@ -95,26 +101,22 @@ export class DesktopActiveWindow extends EventEmitter {
 			// Detect changes
 			if (
 				window &&
-				((window.owner &&
-					window.owner.path !==
-						this._currentApplication.data.executable) ||
+				((window.owner && window.owner.path !== this._currentApplication.data.executable) ||
 					window.title !== this._currentApplication.data.title ||
 					window.url !== this._currentApplication.data.url ||
 					anyway)
 			) {
 				this.applyNewWindow(window);
 			}
-		} catch (e) {
-			console.log('Error occurred during active window poll', e);
+		} catch (err) {
+			console.error('Error occurred during active window poll', err);
 		}
 	}
 
 	private get isActivityWatch(): boolean {
 		const project = LocalStore.getStore('project');
 		const setting = LocalStore.getStore('appSetting');
-		return (
-			project && project.aw && project.aw.isAw && setting.awIsConnected
-		);
+		return project && project.aw && project.aw.isAw && setting.awIsConnected;
 	}
 
 	public async updateActivities(): Promise<void> {

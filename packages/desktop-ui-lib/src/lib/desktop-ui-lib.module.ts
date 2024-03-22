@@ -1,18 +1,12 @@
 import { Injector, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-	GAUZY_ENV,
-	ServerConnectionService,
-	Store,
-} from '..';
+import { GAUZY_ENV, ServerConnectionService, Store } from '..';
 import { Router } from '@angular/router';
 
 @NgModule({
-	imports: [
-		CommonModule
-	]
+	imports: [CommonModule]
 })
-export class DesktopUiLibModule { }
+export class DesktopUiLibModule {}
 
 export function serverConnectionFactory(
 	provider: ServerConnectionService,
@@ -20,16 +14,24 @@ export function serverConnectionFactory(
 	router: Router,
 	injector: Injector
 ) {
-	const environment: any = injector.get(GAUZY_ENV);
 	return () => {
+		const environment: any = injector.get(GAUZY_ENV);
+
+		const url = environment.API_BASE_URL;
+		console.log('Checking server connection in serverConnectionFactory on URL: ', url);
+
 		return provider
-			.checkServerConnection(environment.API_BASE_URL)
+			.checkServerConnection(url)
 			.finally(() => {
+				console.log(
+					`Server connection status in serverConnectionFactory for URL: ${url} is ${store.serverConnection}`
+				);
 				// if (store.serverConnection !== 200) {
 				// 	router.navigate(['server-down']);
 				// }
 			})
-			.catch(() => { });
-		// return true;
+			.catch((err) => {
+				console.error(`Error checking server connection in serverConnectionFactory for URL: ${url}`, err);
+			});
 	};
 }

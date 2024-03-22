@@ -5,13 +5,14 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import * as remoteMain from '@electron/remote/main';
-import * as Sentry from '@sentry/electron';
-import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, shell } from 'electron';
 import * as path from 'path';
+import { app, BrowserWindow, ipcMain, Tray, Menu, shell, MenuItemConstructorOptions, dialog } from 'electron';
+import * as remoteMain from '@electron/remote/main';
+
 import { environment } from './environments/environment';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
+
 require('sqlite3');
 
 Object.assign(process.env, environment);
@@ -54,15 +55,10 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow
 } from '@gauzy/desktop-window';
+import { initSentry } from './sentry';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
-import { initSentry } from './sentry';
-
-try {
-	initSentry();
-} catch (error) {
-	log.error(error);
-}
+import * as Sentry from '@sentry/electron';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -74,6 +70,12 @@ log.info(`GAUZY_SEED_PATH: ${process.env.GAUZY_SEED_PATH}`);
 
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
+
+try {
+	initSentry();
+} catch (error) {
+	log.error(error);
+}
 
 const provider = ProviderFactory.instance;
 const knex = provider.connection;
@@ -109,7 +111,9 @@ const updater = new DesktopUpdater({
 	owner: process.env.REPO_OWNER,
 	typeRelease: 'releases'
 });
+
 const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
+
 const eventErrorManager = ErrorEventManager.instance;
 
 const server = new DesktopServer(true);
@@ -120,31 +124,6 @@ let tray = null;
 let isAlreadyRun = false;
 let onWaitingServer = false;
 let serverDesktop = null;
-let dialogErr = false;
-
-LocalStore.setFilePath({
-	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
-});
-
-// Instance detection
-const gotTheLock = app.requestSingleInstanceLock();
-
-if (!gotTheLock) {
-	app.quit();
-} else {
-	app.on('second-instance', () => {
-		// if someone tried to run a second instance, we should focus our window and show warning message.
-		if (gauzyWindow) {
-			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
-			gauzyWindow.focus();
-			dialog.showMessageBoxSync(gauzyWindow, {
-				type: 'warning',
-				title: process.env.DESCRIPTION,
-				message: 'You already have a running instance'
-			});
-		}
-	});
-}
 
 /* Load translations */
 TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
@@ -153,6 +132,10 @@ TranslateLoader.load(path.join(__dirname, 'ui', 'assets', 'i18n'));
 if (process.platform === 'win32') {
 	app.setAppUserModelId(process.env.APP_ID);
 }
+
+LocalStore.setFilePath({
+	iconPath: path.join(__dirname, 'assets', 'icons', 'menu', 'icon.png')
+});
 
 // Set unlimited listeners
 ipcMain.setMaxListeners(0);
@@ -194,6 +177,7 @@ process.on('uncaughtException', (error) => {
 });
 
 eventErrorManager.onSendReport(async (message: string) => {
+	console.log('Send report event', message);
 	if (!gauzyWindow) return;
 	gauzyWindow.focus();
 	const dialog = new DialogErrorHandler(message, gauzyWindow);
@@ -212,6 +196,7 @@ eventErrorManager.onSendReport(async (message: string) => {
 });
 
 eventErrorManager.onShowError(async (message: string) => {
+	console.log('Show error event', message);
 	if (!gauzyWindow) return;
 	gauzyWindow.focus();
 	const dialog = new DialogErrorHandler(message, gauzyWindow);
@@ -227,12 +212,38 @@ eventErrorManager.onShowError(async (message: string) => {
 	}
 });
 
+// Instance detection
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+	console.log('Another instance is already running, quitting...');
+	app.quit();
+} else {
+	app.on('second-instance', () => {
+		console.log('Another instance is already running...');
+		// if someone tried to run a second instance, we should focus our window and show warning message.
+		if (gauzyWindow) {
+			if (gauzyWindow.isMinimized()) gauzyWindow.restore();
+			gauzyWindow.focus();
+			dialog.showMessageBoxSync(gauzyWindow, {
+				type: 'warning',
+				title: process.env.DESCRIPTION,
+				message: 'You already have a running instance'
+			});
+		}
+	});
+}
+
 async function startServer(value, restart = false) {
+	console.log('Starting the Server...');
+
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(value),
 		IS_INTEGRATED_DESKTOP: value.isLocalServer
 	};
+
 	process.env.IS_ELECTRON = 'true';
+
 	if (value.db === 'sqlite') {
 		process.env.DB_PATH = sqlite3filename;
 		process.env.DB_TYPE = 'sqlite';
@@ -275,10 +286,13 @@ async function startServer(value, restart = false) {
 		process.env.API_PORT = value.port || environment.API_DEFAULT_PORT;
 		process.env.API_HOST = '0.0.0.0';
 		process.env.API_BASE_URL = `http://127.0.0.1:${value.port || environment.API_DEFAULT_PORT}`;
+
 		setEnvAdditional();
+
 		try {
 			await server.start({ api: path.join(__dirname, 'api/main.js') }, process.env, setupWindow, signal);
 		} catch (error) {
+			console.error('ERROR: Occurred while server start:' + error);
 			throw new AppError('MAINWININIT', error);
 		}
 	}
@@ -300,13 +314,14 @@ async function startServer(value, restart = false) {
 	notificationWindow = new ScreenCaptureNotification(pathWindow.screenshotWindow);
 	await notificationWindow.loadURL();
 
-	setupWindow.hide();
+	setupWindow?.hide();
 
 	if (gauzyWindow) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 	}
-	splashScreen.close();
+
+	splashScreen?.close();
 
 	TranslateService.onLanguageChange(() => {
 		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, true);
@@ -327,22 +342,28 @@ async function startServer(value, restart = false) {
 }
 
 function createTrayMenu() {
-	const auth = store.get('auth');
-	if (tray) {
-		tray.destroy();
+	try {
+		const auth = store.get('auth');
+
+		if (tray) {
+			tray.destroy();
+		}
+
+		tray = new TrayIcon(
+			setupWindow,
+			knex,
+			timeTrackerWindow,
+			auth,
+			settingsWindow,
+			{ ...environment },
+			pathWindow,
+			path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
+			gauzyWindow,
+			alwaysOn
+		);
+	} catch (error) {
+		console.error('ERROR: Occurred while create tray menu:' + error);
 	}
-	tray = new TrayIcon(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		{ ...environment },
-		pathWindow,
-		path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'),
-		gauzyWindow,
-		alwaysOn
-	);
 }
 
 function setEnvAdditional() {
@@ -373,16 +394,27 @@ const getApiBaseUrl = (configs) => {
 // More details at https://github.com/electron/electron/issues/15947
 
 app.on('ready', async () => {
+	console.log('App is ready');
+
 	const configs: any = store.get('configs');
 	const settings: any = store.get('appSetting');
+
 	// default global
 	global.variableGlobal = {
 		API_BASE_URL: getApiBaseUrl(configs || {}),
 		IS_INTEGRATED_DESKTOP: configs?.isLocalServer
 	};
-	splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
-	await splashScreen.loadURL();
-	splashScreen.show();
+
+	try {
+		splashScreen = new SplashScreen(pathWindow.timeTrackerUi);
+
+		await splashScreen.loadURL();
+
+		splashScreen.show();
+	} catch (error) {
+		throw new AppError('MAINWININIT', error);
+	}
+
 	if (['sqlite', 'better-sqlite'].includes(provider.dialect)) {
 		try {
 			const res = await knex.raw(`pragma journal_mode = WAL;`);
@@ -391,15 +423,19 @@ app.on('ready', async () => {
 			console.log('ERROR', error);
 		}
 	}
+
 	try {
 		await provider.createDatabase();
 		await provider.migrate();
 	} catch (error) {
+		console.error('ERROR: Occurred while database migration:' + error);
 		throw new AppError('MAINDB', error);
 	}
+
 	if (!settings) {
 		launchAtStartup(true, false);
 	}
+
 	const menu: MenuItemConstructorOptions[] = [
 		{
 			label: app.getName(),
@@ -411,6 +447,7 @@ app.on('ready', async () => {
 			]
 		}
 	];
+
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 
 	try {
@@ -448,29 +485,38 @@ app.on('ready', async () => {
 			splashScreen.close();
 		}
 	} catch (error) {
+		console.error('ERROR: Occurred while create window:' + error);
 		throw new AppError('MAINWININIT', error);
 	}
+
 	updater.settingWindow = settingsWindow;
 	updater.gauzyWindow = gauzyWindow;
+
 	try {
 		await updater.checkUpdate();
 	} catch (error) {
+		console.error('ERROR: Occurred while check update:' + error);
 		throw new UIError('400', error, 'MAINWININIT');
 	}
+
 	removeMainListener();
+
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+
 	if (gauzyWindow) {
 		try {
 			gauzyWindow.webContents.setZoomFactor(1.0);
 			await gauzyWindow.webContents.setVisualZoomLevelLimits(1, 5);
 			console.log('Zoom levels have been set between 100% and 500%');
 		} catch (error) {
+			console.error('ERROR: Occurred while set zoom level:' + error);
 			throw new UIError('400', error, 'MAINWININIT');
 		}
 	}
 });
 
 app.on('window-all-closed', () => {
+	console.log('All windows are closed');
 	if (process.platform !== 'darwin') {
 		app.quit();
 	}
@@ -480,17 +526,26 @@ app.commandLine.appendSwitch('disable-http2');
 
 ipcMain.on('server_is_ready', async () => {
 	console.log('Server is ready event received');
+
 	LocalStore.setDefaultApplicationSetting();
+
 	const appConfig = LocalStore.getStore('configs');
+
 	appConfig.serverConfigConnected = true;
+
 	store.set({
 		configs: appConfig
 	});
+
 	onWaitingServer = false;
+
 	if (!isAlreadyRun) {
 		console.log('Server is ready, starting the Desktop API...');
+
 		serverDesktop = fork(path.join(__dirname, './desktop-api/main.js'));
+
 		removeTimerListener();
+
 		ipcTimer(
 			store,
 			knex,
@@ -505,7 +560,9 @@ ipcMain.on('server_is_ready', async () => {
 			path.join(__dirname, '..', 'data', 'sound', 'snapshot-sound.wav'),
 			alwaysOn
 		);
+
 		timeTrackerWindow.webContents.send('ready_to_show_renderer');
+
 		isAlreadyRun = true;
 	}
 });
@@ -513,20 +570,23 @@ ipcMain.on('server_is_ready', async () => {
 ipcMain.on('quit', quit);
 
 ipcMain.on('minimize', () => {
+	console.log('Minimize event received');
 	gauzyWindow.minimize();
 });
 
 ipcMain.on('maximize', () => {
+	console.log('Maximize event received');
 	gauzyWindow.maximize();
 });
 
 ipcMain.on('restore', () => {
+	console.log('Restore event received');
 	gauzyWindow.restore();
 });
 
 ipcMain.on('restart_app', async (event, arg) => {
+	console.log('Restart app event received');
 	try {
-		dialogErr = false;
 		LocalStore.updateConfigSetting(arg);
 		isAlreadyRun = false;
 		const configs = LocalStore.getStore('configs');
@@ -539,15 +599,23 @@ ipcMain.on('restart_app', async (event, arg) => {
 	} catch (error) {
 		console.error('ERROR: Occurred while server restart:' + error);
 	}
-	app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+
+	try {
+		app.relaunch({ args: process.argv.slice(1).concat(['--relaunch']) });
+	} catch (error) {
+		console.error('ERROR: Occurred while relaunch:' + error);
+	}
+
 	app.exit(0);
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
+	console.log('Save additional setting event received');
 	LocalStore.updateAdditionalSetting(arg);
 });
 
 ipcMain.on('server_already_start', async () => {
+	console.log('Server already start event received');
 	if (!gauzyWindow && !isAlreadyRun) {
 		try {
 			const configs: any = store.get('configs');
@@ -559,20 +627,24 @@ ipcMain.on('server_already_start', async () => {
 			);
 			isAlreadyRun = true;
 		} catch (error) {
+			console.error('ERROR: Occurred while server already start:' + error);
 			throw new AppError('MAINWININIT', error);
 		}
 	}
 });
 
 ipcMain.on('open_browser', async (event, arg) => {
+	console.log('Open browser event received');
 	try {
 		await shell.openExternal(arg.url);
 	} catch (error) {
+		console.error('ERROR: Occurred while open browser:' + error);
 		throw new AppError('MAINOPENEXT', error);
 	}
 });
 
 ipcMain.on('restart_and_update', () => {
+	console.log('Restart and update event received');
 	setImmediate(async () => {
 		try {
 			app.removeAllListeners('window-all-closed');
@@ -588,6 +660,7 @@ ipcMain.on('restart_and_update', () => {
 });
 
 ipcMain.on('check_database_connection', async (event, arg) => {
+	console.log('Check database connection event received');
 	try {
 		const driver = await provider.check(arg);
 		event.sender.send('database_status', {
@@ -595,6 +668,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', { driver })
 		});
 	} catch (error) {
+		console.error('ERROR: Occurred while check database connection:' + error);
 		event.sender.send('database_status', {
 			status: false,
 			message: error.message
@@ -603,6 +677,8 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 });
 
 app.on('activate', async () => {
+	console.log('App is activated');
+
 	if (gauzyWindow) {
 		if (LocalStore.getStore('configs').gauzyWindow) {
 			gauzyWindow.show();
@@ -620,6 +696,7 @@ app.on('activate', async () => {
 });
 
 app.on('before-quit', async (e) => {
+	console.log('App is quitting');
 	const appSetting = LocalStore.getStore('appSetting');
 
 	if (appSetting && appSetting.timerStarted) {
@@ -634,6 +711,7 @@ app.on('before-quit', async (e) => {
 	try {
 		updater.cancel();
 	} catch (e) {
+		console.error('ERROR: Occurred while cancel update:' + e);
 		throw new UIError('500', 'MAINUPDTABORT', e);
 	}
 
@@ -651,6 +729,7 @@ app.on('before-quit', async (e) => {
 // On OS X it is common for applications and their menu bar
 // to stay active until the user quits explicitly with Cmd + Q
 function quit() {
+	console.log('Quit called');
 	if (process.platform !== 'darwin') {
 		app.quit();
 	}

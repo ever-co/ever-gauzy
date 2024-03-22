@@ -1,7 +1,5 @@
 const { init, IPCMode } =
-	process.type === 'browser'
-		? require('@sentry/electron/main')
-		: require('@sentry/electron/renderer');
+	process.type === 'browser' ? require('@sentry/electron/main') : require('@sentry/electron/renderer');
 
 import { environment } from './environments/environment';
 
@@ -24,8 +22,8 @@ export function initSentry() {
 				// Return 'send' to attempt to send the event.
 				// Return 'queue' to queue and persist the event for sending later.
 				// Return 'drop' to drop the event.
-				beforeSend: (request) => (isOnline() ? 'send' : 'queue'),
-			},
+				beforeSend: (request) => (isOnline() ? 'send' : 'queue')
+			}
 		});
 	}
 }

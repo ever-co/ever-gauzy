@@ -37,7 +37,7 @@ export class ActivityWatchService {
 				try {
 					await service.clear();
 				} catch (error) {
-					console.error(`Error clearing events for ${service.constructor.name}: ${error.message}`);
+					console.error(`Error clearing events for ${service.constructor.name}: ${error.message}`, error);
 				}
 			})
 		);

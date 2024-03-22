@@ -19,14 +19,14 @@ import {
 	NbToastrModule,
 	NbWindowModule,
 	NbCalendarModule,
-	NbCalendarKitModule,
+	NbCalendarKitModule
 } from '@nebular/theme';
 import {
 	APIInterceptor,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
 	TenantInterceptor,
-	TokenInterceptor,
+	TokenInterceptor
 } from './@core/interceptors';
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
@@ -57,7 +57,7 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
-import { GAUZY_ENV } from "./@core/constants";
+import { GAUZY_ENV } from './@core/constants';
 import { initializeSentry } from './sentry';
 
 if (environment.SENTRY_DSN) {
@@ -88,7 +88,7 @@ if (environment.SENTRY_DSN) {
 		NbWindowModule.forRoot(),
 		NbToastrModule.forRoot(),
 		NbChatModule.forRoot({
-			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP,
+			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
 		NbEvaIconsModule,
 		CoreModule.forRoot(),
@@ -97,8 +97,8 @@ if (environment.SENTRY_DSN) {
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
-				deps: [HttpClient],
-			},
+				deps: [HttpClient]
+			}
 		}),
 		CloudinaryModule,
 		FileUploadModule,
@@ -109,64 +109,64 @@ if (environment.SENTRY_DSN) {
 		NgxPermissionsModule.forRoot(),
 		NgxDaterangepickerMd.forRoot({
 			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-		}),
+		})
 	],
 	bootstrap: [AppComponent],
 	providers: [
 		{
 			provide: Sentry.TraceService,
-			deps: [Router],
+			deps: [Router]
 		},
 		{ provide: APP_BASE_HREF, useValue: '/' },
 		{
 			provide: ErrorHandler,
-			useClass: SentryErrorHandler,
+			useClass: SentryErrorHandler
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: APIInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: HubstaffTokenInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: LanguageInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
-			multi: true,
+			multi: true
 		},
 		ServerConnectionService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: serverConnectionFactory,
 			deps: [ServerConnectionService, Store, Router],
-			multi: true,
+			multi: true
 		},
 		GoogleMapsLoaderService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: googleMapsLoaderFactory,
 			deps: [GoogleMapsLoaderService],
-			multi: true,
+			multi: true
 		},
 		FeatureService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: featureToggleLoaderFactory,
 			deps: [FeatureService, Store],
-			multi: true,
+			multi: true
 		},
 		{
 			provide: APP_INITIALIZER,
@@ -174,27 +174,27 @@ if (environment.SENTRY_DSN) {
 				return appInitService.init();
 			},
 			deps: [AppInitService],
-			multi: true,
+			multi: true
 		},
 		{
 			provide: ErrorHandler,
-			useClass: SentryErrorHandler,
+			useClass: SentryErrorHandler
 		},
 		AppModuleGuard,
 		ColorPickerService,
 		CookieService,
 		{
 			provide: GAUZY_ENV,
-			useValue: environment,
-		},
-	],
+			useValue: environment
+		}
+	]
 })
 export class AppModule {
 	constructor() {
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
 			week: {
-				dow: dayOfWeekAsString(WeekDaysEnum.MONDAY),
+				dow: dayOfWeekAsString(WeekDaysEnum.MONDAY)
 			},
 			fallbackLocale: LanguagesEnum.ENGLISH
 		});
@@ -209,15 +209,25 @@ export class AppModule {
  * @returns
  */
 export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router) {
-	return () =>
-		provider
-			.checkServerConnection(environment.API_BASE_URL)
+	return () => {
+		const url = environment.API_BASE_URL;
+		console.log('Checking server connection in serverConnectionFactory on URL: ', url);
+
+		return provider
+			.checkServerConnection(url)
 			.finally(() => {
+				console.log(
+					`Server connection status in serverConnectionFactory for Url ${url} is: ${store.serverConnection}`
+				);
+
 				if (store.serverConnection !== 200) {
 					router.navigate(['server-down']);
 				}
 			})
-			.catch(() => { });
+			.catch((err) => {
+				console.error(`Error checking server connection in serverConnectionFactory for URL: ${url}`, err);
+			});
+	};
 }
 
 /**
@@ -243,5 +253,5 @@ export function featureToggleLoaderFactory(provider: FeatureService, store: Stor
 				store.featureToggles = features || [];
 				return features;
 			})
-			.catch(() => { });
+			.catch(() => {});
 }

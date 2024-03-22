@@ -63,12 +63,9 @@ export class DesktopEventCounter {
 	 */
 	public get keyboardPercentage(): number {
 		// Avoid Infinity in results
-		if (this._intervalDuration === 0 || this._activeSeconds.keyboard === 0)
-			return 0;
+		if (this._intervalDuration === 0 || this._activeSeconds.keyboard === 0) return 0;
 
-		return Math.ceil(
-			this._activeSeconds.keyboard / (this._intervalDuration / 100)
-		);
+		return Math.ceil(this._activeSeconds.keyboard / (this._intervalDuration / 100));
 	}
 
 	/**
@@ -77,12 +74,9 @@ export class DesktopEventCounter {
 	 */
 	public get mousePercentage(): number {
 		// Avoid Infinity in results
-		if (this._intervalDuration === 0 || this._activeSeconds.mouse === 0)
-			return 0;
+		if (this._intervalDuration === 0 || this._activeSeconds.mouse === 0) return 0;
 
-		return Math.ceil(
-			this._activeSeconds.mouse / (this._intervalDuration / 100)
-		);
+		return Math.ceil(this._activeSeconds.mouse / (this._intervalDuration / 100));
 	}
 
 	/**
@@ -91,8 +85,7 @@ export class DesktopEventCounter {
 	 */
 	public get systemPercentage(): number {
 		// Avoid Infinity in results
-		if (this._intervalDuration === 0 || this._activeSeconds.system === 0)
-			return 0;
+		if (this._intervalDuration === 0 || this._activeSeconds.system === 0) return 0;
 
 		return this._activeSeconds.system / this._intervalDuration;
 	}
@@ -101,6 +94,7 @@ export class DesktopEventCounter {
 	 * Starts event tracking & counting
 	 */
 	public start(): void {
+		console.log('DesktopEventCounter -> start -> this._intervalId', this._intervalId);
 		if (this._intervalId) {
 			console.log('This instance of EventCounter is already started');
 			// soft fail
@@ -111,11 +105,9 @@ export class DesktopEventCounter {
 		this._intervalId = setInterval(() => {
 			this._intervalDuration += 1;
 
-			if (this._keyboardActiveDuringThisSecond)
-				this._activeSeconds.keyboard += 1;
+			if (this._keyboardActiveDuringThisSecond) this._activeSeconds.keyboard += 1;
 
-			if (this._mouseActiveDuringThisSecond)
-				this._activeSeconds.mouse += 1;
+			if (this._mouseActiveDuringThisSecond) this._activeSeconds.mouse += 1;
 
 			if (
 				this._mouseActiveDuringThisSecond ||
@@ -140,12 +132,17 @@ export class DesktopEventCounter {
 	 * Stops event tracker
 	 */
 	public stop(): void {
-		if (this._intervalId) clearInterval(this._intervalId);
+		console.log('DesktopEventCounter -> stop');
+		if (this._intervalId) {
+			clearInterval(this._intervalId);
+			console.log('DesktopEventCounter -> stop -> clearInterval called');
+		}
 
 		// Resetting counters, flags, and identifiers
 		this._intervalId = null;
 		this._keyboardActiveDuringThisSecond = false;
 		this._mouseActiveDuringThisSecond = false;
+
 		this.reset();
 
 		if (this._detectorIntervalId) {

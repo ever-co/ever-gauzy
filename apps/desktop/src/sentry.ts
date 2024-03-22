@@ -1,14 +1,14 @@
 const { init, IPCMode } =
-	process.type === 'browser'
-		? require('@sentry/electron/main')
-		: require('@sentry/electron/renderer');
+	process.type === 'browser' ? require('@sentry/electron/main') : require('@sentry/electron/renderer');
 
 import { environment } from './environments/environment';
 
 export function initSentry() {
 	if (environment.SENTRY_DSN) {
 		init({
+			debug: !environment.production,
 			dsn: environment.SENTRY_DSN,
+			environment: environment.production ? 'production' : 'development',
 			ipcMode: IPCMode.Both,
 			transportOptions: {
 				// The maximum number of days to keep an event in the queue.
@@ -22,10 +22,8 @@ export function initSentry() {
 				// Return 'send' to attempt to send the event.
 				// Return 'queue' to queue and persist the event for sending later.
 				// Return 'drop' to drop the event.
-				beforeSend: (request) => (isOnline() ? 'send' : 'queue'),
-			},
-			environment: environment.production ? 'production' : 'development',
-			debug: !environment.production,
+				beforeSend: (request) => (isOnline() ? 'send' : 'queue')
+			}
 		});
 	}
 }

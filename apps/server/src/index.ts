@@ -17,11 +17,11 @@ import {
 	MenuItemConstructorOptions,
 	screen
 } from 'electron';
+
 import { environment } from './environments/environment';
 
-// setup logger to catch all unhandled errors and submit as bug reports to our repo
-
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
+
 require('sqlite3');
 
 process.env = Object.assign(process.env, environment);
@@ -79,7 +79,11 @@ log.info(`GAUZY_SEED_PATH: ${process.env.GAUZY_SEED_PATH}`);
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
-initSentry();
+try {
+	initSentry();
+} catch (error) {
+	log.error(error);
+}
 
 let setupWindow: BrowserWindow;
 let serverWindow: BrowserWindow;
@@ -120,6 +124,7 @@ const desktopServer = new DesktopServer();
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
+
 /* Setting the app user model id for the app. */
 if (process.platform === 'win32') {
 	app.setAppUserModelId(process.env.APP_ID);
@@ -170,6 +175,7 @@ process.on('uncaughtException', (error) => {
 });
 
 eventErrorManager.onSendReport(async (message) => {
+	console.log('Send report event', message);
 	if (!serverWindow) return;
 	serverWindow.focus();
 	const dialog = new DialogErrorHandler(message, serverWindow);
@@ -188,6 +194,7 @@ eventErrorManager.onSendReport(async (message) => {
 });
 
 eventErrorManager.onShowError(async (message) => {
+	console.log('Show error event', message);
 	if (!serverWindow) return;
 	serverWindow.focus();
 	const dialog = new DialogErrorHandler(message, serverWindow);
@@ -226,16 +233,23 @@ const appState = async () => {
 
 const runMainWindow = async () => {
 	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
+
 	serverWindow.show();
+
 	splashScreen.close();
+
 	if (!tray) {
 		createTray();
 	}
 
 	new AppMenu(null, settingsWindow, null, null, pathWindow, serverWindow, false);
+
 	const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
+
 	if (menuWindowSetting) menuWindowSetting.enabled = true;
+
 	if (setupWindow) setupWindow.hide();
+
 	serverWindow.webContents.send('dashboard_ready', {
 		setting: serverConfig.setting
 	});
@@ -247,11 +261,13 @@ const initializeConfig = async (val) => {
 		serverConfig.update();
 		await runMainWindow();
 	} catch (error) {
+		console.error('Error in initializeConfig', error);
 		throw new AppError('MAINWININIT', error);
 	}
 };
 
 const runServer = async () => {
+	console.log('Run the Server...');
 	try {
 		const envVal = getEnvApi();
 		const uiPort = serverConfig.uiPort;
@@ -295,11 +311,15 @@ const getEnvApi = () => {
 };
 
 const createTray = () => {
-	const iconNativePath = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
-	iconNativePath.resize({ width: 16, height: 16 });
-	tray = new Tray(iconNativePath);
-	const serverMenu = contextMenu();
-	tray.setContextMenu(Menu.buildFromTemplate(serverMenu));
+	try {
+		const iconNativePath = nativeImage.createFromPath(path.join(__dirname, 'assets', 'icons', 'tray', 'icon.png'));
+		iconNativePath.resize({ width: 16, height: 16 });
+		tray = new Tray(iconNativePath);
+		const serverMenu = contextMenu();
+		tray.setContextMenu(Menu.buildFromTemplate(serverMenu));
+	} catch (error) {
+		console.error('Error in createTray', error);
+	}
 };
 
 const contextMenu = () => {
@@ -369,11 +389,12 @@ const contextMenu = () => {
 };
 
 ipcMain.on('start_server', async (event, arg) => {
+	console.log('Start Server Event Handler');
 	await initializeConfig(arg);
 });
 
 ipcMain.on('run_gauzy_server', async (event, arg) => {
-	console.log('run Gauzy Server');
+	console.log('Run Gauzy Server Event Handler');
 	await runServer();
 });
 
@@ -382,32 +403,44 @@ const stopServer = () => {
 };
 
 ipcMain.on('stop_gauzy_server', (event, arg) => {
+	console.log('Stop Gauzy Server Event Handler');
 	stopServer();
 });
 
 app.on('ready', async () => {
+	console.log('App is ready');
+
 	try {
 		splashScreen = new SplashScreen(pathWindow.ui);
+
 		await splashScreen.loadURL();
+
 		splashScreen.show();
+
 		if (!serverConfig.setting) {
 			LocalStore.setDefaultApplicationSetting();
 			launchAtStartup(true, false);
 		}
+
 		global.variableGlobal = {
 			API_BASE_URL: serverConfig.apiUrl,
 			IS_INTEGRATED_DESKTOP: false
 		};
+
 		if (!settingsWindow) {
 			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
 		}
+
 		await appState();
+
 		updater.settingWindow = settingsWindow;
 		updater.gauzyWindow = serverWindow;
+
 		await updater.checkUpdate();
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
 	}
+
 	TranslateService.onLanguageChange(() => {
 		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
 		new AppMenu(null, settingsWindow, null, null, pathWindow, serverWindow, false);
@@ -430,13 +463,15 @@ ipcMain.on('restart_app', async (event, arg) => {
 });
 
 ipcMain.on('save_additional_setting', (event, arg) => {
-	console.log('arg', arg);
+	console.log('save_additional_setting', arg);
 	LocalStore.updateAdditionalSetting(arg);
 });
 
 ipcMain.on('quit', quit);
 
 ipcMain.on('check_database_connection', async (event, arg) => {
+	console.log('Check Database Connection');
+
 	try {
 		const provider = arg.db;
 		let databaseOptions;
@@ -459,8 +494,11 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 				}
 			};
 		}
+
 		const dbConn = require('knex')(databaseOptions);
+
 		await dbConn.raw('select 1+1 as result');
+
 		event.sender.send('database_status', {
 			status: true,
 			message: TranslateService.instant('TIMER_TRACKER.DIALOG.CONNECTION_DRIVER', {
@@ -468,6 +506,7 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 			})
 		});
 	} catch (error) {
+		console.error('Error in check_database_connection', error);
 		event.sender.send('database_status', {
 			status: false,
 			message: error.message
@@ -476,12 +515,17 @@ ipcMain.on('check_database_connection', async (event, arg) => {
 });
 
 ipcMain.on('resp_msg_server', (event, arg) => {
+	console.log('resp_msg_server');
 	settingsWindow.webContents.send('resp_msg', arg);
 });
 
 ipcMain.on('running_state', (event, arg) => {
+	console.log('running_state');
+
 	settingsWindow.webContents.send('server_status', arg);
+
 	const trayContextMenu = contextMenu();
+
 	if (arg) {
 		const start = trayContextMenu[3];
 		start.enabled = false;
@@ -493,15 +537,20 @@ ipcMain.on('running_state', (event, arg) => {
 		reverseProxy.stop();
 		reverseUiProxy.stop();
 	}
+
 	tray.setContextMenu(Menu.buildFromTemplate(trayContextMenu));
+
 	isServerRun = arg;
+
 	// Closed the server if marked.
 	if (willQuit) {
+		console.log('Quit the app');
 		app.quit();
 	}
 });
 
 ipcMain.on('loading_state', (event, arg) => {
+	console.log('loading_state');
 	const trayContextMenu = contextMenu();
 	trayContextMenu[3].enabled = false;
 	trayContextMenu[4].enabled = false;
@@ -509,12 +558,15 @@ ipcMain.on('loading_state', (event, arg) => {
 });
 
 ipcMain.on('expand_window', (event, arg) => {
+	console.log('expand_window');
+
 	const display = screen.getPrimaryDisplay();
 	const { height, width } = display.workAreaSize;
 	console.log('width ', width);
 	console.log('height ', height);
 	const wx = 640;
 	const hx = 480;
+
 	switch (process.platform) {
 		case 'linux':
 			{
@@ -546,21 +598,31 @@ ipcMain.on('expand_window', (event, arg) => {
 });
 
 function quit() {
+	console.log('Quit the app');
 	if (process.platform !== 'darwin') {
 		app.quit();
 	}
 }
 
 ipcMain.on('restart_and_update', () => {
+	console.log('Restart and Update');
 	setImmediate(() => {
-		app.removeAllListeners('window-all-closed');
-		autoUpdater.quitAndInstall(false);
+		try {
+			app.removeAllListeners('window-all-closed');
+			autoUpdater.quitAndInstall(false);
+		} catch (error) {
+			console.error('Error in restart_and_update', error);
+		}
+
 		app.exit(0);
 	});
 });
 
 app.on('before-quit', async (e) => {
+	console.log('Before Quit');
+
 	e.preventDefault();
+
 	if (isServerRun) {
 		const exitConfirmationDialog = new DialogStopServerExitConfirmation(
 			new DesktopDialog(
@@ -569,7 +631,9 @@ app.on('before-quit', async (e) => {
 				serverWindow
 			)
 		);
+
 		const button = await exitConfirmationDialog.show();
+
 		if (button.response === 0) {
 			// Stop the server from main
 			stopServer();
@@ -580,7 +644,10 @@ app.on('before-quit', async (e) => {
 		// soft download cancellation
 		try {
 			updater.cancel();
-		} catch (e) {}
+		} catch (e) {
+			console.error('Error in before-quit', e);
+		}
+
 		app.exit(0);
 	}
 });
@@ -626,6 +693,7 @@ ipcMain.on('update_server_config', (event, arg) => {
 });
 
 function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
+	console.log('Launch at startup', autoLaunch, hidden);
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
@@ -655,6 +723,7 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 }
 
 ipcMain.on('save_encrypted_file', (event, value) => {
+	console.log('Save Encrypted File');
 	try {
 		const { secureProxy = { enable: false, secure: true, ssl: { key: '', cert: '' } } } =
 			serverConfig.setting || {};
