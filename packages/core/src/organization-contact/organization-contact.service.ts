@@ -7,15 +7,13 @@ import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { OrganizationContact } from './organization-contact.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
-import { TypeOrmOrganizationContactRepository } from './repository/type-orm-organization-contact.repository';
+import { MikroOrmOrganizationContactRepository, TypeOrmOrganizationContactRepository } from './repository';
 
 @Injectable()
 export class OrganizationContactService extends TenantAwareCrudService<OrganizationContact> {
 	constructor(
-		typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-
-		mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository
+		readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+		readonly mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository
 	) {
 		super(typeOrmOrganizationContactRepository, mikroOrmOrganizationContactRepository);
 	}

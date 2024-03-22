@@ -3,7 +3,6 @@ import {
 	JoinTable,
 	RelationId
 } from 'typeorm';
-import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
@@ -49,8 +48,6 @@ import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-or
 
 @MultiORMEntity('organization_contact', { mikroOrmRepository: () => MikroOrmOrganizationContactRepository })
 export class OrganizationContact extends TenantOrganizationBaseEntity implements IOrganizationContact {
-
-	[EntityRepositoryType]?: MikroOrmOrganizationContactRepository;
 
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()

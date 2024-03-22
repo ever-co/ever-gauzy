@@ -1,7 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { IOrganizationContact } from '@gauzy/contracts';
-import { RequestContext } from '../../../core/context';
 import { OrganizationContactUpdateCommand } from '../organization-contact-update.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { ContactService } from '../../../contact/contact.service';
