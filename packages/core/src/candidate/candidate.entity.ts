@@ -115,20 +115,27 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	/**
 	 * Contact
 	 */
-	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.candidate, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Candidate) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly contactId?: string;
+	contactId?: string;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -154,9 +161,16 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => CandidateSource })
 	@MultiORMOneToOne(() => CandidateSource, (candidateSource) => candidateSource.candidate, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
@@ -173,8 +187,13 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 */
 	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, (user) => user.candidate, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
@@ -190,7 +209,13 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate, { owner: true })
+	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true
+	})
 	@JoinColumn()
 	employee?: IEmployee;
 

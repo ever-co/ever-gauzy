@@ -340,11 +340,13 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@MultiORMOneToOne(() => User, (it) => it.employee, {
+	@MultiORMOneToOne(() => User, (user) => user.employee, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
 		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
@@ -360,19 +362,23 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	/**
 	 * Contact
 	 */
-	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.employee, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
 		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: Employee) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
@@ -382,7 +388,10 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * Candidate
 	 */
 	@ApiProperty({ type: () => Candidate })
-	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.employee)
+	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.employee, {
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
+	})
 	candidate?: ICandidate;
 	/*
 	|--------------------------------------------------------------------------

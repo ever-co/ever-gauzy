@@ -114,9 +114,9 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
     const mikroOrmOptions: Partial<OneToOneOptions<T, any>> = {
         ...omit(options, 'onDelete', 'onUpdate') as Partial<OneToOneOptions<T, any>>,
         entity: typeFunctionOrTarget as (string | ((e?: any) => EntityName<T>)),
-        cascade: mikroORMCascade,
-        deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase(),
-        updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase(),
+        ...(mikroORMCascade.length ? { cascade: mikroORMCascade } : {}),
+        ...(typeOrmOptions?.onDelete ? { deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase() } : {}),
+        ...(typeOrmOptions?.onUpdate ? { updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase() } : {}),
         ...(typeOrmOptions?.nullable ? { nullable: typeOrmOptions?.nullable } : {}),
         ...(typeOrmOptions?.lazy ? { lazy: typeOrmOptions?.lazy } : {}),
     };
@@ -124,16 +124,11 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
     // Set default joinColumn if not overwritten in options
     if (mikroOrmOptions.owner === true && !mikroOrmOptions.joinColumn && propertyKey) {
         mikroOrmOptions.joinColumn = `${propertyKey}Id`;
-        mikroOrmOptions.referenceColumnName = `id`;
     }
 
     // Map inverseSideOrOptions based on the DB_ORM environment variable
-    if (process.env.DB_ORM == MultiORMEnum.MikroORM) {
-        if (mikroOrmOptions.owner === true) {
-            mikroOrmOptions.inversedBy = inverseSideOrOptions;
-        } else {
-            mikroOrmOptions.mappedBy = inverseSideOrOptions;
-        }
+    if (process.env.DB_ORM === MultiORMEnum.MikroORM && !mikroOrmOptions.owner) {
+        mikroOrmOptions.mappedBy = inverseSideOrOptions;
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>;
