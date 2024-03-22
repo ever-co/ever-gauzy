@@ -13,7 +13,8 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { CreateOptions, EntityData, FilterQuery as MikroFilterQuery, RequiredEntityData, UpsertOptions, wrap } from '@mikro-orm/core';
+import { CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
+import { AssignOptions } from '@mikro-orm/knex';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
@@ -440,44 +441,45 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns The created or updated entity.
 	 */
 	public async create(
-		entity: IPartialEntity<T>,
+		partialEntity: IPartialEntity<T>,
 		createOptions: CreateOptions = {
 			/** This option disables the strict typing which requires all mandatory properties to have value, it has no effect on runtime */
 			partial: true,
 			/** Creates a managed entity instance instead, bypassing the constructor call */
 			managed: true
 		},
-		upsertOptions: UpsertOptions<T> = {
-			onConflictFields: ['id'], // specify a manual set of fields pass to the on conflict clause
-			onConflictExcludeFields: ['createdAt'],
+		assignOptions: AssignOptions = {
+			updateNestedEntities: false,
+			onlyOwnProperties: true
 		}
 	): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					try {
-						// Create a new entity using MikroORM
-						const newEntity = this.mikroRepository.create(entity as RequiredEntityData<T>, createOptions);
+						if (partialEntity['id']) {
+							// Try to load the existing entity
+							const entity = await this.mikroRepository.findOne(partialEntity['id']);
+							if (entity) {
+								// If the entity has an ID, perform an upsert operation
+								this.mikroRepository.assign(entity, partialEntity as any, assignOptions);
+								await this.mikroRepository.flush();
 
-						// If the entity doesn't have an ID, it's new and should be persisted
-						if (!entity['id']) {
-							// Persisting the entities
-							await this.mikroRepository.persistAndFlush(newEntity); // This will also persist the relations
-							return this.serialize(newEntity);
+								return this.serialize(entity);
+							}
 						}
+						// If the entity doesn't have an ID, it's new and should be persisted
+						// Create a new entity using MikroORM
+						const newEntity = this.mikroRepository.create(partialEntity as RequiredEntityData<T>, createOptions);
 
-						// If the entity has an ID, perform an upsert operation
-						// This block will only be reached if the entity is existing
-						const upsertedEntity = await this.mikroRepository.upsert(
-							entity as EntityData<T> | T,
-							upsertOptions
-						);
-						return this.serialize(upsertedEntity);
+						// Persist new entity and flush
+						await this.mikroRepository.persistAndFlush(newEntity); // This will also persist the relations
+						return this.serialize(newEntity);
 					} catch (error) {
 						console.error('Error during mikro orm create crud transaction:', error);
 					}
 				case MultiORMEnum.TypeORM:
-					const newEntity = this.repository.create(entity as DeepPartial<T>);
+					const newEntity = this.repository.create(partialEntity as DeepPartial<T>);
 					return await this.repository.save(newEntity);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);

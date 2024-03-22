@@ -67,12 +67,15 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	/**
 	 * ProductVariantPrice
 	 */
-	@MultiORMOneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantPrice, (productVariantPrice) => productVariantPrice.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
 	@JoinColumn()
 	price: IProductVariantPrice;
@@ -80,12 +83,15 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	/**
 	 * ProductVariantSetting
 	 */
-	@MultiORMOneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantSetting, (productVariantSetting) => productVariantSetting.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
 	@JoinColumn()
 	setting: IProductVariantSetting;

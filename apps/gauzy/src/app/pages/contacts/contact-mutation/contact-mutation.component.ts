@@ -40,9 +40,10 @@ export class ContactMutationComponent extends TranslationBaseComponent
 
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
-	/*
-	* Getter & Setter for organizationContact element
-	*/
+	/**
+	 * Getter and Setter for organizationContact.
+	 * When a new organizationContact is set, synchronizes organization contact members.
+	 */
 	private _organizationContact: IOrganizationContact;
 	get organizationContact(): IOrganizationContact {
 		return this._organizationContact;
@@ -79,14 +80,12 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/*
 	* Output event emitter for cancel process event
 	*/
-	@Output()
-	canceled = new EventEmitter();
+	@Output() canceled = new EventEmitter();
 
 	/*
 	* Output event emitter for add/edit organization contact event
 	*/
-	@Output()
-	addOrEditOrganizationContact = new EventEmitter();
+	@Output() addOrEditOrganizationContact = new EventEmitter();
 
 	// leaflet map template
 	@ViewChild('leafletTemplate', { static: false }) leafletTemplate: LeafletMapComponent;
@@ -97,7 +96,6 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	// form stepper
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
-
 	members: string[] = [];
 	selectedMembers: IEmployee[] = [];
 	selectedEmployeeIds: string[];
@@ -107,7 +105,6 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	projects: IOrganizationProject[] = [];
 	employees: IEmployee[] = [];
 	organization: IOrganization;
-
 	organizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 
 	/**
@@ -189,14 +186,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * Sync organization contact members
+	 * Sync organization contact members.
+	 * Updates `selectedEmployeeIds` based on the members of the organization contact.
 	 */
 	syncOrganizationContactMembers() {
-		if (this.organizationContact) {
-			this.selectedEmployeeIds = this.organizationContact.members.map(
-				(member: IEmployee) => member.id
-			);
-		}
+		this.selectedEmployeeIds = this.organizationContact?.members?.map((member: IEmployee) => member.id) ?? [];
 	}
 
 	/**
@@ -212,73 +206,59 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		);
 	}
 
+	/**
+	 * Fetches all projects associated with the current organization and user tenant, and updates the 'projects' property.
+	 */
 	private async _getProjects() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { items } = await this.organizationProjectsService.getAll([], {
-			organizationId,
-			tenantId
-		});
-		this.projects = items;
+		try {
+			const { tenantId } = this.store.user;
+			const { id: organizationId } = this.organization;
+
+			const { items } = await this.organizationProjectsService.getAll([], {
+				organizationId,
+				tenantId
+			});
+
+			this.projects = items;
+		} catch (error) {
+			console.error('Error fetching projects:', error);
+		}
 	}
 
 	private _patchForm() {
 		if (!this.organization) {
 			return;
 		}
+		const orgContact = this.organizationContact;
+		//
 		this.contMainForm.patchValue({
-			imageUrl: this.organizationContact
-				? this.organizationContact.imageUrl
-				: null,
-			tags: this.organizationContact
-				? (this.organizationContact.tags)
-				: [],
-			name: this.organizationContact
-				? this.organizationContact.name
-				: '',
-			primaryEmail: this.organizationContact
-				? this.organizationContact.primaryEmail
-				: '',
-			primaryPhone: this.organizationContact
-				? this.organizationContact.primaryPhone
-				: '',
-			projects: this.organizationContact
-				? this.organizationContact.projects || []
-				: [],
-			contactType: this.organizationContact
-				? this.organizationContact.contactType
-				: this.contactType,
-			fax: this.organizationContact
-				? this.organizationContact.contact
-					? this.organizationContact.contact.fax
-					: ''
-				: '',
-			website: this.organizationContact
-				? this.organizationContact.contact
-					? this.organizationContact.contact.website
-					: ''
-				: '',
-			fiscalInformation: this.organizationContact
-				? this.organizationContact.contact
-					? this.organizationContact.contact.fiscalInformation
-					: ''
-				: ''
+			imageUrl: orgContact?.imageUrl ?? null,
+			tags: orgContact?.tags ?? [],
+			name: orgContact?.name ?? null,
+			primaryEmail: orgContact?.primaryEmail ?? null,
+			primaryPhone: orgContact?.primaryPhone ?? null,
+			projects: orgContact?.projects ?? [],
+			contactType: orgContact?.contactType ?? this.contactType,
+			fax: orgContact?.contact?.fax ?? null,
+			website: orgContact?.contact?.website ?? null,
+			fiscalInformation: orgContact?.contact?.fiscalInformation ?? null
 		});
 		this.contMainForm.updateValueAndValidity();
 
+		//
 		this.budgetForm.patchValue({
-			budgetType: this.organizationContact
-				? this.organizationContact.budgetType
-				: OrganizationContactBudgetTypeEnum.HOURS,
-			budget: this.organizationContact
-				? this.organizationContact.budget
-				: null
+			budgetType: orgContact?.budgetType ?? OrganizationContactBudgetTypeEnum.HOURS,
+			budget: orgContact?.budget ?? null
 		});
 		this.budgetForm.updateValueAndValidity();
 
 		this._setLocationForm();
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	private _setLocationForm() {
 		if (!this.organizationContact) {
 			return;
@@ -306,24 +286,27 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		this.toastrService.danger(error);
 	}
 
-	addNewProject = (name: string): Promise<IOrganizationProject> => {
+	/**
+	 * Add a new project.
+	 *
+	 * @param name Name of the project
+	 * @returns A Promise resolving to the newly created IOrganizationProject
+	 */
+	addNewProject = async (name: string): Promise<IOrganizationProject> => {
 		try {
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 
-			return this.organizationProjectsService
-				.create({
-					name,
-					organizationId,
-					tenantId,
-					members: []
-				})
-				.then((project) => {
-					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
-						name
-					});
-					return project;
-				});
+			const project = await this.organizationProjectsService.create({
+				name,
+				organizationId,
+				tenantId,
+				members: []
+			});
+
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
+
+			return project;
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -341,79 +324,96 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		this.canceled.emit();
 	}
 
+	/**
+	 * Submits and processes form data for organizational contacts.
+	 * Validates main form, consolidates data from multiple forms, processes members and project info,
+	 * and emits the combined data for further action.
+	 */
 	async submitForm() {
 		if (this.contMainForm.invalid) {
 			return;
 		}
-		const { fiscalInformation, website, contactType } = this.contMainForm.getRawValue();
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
-		const { budget, budgetType } = this.budgetForm.getRawValue();
-		const { name, primaryEmail, primaryPhone, fax, tags = [] } = this.contMainForm.getRawValue();
-
-		let { imageUrl } = this.contMainForm.getRawValue();
-
+		const data = this.contMainForm.value;
+		const budget = this.budgetForm.value;
 		const location = this.locationFormDirective.getValue();
+		const { fax, fiscalInformation, website } = this.contMainForm.getRawValue();
+
 		const { coordinates } = location['loc'];
 		delete location['loc'];
 
 		const [latitude, longitude] = coordinates;
+
+		// Combining form data with additional properties
 		const contact = {
-			...{ organizationId, tenantId },
+			latitude,
+			longitude,
+			fiscalInformation,
+			website,
+			fax,
 			...location,
-			...{ latitude, longitude }
+			organization: { id: organizationId },
+			tenantId,
+			tenant: { id: tenantId },
+			...(this.organizationContact?.contact?.id ? { id: this.organizationContact?.contact?.id } : {})
 		};
 
-		let members = (this.members || this.selectedEmployeeIds || [])
-			.map((id) => this.employees.find((e) => e.id === id))
-			.filter((e) => !!e);
+		/**
+		 * Constructs an array of member objects from a list of member or selected employee IDs.
+		 * Each ID is mapped to a corresponding employee object, filtering out any non-existent (falsy) members.
+		 */
+		let memberIds = this.members || this.selectedEmployeeIds || [];
+		let members = memberIds.map((id) => this.employees.find((e) => e.id === id)).filter(Boolean);
+
 		if (!members.length) members = this.selectedMembers;
 
-		let { projects = [] } = this.contMainForm.getRawValue();
-		projects.map((project: IOrganizationProject) => {
-			if ('members' in project) {
+		//
+		let projects = data.projects ?? [];
+		projects.forEach((project: IOrganizationProject) => {
+			if (Array.isArray(project.members)) {
 				project.members.push(...members);
+			} else {
+				project.members = [...members];
 			}
-			return project;
 		});
 
 		this.addOrEditOrganizationContact.emit({
-			id: this.organizationContact
-				? this.organizationContact.id
-				: undefined,
-			organizationId,
-			tenantId,
-			budgetType,
-			budget,
-			name,
-			primaryEmail,
-			primaryPhone,
+			...budget,
+			...data,
 			projects,
-			contactType,
-			imageUrl,
 			members,
-			tags,
-			fax,
-			fiscalInformation,
-			website,
-			...contact
+			contact,
+			organizationId,
+			organization: { id: organizationId },
+			tenantId,
+			tenant: { id: tenantId },
+			...(this.organizationContact?.id ? { id: this.organizationContact?.id } : {})
 		});
 	}
 
+	/**
+	 * Updates the 'tags' field in 'contMainForm' with the selected tags and revalidates the form.
+	 * @param tags An array of selected tag objects.
+	 */
 	selectedTagsEvent(tags: ITag[]) {
 		this.contMainForm.patchValue({ tags });
 		this.contMainForm.updateValueAndValidity();
 	}
 
+	/**
+	 * Progresses the stepper and adds a map marker on the second step.
+	 */
 	nextStep() {
 		this.stepper.next();
+
+		// Assuming the second step is related to map operations.
 		if (this.stepper.selectedIndex === 1) {
-			const {
-				loc: { coordinates }
-			} = this.locationFormDirective.getValue();
-			const [lat, lng] = coordinates;
+			// Directly destructure 'coordinates' from the location form value.
+			const { loc: { coordinates: [lat, lng] } } = this.locationFormDirective.getValue();
+
+			// Delay marker addition to ensure the map is ready. Adjust delay as needed.
 			setTimeout(() => {
 				this.leafletTemplate.addMarker(new LatLng(lat, lng));
 			}, 200);
@@ -423,12 +423,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
 	 */
-	onCoordinatesChanges(
-		$event: google.maps.LatLng | google.maps.LatLngLiteral
-	) {
-		const {
-			loc: { coordinates }
-		} = this.locationFormDirective.getValue();
+	onCoordinatesChanges($event: google.maps.LatLng | google.maps.LatLngLiteral) {
+		const { loc: { coordinates } } = this.locationFormDirective.getValue();
 
 		const [lat, lng] = coordinates;
 		if (this.leafletTemplate) {
@@ -436,20 +432,24 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		}
 	}
 
-	/*
-	 * Leaflet Map Click Event Emitter
+	/**
+	 * Handles click events on the Leaflet map. Updates the location form with the clicked coordinates
+	 * and resets some location-related fields. It also triggers a recalculation of dependent form values.
+	 *
+	 * @param latlng The latitude and longitude object from the map click event.
 	 */
 	onMapClicked(latlng: LatLng) {
-		const { lat, lng }: LatLng = latlng;
 		const location = this.locationFormDirective.getValue();
+
 		this.locationFormDirective.setValue({
 			...location,
 			country: '',
 			loc: {
 				type: 'Point',
-				coordinates: [lat, lng]
+				coordinates: [latlng.lat, latlng.lng]
 			}
 		});
+
 		this.locationFormDirective.onCoordinatesChanged();
 	}
 

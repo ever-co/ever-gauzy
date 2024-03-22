@@ -35,12 +35,19 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	MultiORMOneToOne
+} from './../core/decorators/entity';
 import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-organization-contact.repository';
 
 @MultiORMEntity('organization_contact', { mikroOrmRepository: () => MikroOrmOrganizationContactRepository })
-export class OrganizationContact extends TenantOrganizationBaseEntity
-	implements IOrganizationContact {
+export class OrganizationContact extends TenantOrganizationBaseEntity implements IOrganizationContact {
 
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
@@ -56,11 +63,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	primaryPhone: string;
 
 	@ApiProperty({ type: () => String, enum: ContactOrganizationInviteStatus })
-	@MultiORMColumn({
-		type: 'simple-enum',
-		nullable: true,
-		enum: ContactOrganizationInviteStatus
-	})
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: ContactOrganizationInviteStatus })
 	inviteStatus?: ContactOrganizationInviteStatus;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -68,12 +71,7 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	notes?: string;
 
 	@ApiProperty({ type: () => String, enum: ContactType })
-	@MultiORMColumn({
-		type: 'simple-enum',
-		nullable: false,
-		enum: ContactType,
-		default: ContactType.CLIENT
-	})
+	@MultiORMColumn({ type: 'simple-enum', enum: ContactType, default: ContactType.CLIENT })
 	contactType: ContactType;
 
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
@@ -108,16 +106,22 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 */
 	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.organizationContact, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
 
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationContact) => it.contact)
@@ -129,6 +133,9 @@ export class OrganizationContact extends TenantOrganizationBaseEntity
 	 * ImageAsset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 

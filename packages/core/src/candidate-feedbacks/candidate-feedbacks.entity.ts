@@ -105,12 +105,17 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity
 	/**
 	 * Candidate Interviewers
 	 */
-	@ApiProperty({ type: () => CandidateInterviewers })
-	@MultiORMOneToOne(() => CandidateInterviewers, { owner: true })
+	@MultiORMOneToOne(() => CandidateInterviewers, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true
+	})
 	@JoinColumn()
 	interviewer?: ICandidateInterviewers;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: CandidateFeedback) => it.interviewer)
 	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewerId?: ICandidateInterviewers['id'];

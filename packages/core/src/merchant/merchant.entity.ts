@@ -64,8 +64,13 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 */
 	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
