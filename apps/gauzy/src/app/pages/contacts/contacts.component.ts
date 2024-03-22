@@ -364,6 +364,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
+	 * Manages adding or updating an organization contact and displays relevant notifications.
 	 *
 	 * @param organizationContact
 	 * @returns
@@ -372,9 +373,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
-		const contact: IContactCreateInput = this.extractLocation(organizationContact, organizationId, tenantId);
 
+		const contact: IContactCreateInput = this.extractLocation(organizationContact.contact);
 		const request = {
 			...organizationContact,
 			contact
@@ -404,34 +404,25 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
+	 * A contact object with organization and tenant details from the current organization context.
 	 *
-	 * @param organizationContact
-	 * @param organizationId
-	 * @param tenantId
-	 * @returns
+	 * @param contact The contact object to be enriched.
+	 * @returns An enriched contact object containing location details, organization, and tenant information.
 	 */
-	private extractLocation(
-		organizationContact: IOrganizationContactCreateInput,
-		organizationId: string,
-		tenantId: string
-	): IContactCreateInput {
+	private extractLocation(contact: IContactCreateInput): IContactCreateInput | undefined {
+		if (!this.organization) {
+			return;
+		}
+		const { id: organizationId, tenantId } = this.organization;
 		return {
-			country: organizationContact.country,
-			city: organizationContact.city,
-			address: organizationContact.address,
-			address2: organizationContact.address2,
-			postcode: organizationContact.postcode,
-			fax: organizationContact.fax,
-			fiscalInformation: organizationContact.fiscalInformation,
-			website: organizationContact.website,
-			latitude: organizationContact.latitude,
-			longitude: organizationContact.longitude,
+			...contact,
 			organizationId,
 			organization: { id: organizationId },
 			tenantId,
-			tenant: { id: tenantId }
+			tenant: { id: tenantId },
 		};
 	}
+
 
 	/*
 	 * Register Smart Table Source Config
