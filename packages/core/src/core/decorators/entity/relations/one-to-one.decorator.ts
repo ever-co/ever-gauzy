@@ -120,10 +120,8 @@ export function mapOneToOneArgsForMikroORM<T, O>({ typeFunctionOrTarget, inverse
     }
 
     // Map inverseSideOrOptions based on the DB_ORM environment variable
-    if (process.env.DB_ORM === MultiORMEnum.MikroORM && mikroOrmOptions.owner) {
-        if (inverseSideOrOptions) {
-            mikroOrmOptions.inversedBy = inverseSideOrOptions;
-        }
+    if (process.env.DB_ORM === MultiORMEnum.MikroORM && !mikroOrmOptions.owner) {
+        mikroOrmOptions.mappedBy = inverseSideOrOptions;
     }
 
     return mikroOrmOptions as MikroORMRelationOptions<any, any>;
