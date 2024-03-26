@@ -132,7 +132,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			}
 
 			// 6. Executes various organization update tasks concurrently.
-			this.executeOrganizationUpdateTasks(organization, organizationId);
+			this.executeOrganizationUpdateTasks(organization);
 
 			// 7. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
@@ -164,7 +164,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 	 * @param organizationId The unique identifier of the organization, used in some of the update tasks.
 	 * @returns Promise<void> This function returns a promise that resolves to void.
 	 */
-	public async executeOrganizationUpdateTasks(organization: Organization, organizationId: string): Promise<void> {
+	public async executeOrganizationUpdateTasks(organization: Organization): Promise<void> {
 		try {
 			// 1. Create report for relative organization.
 			await this.commandBus.execute(

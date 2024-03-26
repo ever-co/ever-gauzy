@@ -1,5 +1,4 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IFeature, IFeatureOrganization, IFeatureOrganizationUpdateInput, ITenant } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { TenantAwareCrudService } from './../core/crud';
@@ -12,10 +11,9 @@ import { MikroOrmFeatureOrganizationRepository } from './repository/mikro-orm-fe
 @Injectable()
 export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOrganization> {
 	constructor(
-		@InjectRepository(FeatureOrganization)
-		typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
+		readonly typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
 
-		mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
+		readonly mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
 
 		@Inject(forwardRef(() => FeatureService))
 		private readonly _featureService: FeatureService
@@ -68,31 +66,30 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	}
 
 	/**
-	 * Create/Update feature organization for relative tenants
+	 * Create/Update feature organization for relative tenants.
 	 *
-	 * @param tenants
-	 * @returns
+	 * @param tenants An array of ITenant instances.
+	 * @returns A Promise resolving to an array of IFeatureOrganization.
 	 */
 	public async updateTenantFeatureOrganizations(tenants: ITenant[]): Promise<IFeatureOrganization[]> {
 		if (!tenants.length) {
-			return;
+			return [];
 		}
 
 		const featureOrganizations: IFeatureOrganization[] = [];
-		const { items } = await this._featureService.findAll();
-		const features: IFeature[] = items;
+		const features: IFeature[] = await this._featureService.find();
 
-		for await (const feature of features) {
-			for await (const tenant of tenants) {
-				const { isEnabled } = feature;
-				const featureOrganization: IFeatureOrganization = new FeatureOrganization({
-					isEnabled,
-					tenant,
-					feature
-				});
-				featureOrganizations.push(featureOrganization);
-			}
+		for (const feature of features) {
+			const isEnabled = feature.isEnabled;
+			const tenantFeatureOrganizations = tenants.map((tenant) => new FeatureOrganization({
+				isEnabled,
+				tenant,
+				feature
+			}));
+
+			featureOrganizations.push(...tenantFeatureOrganizations);
 		}
+
 		return await this.repository.save(featureOrganizations);
 	}
 }
