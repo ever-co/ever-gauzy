@@ -18,6 +18,7 @@ export * from './ITwitterConfig';
 export * from './IUnleashConfig';
 export * from './IUpworkConfig';
 export * from './IWasabiConfig';
+export * from './IDigitalOceanConfig';
 export * from './IHubstaffConfig';
 export * from './IJitsuConfig';
 export * from './IJiraIntegrationConfig';

@@ -17,7 +17,8 @@ import {
 	IUnleashConfig,
 	IUpworkConfig,
 	IWasabiConfig,
-	IJiraIntegrationConfig
+	IJiraIntegrationConfig,
+	IDigitalOceanConfig
 } from '@gauzy/common';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -98,6 +99,7 @@ export interface IEnvironment {
 	awsConfig?: IAwsConfig;
 	wasabi?: IWasabiConfig;
 	cloudinary?: ICloudinaryConfig;
+	digitalOcean: IDigitalOceanConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
