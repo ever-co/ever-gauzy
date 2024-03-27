@@ -1,32 +1,52 @@
 import { AfterContentChecked, ChangeDetectorRef, Directive, OnDestroy, OnInit } from '@angular/core';
-import { FeatureEnum, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NavMenuBuilderService } from '../../../@core/services/nav-builder';
+import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
+import { NavMenuBuilderService, NavMenuSectionItem } from '../../services/nav-builder';
 import { Store } from '../../services/store.service';
 import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
+import { IMenuItem } from '../../../@shared/sidebar-menu/menu-items/interface/menu-item.interface';
+import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy()
 @Directive({
     selector: '[gaBaseNavMenu]',
 })
-export class BaseNavMenuComponent implements AfterContentChecked, OnInit, OnDestroy {
+export class BaseNavMenuComponent extends TranslationBaseComponent implements AfterContentChecked, OnInit, OnDestroy {
+
     public isEmployeeJobMatchingEntity: boolean = false;
-    public isEmployee: boolean;
+    public isEmployee: boolean = false;
+    public organization: IOrganization;
+
+    /**
+     *
+     */
+    public get selectedItem() {
+        return this._sidebarMenuService.selectedItem;
+    }
+    public set selectedItem(value: IMenuItem) {
+        this._sidebarMenuService.selectedItem = value;
+    }
 
     constructor(
         protected readonly _navMenuBuilderService: NavMenuBuilderService,
         protected readonly _store: Store,
         protected readonly _cdr: ChangeDetectorRef,
         protected readonly _sidebarMenuService: SidebarMenuService,
-    ) { }
+        protected readonly _translate: TranslateService,
+    ) {
+        super(_translate);
+    }
 
     ngOnInit(): void {
-        this.defineNavMenu();
-        this._store.user$
+        this._store.selectedOrganization$
             .pipe(
-                filter((user: IUser) => !!user),
-                tap((user: IUser) => this.isEmployee = !!user.employeeId),
+                filter((organization: IOrganization) => !!organization),
+                distinctUntilChange(),
+                tap((organization: IOrganization) => (this.organization = organization)),
+                tap(() => this.defineNavMenu()),
                 untilDestroyed(this)
             )
             .subscribe();
@@ -678,7 +698,8 @@ export class BaseNavMenuComponent implements AfterContentChecked, OnInit, OnDest
                 title: 'Organization',
                 icon: 'fas fa-globe-americas',
                 data: {
-                    translationKey: 'MENU.ORGANIZATION'
+                    translationKey: 'MENU.ORGANIZATION',
+                    withOrganizationShortcuts: true
                 },
                 items: [
                     {
@@ -687,6 +708,7 @@ export class BaseNavMenuComponent implements AfterContentChecked, OnInit, OnDest
                         icon: 'fas fa-globe-americas',
                         pathMatch: 'prefix',
                         data: {
+                            organizationShortcut: true,
                             permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
                             urlPrefix: `/pages/organizations/edit/`,
                             urlPostfix: '',
@@ -1027,6 +1049,83 @@ export class BaseNavMenuComponent implements AfterContentChecked, OnInit, OnDest
                 ]
             }
         ]);
+    }
+
+    /**
+     * Maps menu sections and their sub-sections recursively.
+     *
+     * @param items The menu items to map.
+     * @returns The mapped menu sections.
+     */
+    public mapMenuSections(items: NavMenuSectionItem[]): NavMenuSectionItem[] {
+        return items.map((item: NavMenuSectionItem) => this.mapMenuSection(item));
+    }
+
+    /**
+     * Maps a single menu section and its sub-sections recursively.
+     *
+     * @param section The menu section to map.
+     * @returns The mapped menu section.
+     */
+    public mapMenuSection(item: NavMenuSectionItem): NavMenuSectionItem {
+        const section: NavMenuSectionItem = {
+            ...item,
+            title: this.getTranslation(item.data.translationKey),
+            hidden: item.hidden || this.isSectionHidden(item),
+        };
+
+        // Additional logic here
+        if (item.data.organizationShortcut) {
+            // If organizationShortcut is provided, modify the section link based on organization
+            section.link = item.data.urlPrefix + this.organization.id + item.data.urlPostfix;
+        }
+
+        if (item.items) {
+            section.children = this.mapMenuSections(item.items);
+        }
+
+        return section;
+    }
+
+    /**
+     * Checks if a menu section should be hidden based on permissions and features.
+     *
+     * @param section The menu section to check.
+     * @returns True if the section should be hidden, false otherwise.
+     */
+    public isSectionHidden(section: NavMenuSectionItem): boolean {
+        const { data } = section;
+
+        // Check if section should be hidden based on permissions or custom hide function
+        if (data.permissionKeys || data.hide) {
+            // If permission keys are provided, check if any permission is granted
+            const anyPermission = data.permissionKeys ? this._store.hasAnyPermission(...data.permissionKeys) : true;
+
+            // If any permission is not granted or custom hide function returns true, hide the section
+            if (!anyPermission || (data.hide && data.hide())) {
+                return true;
+            }
+        }
+
+        // If feature key is provided, check if the feature is enabled
+        if (data.featureKey) {
+            return !this._store.hasFeatureEnabled(data.featureKey);
+        }
+
+        // If none of the above conditions are met, the section should not be hidden
+        return false;
+    }
+
+    /**
+     * Focuses on a specific menu item.
+     * @param event The menu item to focus on.
+     */
+    public focusOn(event: IMenuItem): void {
+        // Set the selected menu item in the sidebarMenuService
+        this._sidebarMenuService.selectedItem = event;
+
+        // Detect changes manually using ChangeDetectorRef
+        this._cdr.detectChanges();
     }
 
     ngOnDestroy(): void { }

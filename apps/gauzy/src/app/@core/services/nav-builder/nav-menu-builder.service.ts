@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay } from 'rxjs';
 import {
-	NavMenuItem,
+	NavMenuSectionItem,
 	NavMenuItemsConfig,
-	NavMenuSection,
 	NavMenuSectionConfig,
 } from './nav-builder-types';
 
@@ -12,10 +11,10 @@ import {
 })
 export class NavMenuBuilderService {
 	// Declare an observable property menuConfig$ of type Observable<NavMenuSection[]>
-	public menuConfig$: Observable<NavMenuSection[]>;
+	public menuConfig$: Observable<NavMenuSectionItem[]>;
 
 	// Initial configuration of the navigation menu
-	private initialNavMenuConfig$ = new BehaviorSubject<NavMenuSection[]>([]);
+	private initialNavMenuConfig$ = new BehaviorSubject<NavMenuSectionItem[]>([]);
 	// Additional sections that can be added to the navigation menu
 	private addedNavMenuSections: Array<NavMenuSectionConfig> = [];
 	// Additional menu items that can be added to the navigation menu
@@ -30,7 +29,7 @@ export class NavMenuBuilderService {
 	 *
 	 * @param config An array of NavMenuSection objects representing the navigation menu sections.
 	 */
-	defineNavMenuSections(config: NavMenuSection[]) {
+	defineNavMenuSections(config: NavMenuSectionItem[]) {
 		this.initialNavMenuConfig$.next(config);
 	}
 
@@ -39,7 +38,7 @@ export class NavMenuBuilderService {
 	 * @param config The configuration object representing the new navigation menu section to add.
 	 * @param before (Optional) The identifier of the section before which the new section should be added.
 	 */
-	addNavMenuSection(config: NavMenuSection, before?: string) {
+	addNavMenuSection(config: NavMenuSectionItem, before?: string) {
 		// Push the new section configuration along with its positioning information into the addedNavMenuSections array
 		this.addedNavMenuSections.push({ config, before });
 	}
@@ -50,7 +49,7 @@ export class NavMenuBuilderService {
 	 * @param sectionId The identifier of the section to which the new item should be added.
 	 * @param before (Optional) The identifier of the item before which the new item should be added.
 	 */
-	addNavMenuItem(config: NavMenuItem, sectionId: string, before?: string) {
+	addNavMenuItem(config: NavMenuSectionItem, sectionId: string, before?: string) {
 		// Push the new item configuration along with its positioning information into the addedNavMenuItems array
 		this.addedNavMenuItems.push({ config, sectionId, before });
 	}
@@ -65,10 +64,10 @@ export class NavMenuBuilderService {
 		// Combine the initial configuration and section additions
 		const combinedConfig$ = combineLatest([this.initialNavMenuConfig$, sectionAdditions$]).pipe(
 			map(([sections, additions]) => {
-				const configMap = new Map<string, NavMenuSection>();
+				const configMap = new Map<string, NavMenuSectionItem>();
 
 				// Add initial configurations to the map
-				sections.forEach((config: NavMenuSection) => configMap.set(config.id, config));
+				sections.forEach((config: NavMenuSectionItem) => configMap.set(config.id, config));
 
 				// Update or add sections from additions
 				for (const { config, before } of additions) {
@@ -96,7 +95,7 @@ export class NavMenuBuilderService {
 		// Combine the combined configuration with item additions to produce the final menu configuration
 		this.menuConfig$ = combineLatest([combinedConfig$, itemAdditions$]).pipe(
 			map(([sections, additions]) => {
-				const sectionMap = new Map<string, NavMenuSection>();
+				const sectionMap = new Map<string, NavMenuSectionItem>();
 
 				// Populate section map for quick lookup
 				sections.forEach((section) => sectionMap.set(section.id, section));
