@@ -31,12 +31,18 @@ export class FileStorageComponent extends TranslationBaseComponent
 	loading: boolean = false;
 
 	public readonly form: UntypedFormGroup = FileStorageComponent.buildForm(this.fb);
+
+	/**
+	 *
+	 * @param fb
+	 * @returns
+	 */
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
+		const defaultFileStorageProvider = environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL;
+
+		//
 		const form = fb.group({
-			fileStorageProvider: [
-				(environment.FILE_PROVIDER).toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL,
-				Validators.required
-			],
+			fileStorageProvider: [defaultFileStorageProvider, Validators.required],
 			// Aws Configuration
 			S3: fb.group({
 				aws_access_key_id: [],
@@ -50,7 +56,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 				wasabi_aws_secret_access_key: [],
 				wasabi_aws_default_region: ['us-east-1'],
 				wasabi_aws_service_url: ['https://s3.wasabisys.com'],
-				wasabi_aws_bucket: ['gauzy']
+				wasabi_aws_bucket: ['gauzy'],
+				wasabi_aws_force_path_style: [false]
 			}),
 			// Cloudinary Configuration
 			CLOUDINARY: fb.group({
@@ -59,6 +66,16 @@ export class FileStorageComponent extends TranslationBaseComponent
 				cloudinary_api_secret: [],
 				cloudinary_api_secure: ['true'],
 				cloudinary_delivery_url: ['https://res.cloudinary.com']
+			}),
+			// DigitalOcean Configuration
+			DIGITALOCEAN: fb.group({
+				digitalocean_access_key_id: [],
+				digitalocean_secret_access_key: [],
+				digitalocean_default_region: [{ value: 'us-east-1', disabled: true }],
+				digitalocean_service_url: [],
+				digitalocean_cdn_url: [],
+				digitalocean_s3_bucket: ['gauzy'],
+				digitalocean_s3_force_path_style: [false]
 			}),
 		});
 		return form;

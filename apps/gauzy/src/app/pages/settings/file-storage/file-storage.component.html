@@ -36,6 +36,11 @@
 							*ngTemplateOutlet="cloudinaryStorageFormTemplate; context: { group: form }">
 						</ng-container>
 					</ng-container>
+					<ng-container *ngSwitchCase="FileStorageProviderEnum.DIGITALOCEAN">
+						<ng-container
+							*ngTemplateOutlet="digitalOceanStorageFormTemplate; context: { group: form }">
+						</ng-container>
+					</ng-container>
 				</ng-container>
 			</nb-card-body>
 			<nb-card-footer>
@@ -244,6 +249,17 @@
 					/>
 				</div>
 			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="wasabi_aws_force_path_style">
+					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.FORCE_PATH_STYLE' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<nb-toggle
+						formControlName="wasabi_aws_force_path_style"
+						status="primary"
+					></nb-toggle >
+				</div>
+			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
@@ -353,6 +369,123 @@
 							{{ secure.label | titlecase }}
 						</nb-option>
 					</nb-select>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
+</ng-template>
+
+<!-- DigitalOcean Storage Configuration Template -->
+<ng-template #digitalOceanStorageFormTemplate let-group="group">
+	<nb-card [formGroup]="group">
+		<nb-card-header>
+			<h6>{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.HEADER' | translate }}</h6>
+		</nb-card-header>
+		<nb-card-body [formGroupName]="FileStorageProviderEnum.DIGITALOCEAN">
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_access_key_id">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.ACCESS_KEY_ID' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						name="digitalocean_access_key_id"
+						formControlName="digitalocean_access_key_id"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_secret_access_key">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SECRET_ACCESS_KEY' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_secret_access_key"
+						name="digitalocean_secret_access_key"
+						formControlName="digitalocean_secret_access_key"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-sm-3 col-xl-2" for="digitalocean_default_region">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.REGION' | translate }}
+				</label>
+				<div class="col-sm-9 col-xl-4">
+					<input
+						id="digitalocean_default_region"
+						name="digitalocean_default_region"
+						formControlName="digitalocean_default_region"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.REGION' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_service_url">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.SERVICE_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_service_url"
+						name="digitalocean_service_url"
+						formControlName="digitalocean_service_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.SERVICE_URL' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_cdn_url">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.CDN_URL' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_cdn_url"
+						name="digitalocean_cdn_url"
+						formControlName="digitalocean_cdn_url"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.CDN_URL' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_s3_bucket">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.BUCKET' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<input
+						id="digitalocean_s3_bucket"
+						name="digitalocean_s3_bucket"
+						formControlName="digitalocean_s3_bucket"
+						nbInput
+						fullWidth
+						class="w-100"
+						[placeholder]="'SETTINGS_FILE_STORAGE.DIGITALOCEAN.PLACEHOLDERS.BUCKET' | translate"
+					/>
+				</div>
+			</div>
+			<div class="form-group row">
+				<label class="label col-3 col-xl-2" for="digitalocean_s3_force_path_style">
+					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.FORCE_PATH_STYLE' | translate }}
+				</label>
+				<div class="col-9 col-xl-4">
+					<nb-toggle
+						formControlName="digitalocean_s3_force_path_style"
+						status="primary"
+					></nb-toggle >
 				</div>
 			</div>
 		</nb-card-body>
