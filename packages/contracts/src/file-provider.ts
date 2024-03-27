@@ -11,10 +11,11 @@ export interface FileSystem {
 }
 
 export enum FileStorageProviderEnum {
-	LOCAL = "LOCAL",
-	S3 = "S3",
-	WASABI = "WASABI",
-	CLOUDINARY = "CLOUDINARY",
+	LOCAL = 'LOCAL',
+	S3 = 'S3',
+	WASABI = 'WASABI',
+	CLOUDINARY = 'CLOUDINARY',
+	DIGITALOCEAN = 'DIGITALOCEAN'
 }
 
 export interface UploadedFile {
@@ -34,6 +35,7 @@ export interface IS3FileStorageProviderConfig {
 	aws_secret_access_key?: string;
 	aws_default_region?: string;
 	aws_bucket?: string;
+	aws_force_path_style?: boolean;
 }
 
 export interface IWasabiFileStorageProviderConfig {
@@ -42,6 +44,7 @@ export interface IWasabiFileStorageProviderConfig {
 	wasabi_aws_default_region?: string;
 	wasabi_aws_service_url?: string;
 	wasabi_aws_bucket?: string;
+	wasabi_aws_force_path_style?: boolean;
 }
 
 export interface ICloudinaryFileStorageProviderConfig {
