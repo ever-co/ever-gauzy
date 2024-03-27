@@ -98,7 +98,12 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 				secretAccessKey: entity.wasabi_aws_secret_access_key
 			},
 			region,
-			endpoint
+			endpoint,
+			/**
+			 * Whether to force path style URLs for S3 objects
+			 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>
+			 */
+			forcePathStyle: entity.wasabi_aws_force_path_style
 		});
 
 		// Create the parameters for calling createBucket

@@ -37,6 +37,9 @@ export interface IS3ProviderConfig {
 
 	// The name of the AWS S3 bucket.
 	aws_bucket: string;
+
+	// Whether to force path style URLs for S3 objects
+	aws_force_path_style: boolean;
 }
 
 export class S3Provider extends Provider<S3Provider> {
@@ -54,7 +57,8 @@ export class S3Provider extends Provider<S3Provider> {
 			aws_access_key_id: environment.awsConfig.accessKeyId,
 			aws_secret_access_key: environment.awsConfig.secretAccessKey,
 			aws_default_region: environment.awsConfig.region,
-			aws_bucket: environment.awsConfig.s3.bucket
+			aws_bucket: environment.awsConfig.s3.bucket,
+			aws_force_path_style: environment.awsConfig.s3.forcePathStyle
 		};
 	}
 
@@ -103,6 +107,14 @@ export class S3Provider extends Provider<S3Provider> {
 
 					if (trimAndGetValue(settings.aws_bucket))
 						this.config.aws_bucket = trimAndGetValue(settings.aws_bucket);
+
+					const forcePathStyle = trimAndGetValue(settings.aws_force_path_style);
+
+					if (forcePathStyle) {
+						this.config.aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
+					} else {
+						this.config.aws_force_path_style = false;
+					}
 				}
 			}
 		} catch (error) {
@@ -184,7 +196,10 @@ export class S3Provider extends Provider<S3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+							fileName = `${prefix}-${moment().unix()}-${parseInt(
+								'' + Math.random() * 1000,
+								10
+							)}.${extension}`;
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -337,7 +352,7 @@ export class S3Provider extends Provider<S3Provider> {
 					 * Whether to force path style URLs for S3 objects
 					 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>
 					 */
-					forcePathStyle: true
+					forcePathStyle: this.config.aws_force_path_style
 				});
 
 				return s3Client;

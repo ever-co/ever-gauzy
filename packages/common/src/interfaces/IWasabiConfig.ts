@@ -18,5 +18,6 @@ export interface IWasabiConfig {
 	readonly s3: {
 		/** S3 Bucket Name */
 		readonly bucket: string;
+		readonly forcePathStyle: boolean;
 	};
 }

@@ -266,8 +266,8 @@ function queryParams(parameters: any[] | undefined): string {
 function getTemplate(connection: DataSource, name: string, timestamp: number, upSqls: string[], downSqls: string[]): string {
     return `
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { DatabaseTypeEnum } from "@gauzy/config";
 import { yellow } from "chalk";
+import { DatabaseTypeEnum } from "@gauzy/config";
 
 export class ${camelCase(name, true)}${timestamp} implements MigrationInterface {
 
