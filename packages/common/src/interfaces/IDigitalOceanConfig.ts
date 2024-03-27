@@ -11,7 +11,7 @@ export interface IDigitalOceanConfig {
     /** DigitalOcean Service URL */
     readonly serviceUrl: string;
     /** The CDN (Content Delivery Network) DigitalOcean configuration. */
-    readonly cdn?: string;
+    readonly cdnUrl?: string;
     /** S3 Bucket Configuration */
     readonly s3: {
         /** S3 Bucket Name */

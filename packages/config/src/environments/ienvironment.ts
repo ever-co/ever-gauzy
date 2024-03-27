@@ -99,7 +99,7 @@ export interface IEnvironment {
 	awsConfig?: IAwsConfig;
 	wasabi?: IWasabiConfig;
 	cloudinary?: ICloudinaryConfig;
-	digitalOcean: IDigitalOceanConfig;
+	digitalOcean?: IDigitalOceanConfig;
 	github: IGithubIntegrationConfig /** Github Configuration */;
 	jira: IJiraIntegrationConfig /** Jira Configuration */;
 	fiverrConfig: IFiverrConfig;
