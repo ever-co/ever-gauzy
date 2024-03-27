@@ -105,7 +105,7 @@ export const environment: IEnvironment = {
 		accessKeyId: process.env.DIGITALOCEAN_ACCESS_KEY_ID,
 		secretAccessKey: process.env.DIGITALOCEAN_SECRET_ACCESS_KEY,
 		region: process.env.DIGITALOCEAN_REGION || 'us-east-1',
-		serviceUrl: process.env.DIGITALOCEAN_SERVICE_URL || 'https://gauzy.sfo2.digitaloceanspaces.com',  // Find your endpoint in the control panel, under Settings. Prepend "https://".
+		serviceUrl: process.env.DIGITALOCEAN_SERVICE_URL || 'https://gauzy.sfo2.digitaloceanspaces.com', // Find your endpoint in the control panel, under Settings. Prepend "https://".
 		cdnUrl: process.env.DIGITALOCEAN_CDN_URL,
 		s3: {
 			bucket: process.env.DIGITALOCEAN_S3_BUCKET || 'gauzy',
