@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RelationId, Index } from 'typeorm';
+import { RelationId } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ICandidate,
@@ -59,12 +60,13 @@ import {
 	User,
 	Warehouse
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
+
+	[EntityRepositoryType]?: MikroOrmTagRepository;
 
 	@ApiProperty({ type: () => String, required: true })
 	@IsNotEmpty()
@@ -111,6 +113,9 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	 * Organization Team
 	 */
 	@MultiORMManyToOne(() => OrganizationTeam, (it) => it.labels, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 	})
@@ -120,7 +125,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Tag) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 

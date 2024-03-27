@@ -6,8 +6,7 @@ import {
 } from '@gauzy/contracts';
 import {
 	JoinColumn,
-	RelationId,
-	Index
+	RelationId
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -24,9 +23,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
-import { MultiORMManyToOne, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('deal', { mikroOrmRepository: () => MikroOrmDealRepository })
 export class Deal extends TenantOrganizationBaseEntity implements IDeal {
@@ -35,7 +33,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@IsNotEmpty()
 	@IsString()
 	@MultiORMColumn()
-	public title: string;
+	title: string;
 
 	@ApiProperty({ type: () => Number })
 	@IsOptional()
@@ -43,7 +41,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@Min(0)
 	@Max(5)
 	@MultiORMColumn()
-	public probability?: number;
+	probability?: number;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -59,15 +57,15 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 		joinColumn: 'createdByUserId',
 	})
 	@JoinColumn({ name: 'createdByUserId' })
-	public createdBy: IUser;
+	createdBy: IUser;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Deal) => it.createdBy)
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	public createdByUserId: string;
+	createdByUserId: string;
 
 	/**
 	 * PipelineStage
@@ -75,15 +73,15 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@ApiProperty({ type: () => PipelineStage })
 	@MultiORMManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
 	@JoinColumn()
-	public stage: IPipelineStage;
+	stage: IPipelineStage;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Deal) => it.stage)
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	public stageId: string;
+	stageId: string;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -94,19 +92,20 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	/**
 	 * OrganizationContact
 	 */
-	@ApiProperty({ type: () => OrganizationContact })
 	@MultiORMOneToOne(() => OrganizationContact, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
-		owner: true,
-		joinColumn: 'clientId',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true
 	})
 	@JoinColumn()
-	public client: IOrganizationContact;
+	client: IOrganizationContact;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Deal) => it.client)
 	@IsOptional()
 	@IsString()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	public clientId: string;
+	clientId: string;
 }

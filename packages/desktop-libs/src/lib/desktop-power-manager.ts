@@ -1,7 +1,7 @@
-import {BrowserWindow, powerMonitor} from "electron";
-import {SleepTracking} from "./contexts";
-import {IPowerManager, ISleepTracking} from "./interfaces";
-import {LocalStore} from "./desktop-store";
+import { BrowserWindow, powerMonitor } from 'electron';
+import { SleepTracking } from './contexts';
+import { IPowerManager, ISleepTracking } from './interfaces';
+import { LocalStore } from './desktop-store';
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
@@ -14,6 +14,7 @@ export class DesktopPowerManager implements IPowerManager {
 		this._suspendDetected = false;
 		this._isLockedScreen = false;
 		this._window = window;
+
 		powerMonitor.on('suspend', () => {
 			console.log('System going to sleep.');
 			this.pauseTracking();

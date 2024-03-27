@@ -1,13 +1,13 @@
-import { environment as env } from '@gauzy/config';
 import { CanActivate, ExecutionContext, Inject, Injectable, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { verify } from 'jsonwebtoken';
+import { environment as env } from '@gauzy/config';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
@@ -15,7 +15,7 @@ export class PermissionGuard implements CanActivate {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _reflector: Reflector,
 		private readonly _rolePermissionService: RolePermissionService
-	) {}
+	) { }
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
@@ -25,8 +25,7 @@ export class PermissionGuard implements CanActivate {
 	async canActivate(context: ExecutionContext): Promise<boolean> {
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions =
-			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {

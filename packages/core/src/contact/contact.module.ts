@@ -8,6 +8,7 @@ import { ContactController } from './contact.controller';
 import { ContactService } from './contact.service';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmContactRepository } from './repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		CqrsModule
 	],
 	controllers: [ContactController],
-	providers: [ContactService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, ContactService]
+	providers: [ContactService, TypeOrmContactRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, ContactService, TypeOrmContactRepository]
 })
 export class ContactModule { }

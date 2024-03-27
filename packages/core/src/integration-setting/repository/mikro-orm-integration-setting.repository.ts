@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { IntegrationSetting } from '../integration-setting.entity';
 
-export class MikroOrmIntegrationSettingRepository extends EntityRepository<IntegrationSetting> { }
+export class MikroOrmIntegrationSettingRepository extends MikroOrmBaseEntityRepository<IntegrationSetting> { }

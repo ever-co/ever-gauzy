@@ -57,8 +57,14 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				const request: any = ctx.switchToHttp().getRequest();
 				const folder: string = request?.params?.folder || 'image_assets';
 
+				// Define the base directory for storing media
+				const baseDirectory = path.join('uploads', folder);
+
+				// Generate unique sub directories based on the current tenant
+				const subDirectory = path.join(RequestContext.currentTenantId() || uuid());
+
 				return new FileStorage().storage({
-					dest: () => path.join('uploads', folder, RequestContext.currentTenantId() || uuid())
+					dest: () => path.join(baseDirectory, subDirectory),
 				});
 			}
 		})
@@ -94,7 +100,10 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 			const thumbName = `thumb-${file.filename}`;
 			const thumbDir = path.dirname(file.key);
 
-			thumbnail = await provider.putFile(data, path.join(thumbDir, thumbName));
+			// Replace double backslashes with single forward slashes
+			const fullPath = path.join(thumbDir, thumbName).replace(/\\/g, '/');
+
+			thumbnail = await provider.putFile(data, fullPath);
 		} catch (error) {
 			console.error('Error while uploading media asset into file storage provider:', error);
 		}

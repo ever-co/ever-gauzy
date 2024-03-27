@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { EmployeeSetting } from '../employee-setting.entity';
 
-export class MikroOrmEmployeeSettingRepository extends EntityRepository<EmployeeSetting> { }
+export class MikroOrmEmployeeSettingRepository extends MikroOrmBaseEntityRepository<EmployeeSetting> { }

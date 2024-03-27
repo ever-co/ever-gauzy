@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { ApprovalPolicy } from '../approval-policy.entity';
 
-export class MikroOrmApprovalPolicyRepository extends EntityRepository<ApprovalPolicy> { }
+export class MikroOrmApprovalPolicyRepository extends MikroOrmBaseEntityRepository<ApprovalPolicy> { }

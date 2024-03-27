@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../../core/repository/mikro-orm-base-entity.repository';
 import { JobSearchOccupation } from '../job-search-occupation.entity';
 
-export class MikroOrmJobSearchOccupationRepository extends EntityRepository<JobSearchOccupation> { }
+export class MikroOrmJobSearchOccupationRepository extends MikroOrmBaseEntityRepository<JobSearchOccupation> { }

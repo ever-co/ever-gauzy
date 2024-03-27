@@ -1,31 +1,28 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	ITenant,
 	IOrganization,
 	IRolePermission,
 	IFeatureOrganization,
-	IImportRecord,
 	IImageAsset
 } from '@gauzy/contracts';
 import {
 	BaseEntity,
 	FeatureOrganization,
 	ImageAsset,
-	ImportRecord,
 	Organization,
 	RolePermission
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('tenant', { mikroOrmRepository: () => MikroOrmTenantRepository })
 export class Tenant extends BaseEntity implements ITenant {
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name?: string;
 
@@ -43,6 +40,9 @@ export class Tenant extends BaseEntity implements ITenant {
 	 * ImageAsset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -56,7 +56,7 @@ export class Tenant extends BaseEntity implements ITenant {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Tenant) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
@@ -65,14 +65,12 @@ export class Tenant extends BaseEntity implements ITenant {
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => Organization })
 	@MultiORMOneToMany(() => Organization, (it) => it.tenant, {
 		cascade: true
 	})
 	@JoinColumn()
 	organizations?: IOrganization[];
 
-	@ApiProperty({ type: () => RolePermission })
 	@MultiORMOneToMany(() => RolePermission, (it) => it.tenant, {
 		cascade: true
 	})
@@ -81,15 +79,8 @@ export class Tenant extends BaseEntity implements ITenant {
 	/**
 	 * Array of feature organizations associated with the entity.
 	 */
-	@ApiProperty({ type: () => FeatureOrganization })
 	@MultiORMOneToMany(() => FeatureOrganization, (it) => it.tenant, {
 		cascade: true,
 	})
 	featureOrganizations?: IFeatureOrganization[];
-
-	@ApiProperty({ type: () => ImportRecord })
-	@MultiORMOneToMany(() => ImportRecord, (importRecord) => importRecord.tenant, {
-		cascade: true
-	})
-	importRecords?: IImportRecord[];
 }

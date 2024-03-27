@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { JoinColumn, RelationId, Index } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsNotEmpty, IsUUID } from 'class-validator';
 import { Exclude, Expose } from 'class-transformer';
 import { IIntegrationSetting } from '@gauzy/contracts';
@@ -8,9 +8,8 @@ import {
 	TenantOrganizationBaseEntity
 } from './../core/entities/internal';
 import { IsSecret } from './../core/decorators';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmIntegrationSettingRepository } from './repository/mikro-orm-integration-setting.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration_setting', { mikroOrmRepository: () => MikroOrmIntegrationSettingRepository })
 export class IntegrationSetting extends TenantOrganizationBaseEntity implements IIntegrationSetting {
@@ -46,7 +45,7 @@ export class IntegrationSetting extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: IntegrationSetting) => it.integration)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	integrationId?: IntegrationTenant['id'];
 

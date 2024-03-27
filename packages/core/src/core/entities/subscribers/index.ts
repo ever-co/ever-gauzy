@@ -1,3 +1,5 @@
+export * from './base-entity-event.subscriber';
+
 import {
 	ActivitySubscriber,
 	CandidateSubscriber,
@@ -24,6 +26,7 @@ import {
 	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
+	RoleSubscriber,
 	ScreenshotSubscriber,
 	TagSubscriber,
 	TaskPrioritySubscriber,
@@ -67,6 +70,7 @@ export const coreSubscribers = [
 	PipelineSubscriber,
 	ProductCategorySubscriber,
 	ReportSubscriber,
+	RoleSubscriber,
 	ScreenshotSubscriber,
 	TagSubscriber,
 	TaskPrioritySubscriber,

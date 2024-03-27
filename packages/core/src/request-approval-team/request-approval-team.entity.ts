@@ -2,7 +2,7 @@
   - Request Approval Employee table is the third table which will combine the employee table and the request approval table.
   - Request Approval Employee table has the many to one relationship to the RequestApproval table and the Employee table by requestApprovalId and employeeId
 */
-import { RelationId, Index } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IOrganizationTeam, IRequestApproval, IRequestApprovalTeam } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
@@ -11,9 +11,8 @@ import {
 	RequestApproval,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmRequestApprovalTeamRepository } from './repository/mikro-orm-request-approval-team.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('request_approval_team', { mikroOrmRepository: () => MikroOrmRequestApprovalTeamRepository })
 export class RequestApprovalTeam extends TenantOrganizationBaseEntity implements IRequestApprovalTeam {
@@ -32,7 +31,7 @@ export class RequestApprovalTeam extends TenantOrganizationBaseEntity implements
 	@RelationId((it: RequestApprovalTeam) => it.requestApproval)
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public requestApprovalId!: string;
 
@@ -45,7 +44,7 @@ export class RequestApprovalTeam extends TenantOrganizationBaseEntity implements
 	@RelationId((it: RequestApprovalTeam) => it.team)
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public teamId!: string;
 }

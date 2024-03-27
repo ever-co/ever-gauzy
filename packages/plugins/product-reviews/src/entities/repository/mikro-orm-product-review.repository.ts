@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '@gauzy/core';
 import { ProductReview } from '../product-review.entity';
 
-export class MikroOrmProductReviewRepository extends EntityRepository<ProductReview> { }
+export class MikroOrmProductReviewRepository extends MikroOrmBaseEntityRepository<ProductReview> { }

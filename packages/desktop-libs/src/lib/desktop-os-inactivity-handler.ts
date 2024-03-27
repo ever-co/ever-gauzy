@@ -1,17 +1,11 @@
-import {
-	DialogAcknowledgeInactivity,
-	PowerManagerDetectInactivity
-} from './decorators';
+import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
 import NotificationDesktop from './desktop-notifier';
 import { DesktopDialog } from './desktop-dialog';
 import { BrowserWindow } from 'electron';
 import { LocalStore } from './desktop-store';
 import { DesktopOfflineModeHandler, IntervalService, TimerService } from './offline';
 import moment from 'moment';
-import {
-	AlwaysSleepTracking,
-	NeverSleepTracking,
-} from './strategies';
+import { AlwaysSleepTracking, NeverSleepTracking } from './strategies';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
 import { TranslateService } from './translation';
 
@@ -33,108 +27,89 @@ export class DesktopOsInactivityHandler {
 		this._stoppedAt = null;
 		this._intervalService = new IntervalService();
 		this._timerService = new TimerService();
-		this._powerManager.detectInactivity.on(
-			'activity-proof-request',
-			async () => {
-				if (!this._isAllowTrackInactivity) return;
-				this._inactivityResultAccepted = false;
-				this._windowFocus();
-				this._startedAt = new Date();
-				this._dialog = new DesktopDialog(
-					process.env.DESCRIPTION,
-					TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
-					powerManager.window
-				);
-				const button = await this._dialog.show();
-				if (button?.response === 0) {
-					if (!this._inactivityResultAccepted) {
-						this._inactivityResultAccepted = true;
-						this._powerManager.detectInactivity.emit(
-							'activity-proof-result',
-							true
-						);
-					}
-				} else {
-					if (!this._inactivityResultAccepted) {
-						this._inactivityResultAccepted = true;
-						this._powerManager.detectInactivity.emit(
-							'activity-proof-result',
-							false
-						);
-					}
-				}
-			}
-		);
-		this._powerManager.detectInactivity.on(
-			'activity-proof-result',
-			async (res) => {
-				if (this._dialog) {
-					this._dialog.close();
-					delete this._dialog;
-					let removeIdleTimePromise = null;
-					let dialogPromise = null;
-					if (this._isRemoveIdleTime) {
-						removeIdleTimePromise = this._removeIdleTime(res);
-					}
-					if (!this._inactivityResultAccepted) {
-						const dialog = new DialogAcknowledgeInactivity(
-							new DesktopDialog(
-								process.env.DESCRIPTION,
-								TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
-								powerManager.window
-							)
-						);
-						dialogPromise = dialog.show();
-						if (powerManager.suspendDetected) {
-							powerManager.window.webContents.send(
-								'inactivity-result-not-accepted'
-							);
-						}
-					}
-					/* Handle multiple promises in parallel. */
-					try {
-						await Promise.allSettled([
-							...(dialogPromise ? [dialogPromise] : []),
-							...(removeIdleTimePromise ? [removeIdleTimePromise] : [])
-						]);
-					} catch (error) {
-						console.log('Error', error);
-					}
-				}
-				if (powerManager.suspendDetected) {
-					powerManager.window.webContents.send(
-						'activity-proof-request'
-					);
-				}
-				if (!res)
-					this._notify.customNotification(
-						TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
-						process.env.DESCRIPTION,
-					);
-				this._inactivityResultAccepted = true;
-			}
-		);
 
-		this._powerManager.detectInactivity.on(
-			'activity-proof-result-not-accepted',
-			() => {
-				this._powerManager.sleepTracking = new SleepInactivityTracking(
-					this._powerManager.suspendDetected && this.isTrackingOnSleep
-						? new AlwaysSleepTracking(this._powerManager.window)
-						: new NeverSleepTracking(this._powerManager.window)
-				);
-				this._powerManager.pauseTracking();
+		this._powerManager.detectInactivity.on('activity-proof-request', async () => {
+			if (!this._isAllowTrackInactivity) return;
+			this._inactivityResultAccepted = false;
+			this._windowFocus();
+			this._startedAt = new Date();
+			this._dialog = new DesktopDialog(
+				process.env.DESCRIPTION,
+				TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
+				powerManager.window
+			);
+			const button = await this._dialog.show();
+			if (button?.response === 0) {
+				if (!this._inactivityResultAccepted) {
+					this._inactivityResultAccepted = true;
+					this._powerManager.detectInactivity.emit('activity-proof-result', true);
+				}
+			} else {
+				if (!this._inactivityResultAccepted) {
+					this._inactivityResultAccepted = true;
+					this._powerManager.detectInactivity.emit('activity-proof-result', false);
+				}
 			}
-		);
+		});
 
-		this._powerManager.detectInactivity.on(
-			'activity-proof-result-accepted',
-			() => {
-				this._powerManager.sleepTracking = new SleepTracking(
-					this._powerManager.window
-				);
+		this._powerManager.detectInactivity.on('activity-proof-result', async (res) => {
+			if (this._dialog) {
+				this._dialog.close();
+				delete this._dialog;
+				let removeIdleTimePromise = null;
+				let dialogPromise = null;
+				if (this._isRemoveIdleTime) {
+					removeIdleTimePromise = this._removeIdleTime(res);
+				}
+				if (!this._inactivityResultAccepted) {
+					const dialog = new DialogAcknowledgeInactivity(
+						new DesktopDialog(
+							process.env.DESCRIPTION,
+							TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
+							powerManager.window
+						)
+					);
+					dialogPromise = dialog.show();
+					if (powerManager.suspendDetected) {
+						powerManager.window.webContents.send('inactivity-result-not-accepted');
+					}
+				}
+				/* Handle multiple promises in parallel. */
+				try {
+					await Promise.allSettled([
+						...(dialogPromise ? [dialogPromise] : []),
+						...(removeIdleTimePromise ? [removeIdleTimePromise] : [])
+					]);
+				} catch (error) {
+					console.log('Error', error);
+				}
 			}
-		);
+
+			if (powerManager.suspendDetected) {
+				powerManager.window.webContents.send('activity-proof-request');
+			}
+
+			if (!res)
+				this._notify.customNotification(
+					TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
+					process.env.DESCRIPTION
+				);
+
+			this._inactivityResultAccepted = true;
+		});
+
+		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', () => {
+			this._powerManager.sleepTracking = new SleepInactivityTracking(
+				this._powerManager.suspendDetected && this.isTrackingOnSleep
+					? new AlwaysSleepTracking(this._powerManager.window)
+					: new NeverSleepTracking(this._powerManager.window)
+			);
+			this._powerManager.pauseTracking();
+		});
+
+		this._powerManager.detectInactivity.on('activity-proof-result-accepted', () => {
+			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
+		});
 	}
 
 	/**
@@ -173,12 +148,14 @@ export class DesktopOsInactivityHandler {
 		const timer = await this._timerService.findLastOne();
 		const lastInterval = await this._intervalService.findLastInterval();
 		timer.timeslotId = lastInterval?.remoteId;
+
 		await this.updateViewOffline({
 			startedAt: this._startedAt,
 			stoppedAt: this._startedAt,
 			idleDuration: idleDuration * 60,
 			timer
 		});
+
 		this._powerManager.window.webContents.send('remove_idle_time', {
 			timeslotIds,
 			isWorking,

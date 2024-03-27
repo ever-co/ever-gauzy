@@ -1,11 +1,10 @@
-import { Index, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 import { IOrganizationPosition, ITag } from '@gauzy/contracts';
 import { Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationPositionRepository } from './repository/mikro-orm-organization-position.repository';
-import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_position', { mikroOrmRepository: () => MikroOrmOrganizationPositionRepository })
 export class OrganizationPosition extends TenantOrganizationBaseEntity implements IOrganizationPosition {
@@ -13,7 +12,7 @@ export class OrganizationPosition extends TenantOrganizationBaseEntity implement
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -28,6 +27,8 @@ export class OrganizationPosition extends TenantOrganizationBaseEntity implement
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_position',
+		joinColumn: 'organizationPositionId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_position'

@@ -1,8 +1,7 @@
 import {
 	RelationId,
 	JoinColumn,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional } from 'class-validator';
@@ -25,9 +24,8 @@ import {
 	ProductOptionGroup,
 	WarehouseProduct
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmProductRepository } from './repository/mikro-orm-product.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product', { mikroOrmRepository: () => MikroOrmProductRepository })
 export class Product extends TranslatableBase implements IProductTranslatable {
@@ -65,7 +63,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Product) => it.featuredImage)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	featuredImageId?: string;
 
@@ -82,7 +80,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Product) => it.productType)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productTypeId?: string;
 
@@ -100,7 +98,7 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Product) => it.productCategory)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productCategoryId?: string;
 	/*
@@ -172,7 +170,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_product'
+		pivotTable: 'tag_product',
+		joinColumn: 'productId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_product'
@@ -186,7 +186,9 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	@MultiORMManyToMany(() => ImageAsset, (imageAsset) => imageAsset.productGallery, {
 		cascade: false,
 		owner: true,
-		pivotTable: 'product_gallery_item'
+		pivotTable: 'product_gallery_item',
+		joinColumn: 'productId',
+		inverseJoinColumn: 'imageAssetId',
 	})
 	@JoinTable({
 		name: 'product_gallery_item'

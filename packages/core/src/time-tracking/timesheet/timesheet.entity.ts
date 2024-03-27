@@ -1,7 +1,6 @@
 import {
 	RelationId,
 	JoinColumn,
-	Index,
 	AfterLoad
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -12,9 +11,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
-import { MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
 export class Timesheet extends TenantOrganizationBaseEntity implements ITimesheet {
@@ -45,34 +43,34 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	stoppedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	approvedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	submittedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => 'timestamptz' })
 	@IsOptional()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	lockedAt?: Date;
 
@@ -81,21 +79,21 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	 */
 	@MultiORMColumn({ type: 'timestamp' })
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	editedAt?: Date;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: false })
 	isBilled?: boolean;
 
 	@ApiPropertyOptional({ type: () => String, enum: TimesheetStatus, default: TimesheetStatus.PENDING })
 	@IsOptional()
 	@IsEnum(TimesheetStatus)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: TimesheetStatus.PENDING })
 	status: string;
 
@@ -127,7 +125,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: Timesheet) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 
@@ -145,7 +143,7 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Timesheet) => it.approvedBy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	approvedById?: IUser['id'];
 

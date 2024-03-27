@@ -21,16 +21,7 @@ import { TypeOrmRoleRepository } from './repository/type-orm-role.repository';
 		CqrsModule
 	],
 	controllers: [RoleController],
-	providers: [
-		...CommandHandlers,
-		RoleService,
-		TypeOrmRoleRepository
-	],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		RoleService,
-		TypeOrmRoleRepository
-	]
+	providers: [...CommandHandlers, RoleService, TypeOrmRoleRepository],
+	exports: [TypeOrmModule, MikroOrmModule, RoleService, TypeOrmRoleRepository]
 })
 export class RoleModule { }

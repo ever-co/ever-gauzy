@@ -1,11 +1,10 @@
-import { Index, JoinTable } from 'typeorm';
+import { JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 import { IExpense, IOrganizationVendor, ITag } from '@gauzy/contracts';
 import { Expense, Tag, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationVendorRepository } from './repository/mikro-orm-organization-vendor.repository';
-import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_vendor', { mikroOrmRepository: () => MikroOrmOrganizationVendorRepository })
 export class OrganizationVendor extends TenantOrganizationBaseEntity implements IOrganizationVendor {
@@ -13,7 +12,7 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -62,7 +61,9 @@ export class OrganizationVendor extends TenantOrganizationBaseEntity implements 
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_organization_vendor'
+		pivotTable: 'tag_organization_vendor',
+		joinColumn: 'organizationVendorId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_vendor'

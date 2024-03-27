@@ -1,14 +1,11 @@
+import { EventSubscriber } from "typeorm";
 import { isJsObject } from "@gauzy/common";
 import { isBetterSqlite3, isSqlite } from "@gauzy/config";
-import {
-    EntitySubscriberInterface,
-    EventSubscriber,
-    InsertEvent
-} from "typeorm";
+import { BaseEntityEventSubscriber } from "../../core/entities/subscribers/base-entity-event.subscriber";
 import { Activity } from "./activity.entity";
 
 @EventSubscriber()
-export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {
+export class ActivitySubscriber extends BaseEntityEventSubscriber<Activity> {
 
     /**
     * Indicates that this subscriber only listen to Activity events.
@@ -18,27 +15,23 @@ export class ActivitySubscriber implements EntitySubscriberInterface<Activity> {
     }
 
     /**
-     * Called before activity entity is inserted to the database.
+     * Called before an Activity entity is inserted or created in the database.
+     * This method prepares the entity for insertion, particularly by serializing the metaData property to a JSON string
+     * for SQLite databases.
      *
-     * @param event
+     * @param entity The Activity entity that is about to be created.
+     * @returns {Promise<void>} A promise that resolves when the pre-creation processing is complete.
      */
-    beforeInsert(event: InsertEvent<Activity>): void | Promise<any> {
+    async beforeEntityCreate(entity: Activity): Promise<void> {
         try {
-            if (event) {
-                if (isSqlite() || isBetterSqlite3()) {
-                    const { entity } = event;
-                    try {
-                        if (isJsObject(entity.metaData)) {
-                            entity.metaData = JSON.stringify(entity.metaData);
-                        }
-                    } catch (error) {
-                        console.log('Before Insert Activity Error:', error);
-                        entity.metaData = JSON.stringify({});
-                    }
-                }
+            // Check if the database is SQLite and the entity's metaData is a JavaScript object
+            if ((isSqlite() || isBetterSqlite3()) && isJsObject(entity.metaData)) {
+                entity.metaData = JSON.stringify(entity.metaData);
             }
         } catch (error) {
-            console.log(error);
+            // In case of error during JSON serialization, reset metaData to an empty object
+            entity.metaData = JSON.stringify({});
+            console.error('ActivitySubscriber: Error during the beforeEntityCreate process:', error);
         }
     }
 }

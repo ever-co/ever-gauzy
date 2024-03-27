@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	styleUrls: ['./server-down.page.scss'],
-	templateUrl: 'server-down.page.html',
+	templateUrl: 'server-down.page.html'
 })
 export class ServerDownPage implements OnInit, OnDestroy {
 	noInternetLogo: string;
@@ -36,14 +36,16 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	}
 
 	private checkConnection() {
+		const url = this.environment.API_BASE_URL;
+
 		this.interval = setInterval(async () => {
-			await this.serverConnectionService.checkServerConnection(
-				this.environment.API_BASE_URL
-			);
-			if (
-				Number(this.store.serverConnection) === 200 ||
-				this.store.userId
-			) {
+			console.log('Checking server connection in checkConnection to URL: ', url);
+
+			await this.serverConnectionService.checkServerConnection(url);
+
+			console.log('Server connection status in checkConnection: ', this.store.serverConnection);
+
+			if (Number(this.store.serverConnection) === 200 || this.store.userId) {
 				clearInterval(this.interval);
 				await this.router.navigate(['']);
 			}
@@ -54,10 +56,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
 			.pipe(
 				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
+					this._languageSelectorService.setLanguage(language, this._translateService);
 				}),
 				untilDestroyed(this)
 			)

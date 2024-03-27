@@ -21,7 +21,6 @@ import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './reposit
 export class EmployeeService extends TenantAwareCrudService<Employee> {
 	constructor(
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);

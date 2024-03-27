@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { ProductOption } from '../product-option.entity';
 
-export class MikroOrmProductOptionRepository extends EntityRepository<ProductOption> { }
+export class MikroOrmProductOptionRepository extends MikroOrmBaseEntityRepository<ProductOption> { }

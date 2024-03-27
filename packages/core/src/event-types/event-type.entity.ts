@@ -1,5 +1,4 @@
 import {
-	Index,
 	RelationId,
 	JoinColumn,
 	JoinTable
@@ -18,9 +17,8 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEventTypeRepository } from './repository/mikro-orm-event-type.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('event_type', { mikroOrmRepository: () => MikroOrmEventTypeRepository })
 export class EventType extends TenantOrganizationBaseEntity implements IEventType {
@@ -28,7 +26,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({
 		type: 'numeric',
 		transformer: new ColumnNumericTransformerPipe()
@@ -37,17 +35,17 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 
 	@ApiProperty({ type: () => String })
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	durationUnit: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	title: string;
 
 	@ApiPropertyOptional({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	description?: string;
@@ -71,7 +69,7 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 	@RelationId((it: EventType) => it.employee)
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	readonly employeeId?: string;
 
@@ -90,6 +88,8 @@ export class EventType extends TenantOrganizationBaseEntity implements IEventTyp
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_event_type',
+		joinColumn: 'tagEventId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_event_type'

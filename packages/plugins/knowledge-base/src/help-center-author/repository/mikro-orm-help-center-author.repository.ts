@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '@gauzy/core';
 import { HelpCenterAuthor } from '../help-center-author.entity';
 
-export class MikroOrmHelpCenterAuthorRepository extends EntityRepository<HelpCenterAuthor> { }
+export class MikroOrmHelpCenterAuthorRepository extends MikroOrmBaseEntityRepository<HelpCenterAuthor> { }

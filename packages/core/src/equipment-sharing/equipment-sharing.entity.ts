@@ -1,8 +1,7 @@
 import {
 	RelationId,
 	JoinTable,
-	JoinColumn,
-	Index
+	JoinColumn
 } from 'typeorm';
 import {
 	IEmployee,
@@ -19,9 +18,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('equipment_sharing', { mikroOrmRepository: () => MikroOrmEquipmentSharingRepository })
 export class EquipmentSharing extends TenantOrganizationBaseEntity
@@ -72,7 +70,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipment)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	equipmentId: IEquipment['id'];
 
@@ -88,7 +86,7 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EquipmentSharing) => it.equipmentSharingPolicy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	equipmentSharingPolicyId: IEquipmentSharingPolicy['id'];
 
@@ -106,6 +104,8 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'equipment_shares_employees',
+		joinColumn: 'equipmentSharingId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'equipment_shares_employees'
@@ -120,6 +120,8 @@ export class EquipmentSharing extends TenantOrganizationBaseEntity
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'equipment_shares_teams',
+		joinColumn: 'equipmentSharingId',
+		inverseJoinColumn: 'organizationTeamId',
 	})
 	@JoinTable({
 		name: 'equipment_shares_teams'

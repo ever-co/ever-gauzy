@@ -21,7 +21,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	JoinColumn,
 	RelationId,
-	Index,
 	JoinTable
 } from 'typeorm';
 import {
@@ -42,9 +41,8 @@ import {
 	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
@@ -117,20 +115,27 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	/**
 	 * Contact
 	 */
-	@ApiProperty({ type: () => Contact })
 	@MultiORMOneToOne(() => Contact, (contact) => contact.candidate, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
 	contact?: IContact;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Candidate) => it.contact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly contactId?: string;
+	contactId?: string;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -144,7 +149,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.organizationPosition)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationPositionId?: IOrganizationPosition['id'];
 
@@ -156,9 +161,16 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => CandidateSource })
 	@MultiORMOneToOne(() => CandidateSource, (candidateSource) => candidateSource.candidate, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
@@ -166,7 +178,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.source)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	sourceId?: ICandidateSource['id'];
 
@@ -175,8 +187,13 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 */
 	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, (user) => user.candidate, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()
@@ -184,7 +201,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	userId: IUser['id'];
 
@@ -192,13 +209,19 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate, { owner: true })
+	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
+		owner: true
+	})
 	@JoinColumn()
 	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Candidate) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: IEmployee['id'];
 
@@ -254,7 +277,9 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		pivotTable: 'tag_candidate',
-		owner: true
+		owner: true,
+		joinColumn: 'candidateId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_candidate'

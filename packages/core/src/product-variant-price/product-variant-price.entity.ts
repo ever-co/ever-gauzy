@@ -6,9 +6,8 @@ import {
 	ProductVariant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmProductVariantPriceRepository } from './repository/mikro-orm-product-variant-price.repository';
-import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant_price', { mikroOrmRepository: () => MikroOrmProductVariantPriceRepository })
 export class ProductVariantPrice extends TenantOrganizationBaseEntity implements IProductVariantPrice {
@@ -43,7 +42,10 @@ export class ProductVariantPrice extends TenantOrganizationBaseEntity implements
 	 * ProductVariant
 	 */
 	@MultiORMOneToOne(() => ProductVariant, (productVariant) => productVariant.price, {
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true
 	})
 	@JoinColumn()

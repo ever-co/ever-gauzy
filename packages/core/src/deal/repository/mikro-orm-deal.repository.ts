@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { Deal } from '../deal.entity';
 
-export class MikroOrmDealRepository extends EntityRepository<Deal> { }
+export class MikroOrmDealRepository extends MikroOrmBaseEntityRepository<Deal> { }

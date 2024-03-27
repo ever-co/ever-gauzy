@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { KeyResultTemplate } from '../keyresult-template.entity';
 
-export class MikroOrmKeyResultTemplateRepository extends EntityRepository<KeyResultTemplate> { }
+export class MikroOrmKeyResultTemplateRepository extends MikroOrmBaseEntityRepository<KeyResultTemplate> { }

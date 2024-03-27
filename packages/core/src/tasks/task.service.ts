@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
@@ -16,10 +15,8 @@ import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 @Injectable()
 export class TaskService extends TenantAwareCrudService<Task> {
 	constructor(
-		@InjectRepository(Task)
-		typeOrmTaskRepository: TypeOrmTaskRepository,
-
-		mikroOrmTaskRepository: MikroOrmTaskRepository
+		readonly typeOrmTaskRepository: TypeOrmTaskRepository,
+		readonly mikroOrmTaskRepository: MikroOrmTaskRepository
 	) {
 		super(typeOrmTaskRepository, mikroOrmTaskRepository);
 	}
@@ -90,9 +87,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-
-			const query = this.createQueryBuilder();
-
+			const query = this.repository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 			/**
 			 * If find options
@@ -164,6 +159,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
+			console.log(error);
 			throw new BadRequestException(error);
 		}
 	}
@@ -207,7 +203,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						const subQuery = qb.subQuery();
 						subQuery.select(p('"task_employee"."taskId"')).from(p('task_employee'), p('task_employee'));
 						subQuery.andWhere(p('"task_employee"."employeeId" = :employeeId'), { employeeId });
-						return p('"task_members"."taskId" IN ') + subQuery.distinct(true).getQuery();
+						return p(`"task_members"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
 					});
 					web.orWhere((qb: SelectQueryBuilder<Task>) => {
 						const subQuery = qb.subQuery();
@@ -218,7 +214,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							p('"organization_team_employee"."organizationTeamId" = "task_team"."organizationTeamId"')
 						);
 						subQuery.andWhere(p('"organization_team_employee"."employeeId" = :employeeId'), { employeeId });
-						return p('"task_teams"."taskId" IN ') + subQuery.distinct(true).getQuery();
+						return p(`"task_teams"."taskId" IN (${subQuery.distinct(true).getQuery()})`);
 					});
 				})
 			);

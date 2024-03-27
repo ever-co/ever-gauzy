@@ -1,7 +1,6 @@
 import {
 	RelationId,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import {
 	ITimeSlot,
@@ -21,9 +20,8 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity
@@ -32,7 +30,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: 0 })
 	duration?: number;
 
@@ -51,14 +49,14 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@ApiPropertyOptional({ type: () => Number, default: 0 })
 	@IsOptional()
 	@IsNumber()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: 0 })
 	overall?: number;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsNotEmpty()
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	startedAt: Date;
 
@@ -85,7 +83,7 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@IsNotEmpty()
 	@IsUUID()
 	@RelationId((it: TimeSlot) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
@@ -130,7 +128,9 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'time_slot_time_logs'
+		pivotTable: 'time_slot_time_logs',
+		joinColumn: 'timeSlotId',
+		inverseJoinColumn: 'timeLogId',
 	})
 	@JoinTable({
 		name: 'time_slot_time_logs'

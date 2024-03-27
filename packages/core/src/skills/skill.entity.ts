@@ -1,18 +1,16 @@
 import { JoinTable } from 'typeorm';
-import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IEmployee, IOrganization, ISkill } from '@gauzy/contracts';
 import {
 	Employee,
 	Organization,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany } from './../core/decorators/entity';
 import { MikroOrmSkillRepository } from './repository/mikro-orm-skill.repository';
-import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('skill', { mikroOrmRepository: () => MikroOrmSkillRepository })
-export class Skill extends TenantOrganizationBaseEntity
-	implements ISkill {
+export class Skill extends TenantOrganizationBaseEntity implements ISkill {
 
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn()
@@ -39,7 +37,9 @@ export class Skill extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'skill_employee'
+		pivotTable: 'skill_employee',
+		joinColumn: 'skillId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'skill_employee'
@@ -53,7 +53,9 @@ export class Skill extends TenantOrganizationBaseEntity
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'skill_organization'
+		pivotTable: 'skill_organization',
+		joinColumn: 'skillId',
+		inverseJoinColumn: 'organizationId',
 	})
 	@JoinTable({
 		name: 'skill_organization'

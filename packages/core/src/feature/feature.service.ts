@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull } from 'typeorm';
 import {
 	FeatureEnum,
@@ -15,14 +14,19 @@ import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.reposi
 @Injectable()
 export class FeatureService extends CrudService<Feature> {
 	constructor(
-		@InjectRepository(Feature)
-		typeOrmFeatureRepository: TypeOrmFeatureRepository,
-
-		mikroOrmFeatureRepository: MikroOrmFeatureRepository
+		readonly typeOrmFeatureRepository: TypeOrmFeatureRepository,
+		readonly mikroOrmFeatureRepository: MikroOrmFeatureRepository
 	) {
 		super(typeOrmFeatureRepository, mikroOrmFeatureRepository);
 	}
 
+	/**
+	 * Retrieves top-level features (those with no parent) from the database. Allows specifying related entities
+	 * to be included in the result. Features are ordered by their creation time in ascending order.
+	 *
+	 * @param relations An array of strings indicating which related entities to include in the result.
+	 * @returns A promise resolving to a paginated response containing top-level IFeature objects.
+	 */
 	async getParentFeatures(relations: string[] = []): Promise<IPagination<IFeature>> {
 		return await super.findAll({
 			where: {

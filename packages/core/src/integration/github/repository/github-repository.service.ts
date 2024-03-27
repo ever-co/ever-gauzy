@@ -1,19 +1,17 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
 import { TenantAwareCrudService } from 'core/crud';
 import { OrganizationGithubRepository } from './github-repository.entity';
 import { IntegrationSyncGithubRepositoryCommand } from '../commands';
-import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-candidate.repository';
-import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/type-orm-github-repository.repository';
+import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
+import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/type-orm-organization-github-repository.repository';
 
 @Injectable()
 export class GithubRepositoryService extends TenantAwareCrudService<OrganizationGithubRepository> {
 	private readonly logger = new Logger('GithubRepositoryService');
 
 	constructor(
-		@InjectRepository(OrganizationGithubRepository)
 		typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
 
 		mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository,

@@ -1,4 +1,4 @@
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { ICandidateTechnologies, ICandidateInterview, ICandidateCriterionsRating } from '@gauzy/contracts';
 import {
@@ -8,9 +8,8 @@ import {
 } from '../core/entities/internal';
 import { IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmCandidateTechnologiesRepository } from './repository/mikro-orm-candidate-technologies.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('candidate_technology', { mikroOrmRepository: () => MikroOrmCandidateTechnologiesRepository })
 export class CandidateTechnologies extends TenantOrganizationBaseEntity implements ICandidateTechnologies {
@@ -42,7 +41,7 @@ export class CandidateTechnologies extends TenantOrganizationBaseEntity implemen
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateTechnologies) => it.interview)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	interviewId?: string;
 

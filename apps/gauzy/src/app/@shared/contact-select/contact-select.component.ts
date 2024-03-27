@@ -5,7 +5,8 @@ import {
 	Input,
 	forwardRef,
 	EventEmitter,
-	Output} from '@angular/core';
+	Output
+} from '@angular/core';
 import {
 	ContactType,
 	IOrganization,
@@ -32,9 +33,9 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 		}
 	]
 })
-export class ContactSelectComponent extends TranslationBaseComponent 
+export class ContactSelectComponent extends TranslationBaseComponent
 	implements OnInit, OnDestroy {
-		
+
 	public hasEditEmployee$: Observable<boolean>;
 	contacts: IOrganizationContact[] = [];
 	organization: IOrganization;
@@ -94,9 +95,9 @@ export class ContactSelectComponent extends TranslationBaseComponent
 	@Input() set searchable(value: boolean) {
 		this._searchable = value;
 	}
-	
-	onChange: any = () => {};
-	onTouched: any = () => {};
+
+	onChange: any = () => { };
+	onTouched: any = () => { };
 
 	private _organizationContact: IOrganizationContact;
 	set organizationContact(val: IOrganizationContact) {
@@ -123,12 +124,12 @@ export class ContactSelectComponent extends TranslationBaseComponent
 
 	ngOnInit() {
 		this.subject$
-		.pipe(
-			debounceTime(100),
-			tap(() => this.getContacts()),
-			untilDestroyed(this)
-		)
-		.subscribe();
+			.pipe(
+				debounceTime(100),
+				tap(() => this.getContacts()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -184,32 +185,42 @@ export class ContactSelectComponent extends TranslationBaseComponent
 		}
 	}
 
-	addOrganizationContact = (
-		name: string
-	): Promise<IOrganizationContact> => {
+	/**
+	 * Adds a new organization contact with the specified name.
+	 *
+	 * @param name The name of the contact to add.
+	 * @returns A promise that resolves to the created organization contact object.
+	 */
+	addOrganizationContact = async (name: string): Promise<IOrganizationContact | null> => {
+		if (!this.organization) {
+			return null;
+		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
 		try {
-			this.toastrService.success(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT',
-					{
-						name: name
-					}
-				),
-				this.getTranslation('TOASTR.TITLE.SUCCESS')
-			);
-			return this.organizationContactService.create({
+			const contact = await this.organizationContactService.create({
 				name,
 				contactType: ContactType.CLIENT,
 				organizationId,
-				tenantId
+				organization: { id: organizationId },
+				tenantId,
+				tenant: { id: tenantId }
 			});
+
+			this.toastrService.success(
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', { name }),
+				this.getTranslation('TOASTR.TITLE.SUCCESS')
+			);
+
+			return contact;
 		} catch (error) {
 			this.errorHandler.handleError(error);
+			// Optionally, re-throw or return null to indicate failure
+			return null;
 		}
 	};
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

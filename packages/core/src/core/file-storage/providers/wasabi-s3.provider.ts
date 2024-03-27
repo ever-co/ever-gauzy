@@ -295,10 +295,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -356,6 +353,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 */
 	async putFile(fileContent: string, key: string = ''): Promise<UploadedFile> {
 		try {
+			// Replace double backslashes with single forward slashes
+			key = key.replace(/\\/g, '/');
+
 			const s3Client = this.getWasabiInstance();
 
 			if (s3Client) {
@@ -460,7 +460,14 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						secretAccessKey: this.config.wasabi_aws_secret_access_key
 					},
 					region: this.config.wasabi_aws_default_region || 'us-east-1',
-					endpoint
+					endpoint,
+					/**
+					 * Whether to force path style URLs for S3 objects
+					 *
+					 * https://s3.wasabisys.com
+					 * (e.g., https://s3.wasabisys.com/<bucketName>/<key> instead of https://<bucketName>.s3.wasabisys.com/<key>
+					 */
+					forcePathStyle: true
 				});
 
 				return s3Client;

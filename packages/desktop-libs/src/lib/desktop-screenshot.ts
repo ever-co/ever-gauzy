@@ -62,7 +62,9 @@ const captureAllWindow = async (
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+
 	const result = [];
+
 	await Promise.all(
 		displays.map(async (display, i) => {
 			if (!isTemp) {
@@ -80,16 +82,11 @@ const captureAllWindow = async (
 				if (display.id === activeScreen.id.toString()) {
 					result.push({
 						...res,
-						name: display.name,
+						name: display.name
 					});
 				}
 			} else {
-				saveTempImage(
-					display.img,
-					display.name,
-					timeSlotId,
-					timeTrackerWindow
-				);
+				saveTempImage(display.img, display.name, timeSlotId, timeTrackerWindow);
 			}
 		})
 	);
@@ -107,14 +104,13 @@ const uploadScreenShot = async (
 	windowPath,
 	soundPath
 ) => {
-	/* Checking if the user is allowed to take a screenshot. */
+	// Checking if the user is allowed to take a screenshot
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+
 	/* start upload */
-	let fileName = `screenshot-${moment().format(
-		'YYYYMMDDHHmmss'
-	)}-${name}.png`;
+	let fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${name}.png`;
 
 	fileName = convertToSlug(fileName);
 
@@ -124,12 +120,15 @@ const uploadScreenShot = async (
 
 	try {
 		const appInfo = LocalStore.beforeRequestParams();
+
 		const form = new Form();
+
 		const bufferImg = Buffer.isBuffer(img) ? img : Buffer.from(img);
 		form.append('file', bufferImg, {
 			contentType: 'image/png',
-			filename: fileName,
+			filename: fileName
 		});
+
 		form.append('timeSlotId', timeSlotId);
 		form.append('tenantId', appInfo.tenantId);
 		form.append('organizationId', appInfo.organizationId);
@@ -137,7 +136,7 @@ const uploadScreenShot = async (
 		console.log('Screenshot Form Request:', {
 			tenantId: appInfo.tenantId,
 			organizationId: appInfo.organizationId,
-			timeSlotId: timeSlotId,
+			timeSlotId: timeSlotId
 		});
 
 		// const response = await fetch(
@@ -152,24 +151,20 @@ const uploadScreenShot = async (
 		// 	}
 		// );
 
-		console.log(`Send Screenshot to API: ${moment().format()}`);
+		const now = moment().format();
+
+		console.log(`Send Screenshot to API: ${now}`);
 
 		const screenshot: any = {};
 
-		console.log(
-			`Get Screenshot Response From API: ${moment().format()}`,
-			screenshot
-		);
+		console.log(`Get Screenshot Response From API: ${now}`, screenshot);
 
 		// remove file on local directory after successful upload
 		removeScreenshotLocally(fileName);
 
 		console.log('Screenshot Thumb Url:', screenshot.thumbUrl);
 
-		console.log(
-			'Screenshot Location Path:',
-			path.join(app.getPath('userData'), `/public/temp/${fileName}`)
-		);
+		console.log('Screenshot Location Path:', path.join(app.getPath('userData'), `/public/temp/${fileName}`));
 
 		showCapture(timeTrackerWindow, screenshot.thumbUrl);
 
@@ -185,29 +180,24 @@ const uploadScreenShot = async (
 		}
 
 		return screenshot;
-	} catch (e) {
-		console.log('Upload Screenshot Error:', e.message);
-		// remove file on local directory if any error
-		// setTimeout(() => {
-		// 	removeScreenshotLocally(fileName);
-		// }, 4000);
-		const imgLocation = path.join(
-			app.getPath('userData'),
-			`/public/temp/${fileName}`
-		);
+	} catch (err) {
+		console.log('Upload Screenshot Error:', err);
+
+		const imgLocation = path.join(app.getPath('userData'), `/public/temp/${fileName}`);
+
 		timeTrackerWindow.webContents.send('save_temp_img', {
 			type: 'screenshot',
 			params: JSON.stringify({
 				path: imgLocation,
 				timeSlotTempId: timeSlotId,
-				message: e.message,
-			}),
+				message: err.message
+			})
 		});
 	}
 };
 
 const writeScreenshotLocally = (img, fileName) => {
-	/* Checking if the user is allowed to take a screenshot. */
+	// Checking if the user is allowed to take a screenshot
 	if (!allowScreenshotCapture()) {
 		return;
 	}
@@ -221,10 +211,7 @@ const writeScreenshotLocally = (img, fileName) => {
 };
 
 const removeScreenshotLocally = (fileName) => {
-	const imgLocation = path.join(
-		app.getPath('userData'),
-		`/public/temp/${fileName}`
-	);
+	const imgLocation = path.join(app.getPath('userData'), `/public/temp/${fileName}`);
 	console.log('Local Image Temp Path', imgLocation);
 	try {
 		unlinkSync(imgLocation);
@@ -236,52 +223,65 @@ const removeScreenshotLocally = (fileName) => {
 const readOrCreateTempDir = (tempPath) => {
 	try {
 		const isDirExist = existsSync(tempPath);
+
 		if (!isDirExist) {
-			mkdirSync(path.join(app.getPath('userData'), '/public'));
-			mkdirSync(tempPath);
+			try {
+				mkdirSync(path.join(app.getPath('userData'), '/public'));
+			} catch (err) {
+				console.error('Error creating public directory', err);
+			}
+
+			try {
+				mkdirSync(tempPath);
+			} catch (err) {
+				console.error('Error creating temp directory', err);
+			}
 		}
 	} catch (error) {
-		mkdirSync(tempPath);
-		console.log('error create dir', error);
+		console.error('error create dir', error);
 	}
 };
 
 export const detectActiveWindow = () => {
-	/* Checking if the user is allowed to take a screenshot. */
+	// Checking if the user is allowed to take a screenshot
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+
 	const allScreen = screen.getAllDisplays();
+
 	const cursorPosition = screen.getCursorScreenPoint();
+
 	let idx = null;
+
 	const currentPosition = allScreen.find((item, i) => {
-		if (
-			cursorPosition.x >= item.bounds.x &&
-			cursorPosition.x <= item.bounds.width + item.bounds.x
-		) {
+		if (cursorPosition.x >= item.bounds.x && cursorPosition.x <= item.bounds.width + item.bounds.x) {
 			idx = i;
 			return item;
 		}
 	});
+
 	return { ...currentPosition, index: idx };
 };
 
 const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
-	/* Checking if the user is allowed to take a screenshot. */
+	// Checking if the user is allowed to take a screenshot
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+
 	timeTrackerWindow.webContents.send('show_last_capture', {
 		...LocalStore.beforeRequestParams(),
-		timeSlotId: timeSlotId,
+		timeSlotId: timeSlotId
 	});
 };
 
 const showCapture = (timeTrackerWindow, url) => {
-	/* Checking if the user is allowed to take a screenshot. */
+	// Checking if the user is allowed to take a screenshot
 	if (!allowScreenshotCapture()) {
 		return;
 	}
+
 	timeTrackerWindow.webContents.send('last_capture_local', { fullUrl: url });
 };
 
@@ -293,46 +293,49 @@ const showCapturedToRenderer = async (
 	soundPath,
 	timeTrackerWindow
 ) => {
-	/* Checking if the user is allowed to take a screenshot. */
+	//  Checking if the user is allowed to take a screenshot
 	if (!allowScreenshotCapture()) {
 		return;
 	}
-	console.log(windowPath);
+
+	console.log('showCapturedToRenderer:', windowPath);
+
 	const soundCamera = soundPath;
+
 	notificationWindow.show(thumbUrl);
+
 	try {
 		if (existsSync(soundCamera)) {
 			timeTrackerWindow.webContents.send('play_sound', {
-				soundFile: soundCamera,
+				soundFile: soundCamera
 			});
 		}
 	} catch (err) {
-		console.error('sound camera not found');
+		console.error('sound camera not found', err);
 	}
 
 	notificationWindow.hide();
+
 	if (quitApp) {
+		console.log('Quit App from showCapturedToRenderer');
 		notificationWindow.close();
 		app.quit();
 	}
 };
 
-export async function takeshot(
-	timeTrackerWindow,
-	arg,
-	notificationWindow,
-	isTemp,
-	windowPath,
-	soundPath
-) {
+export async function takeshot(timeTrackerWindow, arg, notificationWindow, isTemp, windowPath, soundPath) {
 	try {
-		/* Checking if the user is allowed to take a screenshot. */
+		// Checking if the user is allowed to take a screenshot. */
 		if (!allowScreenshotCapture()) {
 			return;
 		}
+
 		const displays = arg.screens;
+
 		const appSetting = LocalStore.getStore('appSetting');
+
 		const activeWindow = detectActiveWindow();
+
 		switch (appSetting.monitor.captured) {
 			case 'all':
 				await captureAllWindow(
@@ -347,6 +350,7 @@ export async function takeshot(
 					soundPath
 				);
 				break;
+
 			case 'active-only':
 				await captureOnlyActiveWindow(
 					displays,
@@ -360,6 +364,7 @@ export async function takeshot(
 					soundPath
 				);
 				break;
+
 			default:
 				break;
 		}
@@ -369,46 +374,41 @@ export async function takeshot(
 			updateLastCapture(timeTrackerWindow, arg.timeSlotId);
 		}
 	} catch (error) {
-		console.log('error upload', error);
+		console.error('error upload', error);
 	}
 }
 
 // method using screenshot-desktop lib
-export async function captureScreen(
-	timeTrackerWindow,
-	notificationWindow,
-	timeSlotId,
-	quitApp,
-	windowPath,
-	soundPath
-) {
+export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId, quitApp, windowPath, soundPath) {
 	try {
-		/* Checking if the user is allowed to take a screenshot. */
+		// Checking if the user is allowed to take a screenshot
 		if (!allowScreenshotCapture()) {
 			return;
 		}
+
 		const displays = await screenshot.listDisplays();
+
 		const activeWindow = detectActiveWindow();
+
 		const allDisplays = [];
+
 		await Promise.all(
 			displays.map(async (display, i) => {
 				const img = await screenshot({ screen: display.id });
 				allDisplays.push({
 					img: img,
 					name: `Screen ${i}`,
-					id:
-						i === activeWindow.index
-							? activeWindow.id.toString()
-							: display.id,
+					id: i === activeWindow.index ? activeWindow.id.toString() : display.id
 				});
 			})
 		);
+
 		await takeshot(
 			timeTrackerWindow,
 			{
 				timeSlotId: timeSlotId,
 				screens: allDisplays,
-				quitApp,
+				quitApp
 			},
 			notificationWindow,
 			false,
@@ -416,7 +416,7 @@ export async function captureScreen(
 			soundPath
 		);
 	} catch (error) {
-		console.log('error', error);
+		console.error('error', error);
 	}
 }
 
@@ -431,87 +431,100 @@ export function convertToSlug(text: string) {
 }
 
 export function saveTempImage(img, name, timeSlotId, timeTrackerWindow) {
-	let fileName = `screenshot-${moment().format(
-		'YYYYMMDDHHmmss'
-	)}-${name}.png`;
+	let fileName = `screenshot-${moment().format('YYYYMMDDHHmmss')}-${name}.png`;
 
 	fileName = convertToSlug(fileName);
 
 	writeScreenshotLocally(img, fileName);
-	const imgLocation = path.join(
-		app.getPath('userData'),
-		`/public/temp/${fileName}`
-	);
+
+	const imgLocation = path.join(app.getPath('userData'), `/public/temp/${fileName}`);
+
 	timeTrackerWindow.webContents.send('save_temp_img', {
 		type: 'screenshot',
 		params: JSON.stringify({
 			path: imgLocation,
-			timeSlotTempId: timeSlotId,
-		}),
+			timeSlotTempId: timeSlotId
+		})
 	});
 }
 
 export async function getScreenshot() {
 	const allDisplays = [];
-	const displays = await screenshot.listDisplays();
-	const activeWindow = detectActiveWindow();
-	await Promise.all(
-		displays.map(async (display, i) => {
-			const img = await screenshot({ screen: display.id });
-			allDisplays.push({
-				img: img,
-				name: `Screen ${i}`,
-				id:
-					i === activeWindow.index
-						? activeWindow.id.toString()
-						: display.id,
-			});
-		})
-	);
 
-	const appSetting = LocalStore.getStore('appSetting');
-	switch (appSetting.monitor.captured) {
-		case 'all':
-			return allDisplays;
-		case 'active-only':
-			return [
-				allDisplays.find((x) => x.id === activeWindow.id.toString()),
-			];
-		default:
-			break;
+	try {
+		const displays = await screenshot.listDisplays();
+		console.log('getScreenshot -> displays');
+
+		const activeWindow = detectActiveWindow();
+		console.log('getScreenshot -> detectActiveWindow');
+
+		if (displays) {
+			await Promise.all(
+				displays.map(async (display, i) => {
+					console.log('getScreenshot -> screenshot for display ', display.id);
+
+					try {
+						const img = await screenshot({ screen: display.id });
+
+						if (img) {
+							console.log('getScreenshot -> img captured for Display Id ', display.id);
+
+							allDisplays.push({
+								img: img,
+								name: `Screen ${i}`,
+								id: i === activeWindow?.index ? activeWindow.id.toString() : display.id
+							});
+						}
+					} catch (error) {
+						console.error('getScreenshot -> error', error);
+					}
+				})
+			);
+		}
+
+		const appSetting = LocalStore.getStore('appSetting');
+
+		switch (appSetting.monitor.captured) {
+			case 'all':
+				return allDisplays;
+			case 'active-only':
+				return [allDisplays.find((x) => x.id === activeWindow.id.toString())];
+			default:
+				break;
+		}
+	} catch (error) {
+		console.error('getScreenshot -> error', error);
 	}
+
+	return allDisplays;
 }
 
-export async function notifyScreenshot(
-	notificationWindow,
-	thumb,
-	windowPath,
-	soundPath,
-	timeTrackerWindow
-) {
+export async function notifyScreenshot(notificationWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
 	const soundCamera = soundPath;
+
 	const appSetting = LocalStore.getStore('appSetting');
-	const thumbImg = `data:image/png;base64, ${thumb.img}`
+
+	const thumbImg = `data:image/png;base64, ${thumb.img}`;
+
 	global.variableGlobal.screenshotSrc = thumbImg;
-	notificationWindow.show(thumbImg);
-	timeTrackerWindow.webContents.send('last_capture_local', {
+
+	notificationWindow?.show(thumbImg);
+
+	timeTrackerWindow?.webContents.send('last_capture_local', {
 		fullUrl: thumbImg
 	});
+
 	try {
-		if (
-			existsSync(soundCamera) &&
-			appSetting &&
-			!appSetting.mutedNotification
-		) {
-			timeTrackerWindow.webContents.send('play_sound', {
-				soundFile: soundCamera,
+		if (existsSync(soundCamera) && appSetting && !appSetting.mutedNotification) {
+			timeTrackerWindow?.webContents.send('play_sound', {
+				soundFile: soundCamera
 			});
 		}
 	} catch (err) {
 		console.error('sound camera not found');
 	}
 
-	notificationWindow.hide();
+	notificationWindow?.hide();
 }
 
 function allowScreenshotCapture(): boolean {

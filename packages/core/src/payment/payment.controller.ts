@@ -188,7 +188,6 @@ export class PaymentController extends CrudController<Payment> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdatePaymentDTO
 	): Promise<IPayment> {
-		console.log({ entity });
 		try {
 			await this.paymentService.findOneByIdString(id);
 			return await this.paymentService.create({

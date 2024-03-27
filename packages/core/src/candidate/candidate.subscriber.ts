@@ -1,11 +1,12 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent, LoadEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import * as moment from 'moment';
 import { average } from "@gauzy/common";
 import { CandidateStatusEnum } from "@gauzy/contracts";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 import { Candidate } from "./candidate.entity";
 
 @EventSubscriber()
-export class CandidateSubscriber implements EntitySubscriberInterface<Candidate> {
+export class CandidateSubscriber extends BaseEntityEventSubscriber<Candidate> {
 
     /**
     * Indicates that this subscriber only listen to Candidate events.
@@ -15,45 +16,45 @@ export class CandidateSubscriber implements EntitySubscriberInterface<Candidate>
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Processes a Candidate entity after it's loaded.
+     * This function calculates the average rating from the candidate's feedbacks if they are available.
+     * It also sets the 'alreadyHired' property based on the candidate's status and the validity of the hiredDate.
      *
-     * @param entity
-     * @param event
+     * @param entity The Candidate entity that has been loaded.
      */
-    afterLoad(entity: Candidate, event?: LoadEvent<Candidate>): void | Promise<any> {
+    async afterEntityLoad(entity: Candidate): Promise<void> {
         try {
+            // Calculate the average rating if feedbacks are available and in array format.
             if (Array.isArray(entity.feedbacks)) {
+                // Assuming `average` is a function that calculates the average rating.
+                // 'rating' is presumably a property within each feedback object.
                 entity.ratings = average(entity.feedbacks, 'rating');
             }
-            /**
-             * If candidate already hired
-             */
-            entity.alreadyHired = (
-                (entity.status === CandidateStatusEnum.HIRED) && (moment(entity.hiredDate).isValid())
-            );
+
+            // Set alreadyHired to true if the candidate's status is HIRED and the hiredDate is a valid date.
+            entity.alreadyHired = entity.status === CandidateStatusEnum.HIRED && moment(entity.hiredDate).isValid();
         } catch (error) {
-            console.log(error);
+            console.error('CandidateSubscriber: Error during the afterEntityLoad process:', error);
         }
     }
 
     /**
-     * Called before entity is inserted to the database.
+     * Performs preprocessing on a Candidate entity before its creation.
+     * This function checks if a rejectDate is present and valid for the candidate,
+     * and if so, updates the candidate's status to REJECTED.
      *
-     * @param event
+     * @param entity The Candidate entity that is about to be created.
      */
-    beforeInsert(event: InsertEvent<Candidate>): void | Promise<any> {
+    async beforeEntityCreate(entity: Candidate): Promise<void> {
         try {
-            if (event.entity) {
-                const { entity } = event;
-                /**
-                 * Automatically update candidate rejected status
-                 */
+            if (entity) {
+                // Check if rejectDate is present and is a valid date. If true, update the candidate's status to REJECTED.
                 if ('rejectDate' in entity && moment(entity.rejectDate).isValid()) {
                     entity.status = CandidateStatusEnum.REJECTED;
                 }
             }
         } catch (error) {
-            console.log(error);
+            console.error('CandidateSubscriber: Error during the beforeEntityCreate process:', error);
         }
     }
 }

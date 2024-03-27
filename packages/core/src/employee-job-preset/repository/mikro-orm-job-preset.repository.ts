@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { JobPreset } from '../job-preset.entity';
 
-export class MikroOrmJobPresetRepository extends EntityRepository<JobPreset> { }
+export class MikroOrmJobPresetRepository extends MikroOrmBaseEntityRepository<JobPreset> { }

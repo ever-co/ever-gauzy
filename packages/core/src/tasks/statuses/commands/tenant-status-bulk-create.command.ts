@@ -6,5 +6,5 @@ export class TenantStatusBulkCreateCommand implements ICommand {
 
 	constructor(
 		public readonly tenants: ITenant[]
-	) {}
+	) { }
 }

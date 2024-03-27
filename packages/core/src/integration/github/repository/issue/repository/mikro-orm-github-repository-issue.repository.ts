@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../../../../core/repository/mikro-orm-base-entity.repository';
 import { OrganizationGithubRepositoryIssue } from '../github-repository-issue.entity';
 
-export class MikroOrmOrganizationGithubRepositoryIssueRepository extends EntityRepository<OrganizationGithubRepositoryIssue> { }
+export class MikroOrmOrganizationGithubRepositoryIssueRepository extends MikroOrmBaseEntityRepository<OrganizationGithubRepositoryIssue> { }

@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { ExpenseCategory } from '../expense-category.entity';
 
-export class MikroOrmExpenseCategoryRepository extends EntityRepository<ExpenseCategory> { }
+export class MikroOrmExpenseCategoryRepository extends MikroOrmBaseEntityRepository<ExpenseCategory> { }

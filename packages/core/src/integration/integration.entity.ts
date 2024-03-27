@@ -5,9 +5,8 @@ import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany } from './../core/decorators/entity';
 import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integration.repository';
-import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('integration', { mikroOrmRepository: () => MikroOrmIntegrationRepository })
 @Unique(['name'])
@@ -93,6 +92,8 @@ export class Integration extends BaseEntity implements IIntegration {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'integration_integration_type',
+		joinColumn: 'integrationId',
+		inverseJoinColumn: 'integrationTypeId',
 	})
 	@JoinTable({
 		name: 'integration_integration_type'
@@ -107,6 +108,8 @@ export class Integration extends BaseEntity implements IIntegration {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_integration',
+		joinColumn: 'integrationId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_integration'

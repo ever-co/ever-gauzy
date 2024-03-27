@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { EventType } from '../event-type.entity';
 
-export class MikroOrmEventTypeRepository extends EntityRepository<EventType> { }
+export class MikroOrmEventTypeRepository extends MikroOrmBaseEntityRepository<EventType> { }

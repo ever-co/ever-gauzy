@@ -3,6 +3,7 @@ import { LocalStore } from './desktop-store';
 import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
 import { TranslateService } from './translation';
 import { TimerService } from './offline';
+
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
 	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex, windowPath, serverWindow?, isZoomVisible?) {
