@@ -33,6 +33,7 @@ export interface IDigitalOceanProviderConfig {
 	digitalocean_secret_access_key: string; // AWS secret access key for DigitalOcean
 	digitalocean_default_region: string; // AWS default region for DigitalOcean
 	digitalocean_service_url: string; // AWS service URL for DigitalOcean
+	digitalocean_cdn_url: string; // AWS service CDN  for DigitalOcean
 	digitalocean_s3_bucket: string; // AWS bucket name for DigitalOcean
 	digitalocean_s3_force_path_style: boolean; // Whether to force path style URLs for DigitalOcean objects
 }
@@ -54,6 +55,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			digitalocean_secret_access_key: digitalOcean.secretAccessKey,
 			digitalocean_default_region: digitalOcean.region,
 			digitalocean_service_url: digitalOcean.serviceUrl,
+			digitalocean_cdn_url: digitalOcean.cdn,
 			digitalocean_s3_bucket: digitalOcean.s3.bucket,
 			digitalocean_s3_force_path_style: digitalOcean.s3.forcePathStyle,
 		};

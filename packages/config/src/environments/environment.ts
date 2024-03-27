@@ -107,6 +107,7 @@ export const environment: IEnvironment = {
 		secretAccessKey: process.env.DIGITALOCEAN_SECRET_ACCESS_KEY,
 		region: process.env.DIGITALOCEAN_REGION || 'us-east-1',
 		serviceUrl: process.env.DIGITALOCEAN_SERVICE_URL || 'https://gauzy.sfo2.digitaloceanspaces.com',  // Find your endpoint in the control panel, under Settings. Prepend "https://".
+		cdn: process.env.DIGITALOCEAN_CDN_URL,
 		s3: {
 			bucket: process.env.DIGITALOCEAN_S3_BUCKET || 'gauzy',
 			forcePathStyle: process.env.DIGITALOCEAN_S3_FORCE_PATH_STYLE === 'true' || false // Configures to use subdomain/virtual calling format.
