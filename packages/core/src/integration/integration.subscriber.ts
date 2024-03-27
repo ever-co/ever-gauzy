@@ -1,10 +1,11 @@
-import { EntitySubscriberInterface, EventSubscriber, LoadEvent } from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { FileStorage } from './../core/file-storage';
+import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { Integration } from './integration.entity';
 
 @EventSubscriber()
-export class IntegrationSubscriber implements EntitySubscriberInterface<Integration> {
+export class IntegrationSubscriber extends BaseEntityEventSubscriber<Integration> {
     /**
      * Indicates that this subscriber only listen to Integration events.
      */
@@ -13,22 +14,24 @@ export class IntegrationSubscriber implements EntitySubscriberInterface<Integrat
     }
 
     /**
-     * Called after entity is loaded from the database.
+     * Called after an Integration entity is loaded from the database. This method updates
+     * the entity by setting the full image URL using a specified file storage provider.
      *
-     * @param entity
-     * @param event
+     * @param entity The Integration entity that has been loaded.
+     * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
      */
-    async afterLoad(
-        entity: Integration | Partial<Integration>,
-        event?: LoadEvent<Integration>
-    ): Promise<any | void> {
+    async afterEntityLoad(entity: Integration): Promise<void> {
         try {
-            if (!!entity.imgSrc) {
+            // Check if imgSrc is present and non-empty
+            if (entity.imgSrc) {
+                // Instantiate FileStorage with the desired provider
                 const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+
+                // Retrieve and set the full image URL
                 entity.fullImgUrl = await store.getProviderInstance().url(entity.imgSrc);
             }
         } catch (error) {
-            console.error('Error in afterLoad:', error);
+            console.error('IntegrationSubscriber: An error occurred during the afterEntityLoad process:', error);
         }
     }
 }

@@ -9,9 +9,8 @@ import {
 	Equipment,
 	Warehouse
 } from './../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
-import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {

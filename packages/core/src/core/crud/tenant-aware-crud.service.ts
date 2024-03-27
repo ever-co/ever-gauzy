@@ -1,6 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import {
-	DeepPartial,
 	DeleteResult,
 	FindOptionsWhere,
 	FindManyOptions,
@@ -9,14 +8,13 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { EntityRepository } from '@mikro-orm/core';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { User } from '../../user/user.entity';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { RequestContext } from '../context';
 import { TenantBaseEntity } from '../entities/internal';
 import { CrudService } from './crud.service';
-import { ICrudService } from './icrud.service';
+import { ICrudService, IPartialEntity } from './icrud.service';
 import { ITryRequest } from './try-request';
 
 /**
@@ -26,7 +24,7 @@ import { ITryRequest } from './try-request';
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
 	constructor(
 		repository: Repository<T>,
-		mikroRepository: EntityRepository<T>
+		mikroRepository: MikroOrmBaseEntityRepository<T>
 	) {
 		super(repository, mikroRepository);
 	}
@@ -87,7 +85,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @returns The find conditions based on the user's relationship with the tenant and additional options.
 	 */
 	private findConditionsWithTenant(
-		user: User,
+		user: IUser,
 		where?: FindOptionsWhere<T>[] | FindOptionsWhere<T>
 	): FindOptionsWhere<T>[] | FindOptionsWhere<T> {
 		if (where && Array.isArray(where)) {
@@ -328,7 +326,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param entity
 	 * @returns
 	 */
-	public async create(entity: DeepPartial<T>): Promise<T> {
+	public async create(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
 		const employeeId = RequestContext.currentEmployeeId();
 
@@ -366,11 +364,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 * @param entity
 	 * @returns
 	 */
-	public async save(entity: DeepPartial<T>): Promise<T> {
+	public async save(entity: IPartialEntity<T>): Promise<T> {
 		const tenantId = RequestContext.currentTenantId();
 		return await super.save({
 			...entity,
-			...(this.repository.metadata.hasColumnWithPropertyPath('tenantId')
+			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
 					tenant: {
 						id: tenantId

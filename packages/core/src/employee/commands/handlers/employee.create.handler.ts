@@ -39,53 +39,56 @@ export class EmployeeCreateHandler
 	 * @throws SomeAppropriateException if an error occurs during the process.
 	 */
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
+
 		const { input, originUrl = environment.clientBaseUrl } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
+		const { organizationId } = input;
 
 		if (isEmpty(input.userId)) {
-			/**
-			 * Find employee role for relative tenant
-			 */
+			// 1. Find employee role for relative tenant
 			const role = await this._roleService.findOneByWhereOptions({
 				name: RolesEnum.EMPLOYEE,
 				tenantId: RequestContext.currentTenantId()
 			});
 
-			// 1. Create user to relative tenant.
+			// 2. Get Password Hash
+			const passwordHash = await this._authService.getPasswordHash(input.password);
+
+			// 3. Create user to relative tenant.
 			const user = await this._commandBus.execute(
 				new UserCreateCommand({
 					...input.user,
 					role,
-					hash: await this._authService.getPasswordHash(input.password),
+					hash: passwordHash,
 					preferredLanguage: languageCode,
 					preferredComponentLayout: ComponentLayoutStyleEnum.TABLE
 				})
 			);
 
-			// 2. Create employee for specific user
+			// 4. Create employee for specific user
 			const employee = await this._employeeService.create({
 				...input,
-				user
+				user,
+				organization: { id: organizationId }
 			});
 
-			const { organizationId } = employee;
-
-			// 3. Assign organizations to the employee user
-			if (organizationId) {
+			// 5. Assign organizations to the employee user
+			if (!!employee.organizationId) {
 				await this._userOrganizationService.addUserToOrganization(user, organizationId);
 			}
 
-			// 4. Send welcome email to user register employee
+			// 6. Send welcome email to user register employee
 			this._emailService.welcomeUser(user, languageCode, organizationId, originUrl);
 			return employee;
 		} else {
 			try {
 				const user = await this._userService.findOneByIdString(input.userId);
 
-				//2. Create employee for specific user
+				//1. Create employee for specific user
 				return await this._employeeService.create({
 					...input,
-					user
+					user,
+					organization: { id: organizationId }
 				});
 			} catch (error) {
 				console.log('Error while creating employee for existing user', error);

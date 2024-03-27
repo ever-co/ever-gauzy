@@ -1,8 +1,9 @@
-import { EntitySubscriberInterface, EventSubscriber, RemoveEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { OrganizationTeamEmployee } from "./organization-team-employee.entity";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
 
 @EventSubscriber()
-export class OrganizationTeamEmployeeSubscriber implements EntitySubscriberInterface<OrganizationTeamEmployee> {
+export class OrganizationTeamEmployeeSubscriber extends BaseEntityEventSubscriber<OrganizationTeamEmployee> {
 
     /**
     * Indicates that this subscriber only listen to OrganizationTeamEmployee events.
@@ -12,17 +13,19 @@ export class OrganizationTeamEmployeeSubscriber implements EntitySubscriberInter
     }
 
     /**
-     * Called after entity is removed from the database.
+     * Called after an OrganizationTeamEmployee entity is removed from the database. This method logs
+     * an action indicating that the team member entity has been removed.
      *
-     * @param event
+     * @param entity The OrganizationTeamEmployee entity that was just deleted.
+     * @returns {Promise<void>} A promise that resolves when the post-delete processing is complete.
      */
-    async afterRemove(event: RemoveEvent<OrganizationTeamEmployee>): Promise<any | void> {
+    async afterEntityDelete(entity: OrganizationTeamEmployee): Promise<void> {
         try {
-            if (event.entityId) {
-                console.log(`BEFORE TEAM MEMBER ENTITY WITH ID ${event.entityId} REMOVED`);
+            if (entity.id) {
+                console.log(`AFTER TEAM MEMBER ENTITY WITH ID ${entity.id} REMOVED`);
             }
         } catch (error) {
-            console.error('Error in afterRemove:', error);
+            console.error('OrganizationTeamEmployeeSubscriber: An error occurred during the afterEntityDelete process:', error);
         }
     }
 }

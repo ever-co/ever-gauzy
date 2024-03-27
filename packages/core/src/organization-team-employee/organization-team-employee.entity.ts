@@ -1,11 +1,10 @@
 import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
-import { RelationId, Index } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { Employee, OrganizationTeam, Role, Task, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team_employee', { mikroOrmRepository: () => MikroOrmOrganizationTeamEmployeeRepository })
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity implements IOrganizationTeamEmployee {
@@ -38,7 +37,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.activeTask)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ type: String, nullable: true, relationId: true })
 	public activeTaskId?: ITask['id'];
 
@@ -56,7 +55,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsNotEmpty()
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public organizationTeamId: IOrganizationTeam['id'];
 
@@ -72,7 +71,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: OrganizationTeamEmployee) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	public employeeId: IEmployee['id'];
 
@@ -93,7 +92,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTeamEmployee) => it.role)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	public roleId?: IRole['id'];
 

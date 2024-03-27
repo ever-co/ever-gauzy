@@ -1,11 +1,11 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantAndOrganizationEntityMutationInput } from './base-entity.model';
 import { ICandidate } from './candidate.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationContact } from './organization-contact.model';
 
 export interface IRelationalContact {
-    readonly contact?: IContact;
-    readonly contactId?: IContact['id'];
+	readonly contact?: IContact;
+	readonly contactId?: IContact['id'];
 }
 
 export interface IContact extends IBasePerTenantAndOrganizationEntityModel {
@@ -33,8 +33,7 @@ export interface IContactFindInput extends IContactCreateInput {
 	id?: string;
 }
 
-export interface IContactCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IContactCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput {
 	name?: string;
 	firstName?: string;
 	lastName?: string;

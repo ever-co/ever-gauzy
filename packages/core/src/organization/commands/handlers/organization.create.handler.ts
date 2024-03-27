@@ -1,24 +1,21 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { faker } from '@faker-js/faker';
 import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
+import { ContactService } from '../../../contact/contact.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { ReportOrganizationCreateCommand } from './../../../reports/commands';
 import { RequestContext } from '../../../core/context';
-import { UserOrganization } from './../../../core/entities/internal';
-import { Organization } from './../../organization.entity';
+import { Organization } from './../../../core/entities/internal';
 import { ImportRecordUpdateOrCreateCommand } from './../../../export-import/import-record';
 import { OrganizationStatusBulkCreateCommand } from './../../../tasks/statuses/commands';
 import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/commands';
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
-import { TypeOrmOrganizationRepository } from '../../repository/type-orm-organization.repository';
-import { TypeOrmUserOrganizationRepository } from '../../../user-organization/repository/type-orm-user-organization.repository';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
@@ -28,35 +25,32 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-
-		@InjectRepository(Organization)
-		private readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-
-		@InjectRepository(UserOrganization)
-		private readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository
+		private readonly contactService: ContactService,
 	) { }
 
-	public async execute(
-		command: OrganizationCreateCommand
-	): Promise<IOrganization> {
+	/**
+	 * Asynchronously executes the process of creating a new organization, along with associated tasks such as
+	 * adding users to the organization, creating contact details, executing various update tasks, and handling import records.
+	 * This function encapsulates several steps, each responsible for a part of the organization creation process.
+	 *
+	 * @param command An instance of OrganizationCreateCommand, containing the input data and settings required to create the organization.
+	 * @returns A promise that resolves to an instance of IOrganization, representing the newly created organization.
+	 */
+	public async execute(command: OrganizationCreateCommand): Promise<IOrganization> {
 		try {
 			const { input } = command;
-			const {
-				isImporting = false,
-				sourceId = null,
-				userOrganizationSourceId = null,
-			} = input;
+			const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
 			const tenantId = RequestContext.currentTenantId();
 
 			const admins: IUser[] = [];
 
 			// 1. Get all Super Admin Users of the Tenant
-			const { items: superAdminUsers } = await this.userService.findAll({
+			const superAdminUsers = await this.userService.find({
 				where: {
 					tenantId,
 					role: {
 						name: RolesEnum.SUPER_ADMIN,
-						tenantId,
+						tenantId
 					},
 				},
 			});
@@ -64,12 +58,12 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 
 			// 2. Organization will add to all SUPER_ADMIN/ADMIN users, if ADMIN create organization.
 			if (RequestContext.hasRole(RolesEnum.ADMIN)) {
-				const { items: adminUsers } = await this.userService.findAll({
+				const adminUsers = await this.userService.find({
 					where: {
 						tenantId,
 						role: {
 							name: RolesEnum.ADMIN,
-							tenantId,
+							tenantId
 						},
 					},
 				});
@@ -80,113 +74,126 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			delete input['contact'];
 
 			// 3. Create organization
-
-			const createdOrganization: IOrganization = await this.organizationService.create({
+			const organization: IOrganization = await this.organizationService.create({
 				...input,
 				upworkOrganizationId: input.upworkOrganizationId || null,
 				upworkOrganizationName: input.upworkOrganizationName || null,
-				futureDateAllowed: input.futureDateAllowed === false ? false : true,
-				show_profits: input.show_profits === true ? true : false,
-				show_bonuses_paid: input.show_bonuses_paid === true ? true : false,
-				show_income: input.show_income === true ? true : false,
-				show_total_hours: input.show_total_hours === true ? true : false,
-				show_projects_count: input.show_projects_count === false ? false : true,
-				show_minimum_project_size: input.show_minimum_project_size === false ? false : true,
-				show_clients_count: input.show_clients_count === false ? false : true,
-				show_clients: input.show_clients === false ? false : true,
-				show_employees_count: input.show_employees_count === false ? false : true,
+				// Simplify boolean assignments
+				futureDateAllowed: input.futureDateAllowed !== false,
+				show_profits: input.show_profits === true,
+				show_bonuses_paid: input.show_bonuses_paid === true,
+				show_income: input.show_income === true,
+				show_total_hours: input.show_total_hours === true,
+				show_projects_count: input.show_projects_count !== false,
+				show_minimum_project_size: input.show_minimum_project_size !== false,
+				show_clients_count: input.show_clients_count !== false,
+				show_clients: input.show_clients !== false,
+				show_employees_count: input.show_employees_count !== false,
 				brandColor: faker.internet.color()
 			});
+			const { id: organizationId } = organization;
 
 			// 4. Take each super admin user and add him/her to created organization
 			try {
-				for await (const admin of admins) {
-					const userOrganization =
-						await this.userOrganizationService.create(
-							new UserOrganization({
-								organization: createdOrganization,
-								tenantId,
-								user: admin,
-							})
-						);
+				const userOrganizations = admins.map(async (user: IUser) => {
+					const userOrganization = await this.userOrganizationService.create({
+						organization: {
+							id: organizationId
+						},
+						user
+					});
 					if (isImporting && userOrganizationSourceId) {
 						await this.commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.typeOrmUserOrganizationRepository.metadata.tableName,
+								entityType: this.userOrganizationService.tableName,
 								sourceId: userOrganizationSourceId,
 								destinationId: userOrganization.id,
 								tenantId,
 							})
 						);
 					}
-				}
+				});
+				await Promise.all(userOrganizations);
 			} catch (e) {
-				console.log('caught', e);
+				console.log('An error occurred while processing user organizations. Details:', e);
 			}
 
 			// 5. Create contact details of created organization
-			const { id } = createdOrganization;
-			contact = Object.assign({}, contact, {
-				organizationId: id,
-				tenantId,
-			});
+			try {
+				contact = await this.contactService.create({
+					...contact,
+					organization: { id: organizationId }
+				});
+				await this.organizationService.update(organizationId, {
+					contactId: contact.id
+				});
+			} catch (error) {
+				console.log('Error occurred during creation of contact details or updating the organization:', error);
+			}
 
-			const organization = await this.organizationService.create({
-				contact,
-				...createdOrganization,
-			});
+			// 6. Executes various organization update tasks concurrently.
+			this.executeOrganizationUpdateTasks(organization);
 
-			// 6. Create Enabled/Disabled reports for relative organization.
-			await this.commandBus.execute(
-				new ReportOrganizationCreateCommand(organization)
-			);
-
-			// 7. Create task statuses for relative organization.
-			await this.commandBus.execute(
-				new OrganizationStatusBulkCreateCommand(organization)
-			);
-
-			// 8. Create task sizes for relative organization.
-			await this.commandBus.execute(
-				new OrganizationTaskSizeBulkCreateCommand(organization)
-			);
-
-			// 9. Create task priorities for relative organization.
-			await this.commandBus.execute(
-				new OrganizationTaskPriorityBulkCreateCommand(organization)
-			);
-
-			// 9. Create issue types for relative organization.
-			await this.commandBus.execute(
-				new OrganizationIssueTypeBulkCreateCommand(organization)
-			);
-
-			// 10. Create task setting for relative organization.
-			await this.commandBus.execute(
-				new OrganizationTaskSettingCreateCommand({
-					organizationId: organization.id
-				})
-			);
-
-			// 11. Create Import Records while migrating for relative organization.
+			// 7. Create Import Records while migrating for relative organization.
 			if (isImporting && sourceId) {
 				const { sourceId } = input;
 				await this.commandBus.execute(
 					new ImportRecordUpdateOrCreateCommand({
-						entityType: this.typeOrmOrganizationRepository.metadata.tableName,
+						entityType: this.organizationService.tableName,
 						sourceId,
-						destinationId: organization.id,
+						destinationId: organizationId,
 						tenantId,
 					})
 				);
 			}
-			return await this.organizationService.findOneByIdString(id);
+			return await this.organizationService.findOneByIdString(organizationId);
 		} catch (error) {
-			console.log(error, 'Error while creating organization');
-			throw new BadRequestException(
-				error,
-				'Error while creating organization'
+			console.log('An error occurred during the organization creation process.', error);
+			throw new BadRequestException(error, 'An error occurred during the organization creation process.');
+		}
+	}
+
+	/**
+	 * Executes various organization update tasks concurrently. This function
+	 * triggers several operations related to an organization, such as creating reports,
+	 * task statuses, task sizes, task priorities, issue types, and task settings.
+	 * These operations are executed in parallel. If any operation fails,
+	 * the error is caught and logged.
+	 *
+	 * @param organization An instance of the Organization class, representing the organization for which the update tasks are to be executed.
+	 * @param organizationId The unique identifier of the organization, used in some of the update tasks.
+	 * @returns Promise<void> This function returns a promise that resolves to void.
+	 */
+	public async executeOrganizationUpdateTasks(organization: Organization): Promise<void> {
+		try {
+			// 1. Create report for relative organization.
+			await this.commandBus.execute(
+				new ReportOrganizationCreateCommand(organization)
 			);
+			// 2. Create task statuses for relative organization.
+			await this.commandBus.execute(
+				new OrganizationStatusBulkCreateCommand(organization)
+			);
+			// 3. Create task sizes for relative organization.
+			await this.commandBus.execute(
+				new OrganizationTaskSizeBulkCreateCommand(organization)
+			);
+			// 4. Create task priorities for relative organization.
+			await this.commandBus.execute(
+				new OrganizationTaskPriorityBulkCreateCommand(organization)
+			);
+			// 5. Create issue types for relative organization.
+			await this.commandBus.execute(
+				new OrganizationIssueTypeBulkCreateCommand(organization)
+			);
+			// 6. Create task setting for relative organization.
+			await this.commandBus.execute(
+				new OrganizationTaskSettingCreateCommand({
+					organization
+				})
+			);
+		} catch (error) {
+			console.log(error, 'Error occurred while executing organization update tasks:', error.message);
 		}
 	}
 }

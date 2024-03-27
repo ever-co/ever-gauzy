@@ -1,3 +1,18 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+	JoinColumn,
+	Unique,
+	RelationId,
+	JoinTable
+} from 'typeorm';
+import {
+	IsString,
+	IsNumber,
+	IsBoolean,
+	IsDate,
+	IsOptional,
+	IsEnum
+} from 'class-validator';
 import {
 	IInvoice,
 	CurrenciesEnum,
@@ -10,22 +25,7 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsString,
-	IsNumber,
-	IsBoolean,
-	IsDate,
-	IsOptional,
-	IsEnum
-} from 'class-validator';
-import {
-	JoinColumn,
-	Unique,
-	RelationId,
-	Index,
-	JoinTable
-} from 'typeorm';
+import { isMySQL } from '@gauzy/config';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import {
 	InvoiceEstimateHistory,
@@ -36,10 +36,8 @@ import {
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
-import { isMySQL } from '@gauzy/config';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice', { mikroOrmRepository: () => MikroOrmInvoiceRepository })
 @Unique(['invoiceNumber'])
@@ -220,7 +218,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invoice) => it.fromOrganization)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	fromOrganizationId?: string;
 
@@ -235,7 +233,7 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Invoice) => it.toContact)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	toContactId?: string;
 
@@ -277,6 +275,8 @@ export class Invoice extends TenantOrganizationBaseEntity implements IInvoice {
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_invoice',
+		joinColumn: 'invoiceId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_invoice'

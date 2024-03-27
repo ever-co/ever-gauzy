@@ -1,19 +1,12 @@
-import {
-	EntitySubscriberInterface,
-	EventSubscriber,
-	InsertEvent,
-	LoadEvent,
-	UpdateEvent,
-} from 'typeorm';
+import { EventSubscriber } from 'typeorm';
 import { sluggable } from '@gauzy/common';
-import { RequestContext } from './../core/context';
-import { getDummyImage } from './../core/utils';
+import { RequestContext } from '../core/context';
+import { getDummyImage } from '../core/utils';
+import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { OrganizationTeam } from './organization-team.entity';
 
 @EventSubscriber()
-export class OrganizationTeamSubscriber
-	implements EntitySubscriberInterface<OrganizationTeam>
-{
+export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<OrganizationTeam> {
 	/**
 	 * Indicates that this subscriber only listen to OrganizationTeam events.
 	 */
@@ -22,85 +15,67 @@ export class OrganizationTeamSubscriber
 	}
 
 	/**
-	 * Called after entity is loaded from the database.
+	 * Called after an OrganizationTeam entity is loaded from the database. This method updates
+	 * the entity by setting the prefix and updating the logo URL if an image is available.
 	 *
-	 * @param entity
-	 * @param event
+	 * @param entity The OrganizationTeam entity that has been loaded.
+	 * @returns {Promise<void>} A promise that resolves when the post-load processing is complete.
 	 */
-	afterLoad(
-		entity: OrganizationTeam,
-		event?: LoadEvent<OrganizationTeam>
-	): void | Promise<any> {
+	async afterEntityLoad(entity: OrganizationTeam): Promise<void> {
 		try {
-			if (entity) {
-				if (entity.prefix) {
-					entity.prefix = entity.prefix.toUpperCase();
-				} else if (!entity.prefix) {
-					const prefix = entity.name;
-					if (prefix) {
-						entity.prefix = prefix.substring(0, 3).toUpperCase();
-					}
-				}
-				if (!!entity['image']) {
-					entity.logo = entity.image.fullUrl || entity.logo;
-				}
+			// Set or update the prefix
+			entity.prefix = entity.prefix ? entity.prefix.toUpperCase() : entity.name?.substring(0, 3).toUpperCase();
+
+			// Update the logo URL if an image is available
+			if (entity.image && entity.image.fullUrl) {
+				entity.logo = entity.image.fullUrl;
 			}
 		} catch (error) {
-			console.log(error);
+			console.error('OrganizationTeamSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
 	}
 
 	/**
-	 * Called before entity is inserted to the database.
+	 * Called before an OrganizationTeam entity is inserted into the database. This method sets the
+	 * creator ID, generates a slug for the profile link, and assigns a default logo if necessary.
 	 *
-	 * @param event
+	 * @param entity The OrganizationTeam entity about to be created.
+	 * @returns {Promise<void>} A promise that resolves when the pre-insertion processing is complete.
 	 */
-	beforeInsert(event: InsertEvent<OrganizationTeam>): void | Promise<any> {
+	async beforeEntityCreate(entity: OrganizationTeam): Promise<void> {
 		try {
-			if (event) {
-				const { entity } = event;
-				if (entity) {
-					entity.createdById = RequestContext.currentUserId();
+			// Assign the current user's ID as the creator
+			entity.createdById = RequestContext.currentUserId();
 
-					// organization team slug based on name or profile link
-					if (entity.profile_link || entity.name) {
-						entity.profile_link = sluggable(
-							`${entity.profile_link || entity.name}`
-						);
-					}
+			// Generate a slug for the profile link
+			if (entity.profile_link || entity.name) {
+				entity.profile_link = sluggable(`${entity.profile_link || entity.name}`);
+			}
 
-					if (!entity.logo) {
-						entity.logo = getDummyImage(
-							330,
-							300,
-							entity.name.charAt(0).toUpperCase()
-						);
-					}
-				}
+			// Set a default logo if not provided
+			if (!entity.logo && entity.name) {
+				entity.logo = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
 		} catch (error) {
-			console.log('Error before insert organization team entity', error);
+			console.error('OrganizationTeamSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
 	}
 
 	/**
-	 * Called before entity is updated to the database.
+	 * Called before an OrganizationTeam entity is updated in the database. This method updates
+	 * the slug for the profile link based on the team's name.
 	 *
-	 * @param event
+	 * @param entity The OrganizationTeam entity that is about to be updated.
+	 * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
 	 */
-	beforeUpdate(event: UpdateEvent<OrganizationTeam>): void | Promise<any> {
+	async beforeEntityUpdate(entity: OrganizationTeam): Promise<void> {
 		try {
-			if (event) {
-				const { entity } = event;
-				if (entity) {
-					// organization team slug based on name
-					if (entity.name) {
-						entity.profile_link = sluggable(`${entity.name}`);
-					}
-				}
+			// Update the profile link slug if the name is provided
+			if (entity.name) {
+				entity.profile_link = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.log('Error before update organization team entity', error);
+			console.error('OrganizationTeamSubscriber: An error occurred during the beforeEntityUpdate process:', error);
 		}
 	}
 }

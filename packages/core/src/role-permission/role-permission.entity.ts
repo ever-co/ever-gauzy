@@ -1,20 +1,16 @@
-import {
-	PermissionsEnum,
-	IRolePermission
-} from '@gauzy/contracts';
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
+import { PermissionsEnum, IRolePermission } from '@gauzy/contracts';
 import { Role, TenantBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('role_permission', { mikroOrmRepository: () => MikroOrmRolePermissionRepository })
-export class RolePermission extends TenantBaseEntity
-	implements IRolePermission {
+export class RolePermission extends TenantBaseEntity implements IRolePermission {
 
 	@ApiProperty({ type: () => String, enum: PermissionsEnum })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	permission: string;
 
@@ -38,7 +34,7 @@ export class RolePermission extends TenantBaseEntity
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: RolePermission) => it.role)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	roleId: string;
 }

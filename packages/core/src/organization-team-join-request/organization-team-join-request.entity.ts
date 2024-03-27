@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -9,9 +9,8 @@ import {
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team_join_request', { mikroOrmRepository: () => MikroOrmOrganizationTeamJoinRequestRepository })
 export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
@@ -85,7 +84,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.user)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	userId?: IUser['id'];
 
@@ -102,7 +101,7 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: OrganizationTeamJoinRequest) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

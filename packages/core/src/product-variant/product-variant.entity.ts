@@ -1,8 +1,7 @@
 import {
 	RelationId,
 	JoinColumn,
-	JoinTable,
-	Index
+	JoinTable
 } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
@@ -24,9 +23,8 @@ import {
 	TenantOrganizationBaseEntity,
 	WarehouseProductVariant
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmProductVariantRepository } from './repository/mikro-orm-product-variant.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('product_variant', { mikroOrmRepository: () => MikroOrmProductVariantRepository })
 export class ProductVariant extends TenantOrganizationBaseEntity implements IProductVariant {
@@ -69,25 +67,33 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	/**
 	 * ProductVariantPrice
 	 */
-	@MultiORMOneToOne(() => ProductVariantPrice, (variantPrice) => variantPrice.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantPrice, (productVariantPrice) => productVariantPrice.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
+	@JoinColumn()
 	price: IProductVariantPrice;
 
 	/**
 	 * ProductVariantSetting
 	 */
-	@MultiORMOneToOne(() => ProductVariantSetting, (settings) => settings.productVariant, {
+	@MultiORMOneToOne(() => ProductVariantSetting, (productVariantSetting) => productVariantSetting.productVariant, {
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
+	@JoinColumn()
 	setting: IProductVariantSetting;
 
 	/*
@@ -109,7 +115,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductVariant) => it.product)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	productId?: string;
 
@@ -127,7 +133,7 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	@ApiProperty({ type: () => String })
 	@RelationId((it: ProductVariant) => it.image)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: string;
 

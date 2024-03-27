@@ -1,53 +1,72 @@
-import { IEmployee, IOrganizationContact, IOrganizationProject } from '@gauzy/contracts';
+import { IOrganizationContact, IOrganizationProject } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { isEmpty } from '@gauzy/common';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { In } from 'typeorm';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { RequestContext } from './../../../core/context';
+import { ContactService } from 'contact/contact.service';
 
 @CommandHandler(OrganizationContactCreateCommand)
 export class OrganizationContactCreateHandler implements ICommandHandler<OrganizationContactCreateCommand> {
 
 	constructor(
-		private readonly organizationContactService: OrganizationContactService,
-		private readonly organizationProjectService: OrganizationProjectService
+		private readonly _organizationContactService: OrganizationContactService,
+		private readonly _organizationProjectService: OrganizationProjectService,
+		private readonly _contactService: ContactService,
 	) { }
 
-	public async execute(
-		command: OrganizationContactCreateCommand
-	): Promise<IOrganizationContact> {
+	/**
+	 * Executes the creation of an organization contact.
+	 *
+	 * @param command An instance of OrganizationContactCreateCommand containing the necessary input for creating a new organization contact.
+	 * @returns A promise that resolves to the newly created organization contact (IOrganizationContact).
+	 */
+	public async execute(command: OrganizationContactCreateCommand): Promise<IOrganizationContact> {
 		try {
+			// Destructure the input from the command.
 			const { input } = command;
+			// Destructure organizationId from the input, and get tenantId either from the current RequestContext or from the input.
+			let { organizationId } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			const tenantId = RequestContext.currentTenantId();
-			const { organizationId } = input;
+			// Check if the input members are empty and projects are defined.
+			if (isEmpty(input.members) && isNotEmpty(input.projects)) {
+				// Map the projects to their IDs.
+				const projectIds = input.projects.map((project) => project.id);
 
-			/**
-			 * If members is not selected, but project already has members
-			 */
-			if (isEmpty(input.members)) {
-				if (input.projects) {
-					const projectIds = input.projects.map((project: IOrganizationProject) => project.id);
-					const projects = await this.organizationProjectService.find({
-						where: {
-							id: In(projectIds),
-							organizationId,
-							tenantId
-						},
-						relations: {
-							members: true
-						}
-					});
-					const members: IEmployee[][] = projects.map((project: IOrganizationProject) => project.members);
-					input.members = [].concat(...members);
-				}
+				// Retrieve projects with specified IDs, belonging to the given organization and tenant.
+				const projects = await this._organizationProjectService.find({
+					where: {
+						id: In(projectIds),
+						organization: { id: organizationId },
+						tenantId
+					},
+					relations: { members: true }
+				});
+
+				// Flatten the members from these projects and assign them to input.members.
+				input.members = projects.flatMap((project: IOrganizationProject) => project.members);
 			}
 
-			return await this.organizationContactService.create(input);
+			// Create contact details of organization
+			try {
+				input.contact = await this._contactService.create({
+					...input.contact,
+					organization: { id: organizationId }
+				});
+			} catch (error) {
+				console.log('Error occurred during creation of contact details or creating the organization contact:', error);
+			}
+
+			// Create a new organization contact with the modified input.
+			return await this._organizationContactService.create({
+				...input,
+				organization: { id: organizationId }
+			});
 		} catch (error) {
-			console.log('Error while creating new organization contact', error);
+			console.error('Error while creating new organization contact', error);
 		}
 	}
 }

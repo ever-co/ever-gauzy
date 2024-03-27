@@ -8,6 +8,7 @@ import { OrganizationTaskSettingService } from './organization-task-setting.serv
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmOrganizationTaskSettingRepository } from './repository';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [OrganizationTaskSettingController],
-	providers: [OrganizationTaskSettingService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTaskSettingService]
+	providers: [OrganizationTaskSettingService, TypeOrmOrganizationTaskSettingRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTaskSettingService, TypeOrmOrganizationTaskSettingRepository]
 })
 export class OrganizationTaskSettingModule { }

@@ -1,10 +1,12 @@
-import { EntitySubscriberInterface, EventSubscriber, InsertEvent } from "typeorm";
+import { EventSubscriber } from "typeorm";
 import { sign } from 'jsonwebtoken';
 import { environment } from "@gauzy/config";
 import { Invoice } from "./invoice.entity";
+import { BaseEntityEventSubscriber } from "../core/entities/subscribers/base-entity-event.subscriber";
+import { MikroOrmEntityManager, MultiOrmEntityManager, TypeOrmEntityManager } from "../core/entities/subscribers/entity-event-subscriber.types";
 
 @EventSubscriber()
-export class InvoiceSubscriber implements EntitySubscriberInterface<Invoice> {
+export class InvoiceSubscriber extends BaseEntityEventSubscriber<Invoice> {
 
     /**
     * Indicates that this subscriber only listen to Invoice events.
@@ -14,36 +16,43 @@ export class InvoiceSubscriber implements EntitySubscriberInterface<Invoice> {
     }
 
     /**
-     * Called after entity is inserted to the database.
+     * Called after an Invoice entity is created in the database. This method updates
+     * the entity by setting a generated token.
      *
-     * @param event
+     * @param entity The newly created Invoice entity.
+     * @param em An optional entity manager which can be either from TypeORM or MikroORM.
+     *           Used for executing the update operation.
+     * @returns {Promise<void>} A promise that resolves when the update operation is complete.
      */
-    afterInsert(event: InsertEvent<Invoice>): void | Promise<any> {
+    async afterEntityCreate(entity: Invoice, em?: MultiOrmEntityManager): Promise<void> {
         try {
-            if (event.entity) {
-                const { entity } = event;
-                const payload = {
-                    id: entity.id,
-                    organizationId: entity.organizationId,
-                    tenantId: entity.tenantId
-                }
-                event.manager.update(Invoice, entity.id, {
-                    token: this.createToken(payload)
-                });
+            const payload = {
+                id: entity.id,
+                organizationId: entity.organizationId,
+                tenantId: entity.tenantId
+            };
+
+            const token = this.createToken(payload);
+
+            // Update the Invoice entity with the generated token
+            if (em instanceof TypeOrmEntityManager) {
+                await em.update(Invoice, { id: entity.id }, { token });
+            } else if (em instanceof MikroOrmEntityManager) {
+                await em.nativeUpdate(Invoice, { id: entity.id }, { token });
             }
         } catch (error) {
-            console.log(error);
+            console.error('InvoiceSubscriber: Error during the afterEntityCreate process:', error);
         }
     }
 
     /**
-     * Generate public invoice token
+     * Generate a public invoice token.
      *
-     * @param payload
-     * @returns
+     * @param payload The data to be encoded in the JWT.
+     * @returns The generated JWT string.
      */
-    createToken(payload: string | Buffer | object): string {
-		const token: string = sign(payload, environment.JWT_SECRET, {});
-		return token;
-	}
+    private createToken(payload: string | Buffer | object): string {
+        const token: string = sign(payload, environment.JWT_SECRET, {});
+        return token;
+    }
 }

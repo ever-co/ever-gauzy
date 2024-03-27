@@ -6,9 +6,8 @@ import {
 	Pipeline,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmPipelineStageRepository } from './repository/mikro-orm-pipeline-stage.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('pipeline_stage', { mikroOrmRepository: () => MikroOrmPipelineStageRepository })
 export class PipelineStage extends TenantOrganizationBaseEntity implements IStage {

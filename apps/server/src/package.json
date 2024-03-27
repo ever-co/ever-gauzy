@@ -46,6 +46,9 @@
         "artifactName": "${name}-${version}.${ext}",
         "productName": "Gauzy Server",
         "copyright": "Copyright © 2019-Present. Ever Co. LTD",
+        "dmg": {
+            "sign": false
+        },
         "asar": true,
         "npmRebuild": true,
         "asarUnpack": [

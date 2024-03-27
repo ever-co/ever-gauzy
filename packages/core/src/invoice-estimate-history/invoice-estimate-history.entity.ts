@@ -3,7 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	JoinColumn,
-	Index,
 	RelationId,
 } from 'typeorm';
 import {
@@ -11,9 +10,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmInvoiceEstimateHistoryRepository } from './repository/mikro-orm-invoice-estimate-history.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('invoice_estimate_history', { mikroOrmRepository: () => MikroOrmInvoiceEstimateHistoryRepository })
 export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity implements IInvoiceEstimateHistory {
@@ -44,7 +42,7 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	@ApiProperty({ type: () => String })
 	@RelationId((it: InvoiceEstimateHistory) => it.user)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	userId: string;
 
@@ -57,7 +55,7 @@ export class InvoiceEstimateHistory extends TenantOrganizationBaseEntity impleme
 	@ApiProperty({ type: () => String })
 	@RelationId((it: InvoiceEstimateHistory) => it.invoice)
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	invoiceId: string;
 }

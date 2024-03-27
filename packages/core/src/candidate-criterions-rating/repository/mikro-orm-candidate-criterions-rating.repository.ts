@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import { CandidateCriterionsRating } from '../candidate-criterion-rating.entity';
 
-export class MikroOrmCandidateCriterionsRatingRepository extends EntityRepository<CandidateCriterionsRating> { }
+export class MikroOrmCandidateCriterionsRatingRepository extends MikroOrmBaseEntityRepository<CandidateCriterionsRating> { }

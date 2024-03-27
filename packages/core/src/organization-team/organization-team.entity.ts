@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinTable,
 	JoinColumn,
 	RelationId,
@@ -48,9 +47,8 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_team', { mikroOrmRepository: () => MikroOrmOrganizationTeamRepository })
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
@@ -61,7 +59,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
@@ -126,7 +124,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
@@ -151,7 +149,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	createdBy?: IUser;
 
 	@RelationId((it: OrganizationTeam) => it.createdBy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	createdById?: IUser['id'];
 
@@ -175,7 +173,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: OrganizationTeam) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
@@ -260,6 +258,8 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_team',
+		joinColumn: 'organizationTeamId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_team'

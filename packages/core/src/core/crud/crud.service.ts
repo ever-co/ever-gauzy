@@ -13,15 +13,13 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import {
-	EntityRepository,
-	FilterQuery as MikroFilterQuery,
-	RequiredEntityData,
-	DeleteOptions,
-	wrap
-} from '@mikro-orm/core';
+import { CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
+import { AssignOptions } from '@mikro-orm/knex';
 import { IPagination } from '@gauzy/contracts';
 import { BaseEntity } from '../entities/internal';
+import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
+import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
+import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
 import {
 	MultiORM,
 	MultiORMEnum,
@@ -41,22 +39,22 @@ import {
 	IUpdateCriteria
 } from './icrud.service';
 import { ITryRequest } from './try-request';
-import { multiORMCreateQueryBuilder } from 'core/orm/query-builder/query-builder.factory';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
 
 export abstract class CrudService<T extends BaseEntity> implements ICrudService<T> {
+
 	constructor(
 		protected readonly repository: Repository<T>,
-		protected readonly mikroRepository: EntityRepository<T>
+		protected readonly mikroRepository: MikroOrmBaseEntityRepository<T>
 	) { }
 
 	/**
 	 * Get the table name from the repository metadata.
 	 * @returns {string} The table name.
 	 */
-	protected get tableName(): string {
+	public get tableName(): string {
 		return this.repository.metadata.tableName;
 	}
 
@@ -64,20 +62,27 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Get the ORM type.
 	 * @returns {MultiORM} The ORM type.
 	 */
-	protected get ormType(): MultiORM {
+	public get ormType(): MultiORM {
 		return ormType;
 	}
 
-	createQueryBuilder(entity?: any) {
-
-		console.log('this.mikroRepository.getEntityManager', this.mikroRepository.getEntityName());
-
+	/**
+	 * Creates an ORM-specific query builder for the repository, supporting MikroORM and TypeORM.
+	 *
+	 * @param alias - Optional alias for the primary table in the query.
+	 * @returns An `IQueryBuilder<T>` instance suitable for the repository's ORM type.
+	 * @throws Error if the ORM type is not implemented.
+	 */
+	public createQueryBuilder(alias?: string): IQueryBuilder<T> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return multiORMCreateQueryBuilder<T>(this.repository, this.ormType as MultiORMEnum);
+				return multiORMCreateQueryBuilder<T>(this.mikroRepository as any, this.ormType as MultiORMEnum, alias);
 
 			case MultiORMEnum.TypeORM:
-				return multiORMCreateQueryBuilder<T>(this.mikroRepository as any, this.ormType as MultiORMEnum);
+				return multiORMCreateQueryBuilder<T>(this.repository, this.ormType as MultiORMEnum, alias);
+
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 	}
 
@@ -427,23 +432,55 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		return this.serialize(record);
 	}
 
-
-
 	/**
-	 * Create a new entity.
+	 * Creates a new entity or updates an existing one based on the provided entity data.
 	 *
-	 * @param entity - The entity data to create.
-	 * @returns A promise resolving to the created entity.
+	 * @param entity The partial entity data for creation or update.
+	 * @param createOptions Options for the creation of the entity in MikroORM.
+	 * @param upsertOptions Options for the upsert operation in MikroORM.
+	 * @returns The created or updated entity.
 	 */
-	public async create(entity: IPartialEntity<T>): Promise<T> {
+	public async create(
+		partialEntity: IPartialEntity<T>,
+		createOptions: CreateOptions = {
+			/** This option disables the strict typing which requires all mandatory properties to have value, it has no effect on runtime */
+			partial: true,
+			/** Creates a managed entity instance instead, bypassing the constructor call */
+			managed: true
+		},
+		assignOptions: AssignOptions = {
+			updateNestedEntities: false,
+			onlyOwnProperties: true
+		}
+	): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					const row = this.mikroRepository.create(entity as RequiredEntityData<T>);
-					return await this.mikroRepository.upsert(row);
+					try {
+						if (partialEntity['id']) {
+							// Try to load the existing entity
+							const entity = await this.mikroRepository.findOne(partialEntity['id']);
+							if (entity) {
+								// If the entity has an ID, perform an upsert operation
+								this.mikroRepository.assign(entity, partialEntity as any, assignOptions);
+								await this.mikroRepository.flush();
+
+								return this.serialize(entity);
+							}
+						}
+						// If the entity doesn't have an ID, it's new and should be persisted
+						// Create a new entity using MikroORM
+						const newEntity = this.mikroRepository.create(partialEntity as RequiredEntityData<T>, createOptions);
+
+						// Persist new entity and flush
+						await this.mikroRepository.persistAndFlush(newEntity); // This will also persist the relations
+						return this.serialize(newEntity);
+					} catch (error) {
+						console.error('Error during mikro orm create crud transaction:', error);
+					}
 				case MultiORMEnum.TypeORM:
-					const obj = this.repository.create(entity as DeepPartial<T>);
-					return await this.repository.save(obj);
+					const newEntity = this.repository.create(partialEntity as DeepPartial<T>);
+					return await this.repository.save(newEntity);
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
 			}
@@ -522,7 +559,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options
 	 * @returns
 	 */
-	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any[]): Promise<DeleteResult> {
+	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any): Promise<DeleteResult> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -530,7 +567,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					if (typeof criteria === 'string' || typeof criteria === 'number') {
 						where = { id: criteria } as any;
 					}
-					const result = await this.mikroRepository.nativeDelete(where, criteria as DeleteOptions<T>);
+					const result = await this.mikroRepository.nativeDelete(where);
 					return { affected: result } as DeleteResult;
 				case MultiORMEnum.TypeORM:
 					return await this.repository.delete(criteria);

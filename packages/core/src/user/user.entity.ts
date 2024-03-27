@@ -4,11 +4,11 @@
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-	Index,
 	JoinColumn,
 	RelationId,
 	JoinTable
 } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -35,52 +35,54 @@ import {
 	TenantBaseEntity,
 	UserOrganization
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
-import { MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity/relations';
+
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
 
+	[EntityRepositoryType]?: MikroOrmUserRepository;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	thirdPartyId?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	firstName?: string;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	lastName?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 100 })
 	@IsOptional()
 	@IsEmail()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	email?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 4, maxLength: 12 })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	phoneNumber?: string;
 
 	@ApiPropertyOptional({ type: () => String, minLength: 3, maxLength: 20 })
 	@IsOptional()
 	@IsString()
-	@Index({ unique: false })
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	username?: string;
 
@@ -180,7 +182,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: User) => it.role)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	roleId?: string;
 
@@ -201,7 +203,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: User) => it.image)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
 
@@ -214,13 +216,19 @@ export class User extends TenantBaseEntity implements IUser {
 	/**
 	 * Employee
 	 */
-	@MultiORMOneToOne(() => Employee, (it: Employee) => it.user)
+	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user, {
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
+	})
 	employee?: IEmployee;
 
 	/**
 	 * Candidate
 	 */
-	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user)
+	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user, {
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
+	})
 	candidate?: ICandidate;
 
 	/*
@@ -233,7 +241,9 @@ export class User extends TenantBaseEntity implements IUser {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_user'
+		pivotTable: 'tag_user',
+		joinColumn: 'userId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_user'

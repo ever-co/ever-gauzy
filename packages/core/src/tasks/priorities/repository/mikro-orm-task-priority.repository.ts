@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../../core/repository/mikro-orm-base-entity.repository';
 import { TaskPriority } from '../priority.entity';
 
-export class MikroOrmTaskPriorityRepository extends EntityRepository<TaskPriority> { }
+export class MikroOrmTaskPriorityRepository extends MikroOrmBaseEntityRepository<TaskPriority> { }

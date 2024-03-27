@@ -8,6 +8,7 @@ import { HelpCenterController } from './help-center.controller';
 import { HelpCenter } from './help-center.entity';
 import { HelpCenterService } from './help-center.service';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmHelpCenterRepository } from './repository';
 
 @Module({
 	imports: [
@@ -17,9 +18,9 @@ import { CommandHandlers } from './commands/handlers';
 		RolePermissionModule,
 		CqrsModule
 	],
-	providers: [HelpCenterService, ...CommandHandlers],
 	controllers: [HelpCenterController],
-	exports: [HelpCenterService]
+	providers: [HelpCenterService, TypeOrmHelpCenterRepository, ...CommandHandlers],
+	exports: [HelpCenterService, TypeOrmHelpCenterRepository]
 })
 export class HelpCenterModule implements OnModuleInit {
 	constructor() { }

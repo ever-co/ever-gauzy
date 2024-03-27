@@ -1,5 +1,4 @@
 import {
-	Index,
 	JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
@@ -15,9 +14,8 @@ import {
 	JobPresetUpworkJobSearchCriterion,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
-import { MultiORMManyToMany, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('job_preset', { mikroOrmRepository: () => MikroOrmJobPresetRepository })
 export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {
@@ -25,7 +23,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name?: string;
 
@@ -63,6 +61,8 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 		cascade: true,
 		owner: true,
 		pivotTable: 'employee_job_preset',
+		joinColumn: 'jobPresetId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'employee_job_preset'

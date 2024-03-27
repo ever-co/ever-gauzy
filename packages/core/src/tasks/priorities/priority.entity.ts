@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskPriority } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -7,9 +7,8 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
 import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
-import { MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('task_priority', { mikroOrmRepository: () => MikroOrmTaskPriorityRepository })
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
@@ -17,12 +16,12 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
 
 	@ApiProperty({ type: () => String })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
 
@@ -71,7 +70,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskPriority) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -94,7 +93,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TaskPriority) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 }

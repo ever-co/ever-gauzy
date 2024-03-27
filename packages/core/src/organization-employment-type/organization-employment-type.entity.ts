@@ -1,15 +1,14 @@
-import { ICandidate, IEmployee, IOrganizationEmploymentType, ITag } from '@gauzy/contracts';
 import { JoinTable } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ICandidate, IEmployee, IOrganizationEmploymentType, ITag } from '@gauzy/contracts';
 import {
 	Candidate,
 	Employee,
 	Tag,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany } from './../core/decorators/entity';
 import { MikroOrmOrganizationEmploymentTypeRepository } from './repository/mikro-orm-organization-employment-type.repository';
-import { MultiORMManyToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('organization_employment_type', { mikroOrmRepository: () => MikroOrmOrganizationEmploymentTypeRepository })
 export class OrganizationEmploymentType extends TenantOrganizationBaseEntity implements IOrganizationEmploymentType {
@@ -29,6 +28,8 @@ export class OrganizationEmploymentType extends TenantOrganizationBaseEntity imp
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_employment_type',
+		joinColumn: 'organizationEmploymentTypeId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_organization_employment_type'
@@ -43,6 +44,8 @@ export class OrganizationEmploymentType extends TenantOrganizationBaseEntity imp
 		cascade: ['update'],
 		owner: true,
 		pivotTable: 'organization_employment_type_employee',
+		joinColumn: 'organizationEmploymentTypeId',
+		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({
 		name: 'organization_employment_type_employee'
@@ -58,6 +61,8 @@ export class OrganizationEmploymentType extends TenantOrganizationBaseEntity imp
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'candidate_employment_type',
+		joinColumn: 'organizationEmploymentTypeId',
+		inverseJoinColumn: 'candidateId',
 	})
 	@JoinTable({
 		name: 'candidate_employment_type'

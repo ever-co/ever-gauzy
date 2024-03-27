@@ -1,5 +1,5 @@
-import { IOrganizationUpdateInput } from "@gauzy/contracts";
 import { IntersectionType } from "@nestjs/swagger";
+import { IOrganizationUpdateInput } from "@gauzy/contracts";
 import { CreateOrganizationDTO } from "./create-organization.dto";
 import { OrganizationPublicSettingDTO } from "./organization-public-setting.dto";
 
@@ -10,4 +10,4 @@ import { OrganizationPublicSettingDTO } from "./organization-public-setting.dto"
 export class UpdateOrganizationDTO extends IntersectionType(
 	CreateOrganizationDTO,
 	OrganizationPublicSettingDTO
-) implements IOrganizationUpdateInput {}
+) implements IOrganizationUpdateInput { }

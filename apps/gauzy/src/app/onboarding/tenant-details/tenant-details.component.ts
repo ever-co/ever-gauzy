@@ -28,7 +28,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly authService: AuthService,
 		private readonly employeesService: EmployeesService
-	) {}
+	) { }
 
 	ngOnInit() {
 		this.isOnboardingRequired();
@@ -101,7 +101,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 			if (this.store.refresh_token) {
 				const { token } = await this.authService.refreshToken(this.store.refresh_token);
 				if (token) {
-					this.store.token  = token;
+					this.store.token = token;
 				}
 			}
 		} catch (error) {
@@ -109,5 +109,5 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

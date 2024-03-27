@@ -20,6 +20,7 @@ export class DesktopServer extends EventEmitter {
 
 	constructor(private readonly isOnlyApiServer = false) {
 		super();
+
 		this.stateObserver = new Observer((state: ServerState) => {
 			this.state = state;
 			this.notification(state);
@@ -34,6 +35,8 @@ export class DesktopServer extends EventEmitter {
 		signal?: AbortSignal,
 		uiPort?: number
 	): Promise<void> {
+		console.log('DesktopServer -> start');
+
 		try {
 			if (this.state !== ServerState.STOPPED) {
 				return; // Server already running or restarting
@@ -46,6 +49,7 @@ export class DesktopServer extends EventEmitter {
 				const uiInstance = DesktopServerFactory.getUiInstance(path?.ui, env, mainWindow, signal, uiPort);
 				await this.startInstance(uiInstance);
 			}
+
 			// Notify running state
 			this.stateObserver.notify(ServerState.RUNNING);
 		} catch (error) {
@@ -92,7 +96,7 @@ export class DesktopServer extends EventEmitter {
 
 		await this.restartInstance(apiInstance);
 
-		// Notify runnig state
+		// Notify running state
 		this.stateObserver.notify(ServerState.RUNNING);
 	}
 
@@ -142,6 +146,7 @@ export class DesktopServer extends EventEmitter {
 				console.log(`ERROR: Uncaught state: ${state}`);
 				break;
 		}
+
 		const notifier = new NotificationDesktop();
 		notifier.customNotification(message, this.name);
 	}

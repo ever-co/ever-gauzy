@@ -54,10 +54,7 @@ export class DesktopUpdater {
 				console.log('Files directory', files);
 				this._updateServer.fileUri(files);
 				this._updateServer.restart();
-				localUpdate.url =
-					'http://localhost:' +
-					LOCAL_SERVER_UPDATE_CONFIG.PORT +
-					'/download';
+				localUpdate.url = 'http://localhost:' + LOCAL_SERVER_UPDATE_CONFIG.PORT + '/download';
 			} else {
 				localUpdate.url = null;
 			}
@@ -80,9 +77,7 @@ export class DesktopUpdater {
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
 			} else if (args.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(
-					new CdnUpdate(this._config)
-				);
+				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 			if (!args.local) {
 				try {
@@ -109,9 +104,7 @@ export class DesktopUpdater {
 
 		ipcMain.on('automatic_update_setting', (event, args) => {
 			const { isEnabled, automaticUpdateDelay } = args;
-			isEnabled
-				? (this._automaticUpdate.delay = automaticUpdateDelay)
-				: this._automaticUpdate.stop();
+			isEnabled ? (this._automaticUpdate.delay = automaticUpdateDelay) : this._automaticUpdate.stop();
 		});
 	}
 
@@ -128,10 +121,10 @@ export class DesktopUpdater {
 			);
 			dialog.options = {
 				...dialog.options,
-				detail: TranslateService.instant(
-					'TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE',
-					{ next: info.version, current: app.getVersion() }
-				),
+				detail: TranslateService.instant('TIMER_TRACKER.DIALOG.NEW_VERSION_AVAILABLE', {
+					next: info.version,
+					current: app.getVersion()
+				})
 			};
 			const button = await dialog.show();
 			if (button?.response === 0) {
@@ -146,16 +139,13 @@ export class DesktopUpdater {
 			const dialog = new DialogConfirmInstallDownload(
 				new DesktopDialog(
 					process.env.DESCRIPTION,
-					TranslateService.instant(
-						'TIMER_TRACKER.DIALOG.READY_INSTALL'
-					),
+					TranslateService.instant('TIMER_TRACKER.DIALOG.READY_INSTALL'),
 					this._gauzyWindow
 				)
 			);
-			dialog.options.detail = TranslateService.instant(
-				'TIMER_TRACKER.DIALOG.HAS_BEEN_DOWNLOADED',
-				{ version: event.version }
-			);
+			dialog.options.detail = TranslateService.instant('TIMER_TRACKER.DIALOG.HAS_BEEN_DOWNLOADED', {
+				version: event.version
+			});
 			const button = await dialog.show();
 			if (button?.response === 0) {
 				this._settingWindow.webContents.send('_logout_quit_install_');
@@ -169,8 +159,7 @@ export class DesktopUpdater {
 		});
 
 		autoUpdater.requestHeaders = {
-			'Cache-Control':
-				'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+			'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
 		};
 
 		autoUpdater.on('update-not-available', () => {
@@ -181,10 +170,7 @@ export class DesktopUpdater {
 		autoUpdater.on('download-progress', (event) => {
 			console.log('update log', event);
 			if (this._settingWindow) {
-				this._settingWindow.webContents.send(
-					'download_on_progress',
-					event
-				);
+				this._settingWindow.webContents.send('download_on_progress', event);
 			}
 		});
 
@@ -204,16 +190,16 @@ export class DesktopUpdater {
 
 	public async checkUpdate(): Promise<void> {
 		const settings: any = LocalStore.getStore('appSetting');
+
 		if (settings && settings.cdnUpdater) {
 			if (settings.cdnUpdater.github) {
 				await this._strategy.initialize();
 				this._updateContext.strategy = this._strategy;
 			} else if (settings.cdnUpdater.digitalOcean) {
-				this._updateContext.strategy = new DigitalOceanCdn(
-					new CdnUpdate(this._config)
-				);
+				this._updateContext.strategy = new DigitalOceanCdn(new CdnUpdate(this._config));
 			}
 		}
+
 		setTimeout(async () => {
 			try {
 				await this._updateContext.checkUpdate();

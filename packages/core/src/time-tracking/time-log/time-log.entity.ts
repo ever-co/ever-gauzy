@@ -1,4 +1,4 @@
-import { RelationId, JoinColumn, Index, AfterLoad } from 'typeorm';
+import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
@@ -25,22 +25,21 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from '../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity/relations';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	startedAt?: Date;
 
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	stoppedAt?: Date;
 
@@ -49,19 +48,19 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 */
 	@MultiORMColumn({ type: 'timestamp' })
 	@IsDateString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	editedAt?: Date;
 
 	@ApiProperty({ type: () => String, enum: TimeLogType, default: TimeLogType.TRACKED })
 	@IsEnum(TimeLogType)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: TimeLogType.TRACKED })
 	logType: TimeLogType;
 
 	@ApiProperty({ type: () => String, enum: TimeLogSourceEnum, default: TimeLogSourceEnum.WEB_TIMER })
 	@IsEnum(TimeLogSourceEnum)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: TimeLogSourceEnum.WEB_TIMER })
 	source?: TimeLogSourceEnum;
 
@@ -83,21 +82,21 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ default: false })
 	isBillable: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	isRunning?: boolean;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ update: false, nullable: true })
 	version?: string;
 
@@ -130,7 +129,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ApiProperty({ type: () => String })
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId: IEmployee['id'];
 
@@ -151,7 +150,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.timesheet)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	timesheetId?: ITimesheet['id'];
 
@@ -175,7 +174,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -196,7 +195,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.task)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
 
@@ -217,7 +216,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.organizationContact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: IOrganizationContact['id'];
 
@@ -238,7 +237,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: TimeLog) => it.organizationTeam)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationTeamId?: IOrganizationTeam['id'];
 

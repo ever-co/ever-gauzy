@@ -1,8 +1,7 @@
 import {
 	JoinColumn,
 	JoinTable,
-	RelationId,
-	Index
+	RelationId
 } from 'typeorm';
 import {
 	IPayment,
@@ -27,9 +26,8 @@ import {
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { IsOptional, IsUUID } from 'class-validator';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmPaymentRepository } from './repository/mikro-orm-payment.repository';
-import { MultiORMManyToMany, MultiORMManyToOne } from 'core/decorators/entity/relations';
 
 @MultiORMEntity('payment', { mikroOrmRepository: () => MikroOrmPaymentRepository })
 export class Payment extends TenantOrganizationBaseEntity implements IPayment {
@@ -77,7 +75,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 */
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: string;
 
@@ -93,7 +91,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	 */
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.invoice)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	invoiceId?: string;
 
@@ -114,7 +112,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: Payment) => it.recordedBy)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	recordedById?: IUser['id'];
 
@@ -139,7 +137,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Payment) => it.project)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	projectId?: IOrganizationProject['id'];
 
@@ -155,7 +153,7 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 
 	@ApiPropertyOptional({ type: () => String })
 	@RelationId((it: Payment) => it.organizationContact)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	organizationContactId?: string;
 
@@ -169,7 +167,9 @@ export class Payment extends TenantOrganizationBaseEntity implements IPayment {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
 		owner: true,
-		pivotTable: 'tag_payment'
+		pivotTable: 'tag_payment',
+		joinColumn: 'paymentId',
+		inverseJoinColumn: 'tagId',
 	})
 	@JoinTable({
 		name: 'tag_payment'

@@ -1,4 +1,3 @@
-import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import {
 	IsNotEmpty,
@@ -11,30 +10,17 @@ import {
 	JoinColumn,
 	RelationId
 } from 'typeorm';
+import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import {
 	AppointmentEmployee,
 	Employee,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
-import { MultiORMManyToOne, MultiORMOneToMany } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_appointment', { mikroOrmRepository: () => MikroOrmEmployeeAppointmentRepository })
 export class EmployeeAppointment extends TenantOrganizationBaseEntity implements IEmployeeAppointment {
-
-	@ApiProperty({ type: () => Employee })
-	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
-	@JoinColumn()
-	employee?: IEmployee;
-
-	@ApiProperty({ type: () => String, readOnly: true })
-	@RelationId(
-		(employeeAppointment: EmployeeAppointment) =>
-			employeeAppointment.employee
-	)
-	@MultiORMColumn({ nullable: true, relationId: true })
-	readonly employeeId?: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -99,14 +85,34 @@ export class EmployeeAppointment extends TenantOrganizationBaseEntity implements
 	@MultiORMColumn({ nullable: true })
 	status?: string;
 
-	@ApiProperty({ type: () => AppointmentEmployee, isArray: true })
-	@MultiORMOneToMany(
-		() => AppointmentEmployee,
-		(entity) => entity.employeeAppointment,
-		{
-			onDelete: 'SET NULL'
-		}
-	)
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 *
+	 */
+	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiProperty({ type: () => String })
+	@RelationId((it: EmployeeAppointment) => it.employee)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	employeeId?: IEmployee['id'];
+
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 *
+	 */
+	@MultiORMOneToMany(() => AppointmentEmployee, (entity) => entity.employeeAppointment, {
+		onDelete: 'SET NULL'
+	})
 	@JoinColumn()
 	invitees?: AppointmentEmployee[];
 }

@@ -1,10 +1,10 @@
-import { Index, AfterLoad } from 'typeorm';
+import { AfterLoad } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { IPasswordReset } from '@gauzy/contracts';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { TenantBaseEntity } from './../core/entities/tenant-base.entity';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
 import { MikroOrmPasswordResetRepository } from './repository/mikro-orm-password-reset.repository';
 
 @MultiORMEntity('password_reset', { mikroOrmRepository: () => MikroOrmPasswordResetRepository })
@@ -14,7 +14,7 @@ export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsEmail()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	email: string;
 
@@ -22,7 +22,7 @@ export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	token: string;
 

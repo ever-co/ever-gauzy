@@ -1,10 +1,9 @@
-import { Index, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IEmployee, IEmployeePhone } from '@gauzy/contracts';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmEmployeePhoneRepository } from './repository/mikro-orm-employee-phone.repository';
-import { MultiORMManyToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('employee_phone', { mikroOrmRepository: () => MikroOrmEmployeePhoneRepository })
 export class EmployeePhone extends TenantOrganizationBaseEntity implements IEmployeePhone {
@@ -13,7 +12,7 @@ export class EmployeePhone extends TenantOrganizationBaseEntity implements IEmpl
 	type: string;
 
 	@ApiProperty({ type: () => String, minLength: 4, maxLength: 12 })
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn()
 	phoneNumber: string;
 
@@ -30,7 +29,7 @@ export class EmployeePhone extends TenantOrganizationBaseEntity implements IEmpl
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeePhone) => it.employee)
-	@Index()
+	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
 	employeeId?: IEmployee['id'];
 }

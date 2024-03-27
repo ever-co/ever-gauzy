@@ -13,12 +13,12 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { MultiORMColumn, MultiORMEntity } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmContactRepository } from './repository/mikro-orm-contact.repository';
-import { MultiORMOneToOne } from '../core/decorators/entity/relations';
 
 @MultiORMEntity('contact', { mikroOrmRepository: () => MikroOrmContactRepository })
 export class Contact extends TenantOrganizationBaseEntity implements IContact {
+
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsOptional()
@@ -88,7 +88,6 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	longitude?: number;
 
 	@ApiProperty({ type: () => String })
-	@MultiORMColumn()
 	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	regionCode?: string;
@@ -120,27 +119,36 @@ export class Contact extends TenantOrganizationBaseEntity implements IContact {
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
 	@MultiORMOneToOne(() => Employee, (employee) => employee.contact, {
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
 	employee?: IEmployee;
 
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Candidate })
 	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.contact, {
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
 	candidate?: ICandidate;
 
 	/**
 	 * Organization Contact
 	 */
-	@ApiProperty({ type: () => OrganizationContact })
 	@MultiORMOneToOne(() => OrganizationContact, (organizationContact) => organizationContact.contact, {
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
+
+		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
+		owner: false
 	})
 	organizationContact?: IOrganizationContact;
 }

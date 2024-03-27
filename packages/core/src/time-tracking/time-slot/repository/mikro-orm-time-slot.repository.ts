@@ -1,4 +1,4 @@
-import { EntityRepository } from '@mikro-orm/core';
+import { MikroOrmBaseEntityRepository } from '../../../core/repository/mikro-orm-base-entity.repository';
 import { TimeSlot } from '../time-slot.entity';
 
-export class MikroOrmTimeSlotRepository extends EntityRepository<TimeSlot> { }
+export class MikroOrmTimeSlotRepository extends MikroOrmBaseEntityRepository<TimeSlot> { }
