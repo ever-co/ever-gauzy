@@ -184,10 +184,7 @@ export class S3Provider extends Provider<S3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -241,6 +238,9 @@ export class S3Provider extends Provider<S3Provider> {
 	 */
 	async putFile(fileContent: string, key: string = ''): Promise<UploadedFile> {
 		try {
+			// Replace double backslashes with single forward slashes
+			key = key.replace(/\\/g, '/');
+
 			const s3Client = this.getS3Instance();
 			const filename = basename(key);
 
@@ -332,7 +332,12 @@ export class S3Provider extends Provider<S3Provider> {
 						accessKeyId: this.config.aws_access_key_id,
 						secretAccessKey: this.config.aws_secret_access_key
 					},
-					region
+					region,
+					/**
+					 * Whether to force path style URLs for S3 objects
+					 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>
+					 */
+					forcePathStyle: true
 				});
 
 				return s3Client;
