@@ -55,7 +55,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 			digitalocean_secret_access_key: digitalOcean.secretAccessKey,
 			digitalocean_default_region: digitalOcean.region,
 			digitalocean_service_url: digitalOcean.serviceUrl,
-			digitalocean_cdn_url: digitalOcean.cdn,
+			digitalocean_cdn_url: digitalOcean.cdnUrl,
 			digitalocean_s3_bucket: digitalOcean.s3.bucket,
 			digitalocean_s3_force_path_style: digitalOcean.s3.forcePathStyle,
 		};
@@ -140,13 +140,9 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 						}
 					}
 
+					// Assuming trimAndGetValue() function trims and retrieves the value from settings
 					const forcePathStyle = trimAndGetValue(settings.digitalocean_s3_force_path_style);
-
-					if (forcePathStyle) {
-						this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
-					} else {
-						this.config.digitalocean_s3_force_path_style = false;
-					}
+					this.config.digitalocean_s3_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
 					if (this._detailedloggingEnabled) {
 						console.log('setDigitalOceanConfiguration this.config.digitalocean_s3_force_path_style value: ', this.config.digitalocean_s3_force_path_style);

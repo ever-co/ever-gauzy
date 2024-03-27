@@ -157,74 +157,57 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				const settings = request['tenantSettings'];
 
 				if (settings) {
-					if (this._detailedloggingEnabled)
-						console.log(`setWasabiConfiguration Tenant Settings value: ${JSON.stringify(settings)}`);
+					if (this._detailedloggingEnabled) {
+						console.log(`setWasabiConfiguration Tenant Settings Value: ${JSON.stringify(settings)}`);
+					}
 
 					if (trimAndGetValue(settings.wasabi_aws_access_key_id)) {
 						this.config.wasabi_aws_access_key_id = trimAndGetValue(settings.wasabi_aws_access_key_id);
 
-						if (this._detailedloggingEnabled)
-							console.log(
-								`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`
-							);
+						if (this._detailedloggingEnabled) {
+							console.log(`setWasabiConfiguration this.config.wasabi_aws_access_key_id value: ${this.config.wasabi_aws_access_key_id}`);
+						}
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_secret_access_key)) {
-						this.config.wasabi_aws_secret_access_key = trimAndGetValue(
-							settings.wasabi_aws_secret_access_key
-						);
+						this.config.wasabi_aws_secret_access_key = trimAndGetValue(settings.wasabi_aws_secret_access_key);
 
-						if (this._detailedloggingEnabled)
-							console.log(
-								`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`
-							);
+						if (this._detailedloggingEnabled) {
+							console.log(`setWasabiConfiguration this.config.wasabi_aws_secret_access_key value: ${this.config.wasabi_aws_secret_access_key}`);
+						}
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_service_url)) {
-						this.config.wasabi_aws_service_url = addHttpsPrefix(
-							trimAndGetValue(settings.wasabi_aws_service_url)
-						);
+						this.config.wasabi_aws_service_url = addHttpsPrefix(trimAndGetValue(settings.wasabi_aws_service_url));
 
-						if (this._detailedloggingEnabled)
-							console.log(
-								'setWasabiConfiguration this.config.wasabi_aws_service_url value: ',
-								this.config.wasabi_aws_service_url
-							);
+						if (this._detailedloggingEnabled) {
+							console.log('setWasabiConfiguration this.config.wasabi_aws_service_url value: ', this.config.wasabi_aws_service_url);
+						}
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_default_region)) {
 						this.config.wasabi_aws_default_region = trimAndGetValue(settings.wasabi_aws_default_region);
 
-						if (this._detailedloggingEnabled)
-							console.log(
-								'setWasabiConfiguration this.config.wasabi_aws_default_region value: ',
-								this.config.wasabi_aws_default_region
-							);
+						if (this._detailedloggingEnabled) {
+							console.log('setWasabiConfiguration this.config.wasabi_aws_default_region value: ', this.config.wasabi_aws_default_region);
+						}
 					}
 
 					if (trimAndGetValue(settings.wasabi_aws_bucket)) {
 						this.config.wasabi_aws_bucket = trimAndGetValue(settings.wasabi_aws_bucket);
 
-						if (this._detailedloggingEnabled)
-							console.log(
-								'setWasabiConfiguration this.config.wasabi_aws_bucket value: ',
-								this.config.wasabi_aws_bucket
-							);
+						if (this._detailedloggingEnabled) {
+							console.log('setWasabiConfiguration this.config.wasabi_aws_bucket value: ', this.config.wasabi_aws_bucket);
+						}
 					}
 
+					// Assuming trimAndGetValue() function trims and retrieves the value from settings
 					const forcePathStyle = trimAndGetValue(settings.wasabi_aws_force_path_style);
+					this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
 
-					if (forcePathStyle) {
-						this.config.wasabi_aws_force_path_style = forcePathStyle === 'true' || forcePathStyle === '1';
-					} else {
-						this.config.wasabi_aws_force_path_style = false;
+					if (this._detailedloggingEnabled) {
+						console.log('setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ', this.config.wasabi_aws_force_path_style);
 					}
-
-					if (this._detailedloggingEnabled)
-						console.log(
-							'setWasabiConfiguration this.config.wasabi_aws_force_path_style value: ',
-							this.config.wasabi_aws_force_path_style
-						);
 				}
 			}
 		} catch (error) {
@@ -313,10 +296,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
 						}
 
 						// Replace double backslashes with single forward slashes

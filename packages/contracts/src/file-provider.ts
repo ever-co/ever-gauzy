@@ -52,3 +52,13 @@ export interface ICloudinaryFileStorageProviderConfig {
 	cloudinary_api_key?: string;
 	cloudinary_api_secret?: string;
 }
+
+export interface IDigitalOceanFileStorageProviderConfig {
+	digitalocean_access_key_id?: string;
+	digitalocean_secret_access_key?: string;
+	digitalocean_default_region?: string;
+	digitalocean_service_url?: string;
+	digitalocean_cdn_url?: string;
+	digitalocean_s3_bucket?: string;
+	digitalocean_s3_force_path_style?: boolean;
+}
