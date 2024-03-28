@@ -53,6 +53,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Input() selectionMode = false;
 	@Input() galleryItems: GalleryItem[] = [];
 	@Input() isSelected: boolean;
+	@Input() employeeId: IEmployee['id'];
 
 	@Output() delete: EventEmitter<any> = new EventEmitter();
 	@Output() toggle: EventEmitter<any> = new EventEmitter();

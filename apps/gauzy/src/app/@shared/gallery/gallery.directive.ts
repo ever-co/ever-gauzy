@@ -81,6 +81,7 @@ export class GalleryDirective implements OnDestroy, OnInit {
 		const items = this.items instanceof Array ? this.items : [this.items];
 		// Sort the 'item' array by 'createdAt'
 		this.items = sortBy(items, 'recordedAt');
+
 		// Append the sorted 'item' array to the gallery service
 		this.galleryService.appendItems(this.items);
 	}
