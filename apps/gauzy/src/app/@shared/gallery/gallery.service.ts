@@ -1,84 +1,62 @@
-import { Injectable, OnInit, OnDestroy, Input } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { Router, NavigationStart } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as _ from 'underscore';
-import { GalleryItem } from './gallery.directive';
+import { Injectable, Input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { uniq } from 'underscore';
+import { GalleryItem } from './gallery.directive';
 
-@UntilDestroy({ checkProperties: true })
-@Injectable({
-	providedIn: 'root'
-})
-export class GalleryService implements OnInit, OnDestroy {
+@Injectable({ providedIn: 'root' })
+export class GalleryService {
 	public dataStore: GalleryItem[] = [];
 
-	@Input()
-	items: GalleryItem[] = [];
+	@Input() items: GalleryItem[] = [];
+	private _items: BehaviorSubject<GalleryItem[]> = new BehaviorSubject([]);
 
-	_items: BehaviorSubject<GalleryItem[]> = new BehaviorSubject([]);
-
-	get items$() {
+	public get items$() {
 		return this._items.asObservable();
 	}
 
 	constructor(
-		private router: Router, 
-		private http: HttpClient
-	) {}
+		private readonly http: HttpClient
+	) { }
 
-	ngOnInit(): void {
-		this.router.events
-			.pipe(
-				filter((event) => {
-					return event instanceof NavigationStart;
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				this.dataStore = [];
-			});
-	}
-
+	/**
+	 * Append one or multiple gallery items to the data store and push them to the gallery.
+	 *
+	 * @param galleryItems The gallery item or array of gallery items to append.
+	 */
 	appendItems(galleryItems: GalleryItem | GalleryItem[]) {
-		if (galleryItems) {
-			if (galleryItems instanceof Array) {
-				this.dataStore = this.dataStore.concat(galleryItems);
-			} else {
-				this.dataStore.push(galleryItems);
-			}
-			this.pushToGallery();
+		if (!galleryItems) return; // Exit early if galleryItems is falsy
+
+		if (Array.isArray(galleryItems)) {
+			this.dataStore = this.dataStore.concat(galleryItems);
+		} else {
+			this.dataStore.push(galleryItems);
 		}
+
+		this.pushToGallery();
 	}
 
-	/*
-	 * Remove gallery images after delete timeslot/timelog
+	/**
+	 * Remove gallery images associated with deleted timeslot/timelog.
+	 *
+	 * @param galleryItems The gallery item or array of gallery items to remove.
 	 */
 	removeGalleryItems(galleryItems: GalleryItem | GalleryItem[]) {
-		let items: GalleryItem[] = [];
-		if (galleryItems) {
-			if (galleryItems instanceof Array) {
-				items = items.concat(galleryItems);
-			} else {
-				items.push(galleryItems);
-			}
+		if (!galleryItems) return; // Exit early if galleryItems is falsy
 
-			const ids = items.map((e: any) => e.id);
-			const screenshots = this.dataStore.filter(
-				(e: any) => !ids.includes(e.id)
-			);
+		const items = Array.isArray(galleryItems) ? [...galleryItems] : [galleryItems];
+		const idsToRemove = items.map(item => item.id);
 
-			this.dataStore = screenshots;
-			this.pushToGallery();
-		}
+		this.dataStore = this.dataStore.filter(item => !idsToRemove.includes(item.id));
+		this.pushToGallery();
 	}
 
+	/**
+	 * Updates the data store with unique GalleryItem objects based on their fullUrl,
+	 * and emits the updated data store using a BehaviorSubject.
+	 */
 	pushToGallery() {
-		this.dataStore = _.uniq(
-			this.dataStore,
-			(galleryItem) => galleryItem.fullUrl
-		);
+		this.dataStore = uniq(this.dataStore, (item: GalleryItem) => item.id);
 		this._items.next(this.dataStore);
 	}
 
@@ -94,10 +72,6 @@ export class GalleryService implements OnInit, OnDestroy {
 	 * Convert blob data from file url
 	 */
 	downloadFile(url: string): Observable<Blob> {
-		return this.http.get(url, {
-		  responseType: 'blob'
-		});
+		return this.http.get(url, { responseType: 'blob' });
 	}
-
-	ngOnDestroy(): void {}
 }

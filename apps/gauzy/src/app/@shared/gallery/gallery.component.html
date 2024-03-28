@@ -36,7 +36,7 @@
 				nbButton
 				status="primary"
 				[disabled]="active_index == 0"
-				(click)="prev($event)"
+				(click)="previous($event)"
 			>
 				<nb-icon icon="arrow-left"></nb-icon>
 			</button>
@@ -62,17 +62,19 @@
 	</div>
 	<div class="gallery-footer">
 		<div class="thumb-items custom-scroll" #customScroll>
-			<div *ngFor="let thumb of items; let index = index"
-				class="thumb-item text-center"
-				[ngClass]="{
-					'thumb-item-active': item == thumb,
-					'danger-bordered': thumb?.isWorkRelated === false
-				}"
-				(click)="setFocus(thumb)"
-			>
-				<img *ngIf="thumb" [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
-				<span>{{ thumb?.recordedAt | dateTimeFormat }}</span>
-			</div>
+			<ng-container *ngFor="let thumb of items; let index = index; trackBy: trackByThumbId">
+				<div
+					class="thumb-item text-center"
+					[ngClass]="{
+						'thumb-item-active': item?.id === thumb?.id,
+						'danger-bordered': thumb?.isWorkRelated === false
+					}"
+					(click)="setFocus(thumb)"
+				>
+					<img *ngIf="thumb" [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
+					<span>{{ thumb?.recordedAt | dateTimeFormat }}</span>
+				</div>
+			</ng-container>
 		</div>
 	</div>
 </div>
