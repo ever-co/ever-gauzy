@@ -124,6 +124,30 @@ services:
           - key: WASABI_S3_BUCKET
             scope: RUN_TIME
             value: '$WASABI_S3_BUCKET'
+          - key: WASABI_S3_FORCE_PATH_STYLE
+            scope: RUN_TIME
+            value: '$WASABI_S3_FORCE_PATH_STYLE'
+          - key: DIGITALOCEAN_ACCESS_KEY_ID
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_ACCESS_KEY_ID'
+          - key: DIGITALOCEAN_SECRET_ACCESS_KEY
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_SECRET_ACCESS_KEY'
+          - key: DIGITALOCEAN_REGION
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_REGION'
+          - key: DIGITALOCEAN_SERVICE_URL
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_SERVICE_URL'
+          - key: DIGITALOCEAN_CDN_URL
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_CDN_URL'
+          - key: DIGITALOCEAN_S3_BUCKET
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_S3_BUCKET'
+          - key: DIGITALOCEAN_S3_FORCE_PATH_STYLE
+            scope: RUN_TIME
+            value: '$DIGITALOCEAN_S3_FORCE_PATH_STYLE'
           - key: EXPRESS_SESSION_SECRET
             scope: RUN_TIME
             value: '$EXPRESS_SESSION_SECRET'

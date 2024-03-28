@@ -4,5 +4,6 @@ export interface IAwsConfig {
 	region: string;
 	s3: {
 		bucket: string;
+		forcePathStyle: boolean;
 	};
 }

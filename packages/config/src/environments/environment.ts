@@ -80,7 +80,8 @@ export const environment: IEnvironment = {
 		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 		region: process.env.AWS_REGION || 'us-east-1',
 		s3: {
-			bucket: process.env.AWS_S3_BUCKET || 'gauzy'
+			bucket: process.env.AWS_S3_BUCKET || 'gauzy',
+			forcePathStyle: process.env.AWS_S3_FORCE_PATH_STYLE === 'true' || false
 		}
 	},
 
@@ -93,7 +94,23 @@ export const environment: IEnvironment = {
 		region: process.env.WASABI_REGION || 'us-east-1',
 		serviceUrl: process.env.WASABI_SERVICE_URL || 'https://s3.wasabisys.com',
 		s3: {
-			bucket: process.env.WASABI_S3_BUCKET || 'gauzy'
+			bucket: process.env.WASABI_S3_BUCKET || 'gauzy',
+			forcePathStyle: process.env.WASABI_S3_FORCE_PATH_STYLE === 'true' || false
+		}
+	},
+
+	/**
+	 * DigitalOcean Spaces Configuration
+	 */
+	digitalOcean: {
+		accessKeyId: process.env.DIGITALOCEAN_ACCESS_KEY_ID,
+		secretAccessKey: process.env.DIGITALOCEAN_SECRET_ACCESS_KEY,
+		region: process.env.DIGITALOCEAN_REGION || 'us-east-1',
+		serviceUrl: process.env.DIGITALOCEAN_SERVICE_URL || 'https://gauzy.sfo2.digitaloceanspaces.com',  // Find your endpoint in the control panel, under Settings. Prepend "https://".
+		cdnUrl: process.env.DIGITALOCEAN_CDN_URL,
+		s3: {
+			bucket: process.env.DIGITALOCEAN_S3_BUCKET || 'gauzy',
+			forcePathStyle: process.env.DIGITALOCEAN_S3_FORCE_PATH_STYLE === 'true' || false // Configures to use subdomain/virtual calling format.
 		}
 	},
 

@@ -329,16 +329,13 @@
 									#swiper
 									class="m-swiper"
 								>
-									<ng-container
-										*ngFor="
-											let timeSlot of employee.timeSlots
-										"
-									>
+									<ng-container *ngFor=" let timeSlot of employee.timeSlots">
 										<ng-template swiperSlide>
 											<ngx-screenshots-item
 												[timeSlot]="timeSlot"
 												(delete)="onDelete()"
 												[multiple]="false"
+												[employeeId]="timeSlot?.employee?.id"
 											></ngx-screenshots-item>
 										</ng-template>
 									</ng-container>
