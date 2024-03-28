@@ -118,8 +118,24 @@ ENV NODE_ENV=development
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
+	&& apk add --no-cache --virtual build-dependencies curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Define the Node.js version you want to install
+ENV NODE_VERSION 18.19.1
+
+# Download and install the specific Node.js version
+RUN mkdir /opt/nodejs && \
+	curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
+	tar -xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /opt/nodejs --strip-components=1 && \
+	rm "node-v${NODE_VERSION}-linux-x64.tar.xz"
+
+# Update PATH to use the newly installed Node.js version
+ENV PATH="/opt/nodejs/bin:${PATH}"
+
+# Verify the Node.js version
+RUN node --version
+RUN npm --version
 
 # Output Python3 version
 RUN python3 --version
@@ -175,8 +191,24 @@ ARG NODE_ENV
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
+	&& apk add --no-cache --virtual build-dependencies curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Define the Node.js version you want to install
+ENV NODE_VERSION 18.19.1
+
+# Download and install the specific Node.js version
+RUN mkdir /opt/nodejs && \
+	curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
+	tar -xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /opt/nodejs --strip-components=1 && \
+	rm "node-v${NODE_VERSION}-linux-x64.tar.xz"
+
+# Update PATH to use the newly installed Node.js version
+ENV PATH="/opt/nodejs/bin:${PATH}"
+
+# Verify the Node.js version
+RUN node --version
+RUN npm --version
 
 # Output Python3 version
 RUN python3 --version

@@ -40,8 +40,24 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 ENV CI=true
 
 RUN apk --update add bash && \
-	apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
+	apk add --no-cache --virtual build-dependencies curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
 	mkdir /srv/gauzy && chown -R node:node /srv/gauzy
+
+# Define the Node.js version you want to install
+ENV NODE_VERSION 18.19.1
+
+# Download and install the specific Node.js version
+RUN mkdir /opt/nodejs && \
+	curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
+	tar -xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /opt/nodejs --strip-components=1 && \
+	rm "node-v${NODE_VERSION}-linux-x64.tar.xz"
+
+# Update PATH to use the newly installed Node.js version
+ENV PATH="/opt/nodejs/bin:${PATH}"
+
+# Verify the Node.js version
+RUN node --version
+RUN npm --version
 
 COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
 
