@@ -1,4 +1,14 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular/core';
+import { NavigationStart, Router } from '@angular/router';
+import { filter, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs/internal/Observable';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Subject } from 'rxjs/internal/Subject';
+import { chain, indexBy, pick, sortBy } from 'underscore';
+import * as moment from 'moment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	ITimeLogFilters,
 	ITimeSlot,
@@ -7,16 +17,7 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs/internal/Observable';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Subject } from 'rxjs/internal/Subject';
 import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
-import { chain, indexBy, pick, sortBy } from 'underscore';
-import * as moment from 'moment';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
@@ -31,8 +32,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './screenshot.component.html',
 	styleUrls: ['./screenshot.component.scss']
 })
-export class ScreenshotComponent extends BaseSelectorFilterComponent
-	implements OnInit, OnDestroy {
+export class ScreenshotComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 	screenshots$: Subject<boolean> = new Subject();
@@ -51,6 +51,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
+		private readonly router: Router,
 		public readonly translateService: TranslateService,
 		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
@@ -73,7 +74,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		this.subject$
 			.pipe(
 				filter(() => !!this.organization),
-				tap(() => this.galleryService.clearGallery()),
 				tap(() => this.prepareRequest()),
 				untilDestroyed(this)
 			)
@@ -86,6 +86,15 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	ngAfterViewInit() {
+		this.router.events
+			.pipe(
+				filter((event) => event instanceof NavigationStart),
+				tap(() => this.galleryService.clearGallery()),
+				untilDestroyed(this)
+			).subscribe();
 	}
 
 	filtersChange(filters: ITimeLogFilters) {
@@ -105,23 +114,20 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
+		// Extract specific properties from filters
 		const appliedFilter = pick(
 			this.filters,
 			'source',
 			'activityLevel',
 			'logType'
 		);
+		// Construct request object
 		const request: IGetTimeSlotInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			relations: [
-				...(
-					this.store.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)
-					? ['employee.user']
-					: []
-				),
+				// Include additional relations based on permissions
+				...(this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? ['employee.user'] : []),
 				'screenshots',
 				'timeLogs'
 			]
@@ -130,24 +136,33 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent
 	}
 
 	/**
-	 * Get daily timeslots screenshots
-	 * @returns
+	 * Retrieves daily time slot data and screenshots for the current organization.
 	 */
 	async getTimeSlotsScreenshots() {
+		// Check if organization is available and request payload is not empty
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
+		// Set loading state to true
 		this.loading = true;
+
 		try {
-			const payloads = this.payloads$.getValue();
+			// Clear existing screenshots URLs
 			this.screenshotsUrls = [];
+
+			// Fetch time slots data using provided payloads
+			const payloads = this.payloads$.getValue();
 			const timeSlots = await this.timesheetService.getTimeSlots(payloads);
 
+			// Store original time slots and group them
 			this.originalTimeSlots = timeSlots;
 			this.timeSlots = this.groupTimeSlots(timeSlots);
 		} catch (error) {
+			// Handle any errors that occur during data retrieval
 			console.log('Error while retrieving screenshots for employee', error);
 		} finally {
+			// Set loading state back to false
 			this.loading = false;
 		}
 	}

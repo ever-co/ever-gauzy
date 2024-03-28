@@ -329,11 +329,7 @@
 									#swiper
 									class="m-swiper"
 								>
-									<ng-container
-										*ngFor="
-											let timeSlot of employee.timeSlots
-										"
-									>
+									<ng-container *ngFor=" let timeSlot of employee.timeSlots">
 										<ng-template swiperSlide>
 											<ngx-screenshots-item
 												[timeSlot]="timeSlot"

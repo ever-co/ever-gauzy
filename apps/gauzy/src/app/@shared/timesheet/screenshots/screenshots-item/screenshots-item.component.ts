@@ -19,7 +19,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
+import { distinctUntilChange, progressStatus, toLocal } from '@gauzy/common-angular';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
 import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
@@ -65,40 +65,36 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		return this._timeSlot;
 	}
 	@Input() set timeSlot(timeSlot: ITimeSlot) {
-		if (timeSlot) {
-			// Create a deep copy of the screenshots to avoid modifying the original array
-			let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
+		if (!timeSlot) return; // If timeSlot is falsy, return early
 
-			// Map each screenshot with additional properties and employeeId
-			this.screenshots = screenshots.map((screenshot: IScreenshot) => ({
-				employeeId: timeSlot.employeeId,
-				...screenshot
-			}));
+		// Create a deep copy of the screenshots to avoid modifying the original array
+		let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
 
-			if (isNotEmpty(this.screenshots)) {
-				// Check if all screenshots have isWorkRelated as false
-				this.isShowBorder = this.screenshots.every(
-					(screenshot: IScreenshot) => screenshot.isWorkRelated === false
-				);
-			}
+		// Map each screenshot with additional properties and employeeId
+		this.screenshots = screenshots.map((screenshot: IScreenshot) => ({
+			employeeId: timeSlot.employeeId,
+			...screenshot
+		})) || [];
 
-			// Assign a new object to _timeSlot with modified properties
-			this._timeSlot = Object.assign({}, timeSlot, {
-				localStartedAt: toLocal(timeSlot.startedAt).toDate(),
-				localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
-				isAllowDelete: this.isEnableDelete(timeSlot),
-				screenshots: this.screenshots
-			});
+		// Check if all screenshots have isWorkRelated as false
+		this.isShowBorder = this.screenshots.every(
+			(screenshot: IScreenshot) => screenshot.isWorkRelated === false
+		);
 
-			// Sort screenshots by recordedAt in descending order
-			screenshots = sortBy(screenshots, 'recordedAt').reverse();
+		// Assign a new object to _timeSlot with modified properties
+		this._timeSlot = {
+			...timeSlot,
+			localStartedAt: toLocal(timeSlot.startedAt).toDate(),
+			localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
+			isAllowDelete: this.isEnableDelete(timeSlot),
+			screenshots: this.screenshots
+		};
 
-			// Update lastScreenshot with the first screenshot if available
-			if (screenshots.length) {
-				const [last] = screenshots;
-				this.lastScreenshot = last;
-			}
-		}
+		// Sort screenshots by recordedAt in descending order
+		screenshots = sortBy(screenshots, 'recordedAt').reverse();
+
+		// Update lastScreenshot with the first screenshot if available
+		this.lastScreenshot = screenshots.length > 0 ? screenshots[0] : null;
 	}
 
 	/*
@@ -205,14 +201,12 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				timeSlot,
 				timeLogs: timeSlot.timeLogs
 			}
-		})
-			.onClose.pipe(
-				filter(data => Boolean(data && data['isDelete'])),
-				tap(() => this.delete.emit()),
-				take(1),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		}).onClose.pipe(
+			filter(data => Boolean(data && data['isDelete'])),
+			tap(() => this.delete.emit()),
+			take(1),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**

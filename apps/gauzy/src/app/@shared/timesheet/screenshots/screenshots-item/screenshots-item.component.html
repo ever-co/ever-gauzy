@@ -71,8 +71,8 @@
 								status="primary"
 								(click)="$event.stopPropagation()"
 								ngxGallery
-								[employeeId]="timeSlot?.employee?.id"
-								[item]="screenshots"
+								[items]="screenshots"
+								[item]="lastScreenshot"
 							>
 								{{ 'ACTIVITY.VIEW_SCREEN' | translate }}
 							</button>
