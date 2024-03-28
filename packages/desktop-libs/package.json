@@ -47,7 +47,7 @@
 		"node-notifier": "^8.0.0",
 		"screenshot-desktop": "^1.12.7",
 		"sound-play": "1.1.0",
-		"sqlite3": "^5.1.5",
+		"sqlite3": "^5.1.7",
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {

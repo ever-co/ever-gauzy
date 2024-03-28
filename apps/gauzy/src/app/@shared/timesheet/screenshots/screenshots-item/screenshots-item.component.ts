@@ -53,6 +53,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Input() selectionMode = false;
 	@Input() galleryItems: GalleryItem[] = [];
 	@Input() isSelected: boolean;
+	@Input() employeeId: IEmployee['id'];
 
 	@Output() delete: EventEmitter<any> = new EventEmitter();
 	@Output() toggle: EventEmitter<any> = new EventEmitter();
@@ -65,40 +66,38 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		return this._timeSlot;
 	}
 	@Input() set timeSlot(timeSlot: ITimeSlot) {
-		if (timeSlot) {
-			// Create a deep copy of the screenshots to avoid modifying the original array
-			let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
+		if (!timeSlot) return; // If timeSlot is falsy, return early
 
-			// Map each screenshot with additional properties and employeeId
-			this.screenshots = screenshots.map((screenshot: IScreenshot) => ({
-				employeeId: timeSlot.employeeId,
-				...screenshot
-			}));
+		// Create a deep copy of the screenshots to avoid modifying the original array
+		let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
 
-			if (isNotEmpty(this.screenshots)) {
-				// Check if all screenshots have isWorkRelated as false
-				this.isShowBorder = this.screenshots.every(
-					(screenshot: IScreenshot) => screenshot.isWorkRelated === false
-				);
-			}
+		// Map each screenshot with additional properties and employeeId
+		this.screenshots = screenshots.map((screenshot: IScreenshot) => ({
+			employeeId: timeSlot.employeeId,
+			...screenshot
+		})) || [];
 
-			// Assign a new object to _timeSlot with modified properties
-			this._timeSlot = Object.assign({}, timeSlot, {
-				localStartedAt: toLocal(timeSlot.startedAt).toDate(),
-				localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
-				isAllowDelete: this.isEnableDelete(timeSlot),
-				screenshots: this.screenshots
-			});
-
-			// Sort screenshots by recordedAt in descending order
-			screenshots = sortBy(screenshots, 'recordedAt').reverse();
-
-			// Update lastScreenshot with the first screenshot if available
-			if (screenshots.length) {
-				const [last] = screenshots;
-				this.lastScreenshot = last;
-			}
+		if (isNotEmpty(this.screenshots)) {
+			// Check if all screenshots have isWorkRelated as false
+			this.isShowBorder = this.screenshots.every(
+				(screenshot: IScreenshot) => screenshot.isWorkRelated === false
+			);
 		}
+
+		// Assign a new object to _timeSlot with modified properties
+		this._timeSlot = {
+			...timeSlot,
+			localStartedAt: toLocal(timeSlot.startedAt).toDate(),
+			localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
+			isAllowDelete: this.isEnableDelete(timeSlot),
+			screenshots: this.screenshots
+		};
+
+		// Sort screenshots by recordedAt in descending order
+		screenshots = sortBy(screenshots, 'recordedAt').reverse();
+
+		// Update lastScreenshot with the first screenshot if available
+		this.lastScreenshot = screenshots.length > 0 ? screenshots[0] : null;
 	}
 
 	/*
@@ -151,10 +150,10 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	/**
- * Deletes a time slot if deletion is allowed and handles related tasks.
- *
- * @param timeSlot - The time slot to be deleted.
- */
+	 * Deletes a time slot if deletion is allowed and handles related tasks.
+	 *
+	 * @param timeSlot The time slot to be deleted.
+	 */
 	async deleteSlot(timeSlot: ITimeSlot): Promise<void> {
 		if (!timeSlot.isAllowDelete) {
 			return;
@@ -171,21 +170,20 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			await this.timesheetService.deleteTimeSlots(request);
 
 			// Remove related screenshots from the gallery
-			const screenshots = this._screenshots.map(({ thumbUrl, fullUrl, ...screenshot }) => ({
-				thumbUrl,
-				fullUrl,
+			const screenshotsToRemove = timeSlot.screenshots.map((screenshot) => ({
+				thumbUrl: screenshot.thumbUrl,
+				fullUrl: screenshot.fullUrl,
 				...screenshot
 			}));
-			this.galleryService.removeGalleryItems(screenshots);
+			this.galleryService.removeGalleryItems(screenshotsToRemove);
 
 			// Display success message
-			const { employee } = timeSlot;
-			if (employee && employee.fullName) {
-				this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
-					name: employee.fullName.trim(),
-					organization: this.organization.name
-				});
-			}
+			const employeeName = timeSlot.employee?.fullName?.trim() || 'Unknown Employee';
+
+			this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
+				name: employeeName,
+				organization: this.organization.name
+			});
 
 			// Trigger delete event
 			this.delete.emit();
@@ -205,14 +203,12 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 				timeSlot,
 				timeLogs: timeSlot.timeLogs
 			}
-		})
-			.onClose.pipe(
-				filter(data => Boolean(data && data['isDelete'])),
-				tap(() => this.delete.emit()),
-				take(1),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		}).onClose.pipe(
+			filter(data => Boolean(data && data['isDelete'])),
+			tap(() => this.delete.emit()),
+			take(1),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**
