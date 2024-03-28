@@ -17,7 +17,7 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { toLocal, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
+import { toLocal, isEmpty, distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
@@ -240,6 +240,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 						fullUrl: screenshot.fullUrl
 					}))
 				);
+				console.log(this.screenshotsUrls);
 				return timeSlot;
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
@@ -286,22 +287,24 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		return groupTimeSlots;
 	}
 
+	/**
+	 * Deletes screenshots associated with the specified time slots from the gallery.
+	 *
+	 * @param timeSlotIds An array of time slot IDs whose screenshots should be removed from the gallery.
+	 */
 	private _deleteScreenshotGallery(timeSlotIds: string[]) {
-		if (this.originalTimeSlots.length) {
-			this.originalTimeSlots.forEach((timeSlot: ITimeSlot) => {
-				if (timeSlotIds.includes(timeSlot.id)) {
-					const galleryItems = timeSlot.screenshots.map(
-						(screenshot: IScreenshot) => {
-							return {
-								thumbUrl: screenshot.thumbUrl,
-								fullUrl: screenshot.fullUrl,
-								...screenshot
-							};
-						}
-					);
-					this.galleryService.removeGalleryItems(galleryItems);
-				}
-			});
+		if (isNotEmpty(this.originalTimeSlots)) {
+			// Extract all screenshots from time slots that match the provided time slot IDs
+			const screenshotsToRemove = this.originalTimeSlots
+				.filter((timeSlot: ITimeSlot) => timeSlotIds.includes(timeSlot.id))
+				.flatMap((timeSlot: ITimeSlot) => timeSlot.screenshots.map((screenshot: IScreenshot) => ({
+					thumbUrl: screenshot.thumbUrl,
+					fullUrl: screenshot.fullUrl,
+					...screenshot // Include other properties from the screenshot
+				})));
+
+			// Remove the extracted gallery items from the gallery
+			this.galleryService.removeGalleryItems(screenshotsToRemove);
 		}
 	}
 }

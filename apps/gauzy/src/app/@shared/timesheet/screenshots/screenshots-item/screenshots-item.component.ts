@@ -150,10 +150,10 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	/**
- * Deletes a time slot if deletion is allowed and handles related tasks.
- *
- * @param timeSlot - The time slot to be deleted.
- */
+	 * Deletes a time slot if deletion is allowed and handles related tasks.
+	 *
+	 * @param timeSlot The time slot to be deleted.
+	 */
 	async deleteSlot(timeSlot: ITimeSlot): Promise<void> {
 		if (!timeSlot.isAllowDelete) {
 			return;
@@ -170,21 +170,20 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 			await this.timesheetService.deleteTimeSlots(request);
 
 			// Remove related screenshots from the gallery
-			const screenshots = this._screenshots.map(({ thumbUrl, fullUrl, ...screenshot }) => ({
-				thumbUrl,
-				fullUrl,
+			const screenshotsToRemove = timeSlot.screenshots.map((screenshot) => ({
+				thumbUrl: screenshot.thumbUrl,
+				fullUrl: screenshot.fullUrl,
 				...screenshot
 			}));
-			this.galleryService.removeGalleryItems(screenshots);
+			this.galleryService.removeGalleryItems(screenshotsToRemove);
 
 			// Display success message
-			const { employee } = timeSlot;
-			if (employee && employee.fullName) {
-				this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
-					name: employee.fullName.trim(),
-					organization: this.organization.name
-				});
-			}
+			const employeeName = timeSlot.employee?.fullName?.trim() || 'Unknown Employee';
+
+			this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
+				name: employeeName,
+				organization: this.organization.name
+			});
 
 			// Trigger delete event
 			this.delete.emit();
