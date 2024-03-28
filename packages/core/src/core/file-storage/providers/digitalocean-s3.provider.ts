@@ -395,7 +395,7 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 					 * Whether to force path style URLs for S3 objects
 					 * (e.g., https://s3.amazonaws.com/<bucketName>/<key> instead of https://<bucketName>.s3.amazonaws.com/<key>
 					 */
-					forcePathStyle: this.config.digitalocean_s3_force_path_style, // Configures to use subdomain/virtual calling format.
+					forcePathStyle: this.config.digitalocean_s3_force_path_style || true, // Configures to use subdomain/virtual calling format.
 					endpoint,
 					region: this.config.digitalocean_default_region || 'us-east-1',
 					credentials: {
