@@ -103,7 +103,7 @@ ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 ARG REDIS_ENABLED
 ARG REDIS_URL
 
-FROM node:18-alpine3.17 AS dependencies
+FROM node:18-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -164,7 +164,7 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:18-alpine3.17 AS prodDependencies
+FROM node:18-alpine3.19 AS prodDependencies
 
 ENV CI=true
 
@@ -218,7 +218,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
 
 RUN rm -r node_modules/@angular
 
-FROM node:18-alpine3.17 AS development
+FROM node:18-alpine3.19 AS development
 
 USER node:node
 
@@ -228,7 +228,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:18-alpine3.17 AS build
+FROM node:18-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
@@ -264,7 +264,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 
 RUN yarn build:api:prod:docker
 
-FROM node:18-alpine3.17 AS production
+FROM node:18-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 

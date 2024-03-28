@@ -32,7 +32,7 @@ ARG GAUZY_GITHUB_APP_ID
 ARG JITSU_BROWSER_URL
 ARG JITSU_BROWSER_WRITE_KEY
 
-FROM node:18-alpine3.17 AS dependencies
+FROM node:18-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -79,7 +79,7 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:18-alpine3.17 AS development
+FROM node:18-alpine3.19 AS development
 
 USER node:node
 
@@ -89,7 +89,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:18-alpine3.17 AS build
+FROM node:18-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
