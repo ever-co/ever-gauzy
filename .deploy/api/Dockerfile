@@ -103,7 +103,7 @@ ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 ARG REDIS_ENABLED
 ARG REDIS_URL
 
-FROM node:18-alpine3.19 AS dependencies
+FROM node:18.19.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -120,18 +120,6 @@ ENV PYTHON /usr/bin/python
 RUN apk --update add bash && npm i -g npm \
 	&& apk add --no-cache --virtual build-dependencies curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
-
-# Define the Node.js version you want to install
-ENV NODE_VERSION 18.19.1
-
-# Download and install the specific Node.js version
-RUN mkdir /opt/nodejs && \
-	curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
-	tar -xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /opt/nodejs --strip-components=1 && \
-	rm "node-v${NODE_VERSION}-linux-x64.tar.xz"
-
-# Update PATH to use the newly installed Node.js version
-ENV PATH="/opt/nodejs/bin:${PATH}"
 
 # Verify the Node.js version
 RUN node --version
@@ -180,7 +168,7 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:18-alpine3.19 AS prodDependencies
+FROM node:18.19.1-alpine3.19 AS prodDependencies
 
 ENV CI=true
 
@@ -193,18 +181,6 @@ ENV PYTHON /usr/bin/python
 RUN apk --update add bash && npm i -g npm \
 	&& apk add --no-cache --virtual build-dependencies curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
-
-# Define the Node.js version you want to install
-ENV NODE_VERSION 18.19.1
-
-# Download and install the specific Node.js version
-RUN mkdir /opt/nodejs && \
-	curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" && \
-	tar -xJf "node-v${NODE_VERSION}-linux-x64.tar.xz" -C /opt/nodejs --strip-components=1 && \
-	rm "node-v${NODE_VERSION}-linux-x64.tar.xz"
-
-# Update PATH to use the newly installed Node.js version
-ENV PATH="/opt/nodejs/bin:${PATH}"
 
 # Verify the Node.js version
 RUN node --version
@@ -250,7 +226,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
 
 RUN rm -r node_modules/@angular
 
-FROM node:18-alpine3.19 AS development
+FROM node:18.19.1-alpine3.19 AS development
 
 USER node:node
 
@@ -260,7 +236,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:18-alpine3.19 AS build
+FROM node:18.19.1-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
@@ -296,7 +272,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 
 RUN yarn build:api:prod:docker
 
-FROM node:18-alpine3.19 AS production
+FROM node:18.19.1-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 
