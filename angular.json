@@ -65,11 +65,19 @@
 							"node_modules/chart.js/dist/chart.js"
 						],
 						"allowedCommonJsDependencies": [
-							"underscore.string",
-							"moment-timezone",
+							"@gauzy/common-angular",
 							"@gauzy/contracts",
-							"cloudinary-core",
-							"brace/mode/handlebars"
+							"@gauzy/integration-hubstaff",
+							"brace",
+							"brace/mode/handlebars",
+							"camelcase",
+							"file-saver",
+							"leaflet",
+							"mobx",
+							"moment-timezone",
+							"moment",
+							"randomcolor",
+							"underscore.string"
 						]
 					},
 					"configurations": {
