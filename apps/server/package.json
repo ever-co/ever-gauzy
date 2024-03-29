@@ -79,7 +79,7 @@
 		"pg": "^8.11.3",
 		"pg-query-stream": "^4.5.3",
 		"rxjs": "^7.4.0",
-		"sqlite3": "^5.1.5",
+		"sqlite3": "^5.1.7",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
 		"typeorm": "^0.3.20"
