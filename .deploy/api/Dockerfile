@@ -32,6 +32,14 @@ ARG WASABI_SECRET_ACCESS_KEY
 ARG WASABI_REGION
 ARG WASABI_SERVICE_URL
 ARG WASABI_S3_BUCKET
+ARG WASABI_S3_FORCE_PATH_STYLE
+ARG DIGITALOCEAN_ACCESS_KEY_ID
+ARG DIGITALOCEAN_SECRET_ACCESS_KEY
+ARG DIGITALOCEAN_REGION
+ARG DIGITALOCEAN_SERVICE_URL
+ARG DIGITALOCEAN_CDN_URL
+ARG DIGITALOCEAN_S3_BUCKET
+ARG DIGITALOCEAN_S3_FORCE_PATH_STYLE
 ARG EXPRESS_SESSION_SECRET
 ARG JWT_SECRET
 ARG JWT_REFRESH_TOKEN_SECRET
@@ -95,7 +103,7 @@ ARG OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
 ARG REDIS_ENABLED
 ARG REDIS_URL
 
-FROM node:18-alpine3.17 AS dependencies
+FROM node:18.19.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -110,8 +118,12 @@ ENV NODE_ENV=development
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
+	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Verify the Node.js version
+RUN node --version
+RUN npm --version
 
 # Output Python3 version
 RUN python3 --version
@@ -156,7 +168,7 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:18-alpine3.17 AS prodDependencies
+FROM node:18.19.1-alpine3.19 AS prodDependencies
 
 ENV CI=true
 
@@ -167,8 +179,12 @@ ARG NODE_ENV
 ENV PYTHON /usr/bin/python
 
 RUN apk --update add bash && npm i -g npm \
-	&& apk add --no-cache --virtual build-dependencies curl jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
+	&& apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools build-base \
 	snappy libheif dos2unix gcc g++ snappy-dev git libgcc libstdc++ linux-headers autoconf automake make nasm vips-dev vips
+
+# Verify the Node.js version
+RUN node --version
+RUN npm --version
 
 # Output Python3 version
 RUN python3 --version
@@ -210,7 +226,7 @@ RUN yarn install --network-timeout 1000000 --frozen-lockfile --production
 
 RUN rm -r node_modules/@angular
 
-FROM node:18-alpine3.17 AS development
+FROM node:18.19.1-alpine3.19 AS development
 
 USER node:node
 
@@ -220,7 +236,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.prod.sh /entrypoint
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:18-alpine3.17 AS build
+FROM node:18.19.1-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 
@@ -256,7 +272,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
 
 RUN yarn build:api:prod:docker
 
-FROM node:18-alpine3.17 AS production
+FROM node:18.19.1-alpine3.19 AS production
 
 WORKDIR /srv/gauzy
 
@@ -321,6 +337,14 @@ ENV WASABI_SECRET_ACCESS_KEY=${WASABI_SECRET_ACCESS_KEY}
 ENV WASABI_REGION=${WASABI_REGION}
 ENV WASABI_SERVICE_URL=${WASABI_SERVICE_URL}
 ENV WASABI_S3_BUCKET=${WASABI_S3_BUCKET}
+ENV WASABI_S3_FORCE_PATH_STYLE=${WASABI_S3_FORCE_PATH_STYLE}
+ENV DIGITALOCEAN_ACCESS_KEY_ID=${DIGITALOCEAN_ACCESS_KEY_ID}
+ENV DIGITALOCEAN_SECRET_ACCESS_KEY=${DIGITALOCEAN_SECRET_ACCESS_KEY}
+ENV DIGITALOCEAN_REGION=${DIGITALOCEAN_REGION}
+ENV DIGITALOCEAN_SERVICE_URL=${DIGITALOCEAN_SERVICE_URL}
+ENV DIGITALOCEAN_CDN_URL=${DIGITALOCEAN_CDN_URL}
+ENV DIGITALOCEAN_S3_BUCKET=${DIGITALOCEAN_S3_BUCKET}
+ENV DIGITALOCEAN_S3_FORCE_PATH_STYLE=${DIGITALOCEAN_S3_FORCE_PATH_STYLE:-false}
 ENV EXPRESS_SESSION_SECRET=${EXPRESS_SESSION_SECRET:-gauzy}
 ENV JWT_SECRET=${JWT_SECRET:-secretKey}
 ENV JWT_REFRESH_TOKEN_SECRET=${JWT_REFRESH_TOKEN_SECRET:-refreshSecretKey}

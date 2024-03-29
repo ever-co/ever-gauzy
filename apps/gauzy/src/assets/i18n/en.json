@@ -4445,7 +4445,8 @@
 				"SECRET_ACCESS_KEY": "Secret access key",
 				"REGION": "Region",
 				"BUCKET": "Bucket",
-				"SERVICE_URL": "Service URL"
+				"SERVICE_URL": "Service URL",
+				"FORCE_PATH_STYLE": "Force path style URLs"
 			},
 			"PLACEHOLDERS": {
 				"ACCESS_KEY_ID": "Access key id",
@@ -4470,6 +4471,26 @@
 				"ACCESS_API_SECRET": "Secret access key",
 				"DELIVERY_URL": "Delivery URL",
 				"SECURE": "Secure"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "DigitalOcean Configuration",
+			"LABELS": {
+				"ACCESS_KEY_ID": "Access key id",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service URL",
+				"CDN_URL": "CDN URL",
+				"FORCE_PATH_STYLE": "Force path style URLs"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "Access key id",
+				"SECRET_ACCESS_KEY": "Secret access key",
+				"REGION": "Region",
+				"BUCKET": "Bucket",
+				"SERVICE_URL": "Service URL",
+				"CDN_URL": "CDN URL"
 			}
 		}
 	},

@@ -1,4 +1,3 @@
-import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
 import {
 	Body,
 	Controller,
@@ -12,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
+import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from '../../core/crud';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
