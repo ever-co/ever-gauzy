@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, combineLatest, map, Observable, shareReplay } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, of, shareReplay } from 'rxjs';
 import {
 	NavMenuSectionItem,
 	NavMenuItemsConfig,
@@ -24,6 +24,7 @@ export class NavMenuBuilderService {
 
 	// Additional menu items that can be added to the navigation menu
 	private addedNavMenuItems: NavMenuItemsConfig[] = [];
+	private removedNavMenuItems: NavMenuItemsConfig[] = [];
 	private addedNavMenuItemsSubject = new BehaviorSubject<NavMenuItemsConfig[]>(this.addedNavMenuItems);
 	public addedNavMenuItems$: Observable<NavMenuItemsConfig[]> = this.addedNavMenuItemsSubject.asObservable();
 
@@ -76,10 +77,17 @@ export class NavMenuBuilderService {
 	 * @param before (Optional) The identifier of the item before which the new item should be added.
 	 */
 	addNavMenuItem(config: NavMenuSectionItem, sectionId: string, before?: string) {
-		// Push the new item configuration along with its positioning information into the addedNavMenuItems array
-		this.addedNavMenuItems.push({ config, sectionId, before });
-		// Emit the updated addedNavMenuItems array to all subscribers
-		this.addedNavMenuItemsSubject.next(this.addedNavMenuItems);
+		// Check if the item already exists
+		const existingIndex = this.addedNavMenuItems.findIndex(item =>
+			item.config.id === config.id && item.sectionId === sectionId
+		);
+
+		if (existingIndex === -1) {
+			// Item does not exist, add it to the array
+			this.addedNavMenuItems.push({ config, sectionId, before });
+			// Emit the updated addedNavMenuItems array to all subscribers
+			this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
+		}
 	}
 
 	/**
@@ -91,8 +99,14 @@ export class NavMenuBuilderService {
 	 */
 	addNavMenuItems(configs: NavMenuSectionItem[], sectionId: string, before?: string) {
 		configs.forEach((config: NavMenuSectionItem) => {
-			// Push each new item configuration along with its positioning information into the addedNavMenuItems array
-			this.addedNavMenuItems.push({ config, sectionId, before });
+			// Check if the item already exists
+			const existingIndex = this.addedNavMenuItems.findIndex((item) =>
+				item.config.id === config.id && item.sectionId === sectionId
+			);
+			if (existingIndex === -1) {
+				// Push each new item configuration along with its positioning information into the addedNavMenuItems array
+				this.addedNavMenuItems.push({ config, sectionId, before });
+			}
 		});
 		// Emit the updated addedNavMenuItems array to all subscribers
 		this.addedNavMenuItemsSubject.next(this.addedNavMenuItems);
@@ -105,12 +119,20 @@ export class NavMenuBuilderService {
 	 * @param sectionId The identifier of the section from which the item should be removed.
 	 */
 	removeNavMenuItem(itemId: string, sectionId: string): void {
-		const index = this.addedNavMenuItems.findIndex(item => item.config.id === itemId && item.sectionId === sectionId);
-		if (index !== -1) {
-			// Remove the item from the array
-			this.addedNavMenuItems.splice(index, 1);
+		const itemIndex = this.addedNavMenuItems.findIndex((item) => item.config.id === itemId && item.sectionId === sectionId);
+		if (itemIndex !== -1) {
+			// Check if the item is already present in the removedNavMenuItems array
+			const existingIndex = this.removedNavMenuItems.findIndex((item) => item.config.id === itemId && item.sectionId === sectionId);
+			if (existingIndex === -1) {
+				// Push the removed item into the removedNavMenuItems array
+				this.removedNavMenuItems.push(this.addedNavMenuItems[itemIndex]);
+			}
+			// Remove the item from the addedNavMenuItems array
+			this.addedNavMenuItems.splice(itemIndex, 1);
 			// Emit the updated array to subscribers
 			this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
+		} else {
+			console.warn(`Navigation menu item with id '${itemId}' in section '${sectionId}' not found.`);
 		}
 	}
 
@@ -121,13 +143,9 @@ export class NavMenuBuilderService {
 	 * @param sectionId The identifier of the section from which the items should be removed.
 	 */
 	removeNavMenuItems(itemIds: string[], sectionId: string): void {
-		console.log(this.addedNavMenuItems);
-
-		// Filter out the items to be removed
-		this.addedNavMenuItems = this.addedNavMenuItems.filter(item => !(itemIds.includes(item.config.id) && item.sectionId === sectionId));
-
-		// Emit the updated addedNavMenuItems array to all subscribers
-		this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
+		itemIds.forEach((itemId: string) => {
+			this.removeNavMenuItem(itemId, sectionId);
+		});
 	}
 
 	/**
@@ -168,13 +186,25 @@ export class NavMenuBuilderService {
 		);
 
 		// Combine the combined configuration with item additions to produce the final menu configuration
-		this.menuConfig$ = combineLatest([combinedConfig$, itemAdditions$]).pipe(
-			map(([sections, additions]) => {
-				console.log({ additions });
+		this.menuConfig$ = combineLatest([combinedConfig$, itemAdditions$, of(this.removedNavMenuItems)]).pipe(
+			map(([sections, additions, removals]) => {
 				const sectionMap = new Map<string, NavMenuSectionItem>();
 
 				// Populate section map for quick lookup
 				sections.forEach((section) => sectionMap.set(section.id, section));
+
+				// Process item deletions
+				removals.forEach((item: NavMenuItemsConfig) => {
+					const sectionId = item.sectionId;
+					const itemIdToRemove = item.config.id;
+					const section = sectionMap.get(sectionId);
+					if (section) {
+						const itemIndex = section.items.findIndex((item) => item.id === itemIdToRemove);
+						if (itemIndex !== -1) {
+							section.items.splice(itemIndex, 1); // Remove item from the section
+						}
+					}
+				});
 
 				// Process item additions
 				additions.forEach((item: NavMenuItemsConfig) => {
@@ -198,7 +228,6 @@ export class NavMenuBuilderService {
 					}
 				});
 
-				console.log({ sections });
 				return sections;
 			})
 		);

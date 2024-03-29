@@ -37,7 +37,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
     }
 
     ngOnInit(): void {
-        this.defineNavMenu();
+        this.defineBaseNavMenus();
     }
 
     ngAfterContentChecked(): void {
@@ -45,9 +45,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
     }
 
     /**
-     *
+     * Defines the base navigation menus.
      */
-    private defineNavMenu() {
+    private defineBaseNavMenus() {
         this._navMenuBuilderService.defineNavMenuSections([
             {
                 id: 'dashboards',
