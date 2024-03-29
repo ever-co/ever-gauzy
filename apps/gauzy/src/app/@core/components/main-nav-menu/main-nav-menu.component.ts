@@ -18,7 +18,7 @@ export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit
 
         // Subscribe to the menuConfig$ observable provided by _navMenuBuilderService
         this.mainMenuConfig$ = this._navMenuBuilderService.menuConfig$.pipe(
-            map((sections) => this.mapMenuSections(sections)),
+            map((sections: NavMenuSectionItem[]) => this.mapMenuSections(sections))
         );
     }
 }

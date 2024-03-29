@@ -1,9 +1,7 @@
 import { AfterContentChecked, ChangeDetectorRef, Directive, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { filter, tap } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { NavMenuBuilderService, NavMenuSectionItem } from '../../services/nav-builder';
 import { Store } from '../../services/store.service';
 import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
@@ -16,8 +14,6 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 })
 export class BaseNavMenuComponent extends TranslationBaseComponent implements AfterContentChecked, OnInit, OnDestroy {
 
-    public isEmployeeJobMatchingEntity: boolean = false;
-    public isEmployee: boolean = false;
     public organization: IOrganization;
 
     /**
@@ -41,15 +37,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
     }
 
     ngOnInit(): void {
-        this._store.selectedOrganization$
-            .pipe(
-                filter((organization: IOrganization) => !!organization),
-                distinctUntilChange(),
-                tap((organization: IOrganization) => (this.organization = organization)),
-                tap(() => this.defineNavMenu()),
-                untilDestroyed(this)
-            )
-            .subscribe();
+        this.defineNavMenu();
     }
 
     ngAfterContentChecked(): void {
@@ -59,7 +47,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
     /**
      *
      */
-    protected defineNavMenu() {
+    private defineNavMenu() {
         this._navMenuBuilderService.defineNavMenuSections([
             {
                 id: 'dashboards',
@@ -414,27 +402,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
                         }
                     },
                     {
-                        id: 'tasks-my-tasks',
-                        title: 'My Tasks',
-                        icon: 'fas fa-user',
-                        link: '/pages/tasks/me',
-                        data: {
-                            translationKey: 'MENU.MY_TASKS',
-                            hide: () => !this.isEmployee,
-                            permissionKeys: [
-                                PermissionsEnum.ALL_ORG_VIEW,
-                                PermissionsEnum.ORG_TASK_VIEW
-                            ],
-                            featureKey: FeatureEnum.FEATURE_MY_TASK,
-                            ...(this._store.hasAnyPermission(
-                                PermissionsEnum.ALL_ORG_EDIT,
-                                PermissionsEnum.ORG_TASK_ADD
-                            ) && {
-                                add: '/pages/tasks/me?openAddDialog=true'
-                            })
-                        }
-                    },
-                    {
                         id: 'tasks-team',
                         title: "Team's Tasks",
                         icon: 'fas fa-user-friends',
@@ -478,34 +445,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
                             ]
                         }
                     },
-                    /** */
-                    ...(this.isEmployeeJobMatchingEntity ? [
-                        {
-                            id: 'jobs-browse',
-                            title: 'Browse',
-                            icon: 'fas fa-list',
-                            link: '/pages/jobs/search',
-                            data: {
-                                translationKey: 'MENU.JOBS_SEARCH',
-                                permissionKeys: [
-                                    PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-                                    PermissionsEnum.ORG_JOB_MATCHING_VIEW
-                                ]
-                            }
-                        },
-                        {
-                            id: 'jobs-matching',
-                            title: 'Matching',
-                            icon: 'fas fa-user',
-                            link: '/pages/jobs/matching',
-                            data: {
-                                translationKey: 'MENU.JOBS_MATCHING',
-                                permissionKeys: [
-                                    PermissionsEnum.ORG_JOB_MATCHING_VIEW
-                                ]
-                            }
-                        },
-                    ] : []),
                     {
                         id: 'jobs-proposal-template',
                         title: 'Proposal Template',
@@ -698,24 +637,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
                 title: 'Organization',
                 icon: 'fas fa-globe-americas',
                 data: {
-                    translationKey: 'MENU.ORGANIZATION',
-                    withOrganizationShortcuts: true
+                    translationKey: 'MENU.ORGANIZATION'
                 },
                 items: [
-                    {
-                        id: 'organization-manage',
-                        title: 'Manage',
-                        icon: 'fas fa-globe-americas',
-                        pathMatch: 'prefix',
-                        data: {
-                            organizationShortcut: true,
-                            permissionKeys: [PermissionsEnum.ALL_ORG_EDIT],
-                            urlPrefix: `/pages/organizations/edit/`,
-                            urlPostfix: '',
-                            translationKey: 'MENU.MANAGE',
-                            featureKey: FeatureEnum.FEATURE_ORGANIZATION
-                        }
-                    },
                     {
                         id: 'organization-equipment',
                         title: 'Equipment',
@@ -1073,12 +997,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
             title: this.getTranslation(item.data.translationKey),
             hidden: item.hidden || this.isSectionHidden(item),
         };
-
-        // Additional logic here
-        if (item.data.organizationShortcut) {
-            // If organizationShortcut is provided, modify the section link based on organization
-            section.link = item.data.urlPrefix + this.organization.id + item.data.urlPostfix;
-        }
 
         if (item.items) {
             section.children = this.mapMenuSections(item.items);

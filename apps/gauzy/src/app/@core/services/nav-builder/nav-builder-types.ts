@@ -24,10 +24,6 @@ export interface NavMenuItemData {
     permissionKeys?: PermissionsEnum[]; // Permissions required to display the item (optional)
     featureKey?: FeatureEnum; // Feature key required to display the item (optional)
     hide?: () => boolean | boolean; // Function to determine if the item should be hidden (optional)
-    urlPrefix?: string;
-    urlPostfix?: string;
-    organizationShortcut?: boolean;
-    withOrganizationShortcuts?: boolean;
     add?: string;
 }
 
