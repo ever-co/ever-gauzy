@@ -1,35 +1,21 @@
-import { AfterContentChecked, ChangeDetectorRef, Directive, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Directive, OnDestroy, OnInit } from '@angular/core';
+import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 import { NavMenuBuilderService, NavMenuSectionItem } from '../../services/nav-builder';
 import { Store } from '../../services/store.service';
 import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
-import { IMenuItem } from '../../../@shared/sidebar-menu/menu-items/interface/menu-item.interface';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy()
 @Directive({
     selector: '[gaBaseNavMenu]',
 })
-export class BaseNavMenuComponent extends TranslationBaseComponent implements AfterContentChecked, OnInit, OnDestroy {
-
-    public organization: IOrganization;
-
-    /**
-     *
-     */
-    public get selectedItem() {
-        return this._sidebarMenuService.selectedItem;
-    }
-    public set selectedItem(value: IMenuItem) {
-        this._sidebarMenuService.selectedItem = value;
-    }
-
+export class BaseNavMenuComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
     constructor(
         protected readonly _navMenuBuilderService: NavMenuBuilderService,
         protected readonly _store: Store,
-        protected readonly _cdr: ChangeDetectorRef,
         protected readonly _sidebarMenuService: SidebarMenuService,
         protected readonly _translate: TranslateService,
     ) {
@@ -40,8 +26,14 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
         this.defineBaseNavMenus();
     }
 
-    ngAfterContentChecked(): void {
-        this._cdr.detectChanges();
+    ngAfterViewInit() {
+        this.translateService.onLangChange
+            .pipe(
+                tap(() => alert()),
+                tap(() => this.defineBaseNavMenus()),
+                untilDestroyed(this)
+            )
+            .subscribe();
     }
 
     /**
@@ -1034,17 +1026,6 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
         return false;
     }
 
-    /**
-     * Focuses on a specific menu item.
-     * @param event The menu item to focus on.
-     */
-    public focusOn(event: IMenuItem): void {
-        // Set the selected menu item in the sidebarMenuService
-        this._sidebarMenuService.selectedItem = event;
-
-        // Detect changes manually using ChangeDetectorRef
-        this._cdr.detectChanges();
-    }
 
     ngOnDestroy(): void { }
 }

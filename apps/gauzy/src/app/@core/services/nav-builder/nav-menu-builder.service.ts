@@ -131,8 +131,6 @@ export class NavMenuBuilderService {
 			this.addedNavMenuItems.splice(itemIndex, 1);
 			// Emit the updated array to subscribers
 			this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
-		} else {
-			console.warn(`Navigation menu item with id '${itemId}' in section '${sectionId}' not found.`);
 		}
 	}
 
