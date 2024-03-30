@@ -1,9 +1,4 @@
-import {
-	createSettingsWindow,
-	getApiBaseUrl,
-	loginPage,
-	timeTrackerPage,
-} from '@gauzy/desktop-window';
+import { createSettingsWindow, getApiBaseUrl, loginPage, timeTrackerPage } from '@gauzy/desktop-window';
 import { Menu, MenuItemConstructorOptions, Tray, app, ipcMain, nativeImage } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
@@ -42,207 +37,141 @@ export class TrayIcon {
 		this.contextMenu = [
 			{
 				id: '4',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.SETUP.SETTING'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				async click() {
 					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('goto_top_menu');
-				},
+				}
 			},
 			{
 				id: '6',
-				label: TranslateService.instant(
-					'BUTTONS.CHECK_UPDATE'
-				),
+				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				async click() {
 					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
 					settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
-				},
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+				}
 			},
 			{
 				id: '0',
-				label: TranslateService.instant(
-					'BUTTONS.EXIT'
-				),
+				label: TranslateService.instant('BUTTONS.EXIT'),
 				click() {
 					app.quit();
-				},
-			},
+				}
+			}
 		];
 		const unAuthMenu = [
 			{
 				id: '4',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.SETUP.SETTING'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				async click() {
 					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('goto_top_menu');
-				},
+				}
 			},
 			{
 				id: '6',
-				label: TranslateService.instant(
-					'BUTTONS.CHECK_UPDATE'
-				),
+				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				async click() {
 					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
 					settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
-				},
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+				}
 			},
 			{
 				id: '0',
-				label: TranslateService.instant(
-					'BUTTONS.EXIT'
-				),
+				label: TranslateService.instant('BUTTONS.EXIT'),
 				click() {
 					app.quit();
-				},
-			},
+				}
+			}
 		];
 		const menuAuth = [
 			{
 				id: '0',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.MENU.NOW_TRACKING',
-					{ timer: 'Oh 00m' }
-				),
-				visible: false,
+				label: TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { timer: 'Oh 00m' }),
+				visible: false
 			},
 			{
 				id: '6',
 				label: '',
 				visible: false,
-				enabled: false,
+				enabled: false
 			},
 			{
 				id: '1',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.MENU.START_TRACKING'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.MENU.START_TRACKING'),
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					const userLogin = store.get('auth');
 					if (userLogin && userLogin.employeeId) {
-						timeTrackerWindow.webContents.send(
-							'start_from_tray',
-							LocalStore.beforeRequestParams()
-						);
+						timeTrackerWindow.webContents.send('start_from_tray', LocalStore.beforeRequestParams());
 					} else {
 						timeTrackerWindow.show();
 						timeTrackerWindow.webContents.send('auth_success_tray_init');
 					}
-				},
+				}
 			},
 			{
 				id: '2',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.MENU.STOP_TRACKING'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.MENU.STOP_TRACKING'),
 				enabled: false,
 				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					timeTrackerWindow.webContents.send('stop_from_tray');
-				},
+				}
 			},
 			{
 				id: '3',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.MENU.OPEN_TIMER'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.MENU.OPEN_TIMER'),
 				enabled: true,
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					timeTrackerWindow.show();
 					timeTrackerWindow.webContents.send('auth_success_tray_init');
-				},
+				}
 			},
 			{
 				id: '6',
-				label: TranslateService.instant(
-					'BUTTONS.CHECK_UPDATE'
-				),
+				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				async click() {
 					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
 					settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
-				},
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+				}
 			},
 			{
 				id: '4',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.SETUP.SETTING'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
 				async click() {
 					if (!settingsWindow) {
-						settingsWindow = await createSettingsWindow(
-							settingsWindow,
-							windowPath.timeTrackerUi
-						);
+						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send(
-						'app_setting',
-						LocalStore.getApplicationConfig()
-					);
+					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('goto_top_menu');
-				},
+				}
 			},
 			{
 				id: '7',
-				label: TranslateService.instant(
-					'BUTTONS.LOGOUT'
-				),
+				label: TranslateService.instant('BUTTONS.LOGOUT'),
 				visible: process.env.IS_DESKTOP_TIMER,
 				async click() {
 					const appSetting = store.get('appSetting');
@@ -254,41 +183,35 @@ export class TrayIcon {
 					if (isLogout) {
 						timeTrackerWindow.webContents.send('logout');
 					}
-				},
+				}
 			},
 			{
 				id: '5',
-				label: TranslateService.instant(
-					'BUTTONS.EXIT'
-				),
+				label: TranslateService.instant('BUTTONS.EXIT'),
 				click() {
 					app.quit();
-				},
-			},
+				}
+			}
 		];
 
 		if (!!appConfig.gauzyWindow && mainWindow) {
 			// Prepare open main window option.
 			const openGauzyMenu = {
 				id: '8',
-				label: TranslateService.instant(
-					'TIMER_TRACKER.MENU.OPEN_MAIN_WINDOW'
-				),
+				label: TranslateService.instant('TIMER_TRACKER.MENU.OPEN_MAIN_WINDOW'),
 				async click() {
 					mainWindow.focus();
 					mainWindow.show();
-				},
-			}
+				}
+			};
 			// Put before the logout element
 			menuAuth.splice(menuAuth.length - 2, 0, openGauzyMenu);
 			// Put on the top of menu
 			unAuthMenu.unshift(openGauzyMenu);
 		}
 
-		const menuWindowTime =
-			Menu.getApplicationMenu().getMenuItemById('window-time-track');
-		const menuWindowSetting =
-			Menu.getApplicationMenu().getMenuItemById('window-setting');
+		const menuWindowTime = Menu.getApplicationMenu().getMenuItemById('window-time-track');
+		const menuWindowSetting = Menu.getApplicationMenu().getMenuItemById('window-setting');
 
 		const openWindow = async () => {
 			if (process.env.IS_DESKTOP_TIMER) {
@@ -303,10 +226,7 @@ export class TrayIcon {
 		if (auth && auth.employeeId && !auth.isLogout) {
 			this.contextMenu = menuAuth;
 			menuWindowTime.enabled = true;
-			timeTrackerWindow.webContents.send(
-				'get_user_detail',
-				LocalStore.beforeRequestParams()
-			);
+			timeTrackerWindow.webContents.send('get_user_detail', LocalStore.beforeRequestParams());
 		} else {
 			this.tray.setTitle('--:--:--', options);
 			this.contextMenu = unAuthMenu;
@@ -336,10 +256,7 @@ export class TrayIcon {
 		ipcMain.on('update_tray_time_update', (event, arg) => {
 			const auth = store.get('auth');
 			if (auth && auth.employeeId && !auth.isLogout) {
-				this.contextMenu[0].label = TranslateService.instant(
-					'TIMER_TRACKER.MENU.NOW_TRACKING',
-					{ time: arg }
-				);
+				this.contextMenu[0].label = TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { time: arg });
 				this.build();
 			}
 		});
@@ -356,7 +273,7 @@ export class TrayIcon {
 			const serverConfig = LocalStore.getStore('configs');
 			global.variableGlobal = {
 				API_BASE_URL: getApiBaseUrl(serverConfig, config),
-				IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer,
+				IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer
 			};
 			try {
 				const user = new User({ ...arg, ...arg.user });
@@ -377,11 +294,11 @@ export class TrayIcon {
 					taskId: null,
 					note: null,
 					organizationContactId: null,
-					organizationTeamId: null,
+					organizationTeamId: null
 				});
 			}
 			store.set({
-				auth: { ...arg, isLogout: false },
+				auth: { ...arg, isLogout: false }
 			});
 
 			menuWindowTime.visible = appConfig.timeTrackerWindow;
@@ -399,13 +316,8 @@ export class TrayIcon {
 			this.build();
 
 			if (timeTrackerWindow && arg.employeeId) {
-				await timeTrackerWindow.loadURL(
-					timeTrackerPage(windowPath.timeTrackerUi)
-				);
-				timeTrackerWindow.webContents.send(
-					'auth_success_tray_init',
-					arg
-				);
+				await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+				timeTrackerWindow.webContents.send('auth_success_tray_init', arg);
 				if (!appConfig.gauzyWindow) {
 					timeTrackerWindow.show();
 				}
@@ -413,11 +325,16 @@ export class TrayIcon {
 		});
 
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
+			console.log('Final Logout');
+
 			this.tray.setTitle('--:--:--', options);
+
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
+
 			menuWindowTime.enabled = false;
 
 			const appSetting = store.get('appSetting');
+
 			if (appSetting && appSetting.timerStarted) {
 				timeTrackerWindow.webContents.send('stop_from_tray');
 			}
@@ -428,30 +345,25 @@ export class TrayIcon {
 				timeTrackerWindow.webContents.send('clear_store');
 				timeTrackerWindow.hide();
 			} else {
-				if (
-					!loginPageAlreadyShow &&
-					!process.env.IS_DESKTOP_TIMER
-				) {
+				if (!loginPageAlreadyShow && !process.env.IS_DESKTOP_TIMER) {
 					const serverConfig = LocalStore.getStore('configs');
 					global.variableGlobal = {
 						API_BASE_URL: getApiBaseUrl(serverConfig, config),
-						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer,
+						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer
 					};
-					await timeTrackerWindow.loadURL(
-						loginPage(windowPath.gauzyWindow)
-					);
-					timeTrackerWindow.webContents.once(
-						'did-finish-load',
-						() => {
-							timeTrackerWindow.webContents.send('hide_register');
-						}
-					);
+					await timeTrackerWindow.loadURL(loginPage(windowPath.gauzyWindow));
+					timeTrackerWindow.webContents.once('did-finish-load', () => {
+						timeTrackerWindow.webContents.send('hide_register');
+					});
 					timeTrackerWindow.show();
 					loginPageAlreadyShow = true;
 				}
 			}
+
 			alwaysOn.hide();
+
 			await userService.remove();
+
 			LocalStore.updateAuthSetting({ isLogout: true });
 		});
 
@@ -462,11 +374,7 @@ export class TrayIcon {
 		});
 
 		ipcMain.on('user_detail', (event, arg) => {
-			if (
-				arg.employee &&
-				arg.employee.organization &&
-				arg.employee.organization.name
-			) {
+			if (arg.employee && arg.employee.organization && arg.employee.organization.name) {
 				this.contextMenu[1].label = arg.employee.organization.name;
 				this.contextMenu[1].visible = true;
 			}
@@ -478,9 +386,7 @@ export class TrayIcon {
 	}
 
 	public removeTimerHandlers() {
-		const channels = [
-			'FINAL_LOGOUT'
-		];
+		const channels = ['FINAL_LOGOUT'];
 		channels.forEach((channel: string) => {
 			ipcMain.removeHandler(channel);
 		});
@@ -493,7 +399,7 @@ export class TrayIcon {
 			'update_tray_time_update',
 			'update_tray_time_title',
 			'auth_success',
-			'user_detail',
+			'user_detail'
 		];
 
 		trayListener.forEach((listener) => {

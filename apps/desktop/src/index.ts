@@ -697,33 +697,33 @@ app.on('activate', async () => {
 
 app.on('before-quit', async (e) => {
 	console.log('App is quitting');
+	e.preventDefault();
+
 	const appSetting = LocalStore.getStore('appSetting');
 
 	if (appSetting && appSetting.timerStarted) {
-		e.preventDefault();
 		timeTrackerWindow.webContents.send('stop_from_tray', {
 			quitApp: true
 		});
-		return;
-	}
+	} else {
+		// soft download cancellation
+		try {
+			updater.cancel();
+		} catch (e) {
+			console.error('ERROR: Occurred while cancel update:' + e);
+			throw new UIError('500', 'MAINUPDTABORT', e);
+		}
 
-	// soft download cancellation
-	try {
-		updater.cancel();
-	} catch (e) {
-		console.error('ERROR: Occurred while cancel update:' + e);
-		throw new UIError('500', 'MAINUPDTABORT', e);
-	}
+		try {
+			if (serverDesktop) serverDesktop.kill();
+			await server.stop();
+			closeAllWindows();
+		} catch (error) {
+			console.error('ERROR: Occurred while server stop:' + error);
+		}
 
-	try {
-		if (serverDesktop) serverDesktop.kill();
-		await server.stop();
-		closeAllWindows();
-	} catch (error) {
-		console.error('ERROR: Occurred while server stop:' + error);
+		app.exit(0);
 	}
-
-	app.exit(0);
 });
 
 // On OS X it is common for applications and their menu bar
