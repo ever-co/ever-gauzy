@@ -547,10 +547,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private async _toggle(timer: any, onClick: boolean) {
 		try {
 			const { lastTimer, isStarted } = timer;
+
 			const isRemote =
 				this._timeTrackerStatus.remoteTimer &&
 				this.xor(!isStarted, this._timeTrackerStatus.remoteTimer.running) &&
 				this._startMode === TimerStartMode.REMOTE;
+
 			const params = {
 				token: this.token,
 				note: this.note,
@@ -561,8 +563,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				organizationContactId: this.organizationContactId,
 				apiHost: this.apiHost
 			};
+
 			let timelog = null;
+
 			console.log('[TIMER_STATE]', lastTimer);
+
 			if (isStarted) {
 				if (!this._isOffline && !this._remoteSleepLock) {
 					try {
@@ -577,6 +582,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._loggerService.log.error(error);
 					}
 				}
+
 				this.loading = false;
 			} else {
 				if (!this._isOffline) {
@@ -595,9 +601,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._loggerService.log.error(error);
 					}
 				}
+
 				this.start$.next(false);
+
 				this.loading = false;
 			}
+
 			asapScheduler.schedule(async () => {
 				try {
 					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
@@ -610,7 +619,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 		} catch (error) {
-			this.loading = false;
 			let messageError = error.message;
 			if (messageError.includes('Http failure response')) {
 				messageError = `Can't connect to api server`;
@@ -621,6 +629,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				status: 'danger'
 			});
 			this._loggerService.log.info(`Timer Toggle Catch: ${moment().format()}`, error);
+			this.loading = false;
 		}
 	}
 
@@ -719,7 +728,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (!this._store.organizationId && !this._store.tenantId) {
 			return;
 		}
+
 		const { organizationId, tenantId } = this._store;
+
 		this._store.statuses = await this.timeTrackerService.statuses({
 			tenantId,
 			organizationId,
@@ -733,7 +744,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	ngOnInit(): void {
 		this._sourceData$ = new BehaviorSubject(new LocalDataSource(this.tableData));
+
 		this._sourceData.setSort([{ field: 'updatedAt', direction: 'desc' }]);
+
 		this.tasks$
 			.pipe(
 				tap(async (tasks) => {
@@ -749,6 +762,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._lastTotalWorkedToday$
 			.pipe(
 				tap((todayDuration: number) => {
@@ -763,6 +777,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._timeRun$
 			.pipe(
 				tap((current: string) => {
@@ -771,6 +786,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._lastTotalWorkedWeek$
 			.pipe(
 				tap((weekDuration: number) => {
@@ -782,6 +798,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.start$
 			.pipe(
 				tap((isStart: boolean) => {
@@ -796,6 +813,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._timeTrackerStatus.external$
 			.pipe(
 				filter(
@@ -816,6 +834,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._timeSlotQueueService.updater$
 			.pipe(
 				distinctUntilChange(),
@@ -823,6 +842,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._timeSlotQueueService.viewQueueStateUpdater$
 			.pipe(
 				tap(({ inProgress }) =>
@@ -834,12 +854,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.userOrganization$
 			.pipe(
 				tap((organization: IOrganization) => (TimeTrackerDateManager.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._alwaysOnService.state$
 			.pipe(
 				filter((state: AlwaysOnStateEnum) => state === AlwaysOnStateEnum.LOADING),
@@ -847,6 +869,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this._loadSmartTableSettings();
 	}
 
@@ -915,21 +938,25 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('stop_from_tray', (event, arg) =>
 			this._ngZone.run(async () => {
-				// Check if quitApp flag is already set, and if so, force stop the timer and return
-				if (this.quitApp) {
-					await this.stopTimer(true, true);
-					return;
-				}
-
 				// Check if arg is defined and has the quitApp property set to true
 				if (arg?.quitApp) {
 					// Set the quitApp flag to true
 					this.quitApp = true;
 				}
 
+				// Check if quitApp flag is already set, and if so, force stop the timer and return
+				if (this.quitApp) {
+					await this.stopTimer(true, true);
+					return;
+				}
+
+				console.log('stop_from_tray this.start=', this.start);
+
 				// Check if the start flag is set, and if so, toggle the start state to false
 				if (this.start) {
 					await this.toggleStart(false);
+				} else {
+					console.log('this.start is false, doing nothing.');
 				}
 			})
 		);
@@ -1207,9 +1234,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				});
 			});
 		});
+
 		if (!this._isReady) {
 			this.electronService.ipcRenderer.send('time_tracker_ready');
 		}
+
 		this.electronService.ipcRenderer.on('remove_idle_time', (event, arg) => {
 			this._ngZone.run(async () => {
 				try {
@@ -1321,10 +1350,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				const idle = arg?.idleDuration ?? 0;
 				this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday - idle);
 				this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek - idle);
+
 				await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
-					...arg.timer,
-					startedAt: arg.stoppedAt
+					...arg?.timer,
+					startedAt: arg?.stoppedAt
 				});
+
 				if (this.start) {
 					event.sender.send('update_session', arg);
 				}
@@ -1341,7 +1372,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('emergency_stop', (event, arg) => {
 			this._ngZone.run(async () => {
+				console.log('Emergency stop');
+
 				if (this.start) {
+					console.log('Emergency stop timer');
 					await this.stopTimer(!this.isRemoteTimer, true);
 				}
 			});
@@ -1446,31 +1480,47 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		});
 	}
 
+	/*
+		Start/Stop Timer
+		if val is true, we start the timer
+		if val is false, we stop the timer
+	 */
 	async toggleStart(val, onClick = true) {
-		if (this.loading) {
-			return;
-		}
-
-		if (!this._passedAllAuthorizations()) return;
+		// check that user is authorized to track time. If not, we return.
+		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
 		this.loading = true;
 
-		if (this.validationField()) {
-			if (val) {
+		if (!val) {
+			console.log('Stop tracking');
+
+			await this.stopTimer(onClick);
+
+			this.refreshTimer();
+
+			this.loading = false;
+
+			return;
+		} else {
+			console.log('Start tracking');
+
+			// check that required inputs are set before we can start timer
+			if (this.validationField()) {
+				console.log('Validation passed');
+
 				if (!this.start) {
+					console.log('Starting timer');
 					await this.startTimer(onClick);
 				} else {
+					console.log('Timer is already running');
 					this.loading = false;
-					console.log('Error', 'Timer is already running');
 				}
+
+				this.refreshTimer();
 			} else {
-				console.log('stop tracking');
-				await this.stopTimer(onClick);
+				this.loading = false;
+				console.log('Error', 'validation failed');
 			}
-			this.refreshTimer();
-		} else {
-			this.loading = false;
-			console.log('Error', 'validation failed');
 		}
 	}
 
@@ -1495,14 +1545,23 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async startTimer(onClick = true): Promise<void> {
 		try {
+			this.loading = true;
+
 			if (onClick) {
 				await this.getTodayTime(this.argFromMain);
 				this._startMode = TimerStartMode.MANUAL;
 			} else {
 				this._startMode = TimerStartMode.REMOTE;
 			}
+
 			this.start$.next(true);
-			this.electronService.ipcRenderer.send('update_tray_start');
+
+			try {
+				this.electronService.ipcRenderer.send('update_tray_start');
+			} catch (error) {
+				console.log('Error in update_tray_start', error);
+			}
+
 			const timer = await this.electronService.ipcRenderer.invoke('START_TIMER', {
 				projectId: this.projectSelect,
 				taskId: this.taskSelect,
@@ -1516,11 +1575,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				isRemoteTimer: this.isRemoteTimer,
 				organizationTeamId: this.teamSelect
 			});
+
 			// update counter
 			if (this.isRemoteTimer) {
-				this.electronService.ipcRenderer.send('update_session', {
-					startedAt: this._timeTrackerStatus.remoteTimer.startedAt
-				});
+				try {
+					this.electronService.ipcRenderer.send('update_session', {
+						startedAt: this._timeTrackerStatus.remoteTimer.startedAt
+					});
+				} catch (error) {
+					console.log('Error in update_session', error);
+				}
 			}
 
 			await this._toggle(timer, onClick);
@@ -1547,26 +1611,33 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			this._startMode = TimerStartMode.STOP;
 			this.start$.next(false);
-			this.loading = false;
 			this._errorHandlerService.handleError(error);
+		} finally {
+			this.loading = false;
 		}
 	}
 
 	public async stopTimer(onClick = true, isEmergency = false): Promise<void> {
 		try {
-			const config = { quitApp: this.quitApp, isEmergency };
-			if (this._startMode === TimerStartMode.MANUAL) {
-				console.log('Taking screen capture');
-				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+			this.loading = true;
 
+			const config = { quitApp: this.quitApp, isEmergency };
+
+			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 
-				console.log('Sending activities');
-				await this.sendActivities(activities);
-
 				console.log('Toggling timer');
 				await this._toggle(timer, onClick);
+
+				// when we stop timer, let's try to make final screenshot in background after tiny delay of 1 sec
+				setTimeout(async () => {
+					console.log('Taking screen capture');
+					const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+
+					console.log('Sending activities');
+					await this.sendActivities(activities);
+				}, 1000);
 			} else {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
@@ -1576,20 +1647,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 
 			console.log('Updating Tray stop');
+
 			this.electronService.ipcRenderer.send('update_tray_stop');
 
 			this._startMode = TimerStartMode.STOP;
 
 			if (this._isSpecialLogout) {
 				this._isSpecialLogout = false;
+				// wait 3 sec and logout
 				await this.logout();
 			}
 
 			if (this.quitApp) {
-				this.electronService.remote.app.quit();
+				console.log('Quitting app from stopTimer after 3 seconds delay');
+				setTimeout(() => {
+					this.electronService.remote.app.quit();
+				}, 3000);
 			}
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
+		} finally {
+			this.loading = false;
 		}
 	}
 
@@ -1619,7 +1697,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const projects = await this.timeTrackerService.getProjects(arg);
 
 			// Check if the selected project is not in the response
-			if (!projects.some((project) => project.id === this.projectSelect)) {
+			if (projects && !projects.some((project) => project.id === this.projectSelect)) {
 				this.projectSelect = null;
 				this.argFromMain.projectId = null;
 			}
@@ -2249,8 +2327,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public refreshTimer(): void {
-		this._isRefresh$.next(true);
-		this.electronService.ipcRenderer.send('refresh-timer');
+		console.log('refresh timer');
+		this.loading = true;
+		try {
+			this._isRefresh$.next(true);
+			this.electronService.ipcRenderer.send('refresh-timer');
+		} catch (err) {
+			console.log('Error', err);
+		} finally {
+			this.loading = false;
+		}
 	}
 
 	public checkOnlineStatus(): boolean {
@@ -2429,9 +2515,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async logout() {
-		await firstValueFrom(this._authStrategy.logout());
-		this.electronService.ipcRenderer.send(this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login');
-		localStorage.clear();
+		// we wait 3 sec and then logout
+		setTimeout(async () => {
+			await firstValueFrom(this._authStrategy.logout());
+			this.electronService.ipcRenderer.send(
+				this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login'
+			);
+			localStorage.clear();
+		}, 3000);
 	}
 
 	public async restart(): Promise<void> {
@@ -2439,24 +2530,32 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (this.isRemoteTimer) {
 			return;
 		}
-		try {
-			// lock restart process
-			this._isLockSyncProcess = true;
-			// resolve promise and add debounce time to avoid riding
-			await lastValueFrom(
-				from(this.toggleStart(false)).pipe(
-					debounceTime(200),
-					concatMap(() => this.toggleStart(true)),
-					untilDestroyed(this)
-				)
-			);
-		} catch (error) {
-			// force stop timer
-			await this.stopTimer(false, true);
-		} finally {
-			// unlock restart process
-			this._isLockSyncProcess = false;
-		}
+
+		// wait 3 sec and then restart
+		setTimeout(async () => {
+			try {
+				// lock restart process
+				this._isLockSyncProcess = true;
+				// resolve promise and add debounce time to avoid riding
+				await lastValueFrom(
+					from(this.toggleStart(false)).pipe(
+						debounceTime(200),
+						concatMap(() => this.toggleStart(true)),
+						untilDestroyed(this)
+					)
+				);
+			} catch (error) {
+				// force stop timer
+				try {
+					await this.stopTimer(false, true);
+				} catch (e) {
+					console.error('Error in force stop timer', e);
+				}
+			} finally {
+				// unlock restart process
+				this._isLockSyncProcess = false;
+			}
+		}, 3000);
 	}
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {

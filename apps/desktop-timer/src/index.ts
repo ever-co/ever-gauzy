@@ -591,10 +591,14 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 });
 
 app.on('before-quit', async (e) => {
+	console.log('App is quitting');
 	e.preventDefault();
+
 	const appSetting = LocalStore.getStore('appSetting');
+
 	if (appSetting && appSetting.timerStarted) {
 		e.preventDefault();
+
 		const exitConfirmationDialog = new DialogStopTimerExitConfirmation(
 			new DesktopDialog(
 				process.env.DESCRIPTION,
@@ -602,7 +606,9 @@ app.on('before-quit', async (e) => {
 				timeTrackerWindow
 			)
 		);
+
 		const button = await exitConfirmationDialog.show();
+
 		if (button.response === 0) {
 			willQuit = true;
 			timeTrackerWindow.webContents.send('stop_from_tray', {
@@ -614,11 +620,27 @@ app.on('before-quit', async (e) => {
 		try {
 			updater.cancel();
 		} catch (e) {
+			console.error('ERROR: Occurred while cancel update:' + e);
 			throw new AppError('MAINUPDTABORT', e);
 		}
+
+		if (serverDesktop) {
+			try {
+				serverDesktop.kill();
+			} catch (error) {
+				console.error('ERROR: Occurred while serverDesktop stop:' + error);
+			}
+		}
+
+		if (serverGauzy) {
+			try {
+				serverGauzy.kill();
+			} catch (error) {
+				console.error('ERROR: Occurred while serverGauzy stop:' + error);
+			}
+		}
+
 		app.exit(0);
-		if (serverDesktop) serverDesktop.kill();
-		if (serverGauzy) serverGauzy.kill();
 	}
 });
 

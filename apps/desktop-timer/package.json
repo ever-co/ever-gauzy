@@ -86,7 +86,8 @@
 		"sqlite3": "^5.1.7",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"underscore": "^1.13.3"
+		"underscore": "^1.13.3",
+		"undici": "^6.10.2"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",
