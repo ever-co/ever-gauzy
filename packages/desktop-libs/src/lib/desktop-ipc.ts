@@ -6,7 +6,6 @@ import { notifyScreenshot, takeshot } from './desktop-screenshot';
 import { resetPermissions } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
-// Import logging for electron and override default console logging
 import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
 import { DesktopPowerManager } from './desktop-power-manager';
@@ -74,8 +73,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		try {
 			log.info('Return Time Sheet');
 
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
 					type: 'update-timer-time-slot',
 					data: {
@@ -96,8 +95,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		try {
 			log.info('Return Toggle API');
 
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
 					type: 'update-timer-time-slot',
 					data: {
@@ -116,13 +115,17 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.on('failed_synced_timeslot', async (event, arg) => {
 		try {
 			log.info('Failed Synced TimeSlot');
+
 			const interval = new Interval(arg.params);
 			interval.screenshots = arg.params.b64Imgs;
 			interval.stoppedAt = new Date();
 			interval.synced = false;
 			interval.timerId = timerHandler.lastTimer?.id;
+
 			await intervalService.create(interval.toObject());
+
 			await countIntervalQueue(timeTrackerWindow, false);
+
 			await latestScreenshots(timeTrackerWindow);
 		} catch (error) {
 			log.info('Error on failed synced TimeSlot', error);
@@ -241,46 +244,61 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		log.info('Update Synced Timer');
 		try {
 			if (!arg.id) {
-				const { id } = await timerService.findLastCapture();
-				arg = {
-					...arg,
-					id
-				};
+				const lastCapture = await timerService.findLastCapture();
+
+				if (lastCapture && lastCapture.id) {
+					const { id } = lastCapture;
+					arg = {
+						...arg,
+						id
+					};
+				}
 			}
-			if (!offlineMode.enabled) {
-				await timerService.update(
-					new Timer({
-						id: arg.id,
-						synced: true,
-						...(arg.lastTimer && {
-							timelogId: arg.lastTimer?.id,
-							timesheetId: arg.lastTimer?.timesheetId
-						}),
-						...(arg.lastTimer?.startedAt && {
-							startedAt: new Date(arg.lastTimer?.startedAt)
-						}),
-						...(!arg.lastTimer && {
-							synced: false,
-							isStartedOffline: arg.isStartedOffline,
-							isStoppedOffline: arg.isStoppedOffline
-						}),
-						...(arg.timeSlotId && {
-							timeslotId: arg.timeSlotId
+
+			if (arg.id) {
+				if (!offlineMode.enabled) {
+					console.log('Update Synced Timer Online');
+					await timerService.update(
+						new Timer({
+							id: arg.id,
+							synced: true,
+							...(arg.lastTimer && {
+								timelogId: arg.lastTimer?.id,
+								timesheetId: arg.lastTimer?.timesheetId
+							}),
+							...(arg.lastTimer?.startedAt && {
+								startedAt: new Date(arg.lastTimer?.startedAt)
+							}),
+							...(!arg.lastTimer && {
+								synced: false,
+								isStartedOffline: arg.isStartedOffline,
+								isStoppedOffline: arg.isStoppedOffline
+							}),
+							...(arg.timeSlotId && {
+								timeslotId: arg.timeSlotId
+							})
 						})
-					})
-				);
+					);
+				} else {
+					console.log('Update Synced Timer Offline');
+					await timerService.update(
+						new Timer({
+							id: arg.id,
+							...(arg.startedAt && {
+								startedAt: new Date(arg.startedAt)
+							})
+						})
+					);
+				}
 			} else {
-				await timerService.update(
-					new Timer({
-						id: arg.id,
-						...(arg.startedAt && {
-							startedAt: new Date(arg.startedAt)
-						})
-					})
-				);
+				console.log('No arg.id found');
 			}
+
+			console.log('Count Interval Queue');
 			await countIntervalQueue(timeTrackerWindow, true);
+
 			if (!isQueueThreadTimerLocked) {
+				console.log('sequentialSyncQueue');
 				await sequentialSyncQueue(timeTrackerWindow);
 			}
 		} catch (error) {
@@ -517,11 +535,11 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
-					data: collections,
-					type: ActivityWatchEventTableList.WINDOW
+					type: ActivityWatchEventTableList.WINDOW,
+					data: collections
 				},
 				knex
 			);
@@ -537,11 +555,11 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
-					data: collections,
-					type: ActivityWatchEventTableList.AFK
+					type: ActivityWatchEventTableList.AFK,
+					data: collections
 				},
 				knex
 			);
@@ -557,11 +575,11 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
-					data: collections,
-					type: ActivityWatchEventTableList.FIREFOX
+					type: ActivityWatchEventTableList.FIREFOX,
+					data: collections
 				},
 				knex
 			);
@@ -577,11 +595,11 @@ export function ipcTimer(
 		if (!collections.length) return;
 
 		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
-					data: collections,
-					type: ActivityWatchEventTableList.CHROME
+					type: ActivityWatchEventTableList.CHROME,
+					data: collections
 				},
 				knex
 			);
@@ -603,8 +621,8 @@ export function ipcTimer(
 
 	ActivityWatchEventManager.onRemoveLocalData(async (_, value: any) => {
 		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
 					type: 'remove-window-events'
 				},
@@ -636,11 +654,11 @@ export function ipcTimer(
 		const collections: IDesktopEvent[] = ActivityWatchEventAdapter.collections(result);
 		if (!collections.length) return;
 		try {
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
-					data: collections,
-					type: ActivityWatchEventTableList.EDGE
+					type: ActivityWatchEventTableList.EDGE,
+					data: collections
 				},
 				knex
 			);
@@ -653,8 +671,8 @@ export function ipcTimer(
 	ipcMain.on('remove_wakatime_local_data', async (event, arg) => {
 		try {
 			if (arg.idsWakatime && arg.idsWakatime.length > 0) {
-				await timerHandler.createQueue(
-					'sqlite-queue',
+				await timerHandler.processWithQueue(
+					`gauzy-queue`,
 					{
 						type: 'remove-wakatime-events',
 						data: arg.idsWakatime
@@ -674,22 +692,43 @@ export function ipcTimer(
 
 			// Check api connection before to stop
 			if (!arg.isEmergency) {
-				log.info('Check API Connection Before Stop Timer...');
-				await offlineMode.connectivity();
+				// We check connectivity before stop timer, but we don't block the process for now...
+				// Instead, we should notify the user that timer might not stop correctly and retry stop the timer after connection to API is restored
+				setTimeout(async () => {
+					log.info('Check API Connection During Stop Timer...');
+
+					await offlineMode.connectivity();
+
+					if (offlineMode.enabled) {
+						console.log('Offline Mode: Timer might not stop correctly');
+						timeTrackerWindow.webContents.send('emergency_stop');
+
+						// We may want to show some notification to user that timer might not stop correctly, but not with Error, more like notification popup
+						// throw new Error('Cannot establish connection to API during Timer Stop');
+					} else {
+						console.log('API working well During Stop Timer');
+					}
+				}, 10);
 			}
+
+			console.log('Continue stopping timer ...');
 
 			// Stop Timer
 			const timerResponse = await timerHandler.stopTimer(setupWindow, timeTrackerWindow, knex, arg.quitApp);
+
+			console.log('Timer Stopped ...');
 
 			settingWindow.webContents.send('app_setting_update', {
 				setting: LocalStore.getStore('appSetting')
 			});
 
 			if (powerManagerPreventSleep) {
+				console.log('Stop Prevent Display Sleep');
 				powerManagerPreventSleep.stop();
 			}
 
 			if (powerManagerDetectInactivity) {
+				console.log('Stop Inactivity Detection');
 				powerManagerDetectInactivity.stopInactivityDetection();
 			}
 
@@ -705,14 +744,14 @@ export function ipcTimer(
 		try {
 			log.info(`Return To Timeslot Last Timeslot ID: ${arg.timeSlotId} and Timer ID: ${arg.timerId}`);
 
-			await timerHandler.createQueue(
-				'sqlite-queue',
+			await timerHandler.processWithQueue(
+				`gauzy-queue`,
 				{
+					type: 'update-timer-time-slot',
 					data: {
 						id: arg.timerId,
 						timeSlotId: arg.timeSlotId
-					},
-					type: 'update-timer-time-slot'
+					}
 				},
 				knex
 			);

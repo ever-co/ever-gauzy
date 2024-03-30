@@ -166,6 +166,7 @@
         "squirrelly": "^8.0.8",
         "tslib": "^2.3.0",
         "twing": "^5.0.2",
-        "underscore": "^1.13.3"
+        "underscore": "^1.13.3",
+        "undici": "^6.10.2"
     }
 }

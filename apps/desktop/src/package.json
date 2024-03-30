@@ -178,7 +178,8 @@
 		"underscore": "^1.13.3",
 		"screenshot-desktop": "^1.12.7",
 		"mac-screen-capture-permissions": "^2.0.0",
-		"embedded-queue": "^0.0.11"
+		"embedded-queue": "^0.0.11",
+		"undici": "^6.10.2"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

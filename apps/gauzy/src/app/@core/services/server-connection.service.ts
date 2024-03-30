@@ -10,37 +10,42 @@ export class ServerConnectionService {
 		const url = `${endPoint}/api`;
 
 		return new Promise((resolve, reject) => {
+			console.log(`Checking server connection on URL in ServerConnectionService in @core/services: ${url}`);
+
 			try {
-				console.log(`Checking server connection on URL in ServerConnectionService in @core/services: ${url}`);
+				if (endPoint !== 'http://localhost:3000') {
+					const requestObservable = this.httpClient.get(url);
 
-				const requestObservable = this.httpClient.get(url);
-
-				if (!requestObservable) {
-					console.error('Failed to create an Observable from the HTTP request.');
-					reject('Failed to create an Observable from the HTTP request.');
-					return;
-				}
-
-				requestObservable.subscribe({
-					next: (resp: any) => {
-						console.log(
-							`Server connection status in ServerConnectionService for URL ${url} is: ${resp.status}`
-						);
-						this.store.serverConnection = resp.status;
-						resolve(true);
-					},
-					error: (err) => {
-						console.error(
-							`Error checking server connection in ServerConnectionService for URL ${url}`,
-							err
-						);
-						this.store.serverConnection = err.status;
-						reject();
+					if (!requestObservable) {
+						console.error('Failed to create an Observable from the HTTP request.');
+						reject('Failed to create an Observable from the HTTP request.');
+						return;
 					}
-				});
+
+					requestObservable.subscribe({
+						next: (resp: any) => {
+							console.log(
+								`Server connection status in ServerConnectionService for URL ${url} is: ${resp.status}`
+							);
+							this.store.serverConnection = resp.status;
+							resolve(true);
+						},
+						error: (err) => {
+							console.error(
+								`Error checking server connection in ServerConnectionService for URL ${url}`,
+								err
+							);
+							this.store.serverConnection = err.status;
+							reject(err);
+						}
+					});
+				} else {
+					console.log(`Skip checking server connection for URL ${url}`);
+					resolve(true);
+				}
 			} catch (error) {
 				console.error(`Error checking server connection in ServerConnectionService for URL ${url}`, error);
-				reject();
+				reject(error);
 			}
 		});
 	}
