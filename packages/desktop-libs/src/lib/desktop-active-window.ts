@@ -98,6 +98,7 @@ export class DesktopActiveWindow extends EventEmitter {
 	private async getWindow(anyway: boolean = false) {
 		try {
 			const window = await activeWindow();
+
 			// Detect changes
 			if (
 				window &&
@@ -106,6 +107,7 @@ export class DesktopActiveWindow extends EventEmitter {
 					window.url !== this._currentApplication.data.url ||
 					anyway)
 			) {
+				console.log('DesktopActiveWindow -> getWindow -> applyNewWindow');
 				this.applyNewWindow(window);
 			}
 		} catch (err) {
@@ -120,6 +122,7 @@ export class DesktopActiveWindow extends EventEmitter {
 	}
 
 	public async updateActivities(): Promise<void> {
+		console.log('DesktopActiveWindow -> updateActivities');
 		await this.getWindow(true);
 	}
 }

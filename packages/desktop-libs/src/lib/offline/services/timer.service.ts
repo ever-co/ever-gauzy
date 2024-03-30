@@ -15,7 +15,12 @@ export class TimerService implements ITimerService<TimerTO> {
 	public async findLastOne(): Promise<TimerTO> {
 		try {
 			const user = await this._userService.retrieve();
-			return await this._timerDAO.lastTimer(user.employeeId);
+
+			if (user && user.employeeId) {
+				return await this._timerDAO.lastTimer(user.employeeId);
+			} else {
+				return null;
+			}
 		} catch (error) {
 			console.error(error);
 			return null;
@@ -25,9 +30,14 @@ export class TimerService implements ITimerService<TimerTO> {
 	public async findLastCapture(): Promise<TimerTO> {
 		try {
 			const user = await this._userService.retrieve();
-			return await this._timerDAO.lastCapture(user.employeeId);
+
+			if (user && user.employeeId) {
+				return await this._timerDAO.lastCapture(user.employeeId);
+			} else {
+				return null;
+			}
 		} catch (error) {
-			console.error(error);
+			console.error('Cannot find last Capture', error);
 			return null;
 		}
 	}
@@ -37,6 +47,7 @@ export class TimerService implements ITimerService<TimerTO> {
 			if (!timer.id) {
 				return console.error('WARN[TIMER_SERVICE]: No timer data, cannot update');
 			}
+
 			await this._timerDAO.update(timer.id, timer.toObject());
 		} catch (error) {
 			throw new AppError('[TIMER_SERVICE]', error);

@@ -170,7 +170,9 @@ export class DesktopOsInactivityHandler {
 
 	public async updateViewOffline(params: any): Promise<void> {
 		const offlineMode = DesktopOfflineModeHandler.instance;
+
 		await offlineMode.connectivity();
+
 		if (offlineMode.enabled) {
 			this._powerManager.window.webContents.send('update_view', params);
 		}
