@@ -1135,8 +1135,6 @@ export class PagesComponent extends TranslationBaseComponent
 		if (!id) return;
 
 		this.user = await this.usersService.getMe([
-			// 'employee',
-			// 'employee.contact',
 			'role',
 			'role.rolePermissions',
 			'tenant',

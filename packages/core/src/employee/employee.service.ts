@@ -27,6 +27,29 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Finds an employee by user ID.
+	 *
+	 * @param userId The ID of the user to find.
+	 * @returns A Promise resolving to the employee if found, otherwise null.
+	 */
+	async findOneByUserId(userId: string): Promise<IEmployee | null> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			return this.findOneByOptions({
+				where: {
+					tenantId,
+					userId
+				}
+			});
+		} catch (error) {
+			// Here you might want to add more sophisticated error handling
+			// For example, log specific errors or rethrow them depending on their nature
+			console.error(`Error finding employee by userId: ${error.message}`);
+			return null;
+		}
+	}
+
+	/**
 	 * Retrieves all active employees with their associated user and organization details.
 	 * @returns A Promise that resolves to an array of active employees.
 	 */

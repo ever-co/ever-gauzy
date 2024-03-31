@@ -60,7 +60,6 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		const id = this.store.userId;
 		if (!id) return;
 		this.user = await this.usersService.getMe([
-			// 'employee',
 			'role',
 			'role.rolePermissions',
 			'tenant'
