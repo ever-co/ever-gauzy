@@ -35,15 +35,14 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	async findOneByUserId(userId: string): Promise<IEmployee | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			return this.findOneByOptions({
-				where: {
-					tenantId,
-					userId
-				}
+
+			// Construct the where clause based on whether tenantId is available
+			const whereClause = tenantId ? { tenantId, userId } : { userId };
+
+			return this.repository.findOne({
+				where: whereClause
 			});
 		} catch (error) {
-			// Here you might want to add more sophisticated error handling
-			// For example, log specific errors or rethrow them depending on their nature
 			console.error(`Error finding employee by userId: ${error.message}`);
 			return null;
 		}
