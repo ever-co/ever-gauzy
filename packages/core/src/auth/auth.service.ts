@@ -32,6 +32,7 @@ import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
+import { Employee } from '../employee/employee.entity';
 import { UserService } from '../user/user.service';
 import { RoleService } from './../role/role.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
@@ -44,6 +45,7 @@ import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmUserRepository } from './../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
+import { EmployeeService } from '../employee/employee.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -56,6 +58,7 @@ export class AuthService extends SocialAuthService {
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
+		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
@@ -79,30 +82,30 @@ export class AuthService extends SocialAuthService {
 						email,
 						isActive: true,
 						isArchived: false,
-						hash: Not(IsNull()),
-						employee: {
-							id: IsNull()
-						}
-					},
-					{
-						email,
-						isActive: true,
-						isArchived: false,
-						hash: Not(IsNull()),
-						employee: {
-							isActive: true, // If employees are inactive
-							isArchived: false
-						}
+						hash: Not(IsNull())
 					}
 				],
 				relations: {
-					employee: true,
 					role: true
 				},
 				order: {
 					createdAt: 'DESC'
 				}
 			});
+
+			if (!user) {
+				throw new UnauthorizedException();
+			}
+
+			const employee = await this.employeeService.findOneByOptions({
+				where: {
+					userId: user.id
+				}
+			});
+
+			if (employee && (!employee.isActive || employee.isArchived)) {
+				throw new UnauthorizedException();
+			}
 
 			// If password is not matching with any user
 			if (!(await bcrypt.compare(password, user.hash))) {
@@ -138,6 +141,7 @@ export class AuthService extends SocialAuthService {
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { email, password } = input;
+
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
 			where: [
@@ -145,25 +149,11 @@ export class AuthService extends SocialAuthService {
 					email,
 					isActive: true,
 					isArchived: false,
-					hash: Not(IsNull()),
-					employee: {
-						id: IsNull()
-					}
-				},
-				{
-					email,
-					isActive: true,
-					isArchived: false,
-					hash: Not(IsNull()),
-					employee: {
-						isActive: true,
-						isArchived: false
-					}
+					hash: Not(IsNull())
 				}
 			],
 			relations: {
-				tenant: true,
-				employee: true
+				tenant: true
 			},
 			order: {
 				createdAt: 'DESC'
@@ -182,15 +172,19 @@ export class AuthService extends SocialAuthService {
 
 		// Update all users with a single query
 		const ids = users.map((user: IUser) => user.id);
-		await this.typeOrmUserRepository.update({
-			id: In(ids),
-			email,
-			isActive: true,
-			isArchived: false
-		}, {
-			code,
-			codeExpireAt
-		});
+
+		await this.typeOrmUserRepository.update(
+			{
+				id: In(ids),
+				email,
+				isActive: true,
+				isArchived: false
+			},
+			{
+				code,
+				codeExpireAt
+			}
+		);
 
 		// Determining the response based on the number of matching users
 		const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
@@ -576,7 +570,6 @@ export class AuthService extends SocialAuthService {
 			// Retrieve the user's data from the userService
 			const user = await this.userService.findOneByIdString(userId, {
 				relations: {
-					employee: true,
 					role: {
 						rolePermissions: true
 					}
@@ -586,11 +579,24 @@ export class AuthService extends SocialAuthService {
 				}
 			});
 
+			if (!user) {
+				console.log('Error while getting jwt access token: User not found', userId);
+				throw new UnauthorizedException();
+			} else {
+				console.log('User found: ', user.id);
+			}
+
+			let employee = await this.employeeService.findOneByOptions({
+				where: {
+					userId: user.id
+				}
+			});
+
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId,
-				employeeId: user.employee ? user.employee.id : null
+				employeeId: employee?.id
 			};
 
 			// Check if the user has a role
@@ -617,6 +623,7 @@ export class AuthService extends SocialAuthService {
 		} catch (error) {
 			// Handle any errors that occur during the process
 			console.log('Error while getting jwt access token', error);
+			throw new UnauthorizedException();
 		}
 	}
 
@@ -796,8 +803,7 @@ export class AuthService extends SocialAuthService {
 					isArchived: false
 				},
 				relations: {
-					tenant: true,
-					employee: true
+					tenant: true
 				}
 			});
 
@@ -837,6 +843,7 @@ export class AuthService extends SocialAuthService {
 			let payload: JwtPayload | string = this.verifyToken(token);
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
+
 				const user = await this.typeOrmUserRepository.findOneOrFail({
 					where: {
 						id: userId,
@@ -848,7 +855,6 @@ export class AuthService extends SocialAuthService {
 						isArchived: false
 					},
 					relations: {
-						employee: true,
 						role: true
 					}
 				});
@@ -867,8 +873,12 @@ export class AuthService extends SocialAuthService {
 					}
 				);
 
+				const employee = await this.employeeService.findOneByOptions({
+					where: { userId: user.id }
+				});
+
 				// If employees are inactive
-				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+				if (employee && (employee.isActive === false || employee.isArchived === true)) {
 					throw new UnauthorizedException();
 				}
 
@@ -1005,10 +1015,10 @@ export class AuthService extends SocialAuthService {
 		code,
 		includeTeams
 	}: {
-		users: IUser[],
-		email: string,
-		code: string,
-		includeTeams: boolean
+		users: IUser[];
+		email: string;
+		code: string;
+		includeTeams: boolean;
 	}): Promise<IUserSigninWorkspaceResponse> {
 		const workspaces: IWorkspaceResponse[] = [];
 
@@ -1071,11 +1081,13 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
-			tenant: user.tenant ? new Tenant({
-				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-			}) : null // Sets tenant to null if user.tenant is undefined
+			tenant: user.tenant
+				? new Tenant({
+						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				  })
+				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}
 }

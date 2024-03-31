@@ -155,7 +155,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				})
 			);
 
-			console.log('query.getSql', query.getSql())
+			console.log('query.getSql', query.getSql());
 			const [items, total] = await query.getManyAndCount();
 			return { items, total };
 		} catch (error) {
@@ -182,12 +182,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where
-				}),
+						where: options.where
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations
-				})
+						relations: options.relations
+					})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -336,7 +336,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	public async pagination(options: PaginationParams<Task>): Promise<IPagination<ITask>> {
 		if ('where' in options) {
 			const { where } = options;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE'
+			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 			if ('title' in where) {
 				const { title } = where;
 				options['where']['title'] = Raw((alias) => `${alias} ${likeOperator} '%${title}%'`);
@@ -355,7 +355,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				const { teams } = where;
 				options.where.teams = {
 					id: In(teams as string[])
-				}
+				};
 			}
 		}
 		return await super.paginate(options);
@@ -414,7 +414,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	public async unassignEmployeeFromTeamTasks(employeeId: string, organizationTeamId: string) {
 		try {
 			const query = this.repository.createQueryBuilder(this.tableName);
+
 			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
+
 			if (organizationTeamId) {
 				query.leftJoinAndSelect(`${query.alias}.teams`, 'teams', 'teams.id = :organizationTeamId', {
 					organizationTeamId

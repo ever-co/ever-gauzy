@@ -44,8 +44,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 
 			user = await this.userService.findOneByIdString(user.id, {
 				relations: {
-					role: true,
-					employee: true
+					role: true
 				}
 			});
 

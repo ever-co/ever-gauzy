@@ -37,6 +37,7 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
 import { GetOrganizationTeamStatisticQuery } from './queries';
+import { EmployeeService } from './../employee/employee.service';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
@@ -54,6 +55,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		private readonly roleService: RoleService,
 		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService,
 		private readonly userService: UserService,
+		private readonly employeeService: EmployeeService,
 		private readonly taskService: TaskService
 	) {
 		super(typeOrmOrganizationTeamRepository, mikroOrmOrganizationTeamRepository);
@@ -230,7 +232,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					// If not included, add the employeeId to the managerIds array
 					managerIds.push(employeeId);
 				}
-			} catch (error) { }
+			} catch (error) {}
 
 			// Retrieves a collection of employees based on specified criteria.
 			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
@@ -491,13 +493,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationId,
 					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
-							members: {
-								employeeId: RequestContext.currentEmployeeId(),
-								role: {
-									name: RolesEnum.MANAGER
+								members: {
+									employeeId: RequestContext.currentEmployeeId(),
+									role: {
+										name: RolesEnum.MANAGER
+									}
 								}
-							}
-						}
+						  }
 						: {})
 				}
 			});
@@ -532,37 +534,39 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			}
 		}
 
-		const user = await this.userService.findOneByIdString(userId, {
-			relations: {
-				employee: true
-			}
-		});
+		const user = await this.userService.findOneByIdString(userId);
+
 		if (!user) {
 			throw new ForbiddenException('User not found!');
 		}
 
-		const { employeeId } = user;
-		if (!employeeId) {
+		const employee = await this.employeeService.findOneByOptions({
+			where: {
+				userId: user.id
+			}
+		});
+
+		if (!employee) {
 			throw new ForbiddenException('User is not associated with an employee!');
 		}
 
 		try {
-			if (isNotEmpty(employeeId)) {
-				// Check if the user is only a manager (has no specific role)
-				await this.organizationTeamEmployeeService.findOneByWhereOptions({
-					employeeId,
+			// Check if the user is only a manager (has no specific role)
+			await this.organizationTeamEmployeeService.findOneByOptions({
+				where: {
+					employeeId: employee.id,
 					roleId: IsNull()
-				});
+				}
+			});
 
-				// Unassign this user from all tasks in a team
-				await this.taskService.unassignEmployeeFromTeamTasks(employeeId, undefined);
+			// Unassign this user from all tasks in a team
+			await this.taskService.unassignEmployeeFromTeamTasks(employee.id, undefined);
 
-				// Delete the team employee record
-				return await this.organizationTeamEmployeeService.delete({
-					employeeId,
-					roleId: IsNull()
-				});
-			}
+			// Delete the team employee record
+			return await this.organizationTeamEmployeeService.delete({
+				employeeId: employee.id,
+				roleId: IsNull()
+			});
 		} catch (error) {
 			throw new ForbiddenException('You are not able to removed account where you are only the manager!');
 		}

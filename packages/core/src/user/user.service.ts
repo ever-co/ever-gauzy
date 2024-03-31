@@ -21,13 +21,7 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import {
-	ComponentLayoutStyleEnum,
-	IUser,
-	LanguagesEnum,
-	PermissionsEnum,
-	RolesEnum
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -47,7 +41,7 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
+		readonly mikroOrmUserRepository: MikroOrmUserRepository
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -63,12 +57,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			case MultiORMEnum.MikroORM:
 				throw new Error(`Not implemented for ${this.ormType}`);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.update({ id }, {
-					emailVerifiedAt: freshTimestamp(),
-					emailToken: null,
-					code: null,
-					codeExpireAt: null
-				});
+				return await this.repository.update(
+					{ id },
+					{
+						emailVerifiedAt: freshTimestamp(),
+						emailToken: null,
+						code: null,
+						codeExpireAt: null
+					}
+				);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -190,7 +187,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch { }
+			} catch {}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -378,20 +375,18 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 
-		const user = await this.findOneByIdString(userId, {
-			relations: {
-				employee: true
-			}
-		});
+		const user = await this.findOneByIdString(userId);
+
 		if (!user) {
 			throw new ForbiddenException('User not found for this ID!');
 		}
 
 		try {
-			// Unassign all the task assigned to this user
-			if (user.employeeId) {
-				await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
-			}
+			// TODO: Unassign all the task assigned to this user
+
+			// Best to raise some event and handle it in the subscriber that remove tasks!
+			//	await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
+
 			return await super.delete(userId);
 		} catch (error) {
 			throw new ForbiddenException(error?.message);

@@ -100,7 +100,7 @@ export interface IUserCodeInput {
 	code: string;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;

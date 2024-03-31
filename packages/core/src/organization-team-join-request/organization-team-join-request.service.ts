@@ -25,6 +25,7 @@ import { OrganizationTeamJoinRequest } from './organization-team-join-request.en
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
 import { InviteService } from './../invite/invite.service';
 import { RoleService } from './../role/role.service';
+import { EmployeeService } from './../employee/employee.service';
 import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-orm-organization-team-join-request.repository';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
@@ -50,10 +51,11 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 
+		private readonly _employeeService: EmployeeService,
 		private readonly _organizationTeamService: OrganizationTeamService,
 		private readonly _emailService: EmailService,
 		private readonly _inviteService: InviteService,
-		private readonly _roleService: RoleService,
+		private readonly _roleService: RoleService
 	) {
 		super(typeOrmOrganizationTeamJoinRequestRepository, mikroOrmOrganizationTeamJoinRequestRepository);
 	}
@@ -302,8 +304,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				},
 				relations: {
 					tenant: true,
-					role: true,
-					employee: true
+					role: true
 				}
 			});
 
@@ -312,29 +313,37 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			 * Current user is already part of tenant as separate user
 			 */
 			if (currentTenantUser) {
+				const employee = await this._employeeService.findOneByOptions({
+					where: {
+						userId: currentTenantUser.id
+					}
+				});
+
 				/**
 				 * Check if user is already part of requested team
 				 */
 				let employeePresentInTeam = null;
-				try {
+
+				if (employee) {
 					employeePresentInTeam = await this._organizationTeamService.findOneByWhereOptions({
 						members: {
-							employeeId: currentTenantUser.employeeId
+							employeeId: employee.id
 						},
 						id: request.organizationTeamId
 					});
-				} catch (error) { }
+				}
 
 				/**
 				 * Add employee to team
 				 */
-				if (!employeePresentInTeam) {
+				if (!employeePresentInTeam && employee) {
 					await this.typeOrmOrganizationTeamEmployeeRepository.save({
-						employeeId: currentTenantUser.employeeId,
+						employeeId: employee.id,
 						organizationTeamId: request.organizationTeamId,
 						tenantId,
 						organizationId: request.organizationId
 					});
+
 					await this.repository.update(id, {
 						status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 						userId: currentTenantUser.id
