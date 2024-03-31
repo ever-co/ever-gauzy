@@ -23,7 +23,7 @@ export class AppInitService {
 			const id = this.store.userId;
 			if (id) {
 				this.user = await this.usersService.getMe([
-					'employee',
+					// 'employee',
 					'role',
 					'role.rolePermissions',
 					'tenant',
