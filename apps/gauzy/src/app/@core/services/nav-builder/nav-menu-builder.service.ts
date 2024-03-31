@@ -82,12 +82,15 @@ export class NavMenuBuilderService {
 			item.config.id === config.id && item.sectionId === sectionId
 		);
 
-		if (existingIndex === -1) {
-			// Item does not exist, add it to the array
+		if (existingIndex !== -1) {
+			// Item exists, replace it with the new config
+			this.addedNavMenuItems[existingIndex] = { config, sectionId, before };
+		} else {
+			// Push each new item configuration along with its positioning information into the addedNavMenuItems array
 			this.addedNavMenuItems.push({ config, sectionId, before });
-			// Emit the updated addedNavMenuItems array to all subscribers
-			this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
 		}
+		// Emit the updated addedNavMenuItems array to all subscribers
+		this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
 	}
 
 	/**
@@ -103,13 +106,18 @@ export class NavMenuBuilderService {
 			const existingIndex = this.addedNavMenuItems.findIndex((item) =>
 				item.config.id === config.id && item.sectionId === sectionId
 			);
-			if (existingIndex === -1) {
+
+			if (existingIndex !== -1) {
+				// If the item exists, replace it with the new config
+				this.addedNavMenuItems[existingIndex] = { config, sectionId, before };
+			} else {
 				// Push each new item configuration along with its positioning information into the addedNavMenuItems array
 				this.addedNavMenuItems.push({ config, sectionId, before });
 			}
 		});
+
 		// Emit the updated addedNavMenuItems array to all subscribers
-		this.addedNavMenuItemsSubject.next(this.addedNavMenuItems);
+		this.addedNavMenuItemsSubject.next([...this.addedNavMenuItems]);
 	}
 
 	/**

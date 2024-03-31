@@ -1,8 +1,10 @@
-import { AfterViewInit, Directive, OnDestroy, OnInit } from '@angular/core';
-import { tap } from 'rxjs/operators';
+import { Directive, OnDestroy, OnInit } from '@angular/core';
+import { merge } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { NavMenuBuilderService, NavMenuSectionItem } from '../../services/nav-builder';
 import { Store } from '../../services/store.service';
 import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
@@ -12,7 +14,8 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 @Directive({
     selector: '[gaBaseNavMenu]',
 })
-export class BaseNavMenuComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class BaseNavMenuComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+
     constructor(
         protected readonly _navMenuBuilderService: NavMenuBuilderService,
         protected readonly _store: Store,
@@ -27,13 +30,21 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
     }
 
     ngAfterViewInit() {
-        this.translateService.onLangChange
-            .pipe(
-                tap(() => alert()),
+        merge(
+            this._store.selectedOrganization$.pipe(
+                filter((organization: IOrganization) => !!organization),
+                distinctUntilChange(),
+                tap(() => this.defineBaseNavMenus())
+            ),
+            this.translateService.onLangChange.pipe(
                 tap(() => this.defineBaseNavMenus()),
-                untilDestroyed(this)
+            ),
+            this._store.featureOrganizations$.pipe(
+                tap(() => this.defineBaseNavMenus()),
             )
-            .subscribe();
+        ).pipe(
+            untilDestroyed(this)
+        ).subscribe();
     }
 
     /**
@@ -1005,6 +1016,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
      */
     public isSectionHidden(section: NavMenuSectionItem): boolean {
         const { data } = section;
+        let isHidden = false;
 
         // Check if section should be hidden based on permissions or custom hide function
         if (data.permissionKeys || data.hide) {
@@ -1013,19 +1025,18 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements Af
 
             // If any permission is not granted or custom hide function returns true, hide the section
             if (!anyPermission || (data.hide && data.hide())) {
-                return true;
+                isHidden = true;
             }
         }
 
         // If feature key is provided, check if the feature is enabled
-        if (data.featureKey) {
-            return !this._store.hasFeatureEnabled(data.featureKey);
+        if (data.featureKey && isHidden === false) {
+            isHidden = !this._store.hasFeatureEnabled(data.featureKey);
         }
 
         // If none of the above conditions are met, the section should not be hidden
-        return false;
+        return isHidden;
     }
-
 
     ngOnDestroy(): void { }
 }

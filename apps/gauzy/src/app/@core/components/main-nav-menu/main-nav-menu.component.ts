@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
@@ -9,7 +9,7 @@ import { NavMenuSectionItem } from '../../services/nav-builder';
     templateUrl: './main-nav-menu.component.html',
     styleUrls: ['./main-nav-menu.component.scss'],
 })
-export class MainNavMenuComponent extends BaseNavMenuComponent implements AfterViewInit, OnInit {
+export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit {
 
     public mainMenuConfig$: Observable<NavMenuSectionItem[]>;
 
@@ -20,9 +20,5 @@ export class MainNavMenuComponent extends BaseNavMenuComponent implements AfterV
         this.mainMenuConfig$ = this._navMenuBuilderService.menuConfig$.pipe(
             map((sections: NavMenuSectionItem[]) => this.mapMenuSections(sections))
         );
-    }
-
-    override ngAfterViewInit() {
-        super.ngAfterViewInit(); // Call the parent class's ngAfterViewInit function
     }
 }
