@@ -41,10 +41,12 @@ export class ServerConnectionService {
 					});
 				} else {
 					console.log(`Skip checking server connection for URL ${url}`);
+					this.store.serverConnection = 200;
 					resolve(true);
 				}
 			} catch (error) {
 				console.error(`Error checking server connection in ServerConnectionService for URL ${url}`, error);
+				this.store.serverConnection = 500;
 				reject(error);
 			}
 		});
