@@ -118,7 +118,11 @@ export class AuthService extends SocialAuthService {
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
 			return {
-				user,
+				user: {
+					...user,
+					employee: employee,
+					employeeId: employee?.id
+				},
 				token: access_token,
 				refresh_token: refresh_token
 			};
