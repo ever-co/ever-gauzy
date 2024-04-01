@@ -37,6 +37,8 @@ import {
 	UpdateUserDTO,
 	FindMeQueryDTO
 } from './dto';
+import { convertNativeParameters } from 'core/crud/pagination.helper';
+import { IEmployee } from '@gauzy/contracts';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -52,38 +54,42 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
-	 * GET current login user
+	 * GET endpoint to retrieve details of the currently logged-in user.
 	 *
-	 * @param options
-	 * @returns
+	 * @param options Query parameters specifying what additional relations to load for the user.
+	 * @returns A Promise that resolves to the IUser object.
 	 */
 	@ApiOperation({ summary: 'Find current user.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found current user',
-		type: User
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
+	@ApiResponse({ status: HttpStatus.OK, description: 'Found current user', type: User })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
 	@Get('/me')
 	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
-		if (options && options.relations && options.relations.length > 0) {
+	async findMe(
+		@Query() options: FindMeQueryDTO
+	): Promise<IUser> {
+		let employee: IEmployee;
+		console.log({ options }, "find me query DTO");
+
+		// Check if there are relations to include and remove 'employee' from them if present.
+		if (options.relations && options.relations.length > 0) {
 			const index = options.relations.indexOf('employee');
 			if (index > -1) {
-				options.relations.splice(index, 1);
+				options.relations.splice(index, 1); // Removing 'employee' to handle it separately
 			}
 		}
 
-		const user = await this.userService.findMe(options?.relations);
+		// Fetch the user along with requested relations (excluding employee).
+		const user = await this.userService.findMe(options.relations);
 
-		const employee = await this.employeeService.findOneByUserId(user.id);
+		// If 'includeEmployee' is set to true, fetch employee details associated with the user.
+		if (options.includeEmployee) {
+			employee = await this.employeeService.findOneByUserId(user.id);
+		}
 
+		// Return user data combined with employee data, if it exists.
 		return {
 			...user,
-			employee: employee
+			...(employee && { employee }), // Conditionally add employee info to the response
 		};
 	}
 

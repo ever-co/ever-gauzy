@@ -28,7 +28,7 @@ export class AppInitService {
 					'tenant',
 					'tenant.featureOrganizations',
 					'tenant.featureOrganizations.feature'
-				]);
+				], true);
 
 				this.authStrategy.electronAuthentication({
 					user: this.user,

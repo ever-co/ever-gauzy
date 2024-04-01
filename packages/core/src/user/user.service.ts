@@ -187,7 +187,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch {}
+			} catch { }
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -341,15 +341,21 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Find current logging user details
+	 * Retrieves details of the currently logged-in user, including specified relations.
 	 *
-	 * @param relations
-	 * @returns
+	 * @param relations An array of strings indicating which relations of the user to include.
+	 * @returns A Promise resolving to the IUser object with the desired relations.
 	 */
 	public async findMe(relations: string[]): Promise<IUser> {
-		return await this.findOneByIdString(RequestContext.currentUserId(), {
-			relations
-		});
+		try {
+			// Get the current user's ID from the RequestContext
+			const userId = RequestContext.currentUserId();
+			// Fetch and return the user's details based on the provided relations
+			return await this.findOneByIdString(userId, { relations });
+		} catch (error) {
+			// Log the error for debugging purposes
+			console.error('Error in findMe:', error);
+		}
 	}
 
 	/**

@@ -1135,12 +1135,11 @@ export class PagesComponent extends TranslationBaseComponent
 		if (!id) return;
 
 		this.user = await this.usersService.getMe([
-			'role',
 			'role.rolePermissions',
 			'tenant',
 			'tenant.featureOrganizations',
 			'tenant.featureOrganizations.feature'
-		]);
+		], true);
 
 		this.authStrategy.electronAuthentication({
 			user: this.user,

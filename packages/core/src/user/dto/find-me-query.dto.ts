@@ -1,6 +1,20 @@
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsOptional } from "class-validator";
+import { Transform, TransformFnParams } from "class-transformer";
+import { parseToBoolean } from '@gauzy/common';
 import { RelationsQueryDTO } from "./../../shared/dto";
 
 /**
- * Get find me (self logged in user) request DTO validation
+ * DTO for "find me" queries to retrieve logged-in user details, extending from RelationsQueryDTO.
  */
-export class FindMeQueryDTO extends RelationsQueryDTO {}
+export class FindMeQueryDTO extends RelationsQueryDTO {
+    /**
+    * Optional flag to include employee details in the response.
+    * It is marked as optional in the API documentation.
+    * If provided, its value is transformed to a boolean; defaults to false if not provided.
+    */
+    @ApiPropertyOptional({ type: Boolean })
+    @IsOptional()
+    @Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
+    readonly includeEmployee: boolean;
+}
