@@ -367,9 +367,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					token: token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
-					organizationId: user.employee
-						? user.employee.organizationId
-						: null,
+					organizationId: user.employee ? user.employee.organizationId : null,
 					tenantId: user.tenantId ? user.tenantId : null,
 				});
 			}
