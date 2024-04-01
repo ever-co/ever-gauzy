@@ -17,4 +17,14 @@ export class FindMeQueryDTO extends RelationsQueryDTO {
     @IsOptional()
     @Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
     readonly includeEmployee: boolean;
+
+    /**
+    * Optional flag to include organization details inside the employee response.
+    * It is marked as optional in the API documentation.
+    * If provided, its value is transformed to a boolean; defaults to false if not provided.
+    */
+    @ApiPropertyOptional({ type: Boolean })
+    @IsOptional()
+    @Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
+    readonly includeOrganization: boolean;
 }

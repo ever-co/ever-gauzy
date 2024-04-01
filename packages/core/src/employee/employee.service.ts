@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, FindOneOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
@@ -32,15 +32,18 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param userId The ID of the user to find.
 	 * @returns A Promise resolving to the employee if found, otherwise null.
 	 */
-	async findOneByUserId(userId: string): Promise<IEmployee | null> {
+	async findOneByUserId(userId: string, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Construct the where clause based on whether tenantId is available
 			const whereClause = tenantId ? { tenantId, userId } : { userId };
 
+			const queryOptions = options ? { ...options } : {};
+
 			return this.repository.findOne({
-				where: whereClause
+				where: whereClause,
+				...queryOptions
 			});
 		} catch (error) {
 			console.error(`Error finding employee by userId: ${error.message}`);

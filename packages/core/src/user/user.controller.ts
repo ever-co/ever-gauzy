@@ -82,7 +82,14 @@ export class UserController extends CrudController<User> {
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with the user.
 		if (options.includeEmployee) {
-			employee = await this.employeeService.findOneByUserId(user.id);
+			const relations: any = {};
+
+			// Include organization relation if 'includeOrganization' is true
+			if (options.includeOrganization) {
+				relations.organization = true;
+			}
+
+			employee = await this.employeeService.findOneByUserId(user.id, { relations });
 		}
 
 		// Return user data combined with employee data, if it exists.
