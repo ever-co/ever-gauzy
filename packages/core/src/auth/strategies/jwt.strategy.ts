@@ -28,7 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 	 */
 	async validate(payload: JwtPayload, done: Function): Promise<void> {
 		try {
-			const { id, thirdPartyId } = payload;
+			const { id, thirdPartyId, employeeId } = payload;
 
 			// We use this to also attach the user object to the request context.
 			const user: IUser = await this._authService.getAuthenticatedUser(
@@ -39,13 +39,28 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 			if (!user) {
 				return done(new UnauthorizedException('unauthorized'), false);
 			} else {
-				// Check if payload has employeeId
-				if (payload.employeeId) {
-					// If employeeId exists, retrieve employee details associated with the user
+				// Check if employeeId exists in payload
+				if (employeeId) {
+					// Retrieve employee details associated with the user
 					const employee = await this._employeeService.findOneByUserId(user.id);
-					// If employee is found, assign its id to user.employeeId, otherwise assign null
-					user.employeeId = employee ? employee.id : null;
+
+					// Check if the employeeId from payload matches the employeeId retrieved
+					if (!employee || payload.employeeId !== employee.id) {
+						return done(new UnauthorizedException('unauthorized'), false);
+					}
+
+					// Assign employeeId to user if employee is found, otherwise assign null
+					user.employeeId = employee.id;
 				}
+
+				// You could add a function to the authService to verify the claims of the token:
+				// i.e. does the user still have the roles that are claimed by the token
+				// const validClaims = await this.authService.verifyTokenClaims(payload);
+
+				// if (!validClaims) {
+				// 	return done(new UnauthorizedException('invalid token claims'), false);
+				// }
+
 				done(null, user);
 			}
 		} catch (error) {
