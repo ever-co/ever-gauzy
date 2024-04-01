@@ -20,9 +20,6 @@ export class RequestContextMiddleware implements NestMiddleware {
 	 * @param next
 	 */
 	use(req: Request, res: Response, next: NextFunction) {
-		/**
-		 *
-		 */
 		const context = new RequestContext({ req, res });
 		const session = cls.getNamespace(RequestContext.name) || cls.createNamespace(RequestContext.name);
 

@@ -96,41 +96,55 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Check if, email address exist
-	 *
-	 * @param email
-	 * @returns
+	 * Checks if a user with the given email exists.
+	 * @param {string} email - The email of the user to check.
+	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({
-			email
-		}));
+		return !!(await this.repository.findOneBy({ email }));
 	}
 
+	/**
+	 * Checks if a user with the given ID exists.
+	 * @param {string} id - The ID of the user to check.
+	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
+	 */
 	async checkIfExists(id: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({
-			id
-		}));
+		return !!(await this.repository.findOneBy({ id }));
 	}
 
+	/**
+	 * Checks if a user with the given third party ID exists.
+	 * @param {string} thirdPartyId - The third party ID of the user to check.
+	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
+	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({
-			thirdPartyId
-		}));
+		return !!(await this.repository.findOneBy({ thirdPartyId }));
 	}
 
-	async getIfExists(id: string): Promise<User> {
-		return await this.repository.findOneBy({
-			id
-		});
+	/**
+	 * Retrieves a user with the given ID if it exists.
+	 * @param {string} id - The ID of the user to retrieve.
+	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
+	 */
+	async getIfExists(id: string): Promise<User | undefined> {
+		return await this.repository.findOneBy({ id });
 	}
 
-	async getIfExistsThirdParty(thirdPartyId: string): Promise<User> {
-		return await this.repository.findOneBy({
-			thirdPartyId
-		});
+	/**
+	 * Retrieves a user with the given third party ID if it exists.
+	 * @param {string} thirdPartyId - The third party ID of the user to retrieve.
+	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
+	 */
+	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
+		return await this.repository.findOneBy({ thirdPartyId });
 	}
 
+	/**
+	 * Creates a new user.
+	 * @param {User} user - The user object to create.
+	 * @returns {Promise<InsertResult>} - A promise that resolves to the insert result.
+	 */
 	async createOne(user: User): Promise<InsertResult> {
 		return await this.repository.insert(user);
 	}
@@ -210,50 +224,52 @@ export class UserService extends TenantAwareCrudService<User> {
 		});
 	}
 
-	/*
-	 * Update user preferred language
+	/**
+	 * Updates the preferred language of the current user.
+	 * @param {LanguagesEnum} preferredLanguage - The preferred language to update.
+	 * @returns {Promise<IUser | UpdateResult>} - A promise that resolves to the updated user or update result.
 	 */
 	async updatePreferredLanguage(preferredLanguage: LanguagesEnum): Promise<IUser | UpdateResult> {
 		try {
-			return await this.update(RequestContext.currentUserId(), {
-				preferredLanguage
-			});
-		} catch (err) {
-			throw new NotFoundException(`The record was not found`, err);
-		}
-	}
-
-	/*
-	 * Update user preferred component layout
-	 */
-	async updatePreferredComponentLayout(
-		preferredComponentLayout: ComponentLayoutStyleEnum
-	): Promise<IUser | UpdateResult> {
-		try {
-			return await this.update(RequestContext.currentUserId(), {
-				preferredComponentLayout
-			});
+			const userId = RequestContext.currentUserId();
+			return await this.update(userId, { preferredLanguage });
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
 	}
 
 	/**
-	 * Set Current Refresh Token
-	 *
-	 * @param refreshToken
-	 * @param userId
+	 * Updates the preferred component layout of the current user.
+	 * @param {ComponentLayoutStyleEnum} preferredComponentLayout - The preferred component layout to update.
+	 * @returns {Promise<IUser | UpdateResult>} - A promise that resolves to the updated user or update result.
 	 */
-	async setCurrentRefreshToken(refreshToken: string, userId: string) {
+	async updatePreferredComponentLayout(preferredComponentLayout: ComponentLayoutStyleEnum): Promise<IUser | UpdateResult> {
 		try {
+			const userId = RequestContext.currentUserId();
+			return await this.update(userId, { preferredComponentLayout });
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/**
+	 * Sets the current refresh token for the user.
+	 * @param {string} refreshToken - The refresh token to set.
+	 * @param {string} userId - The ID of the user for whom to set the refresh token.
+	 * @returns {Promise<void>} - A promise that resolves once the refresh token is set.
+	 */
+	async setCurrentRefreshToken(refreshToken: string, userId: string): Promise<UpdateResult> {
+		try {
+			// Hash the refresh token using bcrypt if refreshToken is provided
 			if (refreshToken) {
 				refreshToken = await bcrypt.hash(refreshToken, 10);
 			}
-			return await this.repository.update(userId, {
-				refreshToken: refreshToken
-			});
+
+			// Update the user's refresh token in the repository
+			return await this.repository.update(userId, { refreshToken });
 		} catch (error) {
-			console.log('Error while set current refresh token', error);
+			// Log error if any
+			console.error('Error while setting current refresh token:', error);
 		}
 	}
 

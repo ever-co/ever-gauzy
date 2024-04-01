@@ -113,7 +113,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get()
 	@UsePipes(new ValidationPipe())
-	async findAll(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
+	async findAll(
+		@Query() params: PaginationParams<OrganizationTeam>
+	): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findAll(params);
 	}
 

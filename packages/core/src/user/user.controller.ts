@@ -68,7 +68,6 @@ export class UserController extends CrudController<User> {
 		@Query() options: FindMeQueryDTO
 	): Promise<IUser> {
 		let employee: IEmployee;
-		console.log({ options }, "find me query DTO");
 
 		// Check if there are relations to include and remove 'employee' from them if present.
 		if (options.relations && options.relations.length > 0) {

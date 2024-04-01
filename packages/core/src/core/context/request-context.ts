@@ -145,52 +145,61 @@ export class RequestContext {
 	}
 
 	/**
-	 *
-	 * @returns
+	 * Retrieves the current employee ID from the request context.
+	 * @returns {string | null} - The current employee ID if available, otherwise null.
 	 */
-	static currentEmployeeId(): string {
+	static currentEmployeeId(): string | null {
 		try {
+			// Retrieve the current user from the request context
 			const user: IUser = RequestContext.currentUser();
-			if (isNotEmpty(user)) {
-				if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					return user.employeeId;
-				}
+
+			// Check if the user is not empty and has the permission to change selected employee
+			if (isNotEmpty(user) && RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				// Return null if the user has the permission to change selected employee
+				return null;
 			}
-			return null;
+
+			// Return the user's employeeId if available
+			return user?.employeeId || null;
 		} catch (error) {
+			// Return null if an error occurs
 			return null;
 		}
 	}
 
 	/**
-	 *
-	 * @param throwError
-	 * @returns
+	 * Retrieves the current user from the request context.
+	 * @param {boolean} throwError - Flag indicating whether to throw an error if user is not found.
+	 * @returns {IUser | null} - The current user if found, otherwise null.
 	 */
-	static currentUser(throwError?: boolean): IUser {
+	static currentUser(throwError?: boolean): IUser | null {
 		const requestContext = RequestContext.currentRequestContext();
 
+		// Check if request context exists
 		if (requestContext) {
-			// tslint:disable-next-line
+			// Get user from request context
 			const user: IUser = requestContext._req['user'];
 
+			// If user exists, return it
 			if (user) {
 				return user;
 			}
 		}
 
+		// If throwError is true, throw an unauthorized error
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
 
+		// If throwError is false or not provided, return null
 		return null;
 	}
 
 	/**
-	 *
-	 * @param permission
-	 * @param throwError
-	 * @returns
+	 * Checks if the current user has a specific permission.
+	 * @param {PermissionsEnum} permission - The permission to check.
+	 * @param {boolean} throwError - Flag indicating whether to throw an error if permission is not granted.
+	 * @returns {boolean} - True if the user has the permission, otherwise false.
 	 */
 	static hasPermission(permission: PermissionsEnum, throwError?: boolean): boolean {
 		return this.hasPermissions([permission], throwError);
@@ -308,6 +317,12 @@ export class RequestContext {
 		return null;
 	}
 
+	/**
+	 * Checks if the current user has a specific role.
+	 * @param {RolesEnum} role - The role to check.
+	 * @param {boolean} throwError - Flag indicating whether to throw an error if the role is not granted.
+	 * @returns {boolean} - True if the user has the role, otherwise false.
+	 */
 	static hasRole(role: RolesEnum, throwError?: boolean): boolean {
 		return this.hasRoles([role], throwError);
 	}

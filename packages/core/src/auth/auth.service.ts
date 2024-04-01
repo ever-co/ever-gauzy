@@ -107,7 +107,7 @@ export class AuthService extends SocialAuthService {
 			return {
 				user: {
 					...user,
-					...(employee && { employee, employeeId: employee.id }),
+					...(employee && { employee }),
 				},
 				token: access_token,
 				refresh_token: refresh_token
@@ -436,6 +436,12 @@ export class AuthService extends SocialAuthService {
 		return user;
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param thirdPartyId
+	 * @returns
+	 */
 	async getAuthenticatedUser(id: string, thirdPartyId?: string): Promise<User> {
 		return thirdPartyId ? this.userService.getIfExistsThirdParty(thirdPartyId) : this.userService.getIfExists(id);
 	}
@@ -1031,7 +1037,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
 		const tenantId = user.tenant ? user.tenantId : null;
-		const employeeId = user.employee ? user.employeeId : null;
+		const employeeId = user.employee ? user.employee?.id : null;
 
 		const workspace: IWorkspaceResponse = {
 			user: this.createUserObject(user),
@@ -1067,13 +1073,11 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
-			tenant: user.tenant
-				? new Tenant({
-					id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-					name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-					logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				})
-				: null // Sets tenant to null if user.tenant is undefined
+			tenant: user.tenant ? new Tenant({
+				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+			}) : null // Sets tenant to null if user.tenant is undefined
 		});
 	}
 }
