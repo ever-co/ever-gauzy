@@ -982,10 +982,11 @@ export class PagesComponent extends TranslationBaseComponent
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
-				tap((user: IUser) => this.isEmployee = !!user.employeeId),
+				tap((user: IUser) => this.isEmployee = !!user.employee),
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -996,6 +997,7 @@ export class PagesComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.store.userRolePermissions$
 			.pipe(
 				filter((permissions: IRolePermission[]) =>
