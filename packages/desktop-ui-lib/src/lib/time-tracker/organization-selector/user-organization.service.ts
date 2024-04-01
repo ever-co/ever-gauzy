@@ -69,6 +69,7 @@ export class UserOrganizationService {
 			});
 
 			userOrganizations$ = this._http.get<IUserOrganization>(`${API_PREFIX}/user/me`, { params }).pipe(
+				map((response: any) => response),
 				shareReplay(1)
 			);
 
