@@ -26,7 +26,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	 * @returns
 	 */
 	async get(request?: FindManyOptions) {
-		const settings: TenantSetting[] = await this.repository.find(request);
+		const settings: TenantSetting[] = await this.typeOrmRepository.find(request);
 		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
@@ -38,7 +38,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	 */
 	async saveSettings(input: ITenantSetting, tenantId: string): Promise<ITenantSetting> {
 		const settingsName = keys(input);
-		const settings: TenantSetting[] = await this.repository.find({
+		const settings: TenantSetting[] = await this.typeOrmRepository.find({
 			where: {
 				name: In(settingsName),
 				tenantId
@@ -65,7 +65,7 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 			}
 		}
 
-		await this.repository.save(saveInput);
+		await this.typeOrmRepository.save(saveInput);
 		return object(pluck(saveInput, 'name'), pluck(saveInput, 'value'));
 	}
 

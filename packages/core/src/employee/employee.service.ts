@@ -41,7 +41,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			const queryOptions = options ? { ...options } : {};
 
-			return this.repository.findOne({
+			return this.typeOrmRepository.findOne({
 				where: whereClause,
 				...queryOptions
 			});
@@ -240,7 +240,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Create a query builder for the Employee entity
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Tables joins with relations
 			query.innerJoin(`${query.alias}.user`, 'user');
@@ -364,7 +364,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					organizationId
 				}
 			});
-			return await this.repository.softDelete({
+			return await this.typeOrmRepository.softDelete({
 				id: employeeId,
 				organizationId,
 				tenantId: RequestContext.currentTenantId()
@@ -383,7 +383,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	): Promise<UpdateResult> {
 		try {
 			const { organizationId } = options;
-			return await this.repository.restore({
+			return await this.typeOrmRepository.restore({
 				id: employeeId,
 				organizationId,
 				tenantId: RequestContext.currentTenantId()

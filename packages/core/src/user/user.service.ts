@@ -57,7 +57,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			case MultiORMEnum.MikroORM:
 				throw new Error(`Not implemented for ${this.ormType}`);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.update(
+				return await this.typeOrmRepository.update(
 					{ id },
 					{
 						emailVerifiedAt: freshTimestamp(),
@@ -78,7 +78,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
-		return await this.repository.findOneBy({ email });
+		return await this.typeOrmRepository.findOneBy({ email });
 	}
 
 	/**
@@ -89,7 +89,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getOAuthLoginEmail(email: string): Promise<IUser> {
 		try {
-			return await this.repository.findOneByOrFail({ email });
+			return await this.typeOrmRepository.findOneByOrFail({ email });
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
@@ -101,7 +101,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({ email }));
+		return !!(await this.typeOrmRepository.findOneBy({ email }));
 	}
 
 	/**
@@ -110,7 +110,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExists(id: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({ id }));
+		return !!(await this.typeOrmRepository.findOneBy({ id }));
 	}
 
 	/**
@@ -119,7 +119,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({ thirdPartyId }));
+		return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
 	}
 
 	/**
@@ -128,7 +128,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExists(id: string): Promise<User | undefined> {
-		return await this.repository.findOneBy({ id });
+		return await this.typeOrmRepository.findOneBy({ id });
 	}
 
 	/**
@@ -137,7 +137,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
-		return await this.repository.findOneBy({ thirdPartyId });
+		return await this.typeOrmRepository.findOneBy({ thirdPartyId });
 	}
 
 	/**
@@ -146,14 +146,14 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<InsertResult>} - A promise that resolves to the insert result.
 	 */
 	async createOne(user: User): Promise<InsertResult> {
-		return await this.repository.insert(user);
+		return await this.typeOrmRepository.insert(user);
 	}
 
 	async changePassword(id: string, hash: string) {
 		try {
 			const user = await this.findOneByIdString(id);
 			user.hash = hash;
-			return await this.repository.save(user);
+			return await this.typeOrmRepository.save(user);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -208,7 +208,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
-		return await this.repository.find({
+		return await this.typeOrmRepository.find({
 			join: {
 				alias: 'user',
 				leftJoin: {
@@ -266,7 +266,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 
 			// Update the user's refresh token in the repository
-			return await this.repository.update(userId, { refreshToken });
+			return await this.typeOrmRepository.update(userId, { refreshToken });
 		} catch (error) {
 			// Log error if any
 			console.error('Error while setting current refresh token:', error);
@@ -286,7 +286,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			const tenantId = RequestContext.currentTenantId();
 
 			try {
-				await this.repository.update(
+				await this.typeOrmRepository.update(
 					{ id: userId, tenantId },
 					{
 						refreshToken: null
@@ -310,7 +310,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
 		try {
 			const { id, email, tenantId, role } = payload;
-			const query = this.repository.createQueryBuilder('user');
+			const query = this.typeOrmRepository.createQueryBuilder('user');
 			query.setFindOptions({
 				join: {
 					alias: 'user',

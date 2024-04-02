@@ -29,7 +29,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns
 	 */
 	async getTimeSheetCount(request: IGetTimesheetInput): Promise<number> {
-		const query = this.repository.createQueryBuilder('timesheet');
+		const query = this.typeOrmRepository.createQueryBuilder('timesheet');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.where((query: SelectQueryBuilder<Timesheet>) => {
 			this.getFilterTimesheetQuery(query, request);
@@ -44,7 +44,7 @@ export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	 * @returns
 	 */
 	async getTimeSheets(request: IGetTimesheetInput): Promise<ITimesheet[]> {
-		const query = this.repository.createQueryBuilder('timesheet');
+		const query = this.typeOrmRepository.createQueryBuilder('timesheet');
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.setFindOptions({
 			select: {

@@ -237,19 +237,15 @@ export class EmployeeController extends CrudController<Employee> {
 	async findAll(
 		@Query() options: PaginationParams<Employee>
 	): Promise<IPagination<IEmployee>> {
-		try {
-			return await this.employeeService.findAll({
-				...options,
-				where: {
-					...options.where,
-					user: {
-						isArchived: false,
-					}
-				}
-			});
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		const where = {
+			...(options.where || {}),
+			user: {
+				isActive: true,
+				isArchived: false
+			}
+		};
+
+		return this.employeeService.findAll({ ...options, where });
 	}
 
 	/**

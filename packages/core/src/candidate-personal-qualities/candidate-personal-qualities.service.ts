@@ -23,7 +23,7 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 	 * @returns
 	 */
 	async createBulk(createInput: ICandidatePersonalQualitiesCreateInput[]) {
-		return await this.repository.save(createInput);
+		return await this.typeOrmRepository.save(createInput);
 	}
 
 	/**
@@ -32,7 +32,7 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 	 * @returns
 	 */
 	async getPersonalQualitiesByInterviewId(interviewId: string): Promise<ICandidatePersonalQualities[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_personal_quality')
 			.where('candidate_personal_quality.interviewId = :interviewId', {
 				interviewId
@@ -46,6 +46,6 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 	 * @returns
 	 */
 	async deleteBulk(ids: string[]) {
-		return await this.repository.delete(ids);
+		return await this.typeOrmRepository.delete(ids);
 	}
 }

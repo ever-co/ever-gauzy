@@ -85,7 +85,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		const { organizationTeamId, email } = entity;
 
 		/** find existing team join request and throw exception */
-		const request = await this.repository.countBy({
+		const request = await this.typeOrmRepository.countBy({
 			organizationTeamId,
 			email
 		});
@@ -124,7 +124,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 			 * Note that it copies only properties that are present in entity schema.
 			 */
-			const createEntityLike = this.repository.create({
+			const createEntityLike = this.typeOrmRepository.create({
 				organizationTeamId,
 				email,
 				organizationId,
@@ -133,7 +133,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 				token,
 				status: null
 			});
-			const organizationTeamJoinRequest = await this.repository.save(createEntityLike);
+			const organizationTeamJoinRequest = await this.typeOrmRepository.save(createEntityLike);
 
 			/** Place here organization team join request email to send verification code*/
 			let { appName, appLogo, appSignature, appLink, companyLink, companyName } = entity;
@@ -170,7 +170,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	): Promise<IOrganizationTeamJoinRequest> {
 		const { email, token, code, organizationTeamId } = options;
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				select: {
 					id: true,
@@ -196,7 +196,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 			const record = await query.getOneOrFail();
 
-			await this.repository.update(record.id, {
+			await this.typeOrmRepository.update(record.id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REQUESTED
 			});
 			delete record.id;
@@ -214,7 +214,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		try {
 			/** find existing team join request */
-			const request = await this.repository.findOneOrFail({
+			const request = await this.typeOrmRepository.findOneOrFail({
 				where: {
 					organizationTeamId,
 					email,
@@ -242,7 +242,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			});
 
 			/** Update code, token and expiredAt */
-			await this.repository.update(request.id, {
+			await this.typeOrmRepository.update(request.id, {
 				code,
 				token,
 				expiredAt: moment(new Date()).add(environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME, 'seconds').toDate()
@@ -280,7 +280,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		const tenantId = RequestContext.currentTenantId();
 		const currentUserId = RequestContext.currentUserId();
 
-		const request = await this.repository.findOne({
+		const request = await this.typeOrmRepository.findOne({
 			where: {
 				id,
 				tenantId
@@ -344,7 +344,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 						organizationId: request.organizationId
 					});
 
-					await this.repository.update(id, {
+					await this.typeOrmRepository.update(id, {
 						status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 						userId: currentTenantUser.id
 					});
@@ -377,7 +377,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 					languageCode
 				);
 
-				await this.repository.update(id, {
+				await this.typeOrmRepository.update(id, {
 					status: OrganizationTeamJoinRequestStatusEnum.ACCEPTED,
 					userId: newTenantUser.id
 				});
@@ -388,7 +388,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		 * REJECTED
 		 */
 		if (action === OrganizationTeamJoinRequestStatusEnum.REJECTED) {
-			await this.repository.update(id, {
+			await this.typeOrmRepository.update(id, {
 				status: OrganizationTeamJoinRequestStatusEnum.REJECTED
 			});
 		}

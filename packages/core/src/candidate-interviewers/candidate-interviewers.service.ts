@@ -23,7 +23,7 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async getInterviewersByInterviewId(interviewId: string): Promise<CandidateInterviewers[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.interviewId = :interviewId', {
 				interviewId
@@ -37,7 +37,7 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async getInterviewersByEmployeeId(employeeId: ICandidateInterviewersDeleteInput): Promise<any> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_interviewer')
 			.where('candidate_interviewer.employeeId = :employeeId', {
 				employeeId
@@ -51,7 +51,7 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async deleteBulk(ids: string[]) {
-		return await this.repository.delete(ids);
+		return await this.typeOrmRepository.delete(ids);
 	}
 
 	/**
@@ -60,6 +60,6 @@ export class CandidateInterviewersService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async createBulk(createInput: ICandidateInterviewersCreateInput[]) {
-		return await this.repository.save(createInput);
+		return await this.typeOrmRepository.save(createInput);
 	}
 }

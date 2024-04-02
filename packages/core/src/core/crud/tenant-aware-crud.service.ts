@@ -23,10 +23,10 @@ import { ITryRequest } from './try-request';
  */
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
 	constructor(
-		repository: Repository<T>,
-		mikroRepository: MikroOrmBaseEntityRepository<T>
+		typeOrmRepository: Repository<T>,
+		mikroOrmRepository: MikroOrmBaseEntityRepository<T>
 	) {
-		super(repository, mikroRepository);
+		super(typeOrmRepository, mikroOrmRepository);
 	}
 
 	/**
@@ -44,7 +44,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			(
 				isNotEmpty(employeeId)
 					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-						this.repository.metadata?.hasColumnWithPropertyPath('employeeId')
+						this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 						? {
 							employee: {
 								id: employeeId
@@ -65,7 +65,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 */
 	private findConditionsWithTenantByUser(user: IUser): FindOptionsWhere<T> {
 		return {
-			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
+			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
 					tenant: {
 						id: user.tenantId
@@ -332,7 +332,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 
 		return await super.create({
 			...entity,
-			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
+			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
 					tenant: {
 						id: tenantId
@@ -345,7 +345,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			 */
 			...(isNotEmpty(employeeId)
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					this.repository.metadata?.hasColumnWithPropertyPath('employeeId')
+					this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 					? {
 						employee: {
 							id: employeeId
@@ -368,7 +368,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		const tenantId = RequestContext.currentTenantId();
 		return await super.save({
 			...entity,
-			...(this.repository.metadata?.hasColumnWithPropertyPath('tenantId')
+			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
 					tenant: {
 						id: tenantId

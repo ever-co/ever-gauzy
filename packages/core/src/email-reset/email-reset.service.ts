@@ -145,7 +145,7 @@ export class EmailResetService extends TenantAwareCrudService<EmailReset> {
 
 	async getEmailResetIfCodeMatches(input: IEmailResetFindInput) {
 		try {
-			const query = this.repository.createQueryBuilder('email_reset');
+			const query = this.typeOrmRepository.createQueryBuilder('email_reset');
 			query.where((qb: SelectQueryBuilder<EmailReset>) => {
 				qb.andWhere(input);
 				qb.andWhere([

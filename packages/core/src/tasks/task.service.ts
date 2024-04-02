@@ -54,7 +54,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		`);
 
 		// Execute the raw SQL query with the issueId parameter
-		const result = await this.repository.query(query, [issueId]);
+		const result = await this.typeOrmRepository.query(query, [issueId]);
 
 		// Check if any epic was found and return it, or return null
 		if (result.length > 0) {
@@ -87,7 +87,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.innerJoin(`${query.alias}.members`, 'members');
 			/**
 			 * If find options
@@ -173,7 +173,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	async getAllTasksByEmployee(employeeId: IEmployee['id'], options: PaginationParams<Task>) {
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.members`, 'members');
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 			/**
@@ -182,12 +182,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where
-					}),
+					where: options.where
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+					relations: options.relations
+				})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -238,7 +238,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
 			/**
@@ -372,7 +372,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Build the query to get the maximum task number
 			query.select(p(`COALESCE(MAX("${query.alias}"."number"), 0)`), 'maxTaskNumber');
@@ -413,7 +413,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 */
 	public async unassignEmployeeFromTeamTasks(employeeId: string, organizationTeamId: string) {
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			query.leftJoinAndSelect(`${query.alias}.members`, 'members');
 
@@ -483,7 +483,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			});
 
 			// Save updated entities to DB
-			await this.repository.save(tasks);
+			await this.typeOrmRepository.save(tasks);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
