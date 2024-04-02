@@ -232,7 +232,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					// If not included, add the employeeId to the managerIds array
 					managerIds.push(employeeId);
 				}
-			} catch (error) {}
+			} catch (error) { }
 
 			// Retrieves a collection of employees based on specified criteria.
 			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
@@ -398,7 +398,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
 		// Create a query builder for the OrganizationTeam entity
-		const query = this.repository.createQueryBuilder(this.tableName);
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 		/**
 		 * Generates a subquery for selecting organization team IDs based on specified conditions.
@@ -493,20 +493,20 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationId,
 					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
-								members: {
-									employeeId: RequestContext.currentEmployeeId(),
-									role: {
-										name: RolesEnum.MANAGER
-									}
+							members: {
+								employeeId: RequestContext.currentEmployeeId(),
+								role: {
+									name: RolesEnum.MANAGER
 								}
-						  }
+							}
+						}
 						: {})
 				}
 			});
 
 			// Check if the team was found before attempting deletion
 			if (team) {
-				return await this.repository.remove(team);
+				return await this.typeOrmRepository.remove(team);
 			} else {
 				// You might want to handle the case where the team was not found differently
 				throw new NotFoundException(`Organization team with ID ${teamId} not found.`);

@@ -76,11 +76,9 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public createQueryBuilder(alias?: string): IQueryBuilder<T> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				console.log(this.mikroOrmRepository);
 				return multiORMCreateQueryBuilder<T>(this.mikroOrmRepository as any, this.ormType as MultiORMEnum, alias);
 
 			case MultiORMEnum.TypeORM:
-				console.log(this.typeOrmRepository);
 				return multiORMCreateQueryBuilder<T>(this.typeOrmRepository, this.ormType as MultiORMEnum, alias);
 
 			default:
@@ -586,7 +584,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param entity The entity to be serialized.
 	 * @returns The serialized entity.
 	 */
-	private serialize(entity: T): T {
+	protected serialize(entity: T): T {
 		if (this.ormType === MultiORMEnum.MikroORM) {
 			// If using MikroORM, use wrap(entity).toJSON() for serialization
 			return wrap(entity).toJSON() as T;

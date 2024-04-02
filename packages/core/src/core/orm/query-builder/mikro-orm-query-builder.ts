@@ -4,17 +4,12 @@ import { Brackets, EntityTarget, FindManyOptions } from 'typeorm';
 import { convertTypeOrmConationAndParamsToMikroOrm, getConationFromQuery } from '../utils';
 
 export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilder<Entity> {
+
     private qb: QueryBuilder<Entity>;
-
     private orderCriteria: Record<string, 'ASC' | 'DESC'> = {};
-
     private groupByFields: string[] = [];
-
     private havingConditions: string[] = [];
     private havingParameters: any[] = [];
-
-    // private aliasNo = uniqueId('sq_')
-
 
     get alias() {
         return this.qb.alias;
@@ -208,7 +203,6 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
 
     }
 
-
     where(condition: string | object | ((qb: IQueryBuilder<Entity>) => IQueryBuilder<Entity>), parameters?: Record<string, any>): this {
         if (typeof condition === 'string') {
             const [mikroOrmCondition, mikroOrmParameters] = convertTypeOrmConationAndParamsToMikroOrm(condition, parameters);
@@ -386,11 +380,8 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
     }
 
     getManyAndCount(): Promise<[Entity[], number]> {
-        console.log(this.qb.getResultAndCount);
         return this.qb.getResultAndCount();
     }
-
-
 
     private applyRelationsToQueryBuilder<Entity>(
         qb: QueryBuilder<any>,
