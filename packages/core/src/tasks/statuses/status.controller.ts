@@ -19,7 +19,7 @@ import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Status')
-@Controller()
+@Controller('/task-statuses')
 export class TaskStatusController extends CrudFactory<
 	TaskStatus,
 	IPaginationParam,
