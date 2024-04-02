@@ -16,11 +16,11 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
     }
 
     constructor(
-        private readonly repo: EntityRepository<Entity>,
-        alias?: string
+        private readonly repository: EntityRepository<Entity>,
+        public readonly queryAlias?: string
     ) {
-        this.qb = this.repo.qb(alias);
-        // this.qb = this.repo.createQueryBuilder(alias) as QueryBuilder<Entity>;
+        // this.qb = this.repository.qb(queryAlias);
+        this.qb = this.repository.createQueryBuilder(queryAlias);
     }
 
     setQueryBuilder(qb: QueryBuilder<Entity>) {
@@ -34,14 +34,14 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
 
     clone(): this {
         const qb = this.qb.clone();
-        const cloneQb: any = new MikroOrmQueryBuilder(this.repo);
+        const cloneQb: any = new MikroOrmQueryBuilder(this.repository);
         cloneQb.setQueryBuilder(qb);
         return this;
     }
 
     subQuery() {
         //  console.log('sq_alisa', this.aliasNo);
-        const subQb: any = new MikroOrmQueryBuilder(this.repo);
+        const subQb: any = new MikroOrmQueryBuilder(this.repository);
         const qb = subQb as IQueryBuilder<Entity>;
         return qb;
     }
@@ -110,10 +110,10 @@ export class MikroOrmQueryBuilder<Entity extends object> implements IQueryBuilde
             // Handle subquery function
             const subQueryFunction = entityTarget as any;
             const subQuery = subQueryFunction(this.subQuery()).getKnexQuery();
-            this.qb = this.repo.createQueryBuilder().from(subQuery, aliasName);
+            this.qb = this.repository.createQueryBuilder().from(subQuery, aliasName);
         } else {
             // Handle direct entity
-            this.qb = this.repo.createQueryBuilder(aliasName) as QueryBuilder<Entity>;
+            this.qb = this.repository.createQueryBuilder(aliasName) as QueryBuilder<Entity>;
         }
         return this;
     }
