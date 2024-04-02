@@ -8,6 +8,7 @@ import { TenantSetting } from './tenant-setting.entity';
 import { TenantAwareCrudService } from './../../core/crud';
 import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-setting.repository';
 import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
+import { MultiORMEnum, parseTypeORMFindToMikroOrm } from 'core/utils';
 
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {
@@ -26,7 +27,21 @@ export class TenantSettingService extends TenantAwareCrudService<TenantSetting> 
 	 * @returns
 	 */
 	async get(request?: FindManyOptions) {
-		const settings: TenantSetting[] = await this.typeOrmRepository.find(request);
+		let settings: TenantSetting[];
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<TenantSetting>(request);
+				const items = await this.mikroOrmRepository.find(where, mikroOptions);
+				settings = items.map((entity: TenantSetting) => this.serialize(entity)) as TenantSetting[];
+				break;
+			case MultiORMEnum.TypeORM:
+				settings = await await this.typeOrmRepository.find(request);
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+
 		return object(pluck(settings, 'name'), pluck(settings, 'value'));
 	}
 
