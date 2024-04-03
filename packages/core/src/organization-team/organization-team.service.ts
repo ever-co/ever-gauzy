@@ -5,8 +5,8 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
+import { QueryOrder } from '@mikro-orm/knex';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -22,34 +22,31 @@ import {
 	ITimerStatus
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
-import { Employee, OrganizationTeamEmployee } from './../core/entities/internal';
-import { OrganizationTeam } from './organization-team.entity';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
+import { MultiORMEnum } from '../core/utils';
+import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
 import { OrganizationTeamEmployeeService } from '../organization-team-employee/organization-team-employee.service';
 import { TaskService } from './../tasks/task.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
-import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
-import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository';
+import { EmployeeService } from './../employee/employee.service';
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
 import { GetOrganizationTeamStatisticQuery } from './queries';
-import { EmployeeService } from './../employee/employee.service';
+import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository } from './repository';
+import { OrganizationTeam } from './organization-team.entity';
+import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
-		@InjectRepository(OrganizationTeam)
-		typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-
-		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
-
-		@InjectRepository(Employee)
+		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
+		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
 		private readonly statisticService: StatisticService,
 		private readonly timerService: TimerService,
 		private readonly roleService: RoleService,
@@ -392,82 +389,159 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to an object containing paginated organization teams.
 	 */
 	public async findAll(options?: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
-		console.time('Get Organization Teams');
-
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
-		// Create a query builder for the OrganizationTeam entity
-		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+		// Initialize variables to store the retrieved items and total count.
+		let items: OrganizationTeam[]; // Array to store retrieved items
+		let total: number; // Variable to store total count of items
 
-		/**
-		 * Generates a subquery for selecting organization team IDs based on specified conditions.
-		 * @param cb - The SelectQueryBuilder instance for constructing the subquery.
-		 * @param employeeId - The employee ID for filtering the teams.
-		 * @returns A SQL condition string to be used in the main query's WHERE clause.
-		 */
-		const subQueryBuilder = (cb: SelectQueryBuilder<OrganizationTeam>, employeeId: string) => {
-			const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
-			subQuery.from('organization_team_employee', 'team');
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const mikroOrmQueryBuilder = this.mikroOrmRepository.createQueryBuilder(this.tableName);
 
-			// Apply the tenant filter
-			subQuery.andWhere(p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+				// Set Query options
+				if (isNotEmpty(options)) {
+					const { select, where, order, skip, take } = options;
 
-			// Apply the organization filter if available
-			if (options?.where?.organizationId) {
-				const { organizationId } = options.where;
-				subQuery.andWhere(p(`"${subQuery.alias}"."organizationId" = :organizationId`), { organizationId });
-			}
+					if (select) { mikroOrmQueryBuilder.select(select as any); }
+					if (skip) { mikroOrmQueryBuilder.offset(take * (skip - 1)); }
+					if (take) { mikroOrmQueryBuilder.limit(take); }
+					if (where) { mikroOrmQueryBuilder.where(where); }
+					if (order) {
+						const orderBy = Object.entries(order).reduce((acc, [field, direction]) => {
+							acc[field] = direction === 'ASC' ? QueryOrder.ASC : QueryOrder.DESC;
+							return acc;
+						}, {});
+						mikroOrmQueryBuilder.orderBy(orderBy);
+					}
+				}
 
-			// Additional conditions
-			subQuery.andWhere(p(`"${subQuery.alias}"."isActive" = :isActive`), { isActive: true });
-			subQuery.andWhere(p(`"${subQuery.alias}"."isArchived" = :isArchived`), { isArchived: false });
-			subQuery.andWhere(p(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId });
+				//
+				const mikroOrmSubQueryBuilder = (employeeId: string): string => {
+					// Create a separate query builder for the subquery
+					const subQuery = this.mikroOrmOrganizationTeamEmployeeRepository.createQueryBuilder('team');
+					// Start building the subquery
+					subQuery.select(['team.organizationTeamId']);
+					subQuery.andWhere({ 'team.tenantId': tenantId }); // Apply the tenant filter
+					subQuery.andWhere({ 'team.isActive': true });
+					subQuery.andWhere({ 'team.isArchived': false });
+					subQuery.andWhere({ 'team.employeeId': employeeId });
 
-			return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
-		};
+					// Apply the organization filter if available
+					if (options?.where?.organizationId) {
+						const { organizationId } = options.where;
+						subQuery.andWhere({ 'team.organizationId': organizationId });
+					}
 
-		// If admin has login and doesn't have permission to change employee
-		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			const members = options?.where?.members;
-			if ('members' in options?.where) {
-				delete options.where['members'];
-			}
+					// Return the subquery as a string
+					return subQuery.getQuery();
+				};
 
-			if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
-				const employeeId = members['employeeId'];
-				// Sub query to get only employee assigned teams
-				query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
-			}
-		} else {
-			// If employee has login and doesn't have permission to change employee
-			const employeeId = RequestContext.currentEmployeeId();
+				// If admin has login and doesn't have permission to change employee
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+					const members = options?.where?.members;
+					if ('members' in options?.where) {
+						delete options.where['members'];
+					}
+					if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
+						const employeeId = members['employeeId'];
 
-			// Sub query to get only employee assigned teams
-			query.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
+						// Sub query to get only employee assigned teams
+						const subQuerySQL = mikroOrmSubQueryBuilder(employeeId);
+						mikroOrmQueryBuilder.andWhere(`${mikroOrmQueryBuilder.alias}.id in (${subQuerySQL})`);
+					}
+				} else {
+					// If employee has login and doesn't have permission to change employee
+					const employeeId = RequestContext.currentEmployeeId();
+
+					// Sub query to get only employee assigned teams
+					const subQuerySQL = mikroOrmSubQueryBuilder(employeeId);
+					mikroOrmQueryBuilder.andWhere(`${mikroOrmQueryBuilder.alias}.id in (${subQuerySQL})`);
+				}
+
+				// Add a condition for the tenant ID
+				mikroOrmQueryBuilder.andWhere({ tenantId });
+				console.log(mikroOrmQueryBuilder.getQuery(), mikroOrmQueryBuilder.getParams(), 'Organization Team Mikro ORM Query');
+				// Retrieve the items and total count
+				[items, total] = await mikroOrmQueryBuilder.getResultAndCount();
+
+				// Optionally serialize the items
+				items = items.map((item: OrganizationTeam) => this.serialize(item));
+				break;
+			case MultiORMEnum.TypeORM:
+				// Create a query builder for the OrganizationTeam entity
+				const typeOrmQueryBuilder = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+				/**
+				 * Generates a subquery for selecting organization team IDs based on specified conditions.
+				 * @param cb - The SelectQueryBuilder instance for constructing the subquery.
+				 * @param employeeId - The employee ID for filtering the teams.
+				 * @returns A SQL condition string to be used in the main query's WHERE clause.
+				 */
+				const subQueryBuilder = (cb: SelectQueryBuilder<OrganizationTeam>, employeeId: string) => {
+					const subQuery = cb.subQuery().select(p('"team"."organizationTeamId"'));
+					subQuery.from('organization_team_employee', 'team');
+
+					// Apply the tenant filter
+					subQuery.andWhere(p(`"${subQuery.alias}"."tenantId" = :tenantId`), { tenantId });
+
+					// Apply the organization filter if available
+					if (options?.where?.organizationId) {
+						const { organizationId } = options.where;
+						subQuery.andWhere(p(`"${subQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					}
+
+					// Additional conditions
+					subQuery.andWhere(p(`"${subQuery.alias}"."isActive" = :isActive`), { isActive: true });
+					subQuery.andWhere(p(`"${subQuery.alias}"."isArchived" = :isArchived`), { isArchived: false });
+					subQuery.andWhere(p(`"${subQuery.alias}"."employeeId" = :employeeId`), { employeeId });
+
+					return p(`"organization_team"."id" IN ${subQuery.distinct(true).getQuery()}`);
+				};
+
+				// If admin has login and doesn't have permission to change employee
+				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+					const members = options?.where?.members;
+					if ('members' in options?.where) {
+						delete options.where['members'];
+					}
+
+					if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
+						const employeeId = members['employeeId'];
+						// Sub query to get only employee assigned teams
+						typeOrmQueryBuilder.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
+					}
+				} else {
+					// If employee has login and doesn't have permission to change employee
+					const employeeId = RequestContext.currentEmployeeId();
+					// Sub query to get only employee assigned teams
+					typeOrmQueryBuilder.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
+				}
+
+				// Set query options
+				if (isNotEmpty(options)) {
+					typeOrmQueryBuilder.setFindOptions({
+						...(options.skip ? { skip: options.take * (options.skip - 1) } : {}),
+						...(options.take ? { take: options.take } : {}),
+						...(options.select ? { select: options.select } : {}),
+						...(options.relations ? { relations: options.relations } : {}),
+						...(options.where ? { where: options.where } : {}),
+						...(options.order ? { order: options.order } : {})
+					});
+				}
+
+				// Apply the tenant filter
+				typeOrmQueryBuilder.andWhere(p(`"${typeOrmQueryBuilder.alias}"."tenantId" = :tenantId`), { tenantId });
+
+				// Retrieve the items and total count
+				[items, total] = await typeOrmQueryBuilder.getManyAndCount();
+				// Return paginated result
+				return { items, total };
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
 		}
 
-		// Set query options
-		if (isNotEmpty(options)) {
-			query.setFindOptions({
-				...(options.skip ? { skip: options.take * (options.skip - 1) } : {}),
-				...(options.take ? { take: options.take } : {}),
-				...(options.select ? { select: options.select } : {}),
-				...(options.relations ? { relations: options.relations } : {}),
-				...(options.where ? { where: options.where } : {}),
-				...(options.order ? { order: options.order } : {})
-			});
-		}
-
-		// Apply the tenant filter
-		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-
-		// Retrieve the items and total count
-		const [items, total] = await query.getManyAndCount();
-
-		console.timeEnd('Get Organization Teams');
-
-		// Return paginated result
 		return { items, total };
 	}
 
