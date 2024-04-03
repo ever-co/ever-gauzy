@@ -1,4 +1,11 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrganizationAward } from '../organization-award.entity';
 
-export class TypeOrmOrganizationAwardRepository extends Repository<OrganizationAward> { }
+@Injectable()
+export class TypeOrmOrganizationAwardRepository extends Repository<OrganizationAward> {
+    constructor(@InjectRepository(OrganizationAward) readonly repository: Repository<OrganizationAward>) {
+        super(repository.target, repository.manager, repository.queryRunner);
+    }
+}

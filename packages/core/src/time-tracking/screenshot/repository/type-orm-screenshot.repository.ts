@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { Screenshot } from '../screenshot.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Screenshot } from '../screenshot.entity';
 
 @Injectable()
 export class TypeOrmScreenshotRepository extends Repository<Screenshot> {

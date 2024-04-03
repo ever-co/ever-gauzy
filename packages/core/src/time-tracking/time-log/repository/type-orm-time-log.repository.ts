@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { TimeLog } from '../time-log.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TimeLog } from '../time-log.entity';
 
 @Injectable()
 export class TypeOrmTimeLogRepository extends Repository<TimeLog> {

@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { WarehouseProductVariant } from '../warehouse-product-variant.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { WarehouseProductVariant } from '../warehouse-product-variant.entity';
 
 @Injectable()
 export class TypeOrmWarehouseProductVariantRepository extends Repository<WarehouseProductVariant> {

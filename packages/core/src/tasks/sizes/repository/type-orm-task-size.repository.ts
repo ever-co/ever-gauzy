@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { TaskSize } from '../size.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TaskSize } from '../size.entity';
 
 @Injectable()
 export class TypeOrmTaskSizeRepository extends Repository<TaskSize> {

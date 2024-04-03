@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { TimeOffRequest } from '../time-off-request.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TimeOffRequest } from '../time-off-request.entity';
 
 @Injectable()
 export class TypeOrmTimeOffRequestRepository extends Repository<TimeOffRequest> {

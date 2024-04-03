@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { TenantSetting } from '../tenant-setting.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TenantSetting } from '../tenant-setting.entity';
 
 @Injectable()
 export class TypeOrmTenantSettingRepository extends Repository<TenantSetting> {
