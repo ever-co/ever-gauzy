@@ -1,12 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import {
-	DeleteResult,
-	FindOptionsWhere,
-	FindManyOptions,
-	FindOneOptions,
-	Repository,
-	UpdateResult
-} from 'typeorm';
+import { DeleteResult, FindOptionsWhere, FindManyOptions, FindOneOptions, Repository, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
@@ -21,11 +14,11 @@ import { ITryRequest } from './try-request';
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
  */
-export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
-	constructor(
-		typeOrmRepository: Repository<T>,
-		mikroOrmRepository: MikroOrmBaseEntityRepository<T>
-	) {
+export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
+	extends CrudService<T>
+	implements ICrudService<T>
+{
+	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
 
@@ -44,13 +37,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			(
 				isNotEmpty(employeeId)
 					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-						this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+					  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 						? {
-							employee: {
-								id: employeeId
-							},
-							employeeId: employeeId
-						}
+								employee: {
+									id: employeeId
+								},
+								employeeId: employeeId
+						  }
 						: {}
 					: {}
 			) as FindOptionsWhere<T>
@@ -67,11 +60,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		return {
 			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-					tenant: {
-						id: user.tenantId
-					},
-					tenantId: user.tenantId
-				}
+						tenant: {
+							id: user.tenantId
+						},
+						tenantId: user.tenantId
+				  }
 				: {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
@@ -101,12 +94,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 		return (
 			where
 				? {
-					...where,
-					...this.findConditionsWithTenantByUser(user)
-				}
+						...where,
+						...this.findConditionsWithTenantByUser(user)
+				  }
 				: {
-					...this.findConditionsWithTenantByUser(user)
-				}
+						...this.findConditionsWithTenantByUser(user)
+				  }
 		) as FindOptionsWhere<T>;
 	}
 
@@ -181,6 +174,10 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 	 */
 	public async count(options?: FindManyOptions<T>): Promise<number> {
 		return await super.count(this.findManyWithTenant(options));
+	}
+
+	public async countFast(): Promise<number> {
+		return await super.count();
 	}
 
 	/**
@@ -334,24 +331,24 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			...entity,
 			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-					tenant: {
-						id: tenantId
-					},
-					tenantId
-				}
+						tenant: {
+							id: tenantId
+						},
+						tenantId
+				  }
 				: {}),
 			/**
 			 * If employee has login & create data for self
 			 */
 			...(isNotEmpty(employeeId)
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+				  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 					? {
-						employee: {
-							id: employeeId
-						},
-						employeeId: employeeId
-					}
+							employee: {
+								id: employeeId
+							},
+							employeeId: employeeId
+					  }
 					: {}
 				: {})
 		});
@@ -370,11 +367,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends
 			...entity,
 			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-					tenant: {
-						id: tenantId
-					},
-					tenantId
-				}
+						tenant: {
+							id: tenantId
+						},
+						tenantId
+				  }
 				: {})
 		});
 	}

@@ -3,7 +3,6 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { HttpException, HttpStatus } from '@nestjs/common';
-import * as cls from 'cls-hooked';
 import { Request, Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
@@ -11,24 +10,26 @@ import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contrac
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
 import { SerializedRequestContext } from './types';
+import { ClsService } from 'nestjs-cls';
+import { v4 as uuidv4 } from 'uuid';
 
 export class RequestContext {
-
-	protected readonly _id: number;
+	protected readonly _id: string;
 	protected readonly _res: Response;
 	private readonly _req: Request;
 	private readonly _languageCode: LanguagesEnum;
 
 	/**
-	 * Constructor for the SampleClass.
+	 * Creates an instance of RequestContext.
 	 * @param options - An object containing optional parameters for initializing the instance.
-	 * @param options.id - Optional ID number for the instance. If not provided, a random ID is generated.
+	 * @param options.id - Optional Request ID. If not provided, a random ID (UUID) is generated.
 	 * @param options.req - Optional Request object.
 	 * @param options.res - Optional Response object.
 	 * @param options.languageCode - Optional language code (enum) for the instance.
+	 * @param options.isAuthorized - Optional flag indicating whether the user is authorized.
 	 */
 	constructor(options: {
-		id?: number;
+		id?: string;
 		req?: Request;
 		res?: Response;
 		languageCode?: LanguagesEnum;
@@ -38,12 +39,28 @@ export class RequestContext {
 		const { req, res, id, languageCode } = options;
 
 		// If 'id' is not provided, generate a random ID.
-		this._id = id || Math.random();
+		this._id = id || uuidv4().toString();
+
+		console.log('RequestContext: setting context with Id:', this._id);
 
 		// Assign values to instance properties.
 		this._req = req;
 		this._res = res;
+
 		this._languageCode = languageCode;
+	}
+
+	protected static clsService: ClsService;
+
+	static setClsService(service: ClsService) {
+		RequestContext.clsService = service;
+	}
+
+	static currentRequestContext(): RequestContext {
+		console.log('RequestContext: getting context ...');
+		const context = RequestContext.clsService.get(RequestContext.name);
+		console.log('RequestContext: got context with Id:', context?._id);
+		return context;
 	}
 
 	/**
@@ -54,7 +71,7 @@ export class RequestContext {
 	static deserialize(ctxObject: SerializedRequestContext): RequestContext {
 		return new RequestContext({
 			req: ctxObject._req,
-			languageCode: ctxObject._languageCode,
+			languageCode: ctxObject._languageCode
 		});
 	}
 
@@ -79,23 +96,13 @@ export class RequestContext {
 	 *
 	 * @returns
 	 */
-	static currentRequestContext(): RequestContext {
-		const session = cls.getNamespace(RequestContext.name);
-		if (session && session.active) {
-			return session.get(RequestContext.name);
-		}
-		return null;
-	}
-
-	/**
-	 *
-	 * @returns
-	 */
 	static currentRequest(): Request {
 		const requestContext = RequestContext.currentRequestContext();
+
 		if (requestContext) {
 			return requestContext._req;
 		}
+
 		return null;
 	}
 
@@ -228,7 +235,6 @@ export class RequestContext {
 		// Return the extracted language code or the default language (ENGLISH) if not found
 		return lang || LanguagesEnum.ENGLISH;
 	}
-
 
 	static hasPermissions(findPermissions: PermissionsEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
