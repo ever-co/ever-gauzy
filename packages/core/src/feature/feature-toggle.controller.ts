@@ -26,6 +26,7 @@ import { FeatureToggleUpdateCommand } from './commands';
 import { CreateFeatureToggleDTO } from './dto';
 import { FeatureOrganizationQueryDTO } from './dto/feature-organization-query.dto';
 import { environment } from '@gauzy/config';
+import { UseValidationPipe } from 'shared/pipes';
 
 const { unleashConfig } = environment;
 
@@ -41,7 +42,6 @@ export class FeatureToggleController {
 	@Get('definition')
 	@Public()
 	async getFeatureToggleDefinitions() {
-
 		let featureToggles: FeatureInterface[] = [];
 
 		// load toggles definitions from Unleash if it's enabled
@@ -73,9 +73,7 @@ export class FeatureToggleController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('parent')
-	async getParentFeatureList(
-		@Query() options: RelationsQueryDTO
-	): Promise<IPagination<IFeature>> {
+	async getParentFeatureList(@Query() options: RelationsQueryDTO): Promise<IPagination<IFeature>> {
 		try {
 			return await this._featureService.getParentFeatures(options.relations);
 		} catch (error) {
@@ -96,23 +94,23 @@ export class FeatureToggleController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('/organizations')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async getFeaturesOrganization(
-		@Query() params: FeatureOrganizationQueryDTO,
+		@Query() params: FeatureOrganizationQueryDTO
 	): Promise<IPagination<IFeatureOrganization>> {
 		try {
 			return await this._featureOrganizationService.findAll({
 				where: {
-					...(
-						params.tenantId ? {
-							tenantId: params.tenantId
-						} : {}
-					),
-					...(
-						params.organizationId ? {
-							organizationId: params.organizationId
-						} : {}
-					),
+					...(params.tenantId
+						? {
+								tenantId: params.tenantId
+						  }
+						: {}),
+					...(params.organizationId
+						? {
+								organizationId: params.organizationId
+						  }
+						: {})
 				},
 				relations: params.relations || []
 			});
@@ -149,18 +147,13 @@ export class FeatureToggleController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
-	async enabledDisabledFeature(
-		@Body() input: CreateFeatureToggleDTO
-	): Promise<boolean> {
-		return await this._commandBus.execute(
-			new FeatureToggleUpdateCommand(input)
-		);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async enabledDisabledFeature(@Body() input: CreateFeatureToggleDTO): Promise<boolean> {
+		return await this._commandBus.execute(new FeatureToggleUpdateCommand(input));
 	}
 }

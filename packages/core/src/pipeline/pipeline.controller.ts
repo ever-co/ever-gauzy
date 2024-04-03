@@ -20,7 +20,7 @@ import { IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts
 import { CrudController, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import { PipelineService } from './pipeline.service';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 
@@ -29,10 +29,7 @@ import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 @Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 @Controller()
 export class PipelineController extends CrudController<Pipeline> {
-
-	constructor(
-		protected readonly pipelineService: PipelineService
-	) {
+	constructor(protected readonly pipelineService: PipelineService) {
 		super(pipelineService);
 	}
 
@@ -44,10 +41,8 @@ export class PipelineController extends CrudController<Pipeline> {
 	 */
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<Pipeline>
-	): Promise<IPagination<IPipeline>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() filter: PaginationParams<Pipeline>): Promise<IPagination<IPipeline>> {
 		return await this.pipelineService.pagination(filter);
 	}
 
@@ -60,13 +55,11 @@ export class PipelineController extends CrudController<Pipeline> {
 	@ApiOperation({ summary: 'find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records',
+		description: 'Found records'
 	})
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get()
-	public async findAll(
-		@Query() filter: PaginationParams<Pipeline>
-	): Promise<IPagination<IPipeline>> {
+	public async findAll(@Query() filter: PaginationParams<Pipeline>): Promise<IPagination<IPipeline>> {
 		return await this.pipelineService.findAll(filter);
 	}
 
@@ -79,13 +72,11 @@ export class PipelineController extends CrudController<Pipeline> {
 	@ApiOperation({ summary: 'find deals' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found records',
+		description: 'Found records'
 	})
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get(':id/deals')
-	public async findDeals(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IPagination<IDeal>> {
+	public async findDeals(@Param('id', UUIDValidationPipe) id: string): Promise<IPagination<IDeal>> {
 		return await this.pipelineService.findDeals(id);
 	}
 
@@ -107,9 +98,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Post()
-	async create(
-		@Body() entity: DeepPartial<Pipeline>
-	): Promise<IPipeline> {
+	async create(@Body() entity: DeepPartial<Pipeline>): Promise<IPipeline> {
 		return await this.pipelineService.create(entity);
 	}
 
@@ -163,9 +152,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return await this.pipelineService.delete(id);
 	}
 }

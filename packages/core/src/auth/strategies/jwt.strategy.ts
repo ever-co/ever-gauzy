@@ -9,11 +9,7 @@ import { EmployeeService } from '../../employee/employee.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-
-	constructor(
-		private readonly _authService: AuthService,
-		private readonly _employeeService: EmployeeService,
-	) {
+	constructor(private readonly _authService: AuthService, private readonly _employeeService: EmployeeService) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 			secretOrKey: env.JWT_SECRET
@@ -30,11 +26,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		try {
 			const { id, thirdPartyId, employeeId } = payload;
 
+			console.log('Validate JWT payload:', payload);
+
 			// We use this to also attach the user object to the request context.
-			const user: IUser = await this._authService.getAuthenticatedUser(
-				id,
-				thirdPartyId
-			);
+			const user: IUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);
 
 			if (!user) {
 				return done(new UnauthorizedException('unauthorized'), false);

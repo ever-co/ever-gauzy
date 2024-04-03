@@ -8,15 +8,13 @@ import { OrganizationTeam } from './../../core/entities/internal';
 import { FindPublicTeamQuery } from './queries';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { PublicTeamQueryDTO } from './dto';
+import { UseValidationPipe } from 'shared/pipes';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
 @Controller()
 export class PublicTeamController {
-
-	constructor(
-		private readonly _queryBus: QueryBus
-	) { }
+	constructor(private readonly _queryBus: QueryBus) {}
 
 	/**
 	 * GET team by profile link
@@ -35,13 +33,11 @@ export class PublicTeamController {
 		description: 'Record not found'
 	})
 	@Get(':profile_link/:id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findOneByProfileLink(
 		@Param() params: FindOptionsWhere<OrganizationTeam>,
 		@Query() options: PublicTeamQueryDTO
 	): Promise<IOrganizationTeam> {
-		return await this._queryBus.execute(
-			new FindPublicTeamQuery(params, options)
-		);
+		return await this._queryBus.execute(new FindPublicTeamQuery(params, options));
 	}
 }

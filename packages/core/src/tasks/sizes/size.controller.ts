@@ -13,7 +13,8 @@ import { CountQueryDTO } from './../../shared/dto';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { TaskSizeService } from './size.service';
 import { TaskSize } from './size.entity';
-import { CreateTaskSizeDTO, TaskSizeQuerDTO, UpdateTaskSizeDTO } from './dto';
+import { CreateTaskSizeDTO, TaskSizeQueryDTO, UpdateTaskSizeDTO } from './dto';
+import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Size')
@@ -25,10 +26,7 @@ export class TaskSizeController extends CrudFactory<
 	ITaskSizeUpdateInput,
 	ITaskSizeFindInput
 >(PaginationParams, CreateTaskSizeDTO, UpdateTaskSizeDTO, CountQueryDTO) {
-
-	constructor(
-		protected readonly taskSizeService: TaskSizeService
-	) {
+	constructor(protected readonly taskSizeService: TaskSizeService) {
 		super(taskSizeService);
 	}
 
@@ -46,10 +44,8 @@ export class TaskSizeController extends CrudFactory<
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async fetchAll(
-		@Query() params: TaskSizeQuerDTO
-	): Promise<IPagination<ITaskSize>> {
+	@UseValidationPipe({ whitelist: true })
+	async fetchAll(@Query() params: TaskSizeQueryDTO): Promise<IPagination<ITaskSize>> {
 		return await this.taskSizeService.fetchAll(params);
 	}
 }

@@ -22,7 +22,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { IEmployee, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
-import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
+import { UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { User } from './user.entity';
@@ -61,10 +61,8 @@ export class UserController extends CrudController<User> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found current user', type: User })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
 	@Get('/me')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findMe(
-		@Query() options: FindMeQueryDTO
-	): Promise<IUser> {
+	@UseValidationPipe({ whitelist: true })
+	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
 		let employee: IEmployee;
 
 		// Check if there are relations to include and remove 'employee' from them if present.
@@ -77,6 +75,8 @@ export class UserController extends CrudController<User> {
 
 		// Fetch the user along with requested relations (excluding employee).
 		const user = await this.userService.findMe(options.relations);
+
+		console.log('findMe found User with Id:', user.id);
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with the user.
 		if (options.includeEmployee) {
@@ -93,7 +93,7 @@ export class UserController extends CrudController<User> {
 		// Return user data combined with employee data, if it exists.
 		return {
 			...user,
-			...(employee && { employee }), // Conditionally add employee info to the response
+			...(employee && { employee }) // Conditionally add employee info to the response
 		};
 	}
 
@@ -127,7 +127,7 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-language')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async updatePreferredLanguage(@Body() entity: UpdatePreferredLanguageDTO): Promise<IUser | UpdateResult> {
 		return await this.userService.updatePreferredLanguage(entity.preferredLanguage);
 	}
@@ -141,7 +141,7 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard)
 	@Put('/preferred-layout')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async updatePreferredComponentLayout(
 		@Body() entity: UpdatePreferredComponentLayoutDTO
 	): Promise<IUser | UpdateResult> {
@@ -241,7 +241,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT)
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
 		return await this.commandBus.execute(new UserCreateCommand(entity));
 	}
@@ -257,7 +257,7 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async update(@Param('id', UUIDValidationPipe) id: IUser['id'], @Body() entity: UpdateUserDTO): Promise<IUser> {
 		return await this.userService.updateProfile(id, {
 			id,

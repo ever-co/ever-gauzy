@@ -1,4 +1,16 @@
-import { Controller, HttpStatus, Get, Query, UseGuards, UsePipes, ValidationPipe, Post, Body, Put, Param } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Query,
+	UseGuards,
+	UsePipes,
+	ValidationPipe,
+	Post,
+	Body,
+	Put,
+	Param
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateExperience, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { UpdateResult } from 'typeorm';
@@ -7,7 +19,7 @@ import { CandidateExperienceService } from './candidate-experience.service';
 import { CandidateExperience } from './candidate-experience.entity';
 import { Permissions } from './../shared/decorators';
 import { TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateCandidateExperienceDTO, UpdateCandidateExperienceDTO } from './dto';
 
 @ApiTags('CandidateExperience')
@@ -15,9 +27,7 @@ import { CreateCandidateExperienceDTO, UpdateCandidateExperienceDTO } from './dt
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateExperienceController extends CrudController<CandidateExperience> {
-	constructor(
-		private readonly candidateExperienceService: CandidateExperienceService
-	) {
+	constructor(private readonly candidateExperienceService: CandidateExperienceService) {
 		super(candidateExperienceService);
 	}
 
@@ -29,7 +39,7 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	 */
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() params: PaginationParams<CandidateExperience>
 	): Promise<IPagination<ICandidateExperience>> {
@@ -56,10 +66,8 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<CandidateExperience>
-	): Promise<IPagination<ICandidateExperience>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<CandidateExperience>): Promise<IPagination<ICandidateExperience>> {
 		return await this.candidateExperienceService.findAll(params);
 	}
 
@@ -70,10 +78,8 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	 * @returns
 	 */
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateCandidateExperienceDTO
-	): Promise<ICandidateExperience> {
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() entity: CreateCandidateExperienceDTO): Promise<ICandidateExperience> {
 		return await this.candidateExperienceService.create(entity);
 	}
 
@@ -84,7 +90,7 @@ export class CandidateExperienceController extends CrudController<CandidateExper
 	 * @returns
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ICandidateExperience['id'],
 		@Body() entity: UpdateCandidateExperienceDTO

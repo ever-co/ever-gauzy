@@ -13,7 +13,8 @@ import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
-import { CreateTaskPriorityDTO, TaskPriorityQuerDTO, UpdateTaskPriorityDTO } from './dto';
+import { CreateTaskPriorityDTO, TaskPriorityQueryDTO, UpdateTaskPriorityDTO } from './dto';
+import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Priority')
@@ -25,10 +26,7 @@ export class TaskPriorityController extends CrudFactory<
 	ITaskPriorityUpdateInput,
 	ITaskPriorityFindInput
 >(PaginationParams, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
-
-	constructor(
-		protected readonly taskPriorityService: TaskPriorityService
-	) {
+	constructor(protected readonly taskPriorityService: TaskPriorityService) {
 		super(taskPriorityService);
 	}
 
@@ -46,10 +44,8 @@ export class TaskPriorityController extends CrudFactory<
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async fetchAll(
-		@Query() params: TaskPriorityQuerDTO
-	): Promise<IPagination<ITaskPriority>> {
+	@UseValidationPipe({ whitelist: true })
+	async fetchAll(@Query() params: TaskPriorityQueryDTO): Promise<IPagination<ITaskPriority>> {
 		return await this.taskPriorityService.fetchAll(params);
 	}
 }

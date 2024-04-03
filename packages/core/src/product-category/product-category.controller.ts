@@ -16,16 +16,11 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import {
-	LanguagesEnum,
-	IPagination,
-	PermissionsEnum,
-	IProductCategoryTranslatable
-} from '@gauzy/contracts';
+import { LanguagesEnum, IPagination, PermissionsEnum, IProductCategoryTranslatable } from '@gauzy/contracts';
 import { ProductCategory } from './product-category.entity';
 import { ProductCategoryService } from './product-category.service';
 import { CrudController, PaginationParams } from './../core/crud';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { ProductCategoryDTO } from './dto';
@@ -61,9 +56,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<ProductCategory>,
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<ProductCategory>): Promise<number> {
 		return await this.productCategoryService.countBy(options);
 	}
 
@@ -85,16 +78,13 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@Permissions(PermissionsEnum.ORG_PRODUCT_CATEGORIES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() options: PaginationParams<ProductCategory>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {
-		return await this.productCategoryService.pagination(
-			options,
-			themeLanguage || languageCode
-		);
+		return await this.productCategoryService.pagination(options, themeLanguage || languageCode);
 	}
 
 	/**
@@ -125,10 +115,7 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductCategory>> {
-		return await this.productCategoryService.findProductCategories(
-			options,
-			themeLanguage || languageCode
-		);
+		return await this.productCategoryService.findProductCategories(options, themeLanguage || languageCode);
 	}
 
 	/**
@@ -144,22 +131,16 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: ProductCategoryDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ProductCategory> {
-		return await this.commandBus.execute(
-			new ProductCategoryCreateCommand(
-				entity,
-				themeLanguage || languageCode
-			)
-		);
+		return await this.commandBus.execute(new ProductCategoryCreateCommand(entity, themeLanguage || languageCode));
 	}
 
 	/**
@@ -180,12 +161,11 @@ export class ProductCategoryController extends CrudController<ProductCategory> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IProductCategoryTranslatable['id'],
 		@Body() entity: ProductCategoryDTO

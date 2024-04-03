@@ -10,7 +10,7 @@ import {
 	Query,
 	UseGuards,
 	UsePipes,
-	ValidationPipe,
+	ValidationPipe
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -20,11 +20,11 @@ import {
 	IPagination,
 	LanguagesEnum,
 	OrganizationTeamJoinRequestStatusEnum,
-	PermissionsEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { PaginationParams } from 'core/crud';
-import { UUIDValidationPipe } from 'shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from 'shared/pipes';
 import { LanguageDecorator } from 'shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
 import { Permissions } from 'shared/decorators';
@@ -39,7 +39,7 @@ export class OrganizationTeamJoinRequestController {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
-	) { }
+	) {}
 
 	/**
 	 * Validate organization team join request
@@ -49,11 +49,9 @@ export class OrganizationTeamJoinRequestController {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Post('validate')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	@Public()
-	async validateJoinRequest(
-		@Body() entity: ValidateJoinRequestDTO
-	): Promise<IOrganizationTeamJoinRequest> {
+	async validateJoinRequest(@Body() entity: ValidateJoinRequestDTO): Promise<IOrganizationTeamJoinRequest> {
 		return await this._organizationTeamJoinRequestService.validateJoinRequest(entity);
 	}
 
@@ -66,11 +64,8 @@ export class OrganizationTeamJoinRequestController {
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(
-		PermissionsEnum.ALL_ORG_VIEW,
-		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW
-	)
-	@UsePipes(new ValidationPipe())
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW)
+	@UseValidationPipe()
 	async findAll(
 		@Query() params: PaginationParams<OrganizationTeamJoinRequest>
 	): Promise<IPagination<IOrganizationTeamJoinRequest>> {
@@ -85,15 +80,13 @@ export class OrganizationTeamJoinRequestController {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	@Public()
 	async create(
 		@Body() entity: OrganizationTeamJoinRequest,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<Object> {
-		return await this._commandBus.execute(
-			new OrganizationTeamJoinRequestCreateCommand(entity, languageCode)
-		);
+		return await this._commandBus.execute(new OrganizationTeamJoinRequestCreateCommand(entity, languageCode));
 	}
 
 	/**
@@ -103,31 +96,20 @@ export class OrganizationTeamJoinRequestController {
 	 */
 	@HttpCode(HttpStatus.OK)
 	@Post('resend-code')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	@Public()
-	public async resendConfirmationCode(
-		@Body() entity: OrganizationTeamJoinRequest
-	): Promise<Object> {
-		return await this._organizationTeamJoinRequestService.resendConfirmationCode(
-			entity
-		);
+	public async resendConfirmationCode(@Body() entity: OrganizationTeamJoinRequest): Promise<Object> {
+		return await this._organizationTeamJoinRequestService.resendConfirmationCode(entity);
 	}
 
 	@Put(':id/:action')
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(
-		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
-		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT
-	)
+	@Permissions(PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW, PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT)
 	public async acceptRequestToJoin(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Param('action') action: OrganizationTeamJoinRequestStatusEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	) {
-		return this._organizationTeamJoinRequestService.acceptRequestToJoin(
-			id,
-			action,
-			languageCode
-		);
+		return this._organizationTeamJoinRequestService.acceptRequestToJoin(id, action, languageCode);
 	}
 }

@@ -25,7 +25,7 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../core';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { Payment } from './payment.entity';
@@ -65,10 +65,8 @@ export class PaymentController extends CrudController<Payment> {
 	})
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('report')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getPaymentReport(
-		@Query() options: PaymentReportQueryDTO
-	): Promise<IPaymentReportData[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getPaymentReport(@Query() options: PaymentReportQueryDTO): Promise<IPaymentReportData[]> {
 		const reports = await this.paymentService.getPayments(options);
 		let response: IPaymentReportData[] = [];
 		if (options.groupBy === ReportGroupFilterEnum.date) {
@@ -98,10 +96,8 @@ export class PaymentController extends CrudController<Payment> {
 	})
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('report/charts')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getDailyReportCharts(
-		@Query() options: PaymentReportQueryDTO
-	) {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getDailyReportCharts(@Query() options: PaymentReportQueryDTO) {
 		return this.paymentService.getDailyReportCharts(options);
 	}
 
@@ -120,12 +116,7 @@ export class PaymentController extends CrudController<Payment> {
 		@Headers('origin') origin: string
 	): Promise<any> {
 		const { invoice, payment } = body.params;
-		return await this.paymentService.sendReceipt(
-			languageCode,
-			invoice,
-			payment,
-			origin
-		);
+		return await this.paymentService.sendReceipt(languageCode, invoice, payment, origin);
 	}
 
 	/**
@@ -136,10 +127,8 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Payment>
-	): Promise<IPagination<IPayment>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<Payment>): Promise<IPagination<IPayment>> {
 		return await this.paymentService.pagination(params);
 	}
 
@@ -152,10 +141,8 @@ export class PaymentController extends CrudController<Payment> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ORG_PAYMENT_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<Payment>
-	): Promise<IPagination<IPayment>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<Payment>): Promise<IPagination<IPayment>> {
 		return await this.paymentService.findAll(params);
 	}
 
@@ -167,10 +154,8 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async create(
-		@Body() entity: CreatePaymentDTO
-	): Promise<IPayment> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreatePaymentDTO): Promise<IPayment> {
 		return await this.paymentService.create(entity);
 	}
 
@@ -183,11 +168,8 @@ export class PaymentController extends CrudController<Payment> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdatePaymentDTO
-	): Promise<IPayment> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdatePaymentDTO): Promise<IPayment> {
 		try {
 			await this.paymentService.findOneByIdString(id);
 			return await this.paymentService.create({

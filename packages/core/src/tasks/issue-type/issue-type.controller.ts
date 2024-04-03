@@ -6,7 +6,7 @@ import {
 	IPagination,
 	IPaginationParam
 } from '@gauzy/contracts';
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CountQueryDTO } from './../../shared/dto';
 import { TenantPermissionGuard } from './../../shared/guards';
@@ -14,6 +14,7 @@ import { CrudFactory, PaginationParams } from './../../core/crud';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CreateIssueTypeDTO, IssueTypeQueryDTO, UpdateIssueTypeDTO } from './dto';
+import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Issue Type')
@@ -43,7 +44,7 @@ export class IssueTypeController extends CrudFactory<
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async findAllIssueTypes(@Query() params: IssueTypeQueryDTO): Promise<IPagination<IIssueType>> {
 		console.log('IssueTypeController -> findAllIssueTypes -> params', params);
 		return await this.issueTypeService.fetchAll(params);

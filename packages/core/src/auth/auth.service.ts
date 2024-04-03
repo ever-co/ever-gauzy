@@ -107,7 +107,7 @@ export class AuthService extends SocialAuthService {
 			return {
 				user: {
 					...user,
-					...(employee && { employee }),
+					...(employee && { employee })
 				},
 				token: access_token,
 				refresh_token: refresh_token
@@ -572,6 +572,8 @@ export class AuthService extends SocialAuthService {
 				throw new Error('User ID is missing in the request.');
 			}
 
+			console.log('Request getJwtAccessToken with Id: ', request.id);
+
 			// Extract the user ID from the request
 			const userId = request.id;
 
@@ -596,7 +598,7 @@ export class AuthService extends SocialAuthService {
 				tenantId: user.tenantId,
 				employeeId: employee ? employee.id : null,
 				role: user.role ? user.role.name : null,
-				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null,
+				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
 			};
 
 			// Generate the JWT access token using the payload
@@ -1073,11 +1075,13 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
-			tenant: user.tenant ? new Tenant({
-				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-			}) : null // Sets tenant to null if user.tenant is undefined
+			tenant: user.tenant
+				? new Tenant({
+						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				  })
+				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}
 }
