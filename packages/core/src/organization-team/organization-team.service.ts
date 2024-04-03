@@ -400,22 +400,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			case MultiORMEnum.MikroORM:
 				const mikroOrmQueryBuilder = this.mikroOrmRepository.createQueryBuilder(this.tableName);
 
-				// Set Query options
-				if (isNotEmpty(options)) {
-					const { select, where, order, skip, take } = options;
 
-					if (select) { mikroOrmQueryBuilder.select(select as any); }
-					if (skip) { mikroOrmQueryBuilder.offset(take * (skip - 1)); }
-					if (take) { mikroOrmQueryBuilder.limit(take); }
-					if (where) { mikroOrmQueryBuilder.where(where); }
-					if (order) {
-						const orderBy = Object.entries(order).reduce((acc, [field, direction]) => {
-							acc[field] = direction === 'ASC' ? QueryOrder.ASC : QueryOrder.DESC;
-							return acc;
-						}, {});
-						mikroOrmQueryBuilder.orderBy(orderBy);
-					}
-				}
 
 				//
 				const mikroOrmSubQueryBuilder = (employeeId: string): string => {
@@ -460,9 +445,27 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					mikroOrmQueryBuilder.andWhere(`${mikroOrmQueryBuilder.alias}.id in (${subQuerySQL})`);
 				}
 
+				// Set Query options
+				if (isNotEmpty(options)) {
+					const { select, where, order, skip, take } = options;
+
+					if (select) { mikroOrmQueryBuilder.select(select as any); }
+					if (skip) { mikroOrmQueryBuilder.offset(take * (skip - 1)); }
+					if (take) { mikroOrmQueryBuilder.limit(take); }
+					if (where) { mikroOrmQueryBuilder.where(where); }
+					if (order) {
+						const orderBy = Object.entries(order).reduce((acc, [field, direction]) => {
+							acc[field] = direction === 'ASC' ? QueryOrder.ASC : QueryOrder.DESC;
+							return acc;
+						}, {});
+						mikroOrmQueryBuilder.orderBy(orderBy);
+					}
+				}
+
 				// Add a condition for the tenant ID
 				mikroOrmQueryBuilder.andWhere({ tenantId });
-				console.log(mikroOrmQueryBuilder.getQuery(), mikroOrmQueryBuilder.getParams(), 'Organization Team Mikro ORM Query');
+				// console.log(mikroOrmQueryBuilder.getQuery(), mikroOrmQueryBuilder.getParams(), 'Organization Team Mikro ORM Query');
+
 				// Retrieve the items and total count
 				[items, total] = await mikroOrmQueryBuilder.getResultAndCount();
 
