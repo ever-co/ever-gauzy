@@ -3,11 +3,7 @@ import { RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
-import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity
-} from '../../core/entities/internal';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MikroOrmTaskStatusRepository } from './repository';
 
@@ -76,7 +72,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -99,7 +95,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

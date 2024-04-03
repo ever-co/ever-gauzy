@@ -1,5 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -22,4 +22,4 @@ import { QueryHandlers } from './queries/handlers';
 	providers: [TaskVersionService, ...QueryHandlers, ...CommandHandlers],
 	exports: [TaskVersionService]
 })
-export class TaskVersionModule { }
+export class TaskVersionModule {}
