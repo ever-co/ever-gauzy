@@ -1,5 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, FindOneOptions, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import {
+	Brackets,
+	FindManyOptions,
+	FindOneOptions,
+	SelectQueryBuilder,
+	UpdateResult,
+	WhereExpressionBuilder
+} from 'typeorm';
 import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
@@ -12,7 +19,7 @@ import {
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { getDateRangeFormat } from './../core/utils';
+import { MultiORMEnum, getDateRangeFormat, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './repository';
@@ -38,13 +45,24 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 
 			// Construct the where clause based on whether tenantId is available
 			const whereClause = tenantId ? { tenantId, userId } : { userId };
-
 			const queryOptions = options ? { ...options } : {};
 
-			return this.typeOrmRepository.findOne({
-				where: whereClause,
-				...queryOptions
-			});
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options as FindManyOptions);
+					const item = await this.mikroOrmRepository.findOne(
+						whereClause,
+						mikroOptions
+					);
+					return this.serialize(item as Employee);
+				case MultiORMEnum.TypeORM:
+					return this.typeOrmRepository.findOne({
+						where: whereClause,
+						...queryOptions
+					});
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
 		} catch (error) {
 			console.error(`Error finding employee by userId: ${error.message}`);
 			return null;
