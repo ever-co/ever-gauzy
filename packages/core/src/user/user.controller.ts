@@ -20,7 +20,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
-import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -37,8 +37,6 @@ import {
 	UpdateUserDTO,
 	FindMeQueryDTO
 } from './dto';
-import { convertNativeParameters } from 'core/crud/pagination.helper';
-import { IEmployee } from '@gauzy/contracts';
 
 @ApiTags('User')
 @ApiBearerAuth()
