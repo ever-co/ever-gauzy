@@ -1,7 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wakatime } from '../wakatime.entity';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TypeOrmWakatimeRepository extends Repository<Wakatime> {

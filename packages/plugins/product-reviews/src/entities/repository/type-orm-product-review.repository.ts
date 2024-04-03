@@ -1,7 +1,7 @@
-import { Repository } from 'typeorm';
-import { ProductReview } from '../product-review.entity';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ProductReview } from '../product-review.entity';
 
 @Injectable()
 export class TypeOrmProductReviewRepository extends Repository<ProductReview> {

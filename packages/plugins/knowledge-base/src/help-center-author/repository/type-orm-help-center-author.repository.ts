@@ -1,7 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HelpCenterAuthor } from '../help-center-author.entity';
-import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class TypeOrmHelpCenterAuthorRepository extends Repository<HelpCenterAuthor> {
