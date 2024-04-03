@@ -10,9 +10,7 @@ import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
 import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from '../../employee/repository';
-import { Employee } from '../../employee/employee.entity';
 import { MultiORMEnum, getORMType } from '../../core/utils';
-import { QBFilterQuery } from '@mikro-orm/core';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -107,38 +105,58 @@ export class OrganizationPermissionGuard implements CanActivate {
 		try {
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
-					const mikroQueryBuilder = this._mikroOrmEmployeeRepository.createQueryBuilder('employee');
-					mikroQueryBuilder.innerJoin('employee.organization', 'organization'); // Inner join with the 'organization' entity
-					mikroQueryBuilder.where('employee.id = ?', [employeeId]); // Add a condition for the employee ID
-					mikroQueryBuilder.andWhere('employee.tenantId = ?', [tenantId]); // Add a condition for the tenant ID
-					// Start a loop to add OR conditions for each permission
-					mikroQueryBuilder.andWhere((qb: QBFilterQuery<Employee>) => {
-						for (const permission of permissions) {
-							mikroQueryBuilder.orWhere(`organization.${camelCase(permission)} = ?`, [true]); // Add a condition for the tenant ID
-						}
-					});
-					console.log(mikroQueryBuilder.getQuery());
-					const mikroOrmCount = await mikroQueryBuilder.getCount(); // Execute the query and get the count
-					console.log({ mikroOrmCount });
-					// Returns true if at least one permission is allowed in the organization, false otherwise
-					return mikroOrmCount > 0;
-				case MultiORMEnum.TypeORM:
-					// Create a query builder for the 'employee' entity
-					const typeOrmQueryBuilder = this._typeOrmEmployeeRepository.createQueryBuilder('employee');
-					typeOrmQueryBuilder.innerJoin('employee.organization', 'organization'); // Inner join with the 'organization' entity
-					typeOrmQueryBuilder.where('employee.id = :employeeId', { employeeId }); // Add a condition for the employee ID
-					typeOrmQueryBuilder.andWhere('employee.tenantId = :tenantId', { tenantId }); // Add a condition for the tenant ID
-					// Use OR condition for each permission
-					typeOrmQueryBuilder.andWhere(
-						new Brackets((qb: WhereExpressionBuilder) => {
-							permissions.forEach((permission) => {
-								qb.orWhere(`organization.${camelCase(permission)} = true`);
+					try {
+						// Create a QueryBuilder for the Employee entity
+						const queryBuilder = this._mikroOrmEmployeeRepository.createQueryBuilder('employee');
+						// Join with another table/entity, 'organization'
+						queryBuilder.innerJoin(`${queryBuilder.alias}.organization`, 'organization');
+						// Add a condition for the employee ID
+						queryBuilder.where({ id: employeeId });
+						// Add a condition for the tenant ID
+						queryBuilder.andWhere({ tenantId: tenantId });
+						// Directly add the OR conditions to the query if permissions array is not empty
+						if (permissions.length > 0) {
+							const orConditions = permissions.map((permission: string) => {
+								const field = `organization.${camelCase(permission)}`;
+								return { [field]: true };
 							});
-						})
-					);
-					const typeOrmCount = await typeOrmQueryBuilder.getCount(); // Execute the query and get the count
-					// Returns true if at least one permission is allowed in the organization, false otherwise
-					return typeOrmCount > 0;
+							// Use OR condition for each permission
+							queryBuilder.andWhere({ $or: orConditions });
+						}
+						// Execute the query and get the count
+						const count = await queryBuilder.getCount();
+						// Returns true if at least one record is found, false otherwise
+						return count > 0;
+					} catch (error) {
+						console.log(`Error occurred while checking ${MultiORMEnum.TypeORM} organization permission:`, error);
+						return false;
+					}
+				case MultiORMEnum.TypeORM:
+					try {
+						// Create a query builder for the 'employee' entity
+						const queryBuilder = this._typeOrmEmployeeRepository.createQueryBuilder('employee');
+						// (Optional) Inner join with another table/entity, for example, 'organization'
+						queryBuilder.innerJoin(`${queryBuilder.alias}.organization`, 'organization');
+						// Add a condition for the employee ID
+						queryBuilder.where(`${queryBuilder.alias}.id = :employeeId`, { employeeId });
+						// Add a condition for the tenant ID
+						queryBuilder.andWhere(`${queryBuilder.alias}.tenantId = :tenantId`, { tenantId });
+						// Use OR condition for each permission
+						queryBuilder.andWhere(
+							new Brackets((qb: WhereExpressionBuilder) => {
+								permissions.forEach((permission) => {
+									qb.orWhere(`organization.${camelCase(permission)} = true`);
+								});
+							})
+						);
+						// Execute the query
+						const count = await queryBuilder.getCount(); // Execute the query and get the count
+						// Returns true if at least one permission is allowed in the organization, false otherwise
+						return count > 0;
+					} catch (error) {
+						console.log(`Error occurred while checking ${MultiORMEnum.TypeORM} organization permission:`, error);
+						return false;
+					}
 				default:
 					break;
 			}
