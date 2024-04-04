@@ -12,6 +12,7 @@ import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
 	IEmployee,
+	IEmployeeFindInput,
 	IOrganization,
 	IPagination,
 	PermissionsEnum

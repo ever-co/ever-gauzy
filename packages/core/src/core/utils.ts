@@ -650,11 +650,7 @@ export function convertTypeORMWhereToMikroORM<T>(where: MikroFilterQuery<T>) {
  * @param entity The entity to be serialized.
  * @returns The serialized entity.
  */
-export function serialize<T>(entity: any): T {
-	if (this.ormType === MultiORMEnum.MikroORM) {
-		// If using MikroORM, use wrap(entity).toJSON() for serialization
-		return wrap(entity).toJSON() as T;
-	}
-	// If using other ORM types, return the entity as is
-	return entity;
+export function wrapSerialize<T extends object>(entity: T): T {
+	// If using MikroORM, use wrap(entity).toJSON() for serialization
+	return wrap(entity).toJSON() as T;
 }

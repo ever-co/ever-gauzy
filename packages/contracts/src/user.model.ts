@@ -59,9 +59,7 @@ export interface IUserFindInput extends IBasePerTenantEntityModel {
 	username?: string;
 	role?: IRole;
 	roleId?: string;
-	hash?: string;
 	imageUrl?: string;
-	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 }
 
@@ -100,7 +98,7 @@ export interface IUserCodeInput {
 	code: string;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
 
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
