@@ -1,4 +1,4 @@
-import { FindOperator, JoinOptions } from "typeorm";
+import { FindOperator } from "typeorm";
 import { ITimerStatusInput, TimeLogSourceEnum } from "@gauzy/contracts";
 
 //
@@ -9,7 +9,6 @@ interface TimeLogParams extends ITimerStatusInput {
 
 //
 interface TimeLogQueryParams extends ITimerStatusInput {
-    join?: JoinOptions;
     where: {
         startedAt: FindOperator<Date>;
         stoppedAt: FindOperator<any>;
@@ -52,16 +51,27 @@ export function buildCommonQueryParameters(params: TimeLogParams, includeJoin: b
         }
     };
 
-    //
+    // Adds a join clause to the query parameters if includeJoin is true.
+    addJoinToQueryParams(queryParams, includeJoin);
+
+    return queryParams;
+}
+
+/**
+ * Adds a join clause to the query parameters if includeJoin is true.
+ *
+ * @param queryParams - The existing query parameters object to be modified.
+ * @param includeJoin - A flag indicating whether to include the join clause.
+ */
+export function addJoinToQueryParams(queryParams: TimeLogQueryParams, includeJoin: boolean): TimeLogQueryParams {
     if (includeJoin) {
-        queryParams.join = {
+        queryParams['join'] = {
             alias: 'time_log',
             innerJoin: {
                 timeSlots: 'time_log.timeSlots',
             }
         };
     }
-
     return queryParams;
 }
 

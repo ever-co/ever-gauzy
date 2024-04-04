@@ -83,9 +83,7 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	async getTimerStatus(
-		request: ITimerStatusInput
-	): Promise<ITimerStatus> {
+	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
@@ -126,7 +124,6 @@ export class TimerService {
 			tenantId,
 			organizationId
 		};
-		console.log(queryParams);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
