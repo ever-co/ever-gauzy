@@ -14,6 +14,8 @@ export class RoleGuard implements CanActivate {
 	 * @returns A boolean indicating whether the user has the required roles.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		console.log('RoleGuard canActivate called');
+
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
