@@ -1,14 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import {
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -16,19 +7,16 @@ import {
 	ITaskRelatedIssueType,
 	ITaskRelatedIssueTypeCreateInput,
 	ITaskRelatedIssueTypeFindInput,
-	ITaskRelatedIssueTypeUpdateInput,
+	ITaskRelatedIssueTypeUpdateInput
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { CountQueryDTO } from '../../shared/dto';
+import { UseValidationPipe } from '../../shared/pipes';
 import { CrudFactory, PaginationParams } from '../../core/crud';
 import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { FindRelatedIssueTypesQuery } from './queries';
-import {
-	CreateRelatedIssueTypeDTO,
-	RelatedIssueTypeQueryDTO,
-	UpdatesRelatedIssueTypeDTO,
-} from './dto';
+import { CreateRelatedIssueTypeDTO, RelatedIssueTypeQueryDTO, UpdatesRelatedIssueTypeDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task RelatedIssueTypes')
@@ -39,12 +27,7 @@ export class TaskRelatedIssueTypeController extends CrudFactory<
 	ITaskRelatedIssueTypeCreateInput,
 	ITaskRelatedIssueTypeUpdateInput,
 	ITaskRelatedIssueTypeFindInput
->(
-	PaginationParams,
-	CreateRelatedIssueTypeDTO,
-	UpdatesRelatedIssueTypeDTO,
-	CountQueryDTO
-) {
+>(PaginationParams, CreateRelatedIssueTypeDTO, UpdatesRelatedIssueTypeDTO, CountQueryDTO) {
 	constructor(
 		private readonly queryBus: QueryBus,
 		protected readonly TaskRelatedIssueTypeService: TaskRelatedIssueTypeService
@@ -62,16 +45,14 @@ export class TaskRelatedIssueTypeController extends CrudFactory<
 	@ApiOperation({ summary: 'Find task statuses by filters.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found task statuses by filters.',
+		description: 'Found task statuses by filters.'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async findTaskRelatedIssueType(
 		@Query() params: RelatedIssueTypeQueryDTO
 	): Promise<IPagination<ITaskRelatedIssueType>> {
-		return await this.queryBus.execute(
-			new FindRelatedIssueTypesQuery(params)
-		);
+		return await this.queryBus.execute(new FindRelatedIssueTypesQuery(params));
 	}
 }

@@ -7,9 +7,7 @@ import {
 	Post,
 	UseGuards,
 	Param,
-	Put,
-	UsePipes,
-	ValidationPipe
+	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
@@ -25,16 +23,14 @@ import { CandidateInterview } from './candidate-interview.entity';
 import { CandidateInterviewService } from './candidate-interview.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 
 @ApiTags('CandidateInterview')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT)
 @Controller()
 export class CandidateInterviewController extends CrudController<CandidateInterview> {
-	constructor(
-		private readonly candidateInterviewService: CandidateInterviewService
-	) {
+	constructor(private readonly candidateInterviewService: CandidateInterviewService) {
 		super(candidateInterviewService);
 	}
 
@@ -55,9 +51,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 		description: 'Record not found'
 	})
 	@Get('candidate/:id')
-	async findByCandidateId(
-		@Param('id', UUIDValidationPipe) id: ICandidate['id']
-	): Promise<ICandidateInterview[]> {
+	async findByCandidateId(@Param('id', UUIDValidationPipe) id: ICandidate['id']): Promise<ICandidateInterview[]> {
 		return await this.candidateInterviewService.findByCandidateId(id);
 	}
 
@@ -73,11 +67,9 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 		description: 'Found candidate interviews count'
 	})
 	@Get('count')
-    async getCount(
-		@Query() options: FindOptionsWhere<CandidateInterview>
-	): Promise<number> {
-        return await this.candidateInterviewService.countBy(options);
-    }
+	async getCount(@Query() options: FindOptionsWhere<CandidateInterview>): Promise<number> {
+		return await this.candidateInterviewService.countBy(options);
+	}
 
 	/**
 	 * GET candidate interviews by pagination
@@ -88,7 +80,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	@ApiOperation({ summary: 'Find all candidate interviews in the same tenant using pagination.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found candidate intreviews in the tenant',
+		description: 'Found candidate interviews in the tenant',
 		type: CandidateInterview
 	})
 	@ApiResponse({
@@ -96,10 +88,8 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 		description: 'Record not found'
 	})
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<CandidateInterview>
-	): Promise<IPagination<ICandidateInterview>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
 		return this.candidateInterviewService.paginate(params);
 	}
 
@@ -122,10 +112,8 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 		description: 'Record not found'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<CandidateInterview>
-	): Promise<IPagination<ICandidateInterview>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
 		return await this.candidateInterviewService.findAll(params);
 	}
 
@@ -146,9 +134,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: ICandidateInterview['id']
-	): Promise<ICandidateInterview> {
+	async findById(@Param('id', UUIDValidationPipe) id: ICandidateInterview['id']): Promise<ICandidateInterview> {
 		return this.candidateInterviewService.findOneByIdString(id);
 	}
 
@@ -167,9 +153,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 		type: CandidateInterview
 	})
 	@Post()
-	async create(
-		@Body() entity: ICandidateInterviewCreateInput
-	): Promise<ICandidateInterview> {
+	async create(@Body() entity: ICandidateInterviewCreateInput): Promise<ICandidateInterview> {
 		return await this.candidateInterviewService.create(entity);
 	}
 

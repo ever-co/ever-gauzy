@@ -4,7 +4,6 @@ import {
 	ForbiddenException,
 	BadRequestException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In } from 'typeorm';
 import * as moment from 'moment';
@@ -19,11 +18,21 @@ import {
 	PermissionsEnum,
 	ITimeSlot,
 	IEmployee,
+	IEmployeeFindInput,
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { Employee, TimeLog } from '../../core/entities/internal';
+import { TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
-import { getDateRangeFormat, validateDateRange } from '../../core/utils';
+import {
+	MultiORM,
+	MultiORMEnum,
+	getDateRangeFormat,
+	getORMType,
+	parseTypeORMFindToMikroOrm,
+	wrapSerialize,
+	validateDateRange
+} from '../../core/utils';
+import { prepareSQLQuery as p } from '../../database/database.helper';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -31,21 +40,42 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand,
 } from '../time-log/commands';
-import { prepareSQLQuery as p } from '../../database/database.helper';
-import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
-import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
+import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
+import { TypeOrmEmployeeRepository, MikroOrmEmployeeRepository } from '../../employee/repository';
+import { addRelationsToQuery, buildCommonQueryParameters, buildLogQueryParameters } from './timer.helper';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class TimerService {
+
+	protected ormType: MultiORM = ormType;
+
 	constructor(
-		@InjectRepository(TimeLog)
 		readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-
-		@InjectRepository(Employee)
+		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
-		private readonly commandBus: CommandBus
+		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
+		readonly commandBus: CommandBus
 	) { }
+
+	/**
+	 * Fetches an employee based on the provided query.
+	 *
+	 * @param query - The query parameters to find the employee.
+	 * @returns A Promise resolving to the employee entity or null.
+	 */
+	async fetchEmployee(query: IEmployeeFindInput): Promise<IEmployee | null> { // Replace 'Employee' with your actual Employee entity type
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmEmployeeRepository.findOneByOptions(query);
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmEmployeeRepository.findOneByOptions(query);
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
+	}
 
 	/**
 	 * Get timer status
@@ -53,9 +83,7 @@ export class TimerService {
 	 * @param request
 	 * @returns
 	 */
-	async getTimerStatus(
-		request: ITimerStatusInput
-	): Promise<ITimerStatus> {
+	async getTimerStatus(request: ITimerStatusInput): Promise<ITimerStatus> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, source, todayStart, todayEnd } = request;
 
@@ -63,22 +91,13 @@ export class TimerService {
 
 		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
 		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		if (!!permission && isNotEmpty(request.employeeId)) {
 			const { employeeId } = request;
-			/** Get specific employee */
-			employee = await this.typeOrmEmployeeRepository.findOneBy({
-				id: employeeId,
-				tenantId,
-				organizationId,
-			});
+			employee = await this.fetchEmployee({ id: employeeId, tenantId, organizationId, });
 		} else {
 			const userId = RequestContext.currentUserId();
-			/** EMPLOYEE have ability to see only own timer status */
-			employee = await this.typeOrmEmployeeRepository.findOneBy({
-				userId,
-				tenantId,
-				organizationId,
-			});
+			employee = await this.fetchEmployee({ userId, tenantId, organizationId });
 		}
 
 		if (!employee) {
@@ -93,49 +112,57 @@ export class TimerService {
 			moment.utc(todayEnd || moment().endOf('day'))
 		);
 
-		// Get today's completed timelogs
-		const logs = await this.typeOrmTimeLogRepository.find({
-			join: {
-				alias: 'time_log',
-				innerJoin: {
-					timeSlots: 'time_log.timeSlots',
-				},
-			},
-			where: {
-				...(source ? { source } : {}),
-				startedAt: Between<Date>(start as Date, end as Date),
-				stoppedAt: Not(IsNull()),
-				employeeId,
-				tenantId,
-				organizationId,
-				isRunning: false,
-				isActive: true,
-				isArchived: false
-			},
-			order: {
-				startedAt: 'DESC',
-				createdAt: 'DESC',
-			},
-		});
+		let logs: TimeLog[] = [];
+		let lastLog: TimeLog;
 
-		// Get today's last log (running or completed)
-		const lastLog = await this.typeOrmTimeLogRepository.findOne({
-			where: {
-				...(source ? { source } : {}),
-				startedAt: Between<Date>(start as Date, end as Date),
-				stoppedAt: Not(IsNull()),
-				employeeId,
-				tenantId,
-				organizationId,
-				isActive: true,
-				isArchived: false
-			},
-			order: {
-				startedAt: 'DESC',
-				createdAt: 'DESC',
-			},
-			...(request['relations'] ? { relations: request['relations'], } : {}),
-		});
+		// Define common parameters for querying
+		const queryParams = {
+			...(source ? { source } : {}),
+			startedAt: Between<Date>(start as Date, end as Date),
+			stoppedAt: Not(IsNull()),
+			employeeId,
+			tenantId,
+			organizationId
+		};
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				/**
+				 * Get today's completed timelogs
+				 */
+				const parseQueryParams = parseTypeORMFindToMikroOrm<TimeLog>(buildLogQueryParameters(queryParams));
+				const items = await this.mikroOrmTimeLogRepository.findAll(parseQueryParams);
+				// Optionally wrapSerialize is a function that serializes the entity
+				logs = items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
+
+				/**
+				 * Get today's last log (running or completed)
+				 */
+				// Common query parameters for time log operations.
+				const lastLogQueryParamsMikroOrm = buildCommonQueryParameters(queryParams);
+				// Adds relations from the request to the query parameters.
+				addRelationsToQuery(lastLogQueryParamsMikroOrm, request);
+				// Converts TypeORM-style query parameters to a format compatible with MikroORM.
+				const parseMikroOrmOptions = parseTypeORMFindToMikroOrm<TimeLog>(lastLogQueryParamsMikroOrm);
+
+				// Get today's last log (running or completed)
+				lastLog = await this.mikroOrmTimeLogRepository.findOne(parseMikroOrmOptions.where, parseMikroOrmOptions.mikroOptions) as TimeLog;
+				break;
+
+			case MultiORMEnum.TypeORM:
+				// Get today's completed timelogs
+				logs = await this.typeOrmTimeLogRepository.find(buildLogQueryParameters(queryParams));
+
+				const lastLogQueryParamsTypeOrm = buildCommonQueryParameters(queryParams); // Common query parameters for time log operations.
+				addRelationsToQuery(lastLogQueryParamsTypeOrm, request); // Adds relations from the request to the query parameters.
+
+				// Get today's last log (running or completed)
+				lastLog = await this.typeOrmTimeLogRepository.findOne(lastLogQueryParamsTypeOrm);
+				break;
+
+			default:
+				throw new Error(`Not implemented for ${ormType}`);
+		}
 
 		const status: ITimerStatus = {
 			duration: 0,
@@ -399,14 +426,10 @@ export class TimerService {
 			},
 		});
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException(
-				`The time tracking functionality has been disabled for you.`
-			);
+			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
 		const { id: employeeId } = employee;
 		return await this.typeOrmTimeLogRepository.findOne({
@@ -430,19 +453,15 @@ export class TimerService {
 	 * @param request The input parameters for the query.
 	 * @returns The timer status for the employee.
 	 */
-	public async getTimerWorkedStatus(
-		request: ITimerStatusInput
-	): Promise<ITimerStatus[]> {
+	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus[]> {
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
 
 		// Define the array to store employeeIds
 		let employeeIds: string[] = [];
 
-		const permissions = [
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
-			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
-		];
+		const permissions = [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW];
 
 		// Check if the current user has any of the specified permissions
 		if (RequestContext.hasAnyPermission(permissions)) {
@@ -454,31 +473,82 @@ export class TimerService {
 			employeeIds = [employeeId];
 		}
 
-		/**
-		 * Get last logs (running or completed)
-		 */
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-		// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-		query.setFindOptions({
-			...(request['relations'] ? { relations: request['relations'] } : {}),
-		});
-		query.where({
-			startedAt: Not(IsNull()),
-			stoppedAt: Not(IsNull()),
-			employeeId: In(employeeIds),
-			tenantId,
-			organizationId,
-			isActive: true,
-			isArchived: false,
-			...(isNotEmpty(source) ? { source } : {}),
-			...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
-		});
-		query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
-		query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
-		query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+		let lastLogs: TimeLog[] = [];
 
-		// Get last logs group by employees (running or completed)
-		const lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+
+				// Construct your SQL query using knex
+				let sqlQuery = knex('time_log').select(
+					knex.raw('DISTINCT ON ("time_log"."employeeId") *')
+				);
+
+				// Builds an SQL query with specific where clauses.
+				sqlQuery.whereNotNull('startedAt');
+				sqlQuery.whereNotNull('stoppedAt');
+				sqlQuery.whereIn('employeeId', employeeIds);
+				sqlQuery.andWhere({
+					tenantId,
+					organizationId,
+					isActive: true,
+					isArchived: false
+				});
+
+				if (source) { sqlQuery = sqlQuery.andWhere({ source }); }
+				if (organizationTeamId) { sqlQuery = sqlQuery.andWhere({ organizationTeamId }); }
+
+				// Adds ordering to the SQL query.
+				sqlQuery = sqlQuery.orderBy([
+					{ column: 'employeeId', order: 'ASC' },
+					{ column: 'startedAt', order: 'DESC' },
+					{ column: 'createdAt', order: 'DESC' }
+				]);
+
+				// Execute the raw SQL query and get the results
+				const rawResults: TimeLog[] = (await knex.raw(sqlQuery.toString())).rows || [];
+				const timeLogIds = rawResults.map((entry: TimeLog) => entry.id);
+
+				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
+				const { mikroOptions } = parseTypeORMFindToMikroOrm<TimeLog>({
+					...(request.relations ? { relations: request.relations } : {})
+				});
+
+				// Get last logs group by employees (running or completed);
+				lastLogs = (await this.mikroOrmTimeLogRepository.find({ id: { $in: timeLogIds } }, mikroOptions)).map(
+					(item: TimeLog) => wrapSerialize(item)
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+				/**
+				 * Get last logs (running or completed)
+				 */
+				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+				// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+				query.setFindOptions({
+					...(request['relations'] ? { relations: request['relations'] } : {}),
+				});
+				query.where({
+					startedAt: Not(IsNull()),
+					stoppedAt: Not(IsNull()),
+					employeeId: In(employeeIds),
+					tenantId,
+					organizationId,
+					isActive: true,
+					isArchived: false,
+					...(isNotEmpty(source) ? { source } : {}),
+					...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
+				});
+				query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
+				query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
+				query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+
+				// Get last logs group by employees (running or completed)
+				lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 
 		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
 		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => ({

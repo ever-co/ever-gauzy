@@ -10,9 +10,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
@@ -28,7 +26,7 @@ import { Warehouse } from './warehouse.entity';
 import { WarehouseProductService } from './warehouse-product-service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { RelationsQueryDTO } from './../shared/dto';
 import { CrudController, PaginationParams } from './../core/crud';
 import { CreateWarehouseDTO, UpdateWarehouseDTO } from './dto';
@@ -68,9 +66,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	async findAllWarehouseProducts(
 		@Param('warehouseId', UUIDValidationPipe) warehouseId: IWarehouse['id']
 	): Promise<IWarehouseProduct[]> {
-		return await this.warehouseProductsService.getAllWarehouseProducts(
-			warehouseId
-		);
+		return await this.warehouseProductsService.getAllWarehouseProducts(warehouseId);
 	}
 
 	/**
@@ -95,10 +91,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Body() entity: IWarehouseProductCreateInput[],
 		@Param('warehouseId', UUIDValidationPipe) warehouseId: IWarehouse['id']
 	): Promise<IPagination<IWarehouseProduct[]>> {
-		return await this.warehouseProductsService.createWarehouseProductBulk(
-			entity,
-			warehouseId
-		);
+		return await this.warehouseProductsService.createWarehouseProductBulk(entity, warehouseId);
 	}
 
 	/**
@@ -125,10 +118,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 		@Param('warehouseProductId', UUIDValidationPipe) warehouseProductId: IWarehouseProduct['id'],
 		@Body() value: { count: number }
 	): Promise<IWarehouseProduct> {
-		return await this.warehouseProductsService.updateWarehouseProductQuantity(
-			warehouseProductId,
-			value.count
-		);
+		return await this.warehouseProductsService.updateWarehouseProductQuantity(warehouseProductId, value.count);
 	}
 
 	/**
@@ -152,7 +142,8 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Post('inventory-quantity/variants/:warehouseProductVariantId')
 	async updateWarehouseProductVariantQuantity(
-		@Param('warehouseProductVariantId', UUIDValidationPipe) warehouseProductVariantId: IWarehouseProductVariant['id'],
+		@Param('warehouseProductVariantId', UUIDValidationPipe)
+		warehouseProductVariantId: IWarehouseProductVariant['id'],
 		@Body() value: { count: number }
 	): Promise<IWarehouseProductVariant> {
 		return await this.warehouseProductsService.updateWarehouseProductVariantQuantity(
@@ -174,9 +165,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<Warehouse>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<Warehouse>): Promise<number> {
 		return await this.warehouseService.countBy(options);
 	}
 
@@ -188,10 +177,8 @@ export class WarehouseController extends CrudController<Warehouse> {
 	 */
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Warehouse>
-	): Promise<IPagination<IWarehouse>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<Warehouse>): Promise<IPagination<IWarehouse>> {
 		return await this.warehouseService.paginate(params);
 	}
 
@@ -215,10 +202,8 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@Permissions(PermissionsEnum.ORG_INVENTORY_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<Warehouse>
-	): Promise<IPagination<IWarehouse>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<Warehouse>): Promise<IPagination<IWarehouse>> {
 		try {
 			return await this.warehouseService.findAll(params);
 		} catch (error) {
@@ -249,7 +234,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateWarehouseDTO): Promise<IWarehouse> {
 		try {
 			return await this.warehouseService.create(entity);
@@ -280,7 +265,7 @@ export class WarehouseController extends CrudController<Warehouse> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IWarehouse['id'],
 		@Body() entity: UpdateWarehouseDTO

@@ -55,6 +55,10 @@ export class Product extends TranslatableBase implements IProductTranslatable {
 	 */
 	@ApiProperty({ type: () => ImageAsset })
 	@MultiORMManyToOne(() => ImageAsset, (imageAsset) => imageAsset.productFeaturedImage, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

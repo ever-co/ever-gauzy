@@ -25,7 +25,7 @@ export class EmailHistoryService extends TenantAwareCrudService<EmailHistory> {
 	 * @returns
 	 */
 	public async findAll(filter?: FindManyOptions<EmailHistory>): Promise<IPagination<IEmailHistory>> {
-		const query = this.repository.createQueryBuilder('email_sent');
+		const query = this.typeOrmRepository.createQueryBuilder('email_sent');
 		query.leftJoin(`email_sent.user`, 'user');
 		query.leftJoin(`email_sent.emailTemplate`, 'emailTemplate');
 		query.addSelect(['user.email', 'user.firstName', 'user.lastName', 'user.imageUrl']);

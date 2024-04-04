@@ -5,9 +5,7 @@ import {
 	Post,
 	Body,
 	Get,
-	Query,
-	UsePipes,
-	ValidationPipe
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IKeyResultTemplate, IPagination } from '@gauzy/contracts';
@@ -15,7 +13,7 @@ import { CrudController } from './../core/crud';
 import { KeyResultTemplate } from './keyresult-template.entity';
 import { KeyresultTemplateService } from './keyresult-template.service';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe } from './../shared/pipes';
+import { ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateKeyresultTemplateDTO } from './dto';
 
 @ApiTags('keyResultTemplate')
@@ -30,9 +28,9 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 
 	/**
 	 * GET key result templates
-	 * 
-	 * @param data 
-	 * @returns 
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Find key result templates.' })
 	@ApiResponse({
@@ -57,9 +55,9 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 
 	/**
 	 * CREATE key result template
-	 * 
-	 * @param entity 
-	 * @returns 
+	 *
+	 * @param entity
+	 * @returns
 	 */
 	@ApiOperation({ summary: 'Create KeyResult Template' })
 	@ApiResponse({
@@ -68,7 +66,7 @@ export class KeyresultTemplateController extends CrudController<KeyResultTemplat
 		type: KeyResultTemplate
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateKeyresultTemplateDTO
 	): Promise<IKeyResultTemplate> {

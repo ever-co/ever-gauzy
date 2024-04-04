@@ -1,5 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -11,15 +11,16 @@ import {
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from './../../shared/guards';
 import { CountQueryDTO } from './../../shared/dto';
+import { UseValidationPipe } from '../../shared/pipes';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { TaskStatusService } from './status.service';
 import { TaskStatus } from './status.entity';
 import { FindStatusesQuery } from './queries';
-import { CreateStatusDTO, StatusQuerDTO, UpdatesStatusDTO } from './dto';
+import { CreateStatusDTO, StatusQueryDTO, UpdatesStatusDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Status')
-@Controller()
+@Controller('/task-statuses')
 export class TaskStatusController extends CrudFactory<
 	TaskStatus,
 	IPaginationParam,
@@ -27,11 +28,7 @@ export class TaskStatusController extends CrudFactory<
 	ITaskStatusUpdateInput,
 	ITaskStatusFindInput
 >(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
-
-	constructor(
-		private readonly queryBus: QueryBus,
-		protected readonly taskStatusService: TaskStatusService
-	) {
+	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
 		super(taskStatusService);
 	}
 
@@ -49,12 +46,8 @@ export class TaskStatusController extends CrudFactory<
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async findTaskStatuses(
-		@Query() params: StatusQuerDTO
-	): Promise<IPagination<ITaskStatus>> {
-		return await this.queryBus.execute(
-			new FindStatusesQuery(params)
-		);
+	@UseValidationPipe({ whitelist: true })
+	async findTaskStatuses(@Query() params: StatusQueryDTO): Promise<IPagination<ITaskStatus>> {
+		return await this.queryBus.execute(new FindStatusesQuery(params));
 	}
 }

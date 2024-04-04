@@ -7,9 +7,7 @@ import {
 	Put,
 	Param,
 	Body,
-	BadRequestException,
-	UsePipes,
-	ValidationPipe
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationPosition, IPagination } from '@gauzy/contracts';
@@ -17,24 +15,22 @@ import { CrudController } from './../core/crud';
 import { OrganizationPositionService } from './organization-position.service';
 import { OrganizationPosition } from './organization-position.entity';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { UpdateOrganizationPositionDTO } from './dto';
 
 @ApiTags('OrganizationPositions')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationPositionController extends CrudController<OrganizationPosition> {
-	constructor(
-		private readonly organizationPositionService: OrganizationPositionService
-	) {
+	constructor(private readonly organizationPositionService: OrganizationPositionService) {
 		super(organizationPositionService);
 	}
 
 	/**
-	 * GET organization positions recurring expense 
-	 * 
-	 * @param data 
-	 * @returns 
+	 * GET organization positions recurring expense
+	 *
+	 * @param data
+	 * @returns
 	 */
 	@ApiOperation({
 		summary: 'Find all organization positions recurring expense.'
@@ -49,9 +45,7 @@ export class OrganizationPositionController extends CrudController<OrganizationP
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationPosition>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationPosition>> {
 		const { relations = [], findInput } = data;
 		return this.organizationPositionService.findAll({
 			where: findInput,
@@ -61,13 +55,13 @@ export class OrganizationPositionController extends CrudController<OrganizationP
 
 	/**
 	 * UPDATE organization position by id
-	 * 
-	 * @param id 
-	 * @param body 
-	 * @returns 
+	 *
+	 * @param id
+	 * @param body
+	 * @returns
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: UpdateOrganizationPositionDTO

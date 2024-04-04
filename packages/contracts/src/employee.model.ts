@@ -110,6 +110,7 @@ export interface IEmployeeFindInput {
 	id?: string;
 	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
+	userId?: IUser['id'];
 	valueDate?: Date;
 	organizationId?: string;
 	tenantId?: string;

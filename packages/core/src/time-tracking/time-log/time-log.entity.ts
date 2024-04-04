@@ -1,5 +1,6 @@
-import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OnLoad, Property } from '@mikro-orm/core';
+import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
 import {
@@ -101,6 +102,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	version?: string;
 
 	/** Additional fields */
+	@Property({ persist: false })
 	duration: number;
 
 	/**
@@ -108,6 +110,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * If the value is true, it means the TimeLog has been edited.
 	 * If the value is false or undefined, it means the TimeLog has not been edited.
 	 */
+	@Property({ persist: false })
 	isEdited?: boolean;
 
 	/*
@@ -269,7 +272,8 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * Called after entity is loaded.
 	 */
 	@AfterLoad()
-	afterLoadEntity?() {
+	@OnLoad()
+	afterEntityLoad?() {
 		const startedAt = moment(this.startedAt, 'YYYY-MM-DD HH:mm:ss');
 		const stoppedAt = moment(this.stoppedAt || new Date(), 'YYYY-MM-DD HH:mm:ss');
 		this.duration = stoppedAt.diff(startedAt, 'seconds');

@@ -19,7 +19,7 @@ export class OrganizationVendorService extends TenantAwareCrudService<Organizati
 	}
 
 	async deleteVendor(vendorId) {
-		const vendor = await this.repository
+		const vendor = await this.typeOrmRepository
 			.createQueryBuilder('vendor')
 			.leftJoin(Expense, 'expense', 'vendor.id = expense."vendorId"')
 			.where('expense."vendorId" = :vendorId', { vendorId: vendorId })

@@ -243,7 +243,7 @@
 						</label>
 						<ga-contact-selector
 							name="organizationContactId"
-							[employeeId]="employeeId"
+							[employeeId]="employee?.id"
 							[disabled]="running"
 							[(ngModel)]="organizationContactId"
 							#clientInput="ngModel"
@@ -269,12 +269,10 @@
 							name="projectId"
 							[skipGlobalChange]="true"
 							[showAllOption]="false"
-							[placeholder]="
-								'TIMER_TRACKER.SELECT_PROJECT' | translate
-							"
+							[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
 							[defaultSelected]="false"
 							[organizationContactId]="organizationContactId"
-							[employeeId]="employeeId"
+							[employeeId]="employee?.id"
 							[disabled]="running"
 							[(ngModel)]="projectId"
 							#projectInput="ngModel"
@@ -299,7 +297,7 @@
 						<ga-task-selector
 							name="taskId"
 							[projectId]="projectId"
-							[employeeId]="employeeId"
+							[employeeId]="employee?.id"
 							[disabled]="running"
 							[(ngModel)]="taskId"
 							#taskInput="ngModel"

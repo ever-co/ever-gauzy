@@ -9,8 +9,6 @@ import {
 	HttpCode,
 	HttpStatus,
 	Delete,
-	ValidationPipe,
-	UsePipes,
 	UseInterceptors,
 	ExecutionContext
 } from '@nestjs/common';
@@ -29,7 +27,7 @@ import { RequestContext } from './../core/context';
 import { tempFile } from './../core/utils';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { ImageAssetCreateCommand } from './commands';
 import { ImageAsset } from './image-asset.entity';
 import { ImageAssetService } from './image-asset.service';
@@ -64,12 +62,12 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 				const subDirectory = path.join(RequestContext.currentTenantId() || uuid());
 
 				return new FileStorage().storage({
-					dest: () => path.join(baseDirectory, subDirectory),
+					dest: () => path.join(baseDirectory, subDirectory)
 				});
 			}
 		})
 	)
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async upload(@UploadedFileStorage() file, @Body() entity: UploadImageAsset) {
 		const provider = new FileStorage().getProvider();
 		let thumbnail: UploadedFile;
@@ -155,7 +153,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.paginate(params);
 	}
@@ -168,7 +166,7 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<ImageAsset>): Promise<IPagination<IImageAsset>> {
 		return await this._imageAssetService.findAll(params);
 	}

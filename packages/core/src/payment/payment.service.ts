@@ -36,7 +36,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getPayments(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.repository.createQueryBuilder(this.tableName);
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 		// Set up the find options for the query
 		query.setFindOptions({
@@ -91,7 +91,7 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 	 */
 	async getDailyReportCharts(request: IGetPaymentInput) {
 		// Create a query builder for the Payment entity
-		const query = this.repository.createQueryBuilder(this.tableName);
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 		// Set up the find options for the query
 		query.setFindOptions({

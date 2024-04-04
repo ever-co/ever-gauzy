@@ -5,6 +5,7 @@ import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { AuthService } from './../../../auth/auth.service';
 import { UserService } from './../../../user/user.service';
+import { EmployeeService } from './../../../employee/employee.service';
 import { InviteService } from './../../invite.service';
 import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
 import { InviteAcceptEmployeeCommand } from '../invite.accept-employee.command';
@@ -14,9 +15,7 @@ import { User } from './../../../core/entities/internal';
 import { TypeOrmUserRepository } from './../../../user/repository/type-orm-user.repository';
 
 @CommandHandler(InviteAcceptCommand)
-export class InviteAcceptHandler
-	implements ICommandHandler<InviteAcceptCommand> {
-
+export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand> {
 	constructor(
 		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
 
@@ -24,7 +23,8 @@ export class InviteAcceptHandler
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
-	) { }
+		private readonly employeeService: EmployeeService
+	) {}
 
 	public async execute(command: InviteAcceptCommand) {
 		try {
@@ -64,19 +64,13 @@ export class InviteAcceptHandler
 			let user: IUser;
 			switch (role.name) {
 				case RolesEnum.EMPLOYEE:
-					user = await this.commandBus.execute(
-						new InviteAcceptEmployeeCommand(input, languageCode)
-					);
+					user = await this.commandBus.execute(new InviteAcceptEmployeeCommand(input, languageCode));
 					return await this._authorizeUser(user);
 				case RolesEnum.CANDIDATE:
-					user = await this.commandBus.execute(
-						new InviteAcceptCandidateCommand(input, languageCode)
-					);
+					user = await this.commandBus.execute(new InviteAcceptCandidateCommand(input, languageCode));
 					return await this._authorizeUser(user);
 				default:
-					user = await this.commandBus.execute(
-						new InviteAcceptUserCommand(input, languageCode)
-					);
+					user = await this.commandBus.execute(new InviteAcceptUserCommand(input, languageCode));
 					return await this._authorizeUser(user);
 			}
 		} catch (error) {
@@ -93,13 +87,13 @@ export class InviteAcceptHandler
 	private async _authorizeUser(user: IUser): Promise<Object> {
 		try {
 			const { id, email } = user;
+
 			await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					id,
 					email
 				},
 				relations: {
-					employee: true,
 					role: {
 						rolePermissions: true
 					}
@@ -108,12 +102,20 @@ export class InviteAcceptHandler
 					createdAt: 'DESC'
 				}
 			});
+
 			// If users are inactive
 			if (user.isActive === false) {
 				throw new UnauthorizedException();
 			}
+
+			const employee = await this.employeeService.findOneByOptions({
+				where: {
+					userId: user.id
+				}
+			});
+
 			// If employees are inactive
-			if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+			if (employee && (employee.isActive === false || employee.isArchived === true)) {
 				throw new UnauthorizedException();
 			}
 

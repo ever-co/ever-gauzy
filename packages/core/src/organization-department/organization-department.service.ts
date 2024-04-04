@@ -23,7 +23,7 @@ export class OrganizationDepartmentService extends TenantAwareCrudService<Organi
 	 * @returns
 	 */
 	async findByEmployee(id: string): Promise<any> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('organization_department')
 			.leftJoin('organization_department.members', 'member')
 			.where('member.id = :id', { id })

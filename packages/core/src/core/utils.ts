@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SqliteDriver } from '@mikro-orm/sqlite';
-import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition } from '@mikro-orm/core';
+import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition, wrap } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -590,6 +590,9 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 				$lte: operator.value[1]
 			};
 		}
+		case 'moreThanOrEqual': {
+			return { $gte: operator.value }
+		}
 		// Add additional cases for other operator types if needed
 		default: {
 			// Handle unknown or unimplemented operator types
@@ -643,4 +646,14 @@ export function convertTypeORMWhereToMikroORM<T>(where: MikroFilterQuery<T>) {
 	}
 	// Otherwise, just convert the single condition object
 	return convertTypeORMConditionToMikroORM(where);
+}
+
+/**
+ * Serializes the provided entity based on the ORM type.
+ * @param entity The entity to be serialized.
+ * @returns The serialized entity.
+ */
+export function wrapSerialize<T extends object>(entity: T): T {
+	// If using MikroORM, use wrap(entity).toJSON() for serialization
+	return wrap(entity).toJSON() as T;
 }

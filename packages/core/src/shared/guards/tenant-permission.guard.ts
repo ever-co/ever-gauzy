@@ -25,6 +25,8 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 	 * @returns
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		console.log('TenantPermissionGuard canActivate called');
+
 		const tenantId = RequestContext.currentTenantId();
 		const roleId = RequestContext.currentRoleId();
 
@@ -50,7 +52,8 @@ export class TenantPermissionGuard extends TenantBaseGuard implements CanActivat
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// Check if permissions are not empty
 		if (isNotEmpty(permissions)) {

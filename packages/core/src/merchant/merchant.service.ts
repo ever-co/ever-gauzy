@@ -20,6 +20,6 @@ export class MerchantService extends TenantAwareCrudService<Merchant> {
 	}
 
 	async update(id: IMerchant['id'], merchant: Merchant): Promise<IMerchant> {
-		return await this.repository.save({ id, ...merchant });
+		return await this.typeOrmRepository.save({ id, ...merchant });
 	}
 }

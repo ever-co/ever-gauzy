@@ -10,16 +10,14 @@ import {
 	Param,
 	Put,
 	Query,
-	BadRequestException,
-	UsePipes,
-	ValidationPipe
+	BadRequestException
 } from '@nestjs/common';
 import { IGoalTimeFrame, IPagination } from '@gauzy/contracts';
 import { CrudController } from './../core/crud';
 import { GoalTimeFrame } from './goal-time-frame.entity';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { GoalTimeFrameService } from './goal-time-frame.service';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { CreateGoalTimeFrameDTO, UpdateGoalTimeFrameDTO } from './dto';
 
@@ -31,7 +29,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		super(goalTimeFrameService);
 	}
 
-	
+
 	@ApiOperation({ summary: 'Get all Goal Time Frames' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -46,8 +44,8 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<IGoalTimeFrame>> {
 		const { findInput } = data;
-		return this.goalTimeFrameService.findAll({ 
-			where: { ...findInput } 
+		return this.goalTimeFrameService.findAll({
+			where: { ...findInput }
 		});
 	}
 
@@ -58,7 +56,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		type: GoalTimeFrame
 	})
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateGoalTimeFrameDTO
 	): Promise<IGoalTimeFrame> {
@@ -98,7 +96,7 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true}))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateGoalTimeFrameDTO
@@ -119,5 +117,5 @@ export class GoalTimeFrameController extends CrudController<GoalTimeFrame> {
 		@Param('id', UUIDValidationPipe) id: string
 	): Promise<any> {
 		return this.goalTimeFrameService.delete(id);
-	}	
+	}
 }

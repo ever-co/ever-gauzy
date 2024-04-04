@@ -8,8 +8,6 @@ import {
 	Param,
 	Put,
 	HttpCode,
-	UsePipes,
-	ValidationPipe,
 	BadRequestException,
 	Post
 } from '@nestjs/common';
@@ -26,7 +24,7 @@ import { IEmailHistory, IPagination, LanguagesEnum, PermissionsEnum } from '@gau
 import { EmailHistory } from './email-history.entity';
 import { EmailHistoryService } from './email-history.service';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { UpdateEmailHistoryDTO } from './dto';
 import { PaginationParams } from './../core/crud';
@@ -39,10 +37,7 @@ import { EmailHistoryResendCommand } from './commands';
 @Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
 @Controller()
 export class EmailHistoryController {
-	constructor(
-		private readonly _emailHistoryService: EmailHistoryService,
-		private readonly commandBus: CommandBus,
-	) { }
+	constructor(private readonly _emailHistoryService: EmailHistoryService, private readonly commandBus: CommandBus) { }
 
 	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
 	@ApiOkResponse({
@@ -56,13 +51,11 @@ export class EmailHistoryController {
 	})
 	@ApiInternalServerErrorResponse({
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
-		description: "Invalid input, The response body may contain clues as to what went wrong"
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<EmailHistory>
-	): Promise<IPagination<IEmailHistory>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<EmailHistory>): Promise<IPagination<IEmailHistory>> {
 		try {
 			return await this._emailHistoryService.findAll(params);
 		} catch (error) {
@@ -81,12 +74,11 @@ export class EmailHistoryController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IEmailHistory['id'],
 		@Body() entity: UpdateEmailHistoryDTO
@@ -98,26 +90,22 @@ export class EmailHistoryController {
 		}
 	}
 
-
 	@ApiOperation({ summary: 'Resend Email.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully updated.',
+		description: 'The record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong',
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Post('resend')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async resendInvite(
 		@Body() entity: ResendEmailHistoryDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
 	): Promise<UpdateResult | IEmailHistory> {
-		return await this.commandBus.execute(
-			new EmailHistoryResendCommand(entity, languageCode)
-		);
+		return await this.commandBus.execute(new EmailHistoryResendCommand(entity, languageCode));
 	}
 }

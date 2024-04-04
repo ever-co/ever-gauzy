@@ -72,7 +72,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			const priorities: ITaskPriority[] = [];
 			for (const tenant of tenants) {
 				for (const priority of DEFAULT_GLOBAL_PRIORITIES) {
-					const create = this.repository.create({
+					const create = this.typeOrmRepository.create({
 						...priority,
 						icon: `ever-icons/${priority.icon}`,
 						tenant,
@@ -81,7 +81,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 					priorities.push(create);
 				}
 			}
-			return await this.repository.save(priorities);
+			return await this.typeOrmRepository.save(priorities);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -102,7 +102,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 			for (const item of items) {
 				const { name, value, description, icon, color } = item;
 
-				const create = this.repository.create({
+				const create = this.typeOrmRepository.create({
 					tenantId,
 					name,
 					value,
@@ -114,7 +114,7 @@ export class TaskPriorityService extends TaskStatusPrioritySizeService<TaskPrior
 				});
 				priorities.push(create);
 			}
-			return await this.repository.save(priorities);
+			return await this.typeOrmRepository.save(priorities);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

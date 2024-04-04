@@ -9,21 +9,16 @@ import {
 	Query,
 	UseGuards,
 	Delete,
-	ValidationPipe,
-	UsePipes
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, FindOneOptions, UpdateResult } from 'typeorm';
-import {
-	ITimeLog,
-	PermissionsEnum,
-	IGetTimeLogConflictInput
-} from '@gauzy/contracts';
+import { ITimeLog, PermissionsEnum, IGetTimeLogConflictInput } from '@gauzy/contracts';
 import { TimeLogService } from './time-log.service';
 import { Permissions } from './../../shared/decorators';
 import { OrganizationPermissionGuard, PermissionGuard, TenantBaseGuard } from './../../shared/guards';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
 import { TimeLogLimitQueryDTO, TimeLogQueryDTO } from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
@@ -34,11 +29,7 @@ import { IGetConflictTimeLogCommand } from './commands';
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeLogController {
-
-	constructor(
-		private readonly timeLogService: TimeLogService,
-		private readonly commandBus: CommandBus,
-	) { }
+	constructor(private readonly timeLogService: TimeLogService, private readonly commandBus: CommandBus) {}
 
 	/**
 	 * Get conflicting timer logs based on the provided entity.
@@ -49,19 +40,15 @@ export class TimeLogController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Successfully retrieved conflicting timer logs',
-		isArray: true,
+		isArray: true
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. The response body may contain clues as to what went wrong.',
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('conflict')
-	async getConflict(
-		@Query() request: IGetTimeLogConflictInput
-	): Promise<ITimeLog[]> {
-		return await this.commandBus.execute(
-			new IGetConflictTimeLogCommand(request)
-		);
+	async getConflict(@Query() request: IGetTimeLogConflictInput): Promise<ITimeLog[]> {
+		return await this.commandBus.execute(new IGetConflictTimeLogCommand(request));
 	}
 
 	/**
@@ -72,17 +59,15 @@ export class TimeLogController {
 	@ApiOperation({ summary: 'Find Timer Log by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the daily report',
+		description: 'Successfully retrieved the daily report'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No records found for the provided options',
+		description: 'No records found for the provided options'
 	})
 	@Get('report/daily')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getDailyReport(
-		@Query() options: TimeLogQueryDTO
-	): Promise<any | null> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getDailyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
 		return await this.timeLogService.getDailyReport(options);
 	}
 
@@ -94,17 +79,15 @@ export class TimeLogController {
 	@ApiOperation({ summary: 'Find Timer Log by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the chart data for the daily report',
+		description: 'Successfully retrieved the chart data for the daily report'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No records found for the provided options',
+		description: 'No records found for the provided options'
 	})
 	@Get('report/daily-chart')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getDailyReportChartData(
-		@Query() options: TimeLogQueryDTO
-	): Promise<any | null> {
+	@UseValidationPipe({ whitelist: true })
+	async getDailyReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
 		return await this.timeLogService.getDailyReportCharts(options);
 	}
 
@@ -116,17 +99,15 @@ export class TimeLogController {
 	@ApiOperation({ summary: 'Get Owed Amount Report' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the report data for the owed amount',
+		description: 'Successfully retrieved the report data for the owed amount'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. The response body may contain clues as to what went wrong.',
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('report/owed-report')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getOwedAmountReport(
-		@Query() options: TimeLogQueryDTO
-	): Promise<any | null> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getOwedAmountReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
 		return await this.timeLogService.getOwedAmountReport(options);
 	}
 
@@ -138,17 +119,15 @@ export class TimeLogController {
 	@ApiOperation({ summary: 'Get Owed Amount Report Chart Data' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the chart data for the owed amount report',
+		description: 'Successfully retrieved the chart data for the owed amount report'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. The response body may contain clues as to what went wrong.',
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('report/owed-charts')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getOwedAmountReportChartData(
-		@Query() options: TimeLogQueryDTO
-	): Promise<any | null> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getOwedAmountReportChartData(@Query() options: TimeLogQueryDTO): Promise<any | null> {
 		return await this.timeLogService.getOwedAmountReportCharts(options);
 	}
 
@@ -160,17 +139,15 @@ export class TimeLogController {
 	@ApiOperation({ summary: 'Get Weekly Report' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the weekly report for timer logs',
+		description: 'Successfully retrieved the weekly report for timer logs'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No records found for the specified options',
+		description: 'No records found for the specified options'
 	})
 	@Get('report/weekly')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getWeeklyReport(
-		@Query() options: TimeLogQueryDTO
-	): Promise<any | null> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getWeeklyReport(@Query() options: TimeLogQueryDTO): Promise<any | null> {
 		return await this.timeLogService.getWeeklyReport(options);
 	}
 
@@ -182,17 +159,15 @@ export class TimeLogController {
 	@ApiOperation({ summary: 'Get Time Limit Report' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the time limit report for timer logs',
+		description: 'Successfully retrieved the time limit report for timer logs'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No records found for the specified options',
+		description: 'No records found for the specified options'
 	})
 	@Get('time-limit')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getTimeLimitReport(
-		@Query() options: TimeLogLimitQueryDTO
-	): Promise<any | null> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getTimeLimitReport(@Query() options: TimeLogLimitQueryDTO): Promise<any | null> {
 		return await this.timeLogService.getTimeLimit(options);
 	}
 
@@ -211,10 +186,8 @@ export class TimeLogController {
 		description: 'Project budget limit not found.'
 	})
 	@Get('project-budget-limit')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getProjectBudgetLimit(
-		@Query() options: TimeLogQueryDTO
-	) {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getProjectBudgetLimit(@Query() options: TimeLogQueryDTO) {
 		return await this.timeLogService.getProjectBudgetLimit(options);
 	}
 
@@ -233,10 +206,8 @@ export class TimeLogController {
 		description: 'Client budget limit not found.'
 	})
 	@Get('client-budget-limit')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async clientBudgetLimit(
-		@Query() options: TimeLogQueryDTO
-	) {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
 		return await this.timeLogService.getClientBudgetLimit(options);
 	}
 
@@ -249,17 +220,15 @@ export class TimeLogController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Successfully retrieved timer logs',
-		isArray: true,
+		isArray: true
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. The response body may contain clues as to what went wrong.',
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async getLogs(
-		@Query() options: TimeLogQueryDTO
-	): Promise<ITimeLog[]> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async getLogs(@Query() options: TimeLogQueryDTO): Promise<ITimeLog[]> {
 		return await this.timeLogService.getTimeLogs(options);
 	}
 
@@ -313,8 +282,7 @@ export class TimeLogController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put(':id')
 	@UseGuards(OrganizationPermissionGuard)
@@ -342,10 +310,8 @@ export class TimeLogController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async deleteTimeLog(
-		@Query() deleteQuery: DeleteTimeLogDTO
-	): Promise<DeleteResult | UpdateResult> {
+	@UseValidationPipe({ transform: true })
+	async deleteTimeLog(@Query() deleteQuery: DeleteTimeLogDTO): Promise<DeleteResult | UpdateResult> {
 		return await this.timeLogService.deleteTimeLogs(deleteQuery);
 	}
 }

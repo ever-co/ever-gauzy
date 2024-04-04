@@ -22,6 +22,6 @@ export class KeyResultService extends TenantAwareCrudService<KeyResult> {
 	 * @returns
 	 */
 	async createBulk(input: KeyResult[]) {
-		return await this.repository.save(input);
+		return await this.typeOrmRepository.save(input);
 	}
 }

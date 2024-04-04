@@ -9,32 +9,28 @@ import {
 	HttpStatus,
 	Post,
 	Put,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { Roles } from './../shared/decorators';
 import { RoleGuard } from './../shared/guards';
+import { UseValidationPipe } from '../shared/pipes';
 import { CreateTenantDTO, UpdateTenantDTO } from './dto';
 import { TenantService } from './tenant.service';
 
 @ApiTags('Tenant')
 @Controller()
 export class TenantController {
-
-	constructor(
-		private readonly tenantService: TenantService
-	) {}
+	constructor(private readonly tenantService: TenantService) { }
 
 	/**
 	 * GET Owner Tenant
 	 *
 	 * @returns
 	 */
-	@ApiOperation({summary: 'Find by id' })
+	@ApiOperation({ summary: 'Find by id' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found tenant record'
@@ -45,9 +41,7 @@ export class TenantController {
 	})
 	@Get()
 	async findById(): Promise<ITenant> {
-		return await this.tenantService.findOneByIdString(
-			RequestContext.currentTenantId()
-		);
+		return await this.tenantService.findOneByIdString(RequestContext.currentTenantId());
 	}
 
 	/**
@@ -72,10 +66,8 @@ export class TenantController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe())
-	async create(
-		@Body() entity: CreateTenantDTO
-	): Promise<ITenant> {
+	@UseValidationPipe()
+	async create(@Body() entity: CreateTenantDTO): Promise<ITenant> {
 		const user = RequestContext.currentUser();
 		if (user.tenantId || user.roleId) {
 			throw new BadRequestException('Tenant already exists');
@@ -107,15 +99,10 @@ export class TenantController {
 	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN)
 	@Put()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async update(
-		@Body() entity: UpdateTenantDTO
-	): Promise<ITenant | UpdateResult> {
+	@UseValidationPipe({ whitelist: true })
+	async update(@Body() entity: UpdateTenantDTO): Promise<ITenant | UpdateResult> {
 		try {
-			return await this.tenantService.update(
-				RequestContext.currentTenantId(),
-				entity
-			);
+			return await this.tenantService.update(RequestContext.currentTenantId(), entity);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -147,9 +134,7 @@ export class TenantController {
 	@Delete()
 	async delete(): Promise<DeleteResult> {
 		try {
-			return await this.tenantService.delete(
-				RequestContext.currentTenantId()
-			);
+			return await this.tenantService.delete(RequestContext.currentTenantId());
 		} catch (error) {
 			throw new ForbiddenException();
 		}

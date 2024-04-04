@@ -1,11 +1,10 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { environment } from '@env/environment';
+import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
-import { EmployeesService, ErrorHandlingService } from '../../../@core';
-import { environment } from '@env/environment';
-import { JitsuService } from '../../../@core/services/analytics/jitsu.service';
+import { EmployeesService, ErrorHandlingService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,8 +47,7 @@ export class UserMenuComponent implements OnInit {
 
 	constructor(
 		private readonly _employeeService: EmployeesService,
-		private readonly _errorHandler: ErrorHandlingService,
-		private readonly jitsuService: JitsuService
+		private readonly _errorHandler: ErrorHandlingService
 	) {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
@@ -64,7 +62,7 @@ export class UserMenuComponent implements OnInit {
 				tap(async (user: IUser) => {
 					this._isSubmit$.next(true);
 					const employee = await firstValueFrom(
-						this._employeeService.getEmployeeById(user.employeeId)
+						this._employeeService.getEmployeeById(user?.employee?.id)
 					);
 					this._employee$.next(employee);
 					this._isSubmit$.next(false);
