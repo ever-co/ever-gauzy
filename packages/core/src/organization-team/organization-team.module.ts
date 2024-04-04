@@ -39,6 +39,6 @@ import { TypeOrmOrganizationTeamRepository } from './repository';
 	],
 	controllers: [OrganizationTeamController],
 	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService, TypeOrmOrganizationTeamRepository],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService]
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService, TypeOrmOrganizationTeamRepository]
 })
 export class OrganizationTeamModule { }

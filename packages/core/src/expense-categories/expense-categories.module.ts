@@ -3,11 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { ExpenseCategory } from './expense-category.entity';
 import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategoriesController } from './expense-categories.controller';
-import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmExpenseCategoryRepository } from './repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [ExpenseCategoriesController],
-	providers: [ExpenseCategoriesService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, ExpenseCategoriesService]
+	providers: [ExpenseCategoriesService, TypeOrmExpenseCategoryRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, ExpenseCategoriesService, TypeOrmExpenseCategoryRepository]
 })
 export class ExpenseCategoriesModule { }

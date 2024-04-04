@@ -1,4 +1,3 @@
-import { InjectRepository } from "@nestjs/typeorm";
 import { Injectable } from "@nestjs/common";
 import { Not } from "typeorm";
 import {
@@ -6,10 +5,12 @@ import {
 	ValidatorConstraint,
 	ValidatorConstraintInterface
 } from "class-validator";
-import { ExpenseCategory } from "../../../core/entities/internal";
 import { RequestContext } from "../../../core/context";
-import { TypeOrmExpenseCategoryRepository } from "../../../expense-categories/repository/type-orm-expense-category.repository";
-import { MikroOrmExpenseCategoryRepository } from "../../../expense-categories/repository/mikro-orm-expense-category.repository";
+import { MultiORM, MultiORMEnum, getORMType } from "../../../core/utils";
+import { MikroOrmExpenseCategoryRepository, TypeOrmExpenseCategoryRepository } from "../../../expense-categories/repository";
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 /**
  * Expense category already existed validation constraint
@@ -22,41 +23,42 @@ import { MikroOrmExpenseCategoryRepository } from "../../../expense-categories/r
 export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstraintInterface {
 
 	constructor(
-		@InjectRepository(ExpenseCategory)
 		readonly typeOrmExpenseCategoryRepository: TypeOrmExpenseCategoryRepository,
-
 		readonly mikroOrmExpenseCategoryRepository: MikroOrmExpenseCategoryRepository
 	) { }
 
 	/**
-	 * Method to be called to perform custom validation over given value.
+	 * Validates if a given name for an expense category is unique within the specified organization.
+	 *
+	 * @param name - The name of the expense category to validate.
+	 * @param args - Validation arguments containing additional contextual information.
+	 * @returns True if the name is unique (or in the case of an update, not matching any other than itself), otherwise false.
 	 */
-	async validate(name: any, args: ValidationArguments): Promise<boolean> {
-		const object: object = args.object;
+	async validate(name: string, args: ValidationArguments): Promise<boolean> {
+		const object = args.object as { organizationId?: string, organization?: { id: string }, id?: string };
+		const organizationId = object.organizationId || object.organization?.id;
+
+		if (!organizationId) return true; // Validation passes if there's no organization context
+
 		try {
-			if (object['organizationId'] || object['organization']['id']) {
-				const organizationId = object['organizationId'] || object['organization']['id'];
-				if (args.targetName === 'UpdateExpenseCategoryDTO') {
-					if (object['id']) {
-						return !(await this.typeOrmExpenseCategoryRepository.findOneByOrFail({
-							id: Not(object['id']),
-							name,
-							organizationId,
-							tenantId: RequestContext.currentTenantId()
-						}));
-					}
-					return true;
-				} else {
-					return !(await this.typeOrmExpenseCategoryRepository.findOneByOrFail({
-						name,
-						organizationId,
-						tenantId: RequestContext.currentTenantId()
-					}));
-				}
+			const tenantId = RequestContext.currentTenantId();
+			const queryConditions = { name, organizationId, tenantId };
+
+			if (args.targetName === 'UpdateExpenseCategoryDTO' && object.id) {
+				queryConditions['id'] = Not(object.id); // Exclude current category from the check
 			}
-			return true;
+
+			switch (ormType) {
+				case MultiORMEnum.MikroORM:
+					return !await this.mikroOrmExpenseCategoryRepository.findOneOrFail(queryConditions);
+				case MultiORMEnum.TypeORM:
+					return !await this.typeOrmExpenseCategoryRepository.findOneByOrFail(queryConditions);
+				default:
+					throw new Error(`Not implemented for ${ormType}`);
+			}
 		} catch (error) {
-			return true;
+			// Consider logging or handling different types of errors explicitly
+			return true; // Name doesn't exist, validation passes
 		}
 	}
 
@@ -65,6 +67,6 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
-		return `${value} already exists, please enter another category.`;
+		return `The category '${value}' already exists. Please choose a different name for the new category.`;
 	}
 }
