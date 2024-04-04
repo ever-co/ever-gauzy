@@ -1,39 +1,31 @@
-// Code from https://github.com/xmlking/ngx-starter-kit.
-// MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
-// Copyright (c) 2018 Sumanth Chinthagunta
-
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import * as cls from 'cls-hooked';
 import { Request, Response, NextFunction } from 'express';
 import { RequestContext } from './request-context';
-
-// There are few alternatives to 'cls-hooked', see:
-// https://docs.nestjs.com/recipes/async-local-storage
-// https://github.com/papooch/nestjs-cls
+import { ClsService } from 'nestjs-cls';
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
-	/**
-	 *
-	 * @param req
-	 * @param res
-	 * @param next
-	 */
-	use(req: Request, res: Response, next: NextFunction) {
-		/**
-		 *
-		 */
-		const context = new RequestContext({ req, res });
-		const session = cls.getNamespace(RequestContext.name) || cls.createNamespace(RequestContext.name);
+	constructor(private clsService: ClsService) {}
 
-		// Note: this is "session" created by "cls-hooked" lib code,
-		// not related to express "session" storage at all!
-		// Also, session.run essentially creates unique context for each
-		// request so all data is isolated without any potential conflicts
-		// for concurrent requests
-		session.run(async () => {
-			console.log('RequestContextMiddleware: setting context ...');
-			session.set(RequestContext.name, context);
+	use(req: Request, res: Response, next: NextFunction) {
+		this.clsService.run(() => {
+			const context = new RequestContext({ req, res });
+			this.clsService.set(RequestContext.name, context);
+
+			const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+			console.log(`Context ${context.id}. Request URL: ${fullUrl} started...`);
+
+			// Capture the original res.end
+			const originalEnd = res.end.bind(res);
+
+			// Override res.end
+			res.end = (...args: any[]): Response => {
+				console.log(`Context ${context.id}. Request to ${fullUrl} completed.`);
+
+				// Call the original res.end and return its result
+				return originalEnd(...args);
+			};
+
 			next();
 		});
 	}

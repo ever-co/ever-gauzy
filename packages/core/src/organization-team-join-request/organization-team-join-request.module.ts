@@ -9,6 +9,7 @@ import { InviteModule } from '../invite/invite.module';
 import { OrganizationTeamEmployee } from '../core/entities/internal';
 import { RoleModule } from '../role/role.module';
 import { UserModule } from './../user/user.module';
+import { EmployeeModule } from './../employee/employee.module';
 import { OrganizationTeamModule } from './../organization-team/organization-team.module';
 import { CommandHandlers } from './commands/handlers';
 import { OrganizationTeamJoinRequestController } from './organization-team-join-request.controller';
@@ -28,6 +29,7 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 		CqrsModule,
 		RolePermissionModule,
 		UserModule,
+		EmployeeModule,
 		OrganizationTeamModule,
 		EmailSendModule,
 		InviteModule,
@@ -37,4 +39,4 @@ import { OrganizationTeamJoinRequestService } from './organization-team-join-req
 	providers: [OrganizationTeamJoinRequestService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamJoinRequestService]
 })
-export class OrganizationTeamJoinRequestModule { }
+export class OrganizationTeamJoinRequestModule {}

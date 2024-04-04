@@ -18,11 +18,7 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	RelationId,
-	JoinTable
-} from 'typeorm';
+import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import {
 	CandidateDocument,
 	CandidateEducation,
@@ -41,7 +37,15 @@ import {
 	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	MultiORMOneToOne
+} from './../core/decorators/entity';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 
 @MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
@@ -101,7 +105,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => String })
 	@MultiORMColumn({ nullable: true })
 	cvUrl?: string;
-
 
 	ratings?: number;
 	alreadyHired?: boolean;
@@ -186,7 +189,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@MultiORMOneToOne(() => User, (user) => user.candidate, {
+	@MultiORMOneToOne(() => User, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
 
@@ -279,7 +282,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 		pivotTable: 'tag_candidate',
 		owner: true,
 		joinColumn: 'candidateId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_candidate'

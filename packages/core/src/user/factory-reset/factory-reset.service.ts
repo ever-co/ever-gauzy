@@ -9,96 +9,96 @@ import { RequestContext } from 'core';
 import { Repository, In } from 'typeorm';
 import { filter, map, some } from 'underscore';
 import {
-    Activity,
-    AppointmentEmployee,
-    ApprovalPolicy,
-    AvailabilitySlot,
-    Candidate,
-    CandidateCriterionsRating,
-    CandidateDocument,
-    CandidateEducation,
-    CandidateExperience,
-    CandidateFeedback,
-    CandidateInterview,
-    CandidateInterviewers,
-    CandidateSkill,
-    CandidateSource,
-    CandidateTechnologies,
-    Contact,
-    Deal,
-    EmailHistory,
-    Employee,
-    EmployeeAppointment,
-    EmployeeAward,
-    EmployeeLevel,
-    EmployeeProposalTemplate,
-    EmployeeRecurringExpense,
-    EmployeeSetting,
-    Equipment,
-    EquipmentSharing,
-    EstimateEmail,
-    EventType,
-    Expense,
-    ExpenseCategory,
-    FeatureOrganization,
-    Goal,
-    GoalKPI,
-    GoalKPITemplate,
-    GoalTemplate,
-    GoalTimeFrame,
-    Income,
-    IntegrationEntitySetting,
-    IntegrationEntitySettingTied,
-    IntegrationMap,
-    IntegrationSetting,
-    IntegrationTenant,
-    Invite,
-    Invoice,
-    InvoiceEstimateHistory,
-    InvoiceItem,
-    JobPreset,
-    JobSearchCategory,
-    JobSearchOccupation,
-    KeyResult,
-    KeyResultTemplate,
-    KeyResultUpdate,
-    Organization,
-    OrganizationAward,
-    OrganizationContact,
-    OrganizationDepartment,
-    OrganizationDocument,
-    OrganizationEmploymentType,
-    OrganizationLanguage,
-    OrganizationPosition,
-    OrganizationProject,
-    OrganizationRecurringExpense,
-    OrganizationSprint,
-    OrganizationTeam,
-    OrganizationTeamEmployee,
-    OrganizationVendor,
-    Payment,
-    Pipeline,
-    PipelineStage,
-    Product,
-    ProductCategory,
-    ProductOption,
-    ProductVariant,
-    ProductVariantPrice,
-    ProductVariantSetting,
-    Proposal,
-    RequestApproval,
-    Screenshot,
-    Skill,
-    Tag,
-    Task,
-    TenantSetting,
-    TimeLog,
-    TimeOffPolicy,
-    TimeOffRequest,
-    Timesheet,
-    TimeSlot,
-    User,
-    UserOrganization
+	Activity,
+	AppointmentEmployee,
+	ApprovalPolicy,
+	AvailabilitySlot,
+	Candidate,
+	CandidateCriterionsRating,
+	CandidateDocument,
+	CandidateEducation,
+	CandidateExperience,
+	CandidateFeedback,
+	CandidateInterview,
+	CandidateInterviewers,
+	CandidateSkill,
+	CandidateSource,
+	CandidateTechnologies,
+	Contact,
+	Deal,
+	EmailHistory,
+	Employee,
+	EmployeeAppointment,
+	EmployeeAward,
+	EmployeeLevel,
+	EmployeeProposalTemplate,
+	EmployeeRecurringExpense,
+	EmployeeSetting,
+	Equipment,
+	EquipmentSharing,
+	EstimateEmail,
+	EventType,
+	Expense,
+	ExpenseCategory,
+	FeatureOrganization,
+	Goal,
+	GoalKPI,
+	GoalKPITemplate,
+	GoalTemplate,
+	GoalTimeFrame,
+	Income,
+	IntegrationEntitySetting,
+	IntegrationEntitySettingTied,
+	IntegrationMap,
+	IntegrationSetting,
+	IntegrationTenant,
+	Invite,
+	Invoice,
+	InvoiceEstimateHistory,
+	InvoiceItem,
+	JobPreset,
+	JobSearchCategory,
+	JobSearchOccupation,
+	KeyResult,
+	KeyResultTemplate,
+	KeyResultUpdate,
+	Organization,
+	OrganizationAward,
+	OrganizationContact,
+	OrganizationDepartment,
+	OrganizationDocument,
+	OrganizationEmploymentType,
+	OrganizationLanguage,
+	OrganizationPosition,
+	OrganizationProject,
+	OrganizationRecurringExpense,
+	OrganizationSprint,
+	OrganizationTeam,
+	OrganizationTeamEmployee,
+	OrganizationVendor,
+	Payment,
+	Pipeline,
+	PipelineStage,
+	Product,
+	ProductCategory,
+	ProductOption,
+	ProductVariant,
+	ProductVariantPrice,
+	ProductVariantSetting,
+	Proposal,
+	RequestApproval,
+	Screenshot,
+	Skill,
+	Tag,
+	Task,
+	TenantSetting,
+	TimeLog,
+	TimeOffPolicy,
+	TimeOffRequest,
+	Timesheet,
+	TimeSlot,
+	User,
+	UserOrganization
 } from '../../core/entities/internal';
 import { TypeOrmActivityRepository } from '../../time-tracking/activity/repository/type-orm-activity.repository';
 import { MikroOrmActivityRepository } from '../../time-tracking/activity/repository/mikro-orm-activity.repository';
@@ -283,663 +283,656 @@ import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repos
 
 @Injectable()
 export class FactoryResetService {
+	repositories: Repository<any>[];
 
-    repositories: Repository<any>[];
+	constructor(
+		@InjectRepository(Activity)
+		private typeOrmActivityRepository: TypeOrmActivityRepository,
 
-    constructor(
-        @InjectRepository(Activity)
-        private typeOrmActivityRepository: TypeOrmActivityRepository,
+		private mikroOrmActivityRepository: MikroOrmActivityRepository,
 
-        private mikroOrmActivityRepository: MikroOrmActivityRepository,
+		@InjectRepository(AppointmentEmployee)
+		private typeOrmAppointmentEmployeeRepository: TypeOrmAppointmentEmployeeRepository,
 
-        @InjectRepository(AppointmentEmployee)
-        private typeOrmAppointmentEmployeeRepository: TypeOrmAppointmentEmployeeRepository,
+		mikroOrmAppointmentEmployeeRepository: MikroOrmAppointmentEmployeeRepository,
 
-        mikroOrmAppointmentEmployeeRepository: MikroOrmAppointmentEmployeeRepository,
+		@InjectRepository(ApprovalPolicy)
+		private typeOrmApprovalPolicyRepository: TypeOrmApprovalPolicyRepository,
 
-        @InjectRepository(ApprovalPolicy)
-        private typeOrmApprovalPolicyRepository: TypeOrmApprovalPolicyRepository,
+		mikroOrmApprovalPolicyRepository: MikroOrmApprovalPolicyRepository,
 
-        mikroOrmApprovalPolicyRepository: MikroOrmApprovalPolicyRepository,
+		@InjectRepository(AvailabilitySlot)
+		private typeOrmAvailabilitySlotRepository: TypeOrmAvailabilitySlotRepository,
 
-        @InjectRepository(AvailabilitySlot)
-        private typeOrmAvailabilitySlotRepository: TypeOrmAvailabilitySlotRepository,
+		mikroOrmAvailabilitySlotRepository: MikroOrmAvailabilitySlotRepository,
 
-        mikroOrmAvailabilitySlotRepository: MikroOrmAvailabilitySlotRepository,
+		@InjectRepository(Candidate)
+		private typeOrmCandidateRepository: TypeOrmCandidateRepository,
 
-        @InjectRepository(Candidate)
-        private typeOrmCandidateRepository: TypeOrmCandidateRepository,
+		mikroOrmCandidateRepository: MikroOrmCandidateRepository,
 
-        mikroOrmCandidateRepository: MikroOrmCandidateRepository,
+		@InjectRepository(CandidateCriterionsRating)
+		private typeOrmCandidateCriterionsRatingRepository: TypeOrmCandidateCriterionsRatingRepository,
 
-        @InjectRepository(CandidateCriterionsRating)
-        private typeOrmCandidateCriterionsRatingRepository: TypeOrmCandidateCriterionsRatingRepository,
+		mikroOrmCandidateCriterionsRatingRepository: MikroOrmCandidateCriterionsRatingRepository,
 
-        mikroOrmCandidateCriterionsRatingRepository: MikroOrmCandidateCriterionsRatingRepository,
+		@InjectRepository(CandidateDocument)
+		private typeOrmCandidateDocumentRepository: TypeOrmCandidateDocumentRepository,
 
-        @InjectRepository(CandidateDocument)
-        private typeOrmCandidateDocumentRepository: TypeOrmCandidateDocumentRepository,
+		mikroOrmCandidateDocumentRepository: MikroOrmCandidateDocumentRepository,
 
-        mikroOrmCandidateDocumentRepository: MikroOrmCandidateDocumentRepository,
+		@InjectRepository(CandidateEducation)
+		private typeOrmCandidateEducationRepository: TypeOrmCandidateEducationRepository,
 
-        @InjectRepository(CandidateEducation)
-        private typeOrmCandidateEducationRepository: TypeOrmCandidateEducationRepository,
+		mikroOrmCandidateEducationRepository: MikroOrmCandidateEducationRepository,
 
-        mikroOrmCandidateEducationRepository: MikroOrmCandidateEducationRepository,
+		@InjectRepository(CandidateExperience)
+		private typeOrmCandidateExperienceRepository: TypeOrmCandidateExperienceRepository,
 
-        @InjectRepository(CandidateExperience)
-        private typeOrmCandidateExperienceRepository: TypeOrmCandidateExperienceRepository,
+		mikroOrmCandidateExperienceRepository: MikroOrmCandidateExperienceRepository,
 
-        mikroOrmCandidateExperienceRepository: MikroOrmCandidateExperienceRepository,
+		@InjectRepository(CandidateFeedback)
+		private typeOrmCandidateFeedbackRepository: TypeOrmCandidateFeedbackRepository,
 
-        @InjectRepository(CandidateFeedback)
-        private typeOrmCandidateFeedbackRepository: TypeOrmCandidateFeedbackRepository,
+		mikroOrmCandidateFeedbackRepository: MikroOrmCandidateFeedbackRepository,
 
-        mikroOrmCandidateFeedbackRepository: MikroOrmCandidateFeedbackRepository,
+		@InjectRepository(CandidateInterview)
+		private typeOrmCandidateInterviewRepository: TypeOrmCandidateInterviewRepository,
 
-        @InjectRepository(CandidateInterview)
-        private typeOrmCandidateInterviewRepository: TypeOrmCandidateInterviewRepository,
+		mikroOrmCandidateInterviewRepository: MikroOrmCandidateInterviewRepository,
 
-        mikroOrmCandidateInterviewRepository: MikroOrmCandidateInterviewRepository,
+		@InjectRepository(CandidateInterviewers)
+		private typeOrmCandidateInterviewersRepository: TypeOrmCandidateInterviewersRepository,
 
-        @InjectRepository(CandidateInterviewers)
-        private typeOrmCandidateInterviewersRepository: TypeOrmCandidateInterviewersRepository,
+		mikroOrmCandidateInterviewersRepository: MikroOrmCandidateInterviewersRepository,
 
-        mikroOrmCandidateInterviewersRepository: MikroOrmCandidateInterviewersRepository,
+		@InjectRepository(CandidateSkill)
+		private typeOrmCandidateSkillRepository: TypeOrmCandidateSkillRepository,
 
-        @InjectRepository(CandidateSkill)
-        private typeOrmCandidateSkillRepository: TypeOrmCandidateSkillRepository,
+		mikroOrmCandidateSkillRepository: MikroOrmCandidateSkillRepository,
 
-        mikroOrmCandidateSkillRepository: MikroOrmCandidateSkillRepository,
+		@InjectRepository(CandidateSource)
+		private typeOrmCandidateSourceRepository: TypeOrmCandidateSourceRepository,
 
-        @InjectRepository(CandidateSource)
-        private typeOrmCandidateSourceRepository: TypeOrmCandidateSourceRepository,
+		mikroOrmCandidateSourceRepository: MikroOrmCandidateSourceRepository,
 
-        mikroOrmCandidateSourceRepository: MikroOrmCandidateSourceRepository,
+		@InjectRepository(CandidateTechnologies)
+		private typeOrmCandidateTechnologiesRepository: TypeOrmCandidateTechnologiesRepository,
 
-        @InjectRepository(CandidateTechnologies)
-        private typeOrmCandidateTechnologiesRepository: TypeOrmCandidateTechnologiesRepository,
+		mikroOrmCandidateTechnologiesRepository: MikroOrmCandidateTechnologiesRepository,
 
-        mikroOrmCandidateTechnologiesRepository: MikroOrmCandidateTechnologiesRepository,
+		@InjectRepository(Contact)
+		private typeOrmContactRepository: TypeOrmContactRepository,
 
-        @InjectRepository(Contact)
-        private typeOrmContactRepository: TypeOrmContactRepository,
+		mikroOrmContactRepository: MikroOrmContactRepository,
 
-        mikroOrmContactRepository: MikroOrmContactRepository,
+		@InjectRepository(Deal)
+		private typeOrmDealRepository: TypeOrmDealRepository,
 
-        @InjectRepository(Deal)
-        private typeOrmDealRepository: TypeOrmDealRepository,
+		mikroOrmDealRepository: MikroOrmDealRepository,
 
-        mikroOrmDealRepository: MikroOrmDealRepository,
+		@InjectRepository(EmailHistory)
+		private typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
 
-        @InjectRepository(EmailHistory)
-        private typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
+		mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
 
-        mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
+		@InjectRepository(Employee)
+		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 
-        @InjectRepository(Employee)
-        private typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 
-        mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
+		@InjectRepository(EmployeeAppointment)
+		private typeOrmEmployeeAppointmentRepository: TypeOrmEmployeeAppointmentRepository,
 
-        @InjectRepository(EmployeeAppointment)
-        private typeOrmEmployeeAppointmentRepository: TypeOrmEmployeeAppointmentRepository,
+		mikroOrmEmployeeAppointmentRepository: MikroOrmEmployeeAppointmentRepository,
 
-        mikroOrmEmployeeAppointmentRepository: MikroOrmEmployeeAppointmentRepository,
+		@InjectRepository(EmployeeAward)
+		private typeOrmEmployeeAwardRepository: TypeOrmEmployeeAwardRepository,
 
-        @InjectRepository(EmployeeAward)
-        private typeOrmEmployeeAwardRepository: TypeOrmEmployeeAwardRepository,
+		mikroOrmEmployeeAwardRepository: MikroOrmEmployeeAwardRepository,
 
-        mikroOrmEmployeeAwardRepository: MikroOrmEmployeeAwardRepository,
+		@InjectRepository(EmployeeProposalTemplate)
+		private typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
 
-        @InjectRepository(EmployeeProposalTemplate)
-        private typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
+		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository,
 
-        mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository,
+		@InjectRepository(EmployeeRecurringExpense)
+		private typeOrmEmployeeRecurringExpenseRepository: TypeOrmEmployeeRecurringExpenseRepository,
 
-        @InjectRepository(EmployeeRecurringExpense)
-        private typeOrmEmployeeRecurringExpenseRepository: TypeOrmEmployeeRecurringExpenseRepository,
+		mikroOrmEmployeeRecurringExpenseRepository: MikroOrmEmployeeRecurringExpenseRepository,
 
-        mikroOrmEmployeeRecurringExpenseRepository: MikroOrmEmployeeRecurringExpenseRepository,
+		@InjectRepository(EmployeeSetting)
+		private typeOrmEmployeeSettingRepository: TypeOrmEmployeeSettingRepository,
 
-        @InjectRepository(EmployeeSetting)
-        private typeOrmEmployeeSettingRepository: TypeOrmEmployeeSettingRepository,
+		mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository,
 
-        mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository,
+		@InjectRepository(Equipment)
+		private typeOrmEquipmentRepository: TypeOrmEquipmentRepository,
 
-        @InjectRepository(Equipment)
-        private typeOrmEquipmentRepository: TypeOrmEquipmentRepository,
+		mikroOrmEquipmentRepository: MikroOrmEquipmentRepository,
 
-        mikroOrmEquipmentRepository: MikroOrmEquipmentRepository,
+		@InjectRepository(EquipmentSharing)
+		private typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
 
-        @InjectRepository(EquipmentSharing)
-        private typeOrmEquipmentSharingRepository: TypeOrmEquipmentSharingRepository,
+		mikroOrmEquipmentSharingRepository: MikroOrmEquipmentSharingRepository,
 
-        mikroOrmEquipmentSharingRepository: MikroOrmEquipmentSharingRepository,
+		@InjectRepository(EstimateEmail)
+		private typeOrmEstimateEmailRepository: TypeOrmEstimateEmailRepository,
 
-        @InjectRepository(EstimateEmail)
-        private typeOrmEstimateEmailRepository: TypeOrmEstimateEmailRepository,
+		mikroOrmEstimateEmailRepository: MikroOrmEstimateEmailRepository,
 
-        mikroOrmEstimateEmailRepository: MikroOrmEstimateEmailRepository,
+		@InjectRepository(EventType)
+		private typeOrmEventTypeRepository: TypeOrmEventTypeRepository,
 
-        @InjectRepository(EventType)
-        private typeOrmEventTypeRepository: TypeOrmEventTypeRepository,
+		mikroOrmEventTypeRepository: MikroOrmEventTypeRepository,
 
-        mikroOrmEventTypeRepository: MikroOrmEventTypeRepository,
+		@InjectRepository(Expense)
+		private typeOrmExpenseRepository: TypeOrmExpenseRepository,
 
-        @InjectRepository(Expense)
-        private typeOrmExpenseRepository: TypeOrmExpenseRepository,
+		mikroOrmExpenseRepository: MikroOrmExpenseRepository,
 
-        mikroOrmExpenseRepository: MikroOrmExpenseRepository,
+		@InjectRepository(ExpenseCategory)
+		private typeOrmExpenseCategoryRepository: TypeOrmExpenseCategoryRepository,
 
-        @InjectRepository(ExpenseCategory)
-        private typeOrmExpenseCategoryRepository: TypeOrmExpenseCategoryRepository,
+		mikroOrmExpenseCategoryRepository: MikroOrmExpenseCategoryRepository,
 
-        mikroOrmExpenseCategoryRepository: MikroOrmExpenseCategoryRepository,
+		@InjectRepository(FeatureOrganization)
+		private typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
 
-        @InjectRepository(FeatureOrganization)
-        private typeOrmFeatureOrganizationRepository: TypeOrmFeatureOrganizationRepository,
+		mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
 
-        mikroOrmFeatureOrganizationRepository: MikroOrmFeatureOrganizationRepository,
+		@InjectRepository(Goal)
+		private typeOrmGoalRepository: TypeOrmGoalRepository,
 
-        @InjectRepository(Goal)
-        private typeOrmGoalRepository: TypeOrmGoalRepository,
+		mikroOrmGoalRepository: MikroOrmGoalRepository,
 
-        mikroOrmGoalRepository: MikroOrmGoalRepository,
+		@InjectRepository(GoalTemplate)
+		private typeOrmGoalTemplateRepository: TypeOrmGoalTemplateRepository,
 
-        @InjectRepository(GoalTemplate)
-        private typeOrmGoalTemplateRepository: TypeOrmGoalTemplateRepository,
+		mikroOrmGoalTemplateRepository: MikroOrmGoalTemplateRepository,
 
-        mikroOrmGoalTemplateRepository: MikroOrmGoalTemplateRepository,
+		@InjectRepository(GoalKPI)
+		private typeOrmGoalKPIRepository: TypeOrmGoalKPIRepository,
 
-        @InjectRepository(GoalKPI)
-        private typeOrmGoalKPIRepository: TypeOrmGoalKPIRepository,
+		mikroOrmGoalKPIRepository: MikroOrmGoalKPIRepository,
 
-        mikroOrmGoalKPIRepository: MikroOrmGoalKPIRepository,
+		@InjectRepository(GoalKPITemplate)
+		private typeOrmGoalKPITemplateRepository: TypeOrmGoalKPITemplateRepository,
 
-        @InjectRepository(GoalKPITemplate)
-        private typeOrmGoalKPITemplateRepository: TypeOrmGoalKPITemplateRepository,
+		mikroOrmGoalKPITemplateRepository: MikroOrmGoalKPITemplateRepository,
 
-        mikroOrmGoalKPITemplateRepository: MikroOrmGoalKPITemplateRepository,
+		@InjectRepository(GoalTimeFrame)
+		private typeOrmGoalTimeFrameRepository: TypeOrmGoalTimeFrameRepository,
 
-        @InjectRepository(GoalTimeFrame)
-        private typeOrmGoalTimeFrameRepository: TypeOrmGoalTimeFrameRepository,
+		mikroOrmGoalTimeFrameRepository: MikroOrmGoalTimeFrameRepository,
 
-        mikroOrmGoalTimeFrameRepository: MikroOrmGoalTimeFrameRepository,
+		@InjectRepository(Income)
+		private typeOrmIncomeRepository: TypeOrmIncomeRepository,
 
-        @InjectRepository(Income)
-        private typeOrmIncomeRepository: TypeOrmIncomeRepository,
+		mikroOrmIncomeRepository: MikroOrmIncomeRepository,
 
-        mikroOrmIncomeRepository: MikroOrmIncomeRepository,
+		@InjectRepository(IntegrationEntitySetting)
+		private typeOrmIntegrationEntitySettingRepository: TypeOrmIntegrationEntitySettingRepository,
 
-        @InjectRepository(IntegrationEntitySetting)
-        private typeOrmIntegrationEntitySettingRepository: TypeOrmIntegrationEntitySettingRepository,
+		mikroOrmIntegrationEntitySettingRepository: MikroOrmIntegrationEntitySettingRepository,
 
-        mikroOrmIntegrationEntitySettingRepository: MikroOrmIntegrationEntitySettingRepository,
+		@InjectRepository(IntegrationEntitySettingTied)
+		private typeOrmIntegrationEntitySettingTiedRepository: TypeOrmIntegrationEntitySettingTiedRepository,
 
-        @InjectRepository(IntegrationEntitySettingTied)
-        private typeOrmIntegrationEntitySettingTiedRepository: TypeOrmIntegrationEntitySettingTiedRepository,
+		mikroOrmIntegrationEntitySettingTiedRepository: MikroOrmIntegrationEntitySettingTiedRepository,
 
-        mikroOrmIntegrationEntitySettingTiedRepository: MikroOrmIntegrationEntitySettingTiedRepository,
+		@InjectRepository(IntegrationMap)
+		private typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
 
-        @InjectRepository(IntegrationMap)
-        private typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
+		mikroOrmIntegrationMapRepository: MikroOrmIntegrationMapRepository,
 
-        mikroOrmIntegrationMapRepository: MikroOrmIntegrationMapRepository,
+		@InjectRepository(IntegrationSetting)
+		private typeOrmIntegrationSettingRepository: TypeOrmIntegrationSettingRepository,
 
-        @InjectRepository(IntegrationSetting)
-        private typeOrmIntegrationSettingRepository: TypeOrmIntegrationSettingRepository,
+		mikroOrmIntegrationSettingRepository: MikroOrmIntegrationSettingRepository,
 
-        mikroOrmIntegrationSettingRepository: MikroOrmIntegrationSettingRepository,
+		@InjectRepository(IntegrationTenant)
+		private typeOrmIntegrationTenantRepository: TypeOrmIntegrationTenantRepository,
 
-        @InjectRepository(IntegrationTenant)
-        private typeOrmIntegrationTenantRepository: TypeOrmIntegrationTenantRepository,
+		mikroOrmIntegrationTenantRepository: MikroOrmIntegrationTenantRepository,
 
-        mikroOrmIntegrationTenantRepository: MikroOrmIntegrationTenantRepository,
+		@InjectRepository(Invite)
+		private typeOrmInviteRepository: TypeOrmInviteRepository,
 
-        @InjectRepository(Invite)
-        private typeOrmInviteRepository: TypeOrmInviteRepository,
+		mikroOrmInviteRepository: MikroOrmInviteRepository,
 
-        mikroOrmInviteRepository: MikroOrmInviteRepository,
+		@InjectRepository(Invoice)
+		private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
 
-        @InjectRepository(Invoice)
-        private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
+		mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
 
-        mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
+		@InjectRepository(InvoiceEstimateHistory)
+		private typeOrmInvoiceEstimateHistoryRepository: TypeOrmInvoiceEstimateHistoryRepository,
 
-        @InjectRepository(InvoiceEstimateHistory)
-        private typeOrmInvoiceEstimateHistoryRepository: TypeOrmInvoiceEstimateHistoryRepository,
+		mikroOrmInvoiceEstimateHistoryRepository: MikroOrmInvoiceEstimateHistoryRepository,
 
-        mikroOrmInvoiceEstimateHistoryRepository: MikroOrmInvoiceEstimateHistoryRepository,
+		@InjectRepository(InvoiceItem)
+		private typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
 
-        @InjectRepository(InvoiceItem)
-        private typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
+		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
 
-        mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
+		@InjectRepository(JobPreset)
+		private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 
-        @InjectRepository(JobPreset)
-        private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
+		mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
 
-        mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
+		@InjectRepository(JobSearchCategory)
+		private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
 
-        @InjectRepository(JobSearchCategory)
-        private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
+		mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
 
-        mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
+		@InjectRepository(JobSearchOccupation)
+		private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
 
-        @InjectRepository(JobSearchOccupation)
-        private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
+		mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
 
-        mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
+		@InjectRepository(KeyResult)
+		private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
 
-        @InjectRepository(KeyResult)
-        private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
+		mikroOrmKeyResultRepository: MikroOrmKeyResultRepository,
 
-        mikroOrmKeyResultRepository: MikroOrmKeyResultRepository,
+		@InjectRepository(KeyResultTemplate)
+		private typeOrmKeyResultTemplateRepository: TypeOrmKeyResultTemplateRepository,
 
-        @InjectRepository(KeyResultTemplate)
-        private typeOrmKeyResultTemplateRepository: TypeOrmKeyResultTemplateRepository,
+		mikroOrmKeyResultTemplateRepository: MikroOrmKeyResultTemplateRepository,
 
-        mikroOrmKeyResultTemplateRepository: MikroOrmKeyResultTemplateRepository,
+		@InjectRepository(KeyResultUpdate)
+		private typeOrmKeyResultUpdateRepository: TypeOrmKeyResultUpdateRepository,
 
-        @InjectRepository(KeyResultUpdate)
-        private typeOrmKeyResultUpdateRepository: TypeOrmKeyResultUpdateRepository,
+		mikroOrmKeyResultUpdateRepository: MikroOrmKeyResultUpdateRepository,
 
-        mikroOrmKeyResultUpdateRepository: MikroOrmKeyResultUpdateRepository,
+		@InjectRepository(EmployeeLevel)
+		private typeOrmEmployeeLevelRepository: TypeOrmEmployeeLevelRepository,
 
-        @InjectRepository(EmployeeLevel)
-        private typeOrmEmployeeLevelRepository: TypeOrmEmployeeLevelRepository,
+		mikroOrmEmployeeLevelRepository: MikroOrmEmployeeLevelRepository,
 
-        mikroOrmEmployeeLevelRepository: MikroOrmEmployeeLevelRepository,
+		@InjectRepository(OrganizationAward)
+		private typeOrmOrganizationAwardRepository: TypeOrmOrganizationAwardRepository,
 
-        @InjectRepository(OrganizationAward)
-        private typeOrmOrganizationAwardRepository: TypeOrmOrganizationAwardRepository,
+		mikroOrmOrganizationAwardRepository: MikroOrmOrganizationAwardRepository,
 
-        mikroOrmOrganizationAwardRepository: MikroOrmOrganizationAwardRepository,
+		@InjectRepository(Organization)
+		private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 
-        @InjectRepository(Organization)
-        private typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
 
-        mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
+		@InjectRepository(OrganizationContact)
+		private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
 
-        @InjectRepository(OrganizationContact)
-        private typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+		mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository,
 
-        mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository,
+		@InjectRepository(OrganizationDepartment)
+		private typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
 
-        @InjectRepository(OrganizationDepartment)
-        private typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
+		mikroOrmOrganizationDepartmentRepository: MikroOrmOrganizationDepartmentRepository,
 
-        mikroOrmOrganizationDepartmentRepository: MikroOrmOrganizationDepartmentRepository,
+		@InjectRepository(OrganizationDocument)
+		private typeOrmOrganizationDocumentRepository: TypeOrmOrganizationDocumentRepository,
 
-        @InjectRepository(OrganizationDocument)
-        private typeOrmOrganizationDocumentRepository: TypeOrmOrganizationDocumentRepository,
+		mikroOrmOrganizationDocumentRepository: MikroOrmOrganizationDocumentRepository,
 
-        mikroOrmOrganizationDocumentRepository: MikroOrmOrganizationDocumentRepository,
+		@InjectRepository(OrganizationEmploymentType)
+		private typeOrmOrganizationEmploymentTypeRepository: TypeOrmOrganizationEmploymentTypeRepository,
 
-        @InjectRepository(OrganizationEmploymentType)
-        private typeOrmOrganizationEmploymentTypeRepository: TypeOrmOrganizationEmploymentTypeRepository,
+		mikroOrmOrganizationEmploymentTypeRepository: MikroOrmOrganizationEmploymentTypeRepository,
 
-        mikroOrmOrganizationEmploymentTypeRepository: MikroOrmOrganizationEmploymentTypeRepository,
+		@InjectRepository(OrganizationLanguage)
+		private typeOrmOrganizationLanguageRepository: TypeOrmOrganizationLanguageRepository,
 
-        @InjectRepository(OrganizationLanguage)
-        private typeOrmOrganizationLanguageRepository: TypeOrmOrganizationLanguageRepository,
+		mikroOrmOrganizationLanguageRepository: MikroOrmOrganizationLanguageRepository,
 
-        mikroOrmOrganizationLanguageRepository: MikroOrmOrganizationLanguageRepository,
+		@InjectRepository(OrganizationPosition)
+		private typeOrmOrganizationPositionRepository: TypeOrmOrganizationPositionRepository,
 
-        @InjectRepository(OrganizationPosition)
-        private typeOrmOrganizationPositionRepository: TypeOrmOrganizationPositionRepository,
+		mikroOrmOrganizationPositionRepository: MikroOrmOrganizationPositionRepository,
 
-        mikroOrmOrganizationPositionRepository: MikroOrmOrganizationPositionRepository,
+		@InjectRepository(OrganizationProject)
+		private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
 
-        @InjectRepository(OrganizationProject)
-        private typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
 
-        mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
+		@InjectRepository(OrganizationRecurringExpense)
+		private typeOrmOrganizationRecurringExpenseRepository: TypeOrmOrganizationRecurringExpenseRepository,
 
-        @InjectRepository(OrganizationRecurringExpense)
-        private typeOrmOrganizationRecurringExpenseRepository: TypeOrmOrganizationRecurringExpenseRepository,
+		mikroOrmOrganizationRecurringExpenseRepository: MikroOrmOrganizationRecurringExpenseRepository,
 
-        mikroOrmOrganizationRecurringExpenseRepository: MikroOrmOrganizationRecurringExpenseRepository,
+		@InjectRepository(OrganizationSprint)
+		private typeOrmOrganizationSprintRepository: TypeOrmOrganizationSprintRepository,
 
-        @InjectRepository(OrganizationSprint)
-        private typeOrmOrganizationSprintRepository: TypeOrmOrganizationSprintRepository,
+		mikroOrmOrganizationSprintRepository: MikroOrmOrganizationSprintRepository,
 
-        mikroOrmOrganizationSprintRepository: MikroOrmOrganizationSprintRepository,
+		@InjectRepository(OrganizationTeam)
+		private typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 
-        @InjectRepository(OrganizationTeam)
-        private typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
+		mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
 
-        mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
+		@InjectRepository(OrganizationTeamEmployee)
+		private typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
 
-        @InjectRepository(OrganizationTeamEmployee)
-        private typeOrmOrganizationTeamEmployeeRepository: TypeOrmOrganizationTeamEmployeeRepository,
+		mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 
-        mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
+		@InjectRepository(OrganizationVendor)
+		private typeOrmOrganizationVendorRepository: TypeOrmOrganizationVendorRepository,
 
-        @InjectRepository(OrganizationVendor)
-        private typeOrmOrganizationVendorRepository: TypeOrmOrganizationVendorRepository,
+		mikroOrmOrganizationVendorRepository: MikroOrmOrganizationVendorRepository,
 
-        mikroOrmOrganizationVendorRepository: MikroOrmOrganizationVendorRepository,
+		@InjectRepository(Payment)
+		private typeOrmPaymentRepository: TypeOrmPaymentRepository,
 
-        @InjectRepository(Payment)
-        private typeOrmPaymentRepository: TypeOrmPaymentRepository,
+		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
 
-        mikroOrmPaymentRepository: MikroOrmPaymentRepository,
+		@InjectRepository(Pipeline)
+		private typeOrmPipelineRepository: TypeOrmPipelineRepository,
 
-        @InjectRepository(Pipeline)
-        private typeOrmPipelineRepository: TypeOrmPipelineRepository,
+		mikroOrmPipelineRepository: MikroOrmPipelineRepository,
 
-        mikroOrmPipelineRepository: MikroOrmPipelineRepository,
+		@InjectRepository(PipelineStage)
+		private typeOrmPipelineStageRepository: TypeOrmPipelineStageRepository,
 
-        @InjectRepository(PipelineStage)
-        private typeOrmPipelineStageRepository: TypeOrmPipelineStageRepository,
+		mikroOrmPipelineStageRepository: MikroOrmPipelineStageRepository,
 
-        mikroOrmPipelineStageRepository: MikroOrmPipelineStageRepository,
+		@InjectRepository(Product)
+		private typeOrmProductRepository: TypeOrmProductRepository,
 
-        @InjectRepository(Product)
-        private typeOrmProductRepository: TypeOrmProductRepository,
+		mikroOrmProductRepository: MikroOrmProductRepository,
 
-        mikroOrmProductRepository: MikroOrmProductRepository,
+		@InjectRepository(ProductCategory)
+		private typeOrmProductCategoryRepository: TypeOrmProductCategoryRepository,
 
-        @InjectRepository(ProductCategory)
-        private typeOrmProductCategoryRepository: TypeOrmProductCategoryRepository,
+		mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository,
 
-        mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository,
+		@InjectRepository(ProductOption)
+		private typeOrmProductOptionRepository: TypeOrmProductOptionRepository,
 
-        @InjectRepository(ProductOption)
-        private typeOrmProductOptionRepository: TypeOrmProductOptionRepository,
+		mikroOrmProductOptionRepository: MikroOrmProductOptionRepository,
 
-        mikroOrmProductOptionRepository: MikroOrmProductOptionRepository,
+		@InjectRepository(ProductVariantSetting)
+		private typeOrmProductVariantSettingRepository: TypeOrmProductVariantSettingRepository,
 
-        @InjectRepository(ProductVariantSetting)
-        private typeOrmProductVariantSettingRepository: TypeOrmProductVariantSettingRepository,
+		mikroOrmProductVariantSettingRepository: MikroOrmProductVariantSettingRepository,
 
-        mikroOrmProductVariantSettingRepository: MikroOrmProductVariantSettingRepository,
+		@InjectRepository(ProductVariant)
+		private typeOrmProductVariantRepository: TypeOrmProductVariantRepository,
 
-        @InjectRepository(ProductVariant)
-        private typeOrmProductVariantRepository: TypeOrmProductVariantRepository,
+		mikroOrmProductVariantRepository: MikroOrmProductVariantRepository,
 
-        mikroOrmProductVariantRepository: MikroOrmProductVariantRepository,
+		@InjectRepository(ProductVariantPrice)
+		private typeOrmProductVariantPriceRepository: TypeOrmProductVariantPriceRepository,
 
-        @InjectRepository(ProductVariantPrice)
-        private typeOrmProductVariantPriceRepository: TypeOrmProductVariantPriceRepository,
+		mikroOrmProductVariantPriceRepository: MikroOrmProductVariantPriceRepository,
 
-        mikroOrmProductVariantPriceRepository: MikroOrmProductVariantPriceRepository,
+		@InjectRepository(Proposal)
+		private typeOrmProposalRepository: TypeOrmProposalRepository,
 
-        @InjectRepository(Proposal)
-        private typeOrmProposalRepository: TypeOrmProposalRepository,
+		mikroOrmProposalRepository: MikroOrmProposalRepository,
 
-        mikroOrmProposalRepository: MikroOrmProposalRepository,
+		@InjectRepository(Skill)
+		private typeOrmSkillRepository: TypeOrmSkillRepository,
 
-        @InjectRepository(Skill)
-        private typeOrmSkillRepository: TypeOrmSkillRepository,
+		mikroOrmSkillRepository: MikroOrmSkillRepository,
 
-        mikroOrmSkillRepository: MikroOrmSkillRepository,
+		@InjectRepository(Screenshot)
+		private typeOrmScreenshotRepository: TypeOrmScreenshotRepository,
 
-        @InjectRepository(Screenshot)
-        private typeOrmScreenshotRepository: TypeOrmScreenshotRepository,
+		mikroOrmScreenshotRepository: MikroOrmScreenshotRepository,
 
-        mikroOrmScreenshotRepository: MikroOrmScreenshotRepository,
+		@InjectRepository(RequestApproval)
+		private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
 
-        @InjectRepository(RequestApproval)
-        private typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+		mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
 
-        mikroOrmRequestApprovalRepository: MikroOrmRequestApprovalRepository,
+		@InjectRepository(Tag)
+		private typeOrmTagRepository: TypeOrmTagRepository,
 
-        @InjectRepository(Tag)
-        private typeOrmTagRepository: TypeOrmTagRepository,
+		mikroOrmTagRepository: MikroOrmTagRepository,
 
-        mikroOrmTagRepository: MikroOrmTagRepository,
+		@InjectRepository(Task)
+		private typeOrmTaskRepository: TypeOrmTaskRepository,
 
-        @InjectRepository(Task)
-        private typeOrmTaskRepository: TypeOrmTaskRepository,
+		mikroOrmTaskRepository: MikroOrmTaskRepository,
 
-        mikroOrmTaskRepository: MikroOrmTaskRepository,
+		@InjectRepository(Timesheet)
+		private typeOrmTimesheetRepository: TypeOrmTimesheetRepository,
 
-        @InjectRepository(Timesheet)
-        private typeOrmTimesheetRepository: TypeOrmTimesheetRepository,
+		mikroOrmTimesheetRepository: MikroOrmTimesheetRepository,
 
-        mikroOrmTimesheetRepository: MikroOrmTimesheetRepository,
+		@InjectRepository(TimeLog)
+		private typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 
-        @InjectRepository(TimeLog)
-        private typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
+		mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
-        mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
+		@InjectRepository(TimeSlot)
+		private typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 
-        @InjectRepository(TimeSlot)
-        private typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
+		mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 
-        mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
+		@InjectRepository(TimeOffRequest)
+		private typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
 
-        @InjectRepository(TimeOffRequest)
-        private typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
+		mikroOrmTimeOffRequestRepository: MikroOrmTimeOffRequestRepository,
 
-        mikroOrmTimeOffRequestRepository: MikroOrmTimeOffRequestRepository,
+		@InjectRepository(TimeOffPolicy)
+		private typeOrmTimeOffPolicyRepository: TypeOrmTimeOffPolicyRepository,
 
-        @InjectRepository(TimeOffPolicy)
-        private typeOrmTimeOffPolicyRepository: TypeOrmTimeOffPolicyRepository,
+		mikroOrmTimeOffPolicyRepository: MikroOrmTimeOffPolicyRepository,
 
-        mikroOrmTimeOffPolicyRepository: MikroOrmTimeOffPolicyRepository,
+		@InjectRepository(TenantSetting)
+		private typeOrmTenantSettingRepository: TypeOrmTenantSettingRepository,
 
-        @InjectRepository(TenantSetting)
-        private typeOrmTenantSettingRepository: TypeOrmTenantSettingRepository,
+		mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository,
 
-        mikroOrmTenantSettingRepository: MikroOrmTenantSettingRepository,
+		@InjectRepository(User)
+		private typeOrmUserRepository: TypeOrmUserRepository,
 
-        @InjectRepository(User)
-        private typeOrmUserRepository: TypeOrmUserRepository,
+		mikroOrmUserRepository: MikroOrmUserRepository,
 
-        mikroOrmUserRepository: MikroOrmUserRepository,
+		@InjectRepository(UserOrganization)
+		private typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 
-        @InjectRepository(UserOrganization)
-        private typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
+		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
-        mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
+		private configService: ConfigService
+	) {}
 
-        private configService: ConfigService
-    ) { }
+	async onModuleInit() {
+		this.registerCoreRepositories();
+	}
 
-    async onModuleInit() {
-        this.registerCoreRepositories();
-    }
+	async reset() {
+		if (this.configService.get('demo') === true) {
+			throw new ForbiddenException();
+		}
+		const userId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
 
-    async reset() {
-        if (this.configService.get('demo') === true) {
-            throw new ForbiddenException();
-        }
-        const userId = RequestContext.currentUserId();
-        const tenantId = RequestContext.currentTenantId();
+		const user = await this.typeOrmUserRepository.findOneBy({
+			id: userId,
+			tenantId
+		});
+		user.thirdPartyId = null;
+		user.preferredLanguage = null;
+		user.preferredComponentLayout = null;
+		await this.typeOrmUserRepository.save(user);
 
-        const user = await this.typeOrmUserRepository.findOneBy({
-            id: userId,
-            tenantId
-        });
-        user.thirdPartyId = null;
-        user.preferredLanguage = null;
-        user.preferredComponentLayout = null;
-        user.employeeId = null;
-        await this.typeOrmUserRepository.save(user);
+		const oldOrganization: any = await this.typeOrmUserOrganizationRepository.findOne({
+			order: {
+				createdAt: 'ASC'
+			},
+			select: ['organizationId'],
+			where: {
+				userId: userId
+			}
+		});
+		const organizations: any = await this.typeOrmUserOrganizationRepository.find({
+			select: ['organizationId'],
+			where: {
+				userId: userId
+			}
+		});
 
-        const oldOrganization: any = await this.typeOrmUserOrganizationRepository.findOne({
-            order: {
-                createdAt: "ASC"
-            },
-            select: ["organizationId"],
-            where: {
-                userId: userId
-            }
-        });
-        const organizations: any = await this.typeOrmUserOrganizationRepository.find({
-            select: ["organizationId"],
-            where: {
-                userId: userId
-            }
-        });
+		const allOrganizationsIds = map(organizations, (org) => {
+			return org.organizationId;
+		});
+		const deleteOrganizationIds = filter(allOrganizationsIds, (organizationsId) => {
+			return organizationsId != oldOrganization.organizationId;
+		});
 
-        const allOrganizationsIds = map(organizations, (org) => {
-            return org.organizationId
-        });
-        const deleteOrganizationIds = filter(allOrganizationsIds, (organizationsId) => {
-            return organizationsId != oldOrganization.organizationId
-        });
+		const findInput = {
+			organizationIds: allOrganizationsIds,
+			tenantId: user.tenantId
+		};
 
-        const findInput = {
-            organizationIds: allOrganizationsIds,
-            tenantId: user.tenantId
-        }
+		await this.deleteSpecificTables(findInput);
+		if (deleteOrganizationIds?.length > 0) {
+			await this.typeOrmUserOrganizationRepository.delete({
+				userId: userId,
+				organizationId: In(deleteOrganizationIds),
+				tenantId: user.tenantId
+			});
+			await this.typeOrmOrganizationRepository.delete({
+				id: In(deleteOrganizationIds),
+				tenantId: user.tenantId
+			});
+		}
 
-        await this.deleteSpecificTables(findInput)
-        if (deleteOrganizationIds?.length > 0) {
-            await this.typeOrmUserOrganizationRepository.delete({
-                userId: userId,
-                organizationId: In(deleteOrganizationIds),
-                tenantId: user.tenantId
-            });
-            await this.typeOrmOrganizationRepository.delete({
-                id: In(deleteOrganizationIds),
-                tenantId: user.tenantId
-            });
-        }
+		const firstOrganization = await this.typeOrmOrganizationRepository.findOneBy({
+			id: oldOrganization.organizationId
+		});
 
-        const firstOrganization = await this.typeOrmOrganizationRepository.findOneBy({
-            id: oldOrganization.organizationId,
-        });
+		return firstOrganization;
+	}
 
-        return firstOrganization;
-    }
+	async deleteSpecificTables(findInput: { organizationIds: string[]; tenantId: string }) {
+		for (let i = 0; i < this.repositories.length; i++) {
+			await this.deleteRepository(this.repositories[i], findInput);
+		}
+		return;
+	}
 
-    async deleteSpecificTables(
-        findInput: {
-            organizationIds: string[];
-            tenantId: string;
-        }
-    ) {
-        for (let i = 0; i < this.repositories.length; i++) {
-            await this.deleteRepository(this.repositories[i], findInput)
-        }
-        return
-    }
+	async deleteRepository(
+		repository: Repository<any>,
+		findInput: {
+			organizationIds: string[];
+			tenantId: string;
+		}
+	): Promise<any> {
+		let conditions: any = {};
+		const columns = repository.metadata.ownColumns.map((column) => column.propertyName);
+		const tenantId = some(columns, (column) => {
+			return column === 'tenantId';
+		});
+		const organizationId = some(columns, (column) => {
+			return column === 'organizationId';
+		});
 
-    async deleteRepository(
-        repository: Repository<any>,
-        findInput: {
-            organizationIds: string[];
-            tenantId: string;
-        }
-    ): Promise<any> {
-        let conditions: any = {};
-        const columns = repository.metadata.ownColumns.map(column => column.propertyName);
-        const tenantId = some(columns, (column) => {
-            return column === 'tenantId';
-        })
-        const organizationId = some(columns, (column) => {
-            return column === 'organizationId';
-        })
+		if (tenantId && organizationId) {
+			conditions = {
+				tenantId: findInput['tenantId'],
+				organizationId: In(findInput['organizationIds'])
+			};
+		}
+		if (tenantId && !organizationId) {
+			conditions = {
+				tenantId: findInput['tenantId']
+			};
+		}
+		return repository.delete(conditions);
+	}
 
-        if (tenantId && organizationId) {
-            conditions = {
-                tenantId: findInput['tenantId'],
-                organizationId: In(findInput['organizationIds'])
-            };
-        }
-        if (tenantId && !organizationId) {
-            conditions = {
-                tenantId: findInput['tenantId']
-            };
-        }
-        return repository.delete(conditions);
-    }
-
-    private registerCoreRepositories() {
-        this.repositories = [
-            this.typeOrmTagRepository,
-            this.typeOrmActivityRepository,
-            this.typeOrmApprovalPolicyRepository,
-            this.typeOrmAppointmentEmployeeRepository,
-            this.typeOrmAvailabilitySlotRepository,
-            this.typeOrmCandidateCriterionsRatingRepository,
-            this.typeOrmCandidateDocumentRepository,
-            this.typeOrmCandidateEducationRepository,
-            this.typeOrmCandidateExperienceRepository,
-            this.typeOrmCandidateFeedbackRepository,
-            this.typeOrmCandidateInterviewersRepository,
-            this.typeOrmCandidateInterviewRepository,
-            this.typeOrmCandidateRepository,
-            this.typeOrmCandidateSkillRepository,
-            this.typeOrmCandidateSourceRepository,
-            this.typeOrmCandidateTechnologiesRepository,
-            this.typeOrmDealRepository,
-            this.typeOrmKeyResultRepository,
-            this.typeOrmKeyResultTemplateRepository,
-            this.typeOrmKeyResultUpdateRepository,
-            this.typeOrmGoalKPIRepository,
-            this.typeOrmGoalKPITemplateRepository,
-            this.typeOrmGoalRepository,
-            this.typeOrmGoalTemplateRepository,
-            this.typeOrmGoalTimeFrameRepository,
-            this.typeOrmEmailHistoryRepository,
-            this.typeOrmTimeLogRepository,
-            this.typeOrmTimeOffPolicyRepository,
-            this.typeOrmTimeOffRequestRepository,
-            this.typeOrmTimesheetRepository,
-            this.typeOrmTimeSlotRepository,
-            this.typeOrmInvoiceItemRepository,
-            this.typeOrmInvoiceEstimateHistoryRepository,
-            this.typeOrmInvoiceRepository,
-            this.typeOrmFeatureOrganizationRepository,
-            this.typeOrmJobPresetRepository,
-            this.typeOrmJobSearchCategoryRepository,
-            this.typeOrmJobSearchOccupationRepository,
-            this.typeOrmEmployeeAppointmentRepository,
-            this.typeOrmEmployeeAwardRepository,
-            this.typeOrmEmployeeLevelRepository,
-            this.typeOrmEmployeeProposalTemplateRepository,
-            this.typeOrmEmployeeRecurringExpenseRepository,
-            this.typeOrmEmployeeRepository,
-            this.typeOrmEmployeeSettingRepository,
-            this.typeOrmEquipmentSharingRepository,
-            this.typeOrmEquipmentRepository,
-            this.typeOrmEstimateEmailRepository,
-            this.typeOrmEventTypeRepository,
-            this.typeOrmExpenseCategoryRepository,
-            this.typeOrmExpenseRepository,
-            this.typeOrmIncomeRepository,
-            this.typeOrmIntegrationEntitySettingRepository,
-            this.typeOrmIntegrationEntitySettingTiedRepository,
-            this.typeOrmIntegrationMapRepository,
-            this.typeOrmIntegrationSettingRepository,
-            this.typeOrmIntegrationTenantRepository,
-            this.typeOrmInviteRepository,
-            this.typeOrmOrganizationAwardRepository,
-            this.typeOrmOrganizationDepartmentRepository,
-            this.typeOrmOrganizationDocumentRepository,
-            this.typeOrmOrganizationEmploymentTypeRepository,
-            this.typeOrmOrganizationLanguageRepository,
-            this.typeOrmOrganizationPositionRepository,
-            this.typeOrmOrganizationSprintRepository,
-            this.typeOrmOrganizationTeamEmployeeRepository,
-            this.typeOrmOrganizationTeamRepository,
-            this.typeOrmOrganizationVendorRepository,
-            this.typeOrmOrganizationRecurringExpenseRepository,
-            this.typeOrmOrganizationProjectRepository,
-            this.typeOrmOrganizationContactRepository,
-            this.typeOrmProductCategoryRepository,
-            this.typeOrmProductOptionRepository,
-            this.typeOrmProductRepository,
-            this.typeOrmProductVariantPriceRepository,
-            this.typeOrmProductVariantRepository,
-            this.typeOrmProductVariantSettingRepository,
-            this.typeOrmPaymentRepository,
-            this.typeOrmPipelineRepository,
-            this.typeOrmProposalRepository,
-            this.typeOrmRequestApprovalRepository,
-            this.typeOrmScreenshotRepository,
-            this.typeOrmSkillRepository,
-            this.typeOrmPipelineStageRepository,
-            this.typeOrmContactRepository,
-            this.typeOrmTaskRepository,
-            this.typeOrmTenantSettingRepository,
-        ];
-    }
+	private registerCoreRepositories() {
+		this.repositories = [
+			this.typeOrmTagRepository,
+			this.typeOrmActivityRepository,
+			this.typeOrmApprovalPolicyRepository,
+			this.typeOrmAppointmentEmployeeRepository,
+			this.typeOrmAvailabilitySlotRepository,
+			this.typeOrmCandidateCriterionsRatingRepository,
+			this.typeOrmCandidateDocumentRepository,
+			this.typeOrmCandidateEducationRepository,
+			this.typeOrmCandidateExperienceRepository,
+			this.typeOrmCandidateFeedbackRepository,
+			this.typeOrmCandidateInterviewersRepository,
+			this.typeOrmCandidateInterviewRepository,
+			this.typeOrmCandidateRepository,
+			this.typeOrmCandidateSkillRepository,
+			this.typeOrmCandidateSourceRepository,
+			this.typeOrmCandidateTechnologiesRepository,
+			this.typeOrmDealRepository,
+			this.typeOrmKeyResultRepository,
+			this.typeOrmKeyResultTemplateRepository,
+			this.typeOrmKeyResultUpdateRepository,
+			this.typeOrmGoalKPIRepository,
+			this.typeOrmGoalKPITemplateRepository,
+			this.typeOrmGoalRepository,
+			this.typeOrmGoalTemplateRepository,
+			this.typeOrmGoalTimeFrameRepository,
+			this.typeOrmEmailHistoryRepository,
+			this.typeOrmTimeLogRepository,
+			this.typeOrmTimeOffPolicyRepository,
+			this.typeOrmTimeOffRequestRepository,
+			this.typeOrmTimesheetRepository,
+			this.typeOrmTimeSlotRepository,
+			this.typeOrmInvoiceItemRepository,
+			this.typeOrmInvoiceEstimateHistoryRepository,
+			this.typeOrmInvoiceRepository,
+			this.typeOrmFeatureOrganizationRepository,
+			this.typeOrmJobPresetRepository,
+			this.typeOrmJobSearchCategoryRepository,
+			this.typeOrmJobSearchOccupationRepository,
+			this.typeOrmEmployeeAppointmentRepository,
+			this.typeOrmEmployeeAwardRepository,
+			this.typeOrmEmployeeLevelRepository,
+			this.typeOrmEmployeeProposalTemplateRepository,
+			this.typeOrmEmployeeRecurringExpenseRepository,
+			this.typeOrmEmployeeRepository,
+			this.typeOrmEmployeeSettingRepository,
+			this.typeOrmEquipmentSharingRepository,
+			this.typeOrmEquipmentRepository,
+			this.typeOrmEstimateEmailRepository,
+			this.typeOrmEventTypeRepository,
+			this.typeOrmExpenseCategoryRepository,
+			this.typeOrmExpenseRepository,
+			this.typeOrmIncomeRepository,
+			this.typeOrmIntegrationEntitySettingRepository,
+			this.typeOrmIntegrationEntitySettingTiedRepository,
+			this.typeOrmIntegrationMapRepository,
+			this.typeOrmIntegrationSettingRepository,
+			this.typeOrmIntegrationTenantRepository,
+			this.typeOrmInviteRepository,
+			this.typeOrmOrganizationAwardRepository,
+			this.typeOrmOrganizationDepartmentRepository,
+			this.typeOrmOrganizationDocumentRepository,
+			this.typeOrmOrganizationEmploymentTypeRepository,
+			this.typeOrmOrganizationLanguageRepository,
+			this.typeOrmOrganizationPositionRepository,
+			this.typeOrmOrganizationSprintRepository,
+			this.typeOrmOrganizationTeamEmployeeRepository,
+			this.typeOrmOrganizationTeamRepository,
+			this.typeOrmOrganizationVendorRepository,
+			this.typeOrmOrganizationRecurringExpenseRepository,
+			this.typeOrmOrganizationProjectRepository,
+			this.typeOrmOrganizationContactRepository,
+			this.typeOrmProductCategoryRepository,
+			this.typeOrmProductOptionRepository,
+			this.typeOrmProductRepository,
+			this.typeOrmProductVariantPriceRepository,
+			this.typeOrmProductVariantRepository,
+			this.typeOrmProductVariantSettingRepository,
+			this.typeOrmPaymentRepository,
+			this.typeOrmPipelineRepository,
+			this.typeOrmProposalRepository,
+			this.typeOrmRequestApprovalRepository,
+			this.typeOrmScreenshotRepository,
+			this.typeOrmSkillRepository,
+			this.typeOrmPipelineStageRepository,
+			this.typeOrmContactRepository,
+			this.typeOrmTaskRepository,
+			this.typeOrmTenantSettingRepository
+		];
+	}
 }

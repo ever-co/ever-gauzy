@@ -9,9 +9,7 @@ import {
 	HttpCode,
 	Put,
 	Param,
-	BadRequestException,
-	UsePipes,
-	ValidationPipe
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGoalGeneralSetting, IPagination } from '@gauzy/contracts';
@@ -19,7 +17,7 @@ import { CrudController } from './../core/crud';
 import { GoalGeneralSetting } from './goal-general-setting.entity';
 import { GoalGeneralSettingService } from './goal-general-setting.service';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateGoalGeneralSettingDTO, UpdateGoalGeneralSettingDTO } from './dto';
 
 @ApiTags('GoalGeneralSetting')
@@ -53,7 +51,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 		type: GoalGeneralSetting
 	})
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateGoalGeneralSettingDTO
 	): Promise<IGoalGeneralSetting> {
@@ -76,7 +74,7 @@ export class GoalGeneralSettingController extends CrudController<GoalGeneralSett
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateGoalGeneralSettingDTO

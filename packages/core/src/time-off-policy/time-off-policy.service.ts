@@ -44,12 +44,12 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			}
 		});
 		policy.employees = employees;
-		return this.repository.save(policy);
+		return this.typeOrmRepository.save(policy);
 	}
 
 	async update(id: string, entity: ITimeOffPolicyUpdateInput): Promise<TimeOffPolicy> {
 		try {
-			await this.repository.delete(id);
+			await this.typeOrmRepository.delete(id);
 			const policy = new TimeOffPolicy();
 
 			policy.name = entity.name;
@@ -67,7 +67,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 				}
 			});
 			policy.employees = employees;
-			return this.repository.save(policy);
+			return this.typeOrmRepository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

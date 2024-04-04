@@ -115,7 +115,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const issueTypes: IIssueType[] = total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
 
 			// Save the created or fetched issue types to the repository and return the result.
-			return await this.repository.save(issueTypes);
+			return await this.typeOrmRepository.save(issueTypes);
 		} catch (error) {
 			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
 		}
@@ -145,7 +145,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 					isSystem: false
 				})
 			));
-			return await this.repository.save(issueTypes);
+			return await this.typeOrmRepository.save(issueTypes);
 		} catch (error) {
 			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
 		}

@@ -6,24 +6,18 @@ import {
 	UseGuards,
 	Post,
 	Body,
-	UsePipes,
-	ValidationPipe,
 	Put,
 	Param
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import {
-	ICandidateSkill,
-	IPagination,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ICandidateSkill, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { CandidateSkill } from './candidate-skill.entity';
 import { CandidateSkillService } from './candidate-skill.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateCandidateSkillDTO, UpdateCandidateSkillDTO } from './dto';
 
 @ApiTags('CandidateSkill')
@@ -31,10 +25,7 @@ import { CreateCandidateSkillDTO, UpdateCandidateSkillDTO } from './dto';
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateSkillController extends CrudController<CandidateSkill> {
-
-	constructor(
-		private readonly candidateSkillService: CandidateSkillService
-	) {
+	constructor(private readonly candidateSkillService: CandidateSkillService) {
 		super(candidateSkillService);
 	}
 
@@ -46,10 +37,8 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	 */
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<CandidateSkill>
-	): Promise<IPagination<ICandidateSkill>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<CandidateSkill>): Promise<IPagination<ICandidateSkill>> {
 		return await this.candidateSkillService.paginate(params);
 	}
 
@@ -73,10 +62,8 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<CandidateSkill>
-	): Promise<IPagination<ICandidateSkill>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<CandidateSkill>): Promise<IPagination<ICandidateSkill>> {
 		return await this.candidateSkillService.findAll({
 			where: params.where
 		});
@@ -89,10 +76,8 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	 * @returns
 	 */
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async create(
-		@Body() entity: CreateCandidateSkillDTO
-	): Promise<ICandidateSkill> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateCandidateSkillDTO): Promise<ICandidateSkill> {
 		return await this.candidateSkillService.create(entity);
 	}
 
@@ -103,7 +88,7 @@ export class CandidateSkillController extends CrudController<CandidateSkill> {
 	 * @returns
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ICandidateSkill['id'],
 		@Body() entity: UpdateCandidateSkillDTO

@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -8,12 +8,13 @@ import {
 	ITaskPriorityFindInput,
 	ITaskPriorityUpdateInput
 } from '@gauzy/contracts';
-import { CrudFactory, PaginationParams } from './../../core/crud';
-import { TenantPermissionGuard } from './../../shared/guards';
-import { CountQueryDTO } from './../../shared/dto';
+import { CrudFactory, PaginationParams } from '../../core/crud';
+import { TenantPermissionGuard } from '../../shared/guards';
+import { CountQueryDTO } from '../../shared/dto';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
-import { CreateTaskPriorityDTO, TaskPriorityQuerDTO, UpdateTaskPriorityDTO } from './dto';
+import { CreateTaskPriorityDTO, TaskPriorityQueryDTO, UpdateTaskPriorityDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Priority')
@@ -25,10 +26,7 @@ export class TaskPriorityController extends CrudFactory<
 	ITaskPriorityUpdateInput,
 	ITaskPriorityFindInput
 >(PaginationParams, CreateTaskPriorityDTO, UpdateTaskPriorityDTO, CountQueryDTO) {
-
-	constructor(
-		protected readonly taskPriorityService: TaskPriorityService
-	) {
+	constructor(protected readonly taskPriorityService: TaskPriorityService) {
 		super(taskPriorityService);
 	}
 
@@ -46,10 +44,8 @@ export class TaskPriorityController extends CrudFactory<
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async fetchAll(
-		@Query() params: TaskPriorityQuerDTO
-	): Promise<IPagination<ITaskPriority>> {
+	@UseValidationPipe({ whitelist: true })
+	async fetchAll(@Query() params: TaskPriorityQueryDTO): Promise<IPagination<ITaskPriority>> {
 		return await this.taskPriorityService.fetchAll(params);
 	}
 }

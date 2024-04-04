@@ -64,7 +64,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 
-		const query = this.repository.createQueryBuilder('job_preset');
+		const query = this.typeOrmRepository.createQueryBuilder('job_preset');
 		query.setFindOptions({
 			join: {
 				alias: 'job_preset',
@@ -102,7 +102,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	public async get(id: string, request?: IGetJobPresetCriterionInput) {
-		const query = this.repository.createQueryBuilder();
+		const query = this.typeOrmRepository.createQueryBuilder();
 		query.leftJoinAndSelect(`${query.alias}.jobPresetCriterions`, 'jobPresetCriterions');
 		if (request.employeeId) {
 			query.leftJoinAndSelect(

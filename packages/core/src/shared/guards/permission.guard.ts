@@ -15,7 +15,7 @@ export class PermissionGuard implements CanActivate {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _reflector: Reflector,
 		private readonly _rolePermissionService: RolePermissionService
-	) { }
+	) {}
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
@@ -23,9 +23,12 @@ export class PermissionGuard implements CanActivate {
 	 * @returns A promise that resolves to a boolean indicating authorization status.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		console.log('PermissionGuard canActivate called');
+
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {
@@ -34,6 +37,7 @@ export class PermissionGuard implements CanActivate {
 
 		// Check user authorization
 		const token = RequestContext.currentToken();
+
 		const { id, role } = verify(token, env.JWT_SECRET) as { id: string; role: string };
 
 		// Retrieve current role ID and tenant ID from RequestContext

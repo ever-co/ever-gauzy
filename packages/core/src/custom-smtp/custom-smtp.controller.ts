@@ -7,19 +7,14 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-	ICustomSmtp,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ICustomSmtp, PermissionsEnum } from '@gauzy/contracts';
 import { ISMTPConfig } from '@gauzy/common';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { CustomSmtp } from './custom-smtp.entity';
 import { CustomSmtpService } from './custom-smtp.service';
@@ -31,11 +26,8 @@ import { CreateCustomSmtpDTO, CustomSmtpQueryDTO, UpdateCustomSmtpDTO, ValidateC
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CUSTOM_SMTP_VIEW)
 @Controller()
-export class CustomSmtpController extends CrudController<CustomSmtp>{
-	constructor(
-		private readonly _customSmtpService: CustomSmtpService,
-		private readonly _commandBus: CommandBus
-	) {
+export class CustomSmtpController extends CrudController<CustomSmtp> {
+	constructor(private readonly _customSmtpService: CustomSmtpService, private readonly _commandBus: CommandBus) {
 		super(_customSmtpService);
 	}
 
@@ -56,10 +48,8 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		description: 'Record not found'
 	})
 	@Get('setting')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getSmtpSetting(
-		@Query() query: CustomSmtpQueryDTO
-	): Promise<ICustomSmtp | ISMTPConfig> {
+	@UseValidationPipe({ whitelist: true })
+	async getSmtpSetting(@Query() query: CustomSmtpQueryDTO): Promise<ICustomSmtp | ISMTPConfig> {
 		return await this._customSmtpService.getSmtpSetting(query);
 	}
 
@@ -75,10 +65,8 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post('validate')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async validateSmtpSetting(
-		@Body() entity: ValidateCustomSmtpDTO
-	): Promise<boolean> {
+	@UseValidationPipe({ whitelist: true })
+	async validateSmtpSetting(@Body() entity: ValidateCustomSmtpDTO): Promise<boolean> {
 		return await this._customSmtpService.verifyTransporter(entity);
 	}
 
@@ -98,13 +86,9 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateCustomSmtpDTO
-	): Promise<ICustomSmtp> {
-		return await this._commandBus.execute(
-			new CustomSmtpCreateCommand(entity)
-		);
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() entity: CreateCustomSmtpDTO): Promise<ICustomSmtp> {
+		return await this._commandBus.execute(new CustomSmtpCreateCommand(entity));
 	}
 
 	/**
@@ -125,17 +109,14 @@ export class CustomSmtpController extends CrudController<CustomSmtp>{
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ICustomSmtp['id'],
 		@Body() entity: UpdateCustomSmtpDTO
 	): Promise<ICustomSmtp> {
-		return await this._commandBus.execute(
-			new CustomSmtpUpdateCommand(id, entity)
-		);
+		return await this._commandBus.execute(new CustomSmtpUpdateCommand(id, entity));
 	}
 }

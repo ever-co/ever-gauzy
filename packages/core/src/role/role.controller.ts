@@ -11,9 +11,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IPagination, IRole, IRoleMigrateInput, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
@@ -23,7 +21,7 @@ import { Role } from './role.entity';
 import { CreateRoleDTO, CreateRoleDTO as UpdateRoleDTO, FindRoleQueryDTO } from './dto';
 import { CrudController } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 
@@ -32,10 +30,7 @@ import { Permissions } from './../shared/decorators';
 @Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 @Controller()
 export class RoleController extends CrudController<Role> {
-
-	constructor(
-		private readonly roleService: RoleService
-	) {
+	constructor(private readonly roleService: RoleService) {
 		super(roleService);
 	}
 
@@ -57,10 +52,8 @@ export class RoleController extends CrudController<Role> {
 	})
 	@Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD)
 	@Get('options')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async findOneRoleByOptions(
-		@Query() options: FindRoleQueryDTO
-	): Promise<IRole> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findOneRoleByOptions(@Query() options: FindRoleQueryDTO): Promise<IRole> {
 		try {
 			try {
 				return await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
@@ -69,9 +62,7 @@ export class RoleController extends CrudController<Role> {
 					}
 				});
 			} catch (e) {
-				return await this.roleService.findOneByWhereOptions(
-					options as FindOptionsWhere<Role>
-				);
+				return await this.roleService.findOneByWhereOptions(options as FindOptionsWhere<Role>);
 			}
 		} catch (error) {
 			throw new ForbiddenException();
@@ -106,10 +97,8 @@ export class RoleController extends CrudController<Role> {
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async create(
-		@Body() entity: CreateRoleDTO
-	): Promise<IRole> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateRoleDTO): Promise<IRole> {
 		try {
 			return await this.roleService.create(entity);
 		} catch (error) {
@@ -126,7 +115,7 @@ export class RoleController extends CrudController<Role> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IRole['id'],
 		@Body() entity: UpdateRoleDTO
@@ -146,9 +135,7 @@ export class RoleController extends CrudController<Role> {
 	 * @returns
 	 */
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IRole['id']
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: IRole['id']): Promise<DeleteResult> {
 		try {
 			return await this.roleService.delete(id);
 		} catch (error) {

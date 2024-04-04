@@ -9,9 +9,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -36,7 +34,7 @@ import { OrganizationProjectService } from './organization-project.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO, RelationsQueryDTO } from './../shared/dto';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../core/dto';
 import {
 	CreateOrganizationProjectDTO,
@@ -76,12 +74,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(
-		PermissionsEnum.ALL_ORG_VIEW,
-		PermissionsEnum.ORG_PROJECT_VIEW
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 	@Get('employee/:employeeId')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findByEmployee(
 		@Param('employeeId', UUIDValidationPipe) employeeId: IEmployee['id'],
 		@Query() options: TenantOrganizationBaseDTO
@@ -109,17 +104,10 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(
-		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.ORG_PROJECT_EDIT
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
 	@Put('employee')
-	async updateByEmployee(
-		@Body() body: IEditEntityByMemberInput
-	): Promise<boolean> {
-		return await this.commandBus.execute(
-			new OrganizationProjectEditByEmployeeCommand(body)
-		);
+	async updateByEmployee(@Body() body: IEditEntityByMemberInput): Promise<boolean> {
+		return await this.commandBus.execute(new OrganizationProjectEditByEmployeeCommand(body));
 	}
 
 	/**
@@ -140,25 +128,18 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(
-		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.ORG_PROJECT_EDIT
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
 	@Put('/task-view/:id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async updateTaskViewMode(
 		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
 		@Body() entity: UpdateTaskModeDTO
 	): Promise<IOrganizationProject> {
-		return await this.commandBus.execute(
-			new OrganizationProjectUpdateCommand({ ...entity, id })
-		);
+		return await this.commandBus.execute(new OrganizationProjectUpdateCommand({ ...entity, id }));
 	}
-
 
 	/**
 	 * Update organization project settings by ID.
@@ -168,14 +149,12 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 * @returns A promise that resolves to an `IOrganizationProject` object representing the updated project settings.
 	 */
 	@Put('/setting/:id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async updateProjectSetting(
 		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
 		@Body() entity: UpdateProjectSettingDTO
 	): Promise<IOrganizationProjectSetting> {
-		return await this.commandBus.execute(
-			new OrganizationProjectSettingUpdateCommand(id, entity)
-		);
+		return await this.commandBus.execute(new OrganizationProjectSettingUpdateCommand(id, entity));
 	}
 
 	/**
@@ -184,7 +163,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 * @returns
 	 */
 	@Get('/synced')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findSyncedProjects(
 		@Query() params: PaginationParams<OrganizationProject>
 	): Promise<IPagination<IOrganizationProject>> {
@@ -210,14 +189,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		description: 'Record not found'
 	})
 	@Get('count')
-	@Permissions(
-		PermissionsEnum.ALL_ORG_VIEW,
-		PermissionsEnum.ORG_PROJECT_VIEW
-	)
-	@UsePipes(new ValidationPipe())
-	async getCount(
-		@Query() options: CountQueryDTO<OrganizationProject>
-	): Promise<number> {
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+	@UseValidationPipe()
+	async getCount(@Query() options: CountQueryDTO<OrganizationProject>): Promise<number> {
 		return await this.organizationProjectService.countBy(options);
 	}
 
@@ -228,8 +202,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 * @returns
 	 */
 	@ApiOperation({
-		summary:
-			'Find all organization project in the same tenant using pagination.'
+		summary: 'Find all organization project in the same tenant using pagination.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -240,12 +213,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(
-		PermissionsEnum.ALL_ORG_VIEW,
-		PermissionsEnum.ORG_PROJECT_VIEW
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() filter: PaginationParams<OrganizationProject>
 	): Promise<IPagination<IOrganizationProject>> {
@@ -270,15 +240,10 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(
-		PermissionsEnum.ALL_ORG_VIEW,
-		PermissionsEnum.ORG_PROJECT_VIEW
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<OrganizationProject>
-	): Promise<IPagination<IOrganizationProject>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<OrganizationProject>): Promise<IPagination<IOrganizationProject>> {
 		return await this.organizationProjectService.findAll(params);
 	}
 
@@ -288,10 +253,7 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 * @param id
 	 * @returns
 	 */
-	@Permissions(
-		PermissionsEnum.ALL_ORG_VIEW,
-		PermissionsEnum.ORG_PROJECT_VIEW
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
@@ -308,17 +270,10 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 */
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@Permissions(
-		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.ORG_PROJECT_ADD
-	)
-	@UsePipes(new ValidationPipe())
-	async create(
-		@Body() entity: CreateOrganizationProjectDTO
-	): Promise<IOrganizationProject> {
-		return await this.commandBus.execute(
-			new OrganizationProjectCreateCommand(entity)
-		);
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD)
+	@UseValidationPipe()
+	async create(@Body() entity: CreateOrganizationProjectDTO): Promise<IOrganizationProject> {
+		return await this.commandBus.execute(new OrganizationProjectCreateCommand(entity));
 	}
 
 	/**
@@ -330,18 +285,13 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@Permissions(
-		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.ORG_PROJECT_EDIT
-	)
-	@UsePipes(new ValidationPipe())
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id'],
 		@Body() entity: UpdateOrganizationProjectDTO
 	): Promise<IOrganizationProject> {
-		return await this.commandBus.execute(
-			new OrganizationProjectUpdateCommand({ ...entity, id })
-		);
+		return await this.commandBus.execute(new OrganizationProjectUpdateCommand({ ...entity, id }));
 	}
 
 	/**
@@ -360,14 +310,9 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Permissions(
-		PermissionsEnum.ALL_ORG_EDIT,
-		PermissionsEnum.ORG_PROJECT_DELETE
-	)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IOrganizationProject['id']
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: IOrganizationProject['id']): Promise<DeleteResult> {
 		return await this.organizationProjectService.delete(id);
 	}
 }

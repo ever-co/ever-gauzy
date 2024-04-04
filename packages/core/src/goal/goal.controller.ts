@@ -9,9 +9,7 @@ import {
 	Param,
 	UseGuards,
 	Delete,
-	Query,
-	UsePipes,
-	ValidationPipe
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
@@ -20,7 +18,7 @@ import { GoalService } from './goal.service';
 import { Goal } from './goal.entity';
 import { CrudController } from './../core/crud';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateGoalDTO, UpdateGoalDTO } from './dto';
 
 @ApiTags('Goals')
@@ -38,7 +36,7 @@ export class GoalController extends CrudController<Goal> {
 		type: Goal
 	})
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateGoalDTO
 	): Promise<IGoal> {
@@ -77,9 +75,9 @@ export class GoalController extends CrudController<Goal> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: string, 
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateGoalDTO
 	): Promise<IGoal> {
 		try {

@@ -124,6 +124,9 @@ export class ProductVariant extends TenantOrganizationBaseEntity implements IPro
 	 */
 	@ApiProperty({ type: () => ImageAsset })
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
 		eager: true,
 	})
