@@ -495,8 +495,8 @@ export class TimerService {
 					isArchived: false
 				});
 
-				// if (source) { sqlQuery = sqlQuery.andWhere({ source }); }
-				// if (organizationTeamId) { sqlQuery = sqlQuery.andWhere({ organizationTeamId }); }
+				if (source) { sqlQuery = sqlQuery.andWhere({ source }); }
+				if (organizationTeamId) { sqlQuery = sqlQuery.andWhere({ organizationTeamId }); }
 
 				// Adds ordering to the SQL query.
 				sqlQuery = sqlQuery.orderBy([
@@ -536,8 +536,8 @@ export class TimerService {
 					organizationId,
 					isActive: true,
 					isArchived: false,
-					// ...(isNotEmpty(source) ? { source } : {}),
-					// ...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
+					...(isNotEmpty(source) ? { source } : {}),
+					...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
 				});
 				query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
 				query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
