@@ -22,7 +22,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 		readonly _reflector: Reflector,
 		readonly _typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly _mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
-	) { }
+	) {}
 
 	/**
 	 * Checks if the user is authorized based on specified permissions.
@@ -30,10 +30,13 @@ export class OrganizationPermissionGuard implements CanActivate {
 	 * @returns A promise that resolves to a boolean indicating authorization status.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		console.log('OrganizationPermissionGuard canActivate called');
+
 		// Retrieve permissions from metadata
 		const targets: Array<Function | Type<any>> = [context.getHandler(), context.getClass()];
 
-		const permissions = removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
+		const permissions =
+			removeDuplicates(this._reflector.getAllAndOverride<PermissionsEnum[]>(PERMISSIONS_METADATA, targets)) || [];
 
 		// If no specific permissions are required, consider it authorized
 		if (isEmpty(permissions)) {
@@ -62,7 +65,9 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 			const cacheKey = `orgPermissions_${tenantId}_${employeeId}_${permissions.join('_')}`;
 
-			console.log(`Guard: Checking Org Permissions for Employee ID: ${employeeId} from Cache with key ${cacheKey}`);
+			console.log(
+				`Guard: Checking Org Permissions for Employee ID: ${employeeId} from Cache with key ${cacheKey}`
+			);
 
 			const fromCache = await this.cacheManager.get<boolean | null>(cacheKey);
 
@@ -72,7 +77,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 				// Check if user has the required permissions
 				isAuthorized = await this.checkOrganizationPermission(tenantId, employeeId, permissions);
 
-				const ttl = 5 * 60 * 1000 // 5 minutes caching period for Organization Permissions
+				const ttl = 5 * 60 * 1000; // 5 minutes caching period for Organization Permissions
 				await this.cacheManager.set(cacheKey, isAuthorized, ttl);
 			} else {
 				isAuthorized = fromCache;
@@ -87,9 +92,17 @@ export class OrganizationPermissionGuard implements CanActivate {
 
 		if (!isAuthorized) {
 			// Log unauthorized access attempts
-			console.log(`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(', ')}`);
+			console.log(
+				`Unauthorized access blocked: User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
 		} else {
-			console.log(`Access granted.  User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(', ')}`);
+			console.log(
+				`Access granted.  User ID: ${id}, Role: ${role}, Employee ID: ${employeeId}, Permissions Checked: ${permissions.join(
+					', '
+				)}`
+			);
 		}
 
 		return isAuthorized;
@@ -128,7 +141,10 @@ export class OrganizationPermissionGuard implements CanActivate {
 						// Returns true if at least one record is found, false otherwise
 						return count > 0;
 					} catch (error) {
-						console.log(`Error occurred while checking ${MultiORMEnum.TypeORM} organization permission:`, error);
+						console.log(
+							`Error occurred while checking ${MultiORMEnum.TypeORM} organization permission:`,
+							error
+						);
 						return false;
 					}
 				case MultiORMEnum.TypeORM:
@@ -154,7 +170,10 @@ export class OrganizationPermissionGuard implements CanActivate {
 						// Returns true if at least one permission is allowed in the organization, false otherwise
 						return count > 0;
 					} catch (error) {
-						console.log(`Error occurred while checking ${MultiORMEnum.TypeORM} organization permission:`, error);
+						console.log(
+							`Error occurred while checking ${MultiORMEnum.TypeORM} organization permission:`,
+							error
+						);
 						return false;
 					}
 				default:

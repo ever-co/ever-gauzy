@@ -650,6 +650,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async getAccessTokenFromRefreshToken() {
+		console.log('Get access token from refresh token');
 		try {
 			const user = RequestContext.currentUser();
 			return {
