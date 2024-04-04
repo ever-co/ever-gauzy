@@ -116,12 +116,12 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 					const mikroOrmOptions = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
 					// Retrieve entities and their count
 					[items, total] = await this.mikroOrmRepository.findAndCount(mikroOrmOptions.where);
+					// Optionally serialize the items
+					items = items.map((item: BaseEntity) => this.serialize(item));
 					break;
 				case MultiORMEnum.TypeORM:
 					// Retrieve entities and their count
 					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
-					// Optionally serialize the items
-					items = items.map((item: BaseEntity) => this.serialize(item));
 					break;
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
