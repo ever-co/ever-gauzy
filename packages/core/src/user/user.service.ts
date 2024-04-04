@@ -128,7 +128,15 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExists(id: string): Promise<User | undefined> {
-		return await this.typeOrmRepository.findOneBy({ id });
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.findOne({ id });
+
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ id });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -137,7 +145,15 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
 	 */
 	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
-		return await this.typeOrmRepository.findOneBy({ thirdPartyId });
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.findOne({ thirdPartyId });
+
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ thirdPartyId });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
 	/**
@@ -201,7 +217,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch { }
+			} catch {}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -243,7 +259,9 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @param {ComponentLayoutStyleEnum} preferredComponentLayout - The preferred component layout to update.
 	 * @returns {Promise<IUser | UpdateResult>} - A promise that resolves to the updated user or update result.
 	 */
-	async updatePreferredComponentLayout(preferredComponentLayout: ComponentLayoutStyleEnum): Promise<IUser | UpdateResult> {
+	async updatePreferredComponentLayout(
+		preferredComponentLayout: ComponentLayoutStyleEnum
+	): Promise<IUser | UpdateResult> {
 		try {
 			const userId = RequestContext.currentUserId();
 			return await this.update(userId, { preferredComponentLayout });

@@ -92,6 +92,10 @@ export class RequestContext {
 		return this._languageCode;
 	}
 
+	get id(): string {
+		return this._id;
+	}
+
 	/**
 	 *
 	 * @returns
