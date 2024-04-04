@@ -129,7 +129,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Query() options: OrganizationTeamStatisticDTO
 	): Promise<IOrganizationTeam> {
-		return await this._queryBus.execute(new GetOrganizationTeamStatisticQuery(id, options));
+		return await this._queryBus.execute(
+			new GetOrganizationTeamStatisticQuery(id, options)
+		);
 	}
 
 	/**
@@ -152,7 +154,9 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateOrganizationTeamDTO): Promise<IOrganizationTeam> {
-		return await this._commandBus.execute(new OrganizationTeamCreateCommand(entity));
+		return await this._commandBus.execute(
+			new OrganizationTeamCreateCommand(entity)
+		);
 	}
 
 	/**

@@ -67,17 +67,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	async getOrganizationTeamStatistic(input: GetOrganizationTeamStatisticQuery): Promise<IOrganizationTeam> {
 		try {
 			console.time('Get Organization Team ID Query');
-
 			const { organizationTeamId, query } = input;
 			const { withLaskWorkedTask } = query;
 
 			/**
 			 * Find the organization team by ID with optional relations.
 			 */
-			const organizationTeam = await this.findOneByIdString(
-				organizationTeamId,
-				query['relations'] ? { relations: query['relations'] } : {}
-			);
+			const options = query['relations'] ? { relations: query['relations'] } : {};
+			const organizationTeam = await this.findOneByIdString(organizationTeamId, options);
 
 			/**
 			 * If the organization team has 'members', sync last worked tasks based on the query.
@@ -112,11 +109,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		try {
 			const { organizationId, startDate, endDate, withLaskWorkedTask, source } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
-			//
 			const employeeIds = members.map(({ employeeId }) => employeeId);
 
-			//
+			// Retrieves timer statistics with optional task relation.
 			const statistics = await this.timerService.getTimerWorkedStatus({
 				source,
 				employeeIds,
@@ -187,12 +182,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const filteredIds = [...memberIds, ...managerIds].filter(Boolean);
 
 			// Retrieve employees based on specified criteria
-			const employees = await this.typeOrmEmployeeRepository.find({
-				where: {
-					id: In(filteredIds), // Filtering by employee IDs (union of memberIds and managerIds)
-					organizationId, // Filtering by organizationId
-					tenantId // Filtering by tenantId
-				}
+			const employees = await this.typeOrmEmployeeRepository.findBy({
+				id: In(filteredIds), // Filtering by employee IDs (union of memberIds and managerIds)
+				organizationId, // Filtering by organizationId
+				tenantId // Filtering by tenantId
 			});
 
 			return employees;
@@ -215,14 +208,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const employeeId = RequestContext.currentEmployeeId();
+			const currentRoleId = RequestContext.currentRoleId();
 
 			// If, employee create teams, default add as a manager
 			try {
 				// Check if the current role is EMPLOYEE
-				await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
-					where: {
-						name: RolesEnum.EMPLOYEE
-					}
+				await this.roleService.findOneByIdString(currentRoleId, {
+					where: { name: RolesEnum.EMPLOYEE }
 				});
 				// Check if the employeeId is not already included in the managerIds array
 				if (!managerIds.includes(employeeId)) {
@@ -232,39 +224,32 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			} catch (error) { }
 
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+			const employees = await this.retrieveEmployees(
+				memberIds,
+				managerIds,
+				organizationId,
+				tenantId
+			);
 
 			// Find the manager role
-			const manager = await this.roleService.findOneByWhereOptions({
-				name: RolesEnum.MANAGER
-			});
+			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
 
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
 			// Use destructuring to directly extract 'id' from 'employee'
-			const members: OrganizationTeamEmployee[] = employees.map(({ id: employeeId }) => {
-				return new OrganizationTeamEmployee({
-					employeeId,
-					organizationId,
-					tenantId,
-					role: managerIdsSet.has(employeeId) ? manager : null
-				});
-			});
+			const members = employees.map(({ id: employeeId }) => new OrganizationTeamEmployee({
+				employee: { id: employeeId },
+				organization: { id: organizationId },
+				tenant: { id: tenantId },
+				role: managerIdsSet.has(employeeId) ? managerRole : null
+			}));
 
 			// Create the organization team with the prepared members
 			return await super.create({
-				tags,
-				organizationId,
-				tenantId,
-				name,
-				prefix,
-				members,
-				profile_link,
-				public: input.public,
-				logo,
-				imageId,
-				projects
+				organization: { id: organizationId },
+				tenant: { id: tenantId },
+				tags, name, prefix, members, profile_link, public: input.public, logo, imageId, projects
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
@@ -320,7 +305,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				});
 
 				// Retrieves a collection of employees based on specified criteria.
-				const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+				const employees = await this.retrieveEmployees(
+					memberIds,
+					managerIds,
+					organizationId,
+					tenantId
+				);
 
 				// Update nested entity
 				await this.organizationTeamEmployeeService.updateOrganizationTeam(
