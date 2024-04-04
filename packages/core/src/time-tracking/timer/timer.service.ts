@@ -426,14 +426,10 @@ export class TimerService {
 			},
 		});
 		if (!employee) {
-			throw new NotFoundException(
-				"We couldn't find the employee you were looking for."
-			);
+			throw new NotFoundException("We couldn't find the employee you were looking for.");
 		}
 		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException(
-				`The time tracking functionality has been disabled for you.`
-			);
+			throw new ForbiddenException(`The time tracking functionality has been disabled for you.`);
 		}
 		const { id: employeeId } = employee;
 		return await this.typeOrmTimeLogRepository.findOne({
@@ -457,19 +453,15 @@ export class TimerService {
 	 * @param request The input parameters for the query.
 	 * @returns The timer status for the employee.
 	 */
-	public async getTimerWorkedStatus(
-		request: ITimerStatusInput
-	): Promise<ITimerStatus[]> {
+	public async getTimerWorkedStatus(request: ITimerStatusInput): Promise<ITimerStatus[]> {
+
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, organizationTeamId, source } = request;
 
 		// Define the array to store employeeIds
 		let employeeIds: string[] = [];
 
-		const permissions = [
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
-			PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
-		];
+		const permissions = [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE, PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW];
 
 		// Check if the current user has any of the specified permissions
 		if (RequestContext.hasAnyPermission(permissions)) {
@@ -481,31 +473,82 @@ export class TimerService {
 			employeeIds = [employeeId];
 		}
 
-		/**
-		 * Get last logs (running or completed)
-		 */
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-		// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
-		query.setFindOptions({
-			...(request['relations'] ? { relations: request['relations'] } : {}),
-		});
-		query.where({
-			startedAt: Not(IsNull()),
-			stoppedAt: Not(IsNull()),
-			employeeId: In(employeeIds),
-			tenantId,
-			organizationId,
-			isActive: true,
-			isArchived: false,
-			...(isNotEmpty(source) ? { source } : {}),
-			...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
-		});
-		query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
-		query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
-		query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+		let lastLogs: TimeLog[] = [];
 
-		// Get last logs group by employees (running or completed)
-		const lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+
+				// Construct your SQL query using knex
+				let sqlQuery = knex('time_log').select(
+					knex.raw('DISTINCT ON ("time_log"."employeeId") *')
+				);
+
+				// Builds an SQL query with specific where clauses.
+				sqlQuery.whereNotNull('startedAt');
+				sqlQuery.whereNotNull('stoppedAt');
+				sqlQuery.whereIn('employeeId', employeeIds);
+				sqlQuery.andWhere({
+					tenantId,
+					organizationId,
+					isActive: true,
+					isArchived: false
+				});
+
+				// if (source) { sqlQuery = sqlQuery.andWhere({ source }); }
+				// if (organizationTeamId) { sqlQuery = sqlQuery.andWhere({ organizationTeamId }); }
+
+				// Adds ordering to the SQL query.
+				sqlQuery = sqlQuery.orderBy([
+					{ column: 'employeeId', order: 'ASC' },
+					{ column: 'startedAt', order: 'DESC' },
+					{ column: 'createdAt', order: 'DESC' }
+				]);
+
+				// Execute the raw SQL query and get the results
+				const rawResults: TimeLog[] = (await knex.raw(sqlQuery.toString())).rows || [];
+				const timeLogIds = rawResults.map((entry: TimeLog) => entry.id);
+
+				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
+				const { mikroOptions } = parseTypeORMFindToMikroOrm<TimeLog>({
+					...(request.relations ? { relations: request.relations } : {})
+				});
+
+				// Get last logs group by employees (running or completed);
+				lastLogs = (await this.mikroOrmTimeLogRepository.find({ id: { $in: timeLogIds } }, mikroOptions)).map(
+					(item: TimeLog) => wrapSerialize(item)
+				);
+				break;
+			case MultiORMEnum.TypeORM:
+				/**
+				 * Get last logs (running or completed)
+				 */
+				const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+				// query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
+				query.setFindOptions({
+					...(request['relations'] ? { relations: request['relations'] } : {}),
+				});
+				query.where({
+					startedAt: Not(IsNull()),
+					stoppedAt: Not(IsNull()),
+					employeeId: In(employeeIds),
+					tenantId,
+					organizationId,
+					isActive: true,
+					isArchived: false,
+					// ...(isNotEmpty(source) ? { source } : {}),
+					// ...(isNotEmpty(organizationTeamId) ? { organizationTeamId } : {}),
+				});
+				query.orderBy(p(`"${query.alias}"."employeeId"`), 'ASC'); // Adjust ORDER BY to match the SELECT list
+				query.addOrderBy(p(`"${query.alias}"."startedAt"`), 'DESC');
+				query.addOrderBy(p(`"${query.alias}"."createdAt"`), 'DESC');
+
+				// Get last logs group by employees (running or completed)
+				lastLogs = await query.distinctOn([p(`"${query.alias}"."employeeId"`)]).getMany();
+				break;
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 
 		/** Transform an array of ITimeLog objects into an array of ITimerStatus objects. */
 		const statistics: ITimerStatus[] = lastLogs.map((lastLog: ITimeLog) => ({

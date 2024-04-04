@@ -1,14 +1,16 @@
-import { environment as env } from '@gauzy/config';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { JwtPayload } from 'jsonwebtoken';
+import { environment as env } from '@gauzy/config';
 import { IUser } from '@gauzy/contracts';
 import { AuthService } from '../auth.service';
 import { EmployeeService } from '../../employee/employee.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+	public loggingEnabled: boolean = false;
+
 	constructor(private readonly _authService: AuthService, private readonly _employeeService: EmployeeService) {
 		super({
 			jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -26,7 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 		try {
 			const { id, thirdPartyId, employeeId } = payload;
 
-			console.log('Validate JWT payload:', payload);
+			if (this.loggingEnabled) console.log('Validate JWT payload:', payload);
 
 			// We use this to also attach the user object to the request context.
 			const user: IUser = await this._authService.getAuthenticatedUser(id, thirdPartyId);

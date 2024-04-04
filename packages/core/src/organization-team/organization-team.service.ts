@@ -79,7 +79,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			/**
 			 * If the organization team has 'members', sync last worked tasks based on the query.
 			 */
-			if ('members' in organizationTeam && Boolean(withLaskWorkedTask)) {
+			if ('members' in organizationTeam && withLaskWorkedTask) {
 				organizationTeam['members'] = await this.syncLastWorkedTask(
 					organizationTeamId,
 					organizationTeam['members'],
