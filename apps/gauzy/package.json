@@ -157,6 +157,8 @@
 		"squirrelly": "^8.0.8",
 		"swiper": "^8.3.1",
 		"tslib": "^2.3.0",
+		"twing": "^5.0.2",
+		"locutus": "2.0.16",
 		"typeface-exo": "^0.0.61",
 		"underscore": "^1.13.3",
 		"underscore.string": "^3.3.6",
