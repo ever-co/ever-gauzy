@@ -9,8 +9,6 @@ import {
 	HttpCode,
 	HttpStatus,
 	Delete,
-	ValidationPipe,
-	UsePipes,
 	UseInterceptors,
 	ExecutionContext
 } from '@nestjs/common';

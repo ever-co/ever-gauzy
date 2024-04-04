@@ -8,9 +8,7 @@ import {
 	UseGuards,
 	Put,
 	Param,
-	ValidationPipe,
-	BadRequestException,
-	UsePipes
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
@@ -99,7 +97,7 @@ export class ProposalController extends CrudController<Proposal> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateProposalDTO): Promise<IProposal> {
 		try {
 			return await this.proposalService.create(entity);
@@ -125,7 +123,7 @@ export class ProposalController extends CrudController<Proposal> {
 		description: 'Record not found'
 	})
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProposalDTO

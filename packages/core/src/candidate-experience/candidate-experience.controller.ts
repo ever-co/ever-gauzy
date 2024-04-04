@@ -4,8 +4,6 @@ import {
 	Get,
 	Query,
 	UseGuards,
-	UsePipes,
-	ValidationPipe,
 	Post,
 	Body,
 	Put,

@@ -1,5 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -11,12 +11,12 @@ import {
 } from '@gauzy/contracts';
 import { TenantPermissionGuard } from '../../shared/guards';
 import { CountQueryDTO } from '../../shared/dto';
+import { UseValidationPipe } from '../../shared/pipes';
 import { CrudFactory, PaginationParams } from '../../core/crud';
 import { TaskRelatedIssueTypeService } from './related-issue-type.service';
 import { TaskRelatedIssueType } from './related-issue-type.entity';
 import { FindRelatedIssueTypesQuery } from './queries';
 import { CreateRelatedIssueTypeDTO, RelatedIssueTypeQueryDTO, UpdatesRelatedIssueTypeDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task RelatedIssueTypes')

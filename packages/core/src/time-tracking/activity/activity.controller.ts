@@ -1,12 +1,12 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, Post, Body, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetActivitiesInput, IBulkActivitiesInput, ReportGroupFilterEnum, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { ActivityService } from './activity.service';
 import { ActivityMapService } from './activity.map.service';
 import { ActivityQueryDTO } from './dto/query';
-import { UseValidationPipe } from 'shared/pipes';
 
 @ApiTags('Activity')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -16,7 +16,7 @@ export class ActivityController {
 	constructor(
 		private readonly activityService: ActivityService,
 		private readonly activityMapService: ActivityMapService
-	) {}
+	) { }
 
 	@ApiOperation({ summary: 'Get Activities' })
 	@ApiResponse({

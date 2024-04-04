@@ -9,9 +9,7 @@ import {
 	Param,
 	Body,
 	Query,
-	Post,
-	UsePipes,
-	ValidationPipe
+	Post
 } from '@nestjs/common';
 import { IEquipment, IPagination } from '@gauzy/contracts';
 import { Equipment } from './equipment.entity';

@@ -1,16 +1,16 @@
 import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { Permissions } from 'shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { Permissions } from '../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { GithubService } from './github.service';
 import { GithubAppInstallDTO, GithubOAuthDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class GitHubController {
-	constructor(private readonly _githubService: GithubService) {}
+	constructor(private readonly _githubService: GithubService) { }
 
 	/**
 	 *

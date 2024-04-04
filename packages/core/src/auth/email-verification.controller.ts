@@ -13,15 +13,15 @@ import { FeatureFlag, IAppIntegrationConfig, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { FeatureFlagGuard } from './../shared/guards';
+import { UseValidationPipe } from '../shared/pipes';
 import { ConfirmEmailByCodeDTO, ConfirmEmailByTokenDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @Controller('email/verify')
 @UseGuards(FeatureFlagGuard)
 @FeatureFlag(FeatureEnum.FEATURE_EMAIL_VERIFICATION)
 @UseInterceptors(ClassSerializerInterceptor)
 export class EmailVerificationController {
-	constructor(private readonly emailConfirmationService: EmailConfirmationService) {}
+	constructor(private readonly emailConfirmationService: EmailConfirmationService) { }
 
 	/**
 	 * Email verification by token

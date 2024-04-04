@@ -10,8 +10,6 @@ import {
 	UseGuards,
 	Put,
 	Query,
-	ValidationPipe,
-	UsePipes,
 	BadRequestException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';

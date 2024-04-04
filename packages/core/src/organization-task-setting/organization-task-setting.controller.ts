@@ -7,8 +7,6 @@ import {
 	Put,
 	UseGuards,
 	Post,
-	UsePipes,
-	ValidationPipe,
 	Get,
 	Query,
 	HttpException
@@ -33,7 +31,7 @@ export class OrganizationTaskSettingController {
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationTaskSettingService: OrganizationTaskSettingService
-	) {}
+	) { }
 
 	/**
 	 * GET organization Task Setting by organizationId

@@ -10,8 +10,7 @@ import {
 	Query,
 	UseGuards,
 	Post,
-	ValidationPipe,
-	UsePipes
+	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';

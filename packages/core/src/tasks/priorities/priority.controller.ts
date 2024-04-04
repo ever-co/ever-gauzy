@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -8,13 +8,13 @@ import {
 	ITaskPriorityFindInput,
 	ITaskPriorityUpdateInput
 } from '@gauzy/contracts';
-import { CrudFactory, PaginationParams } from './../../core/crud';
-import { TenantPermissionGuard } from './../../shared/guards';
-import { CountQueryDTO } from './../../shared/dto';
+import { CrudFactory, PaginationParams } from '../../core/crud';
+import { TenantPermissionGuard } from '../../shared/guards';
+import { CountQueryDTO } from '../../shared/dto';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TaskPriority } from './priority.entity';
 import { TaskPriorityService } from './priority.service';
 import { CreateTaskPriorityDTO, TaskPriorityQueryDTO, UpdateTaskPriorityDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Priority')

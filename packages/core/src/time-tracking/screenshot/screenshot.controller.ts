@@ -7,9 +7,7 @@ import {
 	UseInterceptors,
 	Delete,
 	Param,
-	Query,
-	UsePipes,
-	ValidationPipe
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
@@ -36,7 +34,7 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly _screenshotService: ScreenshotService) {}
+	constructor(private readonly _screenshotService: ScreenshotService) { }
 
 	/**
 	 *

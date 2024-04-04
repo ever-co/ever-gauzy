@@ -26,10 +26,7 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],
-	providers: [
-		TimeLogService,
-		...CommandHandlers
-	],
+	providers: [TimeLogService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, TimeLogService]
 })
 export class TimeLogModule { }

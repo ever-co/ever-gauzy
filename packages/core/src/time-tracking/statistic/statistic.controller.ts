@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ICountsStatistics,
@@ -12,9 +12,9 @@ import {
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
-import { UseValidationPipe } from 'shared/pipes';
 
 @ApiTags('TimesheetStatistic')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -26,7 +26,7 @@ import { UseValidationPipe } from 'shared/pipes';
 )
 @Controller()
 export class StatisticController {
-	constructor(private readonly statisticService: StatisticService) {}
+	constructor(private readonly statisticService: StatisticService) { }
 
 	/**
 	 * Retrieve statistics for counts based on the provided query parameters.

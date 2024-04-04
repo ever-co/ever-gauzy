@@ -10,9 +10,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {

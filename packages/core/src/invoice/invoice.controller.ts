@@ -12,8 +12,6 @@ import {
 	Post,
 	Delete,
 	Res,
-	UsePipes,
-	ValidationPipe,
 	BadRequestException,
 	Headers
 } from '@nestjs/common';

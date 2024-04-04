@@ -10,7 +10,6 @@ import {
 	Param,
 	Body,
 	ValidationPipe,
-	UsePipes,
 	Post
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';

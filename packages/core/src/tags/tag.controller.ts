@@ -6,8 +6,6 @@ import {
 	Body,
 	UseGuards,
 	Query,
-	ValidationPipe,
-	UsePipes,
 	BadRequestException,
 	HttpCode,
 	Put,

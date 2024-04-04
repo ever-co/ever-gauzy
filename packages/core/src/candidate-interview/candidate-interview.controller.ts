@@ -7,9 +7,7 @@ import {
 	Post,
 	UseGuards,
 	Param,
-	Put,
-	UsePipes,
-	ValidationPipe
+	Put
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';

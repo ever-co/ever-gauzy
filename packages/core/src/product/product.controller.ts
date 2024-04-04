@@ -9,9 +9,7 @@ import {
 	HttpCode,
 	UseGuards,
 	Delete,
-	Query,
-	UsePipes,
-	ValidationPipe
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';

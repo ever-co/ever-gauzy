@@ -1,15 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from '../../core/crud';
 import { Permissions } from './../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
 import { TenantSettingGetCommand, TenantSettingSaveCommand } from './commands';
 import { CreateTenantSettingDTO, WasabiS3ProviderConfigDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @ApiTags('TenantSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

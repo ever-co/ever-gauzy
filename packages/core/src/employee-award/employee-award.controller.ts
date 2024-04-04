@@ -10,9 +10,7 @@ import {
 	Param,
 	Delete,
 	Query,
-	Get,
-	UsePipes,
-	ValidationPipe
+	Get
 } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { IEmployeeAward, IPagination, PermissionsEnum } from '@gauzy/contracts';

@@ -1,4 +1,3 @@
-import { HelpCenterArticle } from './help-center-article.entity';
 import { PermissionsEnum, IHelpCenterArticle } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put } from '@nestjs/common';
@@ -12,6 +11,7 @@ import {
 } from '@gauzy/core';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
+import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
 import { HelpCenterUpdateArticleCommand } from './commands/help-center-article.update.command';

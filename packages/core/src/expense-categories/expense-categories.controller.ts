@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Get, Query, Put, Param, Body, UsePipes, ValidationPipe, Post } from '@nestjs/common';
+import { Controller, UseGuards, Get, Query, Put, Param, Body, ValidationPipe, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { IExpenseCategory, IPagination, PermissionsEnum } from '@gauzy/contracts';

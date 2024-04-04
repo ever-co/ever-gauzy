@@ -9,9 +9,7 @@ import {
 	Param,
 	Body,
 	Query,
-	Post,
-	UsePipes,
-	ValidationPipe
+	Post
 } from '@nestjs/common';
 import { IEquipmentSharingPolicy, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';

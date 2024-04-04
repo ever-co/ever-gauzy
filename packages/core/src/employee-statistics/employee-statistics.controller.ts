@@ -4,7 +4,7 @@ import {
 	IMonthAggregatedEmployeeStatistics,
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
-import { Controller, Get, HttpStatus, Param, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EmployeeStatisticsService } from './employee-statistics.service';
@@ -24,7 +24,7 @@ export class EmployeeStatisticsController {
 	constructor(
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly queryBus: QueryBus
-	) {}
+	) { }
 
 	@ApiOperation({
 		summary: 'Find aggregate for all employees by organization id'

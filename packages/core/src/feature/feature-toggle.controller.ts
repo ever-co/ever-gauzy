@@ -6,27 +6,25 @@ import {
 	HttpStatus,
 	Post,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FeatureInterface } from 'unleash-client/lib/feature';
 import { getFeatureToggleDefinitions } from 'unleash-client';
 import { FeatureEnum, IFeature, IFeatureOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CommandBus } from '@nestjs/cqrs';
 import { Public } from '@gauzy/common';
+import { environment } from '@gauzy/config';
 import { Feature } from './feature.entity';
 import { FeatureService } from './feature.service';
 import { FeatureOrganizationService } from './feature-organization.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { RelationsQueryDTO } from './../shared/dto';
+import { UseValidationPipe } from '../shared/pipes';
 import { FeatureToggleUpdateCommand } from './commands';
 import { CreateFeatureToggleDTO } from './dto';
 import { FeatureOrganizationQueryDTO } from './dto/feature-organization-query.dto';
-import { environment } from '@gauzy/config';
-import { UseValidationPipe } from 'shared/pipes';
 
 const { unleashConfig } = environment;
 
@@ -37,7 +35,7 @@ export class FeatureToggleController {
 		private readonly _featureService: FeatureService,
 		private readonly _featureOrganizationService: FeatureOrganizationService,
 		private readonly _commandBus: CommandBus
-	) {}
+	) { }
 
 	@Get('definition')
 	@Public()
@@ -103,13 +101,13 @@ export class FeatureToggleController {
 				where: {
 					...(params.tenantId
 						? {
-								tenantId: params.tenantId
-						  }
+							tenantId: params.tenantId
+						}
 						: {}),
 					...(params.organizationId
 						? {
-								organizationId: params.organizationId
-						  }
+							organizationId: params.organizationId
+						}
 						: {})
 				},
 				relations: params.relations || []

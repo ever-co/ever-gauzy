@@ -8,9 +8,7 @@ import {
 	Body,
 	Put,
 	Param,
-	Delete,
-	UsePipes,
-	ValidationPipe
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';

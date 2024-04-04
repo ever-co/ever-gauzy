@@ -12,11 +12,11 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { Permissions } from 'shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { Permissions } from '../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { GithubSyncService } from './github-sync.service';
 import { ProcessGithubIssueSyncDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
@@ -24,7 +24,7 @@ import { UseValidationPipe } from 'shared/pipes';
 export class GitHubSyncController {
 	private readonly logger = new Logger('GitHubSyncController');
 
-	constructor(private readonly _githubSyncService: GithubSyncService) {}
+	constructor(private readonly _githubSyncService: GithubSyncService) { }
 
 	/**
 	 * Handle an HTTP POST request to manually synchronize GitHub issues and labels.

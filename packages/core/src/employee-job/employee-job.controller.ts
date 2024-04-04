@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get, Query, Post, Body, UsePipes, ValidationPipe, Param } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IEmployeeJobApplication,
@@ -16,7 +16,7 @@ import { EmployeeJobPost } from './employee-job.entity';
 @ApiTags('EmployeeJobPost')
 @Controller()
 export class EmployeeJobPostController {
-	constructor(private readonly employeeJobPostService: EmployeeJobPostService) {}
+	constructor(private readonly employeeJobPostService: EmployeeJobPostService) { }
 
 	/**
 	 * Find all employee job posts.

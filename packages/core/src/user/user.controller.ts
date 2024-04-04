@@ -13,9 +13,7 @@ import {
 	Post,
 	Body,
 	Put,
-	Delete,
-	UsePipes,
-	ValidationPipe
+	Delete
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';

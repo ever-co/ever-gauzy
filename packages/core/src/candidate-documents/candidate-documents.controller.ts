@@ -1,4 +1,4 @@
-import { Controller, HttpStatus, Get, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICandidateDocument, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -6,7 +6,7 @@ import { CandidateDocumentsService } from './candidate-documents.service';
 import { CandidateDocument } from './candidate-documents.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UseValidationPipe } from 'shared';
+import { UseValidationPipe } from '../shared/pipes';
 
 @ApiTags('CandidateDocument')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

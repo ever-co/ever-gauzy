@@ -7,9 +7,7 @@ import {
 	Put,
 	Param,
 	Body,
-	BadRequestException,
-	UsePipes,
-	ValidationPipe
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IOrganizationPosition, IPagination } from '@gauzy/contracts';

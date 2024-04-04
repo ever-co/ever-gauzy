@@ -8,9 +8,7 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { IOrganizationTeamEmployee, PermissionsEnum } from '@gauzy/contracts';
@@ -26,7 +24,7 @@ import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamEmployeeController {
-	constructor(private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService) {}
+	constructor(private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService) { }
 
 	/**
 	 * Update team member by memberId

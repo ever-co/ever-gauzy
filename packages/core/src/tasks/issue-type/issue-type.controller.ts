@@ -1,3 +1,5 @@
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IIssueType,
 	IIssueTypeCreateInput,
@@ -6,15 +8,13 @@ import {
 	IPagination,
 	IPaginationParam
 } from '@gauzy/contracts';
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CountQueryDTO } from './../../shared/dto';
+import { CountQueryDTO } from '../../shared/dto';
 import { TenantPermissionGuard } from './../../shared/guards';
+import { UseValidationPipe } from '../../shared/pipes';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CreateIssueTypeDTO, IssueTypeQueryDTO, UpdateIssueTypeDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Issue Type')

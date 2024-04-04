@@ -8,9 +8,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
@@ -24,10 +22,9 @@ import {
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { PaginationParams } from 'core/crud';
-import { UUIDValidationPipe, UseValidationPipe } from 'shared/pipes';
-import { LanguageDecorator } from 'shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { Permissions } from 'shared/decorators';
+import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
+import { LanguageDecorator, Permissions } from '../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { OrganizationTeamJoinRequestCreateCommand } from './commands';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamJoinRequestService } from './organization-team-join-request.service';
@@ -39,7 +36,7 @@ export class OrganizationTeamJoinRequestController {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
-	) {}
+	) { }
 
 	/**
 	 * Validate organization team join request

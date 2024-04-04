@@ -5,8 +5,6 @@ import {
 	Query,
 	Param,
 	UseGuards,
-	UsePipes,
-	ValidationPipe,
 	InternalServerErrorException,
 	Put,
 	Body,

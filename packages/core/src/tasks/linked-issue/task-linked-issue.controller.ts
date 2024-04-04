@@ -1,10 +1,10 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { UUIDValidationPipe, UseValidationPipe } from 'shared/pipes';
-import { Permissions } from 'shared/decorators';
-import { CrudController } from 'core/crud';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
+import { Permissions } from '../../shared/decorators';
+import { CrudController } from '../../core/crud';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { CreateTaskLinkedIssueDTO, UpdateTaskLinkedIssueDTO } from './dto';

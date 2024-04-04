@@ -26,6 +26,7 @@ import {
 import { RequestContext } from '../core/context';
 import { convertNativeParameters } from '../core/crud/pagination.helper';
 import { AuthRefreshGuard } from './../shared/guards';
+import { UseValidationPipe } from '../shared/pipes';
 import { ChangePasswordRequestDTO, ResetPasswordRequestDTO } from './../password-reset/dto';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { UserService } from './../user/user.service';
@@ -36,7 +37,6 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
-import { UseValidationPipe } from 'shared';
 
 @ApiTags('Auth')
 @Controller()
@@ -45,7 +45,7 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
-	) {}
+	) { }
 
 	/**
 	 * Check if the user is authenticated.

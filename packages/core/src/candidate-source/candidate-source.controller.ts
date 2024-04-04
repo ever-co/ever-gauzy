@@ -8,8 +8,6 @@ import {
 	Body,
 	Controller,
 	Put,
-	UsePipes,
-	ValidationPipe,
 	Param
 } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';

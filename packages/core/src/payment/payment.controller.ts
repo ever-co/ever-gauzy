@@ -10,8 +10,6 @@ import {
 	Param,
 	Body,
 	Post,
-	ValidationPipe,
-	UsePipes,
 	BadRequestException,
 	Headers
 } from '@nestjs/common';

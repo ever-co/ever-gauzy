@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -8,13 +8,13 @@ import {
 	ITaskSizeFindInput,
 	ITaskSizeUpdateInput
 } from '@gauzy/contracts';
-import { CrudFactory, PaginationParams } from './../../core/crud';
-import { CountQueryDTO } from './../../shared/dto';
-import { TenantPermissionGuard } from './../../shared/guards';
+import { CrudFactory, PaginationParams } from '../../core/crud';
+import { CountQueryDTO } from '../../shared/dto';
+import { TenantPermissionGuard } from '../../shared/guards';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TaskSizeService } from './size.service';
 import { TaskSize } from './size.entity';
 import { CreateTaskSizeDTO, TaskSizeQueryDTO, UpdateTaskSizeDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Size')

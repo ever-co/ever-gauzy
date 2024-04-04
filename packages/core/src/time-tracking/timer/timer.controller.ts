@@ -1,18 +1,18 @@
-import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ITimeLog, ITimerStatus, PermissionsEnum } from '@gauzy/contracts';
 import { TimerService } from './timer.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { Permissions } from './../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { StartTimerDTO, StopTimerDTO, TimerStatusQueryDTO } from './dto';
-import { UseValidationPipe } from 'shared/pipes';
 
 @ApiTags('Timer Tracker')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class TimerController {
-	constructor(private readonly timerService: TimerService) {}
+	constructor(private readonly timerService: TimerService) { }
 
 	/**
 	 * GET timer today's status

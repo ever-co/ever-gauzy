@@ -17,7 +17,7 @@ import { KeyResult } from './keyresult.entity';
 import { CrudController } from './../core/crud';
 import { KeyResultService } from './keyresult.service';
 import { TenantPermissionGuard } from './../shared/guards';
-import { BulkBodyLoadTransformPipe, UUIDValidationPipe } from './../shared/pipes';
+import { BulkBodyLoadTransformPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { IKeyResult } from '@gauzy/contracts';
 import { CreateKeyresultDTO, KeyresultBultInputDTO, UpdateKeyresultDTO } from './dto';
 
@@ -42,7 +42,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 		description: 'Key Result not found'
 	})
 	@Post()
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UsePipes(new ValidationPipe({ transform: true }))
 	async create(
 		@Body() entity: CreateKeyresultDTO
 	): Promise<KeyResult> {
@@ -61,7 +61,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@Post('/bulk')
 	async createBulkKeyResults(
-		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity : KeyresultBultInputDTO
+		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: KeyresultBultInputDTO
 	): Promise<KeyResult[]> {
 		return this.keyResultService.createBulk(entity.list);
 	}
@@ -100,7 +100,7 @@ export class KeyResultController extends CrudController<KeyResult> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateKeyresultDTO

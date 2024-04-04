@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SqliteDriver } from '@mikro-orm/sqlite';
-import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition } from '@mikro-orm/core';
+import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition, wrap } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -643,4 +643,18 @@ export function convertTypeORMWhereToMikroORM<T>(where: MikroFilterQuery<T>) {
 	}
 	// Otherwise, just convert the single condition object
 	return convertTypeORMConditionToMikroORM(where);
+}
+
+/**
+ * Serializes the provided entity based on the ORM type.
+ * @param entity The entity to be serialized.
+ * @returns The serialized entity.
+ */
+export function serialize<T>(entity: any): T {
+	if (this.ormType === MultiORMEnum.MikroORM) {
+		// If using MikroORM, use wrap(entity).toJSON() for serialization
+		return wrap(entity).toJSON() as T;
+	}
+	// If using other ORM types, return the entity as is
+	return entity;
 }

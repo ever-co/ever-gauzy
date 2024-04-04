@@ -1,12 +1,12 @@
-import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
 import { Body, Controller, Param, Post, Put } from '@nestjs/common';
-import { UUIDValidationPipe, UseValidationPipe } from 'shared/pipes';
+import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
+import { UUIDValidationPipe, UseValidationPipe } from '../../../shared/pipes';
 import { GithubRepositoryService } from './github-repository.service';
 import { UpdateGithubRepositoryDTO } from './dto';
 
 @Controller('repository')
 export class GitHubRepositoryController {
-	constructor(private readonly _githubRepositoryService: GithubRepositoryService) {}
+	constructor(private readonly _githubRepositoryService: GithubRepositoryService) { }
 
 	/**
 	 * Sync a GitHub repository with Gauzy using provided data.

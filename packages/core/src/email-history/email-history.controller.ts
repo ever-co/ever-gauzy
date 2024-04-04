@@ -8,8 +8,6 @@ import {
 	Param,
 	Put,
 	HttpCode,
-	UsePipes,
-	ValidationPipe,
 	BadRequestException,
 	Post
 } from '@nestjs/common';
@@ -39,7 +37,7 @@ import { EmailHistoryResendCommand } from './commands';
 @Permissions(PermissionsEnum.VIEW_ALL_EMAILS)
 @Controller()
 export class EmailHistoryController {
-	constructor(private readonly _emailHistoryService: EmailHistoryService, private readonly commandBus: CommandBus) {}
+	constructor(private readonly _emailHistoryService: EmailHistoryService, private readonly commandBus: CommandBus) { }
 
 	@ApiOperation({ summary: 'Find all sent emails under specific tenant.' })
 	@ApiOkResponse({

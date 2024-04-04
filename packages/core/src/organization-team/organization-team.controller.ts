@@ -10,8 +10,6 @@ import {
 	Put,
 	Param,
 	UseGuards,
-	UsePipes,
-	ValidationPipe,
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';

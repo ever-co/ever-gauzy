@@ -6,8 +6,6 @@ import {
 	UseGuards,
 	Post,
 	Body,
-	UsePipes,
-	ValidationPipe,
 	Put,
 	Param
 } from '@nestjs/common';

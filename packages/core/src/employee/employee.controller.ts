@@ -13,7 +13,6 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -243,8 +242,8 @@ export class EmployeeController extends CrudController<Employee> {
 					},
 					...(params && params.relations
 						? {
-								relations: params.relations
-						  }
+							relations: params.relations
+						}
 						: {}),
 					withDeleted: true
 				})

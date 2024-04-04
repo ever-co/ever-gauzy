@@ -4,8 +4,6 @@ import {
 	Get,
 	Query,
 	UseGuards,
-	UsePipes,
-	ValidationPipe,
 	Post,
 	Body,
 	Put,
@@ -19,9 +17,8 @@ import { CandidateEducationService } from './candidate-education.service';
 import { CandidateEducation } from './candidate-education.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateCandidateEducationDTO, UpdateCandidateEducationDTO } from './dto';
-import { UseValidationPipe } from 'shared';
 
 @ApiTags('CandidateEducation')
 @UseGuards(TenantPermissionGuard, PermissionGuard)

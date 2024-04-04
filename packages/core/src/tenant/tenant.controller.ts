@@ -9,23 +9,21 @@ import {
 	HttpStatus,
 	Post,
 	Put,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { Roles } from './../shared/decorators';
 import { RoleGuard } from './../shared/guards';
+import { UseValidationPipe } from '../shared/pipes';
 import { CreateTenantDTO, UpdateTenantDTO } from './dto';
 import { TenantService } from './tenant.service';
-import { UseValidationPipe } from 'shared/pipes';
 
 @ApiTags('Tenant')
 @Controller()
 export class TenantController {
-	constructor(private readonly tenantService: TenantService) {}
+	constructor(private readonly tenantService: TenantService) { }
 
 	/**
 	 * GET Owner Tenant

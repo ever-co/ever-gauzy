@@ -1,16 +1,16 @@
-import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
-import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseInterceptors } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
+import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { PublicOrganizationQueryDTO } from './dto/public-organization-query.dto';
 import { PublicOrganizationService } from './public-organization.service';
 import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } from './queries';
-import { UseValidationPipe } from 'shared/pipes';
 
 @Public()
 @UseInterceptors(PublicTransformInterceptor)
@@ -19,7 +19,7 @@ export class PublicOrganizationController {
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly publicOrganizationService: PublicOrganizationService
-	) {}
+	) { }
 
 	/**
 	 * GET public clients in the specific organization
