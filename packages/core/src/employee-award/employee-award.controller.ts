@@ -10,9 +10,7 @@ import {
 	Param,
 	Delete,
 	Query,
-	Get,
-	UsePipes,
-	ValidationPipe
+	Get
 } from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { IEmployeeAward, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -21,7 +19,7 @@ import { EmployeeAwardService } from './employee-award.service';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateEmployeeAwardDTO, UpdateEmployeeAwardDTO } from './dto';
 
 @ApiTags('EmployeeAward')
@@ -29,9 +27,7 @@ import { CreateEmployeeAwardDTO, UpdateEmployeeAwardDTO } from './dto';
 @Permissions(PermissionsEnum.PUBLIC_PAGE_EDIT, PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class EmployeeAwardController extends CrudController<EmployeeAward> {
-	constructor(
-		private readonly employeeAwardService: EmployeeAwardService
-	) {
+	constructor(private readonly employeeAwardService: EmployeeAwardService) {
 		super(employeeAwardService);
 	}
 
@@ -48,10 +44,8 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 		description: 'Record not found'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<EmployeeAward>,
-	): Promise<IPagination<IEmployeeAward>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<EmployeeAward>): Promise<IPagination<IEmployeeAward>> {
 		return await this.employeeAwardService.findAll({
 			where: params.where
 		});
@@ -64,15 +58,12 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async create(
-		@Body() entity: CreateEmployeeAwardDTO
-	): Promise<IEmployeeAward> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateEmployeeAwardDTO): Promise<IEmployeeAward> {
 		return await this.employeeAwardService.create(entity);
 	}
 
@@ -87,12 +78,11 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IEmployeeAward['id'],
 		@Body() entity: UpdateEmployeeAwardDTO
@@ -111,9 +101,7 @@ export class EmployeeAwardController extends CrudController<EmployeeAward> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IEmployeeAward['id']
-	): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: IEmployeeAward['id']): Promise<DeleteResult> {
 		return await this.employeeAwardService.delete(id);
 	}
 }

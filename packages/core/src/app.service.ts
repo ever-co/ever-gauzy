@@ -9,11 +9,11 @@ export class AppService {
 	public count: number = 0;
 
 	/**
-	* Seed DB if no users exists (for simplicity and safety we only re-seed DB if no users found)
-	* TODO: this should actually include more checks, e.g. if schema migrated and many other things
-	*/
+	 * Seed DB if no users exists (for simplicity and safety we only re-seed DB if no users found)
+	 * TODO: this should actually include more checks, e.g. if schema migrated and many other things
+	 */
 	async seedDBIfEmpty() {
-		this.count = await this.userService.count();
+		this.count = await this.userService.countFast();
 		console.log(chalk.magenta(`Found ${this.count} users in DB`));
 		if (this.count === 0) {
 			await this.seedDataService.runDefaultSeed(true);
@@ -32,8 +32,8 @@ export class AppService {
 	) {}
 
 	/*
-	* Seed DB for Demo server 
-	*/
+	 * Seed DB for Demo server
+	 */
 	async executeDemoSeed() {
 		if (this.count === 0 && this.configService.get('demo') === true) {
 			this.seedDataService.executeDemoSeed();

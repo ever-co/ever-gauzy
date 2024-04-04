@@ -24,7 +24,7 @@ export class InvoiceItemService extends TenantAwareCrudService<InvoiceItem> {
 	 * @returns
 	 */
 	async createBulk(invoiceId: string, createInput: IInvoiceItemCreateInput[]) {
-		await this.repository.delete({ invoiceId: invoiceId });
-		return await this.repository.save(createInput);
+		await this.typeOrmRepository.delete({ invoiceId: invoiceId });
+		return await this.typeOrmRepository.save(createInput);
 	}
 }

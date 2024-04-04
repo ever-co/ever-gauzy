@@ -1,16 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
-import {
-	IInvite,
-	InviteStatusEnum,
-	IUser,
-	RolesEnum
-} from '@gauzy/contracts';
+import { IInvite, InviteStatusEnum, IUser, RolesEnum } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
 import { InviteService } from '../../invite.service';
 import { InviteAcceptCandidateCommand } from '../invite.accept-candidate.command';
-import { Candidate, User } from './../../../core/entities/internal'
+import { Candidate, User } from './../../../core/entities/internal';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
 import { TypeOrmCandidateRepository } from '../../../candidate/repository/type-orm-candidate.repository';
 
@@ -21,17 +16,14 @@ import { TypeOrmCandidateRepository } from '../../../candidate/repository/type-o
  */
 @CommandHandler(InviteAcceptCandidateCommand)
 export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAcceptCandidateCommand> {
-
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
-		@InjectRepository(Candidate) private readonly typeOrmCandidateRepository: TypeOrmCandidateRepository,
-	) { }
+		@InjectRepository(Candidate) private readonly typeOrmCandidateRepository: TypeOrmCandidateRepository
+	) {}
 
-	public async execute(
-		command: InviteAcceptCandidateCommand
-	): Promise<IUser> {
+	public async execute(command: InviteAcceptCandidateCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
@@ -55,6 +47,7 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 		let user: IUser;
 		try {
 			const { tenantId, email } = invite;
+
 			user = await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					email,
@@ -62,9 +55,6 @@ export class InviteAcceptCandidateHandler implements ICommandHandler<InviteAccep
 					role: {
 						name: RolesEnum.CANDIDATE
 					}
-				},
-				relations: {
-					candidate: true
 				},
 				order: {
 					createdAt: 'DESC'

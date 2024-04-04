@@ -22,7 +22,7 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 	 * @returns
 	 */
 	async findByKeyResultId(keyResultId: string): Promise<KeyResultUpdate[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('key_result_update')
 			.where('key_result_update.keyResultId = :keyResultId', {
 				keyResultId
@@ -36,6 +36,6 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 	 * @returns
 	 */
 	async deleteBulkByKeyResultId(ids: string[]) {
-		return await this.repository.delete(ids);
+		return await this.typeOrmRepository.delete(ids);
 	}
 }

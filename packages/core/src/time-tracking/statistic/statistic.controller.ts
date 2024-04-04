@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Get, Query, ValidationPipe, UsePipes } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ICountsStatistics,
@@ -12,6 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TimeTrackingStatisticQueryDTO } from './dto';
 import { StatisticService } from './statistic.service';
 
@@ -25,10 +26,7 @@ import { StatisticService } from './statistic.service';
 )
 @Controller()
 export class StatisticController {
-
-	constructor(
-		private readonly statisticService: StatisticService
-	) { }
+	constructor(private readonly statisticService: StatisticService) { }
 
 	/**
 	 * Retrieve statistics for counts based on the provided query parameters.
@@ -49,10 +47,8 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/counts')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getCountsStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<ICountsStatistics> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getCountsStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<ICountsStatistics> {
 		return await this.statisticService.getCounts(request);
 	}
 
@@ -76,13 +72,10 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/members')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getMembersStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<IMembersStatistics[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getMembersStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IMembersStatistics[]> {
 		return await this.statisticService.getMembers(request);
 	}
-
 
 	/**
 	 * Retrieve statistics for projects based on the provided query parameters.
@@ -104,10 +97,8 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/projects')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getProjectsStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<IProjectsStatistics[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getProjectsStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IProjectsStatistics[]> {
 		return await this.statisticService.getProjects(request);
 	}
 
@@ -131,10 +122,8 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/tasks')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getTasksStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<ITask[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getTasksStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<ITask[]> {
 		return await this.statisticService.getTasks(request);
 	}
 
@@ -158,10 +147,8 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/manual-times')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getManualTimesStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<IManualTimesStatistics[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getManualTimesStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IManualTimesStatistics[]> {
 		return await this.statisticService.manualTimes(request);
 	}
 
@@ -185,7 +172,7 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/time-slots')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async getEmployeeTimeSlotsStatistics(
 		@Query() request: TimeTrackingStatisticQueryDTO
 	): Promise<ITimeSlotStatistics[]> {
@@ -200,7 +187,7 @@ export class StatisticController {
 	 */
 	@ApiOperation({
 		summary: 'Get Statistics for Activities',
-		description: 'Endpoint to retrieve statistics for activities based on the provided query parameters.',
+		description: 'Endpoint to retrieve statistics for activities based on the provided query parameters.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -212,10 +199,8 @@ export class StatisticController {
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
 	@Get('/activities')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getActivitiesStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<IActivitiesStatistics[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getActivitiesStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<IActivitiesStatistics[]> {
 		return await this.statisticService.getActivities(request);
 	}
 }

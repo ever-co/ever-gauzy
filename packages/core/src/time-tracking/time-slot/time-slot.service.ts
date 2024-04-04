@@ -67,7 +67,7 @@ export class TimeSlotService extends TenantAwareCrudService<TimeSlot> {
 		}
 
 		// Create a query builder for the TimeSlot entity
-		const query = this.repository.createQueryBuilder('time_slot');
+		const query = this.typeOrmRepository.createQueryBuilder('time_slot');
 		query.leftJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeLogs`, 'time_log');
 

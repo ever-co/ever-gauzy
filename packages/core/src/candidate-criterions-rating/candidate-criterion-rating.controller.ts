@@ -1,17 +1,4 @@
-import {
-	HttpStatus,
-	Get,
-	Query,
-	UseGuards,
-	Post,
-	Controller,
-	Body,
-	Delete,
-	Put,
-	Param,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { HttpStatus, Get, Query, UseGuards, Post, Controller, Body, Delete, Put, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ICandidateCriterionsRating, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -20,7 +7,7 @@ import { CandidateCriterionsRatingService } from './candidate-criterion-rating.s
 import { CandidateCriterionsRating } from './candidate-criterion-rating.entity';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import {
 	CandidateCriterionsRatingBulkCreateCommand,
 	CandidateCriterionsRatingBulkDeleteCommand,
@@ -46,16 +33,10 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 	 * @returns
 	 */
 	@Post('bulk')
-	async createBulk(
-		@Body() body: any
-	): Promise<ICandidateCriterionsRating[]> {
+	async createBulk(@Body() body: any): Promise<ICandidateCriterionsRating[]> {
 		const { feedbackId = null, technologies = [], qualities = [] } = body;
 		return await this.commandBus.execute(
-			new CandidateCriterionsRatingBulkCreateCommand(
-				feedbackId,
-				technologies,
-				qualities
-			)
+			new CandidateCriterionsRatingBulkCreateCommand(feedbackId, technologies, qualities)
 		);
 	}
 
@@ -74,9 +55,7 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 			personalQualities: number[];
 		}
 	): Promise<ICandidateCriterionsRating[]> {
-		return await this.commandBus.execute(
-			new CandidateCriterionsRatingBulkUpdateCommand(body)
-		);
+		return await this.commandBus.execute(new CandidateCriterionsRatingBulkUpdateCommand(body));
 	}
 
 	/**
@@ -99,7 +78,7 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_INTERVIEW_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findAll(
 		@Query() params: PaginationParams<CandidateCriterionsRating>
 	): Promise<IPagination<ICandidateCriterionsRating>> {
@@ -113,11 +92,7 @@ export class CandidateCriterionsRatingController extends CrudController<Candidat
 	 * @returns
 	 */
 	@Delete('feedback/:feedbackId')
-	async deleteBulkByFeedbackId(
-		@Param('feedbackId', UUIDValidationPipe) feedbackId: string,
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new CandidateCriterionsRatingBulkDeleteCommand(feedbackId)
-		);
+	async deleteBulkByFeedbackId(@Param('feedbackId', UUIDValidationPipe) feedbackId: string): Promise<any> {
+		return await this.commandBus.execute(new CandidateCriterionsRatingBulkDeleteCommand(feedbackId));
 	}
 }

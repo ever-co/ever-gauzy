@@ -19,7 +19,7 @@ export class UserOrganizationService {
 		private readonly _userOrganizationsCacheService: OrganizationsCacheService,
 		private readonly _userOrganizationCacheService: UserOrganizationCacheService,
 		private readonly _http: HttpClient
-	) {}
+	) { }
 
 	public all(
 		relations?: string[],
@@ -48,32 +48,36 @@ export class UserOrganizationService {
 		return firstValueFrom(usersOrganizations$);
 	}
 
+	/**
+	 * Retrieves detailed information about the current user's organization.
+	 * @returns {Promise<IUserOrganization>} The user organization details.
+	 */
 	public async detail(): Promise<IUserOrganization> {
-		const params = toParams({
-			relations: [
-				'tenant',
-				'employee',
-				'employee.organization',
-				'role',
-				'role.rolePermissions',
-			],
-		});
-		let userOrganizations$ =
-			this._userOrganizationCacheService.getValue('me');
+		// Check if the user organization details are already cached
+		let userOrganizations$ = this._userOrganizationCacheService.getValue('me');
+
+		// If not cached, fetch the details from the server
 		if (!userOrganizations$) {
-			userOrganizations$ = this._http
-				.get<IUserOrganization>(`${API_PREFIX}/user/me`, {
-					params
-				})
-				.pipe(
-					map((response: any) => response),
-					shareReplay(1)
-				);
-			this._userOrganizationCacheService.setValue(
-				userOrganizations$,
-				'me'
+			const params = toParams({
+				relations: [
+					'tenant',
+					'role',
+					'role.rolePermissions',
+				],
+				includeEmployee: true,
+				includeOrganization: true
+			});
+
+			userOrganizations$ = this._http.get<IUserOrganization>(`${API_PREFIX}/user/me`, { params }).pipe(
+				map((response: any) => response),
+				shareReplay(1)
 			);
+
+			// Cache the fetched user organization details
+			this._userOrganizationCacheService.setValue(userOrganizations$, 'me');
 		}
+
+		// Return the first value from the observable
 		return firstValueFrom(userOrganizations$);
 	}
 

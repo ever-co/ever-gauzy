@@ -10,35 +10,26 @@ import {
 	UseGuards,
 	Put,
 	Query,
-	ValidationPipe,
-	UsePipes,
 	BadRequestException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
 import { CrudController } from './../core/crud';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { OrganizationCreateCommand, OrganizationUpdateCommand } from './commands';
 import { Organization } from './organization.entity';
 import { OrganizationService } from './organization.service';
-import {
-	CreateOrganizationDTO,
-	OrganizationFindOptionsDTO,
-	UpdateOrganizationDTO
-} from './dto';
+import { CreateOrganizationDTO, OrganizationFindOptionsDTO, UpdateOrganizationDTO } from './dto';
 
 @ApiTags('Organization')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationController extends CrudController<Organization> {
-	constructor(
-		private readonly organizationService: OrganizationService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly organizationService: OrganizationService, private readonly commandBus: CommandBus) {
 		super(organizationService);
 	}
 
@@ -50,9 +41,7 @@ export class OrganizationController extends CrudController<Organization> {
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<Organization>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<Organization>): Promise<number> {
 		return await this.organizationService.countBy(options);
 	}
 
@@ -64,10 +53,8 @@ export class OrganizationController extends CrudController<Organization> {
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() options: OrganizationFindOptionsDTO<Organization>
-	): Promise<IPagination<IOrganization>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() options: OrganizationFindOptionsDTO<Organization>): Promise<IPagination<IOrganization>> {
 		return await this.organizationService.paginate(options);
 	}
 
@@ -89,10 +76,8 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async findAll(
-		@Query() options: OrganizationFindOptionsDTO<Organization>
-	): Promise<IPagination<IOrganization>> {
+	@UseValidationPipe({ transform: true })
+	async findAll(@Query() options: OrganizationFindOptionsDTO<Organization>): Promise<IPagination<IOrganization>> {
 		try {
 			return await this.organizationService.findAll(options);
 		} catch (error) {
@@ -119,7 +104,7 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@Permissions()
 	@Get(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganization['id'],
 		@Query() options: OrganizationFindOptionsDTO<Organization>
@@ -140,18 +125,13 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async create(
-		@Body() entity: CreateOrganizationDTO
-	): Promise<IOrganization> {
-		return await this.commandBus.execute(
-			new OrganizationCreateCommand(entity)
-		);
+	@UseValidationPipe({ transform: true })
+	async create(@Body() entity: CreateOrganizationDTO): Promise<IOrganization> {
+		return await this.commandBus.execute(new OrganizationCreateCommand(entity));
 	}
 
 	/**
@@ -172,13 +152,11 @@ export class OrganizationController extends CrudController<Organization> {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Put(':id')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: IOrganization['id'],
 		@Body() entity: UpdateOrganizationDTO
 	): Promise<IOrganization> {
-		return await this.commandBus.execute(
-			new OrganizationUpdateCommand(id, entity)
-		);
+		return await this.commandBus.execute(new OrganizationUpdateCommand(id, entity));
 	}
 }

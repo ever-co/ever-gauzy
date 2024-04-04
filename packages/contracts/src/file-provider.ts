@@ -11,6 +11,7 @@ export interface FileSystem {
 }
 
 export enum FileStorageProviderEnum {
+	DEBUG = 'DEBUG',
 	LOCAL = 'LOCAL',
 	S3 = 'S3',
 	WASABI = 'WASABI',

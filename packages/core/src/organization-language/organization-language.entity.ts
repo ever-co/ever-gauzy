@@ -14,7 +14,7 @@ export class OrganizationLanguage extends TenantOrganizationBaseEntity implement
 
 	@ApiProperty({ type: () => Language })
 	@MultiORMManyToOne(() => Language, {
-		nullable: false,
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 		referenceColumnName: 'code',
 		joinColumn: 'languageCode'
@@ -22,12 +22,12 @@ export class OrganizationLanguage extends TenantOrganizationBaseEntity implement
 	@JoinColumn({ referencedColumnName: "code" })
 	language: Language;
 
-	@ApiProperty({ type: () => String, readOnly: true })
+	@ApiProperty({ type: () => String })
 	@RelationId((it: OrganizationLanguage) => it.language)
 	@IsString()
 	@IsOptional()
 	@ColumnIndex()
-	@MultiORMColumn({ nullable: false, relationId: true })
+	@MultiORMColumn({ relationId: true })
 	languageCode: string;
 
 	@ApiProperty({ type: () => String })

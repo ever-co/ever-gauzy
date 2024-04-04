@@ -78,7 +78,6 @@ export class AuthStrategy extends NbAuthStrategy {
 		this.logout$
 			.pipe(
 				distinctUntilChange(),
-				filter(() => !!this.store.token),
 				tap(() => this._preLogout())
 			)
 			.subscribe();
@@ -269,6 +268,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		this.store.clear();
 		this.store.serverConnection = 200;
 		this.store.preferredLanguage = preferredLanguage;
+
 		if (this.electronService.isElectron) {
 			this.electronService.ipcRenderer.send('logout');
 		}
@@ -282,12 +282,17 @@ export class AuthStrategy extends NbAuthStrategy {
 		);
 	}
 
+	/**
+	 * Performs pre-logout actions.
+	 * Clears time tracking and timesheet filter, and logs out if the user is authenticated.
+	 */
 	private async _preLogout() {
 		if (this.store.token) {
 			this.authService.doLogout().subscribe();
 		}
+
 		//remove time tracking/timesheet filter just before logout
-		if (this.store.user && this.store.user.employeeId) {
+		if (this.store.user && this.store.user.employee) {
 			if (this.timeTrackerService.running) {
 				if (this.timeTrackerService.timerSynced.isExternalSource) {
 					this.timeTrackerService.remoteToggle();
@@ -362,9 +367,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					token: token,
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
-					organizationId: user.employee
-						? user.employee.organizationId
-						: null,
+					organizationId: user.employee ? user.employee.organizationId : null,
 					tenantId: user.tenantId ? user.tenantId : null,
 				});
 			}

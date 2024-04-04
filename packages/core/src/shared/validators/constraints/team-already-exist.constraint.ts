@@ -1,61 +1,66 @@
-import { InjectRepository } from "@nestjs/typeorm";
 import { Injectable } from "@nestjs/common";
-import { Not } from "typeorm";
+import { FindManyOptions, Not } from "typeorm";
 import {
 	ValidationArguments,
 	ValidatorConstraint,
 	ValidatorConstraintInterface
 } from "class-validator";
 import { isEmpty } from "@gauzy/common";
-import { OrganizationTeam } from "../../../core/entities/internal";
+import { IOrganizationTeam } from "@gauzy/contracts";
 import { RequestContext } from "../../../core/context";
-import { TypeOrmOrganizationTeamRepository } from "../../../organization-team/repository/type-orm-organization-team.repository";
-import { MikroOrmOrganizationTeamRepository } from "../../../organization-team/repository/mikro-orm-organization-team.repository";
+import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository } from "../../../organization-team/repository";
+import { MultiORM, MultiORMEnum, getORMType, parseTypeORMFindToMikroOrm } from "../../../core/utils";
 
-/**
- *
- */
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
+
 @ValidatorConstraint({ name: "IsTeamAlreadyExist", async: true })
 @Injectable()
 export class TeamAlreadyExistConstraint implements ValidatorConstraintInterface {
 
 	constructor(
-		@InjectRepository(OrganizationTeam)
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-
 		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository
 	) { }
 
 	/**
-	 * Method to be called to perform custom validation over given value.
+	 * Validates if a given name is not already in use in the specified organization.
+	 *
+	 * @param name - The name to validate.
+	 * @param args - Validation arguments, expected to contain organization ID and tenant ID.
+	 * @returns True if the name is not in use or if there's no organization ID, false otherwise.
 	 */
 	async validate(name: any, args: ValidationArguments): Promise<boolean> {
 		if (isEmpty(name)) {
 			return true; // Empty value is considered valid
 		}
 
-		const payload: object = args.object;
+		const payload = args.object as { organizationId?: string, organization?: { id: string }, id?: string };
+		const organizationId = payload.organizationId || payload.organization?.id;
+
+		if (!organizationId) {
+			return true; // Validation is irrelevant without an organization ID
+		}
+
+		const tenantId = RequestContext.currentTenantId();
+		const queryConditions: Record<string, any> = { name, organizationId, tenantId };
+
+		if (payload.id) {
+			queryConditions.id = Not(payload.id); // Exclude current entity from check
+		}
+
 		try {
-			if (payload['organizationId'] || payload['organization']['id']) {
-				const organizationId = payload['organizationId'] || payload['organization']['id'];
-				const tenantId = RequestContext.currentTenantId();
-
-				const queryConditions: Record<string, any> = {
-					name,
-					organizationId,
-					tenantId
-				};
-
-				if (payload['id']) {
-					queryConditions.id = Not(payload['id']);
-				}
-
-				const existingTeam = await this.typeOrmOrganizationTeamRepository.findOneByOrFail(queryConditions);
-				return !existingTeam;
+			switch (ormType) {
+				case MultiORMEnum.MikroORM:
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<IOrganizationTeam>({ where: queryConditions });
+					return !await this.mikroOrmOrganizationTeamRepository.findOneOrFail(where, mikroOptions);
+				case MultiORMEnum.TypeORM:
+					return !await this.typeOrmOrganizationTeamRepository.findOneByOrFail(queryConditions);
+				default:
+					throw new Error(`Not implemented for ${ormType}`);
 			}
-			return true;
 		} catch (error) {
-			return true;
+			return true; // No existing team found, hence valid
 		}
 	}
 
@@ -64,6 +69,6 @@ export class TeamAlreadyExistConstraint implements ValidatorConstraintInterface 
 	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
-		return `Team "${value}" already exists.`;
+		return `The team name '${value}' is already in use. Please choose a different name.`;
 	}
 }

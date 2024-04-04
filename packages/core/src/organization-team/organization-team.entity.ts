@@ -1,8 +1,4 @@
-import {
-	JoinTable,
-	JoinColumn,
-	RelationId,
-} from 'typeorm';
+import { JoinTable, JoinColumn, RelationId } from 'typeorm';
 import {
 	IEquipmentSharing,
 	IGoal,
@@ -19,16 +15,10 @@ import {
 	ITaskSize,
 	ITaskStatus,
 	ITaskVersion,
-	IUser,
+	IUser
 } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsBoolean,
-	IsNotEmpty,
-	IsOptional,
-	IsString,
-	IsUUID,
-} from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	EquipmentSharing,
 	Goal,
@@ -45,14 +35,20 @@ import {
 	TaskStatus,
 	TaskVersion,
 	TenantOrganizationBaseEntity,
-	User,
+	User
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 
 @MultiORMEntity('organization_team', { mikroOrmRepository: () => MikroOrmOrganizationTeamRepository })
 export class OrganizationTeam extends TenantOrganizationBaseEntity implements IOrganizationTeam {
-
 	/**
 	 * Team name
 	 */
@@ -128,7 +124,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
 
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
@@ -138,12 +133,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * User
 	 */
-	@MultiORMManyToOne(() => User, (it) => it.teams, {
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	createdBy?: IUser;
@@ -164,7 +159,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -259,7 +254,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		owner: true,
 		pivotTable: 'tag_organization_team',
 		joinColumn: 'organizationTeamId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_organization_team'
@@ -273,7 +268,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable()
 	tasks?: ITask[];

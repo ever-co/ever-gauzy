@@ -134,68 +134,82 @@ export class TaskSelectorComponent implements
 		this.disabled = isDisabled;
 	}
 
-	createNew = async (title: ITask['title']) => {
-		if (!this.organization || !title) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId} = this.organization;
-
+	/**
+	 * Creates a new task with the given title.
+	 * @param {string} title - The title of the new task.
+	 * @returns {Promise<void>} - A Promise that resolves when the task is created.
+	 */
+	createNew = async (title: ITask['title']): Promise<void> => {
 		try {
+			// Check if organization or title is not defined, return if so
+			if (!this.organization || !title) {
+				return;
+			}
+
+			// Extract organization and tenant IDs
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Extract employee ID from store user
+			const { employee } = this.store.user;
+			const employeeId = employee?.id;
+
+			// Prepare member object
 			const member: any = {
-				id: this.employeeId || this.store.user.employeeId
+				id: this.employeeId || employeeId
 			};
-			const task = await firstValueFrom(this.tasksService
-				.createTask({
-					title,
-					organizationId,
-					tenantId,
-					status: TaskStatusEnum.IN_PROGRESS,
-					...(member.id && { members: [member] }),
-					...(this.projectId && { projectId: this.projectId }),
-				}));
-			this.tasks = this.tasks.concat(task);
+
+			// Create the task
+			const task = await firstValueFrom(this.tasksService.createTask({
+				title,
+				organizationId,
+				tenantId,
+				status: TaskStatusEnum.IN_PROGRESS,
+				...(member.id && { members: [member] }),
+				...(this.projectId && { projectId: this.projectId }),
+			}));
+
+			// Update tasks list and taskId
+			this.tasks = [...this.tasks, task];
 			this.taskId = task.id;
 		} catch (error) {
+			// Show error message if task creation fails
 			this.toastrService.error(error);
 		}
-	};
+	}
 
-	async getTasks() {
-		if (!this.organization) {
-			return;
-		}
+	/**
+	 * Retrieves tasks based on organization, employee, and project.
+	 * @returns {Promise<void>} - A Promise that resolves when tasks are retrieved.
+	 */
+	async getTasks(): Promise<void> {
+		try {
+			// Check if organization is not defined, return if so
+			if (!this.organization) {
+				return;
+			}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId} = this.organization;
+			// Extract organization and tenant IDs
+			const { id: organizationId, tenantId } = this.organization;
 
-		if (this.employeeId) {
-			this.tasks = await this.tasksService.getAllTasksByEmployee(
-				this.employeeId,
-				{
-					where: {
-						...(this.projectId
-							? {
-								projectId: this.projectId
-							  }
-							: {}),
-						organizationId,
-						tenantId
-					}
-				}
-			);
-		} else {
-			const { items = [] } = await firstValueFrom(this.tasksService
-				.getAllTasks({
-					...(this.projectId
-						? {
-							projectId: this.projectId
-						  }
-						: {}),
-					organizationId,
-					tenantId
-				}));
-			this.tasks = items;
+			// Prepare query parameters
+			const queryOption: any = {
+				...(this.projectId ? { projectId: this.projectId } : {}),
+				organizationId,
+				tenantId
+			};
+
+			// Retrieve tasks based on employee or all tasks
+			if (this.employeeId) {
+				this.tasks = await this.tasksService.getAllTasksByEmployee(this.employeeId, { where: queryOption });
+			} else {
+				const { items = [] } = await firstValueFrom(
+					this.tasksService.getAllTasks({ ...queryOption })
+				);
+				this.tasks = items;
+			}
+		} catch (error) {
+			// Log error if task retrieval fails
+			console.error('Error while retrieving tasks:', error);
 		}
 	}
 

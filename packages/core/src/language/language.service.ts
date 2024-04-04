@@ -2,8 +2,7 @@ import { Language } from './language.entity';
 import { CrudService } from '../core';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MikroOrmLanguageRepository } from './repository/mikro-orm-language.repository';
-import { TypeOrmLanguageRepository } from './repository/type-orm-language.repository';
+import { MikroOrmLanguageRepository, TypeOrmLanguageRepository } from './repository';
 
 @Injectable()
 export class LanguageService extends CrudService<Language> {
@@ -17,15 +16,14 @@ export class LanguageService extends CrudService<Language> {
 	}
 
 	/**
+	 * Finds a single Language entity by its name.
 	 *
-	 * @param name
-	 * @returns
+	 * @param name The name of the Language entity to be found.
+	 * @returns A promise that resolves to the Language entity if found, or null if not found.
 	 */
-	async findOneByName(name: string): Promise<Language> {
-		return await super.findOneByOptions({
-			where: {
-				name
-			}
+	findOneByName(name: string): Promise<Language> {
+		return super.findOneByOptions({
+			where: { name }
 		});
 	}
 }

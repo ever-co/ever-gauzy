@@ -29,7 +29,7 @@ export class EquipmentSharingPolicyService extends TenantAwareCrudService<Equipm
 			policy.organizationId = entity.organizationId;
 			policy.tenantId = entity.tenantId;
 			policy.description = entity.description;
-			return this.repository.save(policy);
+			return this.typeOrmRepository.save(policy);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -43,11 +43,11 @@ export class EquipmentSharingPolicyService extends TenantAwareCrudService<Equipm
 	 */
 	async update(id: string, entity: IEquipmentSharingPolicy): Promise<EquipmentSharingPolicy> {
 		try {
-			const policy = await this.repository.findOneBy({ id });
+			const policy = await this.typeOrmRepository.findOneBy({ id });
 			policy.name = entity.name;
 			policy.organizationId = entity.organizationId;
 			policy.description = entity.description;
-			return this.repository.save(policy);
+			return this.typeOrmRepository.save(policy);
 		} catch (err /*: WriteError*/) {
 			throw new BadRequestException(err);
 		}

@@ -46,7 +46,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 					...entity,
 					tenantId
 				});
-				await this.repository.save(featureOrganization);
+				await this.typeOrmRepository.save(featureOrganization);
 			} else {
 				featureOrganizations.map((item: IFeatureOrganization) => {
 					return new FeatureOrganization(
@@ -56,7 +56,7 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 						})
 					);
 				});
-				await this.repository.save(featureOrganizations);
+				await this.typeOrmRepository.save(featureOrganizations);
 			}
 			return true;
 		} catch (error) {
@@ -90,6 +90,6 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 			featureOrganizations.push(...tenantFeatureOrganizations);
 		}
 
-		return await this.repository.save(featureOrganizations);
+		return await this.typeOrmRepository.save(featureOrganizations);
 	}
 }

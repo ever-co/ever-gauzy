@@ -16,14 +16,10 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import {
-	LanguagesEnum,
-	IPagination,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { LanguagesEnum, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { ProductTypeService } from './product-type.service';
 import { ProductType } from './product-type.entity';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -35,11 +31,7 @@ import { ProductTypeCreateCommand } from './commands';
 @Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
 @Controller()
 export class ProductTypeController extends CrudController<ProductType> {
-
-	constructor(
-		private readonly productTypesService: ProductTypeService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly productTypesService: ProductTypeService, private readonly commandBus: CommandBus) {
 		super(productTypesService);
 	}
 
@@ -61,9 +53,7 @@ export class ProductTypeController extends CrudController<ProductType> {
 	})
 	@Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<ProductType>,
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<ProductType>): Promise<number> {
 		return await this.productTypesService.countBy(options);
 	}
 
@@ -87,16 +77,13 @@ export class ProductTypeController extends CrudController<ProductType> {
 	})
 	@Permissions(PermissionsEnum.ORG_PRODUCT_TYPES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() options: PaginationParams<ProductType>,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductType>> {
-		return await this.productTypesService.pagination(
-			options,
-			themeLanguage || languageCode
-		);
+		return await this.productTypesService.pagination(options, themeLanguage || languageCode);
 	}
 
 	/**
@@ -125,10 +112,7 @@ export class ProductTypeController extends CrudController<ProductType> {
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IPagination<ProductType>> {
-		return await this.productTypesService.findProductTypes(
-			options,
-			themeLanguage || languageCode
-		);
+		return await this.productTypesService.findProductTypes(options, themeLanguage || languageCode);
 	}
 
 	/**
@@ -144,23 +128,17 @@ export class ProductTypeController extends CrudController<ProductType> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: ProductTypeDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<ProductType> {
-		return await this.commandBus.execute(
-			new ProductTypeCreateCommand(
-				entity,
-				themeLanguage || languageCode
-			)
-		);
+		return await this.commandBus.execute(new ProductTypeCreateCommand(entity, themeLanguage || languageCode));
 	}
 
 	/**
@@ -181,16 +159,18 @@ export class ProductTypeController extends CrudController<ProductType> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true
-		})) entity: ProductTypeDTO
+		@Body(
+			new ValidationPipe({
+				transform: true
+			})
+		)
+		entity: ProductTypeDTO
 	): Promise<ProductType> {
 		return await this.productTypesService.updateProductType(id, entity);
 	}

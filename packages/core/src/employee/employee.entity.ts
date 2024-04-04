@@ -1,12 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	JoinTable,
-	RelationId
-} from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	MultiORMOneToOne
+} from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -35,7 +39,7 @@ import {
 	ICandidate,
 	IEmployeeAward,
 	IEquipmentSharing,
-	IEmployeePhone,
+	IEmployeePhone
 } from '@gauzy/contracts';
 import {
 	Candidate,
@@ -65,14 +69,13 @@ import {
 	TimeOffRequest,
 	Timesheet,
 	TimeSlot,
-	User,
+	User
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
-
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
 	@ApiPropertyOptional({ type: () => Date })
@@ -139,7 +142,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe(),
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	averageIncome?: number;
 
@@ -147,7 +150,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		nullable: true,
 		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe(),
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	averageBonus?: number;
 
@@ -156,7 +159,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		nullable: true,
 		type: 'numeric',
 		default: 0,
-		transformer: new ColumnNumericTransformerPipe(),
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	totalWorkHours?: number;
 
@@ -164,7 +167,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: 'numeric',
 		nullable: true,
-		transformer: new ColumnNumericTransformerPipe(),
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	averageExpenses?: number;
 
@@ -244,7 +247,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: 'numeric',
 		nullable: true,
-		transformer: new ColumnNumericTransformerPipe(),
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	totalJobs?: number;
 
@@ -252,7 +255,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: 'numeric',
 		nullable: true,
-		transformer: new ColumnNumericTransformerPipe(),
+		transformer: new ColumnNumericTransformerPipe()
 	})
 	jobSuccess?: number;
 
@@ -268,7 +271,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
-		default: false,
+		default: false
 	})
 	isTrackingEnabled: boolean;
 
@@ -279,7 +282,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
-		default: false,
+		default: false
 	})
 	isOnline?: boolean;
 
@@ -287,7 +290,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
-		default: false,
+		default: false
 	})
 	isAway?: boolean;
 
@@ -298,7 +301,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({
 		type: Boolean,
 		nullable: true,
-		default: false,
+		default: false
 	})
 	isTrackingTime?: boolean;
 
@@ -323,7 +326,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({ nullable: true })
 	linkedInId?: string;
 
-
 	/**
 	 * Additional Property
 	 */
@@ -340,7 +342,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 * User
 	 */
 	@ApiProperty({ type: () => User })
-	@MultiORMOneToOne(() => User, (user) => user.employee, {
+	@MultiORMOneToOne(() => User, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
 
@@ -389,6 +391,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@ApiProperty({ type: () => Candidate })
 	@MultiORMOneToOne(() => Candidate, (candidate) => candidate.employee, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
 		owner: false
 	})
@@ -420,7 +425,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	// Employee Teams
 	@ApiPropertyOptional({
 		type: () => OrganizationTeamEmployee,
-		isArray: true,
+		isArray: true
 	})
 	@MultiORMOneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
 	teams?: IOrganizationTeam[];
@@ -451,7 +456,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 
 	@ApiPropertyOptional({ type: () => InvoiceItem, isArray: true })
 	@MultiORMOneToMany(() => InvoiceItem, (it) => it.employee, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	invoiceItems?: IInvoiceItem[];
@@ -473,7 +478,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@ApiPropertyOptional({ type: () => Goal, isArray: true })
 	@MultiORMOneToMany(() => Goal, (it) => it.ownerEmployee, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	goals?: IGoal[];
 
@@ -482,7 +487,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@ApiPropertyOptional({ type: () => Goal, isArray: true })
 	@MultiORMOneToMany(() => Goal, (it) => it.lead, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	leads?: IGoal[];
 
@@ -491,7 +496,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@ApiPropertyOptional({ type: () => EmployeeAward, isArray: true })
 	@MultiORMOneToMany(() => EmployeeAward, (it) => it.employee, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	awards?: IEmployeeAward[];
 
@@ -517,10 +522,10 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		owner: true,
 		pivotTable: 'organization_project_employee',
 		joinColumn: 'employeeId',
-		inverseJoinColumn: 'organizationProjectId',
+		inverseJoinColumn: 'organizationProjectId'
 	})
 	@JoinTable({
-		name: 'organization_project_employee',
+		name: 'organization_project_employee'
 	})
 	projects?: IOrganizationProject[];
 
@@ -533,10 +538,10 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		owner: true,
 		pivotTable: 'tag_employee',
 		joinColumn: 'employeeId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
-		name: 'tag_employee',
+		name: 'tag_employee'
 	})
 	tags: ITag[];
 
@@ -546,7 +551,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => Skill })
 	@MultiORMManyToMany(() => Skill, (skill) => skill.employees, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	skills: ISkill[];
 
@@ -556,7 +561,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => OrganizationDepartment })
 	@MultiORMManyToMany(() => OrganizationDepartment, (it) => it.members, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationDepartments?: IOrganizationDepartment[];
 
@@ -566,7 +571,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@ApiProperty({ type: () => OrganizationEmploymentType })
 	@MultiORMManyToMany(() => OrganizationEmploymentType, (it) => it.members, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
@@ -582,47 +587,39 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@MultiORMManyToMany(() => OrganizationContact, (it) => it.members, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationContacts?: IOrganizationContact[];
 
 	/**
 	 * TimeOffPolicy
 	 */
-	@MultiORMManyToMany(
-		() => TimeOffPolicy,
-		(timeOffPolicy) => timeOffPolicy.employees,
-		{
-			onUpdate: 'CASCADE',
-			onDelete: 'CASCADE',
-			pivotTable: 'time_off_policy_employee',
-			owner: true,
-			joinColumn: 'employeeId',
-			inverseJoinColumn: 'timeOffPolicyId',
-		}
-	)
+	@MultiORMManyToMany(() => TimeOffPolicy, (timeOffPolicy) => timeOffPolicy.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE',
+		pivotTable: 'time_off_policy_employee',
+		owner: true,
+		joinColumn: 'employeeId',
+		inverseJoinColumn: 'timeOffPolicyId'
+	})
 	@JoinTable({
-		name: 'time_off_policy_employee',
+		name: 'time_off_policy_employee'
 	})
 	timeOffPolicies?: ITimeOffPolicy[];
 
 	/**
 	 * TimeOffRequest
 	 */
-	@MultiORMManyToMany(
-		() => TimeOffRequest,
-		(timeOffRequest) => timeOffRequest.employees,
-		{
-			onUpdate: 'CASCADE',
-			onDelete: 'CASCADE',
-			owner: true,
-			pivotTable: 'time_off_request_employee',
-			joinColumn: 'employeeId',
-			inverseJoinColumn: 'timeOffRequestId',
-		}
-	)
+	@MultiORMManyToMany(() => TimeOffRequest, (timeOffRequest) => timeOffRequest.employees, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE',
+		owner: true,
+		pivotTable: 'time_off_request_employee',
+		joinColumn: 'employeeId',
+		inverseJoinColumn: 'timeOffRequestId'
+	})
 	@JoinTable({
-		name: 'time_off_request_employee',
+		name: 'time_off_request_employee'
 	})
 	timeOffRequests?: ITimeOffRequest[];
 
@@ -631,7 +628,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@MultiORMManyToMany(() => Task, (task) => task.members, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinTable()
 	tasks?: ITask[];
@@ -641,7 +638,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	 */
 	@MultiORMManyToMany(() => EquipmentSharing, (it) => it.employees, {
 		onUpdate: 'CASCADE',
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
 }

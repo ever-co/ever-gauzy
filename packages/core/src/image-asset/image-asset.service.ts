@@ -36,7 +36,7 @@ export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 	}
 
 	async deleteAsset(imageId: string): Promise<ImageAsset> {
-		let result = await this.repository.findOne({
+		let result = await this.typeOrmRepository.findOne({
 			where: { id: imageId },
 			relations: ['productGallery', 'productFeaturedImage']
 		});
@@ -45,6 +45,6 @@ export class ImageAssetService extends TenantAwareCrudService<ImageAsset> {
 			throw new HttpException('Image is under use', HttpStatus.BAD_REQUEST);
 		}
 
-		return this.repository.remove(result);
+		return this.typeOrmRepository.remove(result);
 	}
 }

@@ -50,7 +50,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		filter: FindManyOptions<RequestApproval>,
 		findInput: IRequestApprovalFindInput
 	): Promise<IPagination<IRequestApproval>> {
-		const query = this.repository.createQueryBuilder('request_approval');
+		const query = this.typeOrmRepository.createQueryBuilder('request_approval');
 		query.leftJoinAndSelect(`${query.alias}.approvalPolicy`, 'approvalPolicy');
 
 		const timeOffRequestCheckIdQuery = `${isSqlite() || isBetterSqlite3()
@@ -127,7 +127,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		const currentUser = RequestContext.currentUser();
 
 		const { organizationId } = findInput;
-		const result = await this.repository.find({
+		const result = await this.typeOrmRepository.find({
 			where: {
 				createdBy: currentUser.id,
 				organizationId,
@@ -146,7 +146,7 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		}
 
 		for (const request of requestApproval) {
-			const approval = await this.repository.findOne({
+			const approval = await this.typeOrmRepository.findOne({
 				where: {
 					id: request.requestApprovalId
 				},
@@ -210,11 +210,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			});
 			requestApproval.teamApprovals = requestApprovalTeams;
 		}
-		return this.repository.save(requestApproval);
+		return this.typeOrmRepository.save(requestApproval);
 	}
 	async updateRequestApproval(id: string, entity: IRequestApprovalCreateInput): Promise<RequestApproval> {
 		const tenantId = RequestContext.currentTenantId();
-		const requestApproval = await this.repository.findOneBy({
+		const requestApproval = await this.typeOrmRepository.findOneBy({
 			id
 		});
 		requestApproval.name = entity.name;
@@ -225,14 +225,14 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		requestApproval.organizationId = entity.organizationId;
 		requestApproval.tenantId = tenantId;
 
-		await this.repository
+		await this.typeOrmRepository
 			.createQueryBuilder()
 			.delete()
 			.from(RequestApprovalEmployee)
 			.where(p('requestApprovalId = :id'), { id: id })
 			.execute();
 
-		await this.repository
+		await this.typeOrmRepository
 			.createQueryBuilder()
 			.delete()
 			.from(RequestApprovalTeam)
@@ -276,11 +276,11 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			});
 			requestApproval.teamApprovals = requestApprovalTeams;
 		}
-		return this.repository.save(requestApproval);
+		return this.typeOrmRepository.save(requestApproval);
 	}
 
 	async updateStatusRequestApprovalByAdmin(id: string, status: number): Promise<RequestApproval> {
-		const [requestApproval] = await this.repository.find({
+		const [requestApproval] = await this.typeOrmRepository.find({
 			where: {
 				id
 			},
@@ -302,13 +302,13 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 		requestApproval.status = status;
 
-		return this.repository.save(requestApproval);
+		return this.typeOrmRepository.save(requestApproval);
 	}
 
 	async updateStatusRequestApprovalByEmployeeOrTeam(id: string, status: number): Promise<RequestApproval> {
 		let minCount = 0;
 		const employeeId = RequestContext.currentUser().employeeId;
-		const [requestApproval] = await this.repository.find({
+		const [requestApproval] = await this.typeOrmRepository.find({
 			where: {
 				id
 			},
@@ -346,6 +346,6 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			requestApproval.status = RequestApprovalStatusTypesEnum.APPROVED;
 		}
 
-		return this.repository.save(requestApproval);
+		return this.typeOrmRepository.save(requestApproval);
 	}
 }

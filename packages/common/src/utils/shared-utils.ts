@@ -156,14 +156,12 @@ export function chunks(items: any[], size: number): any[] {
 }
 
 /**
- * string should be converted to a boolean
+ * Parses the given value and converts it to a boolean using JSON.parse.
  *
- * @param val
- * @returns
+ * @param value - The value to be parsed.
+ * @returns {boolean} - The boolean representation of the parsed value.
  */
-export function parseToBoolean(val: string | boolean): boolean {
-	return typeof val === 'string' ? JSON.parse(val) : val;
-}
+export const parseToBoolean = (value: any): boolean => Boolean(JSON.parse(value));
 
 /**
  * Generate slug from string value

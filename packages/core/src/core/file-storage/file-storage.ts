@@ -5,19 +5,39 @@ import * as Providers from './providers';
 import { Provider } from './providers/provider';
 import { RequestContext } from './../../core/context';
 
+const isDebug = false;
+
+let debugProvider: Provider<Providers.DebugProvider>;
+
+if (isDebug) {
+	debugProvider = new Providers.DebugProvider();
+}
+
 export class FileStorage {
 	providers: { [key: string]: Provider<any> } = {};
 	config: FileStorageOption = {
 		dest: ''
 	};
 
+	private _fileStorageProviderDefault: FileStorageProviderEnum;
+
 	/**
 	 *
 	 * @param option
 	 */
 	constructor(option?: FileStorageOption) {
-		this.initProvider();
-		this.setConfig(option);
+		if (!isDebug) {
+			if (!this._fileStorageProviderDefault) {
+				this._fileStorageProviderDefault =
+					(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
+					FileStorageProviderEnum.LOCAL;
+			}
+
+			this.initProvider();
+			this.setConfig(option);
+		} else {
+			console.log('FileStorage constructor called');
+		}
 	}
 
 	/**
@@ -45,30 +65,30 @@ export class FileStorage {
 	 * @returns Current instance of FileStorage.
 	 */
 	setProvider(providerName: FileStorageProviderEnum) {
-		const providers = Object.values(FileStorageProviderEnum);
+		if (!isDebug) {
+			const providers = Object.values(FileStorageProviderEnum);
 
-		if (isEmpty(providerName)) {
-			const request = RequestContext.currentRequest();
-			if (request && isNotEmpty(request['tenantSettings'])) {
-				const provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
-				if (isEmpty(provider) || !providers.includes(provider)) {
-					this.config.provider =
-						(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
-						FileStorageProviderEnum.LOCAL;
+			if (isEmpty(providerName)) {
+				const request = RequestContext.currentRequest();
+				if (request && isNotEmpty(request['tenantSettings'])) {
+					const provider = request['tenantSettings']['fileStorageProvider'] as FileStorageProviderEnum;
+					if (isEmpty(provider) || !providers.includes(provider)) {
+						this.config.provider = this._fileStorageProviderDefault;
+					} else {
+						this.config.provider = provider.toUpperCase() as FileStorageProviderEnum;
+					}
 				} else {
-					this.config.provider = provider.toUpperCase() as FileStorageProviderEnum;
+					this.config.provider = this._fileStorageProviderDefault;
 				}
 			} else {
-				this.config.provider =
-					(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
-					FileStorageProviderEnum.LOCAL;
+				if (providers.includes(providerName)) {
+					this.config.provider = providerName.toUpperCase() as FileStorageProviderEnum;
+				} else {
+					this.config.provider = FileStorageProviderEnum.LOCAL;
+				}
 			}
 		} else {
-			if (providers.includes(providerName)) {
-				this.config.provider = providerName.toUpperCase() as FileStorageProviderEnum;
-			} else {
-				this.config.provider = FileStorageProviderEnum.LOCAL;
-			}
+			console.log('FileStorage setProvider called with providerName:', providerName);
 		}
 
 		return this;
@@ -113,12 +133,17 @@ export class FileStorage {
 	 * @throws Error if the specified provider is not found or if there is no provider configured.
 	 */
 	getProviderInstance(): Provider<any> {
-		if (this.config.provider && this.config.provider in this.providers) {
-			return this.providers[this.config.provider].getProviderInstance();
+		if (!isDebug) {
+			if (this.config.provider && this.config.provider in this.providers) {
+				return this.providers[this.config.provider].getProviderInstance();
+			} else {
+				const providers = Object.values(FileStorageProviderEnum).join(', ');
+				console.warn(`Invalid or missing file storage provider. Valid providers are: ${providers}`);
+				return null;
+			}
 		} else {
-			const providers = Object.values(FileStorageProviderEnum).join(', ');
-			console.warn(`Invalid or missing file storage provider. Valid providers are: ${providers}`);
-			return null;
+			console.log('FileStorage getProviderInstance called');
+			return debugProvider;
 		}
 	}
 
@@ -126,18 +151,22 @@ export class FileStorage {
 	 * Initialize provider instances based on the Providers object.
 	 */
 	initProvider() {
-		for (const key in Providers) {
-			if (Object.prototype.hasOwnProperty.call(Providers, key)) {
-				const className = Providers[key];
-				if (className.instance === undefined) {
-					const provider: Provider<any> = new className();
-					this.providers[provider.name] = provider;
+		if (!isDebug) {
+			for (const key in Providers) {
+				if (Object.prototype.hasOwnProperty.call(Providers, key)) {
+					const className = Providers[key];
+					if (className.instance === undefined) {
+						const provider: Provider<any> = new className();
+						this.providers[provider.name] = provider;
 
-					className.instance = provider;
-				} else {
-					this.providers[className.instance.name] = className.instance;
+						className.instance = provider;
+					} else {
+						this.providers[className.instance.name] = className.instance;
+					}
 				}
 			}
+		} else {
+			console.log('FileStorage initProvider called');
 		}
 	}
 }

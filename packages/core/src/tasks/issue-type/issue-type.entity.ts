@@ -65,6 +65,9 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	 * Image Asset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 

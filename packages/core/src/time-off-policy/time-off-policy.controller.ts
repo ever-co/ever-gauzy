@@ -8,9 +8,7 @@ import {
 	Put,
 	Param,
 	HttpCode,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
@@ -23,7 +21,7 @@ import {
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TimeOffPolicy } from './time-off-policy.entity';
 import { TimeOffPolicyService } from './time-off-policy.service';
 
@@ -42,7 +40,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.POLICY_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(@Query() filter: PaginationParams<TimeOffPolicy>): Promise<IPagination<ITimeOffPolicy>> {
 		return this.timeOffPolicyService.paginate(filter);
 	}

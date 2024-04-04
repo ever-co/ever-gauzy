@@ -101,6 +101,10 @@ export class Equipment extends TenantOrganizationBaseEntity implements IEquipmen
 	 */
 	@ApiProperty({ type: () => ImageAsset })
 	@MultiORMManyToOne(() => ImageAsset, (imageAsset) => imageAsset.equipmentImage, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()

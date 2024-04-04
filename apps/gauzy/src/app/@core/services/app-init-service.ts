@@ -23,13 +23,12 @@ export class AppInitService {
 			const id = this.store.userId;
 			if (id) {
 				this.user = await this.usersService.getMe([
-					'employee',
 					'role',
 					'role.rolePermissions',
 					'tenant',
 					'tenant.featureOrganizations',
 					'tenant.featureOrganizations.feature'
-				]);
+				], true);
 
 				this.authStrategy.electronAuthentication({
 					user: this.user,
