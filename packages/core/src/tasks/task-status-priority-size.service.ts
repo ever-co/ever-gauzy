@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Repository as TypeOrmBaseEntityRepository, SelectQueryBuilder, IsNull, FindManyOptions, FindOneOptions } from 'typeorm';
+import { Repository as TypeOrmBaseEntityRepository, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { isNotEmpty } from '@gauzy/common';
 import {
@@ -113,22 +113,23 @@ export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					// Parse the where clause for MikroORM
-					const { where } = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
-					// Find at least one record or get global records
-					await this.mikroOrmRepository.findOneOrFail(where);
+					const mikroOrmOptions = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
 					// Retrieve entities and their count
-					[items, total] = await this.mikroOrmRepository.findAndCount(where);
+					[items, total] = await this.mikroOrmRepository.findAndCount(mikroOrmOptions.where);
+					break;
+				case MultiORMEnum.TypeORM:
+					// Retrieve entities and their count
+					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
 					// Optionally serialize the items
 					items = items.map((item: BaseEntity) => this.serialize(item));
 					break;
-				case MultiORMEnum.TypeORM:
-					// Find at least one record or get global records
-					await this.typeOrmRepository.findOneOrFail(options as FindOneOptions<BaseEntity>);
-					// Retrieve entities and their count
-					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
-					break;
 				default:
 					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+
+			// If no entities are found, fallback to default entities
+			if (total === 0) {
+				return await this.getDefaultEntities();
 			}
 
 			return { items, total };
