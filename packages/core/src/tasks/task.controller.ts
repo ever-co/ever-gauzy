@@ -9,9 +9,7 @@ import {
 	Body,
 	UseGuards,
 	Post,
-	Delete,
-	ValidationPipe,
-	UsePipes
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';

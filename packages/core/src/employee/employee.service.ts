@@ -35,6 +35,36 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Finds the employeeId associated with a given userId.
+	 *
+	 * @param userId The ID of the user.
+	 * @returns The employeeId or null if not found or in case of an error.
+	 */
+	async findEmployeeIdByUserId(userId: string): Promise<string | null> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			// Construct the where clause based on whether tenantId is available
+			const whereClause = tenantId ? { tenantId, userId } : { userId };
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const employee = await this.mikroOrmRepository.findOne(whereClause);
+					return employee ? employee.id : null;
+				}
+				case MultiORMEnum.TypeORM: {
+					const employee = await this.typeOrmRepository.findOne({ where: whereClause });
+					return employee ? employee.id : null;
+				}
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.error(`Error finding employee by userId: ${error.message}`);
+			return null;
+		}
+	}
+
+	/**
 	 * Finds an employee by user ID.
 	 *
 	 * @param userId The ID of the user to find.
