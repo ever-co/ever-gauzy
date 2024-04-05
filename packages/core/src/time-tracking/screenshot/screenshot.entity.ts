@@ -1,10 +1,10 @@
-import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { RelationId, JoinColumn } from 'typeorm';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 
@@ -88,8 +88,11 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	})
 	apps?: string | string[];
 
-	/** Additional fields */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullUrl?: string;
+
+	@VirtualMultiOrmColumn()
 	thumbUrl?: string;
 	/*
 	|--------------------------------------------------------------------------

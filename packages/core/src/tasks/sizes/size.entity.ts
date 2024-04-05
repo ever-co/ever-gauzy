@@ -7,7 +7,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { MikroOrmTaskSizeRepository } from './repository/mikro-orm-task-size.repository';
 
 @MultiORMEntity('task_size', { mikroOrmRepository: () => MikroOrmTaskSizeRepository })
@@ -44,6 +44,8 @@ export class TaskSize extends TenantOrganizationBaseEntity implements ITaskSize 
 	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------

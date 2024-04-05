@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate } from 'class-validator';
 import { IImportRecord } from '@gauzy/contracts';
-import { MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { TenantBaseEntity } from '../../core/entities/internal';
 import { MikroOrmImportRecordRepository } from './repository/mikro-orm-import-record.repository';
 
@@ -25,5 +25,7 @@ export class ImportRecord extends TenantBaseEntity implements IImportRecord {
 	@MultiORMColumn({ nullable: false, default: () => 'CURRENT_TIMESTAMP' })
 	importDate?: Date;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	wasCreated?: boolean;
 }

@@ -25467,10 +25467,10 @@ locate-path@^7.1.0:
   dependencies:
     p-locate "^6.0.0"
 
-locutus@2.0.16, locutus@^2.0.11:
-  version "2.0.16"
-  resolved "https://registry.yarnpkg.com/locutus/-/locutus-2.0.16.tgz#1da15532f1d735712a27e35a1caf0ccb7041f6b3"
-  integrity sha512-pGfl6Hb/1mXLzrX5kl5lH7gz25ey0vwQssZp8Qo2CEF59di6KrAgdFm+0pW8ghLnvNzzJGj5tlWhhv2QbK3jeQ==
+locutus@^2.0.11, locutus@^2.0.30:
+  version "2.0.30"
+  resolved "https://registry.yarnpkg.com/locutus/-/locutus-2.0.30.tgz#ab39290f4d4eb1dbd46cf46ddfd32bf2c01b7304"
+  integrity sha512-3KZv+hm2ahctGcNKZEArcwu9lO05OK/z3Gjxxx3GsDvbAiezia+2BsmUBuqlAheN1mUH98N8qmBB4pRYHEoceQ==
 
 lodash-es@^4.17.15, lodash-es@^4.17.21:
   version "4.17.21"
