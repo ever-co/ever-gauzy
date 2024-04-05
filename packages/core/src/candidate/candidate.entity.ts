@@ -44,7 +44,8 @@ import {
 	MultiORMManyToMany,
 	MultiORMManyToOne,
 	MultiORMOneToMany,
-	MultiORMOneToOne
+	MultiORMOneToOne,
+	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.repository';
 
@@ -106,7 +107,11 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@MultiORMColumn({ nullable: true })
 	cvUrl?: string;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	ratings?: number;
+
+	@VirtualMultiOrmColumn()
 	alreadyHired?: boolean;
 
 	/*

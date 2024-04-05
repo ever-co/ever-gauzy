@@ -5,7 +5,7 @@ import { IIntegration, IIntegrationType, ITag } from '@gauzy/contracts';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
 import { BaseEntity, Tag } from '../core/entities/internal';
 import { IntegrationType } from './integration-type.entity';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmIntegrationRepository } from './repository/mikro-orm-integration.repository';
 
 @MultiORMEntity('integration', { mikroOrmRepository: () => MikroOrmIntegrationRepository })
@@ -77,7 +77,8 @@ export class Integration extends BaseEntity implements IIntegration {
 	@MultiORMColumn({ nullable: true })
 	order: number;
 
-	/** Additional fields */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullImgUrl?: string;
 	/*
 	|--------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoole
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
 import { MikroOrmScreenshotRepository } from './repository/mikro-orm-screenshot.repository';
 
@@ -90,10 +90,10 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	apps?: string | string[];
 
 	/** Additional virtual columns */
-	@Property({ persist: false })
+	@VirtualMultiOrmColumn()
 	fullUrl?: string;
 
-	@Property({ persist: false })
+	@VirtualMultiOrmColumn()
 	thumbUrl?: string;
 	/*
 	|--------------------------------------------------------------------------

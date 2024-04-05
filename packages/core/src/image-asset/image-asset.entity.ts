@@ -9,7 +9,7 @@ import {
 	Equipment,
 	Warehouse
 } from './../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
+import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
 
 @MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
@@ -75,9 +75,11 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	})
 	storageProvider?: FileStorageProviderEnum;
 
-
-	/** Additional fields */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullUrl?: string;
+
+	@VirtualMultiOrmColumn()
 	thumbUrl?: string;
 
 	/*

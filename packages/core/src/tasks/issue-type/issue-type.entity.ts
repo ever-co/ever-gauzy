@@ -16,7 +16,7 @@ import {
 	OrganizationTeam,
 	TenantOrganizationBaseEntity,
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 
 @MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
@@ -53,6 +53,8 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 
 	/*

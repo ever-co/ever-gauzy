@@ -9,7 +9,7 @@ import {
 	OrganizationTeamJoinRequestStatusEnum
 } from '@gauzy/contracts';
 import { OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 
 @MultiORMEntity('organization_team_join_request', { mikroOrmRepository: () => MikroOrmOrganizationTeamJoinRequestRepository })
@@ -58,7 +58,8 @@ export class OrganizationTeamJoinRequest extends TenantOrganizationBaseEntity
 	@MultiORMColumn({ nullable: true })
 	expiredAt: Date;
 
-	/** Additional fields */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	isExpired: boolean;
 
 	/*

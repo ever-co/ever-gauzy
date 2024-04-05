@@ -26,7 +26,7 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
@@ -101,8 +101,8 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@MultiORMColumn({ update: false, nullable: true })
 	version?: string;
 
-	/** Additional fields */
-	@Property({ persist: false })
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	duration: number;
 
 	/**
@@ -110,7 +110,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * If the value is true, it means the TimeLog has been edited.
 	 * If the value is false or undefined, it means the TimeLog has not been edited.
 	 */
-	@Property({ persist: false })
+	@VirtualMultiOrmColumn()
 	isEdited?: boolean;
 
 	/*

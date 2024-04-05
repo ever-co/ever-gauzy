@@ -9,7 +9,8 @@ import {
 	MultiORMManyToMany,
 	MultiORMManyToOne,
 	MultiORMOneToMany,
-	MultiORMOneToOne
+	MultiORMOneToOne,
+	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import {
 	CurrenciesEnum,
@@ -326,10 +327,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@MultiORMColumn({ nullable: true })
 	linkedInId?: string;
 
-	/**
-	 * Additional Property
-	 */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullName?: string;
+
+	@VirtualMultiOrmColumn()
 	isDeleted?: boolean;
 
 	/*

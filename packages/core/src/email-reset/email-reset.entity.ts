@@ -7,7 +7,7 @@ import { IsEmail, IsOptional, IsUUID } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { IEmailReset, IUser } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmEmailResetRepository } from './repository/mikro-orm-email-reset.repository';
 
 @MultiORMEntity('email_reset', { mikroOrmRepository: () => MikroOrmEmailResetRepository })
@@ -39,6 +39,8 @@ export class EmailReset extends TenantBaseEntity implements IEmailReset {
 	@MultiORMColumn({ nullable: true })
 	expiredAt: Date;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	isExpired: boolean;
 
 	/*

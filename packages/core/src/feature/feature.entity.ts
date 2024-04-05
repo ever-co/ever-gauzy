@@ -9,7 +9,7 @@ import {
 	IFeatureOrganization
 } from '@gauzy/contracts';
 import { BaseEntity, FeatureOrganization } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmFeatureRepository } from './repository/mikro-orm-feature.repository';
 
 @MultiORMEntity('feature', { mikroOrmRepository: () => MikroOrmFeatureRepository })
@@ -49,7 +49,11 @@ export class Feature extends BaseEntity implements IFeature {
 	@MultiORMColumn({ nullable: true })
 	icon: string;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	isEnabled?: boolean;
+
+	@VirtualMultiOrmColumn()
 	imageUrl?: string;
 
 	/*

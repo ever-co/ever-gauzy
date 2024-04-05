@@ -11,7 +11,7 @@ import {
 	TenantOrganizationBaseEntity,
 	User
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
 
 @MultiORMEntity('timesheet', { mikroOrmRepository: () => MikroOrmTimesheetRepository })
@@ -97,13 +97,14 @@ export class Timesheet extends TenantOrganizationBaseEntity implements ITimeshee
 	@MultiORMColumn({ default: TimesheetStatus.PENDING })
 	status: string;
 
-	/** Additional fields */
+	/** Additional virtual columns */
 
 	/**
 	 * Indicates whether the Timesheet has been edited.
 	 * If the value is true, it means the Timesheet has been edited.
 	 * If the value is false or undefined, it means the Timesheet has not been edited.
 	 */
+	@VirtualMultiOrmColumn()
 	isEdited?: boolean;
 
 	/*
