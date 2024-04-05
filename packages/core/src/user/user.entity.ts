@@ -24,7 +24,8 @@ import {
 	MultiORMEntity,
 	MultiORMManyToMany,
 	MultiORMManyToOne,
-	MultiORMOneToMany
+	MultiORMOneToMany,
+	VirtualMultiOrmColumn
 } from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
@@ -142,8 +143,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ insert: false, nullable: true })
 	emailToken?: string;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	name?: string;
 
+	@VirtualMultiOrmColumn()
 	isEmailVerified?: boolean;
 
 	/*
