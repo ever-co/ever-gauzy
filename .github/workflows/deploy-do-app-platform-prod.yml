@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Prod
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Prod']
-    branches: [master]
+    branches: [appplatform]
     types:
       - completed
 

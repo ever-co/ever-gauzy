@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean App Platform Stage
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Stage']
-    branches: [stage]
+    branches: [appplatform]
     types:
       - completed
 
