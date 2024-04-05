@@ -6,7 +6,6 @@ import {
 	NotFoundException
 } from '@nestjs/common';
 import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions } from 'typeorm';
-import { QueryOrder } from '@mikro-orm/knex';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,

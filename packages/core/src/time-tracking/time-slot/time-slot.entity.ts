@@ -3,7 +3,6 @@ import {
 	RelationId,
 	JoinTable
 } from 'typeorm';
-import { Property } from '@mikro-orm/core';
 import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	ITimeSlot,

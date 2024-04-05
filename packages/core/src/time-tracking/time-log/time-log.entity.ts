@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OnLoad, Property } from '@mikro-orm/core';
+import { OnLoad } from '@mikro-orm/core';
 import { RelationId, JoinColumn, AfterLoad } from 'typeorm';
 import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import * as moment from 'moment';
