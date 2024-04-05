@@ -1,7 +1,9 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	RelationId,
 	JoinTable
 } from 'typeorm';
+import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	ITimeSlot,
 	ITimeSlotMinute,
@@ -10,8 +12,6 @@ import {
 	IEmployee,
 	ITimeLog
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	Activity,
 	Employee,
@@ -20,7 +20,7 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
@@ -60,10 +60,17 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@MultiORMColumn()
 	startedAt: Date;
 
-	/** Additional fields */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	stoppedAt?: Date;
+
+	@VirtualMultiOrmColumn()
 	percentage?: number;
+
+	@VirtualMultiOrmColumn()
 	keyboardPercentage?: number;
+
+	@VirtualMultiOrmColumn()
 	mousePercentage?: number;
 	/*
 	|--------------------------------------------------------------------------
@@ -120,7 +127,6 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * TimeLog
 	 */
@@ -132,8 +138,6 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 		joinColumn: 'timeSlotId',
 		inverseJoinColumn: 'timeLogId',
 	})
-	@JoinTable({
-		name: 'time_slot_time_logs'
-	})
+	@JoinTable({ name: 'time_slot_time_logs' })
 	timeLogs?: ITimeLog[];
 }
