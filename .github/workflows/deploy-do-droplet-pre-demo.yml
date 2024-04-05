@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean Droplet Demo Pre
 on:
   push:
     branches:
-      - develop
+      - droplets
 
 jobs:
   deploy:

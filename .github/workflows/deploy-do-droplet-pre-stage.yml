@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean Droplet Stage Pre
 on:
   push:
     branches:
-      - stage
+      - droplets
 
 jobs:
   deploy:

@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean Droplet Prod
 on:
   workflow_run:
     workflows: ['Deploy to DigitalOcean Droplet Prod Pre']
-    branches: [master]
+    branches: [droplets]
     types:
       - completed
 
