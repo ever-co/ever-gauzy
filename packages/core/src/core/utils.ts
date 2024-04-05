@@ -492,6 +492,23 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
 }
 
 /**
+ * Adds 'tenantId' to a 'where' clause, supporting both objects and arrays.
+ *
+ * @param tenantId - The tenant ID to add.
+ * @param where - The current 'where' clause.
+ * @returns An updated 'where' clause including the 'tenantId'.
+ */
+export function enhanceWhereWithTenantId<T>(tenantId: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
+	if (Array.isArray(where)) {
+		// Merge tenantId into each object of the array
+		return where.map(condition => ({ ...condition, tenantId }));
+	} else {
+		// Merge where with tenantId if where is an object
+		return { ...where, tenantId };
+	}
+}
+
+/**
  * Convert TypeORM's FindManyOptions to MikroORM's equivalent options.
  *
  * @param options - TypeORM's FindManyOptions.
