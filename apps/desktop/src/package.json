@@ -175,7 +175,7 @@
 		"squirrelly": "^8.0.8",
 		"tslib": "^2.3.0",
 		"twing": "^5.0.2",
-		"locutus": "2.0.16",
+		"locutus": "^2.0.30",
 		"underscore": "^1.13.3",
 		"screenshot-desktop": "^1.15.0",
 		"mac-screen-capture-permissions": "^2.1.0",
