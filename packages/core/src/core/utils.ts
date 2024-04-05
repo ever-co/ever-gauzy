@@ -10,7 +10,7 @@ import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { IDateRange, IUser } from '@gauzy/contracts';
+import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
@@ -214,10 +214,7 @@ export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
 export function getDateRangeFormat(
 	startDate: moment.Moment,
 	endDate: moment.Moment
-): {
-	start: string | Date;
-	end: string | Date;
-} {
+): DateRange {
 	let start = moment(startDate);
 	let end = moment(endDate);
 

@@ -1,5 +1,6 @@
-import { RelationId, JoinColumn } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { RelationId, JoinColumn } from 'typeorm';
+import { Property } from '@mikro-orm/core';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
 import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
@@ -88,8 +89,11 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	})
 	apps?: string | string[];
 
-	/** Additional fields */
+	/** Additional virtual columns */
+	@Property({ persist: false })
 	fullUrl?: string;
+
+	@Property({ persist: false })
 	thumbUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
