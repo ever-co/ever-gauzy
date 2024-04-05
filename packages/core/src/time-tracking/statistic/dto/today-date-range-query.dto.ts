@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { ITimeLogTodayFilters } from "@gauzy/contracts";
 import { IsDateString, IsOptional } from "class-validator";
+import { ITimeLogTodayFilters } from "@gauzy/contracts";
 import { IsBeforeDate } from "./../../../shared/validators";
 
 export class TodayDateRangeQueryDTO implements ITimeLogTodayFilters {
