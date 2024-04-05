@@ -22,7 +22,7 @@ import {
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../../core/decorators/entity';
-import { MikroOrmTimeSlotRepository } from './repository';
+import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity
