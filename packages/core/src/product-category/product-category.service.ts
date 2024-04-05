@@ -40,8 +40,8 @@ export class ProductCategoryService extends TenantAwareCrudService<ProductCatego
 	 */
 	async updateProductCategory(id: string, entity: ProductCategory): Promise<ProductCategory> {
 		try {
-			await this.repository.delete(id);
-			return this.repository.save(entity);
+			await this.typeOrmRepository.delete(id);
+			return this.typeOrmRepository.save(entity);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

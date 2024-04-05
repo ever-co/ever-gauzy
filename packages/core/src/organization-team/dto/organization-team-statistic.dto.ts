@@ -20,6 +20,6 @@ export class OrganizationTeamStatisticDTO extends IntersectionType(DateRangeQuer
 	 */
 	@ApiPropertyOptional({ type: Boolean, default: false })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => parseToBoolean(value) ?? false)
-	readonly withLaskWorkedTask: boolean = false;
+	@Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
+	readonly withLaskWorkedTask: boolean;
 }

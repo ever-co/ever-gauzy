@@ -32,7 +32,7 @@ ARG GAUZY_GITHUB_APP_ID
 ARG JITSU_BROWSER_URL
 ARG JITSU_BROWSER_WRITE_KEY
 
-FROM node:18.19.1-alpine3.19 AS dependencies
+FROM node:20.11.1-alpine3.19 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
@@ -40,7 +40,7 @@ LABEL org.opencontainers.image.source https://github.com/ever-co/ever-gauzy
 ENV CI=true
 
 RUN apk --update add bash && \
-	apk add --no-cache --virtual build-dependencies curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
+	apk add --no-cache --virtual build-dependencies bind-tools curl tar xz jq python3 python3-dev py3-configobj py3-pip py3-setuptools dos2unix gcc g++ git make vips-dev && \
 	mkdir /srv/gauzy && chown -R node:node /srv/gauzy
 
 # Verify the Node.js version
@@ -83,7 +83,7 @@ COPY --chown=node:node decorate-angular-cli.js lerna.json package.json yarn.lock
 RUN yarn install --network-timeout 1000000 --frozen-lockfile && yarn cache clean
 # RUN apk del build-dependencies make gcc g++ python2 py2-setuptools vips-dev
 
-FROM node:18.19.1-alpine3.19 AS development
+FROM node:20.11.1-alpine3.19 AS development
 
 USER node:node
 
@@ -93,7 +93,7 @@ COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypo
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
-FROM node:18.19.1-alpine3.19 AS build
+FROM node:20.11.1-alpine3.19 AS build
 
 WORKDIR /srv/gauzy
 

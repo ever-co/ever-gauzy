@@ -14,22 +14,17 @@ import {
 	Param,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
-import {
-	OrganizationDepartmentEditByEmployeeCommand,
-	OrganizationDepartmentUpdateCommand
-} from './commands';
+import { OrganizationDepartmentEditByEmployeeCommand, OrganizationDepartmentUpdateCommand } from './commands';
 import { OrganizationDepartment } from './organization-department.entity';
 import { OrganizationDepartmentService } from './organization-department.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationDepartment')
 @UseGuards(TenantPermissionGuard)
@@ -61,9 +56,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		description: 'Record not found'
 	})
 	@Get('employee/:id')
-	async findByEmployee(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IPagination<OrganizationDepartment>> {
+	async findByEmployee(@Param('id', UUIDValidationPipe) id: string): Promise<IPagination<OrganizationDepartment>> {
 		return this.organizationDepartmentService.findByEmployee(id);
 	}
 
@@ -84,19 +77,14 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
-	async updateByEmployee(
-		@Body() entity: IEditEntityByMemberInput
-	): Promise<any> {
-		return this.commandBus.execute(
-			new OrganizationDepartmentEditByEmployeeCommand(entity)
-		);
+	async updateByEmployee(@Body() entity: IEditEntityByMemberInput): Promise<any> {
+		return this.commandBus.execute(new OrganizationDepartmentEditByEmployeeCommand(entity));
 	}
 
 	/**
@@ -118,10 +106,8 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationDepartment>> {
-		const { findInput, relations, order} = data;
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationDepartment>> {
+		const { findInput, relations, order } = data;
 		return this.organizationDepartmentService.findAll({
 			where: findInput,
 			order,
@@ -139,7 +125,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() filter: PaginationParams<OrganizationDepartment>
 	): Promise<IPagination<IOrganizationDepartment>> {
@@ -164,8 +150,7 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -173,8 +158,6 @@ export class OrganizationDepartmentController extends CrudController<Organizatio
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: IOrganizationDepartmentCreateInput
 	): Promise<any> {
-		return this.commandBus.execute(
-			new OrganizationDepartmentUpdateCommand(id, entity)
-		);
+		return this.commandBus.execute(new OrganizationDepartmentUpdateCommand(id, entity));
 	}
 }

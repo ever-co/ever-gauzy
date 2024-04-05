@@ -37,7 +37,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	 * @returns
 	 */
 	async findTagsByLevel(input: ITagFindInput, relations: string[] = []): Promise<IPagination<ITag>> {
-		const query = this.repository.createQueryBuilder(this.tableName);
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 		/**
 		 * Defines a special criteria to find specific relations.
 		 */
@@ -70,7 +70,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		relations: string[] | FindOptionsRelations<Tag> = []
 	): Promise<IPagination<ITag>> {
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			/**
 			 * Defines a special criteria to find specific relations.
 			 */

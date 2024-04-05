@@ -10,15 +10,13 @@ import { ErrorHandlingService, UsersService } from "../services";
 })
 export class UserResolver implements Resolve<Observable<number | Observable<never>>> {
     constructor(
-        private readonly router: Router,
+        private readonly _router: Router,
         private readonly _usersService: UsersService,
         private readonly _errorHandlingService: ErrorHandlingService,
     ) { }
 
     // Get the observable for fetching user data from the service
-    resolve(
-        route: ActivatedRouteSnapshot
-    ): Observable<number> {
+    resolve(route: ActivatedRouteSnapshot): Observable<number> {
         // Get the observable for fetching user data from the service
         const user$ = this._usersService.getMe();
 
@@ -29,7 +27,7 @@ export class UserResolver implements Resolve<Observable<number | Observable<neve
                 //When a new user registers & logs in for the first time, he/she does not have tenantId.
                 //In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
                 if (!user.tenantId) {
-                    this.router.navigate(['/onboarding/tenant']);
+                    this._router.navigate(['/onboarding/tenant']);
                     return;
                 }
             }),

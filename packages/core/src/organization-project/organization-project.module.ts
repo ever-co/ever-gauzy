@@ -19,11 +19,11 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		]),
 		TypeOrmModule.forFeature([OrganizationProject]),
 		MikroOrmModule.forFeature([OrganizationProject]),
-		forwardRef(() => RolePermissionModule),
+		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [OrganizationProjectController],
 	providers: [OrganizationProjectService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, OrganizationProjectService]
 })
-export class OrganizationProjectModule { }
+export class OrganizationProjectModule {}

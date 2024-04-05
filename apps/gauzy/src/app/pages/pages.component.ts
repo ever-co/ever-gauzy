@@ -80,6 +80,7 @@ export class PagesComponent extends TranslationBaseComponent
 			)
 			.subscribe();
 		await this._createEntryPoint();
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -90,6 +91,7 @@ export class PagesComponent extends TranslationBaseComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.store.userRolePermissions$
 			.pipe(
 				filter((permissions: IRolePermission[]) =>
@@ -359,14 +361,11 @@ export class PagesComponent extends TranslationBaseComponent
 		if (!id) return;
 
 		this.user = await this.usersService.getMe([
-			'employee',
-			'employee.contact',
-			'role',
 			'role.rolePermissions',
 			'tenant',
 			'tenant.featureOrganizations',
 			'tenant.featureOrganizations.feature'
-		]);
+		], true);
 
 		this.authStrategy.electronAuthentication({
 			user: this.user,

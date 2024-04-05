@@ -25,17 +25,14 @@
 	<nb-card-body class="main-content">
 		<div class="row">
 			<div class="col-xl-3 col-12 d-flex flex-column">
-				<ng-container *ngIf="!user?.employeeId">
+				<ng-container *ngIf="!employee?.id">
 					<nb-card class="custom author d-flex flex-row p-3">
 						<div class="image-container">
 							<img [src]="proposal?.author?.user?.imageUrl" alt=""/>
 						</div>
 						<div class="identity">
 							<h6 class="role">
-								{{
-									'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR'
-										| translate
-								}}
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.AUTHOR' | translate }}
 							</h6>
 							<span class="name">
 								{{ proposal?.author?.fullName }}

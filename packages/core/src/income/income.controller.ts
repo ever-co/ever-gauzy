@@ -15,23 +15,15 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-	IIncome,
-	IPagination,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { IIncome, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { RequestContext } from '../core/context';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import {
-	IncomeCreateCommand,
-	IncomeDeleteCommand,
-	IncomeUpdateCommand
-} from './commands';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { IncomeCreateCommand, IncomeDeleteCommand, IncomeUpdateCommand } from './commands';
 import { Income } from './income.entity';
 import { IncomeService } from './income.service';
 import { CreateIncomeDTO, DeleteIncomeDTO, UpdateIncomeDTO } from './dto';
@@ -61,9 +53,7 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('me')
-	async findMyIncome(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IIncome>> {
+	async findMyIncome(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IIncome>> {
 		const { relations, findInput, filterDate } = data;
 		//If user is not an employee, then this will return 404
 		const employee = await this.employeeService.findOneByWhereOptions({
@@ -83,18 +73,14 @@ export class IncomeController extends CrudController<Income> {
 	 */
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<Income>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<Income>): Promise<number> {
 		return await this.incomeService.countBy(options);
 	}
 
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Income>
-	): Promise<IPagination<IIncome>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<Income>): Promise<IPagination<IIncome>> {
 		return await this.incomeService.pagination(params);
 	}
 
@@ -110,14 +96,9 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IIncome>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IIncome>> {
 		const { relations, findInput, filterDate } = data;
-		return this.incomeService.findAllIncomes(
-			{ where: findInput, relations },
-			filterDate
-		);
+		return this.incomeService.findAllIncomes({ where: findInput, relations }, filterDate);
 	}
 
 	/**
@@ -128,9 +109,7 @@ export class IncomeController extends CrudController<Income> {
 	 */
 	@Permissions(PermissionsEnum.ORG_INCOMES_VIEW)
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: string,
-	): Promise<IIncome> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<IIncome> {
 		return await this.incomeService.findOneByIdString(id);
 	}
 
@@ -141,18 +120,13 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async create(
-		@Body() entity: CreateIncomeDTO
-	): Promise<IIncome> {
-		return await this.commandBus.execute(
-			new IncomeCreateCommand(entity)
-		);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateIncomeDTO): Promise<IIncome> {
+		return await this.commandBus.execute(new IncomeCreateCommand(entity));
 	}
 
 	@ApiOperation({ summary: 'Update an existing record' })
@@ -166,19 +140,13 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateIncomeDTO
-	): Promise<IIncome> {
-		return await this.commandBus.execute(
-			new IncomeUpdateCommand(id, entity)
-		);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateIncomeDTO): Promise<IIncome> {
+		return await this.commandBus.execute(new IncomeUpdateCommand(id, entity));
 	}
 
 	@ApiOperation({
@@ -194,16 +162,11 @@ export class IncomeController extends CrudController<Income> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) incomeId: string,
 		@Query() options: DeleteIncomeDTO
 	): Promise<DeleteResult> {
-		return await this.commandBus.execute(
-			new IncomeDeleteCommand(
-				options.employeeId,
-				incomeId
-			)
-		);
+		return await this.commandBus.execute(new IncomeDeleteCommand(options.employeeId, incomeId));
 	}
 }

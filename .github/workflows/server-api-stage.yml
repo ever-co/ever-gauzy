@@ -26,7 +26,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: buildjet/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20.11.1
           cache: 'yarn'
 
       - name: Change permissions
@@ -87,7 +87,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20.11.1
           cache: 'yarn'
 
       - name: Fix node-gyp and Python
@@ -142,7 +142,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20.11.1
           cache: 'yarn'
 
       - name: Fix node-gyp and Python

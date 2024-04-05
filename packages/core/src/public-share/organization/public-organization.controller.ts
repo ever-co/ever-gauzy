@@ -1,10 +1,11 @@
-import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
-import { Controller, Get, HttpStatus, Param, Query, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseInterceptors } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOptionsWhere } from 'typeorm';
+import { IOrganization, IOrganizationContact, IPagination } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { Organization, OrganizationContact, OrganizationProject } from './../../core/entities/internal';
+import { UseValidationPipe } from '../../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
 import { PublicTransformInterceptor } from './../public-transform.interceptor';
 import { PublicOrganizationQueryDTO } from './dto/public-organization-query.dto';
@@ -15,7 +16,6 @@ import { FindPublicClientsByOrganizationQuery, FindPublicOrganizationQuery } fro
 @UseInterceptors(PublicTransformInterceptor)
 @Controller()
 export class PublicOrganizationController {
-
 	constructor(
 		private readonly queryBus: QueryBus,
 		private readonly publicOrganizationService: PublicOrganizationService
@@ -39,14 +39,12 @@ export class PublicOrganizationController {
 		description: 'Records not found'
 	})
 	@Get('client')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findPublicClientsByOrganization(
 		@Query() options: TenantOrganizationBaseDTO
 	): Promise<IPagination<IOrganizationContact>> {
 		return await this.queryBus.execute(
-			new FindPublicClientsByOrganizationQuery(
-				options as FindOptionsWhere<OrganizationContact>
-			)
+			new FindPublicClientsByOrganizationQuery(options as FindOptionsWhere<OrganizationContact>)
 		);
 	}
 
@@ -57,13 +55,11 @@ export class PublicOrganizationController {
 	 * @returns
 	 */
 	@Get('client/count')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async findPublicClientCountsByOrganization(
-		@Query() options: TenantOrganizationBaseDTO
-	): Promise<Number> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findPublicClientCountsByOrganization(@Query() options: TenantOrganizationBaseDTO): Promise<Number> {
 		return await this.publicOrganizationService.findPublicClientCountsByOrganization(
 			options as FindOptionsWhere<OrganizationContact>
-		)
+		);
 	}
 
 	/**
@@ -73,13 +69,11 @@ export class PublicOrganizationController {
 	 * @returns
 	 */
 	@Get('project/count')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async findPublicProjectCountsByOrganization(
-		@Query() options: TenantOrganizationBaseDTO
-	): Promise<Number> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async findPublicProjectCountsByOrganization(@Query() options: TenantOrganizationBaseDTO): Promise<Number> {
 		return await this.publicOrganizationService.findPublicProjectCountsByOrganization(
 			options as FindOptionsWhere<OrganizationProject>
-		)
+		);
 	}
 
 	/**
@@ -98,13 +92,11 @@ export class PublicOrganizationController {
 		description: 'Record not found'
 	})
 	@Get(':profile_link/:id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findOneByProfileLink(
 		@Param() params: FindOptionsWhere<Organization>,
 		@Query() options: PublicOrganizationQueryDTO
 	): Promise<IOrganization> {
-		return await this.queryBus.execute(
-			new FindPublicOrganizationQuery(params, options.relations)
-		);
+		return await this.queryBus.execute(new FindPublicOrganizationQuery(params, options.relations));
 	}
 }

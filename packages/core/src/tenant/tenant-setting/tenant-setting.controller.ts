@@ -1,19 +1,10 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Post,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards, } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { ITenantSetting, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController } from '../../core/crud';
 import { Permissions } from './../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { TenantSetting } from './tenant-setting.entity';
 import { TenantSettingService } from './tenant-setting.service';
@@ -25,10 +16,7 @@ import { CreateTenantSettingDTO, WasabiS3ProviderConfigDTO } from './dto';
 @Permissions(PermissionsEnum.TENANT_SETTING)
 @Controller()
 export class TenantSettingController extends CrudController<TenantSetting> {
-	constructor(
-		private readonly tenantSettingService: TenantSettingService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly tenantSettingService: TenantSettingService, private readonly commandBus: CommandBus) {
 		super(tenantSettingService);
 	}
 
@@ -47,9 +35,7 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Get()
 	async getSettings() {
-		return await this.commandBus.execute(
-			new TenantSettingGetCommand()
-		);
+		return await this.commandBus.execute(new TenantSettingGetCommand());
 	}
 
 	@ApiOperation({
@@ -61,18 +47,13 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	@Post()
-	async saveSettings(
-		@Body() entity: CreateTenantSettingDTO
-	): Promise<ITenantSetting> {
-		return await this.commandBus.execute(
-			new TenantSettingSaveCommand(entity)
-		);
+	async saveSettings(@Body() entity: CreateTenantSettingDTO): Promise<ITenantSetting> {
+		return await this.commandBus.execute(new TenantSettingSaveCommand(entity));
 	}
 
 	@ApiOperation({
@@ -84,14 +65,11 @@ export class TenantSettingController extends CrudController<TenantSetting> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	@Post('wasabi/validate')
-	async validateWasabiConfiguration(
-		@Body() entity: WasabiS3ProviderConfigDTO
-	): Promise<void | any> {
+	async validateWasabiConfiguration(@Body() entity: WasabiS3ProviderConfigDTO): Promise<void | any> {
 		return await this.tenantSettingService.verifyWasabiConfiguration(entity);
 	}
 }

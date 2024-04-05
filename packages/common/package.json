@@ -29,7 +29,7 @@
 	},
 	"dependencies": {
 		"@mikro-orm/nestjs": "^5.2.3",
-		"@nestjs/common": "^10.3.3",
+		"@nestjs/common": "^10.3.7",
 		"@nestjs/typeorm": "^10.0.2",
 		"apollo-server-core": "^3.10.1",
 		"nest-knexjs": "^0.0.21",

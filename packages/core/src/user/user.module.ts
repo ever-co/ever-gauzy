@@ -14,17 +14,17 @@ import { UserController } from './user.controller';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
+import { EmployeeModule } from './../employee/employee.module';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/user', module: UserModule }
-		]),
+		RouterModule.register([{ path: '/user', module: UserModule }]),
 		forwardRef(() => TypeOrmModule.forFeature([User])),
 		forwardRef(() => MikroOrmModule.forFeature([User])),
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => TaskModule),
+		forwardRef(() => EmployeeModule),
 		CqrsModule,
 		FactoryResetModule
 	],
@@ -32,4 +32,4 @@ import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
 	providers: [UserService, TypeOrmUserRepository, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, UserService, TypeOrmUserRepository]
 })
-export class UserModule { }
+export class UserModule {}

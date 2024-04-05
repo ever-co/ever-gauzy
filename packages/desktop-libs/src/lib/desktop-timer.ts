@@ -44,7 +44,6 @@ export default class TimerHandler {
 	listener = false;
 	nextScreenshot = 0;
 	queue: any = null;
-	queueType: any = {};
 	appName = app.getName();
 	_eventCounter = new DesktopEventCounter();
 
@@ -81,7 +80,9 @@ export default class TimerHandler {
 		this._activeWindow.start();
 
 		const appSetting = LocalStore.getStore('appSetting');
+
 		appSetting.timerStarted = true;
+
 		LocalStore.updateApplicationSetting(appSetting);
 
 		this.notificationDesktop.timerActionNotification(true);
@@ -138,8 +139,8 @@ export default class TimerHandler {
 			try {
 				const appSetting = LocalStore.getStore('appSetting');
 
-				await this.createQueue(
-					`sqlite-queue-${process.env.NAME}`,
+				await this.processWithQueue(
+					`gauzy-queue`,
 					{
 						type: 'update-duration-timer',
 						data: {
@@ -194,6 +195,7 @@ export default class TimerHandler {
 	async randomScreenshotUpdate(knex, timeTrackerWindow) {
 		try {
 			await this._activeWindow.updateActivities();
+			console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
 			const activities = await this.getAllActivities(knex, this.timeSlotStart);
 			timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
 			this.nextTickScreenshot();
@@ -224,12 +226,18 @@ export default class TimerHandler {
 		);
 
 		this.intervalUpdateTime = setInterval(async () => {
-			await this._activeWindow.updateActivities();
-			console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
-			const activities = await this.getAllActivities(knex, this.timeSlotStart);
-			timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
-			console.log('Timeslot Start Time', this.timeSlotStart);
-			this.timeSlotStart = moment();
+			try {
+				console.log('Start Timer Interval Period');
+				await this._activeWindow.updateActivities();
+				console.log('Last Timer Id:', this.lastTimer ? this.lastTimer.id : null);
+				const activities = await this.getAllActivities(knex, this.timeSlotStart);
+				console.log('Activities loaded');
+				timeTrackerWindow.webContents.send('prepare_activities_screenshot', activities);
+				console.log('Timeslot Start Time', this.timeSlotStart);
+				this.timeSlotStart = moment();
+			} catch (error) {
+				console.error('Error on startTimerIntervalPeriod', error);
+			}
 		}, 60 * 1000 * updatePeriod);
 	}
 
@@ -283,6 +291,7 @@ export default class TimerHandler {
 	}
 
 	updateToggle(setupWindow, knex, isStop) {
+		console.log('Update Toggle Timer');
 		const params: any = {
 			...LocalStore.beforeRequestParams()
 		};
@@ -290,6 +299,7 @@ export default class TimerHandler {
 		if (isStop) params.manualTimeSlot = true;
 
 		setupWindow.webContents.send('update_toggle_timer', params);
+		console.log('Update Toggle Timer End');
 	}
 
 	/*
@@ -524,10 +534,13 @@ export default class TimerHandler {
 		}
 
 		if (this._eventCounter.intervalDuration >= updatePeriod) {
-			console.log('Reset Event Counter');
+			console.log('Resetting Event Counter');
 			this._eventCounter.reset();
-			console.log('Event Counter Reset:', this._eventCounter);
+			console.log('Event Counter Reset');
+
 			await this._activityWatchService.clearAllEvents();
+			console.log('Cleared All Events');
+
 			this._activities = [];
 		}
 
@@ -535,9 +548,14 @@ export default class TimerHandler {
 	}
 
 	async stopTimer(setupWindow, timeTrackerWindow, knex, quitApp) {
+		console.log('TimerHandler -> Stop Timer');
+
 		const appSetting = LocalStore.getStore('appSetting');
+
 		appSetting.timerStarted = false;
+
 		LocalStore.updateApplicationSetting(appSetting);
+
 		this.notificationDesktop.timerActionNotification(false);
 
 		/*
@@ -558,9 +576,13 @@ export default class TimerHandler {
 	}
 
 	public async createTimer(timeLog: ITimeLog): Promise<void> {
+		console.log('Create Timer');
+
 		try {
 			const project = LocalStore.getStore('project');
+
 			const user = await this._userService.retrieve();
+
 			const payload = {
 				projectId: project?.projectId,
 				employeeId: user.employeeId,
@@ -570,24 +592,29 @@ export default class TimerHandler {
 				taskId: project?.taskId,
 				description: project?.note
 			};
-			this.isPaused
-				? await this._timerService.save(
-						new Timer({
-							...payload,
-							day: this.todayLocalTimezone,
-							duration: 0,
-							synced: !this._offlineMode.enabled,
-							isStartedOffline: this._offlineMode.enabled,
-							isStoppedOffline: false,
-							version: 'v' + app.getVersion()
-						})
-				  )
-				: await this._timerService.update(
-						new Timer({
-							...payload,
-							id: this.lastTimer.id
-						})
-				  );
+
+			if (this.isPaused) {
+				console.log('Create Timer - Paused');
+				await this._timerService.save(
+					new Timer({
+						...payload,
+						day: this.todayLocalTimezone,
+						duration: 0,
+						synced: !this._offlineMode.enabled,
+						isStartedOffline: this._offlineMode.enabled,
+						isStoppedOffline: false,
+						version: 'v' + app.getVersion()
+					})
+				);
+			} else {
+				console.log('Create Timer - Not Paused');
+				await this._timerService.update(
+					new Timer({
+						...payload,
+						id: this.lastTimer.id
+					})
+				);
+			}
 
 			const lastSavedTimer = await this._timerService.findLastOne();
 
@@ -617,6 +644,7 @@ export default class TimerHandler {
 		if (this.timeSlotStart) {
 			console.log('Make Screenshot Started for: ', this.timeSlotStart);
 			await this._activeWindow.updateActivities();
+			console.log('Updated Activities');
 
 			const activities = await this.getAllActivities(knex, this.timeSlotStart);
 
@@ -629,104 +657,144 @@ export default class TimerHandler {
 		}
 	}
 
-	async createQueue(type, data, knex) {
+	private async ProcessQueueMessage(job, knex) {
+		await new Promise(async (resolve) => {
+			const windowService = new ActivityWatchWindowService();
+
+			const typeJob = job.data.type;
+
+			try {
+				switch (typeJob) {
+					case ActivityWatchEventTableList.WINDOW:
+						{
+							console.log('Processing Window Event');
+							await windowService.save(job.data.data);
+						}
+						break;
+
+					case ActivityWatchEventTableList.AFK:
+						{
+							console.log('Processing AFK Event');
+							const afkService = new ActivityWatchAfkService();
+							await afkService.save(job.data.data);
+						}
+						break;
+
+					case ActivityWatchEventTableList.CHROME:
+						{
+							console.log('Processing Chrome Event');
+							const chromeService = new ActivityWatchChromeService();
+							await chromeService.save(job.data.data);
+						}
+						break;
+
+					case ActivityWatchEventTableList.FIREFOX:
+						{
+							console.log('Processing Firefox Event');
+							const firefoxService = new ActivityWatchFirefoxService();
+							await firefoxService.save(job.data.data);
+						}
+						break;
+
+					case ActivityWatchEventTableList.EDGE:
+						{
+							console.log('Processing Edge Event');
+							const edgeService = new ActivityWatchEdgeService();
+							await edgeService.save(job.data.data);
+						}
+						break;
+
+					case 'remove-window-events':
+						console.log('Removing Window Events');
+						await windowService.clear();
+						break;
+
+					case 'remove-wakatime-events':
+						console.log('Removing Wakatime Events');
+						await metaData.removeActivity(knex, {
+							idsWakatime: job.data.data
+						});
+						break;
+
+					case 'update-duration-timer':
+						const pUpdate = {
+							id: job.data.data.id,
+							duration: job.data.data.duration,
+							...(this._offlineMode.enabled && { synced: false })
+						};
+
+						console.log(
+							`Updating Timer Duration ${JSON.stringify(pUpdate)} - Offline Mode: ${
+								this._offlineMode.enabled
+							}`
+						);
+
+						await this._timerService.update(new Timer(pUpdate));
+
+						break;
+
+					case 'update-timer-time-slot':
+						const pUpdateSlot = {
+							id: job.data.data.id,
+							timeslotId: job.data.data.timeSlotId,
+							timesheetId: job.data.data.timeSheetId
+						};
+
+						console.log(`Updating Timer Time Slot ${JSON.stringify(pUpdateSlot)}`);
+
+						await this._timerService.update(new Timer(pUpdateSlot));
+
+						break;
+
+					default:
+						console.log('Unknown Job Type');
+						break;
+				}
+
+				resolve(true);
+			} catch (error) {
+				console.error('failed insert window activity', error);
+				resolve(false);
+			}
+		});
+	}
+
+	async processWithQueue(type, data, knex) {
 		const queName = `${type}-${this.appName}`;
+		console.log(`processWithQueue Called for ${queName}`);
 
 		if (!this.queue) {
+			console.log(`Initializing Queue ${queName}`);
+
 			this.queue = await EmbeddedQueue.Queue.createQueue({
 				inMemoryOnly: true
 			});
-		}
 
-		if (!this.queueType[queName]) {
-			this.queueType[queName] = this.queue;
+			console.log(`Queue initialized ${queName}`);
 
 			this.queue.process(
 				queName,
 				async (job) => {
-					await new Promise(async (resolve) => {
-						const windowService = new ActivityWatchWindowService();
-						const typeJob = job.data.type;
-						try {
-							switch (typeJob) {
-								case ActivityWatchEventTableList.WINDOW:
-									{
-										await windowService.save(job.data.data);
-									}
-									break;
-								case ActivityWatchEventTableList.AFK:
-									{
-										const afkService = new ActivityWatchAfkService();
-										await afkService.save(job.data.data);
-									}
-									break;
-								case ActivityWatchEventTableList.CHROME:
-									{
-										const chromeService = new ActivityWatchChromeService();
-										await chromeService.save(job.data.data);
-									}
-									break;
-								case ActivityWatchEventTableList.FIREFOX:
-									{
-										const firefoxService = new ActivityWatchFirefoxService();
-										await firefoxService.save(job.data.data);
-									}
-									break;
-								case ActivityWatchEventTableList.EDGE:
-									{
-										const edgeService = new ActivityWatchEdgeService();
-										await edgeService.save(job.data.data);
-									}
-									break;
-								case 'remove-window-events':
-									await windowService.clear();
-									break;
-								case 'remove-wakatime-events':
-									await metaData.removeActivity(knex, {
-										idsWakatime: job.data.data
-									});
-									break;
-								case 'update-duration-timer':
-									await this._timerService.update(
-										new Timer({
-											id: job.data.data.id,
-											duration: job.data.data.duration,
-											...(this._offlineMode.enabled && { synced: false })
-										})
-									);
-									break;
-								case 'update-timer-time-slot':
-									await this._timerService.update(
-										new Timer({
-											id: job.data.data.id,
-											timeslotId: job.data.data.timeSlotId,
-											timesheetId: job.data.data.timeSheetId
-										})
-									);
-									break;
-								default:
-									break;
-							}
-							resolve(true);
-						} catch (error) {
-							console.log('failed insert window activity');
-							resolve(false);
-						}
-					});
+					console.log(`Processing Job for ${queName}`);
+					await this.ProcessQueueMessage(job, knex);
 				},
+				// concurrency is 1
 				1
 			);
 
 			// handle job complete event
 			this.queue.on(EmbeddedQueue.Event.Complete, (job, result) => {
+				console.log(`Removing Job from Queue ${queName}`);
 				job.remove();
 			});
 		}
 
-		// create "adder" type job
+		// create job and add to queue
 		await this.queue.createJob({
 			type: queName,
 			data: data
 		});
+
+		console.log(`Job Created for ${queName}`);
 	}
 }

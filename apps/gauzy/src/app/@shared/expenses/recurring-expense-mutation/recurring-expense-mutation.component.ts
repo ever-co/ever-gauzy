@@ -1,5 +1,10 @@
 import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { NbDialogRef } from '@nebular/theme';
+import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
+import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ComponentType,
 	IRecurringExpenseModel,
@@ -9,11 +14,6 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import { NbDialogRef } from '@nebular/theme';
-import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
-import * as moment from 'moment';
-import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
 	DateRangePickerBuilderService,
@@ -186,8 +186,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
+		const { id: organizationId, tenantId } = this.organization;
 
 		this.expenseCategoriesStore.loadAll({
 			organizationId,
@@ -201,20 +200,41 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	 * @param categories
 	 */
 	mappedExpenseCategories(categories: IExpenseCategory[]) {
-		const storedCategories: {
-			label: string;
-			value: string;
-		}[] = [];
+		const storedCategories: { label: string; value: string; }[] = [];
+
 		for (let category of categories) {
 			storedCategories.push({
 				value: category.name,
 				label: category.name
 			});
 		}
-		this.defaultFilteredCategories = [
+
+		// Define a helper function to create a unique key based on label and name
+		const getKey = (item: any) => `${item.label}-${item.value}`;
+
+		// Merge the storedCategories with defaultFilteredCategories and filter out duplicates
+		const mergedCategories = [
 			...this.defaultFilteredCategories,
 			...storedCategories
-		];
+		].reduce((uniqueItems, item) => {
+			// Generate a unique key for the current item
+			const key = getKey(item);
+			// If the key is not already present in the set, add the item to the set and to the result array
+			if (!uniqueItems.set.has(key)) {
+				uniqueItems.set.add(key);
+				uniqueItems.result.push(item);
+			}
+			return uniqueItems;
+		}, { set: new Set(), result: [] }).result;
+
+		// Now, map the mergedCategories as needed
+		const uniqueFilteredCategories = mergedCategories.map((item) => {
+			// Perform any additional mapping or transformation if required
+			return item;
+		});
+
+		// Update the defaultFilteredCategories with the uniqueFilteredCategories
+		this.defaultFilteredCategories = uniqueFilteredCategories;
 	}
 
 	submitForm() {
@@ -250,9 +270,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		if (this.recurringExpense && this.recurringExpense.employeeId) {
 			payload['employee'] = employee;
 		} else {
-			payload['employee'] = this.employeeSelector
-				? this.employeeSelector.selectedEmployee
-				: null;
+			payload['employee'] = this.employeeSelector ? this.employeeSelector.selectedEmployee : null;
 		}
 		this.dialogRef.close(payload);
 	}
@@ -321,6 +339,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 				},
 				...this.defaultFilteredCategories
 			];
+			console.log(this.defaultFilteredCategories);
 		}
 	}
 

@@ -26,19 +26,19 @@ export class ProductOptionGroupService extends TenantAwareCrudService<ProductOpt
 	}
 
 	async create(productOptionsGroupInput: ProductOptionGroup): Promise<ProductOptionGroup> {
-		return this.repository.save(productOptionsGroupInput);
+		return this.typeOrmRepository.save(productOptionsGroupInput);
 	}
 
 	async createBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return this.repository.save(productOptionsGroupInput);
+		return this.typeOrmRepository.save(productOptionsGroupInput);
 	}
 
 	async saveBulk(productOptionsGroupInput: ProductOptionGroup[]): Promise<ProductOptionGroup[]> {
-		return this.repository.save(productOptionsGroupInput);
+		return this.typeOrmRepository.save(productOptionsGroupInput);
 	}
 
 	async deleteBulk(productOptionGroupsInput: IProductOptionGroupTranslatable[]) {
-		return this.repository.remove(productOptionGroupsInput as any);
+		return this.typeOrmRepository.remove(productOptionGroupsInput as any);
 	}
 
 	async createTranslations(

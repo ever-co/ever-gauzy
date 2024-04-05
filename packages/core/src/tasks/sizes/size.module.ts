@@ -1,6 +1,6 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
@@ -21,4 +21,4 @@ import { CommandHandlers } from './commands/handlers';
 	providers: [TaskSizeService, ...CommandHandlers],
 	exports: [TaskSizeService]
 })
-export class TaskSizeModule { }
+export class TaskSizeModule {}

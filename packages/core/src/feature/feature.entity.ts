@@ -61,8 +61,11 @@ export class Feature extends BaseEntity implements IFeature {
 	/**
 	 * Feature
 	 */
-	@ApiProperty({ type: () => Feature })
-	@MultiORMManyToOne(() => Feature, (feature) => feature.children, {
+	@MultiORMManyToOne(() => Feature, (it) => it.children, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	parent: IFeature;
@@ -82,8 +85,7 @@ export class Feature extends BaseEntity implements IFeature {
 	/**
 	 * FeatureOrganization
 	 */
-	@ApiProperty({ type: () => FeatureOrganization })
-	@MultiORMOneToMany(() => FeatureOrganization, (featureOrganization) => featureOrganization.feature, {
+	@MultiORMOneToMany(() => FeatureOrganization, (it) => it.feature, {
 		cascade: true
 	})
 	@JoinColumn()
@@ -92,8 +94,7 @@ export class Feature extends BaseEntity implements IFeature {
 	/**
 	 * Feature
 	 */
-	@ApiProperty({ type: () => Feature })
-	@MultiORMOneToMany(() => Feature, (feature) => feature.parent, {
+	@MultiORMOneToMany(() => Feature, (it) => it.parent, {
 		cascade: true
 	})
 	@JoinColumn({ name: 'parentId' })

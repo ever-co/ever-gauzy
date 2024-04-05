@@ -11,6 +11,7 @@ import { CommandHandlers } from './commands/handlers';
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from './../user/user.module';
+import { EmployeeModule } from './../employee/employee.module';
 import { RoleModule } from './../role/role.module';
 import { PasswordResetModule } from './../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
@@ -38,6 +39,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				AuthModule,
 				EmailSendModule,
 				UserModule,
+				EmployeeModule,
 				RoleModule,
 				PasswordResetModule,
 				CqrsModule
@@ -48,6 +50,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		MikroOrmModule.forFeature([UserOrganization, Organization, OrganizationTeam]),
 		EmailSendModule,
 		UserModule,
+		EmployeeModule,
 		RoleModule,
 		PasswordResetModule,
 		FeatureModule,
@@ -57,4 +60,4 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 	providers: [...providers, ...CommandHandlers, ...strategies],
 	exports: [...providers]
 })
-export class AuthModule { }
+export class AuthModule {}

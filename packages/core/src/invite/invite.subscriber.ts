@@ -23,8 +23,10 @@ export class InviteSubscriber extends BaseEntityEventSubscriber<Invite> {
      */
     async afterEntityLoad(entity: Invite): Promise<void> {
         try {
-            // Determine if the invite is expired
-            entity.isExpired = entity.expireDate ? moment(entity.expireDate).isBefore(moment()) : false;
+            if ('expireDate' in entity) {
+                // Determine if the invite is expired
+                entity.isExpired = entity.expireDate ? moment(entity.expireDate).isBefore(moment()) : false;
+            }
 
             // Update the status based on the expiration
             if (entity.isExpired) {

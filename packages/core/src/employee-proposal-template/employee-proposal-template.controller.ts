@@ -8,14 +8,12 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { IEmployeeProposalTemplate, IPagination, PermissionsEnum,  } from '@gauzy/contracts';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { IEmployeeProposalTemplate, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CrudController, PaginationParams } from './../core/crud';
@@ -28,9 +26,7 @@ import { CreateProposalTemplateDTO, UpdateProposalTemplateDTO } from './dto';
 @Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT)
 @Controller()
 export class EmployeeProposalTemplateController extends CrudController<EmployeeProposalTemplate> {
-	constructor(
-		private readonly employeeProposalTemplateService: EmployeeProposalTemplateService
-	) {
+	constructor(private readonly employeeProposalTemplateService: EmployeeProposalTemplateService) {
 		super(employeeProposalTemplateService);
 	}
 
@@ -42,7 +38,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	 */
 	@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() params: PaginationParams<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
@@ -61,9 +57,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 		description: 'Record Updated'
 	})
 	@Post(':id/make-default')
-	async makeDefault(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<IEmployeeProposalTemplate> {
+	async makeDefault(@Param('id', UUIDValidationPipe) id: string): Promise<IEmployeeProposalTemplate> {
 		return await this.employeeProposalTemplateService.makeDefault(id);
 	}
 
@@ -80,7 +74,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findAll(
 		@Query() params?: PaginationParams<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
@@ -98,10 +92,8 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	 * @returns
 	 */
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async create(
-		@Body() entity: CreateProposalTemplateDTO
-	): Promise<IEmployeeProposalTemplate> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async create(@Body() entity: CreateProposalTemplateDTO): Promise<IEmployeeProposalTemplate> {
 		return await this.employeeProposalTemplateService.create(entity);
 	}
 
@@ -112,7 +104,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	 * @returns
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	@UseValidationPipe({ whitelist: true, transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProposalTemplateDTO

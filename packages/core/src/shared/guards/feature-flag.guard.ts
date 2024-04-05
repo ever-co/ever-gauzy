@@ -1,10 +1,10 @@
 import { CanActivate, ExecutionContext, Inject, Injectable, NotFoundException, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { FEATURE_METADATA } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { FeatureService } from './../../feature/feature.service';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 /**
  * Feature enabled/disabled guard
@@ -17,7 +17,7 @@ export class FeatureFlagGuard implements CanActivate {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _reflector: Reflector,
 		private readonly featureFlagService: FeatureService
-	) {}
+	) { }
 
 	/**
 	 * Determines if the current request can be activated based on feature flag metadata.
@@ -44,7 +44,6 @@ export class FeatureFlagGuard implements CanActivate {
 
 		if (fromCache == null) {
 			isEnabled = await this.featureFlagService.isFeatureEnabled(flag);
-
 			await this.cacheManager.set(cacheKey, isEnabled);
 		} else {
 			isEnabled = fromCache;

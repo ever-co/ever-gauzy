@@ -180,7 +180,7 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.repository.createQueryBuilder();
+		const query = this.typeOrmRepository.createQueryBuilder();
 		if (request.limit > 0) {
 			query.take(request.limit);
 			query.skip((request.page || 0) * request.limit);

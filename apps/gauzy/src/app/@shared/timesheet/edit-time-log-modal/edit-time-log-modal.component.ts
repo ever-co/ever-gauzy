@@ -272,8 +272,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		}
 		this.loading = true;
 		try {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
+			const { employee } = this.store.user;
+			const { id: organizationId, tenantId } = this.organization;
 
 			const { start, end } = this.selectedRange;
 			const startedAt = toUTC(start).toDate();
@@ -288,9 +288,11 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				logType: TimeLogType.MANUAL,
 				source: TimeLogSourceEnum.WEB_TIMER
 			};
+
 			if (!payload.employeeId) {
-				payload.employeeId = this.store.user.employeeId;
+				payload.employeeId = employee?.id;
 			}
+
 			if (this.mode === 'create') {
 				const timeLog = await this.timesheetService.addTime(payload);
 				this.dialogRef.close(timeLog);
@@ -301,6 +303,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				);
 				this.dialogRef.close(timeLog);
 			}
+
 			this.form.reset();
 			this.selectedRange = { start: null, end: null };
 			this.toastrService.success('TIMER_TRACKER.ADD_TIME_SUCCESS');

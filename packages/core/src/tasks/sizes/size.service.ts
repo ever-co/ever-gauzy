@@ -72,7 +72,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 			const sizes: ITaskSize[] = [];
 			for (const tenant of tenants) {
 				for (const size of DEFAULT_GLOBAL_SIZES) {
-					const create = this.repository.create({
+					const create = this.typeOrmRepository.create({
 						...size,
 						icon: `ever-icons/${size.icon}`,
 						tenant,
@@ -81,7 +81,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 					sizes.push(create);
 				}
 			}
-			return await this.repository.save(sizes);
+			return await this.typeOrmRepository.save(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -101,7 +101,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 
 			for (const item of items) {
 				const { tenantId, name, value, description, icon, color } = item;
-				const create = this.repository.create({
+				const create = this.typeOrmRepository.create({
 					tenantId,
 					name,
 					value,
@@ -113,7 +113,7 @@ export class TaskSizeService extends TaskStatusPrioritySizeService<TaskSize> {
 				});
 				sizes.push(create);
 			}
-			return await this.repository.save(sizes);
+			return await this.typeOrmRepository.save(sizes);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

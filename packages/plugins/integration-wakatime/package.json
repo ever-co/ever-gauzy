@@ -32,12 +32,12 @@
 		"@gauzy/core": "^0.1.0",
 		"@mikro-orm/core": "^6.1.12",
 		"@mikro-orm/nestjs": "^5.2.3",
-		"@nestjs/common": "^10.3.3",
+		"@nestjs/common": "^10.3.7",
 		"@nestjs/typeorm": "^10.0.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
-		"@nestjs/testing": "^10.3.3",
+		"@nestjs/testing": "^10.3.7",
 		"@types/node": "^17.0.33",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"

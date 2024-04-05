@@ -7,9 +7,7 @@ import {
 	UseInterceptors,
 	Delete,
 	Param,
-	Query,
-	UsePipes,
-	ValidationPipe
+	Query
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
@@ -28,7 +26,7 @@ import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteQueryDTO } from './../../shared/dto';
 
 @ApiTags('Screenshot')
@@ -36,10 +34,7 @@ import { DeleteQueryDTO } from './../../shared/dto';
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-
-	constructor(
-		private readonly _screenshotService: ScreenshotService
-	) { }
+	constructor(private readonly _screenshotService: ScreenshotService) { }
 
 	/**
 	 *
@@ -78,10 +73,7 @@ export class ScreenshotController {
 			}
 		})
 	)
-	async create(
-		@Body() input: Screenshot,
-		@UploadedFileStorage() file: UploadedFile
-	) {
+	async create(@Body() input: Screenshot, @UploadedFileStorage() file: UploadedFile) {
 		if (!file.key) {
 			console.warn('Screenshot file key is empty');
 			return;
@@ -211,7 +203,7 @@ export class ScreenshotController {
 	})
 	@Permissions(PermissionsEnum.DELETE_SCREENSHOTS)
 	@Delete(':id')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async delete(
 		@Param('id', UUIDValidationPipe) screenshotId: IScreenshot['id'],
 		@Query() options: DeleteQueryDTO<Screenshot>

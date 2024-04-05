@@ -76,13 +76,16 @@
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.40",
 		"node-static": "^0.7.11",
-		"pg": "^8.11.3",
-		"pg-query-stream": "^4.5.3",
+		"node-fetch": "^2.6.7",
+		"pg": "^8.11.4",
+		"pg-query-stream": "^4.5.4",
 		"rxjs": "^7.4.0",
 		"sqlite3": "^5.1.7",
 		"squirrelly": "^8.0.8",
 		"twing": "^5.0.2",
-		"typeorm": "^0.3.20"
+		"locutus": "2.0.16",
+		"typeorm": "^0.3.20",
+		"undici": "^6.10.2"
 	},
 	"optionalDependencies": {
 		"node-linux": "^0.1.12",

@@ -1,29 +1,17 @@
-import { HelpCenterArticle } from './help-center-article.entity';
 import { PermissionsEnum, IHelpCenterArticle } from '@gauzy/contracts';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import {
-	Controller,
-	HttpStatus,
-	Post,
-	Body,
-	UseGuards,
-	Get,
-	Param,
-	Delete,
-	HttpCode,
-	Put,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, UseGuards, Get, Param, Delete, HttpCode, Put } from '@nestjs/common';
 import {
 	Permissions,
 	CrudController,
 	TenantPermissionGuard,
 	PermissionGuard,
+	UseValidationPipe,
 	UUIDValidationPipe
 } from '@gauzy/core';
 import { AuthGuard } from '@nestjs/passport';
 import { CommandBus } from '@nestjs/cqrs';
+import { HelpCenterArticle } from './help-center-article.entity';
 import { HelpCenterArticleService } from './help-center-article.service';
 import { KnowledgeBaseCategoryBulkDeleteCommand } from './commands';
 import { HelpCenterUpdateArticleCommand } from './commands/help-center-article.update.command';
@@ -51,9 +39,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Post()
-	async create(
-		@Body() entity: IHelpCenterArticle
-	): Promise<IHelpCenterArticle> {
+	async create(@Body() entity: IHelpCenterArticle): Promise<IHelpCenterArticle> {
 		return this.helpCenterArticleService.create(entity);
 	}
 
@@ -70,9 +56,7 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 		description: 'Record not found'
 	})
 	@Get('category/:categoryId')
-	async findByCategoryId(
-		@Param('categoryId', UUIDValidationPipe) categoryId: string
-	): Promise<IHelpCenterArticle[]> {
+	async findByCategoryId(@Param('categoryId', UUIDValidationPipe) categoryId: string): Promise<IHelpCenterArticle[]> {
 		return this.helpCenterArticleService.getArticlesByCategoryId(categoryId);
 	}
 
@@ -91,12 +75,8 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_HELP_CENTER_EDIT)
 	@Delete('category/:categoryId')
-	async deleteBulkByCategoryId(
-		@Param('categoryId', UUIDValidationPipe) categoryId: string
-	): Promise<any> {
-		return this.commandBus.execute(
-			new KnowledgeBaseCategoryBulkDeleteCommand(categoryId)
-		);
+	async deleteBulkByCategoryId(@Param('categoryId', UUIDValidationPipe) categoryId: string): Promise<any> {
+		return this.commandBus.execute(new KnowledgeBaseCategoryBulkDeleteCommand(categoryId));
 	}
 
 	/**
@@ -117,18 +97,15 @@ export class HelpCenterArticleController extends CrudController<HelpCenterArticl
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IHelpCenterArticle['id'],
 		@Body() updateInput: UpdateHelpCenterArticleDTO
 	): Promise<void> {
-		return await this.commandBus.execute(
-			new HelpCenterUpdateArticleCommand(id, updateInput)
-		);
+		return await this.commandBus.execute(new HelpCenterUpdateArticleCommand(id, updateInput));
 	}
 }

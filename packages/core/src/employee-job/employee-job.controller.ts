@@ -1,14 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Post,
-	Body,
-	UsePipes,
-	ValidationPipe,
-	Param
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	IEmployeeJobApplication,
@@ -17,18 +7,16 @@ import {
 	IGetEmployeeJobPostInput,
 	IPagination,
 	IUpdateEmployeeJobPostAppliedResult,
-	IVisibilityJobPostInput,
+	IVisibilityJobPostInput
 } from '@gauzy/contracts';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
 
 @ApiTags('EmployeeJobPost')
 @Controller()
 export class EmployeeJobPostController {
-	constructor(
-		private readonly employeeJobPostService: EmployeeJobPostService
-	) { }
+	constructor(private readonly employeeJobPostService: EmployeeJobPostService) { }
 
 	/**
 	 * Find all employee job posts.
@@ -40,11 +28,11 @@ export class EmployeeJobPostController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found employee job posts',
-		type: EmployeeJobPost,
+		type: EmployeeJobPost
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get()
 	async findAll(@Query() input: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
@@ -61,17 +49,15 @@ export class EmployeeJobPostController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Apply for a Job',
-		type: EmployeeJobPost,
+		type: EmployeeJobPost
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
-	@UsePipes(new ValidationPipe()) // Assuming ValidationPipe is configured appropriately
+	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
 	@Post('apply')
-	async apply(
-		@Body() input: IEmployeeJobApplication,
-	): Promise<IEmployeeJobApplicationAppliedResult | null> {
+	async apply(@Body() input: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult | null> {
 		try {
 			// Apply for the job using the service
 			const appliedJobPost = await this.employeeJobPostService.apply(input);
@@ -97,17 +83,15 @@ export class EmployeeJobPostController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Update applied for a job',
-		type: EmployeeJobPost,
+		type: EmployeeJobPost
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
-	@UsePipes(new ValidationPipe()) // Assuming ValidationPipe is configured appropriately
+	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
 	@Post('updateApplied')
-	async updateApplied(
-		@Body() input: IEmployeeJobApplication,
-	): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
+	async updateApplied(@Body() input: IEmployeeJobApplication): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
 		try {
 			// Update the job application status using the service
 			const updatedJobPost = await this.employeeJobPostService.updateApplied(input);
@@ -134,17 +118,15 @@ export class EmployeeJobPostController {
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Update visibility for a job',
-		type: EmployeeJobPost,
+		type: EmployeeJobPost
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
-	@UsePipes(new ValidationPipe()) // Assuming ValidationPipe is configured appropriately
+	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
 	@Post('hide')
-	async updateVisibility(
-		@Body() data: IVisibilityJobPostInput,
-	): Promise<boolean | null> {
+	async updateVisibility(@Body() data: IVisibilityJobPostInput): Promise<boolean | null> {
 		try {
 			// Update the job visibility status using the service
 			const updatedJobPost = await this.employeeJobPostService.updateVisibility(data);
@@ -170,7 +152,7 @@ export class EmployeeJobPostController {
 	@ApiOperation({ summary: 'Create employee job application record' })
 	@Post('/pre-process')
 	async preProcessEmployeeJobApplication(
-		@Body() input: IEmployeeJobApplication,
+		@Body() input: IEmployeeJobApplication
 	): Promise<Partial<IEmployeeJobApplication> | null> {
 		try {
 			// Validate the input structure if needed
@@ -197,7 +179,7 @@ export class EmployeeJobPostController {
 	 * @returns A promise that resolves to the AI-generated proposal details.
 	 */
 	@ApiOperation({
-		summary: 'Get AI generated proposal for employee job application.',
+		summary: 'Get AI generated proposal for employee job application.'
 	})
 	@Get('/application/:employeeJobApplicationId')
 	async getEmployeeJobApplication(
@@ -226,7 +208,7 @@ export class EmployeeJobPostController {
 	 * @returns A promise that resolves to the generated AI proposal details.
 	 */
 	@ApiOperation({
-		summary: 'Generate AI proposal for employee job application',
+		summary: 'Generate AI proposal for employee job application'
 	})
 	@Post('/generate-proposal/:employeeJobApplicationId')
 	async generateAIProposal(
