@@ -75,7 +75,7 @@ export class ReportService extends CrudService<Report> {
 		const { organizationId } = options;
 		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-		return await this.repository.find({
+		return await this.typeOrmRepository.find({
 			join: {
 				alias: this.tableName,
 				innerJoin: {

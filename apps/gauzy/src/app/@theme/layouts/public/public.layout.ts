@@ -33,7 +33,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 	user: any;
 
 	ngOnInit() {
-		this.loadUserData();
+		this.loadCurrentUserAndPermissions();
 		this.themeService
 			.getJsTheme()
 			.pipe(
@@ -56,17 +56,32 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	private async loadUserData() {
+	/**
+	 * Loads the current user's data and updates the store with user details and permissions.
+	 */
+	private async loadCurrentUserAndPermissions() {
 		const id = this.store.userId;
-		if (!id) return;
-		this.user = await this.usersService.getMe([
-			'employee',
-			'role',
-			'role.rolePermissions',
-			'tenant'
-		]);
 
-		this.store.userRolePermissions = this.user.role.rolePermissions;
-		this.store.user = this.user;
+		// Return early if the user ID is not set
+		if (!id) {
+			console.warn('No user ID found in the store.');
+			return;
+		}
+
+		try {
+			// Fetch user details, including role permissions and tenant information
+			this.user = await this.usersService.getMe([
+				'role',
+				'role.rolePermissions',
+				'tenant'
+			], true);
+
+			// Update the store with user details and role permissions
+			this.store.userRolePermissions = this.user.role.rolePermissions;
+			this.store.user = this.user;
+		} catch (error) {
+			console.error('Error loading current user data:', error);
+			// Handle the error as appropriate (e.g., user feedback, retry logic, etc.)
+		}
 	}
 }

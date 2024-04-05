@@ -8,25 +8,18 @@ import {
 	Body,
 	Put,
 	Param,
-	Delete,
-	UsePipes,
-	ValidationPipe
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
-import {
-	PermissionsEnum,
-	ICandidateFeedbackCreateInput,
-	IPagination,
-	ICandidateFeedback
-} from '@gauzy/contracts';
+import { PermissionsEnum, ICandidateFeedbackCreateInput, IPagination, ICandidateFeedback } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { CandidateFeedback } from './candidate-feedbacks.entity';
 import { CandidateFeedbacksService } from './candidate-feedbacks.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { FeedbackDeleteCommand, FeedbackUpdateCommand } from './commands';
 
 @ApiTags('CandidateFeedback')
@@ -65,9 +58,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	async findByInterviewId(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string
 	): Promise<CandidateFeedback[]> {
-		return this.candidateFeedbacksService.getFeedbacksByInterviewId(
-			interviewId
-		);
+		return this.candidateFeedbacksService.getFeedbacksByInterviewId(interviewId);
 	}
 
 	/**
@@ -82,11 +73,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	@Delete('interview/:interviewId/:feedbackId')
 	async deleteFeedback(
 		@Param('interviewId', UUIDValidationPipe) interviewId: string,
-		@Param('feedbackId', UUIDValidationPipe) feedbackId: string,
+		@Param('feedbackId', UUIDValidationPipe) feedbackId: string
 	): Promise<any> {
-		return await this.commandBus.execute(
-			new FeedbackDeleteCommand(feedbackId, interviewId)
-		);
+		return await this.commandBus.execute(new FeedbackDeleteCommand(feedbackId, interviewId));
 	}
 
 	/**
@@ -101,11 +90,9 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		description: 'Found candidates feedback count'
 	})
 	@Get('count')
-    async getCount(
-		@Query() options: FindOptionsWhere<CandidateFeedback>
-	): Promise<number> {
-        return await this.candidateFeedbacksService.countBy(options);
-    }
+	async getCount(@Query() options: FindOptionsWhere<CandidateFeedback>): Promise<number> {
+		return await this.candidateFeedbacksService.countBy(options);
+	}
 
 	/**
 	 * GET candidate feedbacks by pagination
@@ -124,10 +111,8 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		description: 'Record not found'
 	})
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<CandidateFeedback>
-	): Promise<IPagination<ICandidateFeedback>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() filter: PaginationParams<CandidateFeedback>): Promise<IPagination<ICandidateFeedback>> {
 		return this.candidateFeedbacksService.paginate(filter);
 	}
 
@@ -150,9 +135,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ICandidateFeedback>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ICandidateFeedback>> {
 		const { relations = [], findInput = null } = data;
 		return this.candidateFeedbacksService.findAll({
 			where: findInput,
@@ -179,9 +162,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<ICandidateFeedback> {
+	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<ICandidateFeedback> {
 		return this.candidateFeedbacksService.findOneByIdString(id);
 	}
 
@@ -194,9 +175,7 @@ export class CandidateFeedbacksController extends CrudController<CandidateFeedba
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_FEEDBACK_EDIT)
 	@Post()
-	async create(
-		@Body() body: ICandidateFeedbackCreateInput
-	): Promise<ICandidateFeedback> {
+	async create(@Body() body: ICandidateFeedbackCreateInput): Promise<ICandidateFeedback> {
 		return this.candidateFeedbacksService.create(body);
 	}
 

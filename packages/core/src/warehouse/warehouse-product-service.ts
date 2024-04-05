@@ -46,7 +46,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 	 * @returns
 	 */
 	async getAllWarehouseProducts(warehouseId: string): Promise<IWarehouseProduct[]> {
-		return await this.repository.find({
+		return await this.typeOrmRepository.find({
 			where: {
 				warehouseId,
 				tenantId: RequestContext.currentTenantId()
@@ -104,17 +104,17 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 			})
 		);
 
-		let result: any = await this.repository.save(warehouseProductArr);
+		let result: any = await this.typeOrmRepository.save(warehouseProductArr);
 
 		return { items: result, total: result ? result.length : 0 };
 	}
 
 	async updateWarehouseProductQuantity(warehouseProductId: String, quantity: number): Promise<IWarehouseProduct> {
-		let warehouseProduct = await this.repository.findOneBy({
+		let warehouseProduct = await this.typeOrmRepository.findOneBy({
 			id: warehouseProductId as any
 		});
 		warehouseProduct.quantity = quantity;
-		return this.repository.save(warehouseProduct);
+		return this.typeOrmRepository.save(warehouseProduct);
 	}
 
 	async updateWarehouseProductVariantQuantity(
@@ -133,7 +133,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 
 		let updatedVariant = await this.typeOrmWarehouseProductVariantRepository.save(warehouseProductVariant);
 
-		let warehouseProduct = await this.repository.findOne({
+		let warehouseProduct = await this.typeOrmRepository.findOne({
 			where: {
 				id: warehouseProductVariant.warehouseProduct.id
 			},
@@ -147,7 +147,7 @@ export class WarehouseProductService extends TenantAwareCrudService<WarehousePro
 			warehouseProduct.quantity = +warehouseProduct.quantity + sumQuantity - warehouseProduct.quantity;
 		}
 
-		await this.repository.save(warehouseProduct);
+		await this.typeOrmRepository.save(warehouseProduct);
 		return updatedVariant;
 	}
 }

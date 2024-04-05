@@ -23,10 +23,13 @@ import { InviteController } from './invite.controller';
 import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { EmailSendModule } from './../email-send/email-send.module';
+import { TypeOrmInviteRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/invite', module: InviteModule }]),
+		RouterModule.register([
+			{ path: '/invite', module: InviteModule }
+		]),
 		TypeOrmModule.forFeature([Invite]),
 		MikroOrmModule.forFeature([Invite]),
 		CqrsModule,
@@ -42,12 +45,12 @@ import { EmailSendModule } from './../email-send/email-send.module';
 		OrganizationContactModule,
 		OrganizationDepartmentModule,
 		OrganizationTeamModule,
+		OrganizationTeamEmployeeModule,
 		UserOrganizationModule,
 		AuthModule,
-		OrganizationTeamEmployeeModule
 	],
 	controllers: [InviteController],
-	providers: [InviteService, ...CommandHandlers, ...QueryHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, InviteService]
+	providers: [InviteService, TypeOrmInviteRepository, ...CommandHandlers, ...QueryHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, InviteService, TypeOrmInviteRepository]
 })
 export class InviteModule { }

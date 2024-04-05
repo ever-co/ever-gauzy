@@ -30,7 +30,7 @@
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
 		"@nestjs/axios": "^3.0.2",
-		"@nestjs/common": "^10.3.3",
+		"@nestjs/common": "^10.3.7",
 		"@nestjs/config": "^3.2.0",
 		"axios": "^1.6.5",
 		"chalk": "4.1.2",

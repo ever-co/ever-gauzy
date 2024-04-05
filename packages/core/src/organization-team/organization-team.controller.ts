@@ -10,8 +10,6 @@ import {
 	Put,
 	Param,
 	UseGuards,
-	UsePipes,
-	ValidationPipe,
 	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -19,7 +17,7 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO, DeleteQueryDTO } from './../shared/dto';
 import { GetOrganizationTeamStatisticQuery } from './queries';
@@ -61,7 +59,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('me')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findMyTeams(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findMyTeams(params);
 	}
@@ -74,7 +72,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('count')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async getCount(@Query() options: CountQueryDTO<OrganizationTeam>): Promise<number> {
 		return await this._organizationTeamService.countBy(options);
 	}
@@ -87,7 +85,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.pagination(params);
 	}
@@ -112,7 +110,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<OrganizationTeam>): Promise<IPagination<IOrganizationTeam>> {
 		return await this._organizationTeamService.findAll(params);
 	}
@@ -126,16 +124,14 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	 */
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
 	@Get(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async findById(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Query() options: OrganizationTeamStatisticDTO
 	): Promise<IOrganizationTeam> {
-
 		return await this._queryBus.execute(
 			new GetOrganizationTeamStatisticQuery(id, options)
 		);
-
 	}
 
 	/**
@@ -156,9 +152,11 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@HttpCode(HttpStatus.OK)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_ADD)
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateOrganizationTeamDTO): Promise<IOrganizationTeam> {
-		return await this._commandBus.execute(new OrganizationTeamCreateCommand(entity));
+		return await this._commandBus.execute(
+			new OrganizationTeamCreateCommand(entity)
+		);
 	}
 
 	/**
@@ -184,7 +182,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
 		@Body() entity: UpdateOrganizationTeamDTO
@@ -210,7 +208,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
 	@Delete(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) teamId: IOrganizationTeam['id'],
 		@Query() options: DeleteQueryDTO<OrganizationTeam>

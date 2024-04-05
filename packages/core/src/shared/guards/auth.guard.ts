@@ -15,6 +15,8 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
 	 * @returns A boolean indicating whether access is allowed.
 	 */
 	canActivate(context: ExecutionContext) {
+		console.log('AuthGuard canActivate called');
+
 		const request = context.switchToHttp().getRequest();
 
 		// Allow preflight requests to pass without Auth

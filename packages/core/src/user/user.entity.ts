@@ -3,11 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	RelationId,
-	JoinTable
-} from 'typeorm';
+import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
@@ -17,31 +13,24 @@ import {
 	LanguagesEnum,
 	ComponentLayoutStyleEnum,
 	ITag,
-	IEmployee,
 	IUserOrganization,
 	IInvite,
-	IOrganizationTeam,
-	ICandidate,
 	IImageAsset
 } from '@gauzy/contracts';
+import { ImageAsset, Invite, Role, Tag, TenantBaseEntity, UserOrganization } from '../core/entities/internal';
 import {
-	Candidate,
-	Employee,
-	ImageAsset,
-	Invite,
-	OrganizationTeam,
-	Role,
-	Tag,
-	TenantBaseEntity,
-	UserOrganization
-} from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	VirtualMultiOrmColumn
+} from './../core/decorators/entity';
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
-
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
 export class User extends TenantBaseEntity implements IUser {
-
 	[EntityRepositoryType]?: MikroOrmUserRepository;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -129,7 +118,6 @@ export class User extends TenantBaseEntity implements IUser {
 	})
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 
-
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -155,8 +143,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ insert: false, nullable: true })
 	emailToken?: string;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	name?: string;
-	employeeId?: string;
+
+	@VirtualMultiOrmColumn()
 	isEmailVerified?: boolean;
 
 	/*
@@ -190,6 +181,9 @@ export class User extends TenantBaseEntity implements IUser {
 	 * ImageAsset
 	 */
 	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'SET NULL',
 
@@ -209,30 +203,6 @@ export class User extends TenantBaseEntity implements IUser {
 
 	/*
 	|--------------------------------------------------------------------------
-	| @OneToOne
-	|--------------------------------------------------------------------------
-	*/
-
-	/**
-	 * Employee
-	 */
-	@MultiORMOneToOne(() => Employee, (employee: Employee) => employee.user, {
-		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
-		owner: false
-	})
-	employee?: IEmployee;
-
-	/**
-	 * Candidate
-	 */
-	@MultiORMOneToOne(() => Candidate, (candidate: Candidate) => candidate.user, {
-		/** This column is a boolean flag indicating that this is the inverse side of the relationship, and it doesn't control the foreign key directly  */
-		owner: false
-	})
-	candidate?: ICandidate;
-
-	/*
-	|--------------------------------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
@@ -243,7 +213,7 @@ export class User extends TenantBaseEntity implements IUser {
 		owner: true,
 		pivotTable: 'tag_user',
 		joinColumn: 'userId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_user'
@@ -270,12 +240,4 @@ export class User extends TenantBaseEntity implements IUser {
 	 */
 	@MultiORMOneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
-
-	/**
-	 * User belongs to teams
-	 */
-	@MultiORMOneToMany(() => OrganizationTeam, (it) => it.createdBy, {
-		onDelete: 'CASCADE'
-	})
-	teams?: IOrganizationTeam[];
 }

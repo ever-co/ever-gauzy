@@ -11,6 +11,8 @@ export class TenantBaseGuard implements CanActivate {
 	 * @returns
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
+		console.log('TenantBaseGuard canActivate called');
+
 		const currentTenantId = RequestContext.currentTenantId();
 		const request: any = context.switchToHttp().getRequest();
 		const method: RequestMethodEnum = request.method;
@@ -25,6 +27,7 @@ export class TenantBaseGuard implements CanActivate {
 
 		// Get tenant-id from request headers
 		const headerTenantId = headers['tenant-id'];
+
 		if (headerTenantId && (rawHeaders.includes('tenant-id') || rawHeaders.includes('Tenant-Id'))) {
 			isAuthorized = currentTenantId === headerTenantId;
 		} else {

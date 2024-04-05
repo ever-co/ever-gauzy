@@ -11,6 +11,7 @@ import { TimeLog } from './time-log.entity';
 import { TimeLogController } from './time-log.controller';
 import { TimeLogService } from './time-log.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
+import { TypeOrmTimeLogRepository } from './repository';
 
 @Module({
 	controllers: [
@@ -26,10 +27,7 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 		forwardRef(() => TimeSlotModule),
 		CqrsModule
 	],
-	providers: [
-		TimeLogService,
-		...CommandHandlers
-	],
-	exports: [TypeOrmModule, MikroOrmModule, TimeLogService]
+	providers: [TimeLogService, TypeOrmTimeLogRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, TimeLogService, TypeOrmTimeLogRepository]
 })
 export class TimeLogModule { }

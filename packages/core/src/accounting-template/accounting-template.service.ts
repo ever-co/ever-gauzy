@@ -196,7 +196,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			languageCode = themeLanguage
 		} = options;
 		try {
-			return await this.repository.findOneBy({
+			return await this.typeOrmRepository.findOneBy({
 				languageCode,
 				templateType,
 				organizationId,
@@ -204,7 +204,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 			});
 		} catch (error) {
 			try {
-				return await this.repository.findOneBy({
+				return await this.typeOrmRepository.findOneBy({
 					languageCode,
 					templateType,
 					organizationId: IsNull(),
@@ -212,14 +212,14 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 				});
 			} catch (error) {
 				try {
-					return await this.repository.findOneBy({
+					return await this.typeOrmRepository.findOneBy({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId,
 						tenantId
 					});
 				} catch (error) {
-					return await this.repository.findOneBy({
+					return await this.typeOrmRepository.findOneBy({
 						languageCode: LanguagesEnum.ENGLISH,
 						templateType,
 						organizationId: IsNull(),
@@ -237,7 +237,7 @@ export class AccountingTemplateService extends TenantAwareCrudService<Accounting
 	 * @returns
 	 */
 	async findAll(params: PaginationParams<AccountingTemplate>): Promise<IPagination<IAccountingTemplate>> {
-		const query = this.repository.createQueryBuilder('accounting_template');
+		const query = this.typeOrmRepository.createQueryBuilder('accounting_template');
 		query.setFindOptions({
 			select: {
 				organization: {

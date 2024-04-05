@@ -12,7 +12,8 @@ import {
 	IOrganization,
 	IOrganizationTeam,
 	CrudActionEnum,
-	PermissionsEnum
+	PermissionsEnum,
+	IPagination
 } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
@@ -205,36 +206,37 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			});
 	}
 
+	/**
+	 * Retrieves teams based on the current organization and employee.
+	 */
 	async getTeams() {
 		if (!this.organization) {
 			return;
 		}
+
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
+		let teamsResponse: IPagination<IOrganizationTeam>;
+
 		if (this.employeeId) {
-			// Fetch teams from the service
-			const { items = [] } = await this._organizationTeamsService.getMyTeams({
+			// Fetch teams based on the current employee
+			teamsResponse = await this._organizationTeamsService.getMyTeams({
 				organizationId,
 				tenantId,
-				// Additional parameters based on selectedEmployeeId
-				...(this.employeeId
-					? {
-						members: {
-							employeeId: this.employeeId
-						}
-					}
-					: {})
+				members: { employeeId: this.employeeId }
 			});
-			this.teams = items;
 		} else {
-			const { items = [] } = await this._organizationTeamsService.getAll([], {
+			// Fetch all teams for the organization
+			teamsResponse = await this._organizationTeamsService.getAll([], {
 				organizationId,
 				tenantId,
-				...(this.organizationContactId ? { organizationContactId: this.organizationContactId } : {})
+				...(this.organizationContactId && { organizationContactId: this.organizationContactId })
 			});
-			this.teams = items;
 		}
+
+		// Update teams list
+		this.teams = teamsResponse.items || [];
 
 		//Insert All Employees Option
 		if (this.showAllOption) {
@@ -263,43 +265,50 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		this.disabled = isDisabled;
 	}
 
+	/**
+	 * Creates a new team with the given name.
+	 * @param {string} name - The name of the new team.
+	 */
 	createNew = async (name: string) => {
+		// Check if organization is defined
 		if (!this.organization) {
 			return;
 		}
-		try {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
 
+		try {
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Construct request object with common parameters
 			const request = {
 				name,
 				organizationId,
 				tenantId,
-				...(this.organizationContactId
-					? {
-						organizationContactId: this.organizationContactId
-					}
-					: {})
+				...(this.organizationContactId && { organizationContactId: this.organizationContactId })
 			};
-			if (this.employeeId || this.store.user.employeeId) {
-				const member: any = {
-					id: this.employeeId || this.store.user.employeeId
+
+			// Include member if employeeId or store user's employeeId is provided
+			const employeeId = this.store.user.employee?.id;
+
+			if (this.employeeId || employeeId) {
+				const member: Record<string, string> = {
+					id: this.employeeId || employeeId
 				};
 				request['members'] = [member];
 			}
 
+			// Create the team
 			const team = await this._organizationTeamsService.create(request);
 
-			this.teams = this.teams.concat([team]);
+			// Call method to handle the created team
+			this.createOrganizationTeam(team);
+
+			// Update teamId
 			this.teamId = team.id;
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM',
-				{
-					name
-				}
-			);
+			// Show success message
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ADD_NEW_TEAM', { name });
 		} catch (error) {
+			// Show error message
 			this.toastrService.error(error);
 		}
 	};

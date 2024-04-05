@@ -27,14 +27,14 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 		technologyCreateInput: ICandidateCriterionsRatingCreateInput[],
 		qualityCreateInput: ICandidateCriterionsRatingCreateInput[]
 	) {
-		return [await this.repository.save(technologyCreateInput), await this.repository.save(qualityCreateInput)];
+		return [await this.typeOrmRepository.save(technologyCreateInput), await this.typeOrmRepository.save(qualityCreateInput)];
 	}
 
 	/***
 	 *
 	 */
 	async getCriterionsByFeedbackId(feedbackId: string): Promise<CandidateCriterionsRating[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_feedback')
 			.where('candidate_feedback.feedbackId = :feedbackId', {
 				feedbackId
@@ -48,7 +48,7 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	 * @returns
 	 */
 	async deleteBulk(ids: string[]) {
-		return await this.repository.delete(ids);
+		return await this.typeOrmRepository.delete(ids);
 	}
 
 	/**
@@ -58,6 +58,6 @@ export class CandidateCriterionsRatingService extends TenantAwareCrudService<Can
 	 * @returns
 	 */
 	async updateBulk(tech: ICandidateCriterionsRating[], qual: ICandidateCriterionsRating[]) {
-		return [await this.repository.save(tech), await this.repository.save(qual)];
+		return [await this.typeOrmRepository.save(tech), await this.typeOrmRepository.save(qual)];
 	}
 }

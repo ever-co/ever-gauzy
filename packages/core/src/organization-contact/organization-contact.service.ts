@@ -30,7 +30,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		options: IOrganizationContactFindInput
 	): Promise<IOrganizationContact[]> {
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				select: {
 					id: true,
@@ -82,7 +82,7 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		const { employeeId, organizationId, contactType } = findInput;
 		const { tenantId, id: createdBy } = RequestContext.currentUser();
 
-		const query = this.repository.createQueryBuilder('organization_contact');
+		const query = this.typeOrmRepository.createQueryBuilder('organization_contact');
 		if (relations.length > 0) {
 			relations.forEach((relation: string) => {
 				if (relation.indexOf('.') !== -1) {

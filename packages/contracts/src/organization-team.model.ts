@@ -29,6 +29,7 @@ export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizatio
 	prefix?: string;
 	public?: boolean;
 	profile_link?: string;
+	members?: IOrganizationTeamEmployee;
 }
 
 export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {

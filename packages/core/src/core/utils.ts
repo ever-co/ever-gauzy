@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SqliteDriver } from '@mikro-orm/sqlite';
-import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition } from '@mikro-orm/core';
+import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition, wrap } from '@mikro-orm/core';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -10,7 +10,7 @@ import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { IDateRange, IUser } from '@gauzy/contracts';
+import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
@@ -214,10 +214,7 @@ export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
 export function getDateRangeFormat(
 	startDate: moment.Moment,
 	endDate: moment.Moment
-): {
-	start: string | Date;
-	end: string | Date;
-} {
+): DateRange {
 	let start = moment(startDate);
 	let end = moment(endDate);
 
@@ -495,6 +492,23 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
 }
 
 /**
+ * Adds 'tenantId' to a 'where' clause, supporting both objects and arrays.
+ *
+ * @param tenantId - The tenant ID to add.
+ * @param where - The current 'where' clause.
+ * @returns An updated 'where' clause including the 'tenantId'.
+ */
+export function enhanceWhereWithTenantId<T>(tenantId: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
+	if (Array.isArray(where)) {
+		// Merge tenantId into each object of the array
+		return where.map(condition => ({ ...condition, tenantId }));
+	} else {
+		// Merge where with tenantId if where is an object
+		return { ...where, tenantId };
+	}
+}
+
+/**
  * Convert TypeORM's FindManyOptions to MikroORM's equivalent options.
  *
  * @param options - TypeORM's FindManyOptions.
@@ -590,6 +604,9 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 				$lte: operator.value[1]
 			};
 		}
+		case 'moreThanOrEqual': {
+			return { $gte: operator.value }
+		}
 		// Add additional cases for other operator types if needed
 		default: {
 			// Handle unknown or unimplemented operator types
@@ -643,4 +660,14 @@ export function convertTypeORMWhereToMikroORM<T>(where: MikroFilterQuery<T>) {
 	}
 	// Otherwise, just convert the single condition object
 	return convertTypeORMConditionToMikroORM(where);
+}
+
+/**
+ * Serializes the provided entity based on the ORM type.
+ * @param entity The entity to be serialized.
+ * @returns The serialized entity.
+ */
+export function wrapSerialize<T extends object>(entity: T): T {
+	// If using MikroORM, use wrap(entity).toJSON() for serialization
+	return wrap(entity).toJSON() as T;
 }

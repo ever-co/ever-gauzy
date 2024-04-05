@@ -35,7 +35,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	async deleteScreenshot(id: IScreenshot['id'], options?: FindOptionsWhere<Screenshot>): Promise<IScreenshot> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				where: {
 					...(options ? options : {}),
@@ -50,7 +50,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 				});
 			}
 			const screenshot = await query.getOneOrFail();
-			return await this.repository.remove(screenshot);
+			return await this.typeOrmRepository.remove(screenshot);
 		} catch (error) {
 			throw new ForbiddenException();
 		}

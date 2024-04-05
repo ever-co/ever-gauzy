@@ -1,4 +1,15 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
+import { NbThemeService } from '@nebular/theme';
+import * as moment from 'moment';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Observable } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
+import { Environment } from '@env/model';
+import { environment } from '@env/environment';
 import {
 	IOrganization,
 	IUser,
@@ -8,18 +19,7 @@ import {
 	TimeLogSourceEnum,
 	IEmployee
 } from '@gauzy/contracts';
-import { NgxDraggableDomMoveEvent, NgxDraggablePoint } from 'ngx-draggable-dom';
-import { NbThemeService } from '@nebular/theme';
-import * as moment from 'moment';
 import { distinctUntilChange, toLocal, toUTC } from '@gauzy/common-angular';
-import { NgForm } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
-import { filter, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { Environment } from '@env/model';
-import { environment } from '@env/environment';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
@@ -44,13 +44,13 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 	isOpen = false;
 	isExpanded = true;
 	futureDateAllowed: IOrganization['futureDateAllowed'] = false;
-	employeeId: IEmployee['id'];
 	todaySessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	currentSessionTime = moment().set({ hour: 0, minute: 0, second: 0 }).format('HH:mm:ss');
 	running: boolean;
 	today: Date = new Date();
 	selectedRange: IDateRange = { start: null, end: null };
 	user: IUser;
+	employee: IEmployee;
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	timeLogType = TimeLogType;
@@ -178,7 +178,7 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap((user: IUser) => (this.employeeId = user.employeeId)),
+				tap((user: IUser) => (this.employee = user?.employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();

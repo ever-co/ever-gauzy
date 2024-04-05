@@ -46,7 +46,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			const tenantId = RequestContext.currentTenantId();
 			const currentUser = RequestContext.currentUser();
 
-			const timeOffRequest = await this.repository.save(request);
+			const timeOffRequest = await this.typeOrmRepository.save(request);
 
 			const requestApproval = new RequestApproval();
 			requestApproval.requestId = timeOffRequest.id;
@@ -76,7 +76,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		try {
 			const { organizationId, employeeId, startDate, endDate } = findInput;
 			const tenantId = RequestContext.currentTenantId();
-			const query = this.repository.createQueryBuilder('timeoff');
+			const query = this.typeOrmRepository.createQueryBuilder('timeoff');
 			query
 				.leftJoinAndSelect(`${query.alias}.employees`, `employees`)
 				.leftJoinAndSelect(`${query.alias}.policy`, `policy`)
@@ -110,7 +110,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateTimeOffByAdmin(id: string, timeOffRequest: ITimeOffCreateInput) {
 		try {
-			return await this.repository.save({
+			return await this.typeOrmRepository.save({
 				id,
 				...timeOffRequest
 			});
@@ -121,7 +121,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 	async updateStatusTimeOffByAdmin(id: string, status: string): Promise<TimeOffRequest> {
 		try {
-			const timeOffRequest = await this.repository.findOneBy({
+			const timeOffRequest = await this.typeOrmRepository.findOneBy({
 				id
 			});
 
@@ -133,7 +133,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			} else {
 				throw new ConflictException('Request time off is Conflict');
 			}
-			return await this.repository.save(timeOffRequest);
+			return await this.typeOrmRepository.save(timeOffRequest);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -147,7 +147,7 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	 */
 	public async pagination(options: any) {
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			// Set query options
 			if (isNotEmpty(options)) {
 				query.setFindOptions({

@@ -19,7 +19,7 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	}
 
 	async findByArticleId(articleId: string): Promise<HelpCenterAuthor[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('knowledge_base_author')
 			.where('knowledge_base_author.articleId = :articleId', {
 				articleId
@@ -33,7 +33,7 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 * @returns
 	 */
 	async createBulk(createInput: IHelpCenterAuthor[]) {
-		return await this.repository.save(createInput);
+		return await this.typeOrmRepository.save(createInput);
 	}
 
 	/**
@@ -43,7 +43,7 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 */
 	async deleteBulkByArticleId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await this.repository.delete(ids);
+			return await this.typeOrmRepository.delete(ids);
 		}
 	}
 
@@ -52,6 +52,6 @@ export class HelpCenterAuthorService extends TenantAwareCrudService<HelpCenterAu
 	 * @returns
 	 */
 	async getAll(): Promise<IHelpCenterAuthor[]> {
-		return await this.repository.createQueryBuilder('knowledge_base_author').getMany();
+		return await this.typeOrmRepository.createQueryBuilder('knowledge_base_author').getMany();
 	}
 }

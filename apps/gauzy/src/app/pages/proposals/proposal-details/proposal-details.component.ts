@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IProposal, IUser } from '@gauzy/contracts';
+import { IEmployee, IProposal, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services';
@@ -14,24 +14,26 @@ import { Store } from '../../../@core/services';
 })
 export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
 
+	user: IUser;
+	employee: IEmployee;
+	proposal: IProposal;
+	jobPostLink: SafeHtml;
+	jobPostContent: SafeHtml;
+	proposalContent: SafeHtml;
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
 		private readonly router: Router
-	) {}
-
-	user: IUser;
-	proposal: IProposal;
-	jobPostLink: SafeHtml;
-	jobPostContent: SafeHtml;
-	proposalContent: SafeHtml;
+	) { }
 
 	ngOnInit(): void {
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
+				tap((user: IUser) => (this.employee = user?.employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -76,5 +78,5 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

@@ -1,13 +1,9 @@
 import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { MikroOrmModule } from "@mikro-orm/nestjs";
-import {
-    Role,
-    Employee,
-    OrganizationTeam,
-    ExpenseCategory,
-    UserOrganization
-} from "./../../core/entities/internal";
+import { UserOrganizationModule } from "../../user-organization/user-organization.module";
+import { RoleModule } from "../../role/role.module";
+import { EmployeeModule } from "../../employee/employee.module";
+import { ExpenseCategoriesModule } from "../../expense-categories/expense-categories.module";
+import { OrganizationTeamModule } from "../../organization-team/organization-team.module";
 import {
     TenantBelongsToUserConstraint,
     RoleAlreadyExistConstraint,
@@ -18,18 +14,13 @@ import {
     OrganizationBelongsToUserConstraint
 } from "./constraints";
 
-const entities = [
-    Role,
-    Employee,
-    OrganizationTeam,
-    ExpenseCategory,
-    UserOrganization
-];
-
 @Module({
     imports: [
-        TypeOrmModule.forFeature(entities),
-        MikroOrmModule.forFeature(entities)
+        EmployeeModule,
+        UserOrganizationModule,
+        RoleModule,
+        ExpenseCategoriesModule,
+        OrganizationTeamModule,
     ],
     providers: [
         TenantBelongsToUserConstraint,
@@ -40,6 +31,6 @@ const entities = [
         ExpenseCategoryAlreadyExistConstraint,
         OrganizationBelongsToUserConstraint
     ],
-    exports: [TypeOrmModule, MikroOrmModule]
+    exports: []
 })
 export class ValidatorModule { }

@@ -1,17 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/knex';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
-import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity
-} from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
-import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
+import { MikroOrmTaskStatusRepository } from './repository';
 
 @MultiORMEntity('task_status', { mikroOrmRepository: () => MikroOrmTaskStatusRepository })
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {
+
+	[EntityRepositoryType]?: MikroOrmTaskStatusRepository;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -21,6 +20,8 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	name: string;
 
 	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn()
 	value: string;
@@ -53,9 +54,8 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@MultiORMColumn({ default: false })
 	isCollapsed?: boolean;
 
-	/**
-	 * Additional Property
-	 */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
@@ -71,7 +71,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -94,7 +94,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

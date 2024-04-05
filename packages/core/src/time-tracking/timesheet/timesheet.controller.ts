@@ -1,46 +1,20 @@
-import {
-	Controller,
-	UseGuards,
-	Put,
-	HttpStatus,
-	Body,
-	Get,
-	Query,
-	Param,
-	ValidationPipe,
-	BadRequestException,
-	UsePipes
-} from '@nestjs/common';
+import { Controller, UseGuards, Put, HttpStatus, Body, Get, Query, Param, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-	ITimesheet,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ITimesheet, PermissionsEnum } from '@gauzy/contracts';
 import { TimeSheetService } from './timesheet.service';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
-import {
-	SubmitTimesheetStatusDTO,
-	TimesheetQueryDTO,
-	UpdateTimesheetStatusDTO
-} from './dto/query';
-import {
-	TimesheetSubmitCommand,
-	TimesheetUpdateStatusCommand
-} from './commands';
+import { SubmitTimesheetStatusDTO, TimesheetQueryDTO, UpdateTimesheetStatusDTO } from './dto/query';
+import { TimesheetSubmitCommand, TimesheetUpdateStatusCommand } from './commands';
 
 @ApiTags('TimeSheet')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
 @Controller()
 export class TimeSheetController {
-
-	constructor(
-		private readonly commandBus: CommandBus,
-		private readonly timeSheetService: TimeSheetService
-	) {}
+	constructor(private readonly commandBus: CommandBus, private readonly timeSheetService: TimeSheetService) {}
 
 	/**
 	 * GET timesheet counts in the same tenant
@@ -58,10 +32,8 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/count')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async getTimesheetCount(
-		@Query() options: TimesheetQueryDTO
-	): Promise<number> {
+	@UseValidationPipe({ whitelist: true })
+	async getTimesheetCount(@Query() options: TimesheetQueryDTO): Promise<number> {
 		try {
 			return await this.timeSheetService.getTimeSheetCount(options);
 		} catch (error) {
@@ -85,13 +57,9 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/status')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async updateTimesheetStatus(
-		@Body() entity: UpdateTimesheetStatusDTO
-	): Promise<ITimesheet[]> {
-		return await this.commandBus.execute(
-			new TimesheetUpdateStatusCommand(entity)
-		);
+	@UseValidationPipe({ whitelist: true })
+	async updateTimesheetStatus(@Body() entity: UpdateTimesheetStatusDTO): Promise<ITimesheet[]> {
+		return await this.commandBus.execute(new TimesheetUpdateStatusCommand(entity));
 	}
 
 	/**
@@ -110,13 +78,9 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/submit')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async submitTimeSheet(
-		@Body() entity: SubmitTimesheetStatusDTO
-	): Promise<ITimesheet[]> {
-		return await this.commandBus.execute(
-			new TimesheetSubmitCommand(entity)
-		);
+	@UseValidationPipe({ whitelist: true })
+	async submitTimeSheet(@Body() entity: SubmitTimesheetStatusDTO): Promise<ITimesheet[]> {
+		return await this.commandBus.execute(new TimesheetSubmitCommand(entity));
 	}
 
 	/**
@@ -135,10 +99,8 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async get(
-		@Query() options: TimesheetQueryDTO
-	): Promise<ITimesheet[]> {
+	@UseValidationPipe({ whitelist: true })
+	async get(@Query() options: TimesheetQueryDTO): Promise<ITimesheet[]> {
 		try {
 			return await this.timeSheetService.getTimeSheets(options);
 		} catch (error) {
@@ -162,9 +124,7 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get('/:id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: ITimesheet['id']
-	): Promise<ITimesheet> {
+	async findById(@Param('id', UUIDValidationPipe) id: ITimesheet['id']): Promise<ITimesheet> {
 		try {
 			return await this.timeSheetService.findOneByIdString(id);
 		} catch (error) {

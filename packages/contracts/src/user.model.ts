@@ -59,9 +59,7 @@ export interface IUserFindInput extends IBasePerTenantEntityModel {
 	username?: string;
 	role?: IRole;
 	roleId?: string;
-	hash?: string;
 	imageUrl?: string;
-	tags?: ITag[];
 	preferredLanguage?: LanguagesEnum;
 }
 

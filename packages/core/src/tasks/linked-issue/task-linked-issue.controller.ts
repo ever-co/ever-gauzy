@@ -1,21 +1,10 @@
-import {
-	Body,
-	Controller,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
-	UseGuards,
-	UsePipes,
-	ValidationPipe,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ITaskLinkedIssue, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { UUIDValidationPipe } from 'shared/pipes';
-import { Permissions } from 'shared/decorators';
-import { CrudController } from 'core/crud';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { UUIDValidationPipe, UseValidationPipe } from '../../shared/pipes';
+import { Permissions } from '../../shared/decorators';
+import { CrudController } from '../../core/crud';
 import { TaskLinkedIssue } from './task-linked-issue.entity';
 import { TaskLinkedIssueService } from './task-linked-issue.service';
 import { CreateTaskLinkedIssueDTO, UpdateTaskLinkedIssueDTO } from './dto';
@@ -25,9 +14,7 @@ import { CreateTaskLinkedIssueDTO, UpdateTaskLinkedIssueDTO } from './dto';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
-	constructor(
-		protected readonly taskLinkedIssueService: TaskLinkedIssueService
-	) {
+	constructor(protected readonly taskLinkedIssueService: TaskLinkedIssueService) {
 		super(taskLinkedIssueService);
 	}
 
@@ -40,10 +27,8 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
-	async create(
-		@Body() entity: CreateTaskLinkedIssueDTO
-	): Promise<ITaskLinkedIssue> {
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() entity: CreateTaskLinkedIssueDTO): Promise<ITaskLinkedIssue> {
 		return await this.taskLinkedIssueService.create(entity);
 	}
 
@@ -57,7 +42,7 @@ export class TaskLinkedIssueController extends CrudController<TaskLinkedIssue> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ITaskLinkedIssue['id'],
 		@Body() entity: UpdateTaskLinkedIssueDTO

@@ -1,7 +1,8 @@
-import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { Permissions } from 'shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { Permissions } from '../../shared/decorators';
+import { UseValidationPipe } from '../../shared/pipes';
 import { GithubService } from './github.service';
 import { GithubAppInstallDTO, GithubOAuthDTO } from './dto';
 
@@ -9,9 +10,7 @@ import { GithubAppInstallDTO, GithubOAuthDTO } from './dto';
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class GitHubController {
-	constructor(
-		private readonly _githubService: GithubService
-	) { }
+	constructor(private readonly _githubService: GithubService) { }
 
 	/**
 	 *
@@ -20,7 +19,7 @@ export class GitHubController {
 	 */
 	@Post('/install')
 	@HttpCode(HttpStatus.CREATED)
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async addGithubAppInstallation(@Body() input: GithubAppInstallDTO) {
 		try {
 			// Validate the input data (You can use class-validator for validation)
@@ -31,7 +30,10 @@ export class GitHubController {
 			return await this._githubService.addGithubAppInstallation(input);
 		} catch (error) {
 			// Handle errors and return an appropriate error response
-			throw new HttpException(`Failed to add GitHub integration: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new HttpException(
+				`Failed to add GitHub integration: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 
@@ -42,7 +44,7 @@ export class GitHubController {
 	 */
 	@Post('/oauth')
 	@HttpCode(HttpStatus.CREATED)
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async oAuthEndpointAuthorization(@Body() input: GithubOAuthDTO) {
 		try {
 			// Validate the input data (You can use class-validator for validation)
@@ -53,7 +55,10 @@ export class GitHubController {
 			return await this._githubService.oAuthEndpointAuthorization(input);
 		} catch (error) {
 			// Handle errors and return an appropriate error response
-			throw new HttpException(`Failed to add GitHub integration: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR);
+			throw new HttpException(
+				`Failed to add GitHub integration: ${error.message}`,
+				HttpStatus.INTERNAL_SERVER_ERROR
+			);
 		}
 	}
 }

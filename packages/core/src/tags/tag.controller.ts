@@ -6,8 +6,6 @@ import {
 	Body,
 	UseGuards,
 	Query,
-	ValidationPipe,
-	UsePipes,
 	BadRequestException,
 	HttpCode,
 	Put,
@@ -20,7 +18,7 @@ import { IPagination, ITag, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Tag } from './tag.entity';
 import { TagService } from './tag.service';
 import { TagListCommand } from './commands';
@@ -40,7 +38,7 @@ export class TagController extends CrudController<Tag> {
 	 * @param query
 	 */
 	@Get('level')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findTagsByLevel(@Query() query: TagQueryByLevelDTO): Promise<IPagination<ITag>> {
 		try {
 			console.log('TagController -> findTagsByLevel -> query', query);
@@ -57,7 +55,7 @@ export class TagController extends CrudController<Tag> {
 	 * @returns
 	 */
 	@Get()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findAll(@Query() options: PaginationParams<Tag>): Promise<any> {
 		return await this.commandBus.execute(new TagListCommand(options.where, options.relations));
 	}
@@ -72,7 +70,7 @@ export class TagController extends CrudController<Tag> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD)
 	@Post()
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateTagDTO): Promise<ITag> {
 		return await this.tagService.create(entity);
 	}
@@ -88,7 +86,7 @@ export class TagController extends CrudController<Tag> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ITag['id'],
 		@Body() entity: UpdateTagDTO

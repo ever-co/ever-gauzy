@@ -24,7 +24,7 @@ export class SkillService extends TenantAwareCrudService<Skill> {
 	 * @returns
 	 */
 	async findOneByName(name: string): Promise<Skill> {
-		const query = this.repository.createQueryBuilder('skill').where(p(`"skill"."name" = :name`), {
+		const query = this.typeOrmRepository.createQueryBuilder('skill').where(p(`"skill"."name" = :name`), {
 			name
 		});
 		const item = await query.getOne();

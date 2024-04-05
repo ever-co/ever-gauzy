@@ -20,7 +20,7 @@ import { CreateTimeSlotCommand, DeleteTimeSlotCommand, UpdateTimeSlotCommand } f
 import { TimeSlotService } from './time-slot.service';
 import { TimeSlot } from './time-slot.entity';
 import { OrganizationPermissionGuard, PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
-import { UUIDValidationPipe } from './../../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { Permissions } from './../../shared/decorators';
 import { DeleteTimeSlotDTO } from './dto';
 import { TimeSlotQueryDTO } from './dto/query';
@@ -30,10 +30,7 @@ import { TimeSlotQueryDTO } from './dto/query';
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeSlotController {
-	constructor(
-		private readonly timeSlotService: TimeSlotService,
-		private readonly commandBus: CommandBus
-	) { }
+	constructor(private readonly timeSlotService: TimeSlotService, private readonly commandBus: CommandBus) {}
 
 	/**
 	 *
@@ -46,10 +43,8 @@ export class TimeSlotController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get()
-	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
-	async findAll(
-		@Query() options: TimeSlotQueryDTO
-	): Promise<ITimeSlot[]> {
+	@UseValidationPipe({ whitelist: true, transform: true })
+	async findAll(@Query() options: TimeSlotQueryDTO): Promise<ITimeSlot[]> {
 		return await this.timeSlotService.getTimeSlots(options);
 	}
 
@@ -62,8 +57,7 @@ export class TimeSlotController {
 	@ApiOperation({ summary: 'Get Time Slot By Id' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Get(':id')
 	async findById(
@@ -81,16 +75,11 @@ export class TimeSlotController {
 	@ApiOperation({ summary: 'Create Time Slot' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	async create(
-		@Body() requst: ITimeSlot
-	): Promise<ITimeSlot> {
-		return await this.commandBus.execute(
-			new CreateTimeSlotCommand(requst)
-		);
+	async create(@Body() requst: ITimeSlot): Promise<ITimeSlot> {
+		return await this.commandBus.execute(new CreateTimeSlotCommand(requst));
 	}
 
 	/**
@@ -102,19 +91,13 @@ export class TimeSlotController {
 	@ApiOperation({ summary: 'Update Time Slot' })
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_MODIFY_TIME)
 	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: ITimeSlot['id'],
-		@Body() request: TimeSlot
-	): Promise<ITimeSlot> {
-		return await this.commandBus.execute(
-			new UpdateTimeSlotCommand(id, request)
-		);
+	async update(@Param('id', UUIDValidationPipe) id: ITimeSlot['id'], @Body() request: TimeSlot): Promise<ITimeSlot> {
+		return await this.commandBus.execute(new UpdateTimeSlotCommand(id, request));
 	}
 
 	/**
@@ -134,12 +117,8 @@ export class TimeSlotController {
 	@UseGuards(OrganizationPermissionGuard)
 	@Permissions(PermissionsEnum.ALLOW_DELETE_TIME)
 	@Delete()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async deleteTimeSlot(
-		@Query() query: DeleteTimeSlotDTO
-	): Promise<DeleteResult | UpdateResult> {
-		return await this.commandBus.execute(
-			new DeleteTimeSlotCommand(query)
-		);
+	@UseValidationPipe({ transform: true })
+	async deleteTimeSlot(@Query() query: DeleteTimeSlotDTO): Promise<DeleteResult | UpdateResult> {
+		return await this.commandBus.execute(new DeleteTimeSlotCommand(query));
 	}
 }

@@ -92,7 +92,12 @@ export class Merchant extends TenantOrganizationBaseEntity implements IMerchant 
 	 * ImageAsset
 	 */
 	@ApiProperty({ type: () => ImageAsset })
-	@MultiORMManyToOne(() => ImageAsset, { cascade: true })
+	@MultiORMManyToOne(() => ImageAsset, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		cascade: true
+	})
 	@JoinColumn()
 	logo?: IImageAsset;
 

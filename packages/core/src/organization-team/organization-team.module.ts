@@ -17,10 +17,13 @@ import { CommandHandlers } from './commands/handlers';
 import { TimerModule } from './../time-tracking/timer/timer.module';
 import { StatisticModule } from './../time-tracking/statistic/statistic.module';
 import { TaskModule } from './../tasks/task.module';
+import { TypeOrmOrganizationTeamRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/organization-team', module: OrganizationTeamModule }]),
+		RouterModule.register([
+			{ path: '/organization-team', module: OrganizationTeamModule }
+		]),
 		TypeOrmModule.forFeature([OrganizationTeam]),
 		MikroOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
@@ -35,7 +38,7 @@ import { TaskModule } from './../tasks/task.module';
 		TaskModule
 	],
 	controllers: [OrganizationTeamController],
-	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService]
+	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService, TypeOrmOrganizationTeamRepository],
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService, TypeOrmOrganizationTeamRepository]
 })
-export class OrganizationTeamModule {}
+export class OrganizationTeamModule { }

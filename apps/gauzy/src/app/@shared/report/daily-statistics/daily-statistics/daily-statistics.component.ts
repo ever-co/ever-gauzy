@@ -105,45 +105,72 @@ export class DailyStatisticsComponent extends BaseSelectorFilterComponent
 		this.cd.detectChanges();
 	}
 
-	async getCounts() {
-		if (!this.organization || isEmpty(this.filters)) {
-			return;
-		}
-		const payloads = this.payloads$.getValue();
-
-		this.loading = true;
+	/**
+	 * Retrieves counts from the timesheet statistics service based on current filters and organization.
+	 * Loads employee and project counts if organization and filters are defined.
+	 */
+	async getCounts(): Promise<void> {
 		try {
+			// Check if organization or filters are not defined, return if so
+			if (!this.organization || isEmpty(this.filters)) {
+				return;
+			}
+
+			// Extract payloads from BehaviorSubject
+			const payloads = this.payloads$.getValue();
+
+			// Set loading state to true
+			this.loading = true;
+
+			// Retrieve counts from timesheet statistics service
 			const counts = await this.timesheetStatisticsService.getCounts(payloads);
+
+			// Update counts
 			this.counts = counts;
 
-			this.loadEmployeesCount();
-			this.loadProjectsCount();
+			// Load employee and project counts
+			await Promise.all([this.loadEmployeesCount(), this.loadProjectsCount()]);
 		} catch (error) {
-			console.log('Error while retrieving daily statistics', error);
+			// Log error if any
+			console.error('Error while retrieving daily statistics', error);
 		} finally {
+			// Set loading state to false
 			this.loading = false;
 		}
 	}
 
+	/**
+	 * Loads the count of employees for the organization.
+	 */
 	private async loadEmployeesCount() {
-		if (this.store.user.employeeId) {
+		// Check if the user already has an associated employee
+		if (this.store.user.employee) {
+			// If the user has an employee, no need to load the count
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
 
+		// Extract organization and tenant IDs
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Retrieve the count of employees for the organization
 		this.employeesService.getCount({ organizationId, tenantId })
 			.pipe(
+				// Update employees count when count is received
 				tap((count: number) => this.employeesCount = count),
+				// Unsubscribe from the observable when component is destroyed
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	/**
+	 * Loads the count of projects for the organization.
+	 */
 	private async loadProjectsCount() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		// Extract organization and tenant IDs
+		const { id: organizationId, tenantId } = this.organization;
 
+		// Retrieve the count of projects for the organization
 		this.projectsCount = await this.projectService.getCount({
 			organizationId,
 			tenantId

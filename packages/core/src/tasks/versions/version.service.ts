@@ -89,7 +89,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				);
 			}
 		}
-		return await this.repository.save(versions);
+		return await this.typeOrmRepository.save(versions);
 	}
 
 	/**
@@ -119,7 +119,7 @@ export class TaskVersionService extends TaskStatusPrioritySizeService<TaskVersio
 				});
 				versions.push(version);
 			}
-			return await this.repository.save(versions);
+			return await this.typeOrmRepository.save(versions);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

@@ -28,12 +28,7 @@ import { ConfigService, DatabaseTypeEnum, isBetterSqlite3, isMySQL, isPostgres, 
 import { concateUserNameExpression } from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
-import {
-	Activity,
-	Employee,
-	TimeLog,
-	TimeSlot
-} from './../../core/entities/internal';
+import { Activity, Employee, TimeLog, TimeSlot } from './../../core/entities/internal';
 import { getDateRangeFormat } from './../../core/utils';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/mikro-orm-time-slot.repository';
@@ -68,7 +63,7 @@ export class StatisticService {
 		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 
 		private readonly configService: ConfigService
-	) { }
+	) {}
 
 	/**
 	 * GET Time Tracking Dashboard Counts Statistics
@@ -134,10 +129,14 @@ export class StatisticService {
 				weekQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekQuery.alias}"."id")), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				weekQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekQuery.alias}"."id")), 0)`);
+				weekQueryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekQuery.alias}"."id")), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		weekQuery
@@ -187,8 +186,8 @@ export class StatisticService {
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
 						const { activityLevel } = request;
-						const startLevel = (activityLevel.start * 6);
-						const endLevel = (activityLevel.end * 6);
+						const startLevel = activityLevel.start * 6;
+						const endLevel = activityLevel.end * 6;
 
 						qb.andWhere(p(`"${weekQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
 							startLevel,
@@ -220,10 +219,9 @@ export class StatisticService {
 		const weekTimeStatistics = await weekQuery.getRawMany();
 
 		const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
-		const weekPercentage = (
+		const weekPercentage =
 			(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) /
-			(reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0))
-		);
+			reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0);
 
 		weekActivities['duration'] = weekDuration;
 		weekActivities['overall'] = weekPercentage;
@@ -253,10 +251,14 @@ export class StatisticService {
 				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${todayQuery.alias}"."id")), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				todayQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${todayQuery.alias}"."id")), 0)`);
+				todayQueryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${todayQuery.alias}"."id")), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		todayQuery
@@ -312,8 +314,8 @@ export class StatisticService {
 						 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 						 */
 						const { activityLevel } = request;
-						const startLevel = (activityLevel.start * 6);
-						const endLevel = (activityLevel.end * 6);
+						const startLevel = activityLevel.start * 6;
+						const endLevel = activityLevel.end * 6;
 
 						qb.andWhere(p(`"${todayQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
 							startLevel,
@@ -345,10 +347,9 @@ export class StatisticService {
 		const todayTimeStatistics = await todayQuery.getRawMany();
 
 		const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
-		const todayPercentage = (
+		const todayPercentage =
 			(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) /
-			(reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0))
-		);
+			reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0);
 
 		todayActivities['duration'] = todayDuration;
 		todayActivities['overall'] = todayPercentage;
@@ -395,7 +396,7 @@ export class StatisticService {
 		/**
 		 * Set employeeIds based on user conditions and permissions
 		 */
-		if ((user.employeeId) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
+		if (user.employeeId || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
 			employeeIds = [user.employeeId];
 		}
 
@@ -409,17 +410,21 @@ export class StatisticService {
 				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`);
+				queryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		const query = this.typeOrmEmployeeRepository.createQueryBuilder();
 		let employees: IMembersStatistics[] = await query
 			.select(p(`"${query.alias}".id`))
 			// Builds a SELECT statement for the "user_name" column based on the database type.
-			.addSelect(p(`${concateUserNameExpression(this.configService.dbConnectionOptions.type)}`), "user_name")
+			.addSelect(p(`${concateUserNameExpression(this.configService.dbConnectionOptions.type)}`), 'user_name')
 			.addSelect(p(`"user"."imageUrl"`), 'user_image_url')
 			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.user`, 'user')
@@ -488,10 +493,14 @@ export class StatisticService {
 					weekTimeQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`;
 					break;
 				case DatabaseTypeEnum.mysql:
-					weekTimeQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`);
+					weekTimeQueryString = p(
+						`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${weekTimeQuery.alias}"."id")), 0)`
+					);
 					break;
 				default:
-					throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+					throw Error(
+						`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+					);
 			}
 
 			weekTimeQuery
@@ -504,7 +513,9 @@ export class StatisticService {
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(p(`"${weekTimeQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-						qb.andWhere(p(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+						qb.andWhere(p(`"${weekTimeQuery.alias}"."organizationId" = :organizationId`), {
+							organizationId
+						});
 					})
 				)
 				.andWhere(
@@ -551,10 +562,9 @@ export class StatisticService {
 
 			weekTimeSlots = mapObject(groupBy(weekTimeSlots, 'employeeId'), (values, employeeId) => {
 				const weekDuration = reduce(pluck(values, 'week_duration'), ArraySum, 0);
-				const weekPercentage = (
+				const weekPercentage =
 					(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
-					(reduce(pluck(values, 'duration'), ArraySum, 0))
-				);
+					reduce(pluck(values, 'duration'), ArraySum, 0);
 				return {
 					employeeId,
 					duration: weekDuration,
@@ -586,10 +596,14 @@ export class StatisticService {
 					dayTimeQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt"))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`;
 					break;
 				case DatabaseTypeEnum.mysql:
-					dayTimeQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`);
+					dayTimeQueryString = p(
+						`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW()))) / COUNT("${dayTimeQuery.alias}"."id")), 0)`
+					);
 					break;
 				default:
-					throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+					throw Error(
+						`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+					);
 			}
 
 			dayTimeQuery
@@ -602,7 +616,9 @@ export class StatisticService {
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.andWhere(p(`"${dayTimeQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-						qb.andWhere(p(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+						qb.andWhere(p(`"${dayTimeQuery.alias}"."organizationId" = :organizationId`), {
+							organizationId
+						});
 					})
 				)
 				.andWhere(
@@ -652,10 +668,9 @@ export class StatisticService {
 			let dayTimeSlots: any = await dayTimeQuery.getRawMany();
 			dayTimeSlots = mapObject(groupBy(dayTimeSlots, 'employeeId'), (values, employeeId) => {
 				const todayDuration = reduce(pluck(values, 'today_duration'), ArraySum, 0);
-				const todayPercentage = (
+				const todayPercentage =
 					(reduce(pluck(values, 'overall'), ArraySum, 0) * 100) /
-					(reduce(pluck(values, 'duration'), ArraySum, 0))
-				);
+					reduce(pluck(values, 'duration'), ArraySum, 0);
 				return {
 					employeeId,
 					duration: todayDuration,
@@ -665,9 +680,7 @@ export class StatisticService {
 			dayTimeSlots = chain(dayTimeSlots)
 				.map((dayTimeSlot: any) => {
 					if (dayTimeSlot && dayTimeSlot.overall) {
-						dayTimeSlot.overall = parseFloat(
-							dayTimeSlot.overall as string
-						).toFixed(1);
+						dayTimeSlot.overall = parseFloat(dayTimeSlot.overall as string).toFixed(1);
 					}
 					return dayTimeSlot;
 				})
@@ -698,10 +711,14 @@ export class StatisticService {
 						weekHoursQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("timeLogs"."stoppedAt", NOW()) - "timeLogs"."startedAt")))), 0)`;
 						break;
 					case DatabaseTypeEnum.mysql:
-						weekHoursQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`);
+						weekHoursQueryString = p(
+							`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "timeLogs"."startedAt", COALESCE("timeLogs"."stoppedAt", NOW())))), 0)`
+						);
 						break;
 					default:
-						throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+						throw Error(
+							`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+						);
 				}
 
 				const weekHoursQuery = this.typeOrmEmployeeRepository.createQueryBuilder();
@@ -712,16 +729,22 @@ export class StatisticService {
 					.addSelect(
 						// -- why we minus 1 if MySQL is selected, Sunday DOW in postgres is 0, in MySQL is 1
 						// -- in case no database type is selected we return "0" as the DOW
-						isSqlite() || isBetterSqlite3() ? `(strftime('%w', timeLogs.startedAt))`
-							: isPostgres() ? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-								: isMySQL() ? p('DayOfWeek("timeLogs"."startedAt") - 1') : '0'
-						, 'day'
+						isSqlite() || isBetterSqlite3()
+							? `(strftime('%w', timeLogs.startedAt))`
+							: isPostgres()
+							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+							: isMySQL()
+							? p('DayOfWeek("timeLogs"."startedAt") - 1')
+							: '0',
+						'day'
 					)
 					.andWhere(p(`"${weekHoursQuery.alias}"."id" = :memberId`), { memberId: member.id })
 					.andWhere(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							qb.andWhere(p(`"${weekHoursQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-							qb.andWhere(p(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+							qb.andWhere(p(`"${weekHoursQuery.alias}"."organizationId" = :organizationId`), {
+								organizationId
+							});
 						})
 					)
 					.andWhere(
@@ -757,9 +780,13 @@ export class StatisticService {
 						})
 					)
 					.addGroupBy(
-						isSqlite() || isBetterSqlite3() ? `(strftime('%w', timeLogs.startedAt))`
-							: isPostgres() ? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-								: isMySQL() ? p('DayOfWeek("timeLogs"."startedAt") - 1') : '0'
+						isSqlite() || isBetterSqlite3()
+							? `(strftime('%w', timeLogs.startedAt))`
+							: isPostgres()
+							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+							: isMySQL()
+							? p('DayOfWeek("timeLogs"."startedAt") - 1')
+							: '0'
 					);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
@@ -813,15 +840,19 @@ export class StatisticService {
 				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
+				queryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		query
-			.select(p(`"project"."name"`), "name")
-			.addSelect(p(`"project"."id"`), "projectId")
+			.select(p(`"project"."name"`), 'name')
+			.addSelect(p(`"project"."id"`), 'projectId')
 			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.project`, 'project')
 			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
@@ -834,7 +865,7 @@ export class StatisticService {
 					qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :start AND :end`), {
 						start,
 						end
-					})
+					});
 				})
 			)
 			.andWhere(
@@ -882,7 +913,7 @@ export class StatisticService {
 					name: project.name,
 					id: projectId,
 					duration: reduce(pluck(projects, 'duration'), ArraySum, 0)
-				} as IProjectsStatistics
+				} as IProjectsStatistics;
 			})
 			.value()
 			.splice(0, 5);
@@ -899,10 +930,14 @@ export class StatisticService {
 				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
+				totalDurationQueryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		totalDurationQuery
@@ -919,7 +954,9 @@ export class StatisticService {
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), {
+						organizationId
+					});
 				})
 			)
 			.andWhere(
@@ -942,9 +979,7 @@ export class StatisticService {
 		const totalDuration = await totalDurationQuery.getRawOne();
 		projects = projects.map((project: IProjectsStatistics) => {
 			project.durationPercentage = parseFloat(
-				parseFloat(
-					(project.duration * 100) / totalDuration.duration + ''
-				).toFixed(2)
+				parseFloat((project.duration * 100) / totalDuration.duration + '').toFixed(2)
 			);
 			return project;
 		});
@@ -959,7 +994,15 @@ export class StatisticService {
 	 */
 	async getTasks(request: IGetTasksStatistics) {
 		const { organizationId, startDate, endDate, take, onlyMe = false, organizationTeamId } = request;
-		let { employeeIds = [], projectIds = [], taskIds = [], defaultRange, unitOfTime, todayEnd, todayStart } = request;
+		let {
+			employeeIds = [],
+			projectIds = [],
+			taskIds = [],
+			defaultRange,
+			unitOfTime,
+			todayEnd,
+			todayStart
+		} = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -968,17 +1011,18 @@ export class StatisticService {
 		let end: string | Date;
 
 		if (startDate && endDate) {
-			const range = getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			);
+			const range = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
 			start = range.start;
 			end = range.end;
 		} else {
 			if (typeof defaultRange === 'boolean' && defaultRange) {
 				const range = getDateRangeFormat(
-					moment().startOf(unitOfTime || 'week').utc(),
-					moment().endOf(unitOfTime || 'week').utc()
+					moment()
+						.startOf(unitOfTime || 'week')
+						.utc(),
+					moment()
+						.endOf(unitOfTime || 'week')
+						.utc()
 				);
 				start = range.start;
 				end = range.end;
@@ -991,16 +1035,11 @@ export class StatisticService {
 		if (
 			user &&
 			user.employeeId &&
-			(onlyMe ||
-				!RequestContext.hasPermission(
-					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-				))
+			(onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
 		) {
 			if (
 				isNotEmpty(organizationTeamId) ||
-				RequestContext.hasPermission(
-					PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
-				)
+				RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)
 			) {
 				employeeIds = [...employeeIds];
 			} else {
@@ -1009,10 +1048,7 @@ export class StatisticService {
 		}
 
 		if (todayStart && todayEnd) {
-			const range = getDateRangeFormat(
-				moment.utc(todayStart),
-				moment.utc(todayEnd)
-			);
+			const range = getDateRangeFormat(moment.utc(todayStart), moment.utc(todayEnd));
 			todayStart = range.start;
 			todayEnd = range.end;
 		} else {
@@ -1042,10 +1078,14 @@ export class StatisticService {
 				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				todayQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${todayQuery.alias}"."startedAt", COALESCE("${todayQuery.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
+				todayQueryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${todayQuery.alias}"."startedAt", COALESCE("${todayQuery.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		todayQuery
@@ -1126,15 +1166,19 @@ export class StatisticService {
 				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				queryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
+				queryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		query
-			.select(p(`"task"."title"`), "title")
-			.addSelect(p(`"task"."id"`), "taskId")
+			.select(p(`"task"."title"`), 'title')
+			.addSelect(p(`"task"."id"`), 'taskId')
 			.addSelect(p(`"${query.alias}"."updatedAt"`), 'updatedAt')
 			.addSelect(queryString, `duration`)
 			.innerJoin(`${query.alias}.task`, 'task')
@@ -1195,41 +1239,8 @@ export class StatisticService {
 			.groupBy(p(`"${query.alias}"."id"`))
 			.addGroupBy(p(`"task"."id"`))
 			.orderBy(p(`"${todayQuery.alias}"."updatedAt"`), 'DESC');
+
 		const statistics = await query.getRawMany();
-		const mergedStatistics = _.map(statistics, (statistic) => {
-			const updatedAt = String(statistic.updatedAt);
-			return _.extend(
-				{
-					today_duration: 0,
-					...statistic,
-					updatedAt,
-				},
-				_.findWhere(
-					todayStatistics.map((today) => ({
-						...today,
-						updatedAt: String(today.updatedAt),
-					})),
-					{
-						taskId: statistic.taskId,
-						updatedAt,
-					}
-				)
-			);
-		});
-		let tasks: ITask[] = chain(mergedStatistics)
-			.groupBy('taskId')
-			.map((tasks: ITask[], taskId) => {
-				const [task] = tasks;
-				return {
-					title: task.title,
-					id: taskId,
-					duration: reduce(pluck(tasks, 'duration'), ArraySum, 0),
-					todayDuration: reduce(pluck(tasks, 'today_duration'), ArraySum, 0),
-					updatedAt: task.updatedAt
-				} as ITask;
-			})
-			.value();
-		if (isNotEmpty(take)) { tasks = tasks.splice(0, take); }
 
 		const totalDurationQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
 
@@ -1243,10 +1254,14 @@ export class StatisticService {
 				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
+				totalDurationQueryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		totalDurationQuery
@@ -1265,7 +1280,9 @@ export class StatisticService {
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), {
+						organizationId
+					});
 				})
 			)
 			.andWhere(
@@ -1287,16 +1304,130 @@ export class StatisticService {
 					}
 				})
 			);
+
 		const totalDuration = await totalDurationQuery.getRawOne();
-		tasks = tasks.map((task: any) => {
+
+		// ------------------------------------------------
+
+		console.log('Find Statistics length: ', statistics.length);
+		console.log('Find Today Statistics length: ', todayStatistics.length);
+		console.log('Find Total Duration: ', totalDuration.duration);
+
+		/* Code that cause issues... We try to optimize it using "hashing" approach etc
+
+		const mergedStatistics = _.map(statistics, (statistic) => {
+			const updatedAt = String(statistic.updatedAt);
+			return _.extend(
+				{
+					today_duration: 0,
+					...statistic,
+					updatedAt
+				},
+				_.findWhere(
+					todayStatistics.map((today) => ({
+						...today,
+						updatedAt: String(today.updatedAt)
+					})),
+					{
+						taskId: statistic.taskId,
+						updatedAt
+					}
+				)
+			);
+		});
+
+		let tasks: ITask[] = chain(mergedStatistics)
+			.groupBy('taskId')
+			.map((tasks: ITask[], taskId) => {
+				const [task] = tasks;
+				return {
+					title: task.title,
+					id: taskId,
+					duration: reduce(pluck(tasks, 'duration'), ArraySum, 0),
+					todayDuration: reduce(pluck(tasks, 'today_duration'), ArraySum, 0),
+					updatedAt: task.updatedAt
+				} as ITask;
+			})
+			.value();
+
+		if (isNotEmpty(take)) {
+			tasks = tasks.splice(0, take);
+		}
+
+        tasks = tasks.map((task: any) => {
 			task.durationPercentage = parseFloat(
-				parseFloat(
-					(task.duration * 100) / totalDuration.duration + ''
-				).toFixed(2)
+				parseFloat((task.duration * 100) / totalDuration.duration + '').toFixed(2)
 			);
 			return task;
 		});
-		return tasks || [];
+
+		*/
+
+		const totalDurationValue = statistics.reduce((total, stat) => total + (parseInt(stat.duration, 10) || 0), 0);
+
+		console.log('Total Duration Value: ', totalDurationValue);
+
+		const todayStatsLookup = todayStatistics.reduce((acc, stat) => {
+			const taskId = stat.taskId;
+			if (!acc[taskId]) {
+				acc[taskId] = { todayDuration: 0 };
+			}
+			acc[taskId].todayDuration += parseInt(stat.today_duration, 10) || 0;
+			return acc;
+		}, {});
+
+		const taskAggregates = statistics.reduce((acc, stat) => {
+			const taskId = stat.taskId;
+
+			if (!acc[taskId]) {
+				acc[taskId] = { duration: 0, todayDuration: 0, title: stat.title };
+			}
+
+			// Convert stat.duration to a number before adding
+			const durationToAdd = Number(stat.duration) || 0;
+
+			// Sum durations as numbers
+			acc[taskId].duration += durationToAdd;
+
+			if (todayStatsLookup[taskId]) {
+				acc[taskId].todayDuration = todayStatsLookup[taskId].todayDuration;
+			}
+
+			return acc;
+		}, {});
+
+		let tasks = Object.entries(taskAggregates).map(([taskId, agg]: [string, any]) => ({
+			id: taskId,
+			title: agg.title,
+			duration: agg.duration,
+			todayDuration: agg.todayDuration,
+			updatedAt: agg.updatedAt
+		}));
+
+		tasks = tasks.map((task: any) => {
+			const duration = parseInt(task.duration, 10);
+			const todayDuration = parseInt(task.todayDuration, 10);
+
+			// Update task with parsed numeric values
+			task.duration = isNaN(duration) ? null : duration;
+			task.todayDuration = isNaN(todayDuration) ? null : todayDuration;
+
+			if (!isNaN(task.duration) && totalDurationValue !== 0) {
+				task.durationPercentage = parseFloat(((task.duration * 100) / totalDurationValue).toFixed(2));
+			} else {
+				task.durationPercentage = 0;
+			}
+
+			return task;
+		});
+
+		if (isNotEmpty(take)) {
+			tasks = tasks.splice(0, take);
+		}
+
+		console.log('Task Aggregates: ', tasks);
+
+		return tasks;
 	}
 
 	/**
@@ -1334,7 +1465,7 @@ export class StatisticService {
 			employeeIds = [user.employeeId];
 		}
 
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder("time_log");
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 		query.innerJoin(`${query.alias}.timeSlots`, 'timeSlots');
 		query.leftJoinAndSelect(`${query.alias}.project`, 'project');
 		query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
@@ -1342,7 +1473,7 @@ export class StatisticService {
 		query.setFindOptions({
 			take: 5,
 			order: {
-				startedAt: "DESC"
+				startedAt: 'DESC'
 			}
 		});
 		query.where((qb: SelectQueryBuilder<TimeLog>) => {
@@ -1394,14 +1525,16 @@ export class StatisticService {
 		});
 		const timeLogs = await query.getMany();
 
-		const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map((timeLog: ITimeLog): IManualTimesStatistics => ({
-			id: timeLog.id,
-			startedAt: timeLog.startedAt,
-			duration: timeLog.duration,
-			user: { ...pick(timeLog.employee.user, ['name', 'imageUrl']) },
-			project: { ...pick(timeLog.project, ['name', 'imageUrl']) },
-			employeeId: timeLog.employee.id,
-		}));
+		const mappedTimeLogs: IManualTimesStatistics[] = timeLogs.map(
+			(timeLog: ITimeLog): IManualTimesStatistics => ({
+				id: timeLog.id,
+				startedAt: timeLog.startedAt,
+				duration: timeLog.duration,
+				user: { ...pick(timeLog.employee.user, ['name', 'imageUrl']) },
+				project: { ...pick(timeLog.project, ['name', 'imageUrl']) },
+				employeeId: timeLog.employee.id
+			})
+		);
 
 		console.timeEnd('Get Manual Time Log');
 		return mappedTimeLogs || [];
@@ -1452,10 +1585,14 @@ export class StatisticService {
 				queryString = `CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time")::timestamp Between :start AND :end`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				queryString = p(`CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time") BETWEEN :start AND :end`);
+				queryString = p(
+					`CONCAT("${query.alias}"."date", ' ', "${query.alias}"."time") BETWEEN :start AND :end`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		query
@@ -1513,8 +1650,8 @@ export class StatisticService {
 		let activities: IActivitiesStatistics[] = await query.getRawMany();
 
 		/*
-		* Fetch total duration of the week for calculate duration percentage
-		*/
+		 * Fetch total duration of the week for calculate duration percentage
+		 */
 		const totalDurationQuery = this.typeOrmActivityRepository.createQueryBuilder();
 		let totalDurationQueryString: string;
 
@@ -1527,10 +1664,14 @@ export class StatisticService {
 				totalDurationQueryString = `CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time")::timestamp Between :start AND :end`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				totalDurationQueryString = p(`CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time") BETWEEN :start AND :end`);
+				totalDurationQueryString = p(
+					`CONCAT("${totalDurationQuery.alias}"."date", ' ', "${totalDurationQuery.alias}"."time") BETWEEN :start AND :end`
+				);
 				break;
 			default:
-				throw Error(`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`);
+				throw Error(
+					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
+				);
 		}
 
 		totalDurationQuery
@@ -1557,7 +1698,9 @@ export class StatisticService {
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), {
+						organizationId
+					});
 				})
 			)
 			.andWhere(
@@ -1627,12 +1770,12 @@ export class StatisticService {
 		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
 		query.innerJoin(`${query.alias}.employee`, 'employee');
 		query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
-		query.innerJoin(`employee.user`, "user");
-		query.select(p(`"${query.alias}"."employeeId"`), "id");
-		query.addSelect(p(`MAX("${query.alias}"."startedAt")`), "startedAt");
-		query.addSelect(p(`"user"."imageUrl"`), "user_image_url");
+		query.innerJoin(`employee.user`, 'user');
+		query.select(p(`"${query.alias}"."employeeId"`), 'id');
+		query.addSelect(p(`MAX("${query.alias}"."startedAt")`), 'startedAt');
+		query.addSelect(p(`"user"."imageUrl"`), 'user_image_url');
 		// Builds a SELECT statement for the "user_name" column based on the database type.
-		query.addSelect(p(`${concateUserNameExpression(this.configService.dbConnectionOptions.type)}`), "user_name");
+		query.addSelect(p(`${concateUserNameExpression(this.configService.dbConnectionOptions.type)}`), 'user_name');
 		query.andWhere(
 			new Brackets((qb: WhereExpressionBuilder) => {
 				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
@@ -1659,7 +1802,7 @@ export class StatisticService {
 		);
 		query.groupBy(p(`"${query.alias}"."employeeId"`));
 		query.addGroupBy(p(`"user"."id"`));
-		query.addOrderBy(p(`"startedAt"`), "DESC");
+		query.addOrderBy(p(`"startedAt"`), 'DESC');
 		query.limit(3);
 
 		let employees: ITimeSlotStatistics[] = [];
@@ -1726,7 +1869,7 @@ export class StatisticService {
 			new Brackets((where: WhereExpressionBuilder) => {
 				this.getFilterQuery(query, where, request);
 			})
-		)
+		);
 		query.groupBy(p(`"${query.alias}"."employeeId"`));
 		const employees = await query.getRawMany();
 		return employees.length;
@@ -1748,7 +1891,7 @@ export class StatisticService {
 			new Brackets((where: WhereExpressionBuilder) => {
 				this.getFilterQuery(query, where, request);
 			})
-		)
+		);
 		query.groupBy(p(`"${query.alias}"."projectId"`));
 		const projects = await query.getRawMany();
 		return projects.length;
@@ -1801,8 +1944,8 @@ export class StatisticService {
 					 * So, we have convert it into 10 minutes TimeSlot by multiply by 6
 					 */
 					const { activityLevel } = request;
-					const startLevel = (activityLevel.start * 6);
-					const endLevel = (activityLevel.end * 6);
+					const startLevel = activityLevel.start * 6;
+					const endLevel = activityLevel.end * 6;
 
 					qb.andWhere(p(`"time_slot"."overall" BETWEEN :startLevel AND :endLevel`), {
 						startLevel,

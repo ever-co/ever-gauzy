@@ -52,7 +52,7 @@ import {
 	TimeLog,
 	User,
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
@@ -150,10 +150,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	version?: string;
 
-	/**
-	 * Additional exposed fields
-	 */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	taskNumber?: string;
+
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	rootEpic?: ITask;
 
 	/*

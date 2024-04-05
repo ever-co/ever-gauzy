@@ -7,10 +7,12 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class TenantSettingsMiddleware implements NestMiddleware {
+	private logging = true;
+
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly tenantSettingService: TenantSettingService
-	) {}
+	) { }
 
 	/**
 	 *
@@ -31,14 +33,18 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 				let tenantSettings = {};
 
 				if (decodedToken && decodedToken.tenantId) {
-					console.log('Getting Tenant settings from Cache for tenantId: %s', decodedToken.tenantId);
+					if (this.logging) {
+						console.log('Getting Tenant settings from Cache for tenantId: %s', decodedToken.tenantId);
+					}
 
 					const cacheKey = 'tenantSettings_' + decodedToken.tenantId;
 
 					tenantSettings = await this.cacheManager.get(cacheKey);
 
 					if (!tenantSettings) {
-						console.log('Tenant settings NOT loaded from Cache for tenantId: %s', decodedToken.tenantId);
+						if (this.logging) {
+							console.log('Tenant settings NOT loaded from Cache for tenantId: %s', decodedToken.tenantId);
+						}
 
 						// Fetch tenant settings based on the decoded tenantId
 						tenantSettings = await this.tenantSettingService.get({
@@ -48,19 +54,17 @@ export class TenantSettingsMiddleware implements NestMiddleware {
 						});
 
 						if (tenantSettings) {
-							await this.cacheManager.set(
-								cacheKey,
-								tenantSettings,
-								5 * 60 * 1000 // 5 min caching period for Tenants Settings
-							);
+							const ttl = 5 * 60 * 1000 // 5 min caching period for Tenants Settings
+							await this.cacheManager.set(cacheKey, tenantSettings, ttl);
 
-							console.log(
-								'Tenant settings loaded from DB and stored in Cache for tenantId: %s',
-								decodedToken.tenantId
-							);
+							if (this.logging) {
+								console.log('Tenant settings loaded from DB and stored in Cache for tenantId: %s', decodedToken.tenantId);
+							}
 						}
 					} else {
-						console.log('Tenant settings loaded from Cache for tenantId: %s', decodedToken.tenantId);
+						if (this.logging) {
+							console.log('Tenant settings loaded from Cache for tenantId: %s', decodedToken.tenantId);
+						}
 					}
 				}
 

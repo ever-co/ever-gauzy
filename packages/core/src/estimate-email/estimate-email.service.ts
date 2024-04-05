@@ -65,7 +65,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 			estimateEmail.token = sign(payload, environment.JWT_SECRET, {
 				expiresIn: `${duration}s`
 			});
-			return await this.repository.save(estimateEmail);
+			return await this.typeOrmRepository.save(estimateEmail);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -83,7 +83,7 @@ export class EstimateEmailService extends TenantAwareCrudService<EstimateEmail> 
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as IEstimateEmailFindInput;
 			const { organizationId, tenantId, email, token } = decoded;
 
-			return await this.repository.findOneOrFail({
+			return await this.typeOrmRepository.findOneOrFail({
 				select: {
 					tenant: {
 						name: true,

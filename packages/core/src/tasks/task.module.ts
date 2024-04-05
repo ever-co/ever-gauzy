@@ -16,20 +16,14 @@ import { TaskService } from './task.service';
 import { TaskController } from './task.controller';
 import { TypeOrmTaskRepository } from './repository';
 
-const forFeatureEntities = [
-	Task,
-	TaskStatus,
-	IntegrationMap
-];
+const forFeatureEntities = [Task, TaskStatus, IntegrationMap];
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/tasks', module: TaskModule }
-		]),
+		RouterModule.register([{ path: '/tasks', module: TaskModule }]),
 		TypeOrmModule.forFeature(forFeatureEntities),
 		MikroOrmModule.forFeature(forFeatureEntities),
-		forwardRef(() => RolePermissionModule),
+		RolePermissionModule,
 		forwardRef(() => UserModule),
 		RoleModule,
 		EmployeeModule,
@@ -40,4 +34,4 @@ const forFeatureEntities = [
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers, ...EventHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, TaskService, TypeOrmTaskRepository]
 })
-export class TaskModule { }
+export class TaskModule {}

@@ -6,7 +6,8 @@ import {
 	forwardRef,
 	AfterViewInit,
 	Output,
-	EventEmitter
+	EventEmitter,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -44,7 +45,8 @@ import { TruncatePipe } from '../../pipes';
 			useExisting: forwardRef(() => ProjectSelectorComponent),
 			multi: true
 		}
-	]
+	],
+	// changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
 
@@ -174,10 +176,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -208,41 +207,40 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			});
 	}
 
+	/**
+	 * Retrieves projects based on specified parameters.
+	 * If an employee ID is provided, it retrieves projects associated with that employee.
+	 * Otherwise, it retrieves all projects for the organization.
+	 * Inserts an "All Projects" option if specified.
+	 */
 	async getProjects() {
+		// Check if organization is defined
 		if (!this.organization) {
 			return;
 		}
+
+		// Extract user and organization details
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
+		// Construct query options based on provided parameters
+		const queryOptions = {
+			organizationId,
+			tenantId,
+			...(this.organizationContactId ? { organizationContactId: this.organizationContactId } : {})
+		};
+
+		// Retrieve projects based on whether employee ID is provided or not
 		if (this.employeeId) {
-			this.projects = await this.organizationProjects.getAllByEmployee(
-				this.employeeId,
-				{
-					organizationId,
-					tenantId,
-					...(this.organizationContactId
-						? {
-							organizationContactId:
-								this.organizationContactId
-						}
-						: {})
-				}
-			);
+			// Retrieve projects associated with the specified employee
+			this.projects = await this.organizationProjects.getAllByEmployee(this.employeeId, queryOptions);
 		} else {
-			const { items = [] } = await this.organizationProjects.getAll([], {
-				organizationId,
-				tenantId,
-				...(this.organizationContactId
-					? {
-						organizationContactId: this.organizationContactId
-					}
-					: {})
-			});
+			// Retrieve all projects for the organization
+			const { items = [] } = await this.organizationProjects.getAll([], queryOptions);
 			this.projects = items;
 		}
 
-		//Insert All Employees Option
+		// Insert an "All Projects" option if specified
 		if (this.showAllOption) {
 			this.projects.unshift(ALL_PROJECT_SELECTED);
 			this.selectProject(ALL_PROJECT_SELECTED);
@@ -269,46 +267,54 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		this.disabled = isDisabled;
 	}
 
+	/**
+	 * Creates a new project with the given name.
+	 * @param {string} name - The name of the new project.
+	 */
 	createNew = async (name: string) => {
+		// Check if organization is defined
 		if (!this.organization) {
 			return;
 		}
-		try {
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
 
+		try {
+			// Extract tenantId and organizationId
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Construct request object with common parameters
 			const request = {
 				name,
 				organizationId,
 				tenantId,
-				...(this.organizationContactId
-					? {
-						organizationContactId: this.organizationContactId
-					}
-					: {})
+				...(this.organizationContactId && { organizationContactId: this.organizationContactId })
 			};
-			if (this.employeeId || this.store.user.employeeId) {
-				const member: any = {
-					id: this.employeeId || this.store.user.employeeId
+
+			// Include member if employeeId or store user's employeeId is provided
+			const employeeId = this.store.user.employee?.id;
+
+			if (this.employeeId || employeeId) {
+				const member: Record<string, string> = {
+					id: this.employeeId || employeeId
 				};
 				request['members'] = [member];
 			}
 
+			// Create the project
 			const project = await this.organizationProjects.create(request);
 
-			this.projects = this.projects.concat([project]);
+			// Call method to handle the created project
+			this.createOrganizationProject(project);
+
+			// Update projectId
 			this.projectId = project.id;
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{
-					name
-				}
-			);
+			// Show success message
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
 		} catch (error) {
+			// Show error message
 			this.toastrService.error(error);
 		}
-	};
+	}
 
 	/*
 	 * After created new organization project pushed on dropdown

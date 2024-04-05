@@ -36,7 +36,7 @@ import { Invite } from './invite.entity';
 import { InviteService } from './invite.service';
 import { LanguageDecorator, Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { PaginationParams } from './../core/crud';
 import {
 	InviteAcceptCommand,
@@ -70,7 +70,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_TEAM_ADD)
 	@Post('/emails')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async createManyWithEmailsId(
 		@Body() entity: CreateInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum
@@ -96,7 +96,7 @@ export class InviteController {
 	})
 	@Public()
 	@Get('validate')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async validateInviteByToken(@Query() options: ValidateInviteQueryDTO) {
 		return await this.queryBus.execute(
 			new FindInviteByEmailTokenQuery({
@@ -114,7 +114,7 @@ export class InviteController {
 	 */
 	@Public()
 	@Post('validate-by-code')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async validateInviteByCode(@Body() body: ValidateInviteByCodeQueryDTO) {
 		return await this.queryBus.execute(
 			new FindInviteByEmailCodeQuery({
@@ -162,7 +162,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
 		return await this.inviteService.findAllInvites(options);
 	}
@@ -206,7 +206,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Post('resend')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async resendInvite(
 		@Body() entity: ResendInviteDTO,
 		@LanguageDecorator() languageCode: LanguagesEnum

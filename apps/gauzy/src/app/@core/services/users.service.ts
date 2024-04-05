@@ -11,11 +11,17 @@ export class UsersService {
 
 	API_URL = `${API_PREFIX}/user`;
 
-	getMe(relations: string[] = []): Promise<IUser> {
+	/**
+	 * Retrieves the current user's details, optionally including specified relations and employee data.
+	 *
+	 * @param relations An array of strings indicating relations to include in the response.
+	 * @param includeEmployee A boolean flag to include employee details in the response.
+	 * @returns A Promise resolving to the IUser object.
+	 */
+	getMe(relations: string[] = [], includeEmployee: boolean = false): Promise<IUser> {
 		return firstValueFrom(
-			this.http
-			.get<IUser>(`${this.API_URL}/me`, {
-				params: toParams({ relations })
+			this.http.get<IUser>(`${this.API_URL}/me`, {
+				params: toParams({ relations, includeEmployee })
 			})
 		);
 	}
@@ -23,7 +29,7 @@ export class UsersService {
 	getUserByEmail(emailId: string): Promise<IUser> {
 		return firstValueFrom(
 			this.http
-			.get<IUser>(`${this.API_URL}/email/${emailId}`)
+				.get<IUser>(`${this.API_URL}/email/${emailId}`)
 		);
 	}
 
@@ -31,9 +37,9 @@ export class UsersService {
 		const data = JSON.stringify({ relations });
 		return firstValueFrom(
 			this.http
-			.get<IUser>(`${this.API_URL}/${id}`, {
-				params: { data }
-			})
+				.get<IUser>(`${this.API_URL}/${id}`, {
+					params: { data }
+				})
 		);
 	}
 
@@ -44,23 +50,23 @@ export class UsersService {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
 			this.http
-			.get<{ items: IUser[]; total: number }>(`${this.API_URL}`, {
-				params: { data }
-			})
+				.get<{ items: IUser[]; total: number }>(`${this.API_URL}`, {
+					params: { data }
+				})
 		);
 	}
 
 	update(userId: string, updateInput: IUserUpdateInput) {
 		return firstValueFrom(
 			this.http
-			.put(`${this.API_URL}/${userId}`, updateInput)
+				.put(`${this.API_URL}/${userId}`, updateInput)
 		);
 	}
 
 	delete(userId, user) {
 		return firstValueFrom(
 			this.http
-			.delete(`${this.API_URL}/${userId}`, user)
+				.delete(`${this.API_URL}/${userId}`, user)
 		);
 	}
 

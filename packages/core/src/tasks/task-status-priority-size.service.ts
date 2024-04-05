@@ -1,8 +1,7 @@
-import { isNotEmpty } from '@gauzy/common';
 import { Injectable } from '@nestjs/common';
-import { Brackets, Repository, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Repository as TypeOrmBaseEntityRepository, SelectQueryBuilder, IsNull, FindManyOptions } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
-import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
+import { isNotEmpty } from '@gauzy/common';
 import {
 	FileStorageProviderEnum,
 	IIssueTypeFindInput,
@@ -12,30 +11,30 @@ import {
 	ITaskStatusFindInput,
 	ITaskVersionFindInput
 } from '@gauzy/contracts';
+import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
 import { FileStorage } from '../core/file-storage';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
+import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { TenantBaseEntity } from '../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
-export type IFindEntityByParams =
+export type FindEntityByParams =
 	| ITaskStatusFindInput
 	| ITaskPriorityFindInput
 	| ITaskSizeFindInput
 	| IIssueTypeFindInput
-	| ITaskVersionFindInput;
+	| ITaskVersionFindInput
 
 @Injectable()
-export class TaskStatusPrioritySizeService<
-	BaseEntity extends TenantBaseEntity
-> extends TenantAwareCrudService<BaseEntity> {
+export class TaskStatusPrioritySizeService<BaseEntity extends TenantBaseEntity> extends TenantAwareCrudService<BaseEntity> {
 	constructor(
-		readonly typeOrmTaskStatusRepository: Repository<BaseEntity>,
-		readonly mikroOrmTaskStatusRepository: MikroOrmBaseEntityRepository<BaseEntity>,
+		readonly typeOrmBaseEntityRepository: TypeOrmBaseEntityRepository<BaseEntity>,
+		readonly mikroOrmBaseEntityRepository: MikroOrmBaseEntityRepository<BaseEntity>,
 		readonly knexConnection: KnexConnection
 	) {
 		console.log(`TaskStatusPrioritySizeService initialized.`);
-		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository);
+		super(typeOrmBaseEntityRepository, mikroOrmBaseEntityRepository);
 	}
 
 	/**
@@ -43,7 +42,7 @@ export class TaskStatusPrioritySizeService<
 	 * @param input - Parameters for finding entities (IFindEntityByParams).
 	 * @returns A Promise resolving to an object with items and total count.
 	 */
-	async fetchAllByKnex(input: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
+	async fetchAllByKnex(input: FindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
 			// Ensure at least one record matches the specified parameters
 			const first = await this.getOneOrFailByKnex(input);
@@ -86,67 +85,104 @@ export class TaskStatusPrioritySizeService<
 
 	/**
 	 * Retrieves entities based on the provided parameters.
+	 *
 	 * @param params - Parameters for filtering (IFindEntityByParams).
 	 * @returns A Promise that resolves to an object conforming to the IPagination interface.
 	 */
-	async fetchAll(params: IFindEntityByParams): Promise<IPagination<BaseEntity>> {
+	async fetchAll(params: FindEntityByParams): Promise<IPagination<BaseEntity>> {
 		try {
-			/**
-			 * Find at least one record or get global records
-			 */
-			const checkQueryBuilder = this.repository.createQueryBuilder(this.tableName);
+			// Destructures the organizationId, projectId, and organizationTeamId from the provided parameters.
+			const { organizationId, projectId, organizationTeamId } = params;
 
-			checkQueryBuilder.where((qb: SelectQueryBuilder<BaseEntity>) => {
-				// Apply filters based on request parameters
-				this.getFilterQuery(qb, params);
-			});
+			// Convert the where clause to FindManyOptions<BaseEntity>
+			const options: FindManyOptions<FindEntityByParams> = {
+				// Construct the where clause based on parameters
+				where: {
+					tenantId: isNotEmpty(params.tenantId) ? (RequestContext.currentTenantId() || params.tenantId) : IsNull(),
+					organizationId: isNotEmpty(organizationId) ? organizationId : IsNull(),
+					projectId: isNotEmpty(projectId) ? projectId : IsNull(),
+					organizationTeamId: isNotEmpty(organizationTeamId) ? organizationTeamId : IsNull(),
+				}
+			};
 
-			// Ensure at least one record matches the specified parameters
-			const first = await checkQueryBuilder.getOneOrFail();
+			// Initialize variables to store the retrieved items and total count.
+			let items: BaseEntity[]; // Array to store retrieved items
+			let total: number; // Variable to store total count of items
 
-			if (!first) {
-				console.log(`No entities found matching the specified parameters ${JSON.stringify(params)}`);
+			// Determine the ORM type and execute the appropriate logic accordingly.
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					// Parse the where clause for MikroORM
+					const mikroOrmOptions = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
+					// Retrieve entities and their count
+					[items, total] = await this.mikroOrmRepository.findAndCount(mikroOrmOptions.where);
+					// Optionally serialize the items
+					items = items.map((item: BaseEntity) => this.serialize(item));
+					break;
+				case MultiORMEnum.TypeORM:
+					// Retrieve entities and their count
+					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
+					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+
+			// If no entities are found, fallback to default entities
+			if (total === 0) {
 				return await this.getDefaultEntities();
 			}
 
-			/**
-			 * Find task sizes/priorities for given params
-			 */
-			const queryBuilder = this.repository.createQueryBuilder(this.tableName);
-			queryBuilder.where((qb: SelectQueryBuilder<BaseEntity>) => {
-				// Apply filters based on request parameters
-				this.getFilterQuery(qb, params);
-			});
-
-			const [items, total] = await queryBuilder.getManyAndCount(); // Retrieve entities and their count
 			return { items, total };
 		} catch (error) {
-			console.error('Failed to retrieve entities based on the specified parameters', error);
+			console.log(`No entities found matching the specified parameters ${JSON.stringify(params)} for ${this.ormType}: `, error?.message);
 			// If an error occurs during the retrieval, fallback to default entities
 			return await this.getDefaultEntities();
 		}
 	}
 
 	/**
-	 * GET global system statuses/priorities/sizes
-	 *
-	 * @returns
+	 * Retrieves default entities based on certain criteria.
+	 * @returns A promise resolving to an object containing items and total count.
 	 */
 	async getDefaultEntities(): Promise<IPagination<BaseEntity>> {
-		const query = this.repository.createQueryBuilder(this.tableName);
-		query.where((qb: SelectQueryBuilder<BaseEntity>) => {
-			qb.andWhere(
-				new Brackets((bck: WhereExpressionBuilder) => {
-					bck.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
-					bck.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
-					bck.andWhere(p(`"${qb.alias}"."projectId" IS NULL`));
-					bck.andWhere(p(`"${qb.alias}"."organizationTeamId" IS NULL`));
-					bck.andWhere(p(`"${qb.alias}"."isSystem" = :isSystem`), { isSystem: true });
-				})
-			);
-		});
-		const [items, total] = await query.getManyAndCount();
-		return { items, total };
+		try {
+			// Convert the where clause to FindManyOptions<FindEntityByParams>
+			const options: FindManyOptions<FindEntityByParams & { isSystem: boolean }> = {
+				// Construct the where clause based on parameters
+				where: {
+					tenantId: IsNull(),
+					organizationId: IsNull(),
+					projectId: IsNull(),
+					organizationTeamId: IsNull(),
+					isSystem: true
+				}
+			};
+
+			// Initialize variables to store the retrieved items and total count.
+			let items: BaseEntity[]; // Array to store retrieved items
+			let total: number; // Variable to store total count of items
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					// Parse the where clause for MikroORM
+					const { where } = parseTypeORMFindToMikroOrm<BaseEntity>(options as FindManyOptions<BaseEntity>);
+					// Retrieve entities and their count
+					[items, total] = await this.mikroOrmRepository.findAndCount(where);
+					// Optionally serialize the items
+					items = items.map((item: BaseEntity) => this.serialize(item));
+					break;
+				case MultiORMEnum.TypeORM:
+					// Retrieve entities and their count
+					[items, total] = await this.typeOrmRepository.findAndCount(options as FindManyOptions<BaseEntity>);
+					break;
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+
+			return { items, total };
+		} catch (error) {
+			console.error(`Error while getting base entities by ${this.ormType}`, error);
+		}
 	}
 
 	/**
@@ -156,7 +192,7 @@ export class TaskStatusPrioritySizeService<
 	 * @param request
 	 * @returns
 	 */
-	getFilterQuery(query: SelectQueryBuilder<BaseEntity>, request: IFindEntityByParams) {
+	getFilterQuery(query: SelectQueryBuilder<BaseEntity>, request: FindEntityByParams): SelectQueryBuilder<BaseEntity> {
 		const { organizationId, projectId, organizationTeamId } = request;
 
 		/**
@@ -212,7 +248,7 @@ export class TaskStatusPrioritySizeService<
 	 * @param request - Request parameters for filtering (IFindEntityByParams).
 	 * @returns A Promise that resolves to the first entity or rejects if none is found.
 	 */
-	async getOneOrFailByKnex(request: IFindEntityByParams): Promise<BaseEntity | undefined> {
+	async getOneOrFailByKnex(request: FindEntityByParams): Promise<BaseEntity | undefined> {
 		// Create a Knex query builder
 		return await this.createKnexQueryBuilder(this.knexConnection)
 			.modify((qb: KnexConnection.QueryBuilder<any, any>) => {
@@ -231,7 +267,7 @@ export class TaskStatusPrioritySizeService<
 	 * @param request - Request parameters for filtering (IFindEntityByParams).
 	 * @returns A Knex query builder with applied filters.
 	 */
-	async getManyAndCountByKnex(request: IFindEntityByParams): Promise<KnexConnection.QueryBuilder<any, any>> {
+	async getManyAndCountByKnex(request: FindEntityByParams): Promise<KnexConnection.QueryBuilder<any, any>> {
 		// Create a Knex query builder
 		return await this.createKnexQueryBuilder(this.knexConnection).modify(
 			(qb: KnexConnection.QueryBuilder<any, any>) => {
@@ -276,7 +312,7 @@ export class TaskStatusPrioritySizeService<
 	 * @param qb - Knex query builder.
 	 * @param request - Request parameters for filtering (IFindEntityByParams).
 	 */
-	getFilterQueryByKnex(qb: KnexConnection.QueryBuilder<any, any>, request: IFindEntityByParams) {
+	getFilterQueryByKnex(qb: KnexConnection.QueryBuilder<any, any>, request: FindEntityByParams) {
 		// Destructure request parameters
 		const { organizationId, projectId, organizationTeamId } = request;
 

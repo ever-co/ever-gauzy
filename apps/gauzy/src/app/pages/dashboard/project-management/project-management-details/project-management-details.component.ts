@@ -100,8 +100,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		if (!this._organization) {
 			return;
 		}
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this._organization;
+		const { id: organizationId, tenantId } = this._organization;
 
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
 			...(this.selectedEmployeeId
@@ -164,7 +163,7 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		if (!this._store.user) {
 			return;
 		}
-		return this.selectedEmployeeId === this._store.user.employeeId;
+		return this.selectedEmployeeId === this._store.user.employee?.id;
 	}
 
 	public onScrollTasks(): void {

@@ -40,20 +40,17 @@ export class FeatureService extends CrudService<Feature> {
 	}
 
 	/**
-	 * Feature flag enabled/disabled checked
-	 *
-	 * @param flag
-	 * @returns
+	 * Checks if the specified feature flag is enabled.
+	 * @param flag The feature flag to check.
+	 * @returns A boolean indicating whether the feature flag is enabled.
 	 */
-	public async isFeatureEnabled(flag: FeatureEnum) {
-		const featureFlag = await super.findOneOrFailByWhereOptions({
-			code: flag
-		});
-		if (!featureFlag.success) {
+	public async isFeatureEnabled(flag: FeatureEnum): Promise<boolean> {
+		try {
+			const featureFlag = await super.findOneByWhereOptions({ code: flag });
+			return featureFlag.isEnabled;
+		} catch (error) {
+			// Feature flag not found, fallback to default value
 			return !!gauzyToggleFeatures[flag];
 		}
-
-		const { record: feature } = featureFlag;
-		return feature.isEnabled;
 	}
 }

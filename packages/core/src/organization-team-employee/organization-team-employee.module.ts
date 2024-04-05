@@ -7,6 +7,7 @@ import { OrganizationTeamEmployeeController } from './organization-team-employee
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 import { TaskModule } from './../tasks/task.module';
+import { TypeOrmOrganizationTeamEmployeeRepository } from './repository';
 
 @Module({
 	imports: [
@@ -22,7 +23,7 @@ import { TaskModule } from './../tasks/task.module';
 		TaskModule
 	],
 	controllers: [OrganizationTeamEmployeeController],
-	providers: [OrganizationTeamEmployeeService],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamEmployeeService]
+	providers: [OrganizationTeamEmployeeService, TypeOrmOrganizationTeamEmployeeRepository],
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamEmployeeService, TypeOrmOrganizationTeamEmployeeRepository]
 })
 export class OrganizationTeamEmployeeModule { }

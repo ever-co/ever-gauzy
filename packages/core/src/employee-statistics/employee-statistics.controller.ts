@@ -4,20 +4,11 @@ import {
 	IMonthAggregatedEmployeeStatistics,
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
-import {
-	Controller,
-	Get,
-	HttpStatus,
-	Param,
-	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
-} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EmployeeStatisticsService } from './employee-statistics.service';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import {
 	AggregatedEmployeeStatisticQuery,
@@ -33,7 +24,7 @@ export class EmployeeStatisticsController {
 	constructor(
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly queryBus: QueryBus
-	) {}
+	) { }
 
 	@ApiOperation({
 		summary: 'Find aggregate for all employees by organization id'
@@ -48,9 +39,7 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IAggregatedEmployeeStatistic[]> {
 		const { findInput } = data;
-		return this.queryBus.execute(
-			new AggregatedEmployeeStatisticQuery(findInput)
-		);
+		return this.queryBus.execute(new AggregatedEmployeeStatisticQuery(findInput));
 	}
 
 	@ApiOperation({ summary: 'Find by id' })
@@ -65,15 +54,11 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatistics> {
 		const { findInput } = data;
-		return this.employeeStatisticsService.getStatisticsByEmployeeId(
-			id,
-			findInput
-		);
+		return this.employeeStatisticsService.getStatisticsByEmployeeId(id, findInput);
 	}
 
 	@ApiOperation({
-		summary:
-			'Find Aggregated Statistics by Employee id, valueDate and past N months'
+		summary: 'Find Aggregated Statistics by Employee id, valueDate and past N months'
 	})
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
 	@ApiResponse({
@@ -81,17 +66,14 @@ export class EmployeeStatisticsController {
 		description: 'Record not found'
 	})
 	@Get('/months')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async findAggregatedStatisticsByEmployeeId(
 		@Query() options: EmployeeAggregatedStatisticByMonthQueryDTO
 	): Promise<IMonthAggregatedEmployeeStatistics> {
-		return await this.queryBus.execute(
-			new MonthAggregatedEmployeeStatisticsQuery(options)
-		);
+		return await this.queryBus.execute(new MonthAggregatedEmployeeStatisticsQuery(options));
 	}
 	@ApiOperation({
-		summary:
-			'Find Statistics History by Employee id, valueDate and past N months'
+		summary: 'Find Statistics History by Employee id, valueDate and past N months'
 	})
 	@ApiResponse({ status: HttpStatus.OK, description: 'Found one record' })
 	@ApiResponse({
@@ -103,8 +85,6 @@ export class EmployeeStatisticsController {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IEmployeeStatisticsHistory[]> {
 		const { findInput } = data;
-		return this.queryBus.execute(
-			new EmployeeStatisticsHistoryQuery(findInput)
-		);
+		return this.queryBus.execute(new EmployeeStatisticsHistoryQuery(findInput));
 	}
 }

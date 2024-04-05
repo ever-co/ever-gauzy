@@ -1,10 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import {
+	Brackets,
+	FindManyOptions,
+	FindOneOptions,
+	SelectQueryBuilder,
+	UpdateResult,
+	WhereExpressionBuilder
+} from 'typeorm';
 import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
 	IEmployee,
+	IEmployeeFindInput,
 	IOrganization,
 	IPagination,
 	PermissionsEnum
@@ -12,7 +20,7 @@ import {
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { getDateRangeFormat } from './../core/utils';
+import { MultiORMEnum, getDateRangeFormat, parseTypeORMFindToMikroOrm } from './../core/utils';
 import { Employee } from './employee.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository, TypeOrmEmployeeRepository } from './repository';
@@ -24,6 +32,42 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
+	}
+
+	/**
+	 * Finds an employee by user ID.
+	 *
+	 * @param userId The ID of the user to find.
+	 * @returns A Promise resolving to the employee if found, otherwise null.
+	 */
+	async findOneByUserId(userId: string, options?: FindOneOptions<Employee>): Promise<IEmployee | null> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+
+			// Construct the where clause based on whether tenantId is available
+			const whereClause = tenantId ? { tenantId, userId } : { userId };
+			const queryOptions = options ? { ...options } : {};
+
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const { mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options as FindManyOptions);
+					const item = await this.mikroOrmRepository.findOne(
+						whereClause,
+						mikroOptions
+					);
+					return this.serialize(item as Employee);
+				case MultiORMEnum.TypeORM:
+					return this.typeOrmRepository.findOne({
+						where: whereClause,
+						...queryOptions
+					});
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.error(`Error finding employee by userId: ${error.message}`);
+			return null;
+		}
 	}
 
 	/**
@@ -215,7 +259,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Create a query builder for the Employee entity
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Tables joins with relations
 			query.innerJoin(`${query.alias}.user`, 'user');
@@ -339,7 +383,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					organizationId
 				}
 			});
-			return await this.repository.softDelete({
+			return await this.typeOrmRepository.softDelete({
 				id: employeeId,
 				organizationId,
 				tenantId: RequestContext.currentTenantId()
@@ -358,7 +402,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	): Promise<UpdateResult> {
 		try {
 			const { organizationId } = options;
-			return await this.repository.restore({
+			return await this.typeOrmRepository.restore({
 				id: employeeId,
 				organizationId,
 				tenantId: RequestContext.currentTenantId()

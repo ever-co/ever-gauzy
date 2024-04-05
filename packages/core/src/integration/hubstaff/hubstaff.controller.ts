@@ -11,8 +11,8 @@ import {
 } from '@gauzy/contracts';
 import { ApiTags } from '@nestjs/swagger';
 import { Permissions } from 'shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from 'shared/guards';
-import { UUIDValidationPipe } from 'shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { UUIDValidationPipe } from '../../shared/pipes';
 import { HubstaffService } from './hubstaff.service';
 
 @ApiTags('Hubstaff Integrations')

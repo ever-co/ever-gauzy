@@ -9,38 +9,34 @@ import {
 	Param,
 	Body,
 	Query,
-	Post,
-	UsePipes,
-	ValidationPipe
+	Post
 } from '@nestjs/common';
 import { IEquipmentSharingPolicy, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { EquipmentSharingPolicy } from './equipment-sharing-policy.entity';
 import { EquipmentSharingPolicyService } from './equipment-sharing-policy.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 
 @ApiTags('EquipmentSharingPolicy')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentSharingPolicyController extends CrudController<EquipmentSharingPolicy> {
-	constructor(
-		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService
-	) {
+	constructor(private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService) {
 		super(equipmentSharingPolicyService);
 	}
 
 	/**
 	 * GET equipment sharing policy by pagination
-	 * 
-	 * @param filter 
-	 * @returns 
+	 *
+	 * @param filter
+	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() filter: PaginationParams<EquipmentSharingPolicy>
 	): Promise<IPagination<IEquipmentSharingPolicy>> {
@@ -59,9 +55,7 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	})
 	@UseGuards(PermissionGuard)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IEquipmentSharingPolicy>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEquipmentSharingPolicy>> {
 		const { findInput, relations } = data;
 		return this.equipmentSharingPolicyService.findAll({
 			where: findInput,
@@ -76,14 +70,11 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
 	@Post()
-	async create(
-		@Body() entity: IEquipmentSharingPolicy
-	): Promise<IEquipmentSharingPolicy> {
+	async create(@Body() entity: IEquipmentSharingPolicy): Promise<IEquipmentSharingPolicy> {
 		return this.equipmentSharingPolicyService.create(entity);
 	}
 
@@ -98,8 +89,7 @@ export class EquipmentSharingPolicyController extends CrudController<EquipmentSh
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)

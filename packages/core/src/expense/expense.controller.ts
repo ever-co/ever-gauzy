@@ -29,16 +29,12 @@ import { CrudController, PaginationParams } from '../core/crud';
 import { EmployeeService } from '../employee/employee.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import {
-	ExpenseCreateCommand,
-	ExpenseDeleteCommand,
-	ExpenseUpdateCommand
-} from './commands';
+import { ExpenseCreateCommand, ExpenseDeleteCommand, ExpenseUpdateCommand } from './commands';
 import { Expense } from './expense.entity';
 import { ExpenseService } from './expense.service';
 import { RequestContext } from '../core/context';
 import { FindSplitExpenseQuery } from './queries';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { ExpenseMapService } from './expense.map.service';
 import { CreateExpenseDTO, DeleteExpenseDTO, UpdateExpenseDTO } from './dto';
 import { ExpenseReportQueryDTO } from './dto/query';
@@ -66,9 +62,7 @@ export class ExpenseController extends CrudController<Expense> {
 	 */
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<Expense>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<Expense>): Promise<number> {
 		return await this.expenseService.countBy(options);
 	}
 
@@ -80,17 +74,14 @@ export class ExpenseController extends CrudController<Expense> {
 	 */
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Expense>
-	): Promise<IPagination<IExpense>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<Expense>): Promise<IPagination<IExpense>> {
 		return this.expenseService.pagination(params);
 	}
 
 	// If user is not an employee, then this will return 404
 	@ApiOperation({
-		summary:
-			'Find all expense for the logged in employee, including split expenses.'
+		summary: 'Find all expense for the logged in employee, including split expenses.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -103,9 +94,7 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('me')
-	async findMyExpenseWithSplitIncluded(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IExpense>> {
+	async findMyExpenseWithSplitIncluded(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IExpense>> {
 		const { relations, filterDate } = data;
 		const employee = await this.employeeService.findOneByWhereOptions({
 			userId: RequestContext.currentUserId()
@@ -159,10 +148,8 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getExpenseReport(
-		@Query() options: ExpenseReportQueryDTO
-	): Promise<IExpenseReportData[]> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getExpenseReport(@Query() options: ExpenseReportQueryDTO): Promise<IExpenseReportData[]> {
 		const expenses = await this.expenseService.getExpense(options);
 		let response: IExpenseReportData[] = [];
 		if (options.groupBy === ReportGroupFilterEnum.date) {
@@ -186,10 +173,8 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('report/daily-chart')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async getDailyReportChartData(
-		@Query() options: ExpenseReportQueryDTO
-	) {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async getDailyReportChartData(@Query() options: ExpenseReportQueryDTO) {
 		return this.expenseService.getDailyReportChartData(options);
 	}
 
@@ -205,14 +190,9 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IExpense>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IExpense>> {
 		const { relations, findInput, filterDate } = data;
-		return this.expenseService.findAllExpenses(
-			{ where: findInput, relations },
-			filterDate
-		);
+		return this.expenseService.findAllExpenses({ where: findInput, relations }, filterDate);
 	}
 
 	/**
@@ -223,9 +203,7 @@ export class ExpenseController extends CrudController<Expense> {
 	 */
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: IExpense['id'],
-	): Promise<IExpense> {
+	async findById(@Param('id', UUIDValidationPipe) id: IExpense['id']): Promise<IExpense> {
 		return await this.expenseService.findOneByIdString(id);
 	}
 
@@ -242,18 +220,13 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async create(
-		@Body() entity: CreateExpenseDTO
-	): Promise<IExpense> {
-		return await this.commandBus.execute(
-			new ExpenseCreateCommand(entity)
-		);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateExpenseDTO): Promise<IExpense> {
+		return await this.commandBus.execute(new ExpenseCreateCommand(entity));
 	}
 
 	/**
@@ -270,19 +243,13 @@ export class ExpenseController extends CrudController<Expense> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateExpenseDTO
-	): Promise<IExpense> {
-		return await this.commandBus.execute(
-			new ExpenseUpdateCommand(id, entity)
-		);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateExpenseDTO): Promise<IExpense> {
+		return await this.commandBus.execute(new ExpenseUpdateCommand(id, entity));
 	}
 
 	/**
@@ -304,16 +271,11 @@ export class ExpenseController extends CrudController<Expense> {
 		description: 'Record not found'
 	})
 	@Delete(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) expenseId: string,
 		@Query() options: DeleteExpenseDTO
 	): Promise<DeleteResult> {
-		return await this.commandBus.execute(
-			new ExpenseDeleteCommand(
-				options.employeeId,
-				expenseId
-			)
-		);
+		return await this.commandBus.execute(new ExpenseDeleteCommand(options.employeeId, expenseId));
 	}
 }

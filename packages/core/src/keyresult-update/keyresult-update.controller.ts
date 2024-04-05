@@ -9,16 +9,14 @@ import {
 	Param,
 	UseGuards,
 	Query,
-	Delete,
-	UsePipes,
-	ValidationPipe
+	Delete
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CrudController } from './../core/crud';
 import { KeyResultUpdate } from './keyresult-update.entity';
 import { KeyResultUpdateService } from './keyresult-update.service';
 import { IKeyResultUpdate } from '@gauzy/contracts';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CommandBus } from '@nestjs/cqrs';
 import { KeyResultUpdateBulkDeleteCommand } from './commands';
 import { TenantPermissionGuard } from './../shared/guards';
@@ -48,7 +46,7 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 			'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateKeyresultUpdateDTO
 	): Promise<IKeyResultUpdate> {
@@ -89,7 +87,7 @@ export class KeyResultUpdateController extends CrudController<KeyResultUpdate> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes( new ValidationPipe({ transform : true }))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateKeyresultUpdateDTO

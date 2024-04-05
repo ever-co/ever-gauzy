@@ -1,10 +1,20 @@
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Delete, HttpCode, HttpStatus, Param, Put, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Put,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { IOrganizationTeamEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { OrganizationTeamEmployeeService } from './organization-team-employee.service';
 import { DeleteTeamMemberQueryDTO, UpdateOrganizationTeamActiveTaskDTO, UpdateTeamMemberDTO } from './dto';
 import { OrganizationTeamEmployee } from './organization-team-employee.entity';
@@ -14,10 +24,7 @@ import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
 @Controller()
 export class OrganizationTeamEmployeeController {
-
-	constructor(
-		private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService
-	) { }
+	constructor(private readonly organizationTeamEmployeeService: OrganizationTeamEmployeeService) { }
 
 	/**
 	 * Update team member by memberId
@@ -28,7 +35,7 @@ export class OrganizationTeamEmployeeController {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
@@ -36,7 +43,6 @@ export class OrganizationTeamEmployeeController {
 	): Promise<UpdateResult | IOrganizationTeamEmployee> {
 		return await this.organizationTeamEmployeeService.update(memberId, entity);
 	}
-
 
 	/**
 	 * Update organization team member active task entity
@@ -47,7 +53,7 @@ export class OrganizationTeamEmployeeController {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK)
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	@Put(':id/active-task')
 	async updateActiveTask(
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],
@@ -74,7 +80,7 @@ export class OrganizationTeamEmployeeController {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_DELETE)
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	@Delete(':id')
 	async delete(
 		@Param('id', UUIDValidationPipe) memberId: IOrganizationTeamEmployee['id'],

@@ -45,7 +45,7 @@ export class CandidateService extends TenantAwareCrudService<Candidate> {
 	 */
 	public async pagination(options: any) {
 		try {
-			const query = this.repository.createQueryBuilder('candidate');
+			const query = this.typeOrmRepository.createQueryBuilder('candidate');
 			query.setFindOptions({
 				skip: options && options.skip ? options.take * (options.skip - 1) : 0,
 				take: options && options.take ? options.take : 10,

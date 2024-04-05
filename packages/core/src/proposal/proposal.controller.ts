@@ -8,9 +8,7 @@ import {
 	UseGuards,
 	Put,
 	Param,
-	ValidationPipe,
-	BadRequestException,
-	UsePipes
+	BadRequestException
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
@@ -20,7 +18,7 @@ import { Proposal } from './proposal.entity';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateProposalDTO, UpdateProposalDTO } from './dto';
 
 @ApiTags('Proposal')
@@ -28,10 +26,7 @@ import { CreateProposalDTO, UpdateProposalDTO } from './dto';
 @Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 @Controller()
 export class ProposalController extends CrudController<Proposal> {
-
-	constructor(
-		private readonly proposalService: ProposalService
-	) {
+	constructor(private readonly proposalService: ProposalService) {
 		super(proposalService);
 	}
 
@@ -43,10 +38,8 @@ export class ProposalController extends CrudController<Proposal> {
 	 */
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<Proposal>
-	): Promise<IPagination<IProposal>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
 		return this.proposalService.pagination(params);
 	}
 
@@ -68,14 +61,9 @@ export class ProposalController extends CrudController<Proposal> {
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IProposal>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IProposal>> {
 		const { relations, findInput, filterDate } = data;
-		return await this.proposalService.getAllProposals(
-			{ where: findInput, relations },
-			filterDate
-		);
+		return await this.proposalService.getAllProposals({ where: findInput, relations }, filterDate);
 	}
 
 	@ApiOperation({ summary: 'Find single proposal by id.' })
@@ -95,7 +83,7 @@ export class ProposalController extends CrudController<Proposal> {
 		@Query() options: OptionParams<Proposal>
 	): Promise<IProposal> {
 		return await this.proposalService.findOneByIdString(id, {
-			relations: options.relations ||  []
+			relations: options.relations || []
 		});
 	}
 
@@ -106,14 +94,11 @@ export class ProposalController extends CrudController<Proposal> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
-	async create(
-		@Body() entity: CreateProposalDTO
-	): Promise<IProposal> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateProposalDTO): Promise<IProposal> {
 		try {
 			return await this.proposalService.create(entity);
 		} catch (error) {
@@ -138,7 +123,7 @@ export class ProposalController extends CrudController<Proposal> {
 		description: 'Record not found'
 	})
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProposalDTO

@@ -8,8 +8,6 @@ import {
 	Body,
 	Controller,
 	Put,
-	UsePipes,
-	ValidationPipe,
 	Param
 } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
@@ -18,7 +16,7 @@ import { ICandidateSource, IPagination, PermissionsEnum } from '@gauzy/contracts
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CandidateSourceService } from './candidate-source.service';
 import { CreateCandidateSourceDTO, UpdateCandidateSourceDTO } from './dto';
 
@@ -27,9 +25,7 @@ import { CreateCandidateSourceDTO, UpdateCandidateSourceDTO } from './dto';
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
 @Controller()
 export class CandidateSourceController extends CrudController<CandidateSource> {
-	constructor(
-		private readonly candidateSourceService: CandidateSourceService
-	) {
+	constructor(private readonly candidateSourceService: CandidateSourceService) {
 		super(candidateSourceService);
 	}
 
@@ -41,10 +37,8 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	 */
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() params: PaginationParams<CandidateSource>
-	): Promise<IPagination<ICandidateSource>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() params: PaginationParams<CandidateSource>): Promise<IPagination<ICandidateSource>> {
 		return await this.candidateSourceService.paginate(params);
 	}
 
@@ -68,10 +62,8 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<CandidateSource>
-	): Promise<IPagination<ICandidateSource>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<CandidateSource>): Promise<IPagination<ICandidateSource>> {
 		return await this.candidateSourceService.findAll({
 			where: params.where
 		});
@@ -96,10 +88,8 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 		description: 'Record not found'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true, whitelist: true }))
-	async create(
-		@Body() entity: CreateCandidateSourceDTO
-	): Promise<ICandidateSource> {
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateCandidateSourceDTO): Promise<ICandidateSource> {
 		return await this.candidateSourceService.create(entity);
 	}
 
@@ -110,7 +100,7 @@ export class CandidateSourceController extends CrudController<CandidateSource> {
 	 * @returns
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ICandidateSource['id'],
 		@Body() entity: UpdateCandidateSourceDTO

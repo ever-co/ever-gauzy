@@ -23,7 +23,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async createBulk(createInput: ICandidateTechnologiesCreateInput[]) {
-		return await this.repository.save(createInput);
+		return await this.typeOrmRepository.save(createInput);
 	}
 
 	/**
@@ -32,7 +32,7 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async getTechnologiesByInterviewId(interviewId: string): Promise<ICandidateTechnologies[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('candidate_technology')
 			.where('candidate_technology.interviewId = :interviewId', {
 				interviewId
@@ -46,6 +46,6 @@ export class CandidateTechnologiesService extends TenantAwareCrudService<Candida
 	 * @returns
 	 */
 	async deleteBulk(ids: string[]) {
-		return await this.repository.delete(ids);
+		return await this.typeOrmRepository.delete(ids);
 	}
 }

@@ -12,8 +12,6 @@ import {
 	Post,
 	Delete,
 	Res,
-	UsePipes,
-	ValidationPipe,
 	BadRequestException,
 	Headers
 } from '@nestjs/common';
@@ -21,18 +19,13 @@ import { DeleteResult, FindOptionsWhere } from 'typeorm';
 import { Response } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
-import {
-	PermissionsEnum,
-	IInvoice,
-	LanguagesEnum,
-	IPagination
-} from '@gauzy/contracts';
+import { PermissionsEnum, IInvoice, LanguagesEnum, IPagination } from '@gauzy/contracts';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { Invoice } from './invoice.entity';
 import { InvoiceService } from './invoice.service';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import {
 	InvoiceCreateCommand,
 	InvoiceDeleteCommand,
@@ -42,22 +35,14 @@ import {
 	InvoiceGeneratePdfCommand,
 	InvoicePaymentGeneratePdfCommand
 } from './commands';
-import {
-	CreateInvoiceDTO,
-	UpdateEstimateInvoiceDTO,
-	UpdateInvoiceActionDTO,
-	UpdateInvoiceDTO
-} from './dto';
+import { CreateInvoiceDTO, UpdateEstimateInvoiceDTO, UpdateInvoiceActionDTO, UpdateInvoiceDTO } from './dto';
 
 @ApiTags('Invoice')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INVOICES_EDIT)
 @Controller()
 export class InvoiceController extends CrudController<Invoice> {
-	constructor(
-		private readonly invoiceService: InvoiceService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly invoiceService: InvoiceService, private readonly commandBus: CommandBus) {
 		super(invoiceService);
 	}
 
@@ -69,9 +54,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: FindOptionsWhere<Invoice>
-	): Promise<number> {
+	async getCount(@Query() options: FindOptionsWhere<Invoice>): Promise<number> {
 		return await this.invoiceService.countBy(options);
 	}
 
@@ -83,10 +66,8 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() options: PaginationParams<Invoice>
-	): Promise<IPagination<IInvoice>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() options: PaginationParams<Invoice>): Promise<IPagination<IInvoice>> {
 		return await this.invoiceService.pagination(options);
 	}
 
@@ -109,9 +90,7 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@Permissions(PermissionsEnum.INVOICES_VIEW)
 	@Get()
-	async findAll(
-		@Query() options: OptionParams<IInvoice>
-	): Promise<IPagination<IInvoice>> {
+	async findAll(@Query() options: OptionParams<IInvoice>): Promise<IPagination<IInvoice>> {
 		try {
 			return await this.invoiceService.findAll(options);
 		} catch (error) {
@@ -152,18 +131,13 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async create(
-		@Body() entity: CreateInvoiceDTO
-	): Promise<Invoice> {
-		return await this.commandBus.execute(
-			new InvoiceCreateCommand(entity)
-		);
+	@UseValidationPipe({ transform: true })
+	async create(@Body() entity: CreateInvoiceDTO): Promise<Invoice> {
+		return await this.commandBus.execute(new InvoiceCreateCommand(entity));
 	}
 
 	/**
@@ -184,19 +158,16 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateInvoiceDTO
 	): Promise<Invoice> {
-		return await this.commandBus.execute(
-			new InvoiceUpdateCommand({ id, ...entity })
-		);
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
 	}
 
 	/**
@@ -217,19 +188,16 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('/:id/estimate')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async updateEstimate(
 		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
 		@Body() entity: UpdateEstimateInvoiceDTO
 	) {
-		return await this.commandBus.execute(
-			new InvoiceUpdateCommand({ id, ...entity })
-		);
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
 	}
 
 	/**
@@ -250,19 +218,13 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('/:id/action')
-	@UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
-	async updateAction(
-		@Param('id', UUIDValidationPipe) id: IInvoice['id'],
-		@Body() entity: UpdateInvoiceActionDTO
-	) {
-		return await this.commandBus.execute(
-			new InvoiceUpdateCommand({ id, ...entity })
-		);
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async updateAction(@Param('id', UUIDValidationPipe) id: IInvoice['id'], @Body() entity: UpdateInvoiceActionDTO) {
+		return await this.commandBus.execute(new InvoiceUpdateCommand({ id, ...entity }));
 	}
 
 	/**
@@ -282,14 +244,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		@I18nLang() languageCode: LanguagesEnum,
 		@Headers('origin') origin: string
 	): Promise<any> {
-		return this.commandBus.execute(
-			new InvoiceSendEmailCommand(
-				languageCode,
-				email,
-				body.params,
-				origin
-			)
-		);
+		return this.commandBus.execute(new InvoiceSendEmailCommand(languageCode, email, body.params, origin));
 	}
 
 	/**
@@ -300,12 +255,8 @@ export class InvoiceController extends CrudController<Invoice> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put('generate/:uuid')
-	async generateLink(
-		@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id']
-	): Promise<IInvoice> {
-		return await this.commandBus.execute(
-			new InvoiceGenerateLinkCommand(uuid)
-		);
+	async generateLink(@Param('uuid', UUIDValidationPipe) uuid: IInvoice['id']): Promise<IInvoice> {
+		return await this.commandBus.execute(new InvoiceGenerateLinkCommand(uuid));
 	}
 
 	@ApiOperation({ summary: 'Delete record' })
@@ -319,12 +270,8 @@ export class InvoiceController extends CrudController<Invoice> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: IInvoice['id']
-	): Promise<DeleteResult> {
-		return await this.commandBus.execute(
-			new InvoiceDeleteCommand(id)
-		);
+	async delete(@Param('id', UUIDValidationPipe) id: IInvoice['id']): Promise<DeleteResult> {
+		return await this.commandBus.execute(new InvoiceDeleteCommand(id));
 	}
 
 	/**
@@ -352,9 +299,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		@I18nLang() locale: LanguagesEnum,
 		@Res() res: Response
 	): Promise<any> {
-		const buffer: Buffer = await this.commandBus.execute(
-			new InvoiceGeneratePdfCommand(uuid, locale)
-		);
+		const buffer: Buffer = await this.commandBus.execute(new InvoiceGeneratePdfCommand(uuid, locale));
 		if (!buffer) {
 			return;
 		}
@@ -391,9 +336,7 @@ export class InvoiceController extends CrudController<Invoice> {
 		@I18nLang() locale: LanguagesEnum,
 		@Res() res: Response
 	): Promise<any> {
-		const buffer = await this.commandBus.execute(
-			new InvoicePaymentGeneratePdfCommand(uuid, locale)
-		);
+		const buffer = await this.commandBus.execute(new InvoicePaymentGeneratePdfCommand(uuid, locale));
 		if (!buffer) {
 			return;
 		}

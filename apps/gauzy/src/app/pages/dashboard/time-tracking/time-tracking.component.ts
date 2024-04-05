@@ -95,6 +95,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy, AfterViewChecked {
 
 	user: IUser;
+	employee: IEmployee;
 	timeSlotEmployees: ITimeSlotStatistics[] = [];
 	activities: IActivitiesStatistics[] = [];
 	projects: IProjectsStatistics[] = [];
@@ -170,6 +171,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
+				tap((user: IUser) => (this.employee = user?.employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -631,38 +633,49 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	}
 
 	/**
-	 * Get employee counts
-	 *
+	 * Load the count of employees for the organization.
 	 */
 	private async loadEmployeesCount() {
-		if (this.user && this.user.employeeId) {
+		// If employee is already loaded or organization is not defined, return
+		if (this.employee || !this.organization) {
 			return;
 		}
-		if (!this.organization) {
-			return;
-		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
 
-		this.employeesService.getCount({ organizationId, tenantId })
-			.pipe(
-				tap((count: number) => this.employeesCount = count),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Extract organization and tenant IDs
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Retrieve the count of employees for the organization
+		const count$ = this.employeesService.getCount({ organizationId, tenantId });
+
+		// Subscribe to the count observable, updating employeesCount when count is received
+		count$.pipe(
+			// Update employees count when count is received
+			tap((count: number) => this.employeesCount = count),
+			// Unsubscribe from the observable when component is destroyed
+			untilDestroyed(this)
+		).subscribe();
 	}
 
+	/**
+	 * Load the count of projects for the organization.
+	 */
 	private async loadProjectsCount() {
 		if (!this.organization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
 
-		this.projectCount = await this.projectService.getCount({
-			organizationId,
-			tenantId
-		});
+		try {
+			// Extract organization and tenant IDs
+			const { id: organizationId, tenantId } = this.organization;
+
+			// Retrieve the count of projects for the organization
+			this.projectCount = await this.projectService.getCount({
+				organizationId,
+				tenantId
+			});
+		} catch (error) {
+			console.error("Error loading project count:", error);
+		}
 	}
 
 	/**

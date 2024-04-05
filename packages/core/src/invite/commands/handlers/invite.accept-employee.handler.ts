@@ -37,21 +37,22 @@ import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.re
  */
 @CommandHandler(InviteAcceptEmployeeCommand)
 export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAcceptEmployeeCommand> {
-
 	constructor(
 		private readonly inviteService: InviteService,
 		private readonly authService: AuthService,
 		@InjectRepository(User) private readonly typeOrmUserRepository: TypeOrmUserRepository,
 		@InjectRepository(Employee) private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		@InjectRepository(OrganizationProject) private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-		@InjectRepository(OrganizationContact) private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
-		@InjectRepository(OrganizationDepartment) private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
-		@InjectRepository(OrganizationTeam) private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
-	) { }
+		@InjectRepository(OrganizationProject)
+		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+		@InjectRepository(OrganizationContact)
+		private readonly typeOrmOrganizationContactRepository: TypeOrmOrganizationContactRepository,
+		@InjectRepository(OrganizationDepartment)
+		private readonly typeOrmOrganizationDepartmentRepository: TypeOrmOrganizationDepartmentRepository,
+		@InjectRepository(OrganizationTeam)
+		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
+	) {}
 
-	public async execute(
-		command: InviteAcceptEmployeeCommand
-	): Promise<IUser> {
+	public async execute(command: InviteAcceptEmployeeCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
@@ -92,9 +93,6 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 						name: RolesEnum.EMPLOYEE
 					}
 				},
-				relations: {
-					employee: true
-				},
 				order: {
 					createdAt: 'DESC'
 				}
@@ -119,6 +117,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				},
 				languageCode
 			);
+
 			/**
 			 * Create employee after create user
 			 */
@@ -129,7 +128,9 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				startedWorkOn: invite.actionDate || null,
 				isActive: true
 			});
+
 			const employee = await this.typeOrmEmployeeRepository.save(create);
+
 			await this.updateEmployeeMemberships(invite, employee);
 		}
 
@@ -148,11 +149,7 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 	 * @param invite
 	 * @param employee
 	 */
-	public async updateEmployeeMemberships(
-		invite: IInvite,
-		employee: IEmployee
-	): Promise<void> {
-
+	public async updateEmployeeMemberships(invite: IInvite, employee: IEmployee): Promise<void> {
 		//Update project members
 		if (invite.projects) {
 			invite.projects.forEach(async (project: IOrganizationProject) => {

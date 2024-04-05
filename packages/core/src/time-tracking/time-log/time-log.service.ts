@@ -88,7 +88,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getTimeLogs(request: IGetTimeLogReportInput): Promise<ITimeLog[]> {
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder(this.tableName);
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -148,7 +148,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getWeeklyReport(request: IGetTimeLogReportInput) {
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder('time_log');
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -249,7 +249,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getDailyReportCharts(request: IGetTimeLogReportInput) {
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder('time_log');
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -324,7 +324,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { timezone } = request;
 
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder('time_log');
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -434,7 +434,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { timezone } = request;
 
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder('time_log');
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -513,7 +513,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	async getOwedAmountReportCharts(request: IGetTimeLogReportInput) {
 		// Step 1: Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder('time_log');
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -611,7 +611,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// Create a query builder for the TimeLog entity
-		const query = this.repository.createQueryBuilder(this.tableName);
+		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 		// Inner join with related entities (employee, timeSlots)
 		query.innerJoin(`${query.alias}.employee`, 'employee');
@@ -1158,7 +1158,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 
 			// Check for conflicts with existing time logs
-			const timeLog = await this.repository.findOneBy({
+			const timeLog = await this.typeOrmRepository.findOneBy({
 				id: id
 			});
 
@@ -1197,7 +1197,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			await this.commandBus.execute(new TimeLogUpdateCommand(request, timeLog));
 
 			// Retrieve the updated time log entry
-			return await this.repository.findOneBy({ id: request.id });
+			return await this.typeOrmRepository.findOneBy({ id: request.id });
 		} catch (error) {
 			// Handle exceptions appropriately
 			throw new BadRequestException('Failed to update manual time log');
@@ -1222,7 +1222,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const user = RequestContext.currentUser();
 		const { organizationId, forceDelete } = params;
 
-		const query = this.repository.createQueryBuilder('time_log');
+		const query = this.typeOrmRepository.createQueryBuilder('time_log');
 		query.setFindOptions({
 			relations: {
 				timeSlots: true

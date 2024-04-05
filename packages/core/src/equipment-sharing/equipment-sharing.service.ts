@@ -34,7 +34,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async findEquipmentSharingsByOrgId(organizationId: string): Promise<any> {
 		try {
-			const query = this.repository.createQueryBuilder('equipment_sharing');
+			const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
 			query
 				.leftJoinAndSelect(`${query.alias}.employees`, 'employees')
 				.leftJoinAndSelect(`${query.alias}.teams`, 'teams')
@@ -81,7 +81,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async findRequestApprovalsByEmployeeId(id: string): Promise<any> {
 		try {
-			return await this.repository.find({
+			return await this.typeOrmRepository.find({
 				where: {
 					createdBy: id
 				},
@@ -93,7 +93,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	async findAllEquipmentSharings(): Promise<IPagination<IEquipmentSharing>> {
-		const [items, total] = await this.repository.findAndCount({
+		const [items, total] = await this.typeOrmRepository.findAndCount({
 			relations: ['equipment', 'employees', 'teams']
 		});
 		return { items, total };
@@ -103,7 +103,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 		try {
 			equipmentSharing.createdBy = RequestContext.currentUser().id;
 			equipmentSharing.createdByName = RequestContext.currentUser().name;
-			const equipmentSharingSaved = await this.repository.save(equipmentSharing);
+			const equipmentSharingSaved = await this.typeOrmRepository.save(equipmentSharing);
 			return equipmentSharingSaved;
 		} catch (err) {
 			console.log('err', err);
@@ -113,8 +113,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async update(id: string, equipmentSharing: EquipmentSharing): Promise<EquipmentSharing> {
 		try {
-			await this.repository.delete(id);
-			const equipmentSharingSaved = await this.repository.save(equipmentSharing);
+			await this.typeOrmRepository.delete(id);
+			const equipmentSharingSaved = await this.typeOrmRepository.save(equipmentSharing);
 
 			return equipmentSharingSaved;
 		} catch (err) {
@@ -125,7 +125,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	async delete(id: string): Promise<any> {
 		try {
 			const [equipmentSharing] = await Promise.all([
-				await this.repository.delete(id),
+				await this.typeOrmRepository.delete(id),
 				await this.typeOrmRequestApprovalRepository.delete({
 					requestId: id
 				})
@@ -139,7 +139,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 
 	async updateStatusEquipmentSharingByAdmin(id: string, status: number): Promise<EquipmentSharing> {
 		try {
-			const equipmentSharing = await this.repository.findOneBy({
+			const equipmentSharing = await this.typeOrmRepository.findOneBy({
 				id
 			});
 
@@ -148,7 +148,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			}
 			equipmentSharing.status = status;
 
-			return await this.repository.save(equipmentSharing);
+			return await this.typeOrmRepository.save(equipmentSharing);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -157,7 +157,7 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	public async pagination(filter: any): Promise<IPagination<IEquipmentSharing>> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const query = this.repository.createQueryBuilder('equipment_sharing');
+			const query = this.typeOrmRepository.createQueryBuilder('equipment_sharing');
 
 			/**
 			 * Pagination

@@ -1,15 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	Get,
-	Query,
-	Put,
-	Param,
-	Body,
-	UsePipes,
-	ValidationPipe,
-	Post
-} from '@nestjs/common';
+import { Controller, UseGuards, Get, Query, Put, Param, Body, ValidationPipe, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { IExpenseCategory, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -18,15 +7,9 @@ import { ExpenseCategoriesService } from './expense-categories.service';
 import { ExpenseCategory } from './expense-category.entity';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { UUIDValidationPipe } from './../shared/pipes';
-import {
-	CreateExpenseCategoryDTO,
-	UpdateExpenseCategoryDTO
-} from './dto';
-import {
-	ExpenseCategoryCreateCommand,
-	ExpenseCategoryUpdateCommand
-} from './commands';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { CreateExpenseCategoryDTO, UpdateExpenseCategoryDTO } from './dto';
+import { ExpenseCategoryCreateCommand, ExpenseCategoryUpdateCommand } from './commands';
 
 @ApiTags('ExpenseCategories')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -48,10 +31,8 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	 */
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() options: PaginationParams<ExpenseCategory>
-	): Promise<IPagination<IExpenseCategory>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() options: PaginationParams<ExpenseCategory>): Promise<IPagination<IExpenseCategory>> {
 		return this._expenseCategoriesService.paginate(options);
 	}
 
@@ -64,9 +45,7 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	 */
 	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
-	async findAll(
-		@Query() options: PaginationParams<ExpenseCategory>
-	): Promise<IPagination<IExpenseCategory>> {
+	async findAll(@Query() options: PaginationParams<ExpenseCategory>): Promise<IPagination<IExpenseCategory>> {
 		return await this._expenseCategoriesService.findAll(options);
 	}
 
@@ -78,14 +57,15 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	 */
 	@Post()
 	async create(
-		@Body(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) entity: CreateExpenseCategoryDTO
+		@Body(
+			new ValidationPipe({
+				transform: true,
+				whitelist: true
+			})
+		)
+		entity: CreateExpenseCategoryDTO
 	): Promise<IExpenseCategory> {
-		return await this._commandBus.execute(
-			new ExpenseCategoryCreateCommand(entity)
-		);
+		return await this._commandBus.execute(new ExpenseCategoryCreateCommand(entity));
 	}
 
 	/**
@@ -98,13 +78,14 @@ export class ExpenseCategoriesController extends CrudController<ExpenseCategory>
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform : true,
-			whitelist: true
-		})) entity: UpdateExpenseCategoryDTO
+		@Body(
+			new ValidationPipe({
+				transform: true,
+				whitelist: true
+			})
+		)
+		entity: UpdateExpenseCategoryDTO
 	): Promise<IExpenseCategory> {
-		return await this._commandBus.execute(
-			new ExpenseCategoryUpdateCommand(id, entity)
-		);
+		return await this._commandBus.execute(new ExpenseCategoryUpdateCommand(id, entity));
 	}
 }

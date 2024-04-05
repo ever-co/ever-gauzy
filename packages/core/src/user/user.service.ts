@@ -21,13 +21,7 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import {
-	ComponentLayoutStyleEnum,
-	IUser,
-	LanguagesEnum,
-	PermissionsEnum,
-	RolesEnum
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -47,7 +41,7 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
+		readonly mikroOrmUserRepository: MikroOrmUserRepository
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -63,12 +57,15 @@ export class UserService extends TenantAwareCrudService<User> {
 			case MultiORMEnum.MikroORM:
 				throw new Error(`Not implemented for ${this.ormType}`);
 			case MultiORMEnum.TypeORM:
-				return await this.repository.update({ id }, {
-					emailVerifiedAt: freshTimestamp(),
-					emailToken: null,
-					code: null,
-					codeExpireAt: null
-				});
+				return await this.typeOrmRepository.update(
+					{ id },
+					{
+						emailVerifiedAt: freshTimestamp(),
+						emailToken: null,
+						code: null,
+						codeExpireAt: null
+					}
+				);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -81,7 +78,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @returns
 	 */
 	async getUserByEmail(email: string): Promise<IUser | null> {
-		return await this.repository.findOneBy({ email });
+		return await this.typeOrmRepository.findOneBy({ email });
 	}
 
 	/**
@@ -92,57 +89,87 @@ export class UserService extends TenantAwareCrudService<User> {
 	 */
 	async getOAuthLoginEmail(email: string): Promise<IUser> {
 		try {
-			return await this.repository.findOneByOrFail({ email });
+			return await this.typeOrmRepository.findOneByOrFail({ email });
 		} catch (error) {
 			throw new NotFoundException(`The requested record was not found`);
 		}
 	}
 
 	/**
-	 * Check if, email address exist
-	 *
-	 * @param email
-	 * @returns
+	 * Checks if a user with the given email exists.
+	 * @param {string} email - The email of the user to check.
+	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
 	 */
 	async checkIfExistsEmail(email: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({
-			email
-		}));
+		return !!(await this.typeOrmRepository.findOneBy({ email }));
 	}
 
+	/**
+	 * Checks if a user with the given ID exists.
+	 * @param {string} id - The ID of the user to check.
+	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
+	 */
 	async checkIfExists(id: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({
-			id
-		}));
+		return !!(await this.typeOrmRepository.findOneBy({ id }));
 	}
 
+	/**
+	 * Checks if a user with the given third party ID exists.
+	 * @param {string} thirdPartyId - The third party ID of the user to check.
+	 * @returns {Promise<boolean>} - A promise that resolves to true if the user exists, otherwise false.
+	 */
 	async checkIfExistsThirdParty(thirdPartyId: string): Promise<boolean> {
-		return !!(await this.repository.findOneBy({
-			thirdPartyId
-		}));
+		return !!(await this.typeOrmRepository.findOneBy({ thirdPartyId }));
 	}
 
-	async getIfExists(id: string): Promise<User> {
-		return await this.repository.findOneBy({
-			id
-		});
+	/**
+	 * Retrieves a user with the given ID if it exists.
+	 * @param {string} id - The ID of the user to retrieve.
+	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
+	 */
+	async getIfExists(id: string): Promise<User | undefined> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.findOne({ id });
+
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ id });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
-	async getIfExistsThirdParty(thirdPartyId: string): Promise<User> {
-		return await this.repository.findOneBy({
-			thirdPartyId
-		});
+	/**
+	 * Retrieves a user with the given third party ID if it exists.
+	 * @param {string} thirdPartyId - The third party ID of the user to retrieve.
+	 * @returns {Promise<User | undefined>} - A promise that resolves to the user if it exists, otherwise undefined.
+	 */
+	async getIfExistsThirdParty(thirdPartyId: string): Promise<User | undefined> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmUserRepository.findOne({ thirdPartyId });
+
+			case MultiORMEnum.TypeORM:
+				return await this.typeOrmRepository.findOneBy({ thirdPartyId });
+			default:
+				throw new Error(`Not implemented for ${this.ormType}`);
+		}
 	}
 
+	/**
+	 * Creates a new user.
+	 * @param {User} user - The user object to create.
+	 * @returns {Promise<InsertResult>} - A promise that resolves to the insert result.
+	 */
 	async createOne(user: User): Promise<InsertResult> {
-		return await this.repository.insert(user);
+		return await this.typeOrmRepository.insert(user);
 	}
 
 	async changePassword(id: string, hash: string) {
 		try {
 			const user = await this.findOneByIdString(id);
 			user.hash = hash;
-			return await this.repository.save(user);
+			return await this.typeOrmRepository.save(user);
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -190,14 +217,14 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch { }
+			} catch {}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
 	}
 
 	async getAdminUsers(tenantId: string): Promise<User[]> {
-		return await this.repository.find({
+		return await this.typeOrmRepository.find({
 			join: {
 				alias: 'user',
 				leftJoin: {
@@ -213,50 +240,54 @@ export class UserService extends TenantAwareCrudService<User> {
 		});
 	}
 
-	/*
-	 * Update user preferred language
+	/**
+	 * Updates the preferred language of the current user.
+	 * @param {LanguagesEnum} preferredLanguage - The preferred language to update.
+	 * @returns {Promise<IUser | UpdateResult>} - A promise that resolves to the updated user or update result.
 	 */
 	async updatePreferredLanguage(preferredLanguage: LanguagesEnum): Promise<IUser | UpdateResult> {
 		try {
-			return await this.update(RequestContext.currentUserId(), {
-				preferredLanguage
-			});
-		} catch (err) {
-			throw new NotFoundException(`The record was not found`, err);
-		}
-	}
-
-	/*
-	 * Update user preferred component layout
-	 */
-	async updatePreferredComponentLayout(
-		preferredComponentLayout: ComponentLayoutStyleEnum
-	): Promise<IUser | UpdateResult> {
-		try {
-			return await this.update(RequestContext.currentUserId(), {
-				preferredComponentLayout
-			});
+			const userId = RequestContext.currentUserId();
+			return await this.update(userId, { preferredLanguage });
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
 		}
 	}
 
 	/**
-	 * Set Current Refresh Token
-	 *
-	 * @param refreshToken
-	 * @param userId
+	 * Updates the preferred component layout of the current user.
+	 * @param {ComponentLayoutStyleEnum} preferredComponentLayout - The preferred component layout to update.
+	 * @returns {Promise<IUser | UpdateResult>} - A promise that resolves to the updated user or update result.
 	 */
-	async setCurrentRefreshToken(refreshToken: string, userId: string) {
+	async updatePreferredComponentLayout(
+		preferredComponentLayout: ComponentLayoutStyleEnum
+	): Promise<IUser | UpdateResult> {
 		try {
+			const userId = RequestContext.currentUserId();
+			return await this.update(userId, { preferredComponentLayout });
+		} catch (err) {
+			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/**
+	 * Sets the current refresh token for the user.
+	 * @param {string} refreshToken - The refresh token to set.
+	 * @param {string} userId - The ID of the user for whom to set the refresh token.
+	 * @returns {Promise<void>} - A promise that resolves once the refresh token is set.
+	 */
+	async setCurrentRefreshToken(refreshToken: string, userId: string): Promise<UpdateResult> {
+		try {
+			// Hash the refresh token using bcrypt if refreshToken is provided
 			if (refreshToken) {
 				refreshToken = await bcrypt.hash(refreshToken, 10);
 			}
-			return await this.repository.update(userId, {
-				refreshToken: refreshToken
-			});
+
+			// Update the user's refresh token in the repository
+			return await this.typeOrmRepository.update(userId, { refreshToken });
 		} catch (error) {
-			console.log('Error while set current refresh token', error);
+			// Log error if any
+			console.error('Error while setting current refresh token:', error);
 		}
 	}
 
@@ -273,7 +304,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			const tenantId = RequestContext.currentTenantId();
 
 			try {
-				await this.repository.update(
+				await this.typeOrmRepository.update(
 					{ id: userId, tenantId },
 					{
 						refreshToken: null
@@ -297,7 +328,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	async getUserIfRefreshTokenMatches(refreshToken: string, payload: JwtPayload) {
 		try {
 			const { id, email, tenantId, role } = payload;
-			const query = this.repository.createQueryBuilder('user');
+			const query = this.typeOrmRepository.createQueryBuilder('user');
 			query.setFindOptions({
 				join: {
 					alias: 'user',
@@ -344,15 +375,21 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * Find current logging user details
+	 * Retrieves details of the currently logged-in user, including specified relations.
 	 *
-	 * @param relations
-	 * @returns
+	 * @param relations An array of strings indicating which relations of the user to include.
+	 * @returns A Promise resolving to the IUser object with the desired relations.
 	 */
 	public async findMe(relations: string[]): Promise<IUser> {
-		return await this.findOneByIdString(RequestContext.currentUserId(), {
-			relations
-		});
+		try {
+			// Get the current user's ID from the RequestContext
+			const userId = RequestContext.currentUserId();
+			// Fetch and return the user's details based on the provided relations
+			return await this.findOneByIdString(userId, { relations });
+		} catch (error) {
+			// Log the error for debugging purposes
+			console.error('Error in findMe:', error);
+		}
 	}
 
 	/**
@@ -378,20 +415,18 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		}
 
-		const user = await this.findOneByIdString(userId, {
-			relations: {
-				employee: true
-			}
-		});
+		const user = await this.findOneByIdString(userId);
+
 		if (!user) {
 			throw new ForbiddenException('User not found for this ID!');
 		}
 
 		try {
-			// Unassign all the task assigned to this user
-			if (user.employeeId) {
-				await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
-			}
+			// TODO: Unassign all the task assigned to this user
+
+			// Best to raise some event and handle it in the subscriber that remove tasks!
+			//	await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
+
 			return await super.delete(userId);
 		} catch (error) {
 			throw new ForbiddenException(error?.message);

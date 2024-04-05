@@ -1,6 +1,6 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -144,6 +144,8 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
+import { ClsModule, ClsService } from 'nestjs-cls';
+import { RequestContext } from 'core/context/request-context';
 
 const { unleashConfig, github, jira } = environment;
 
@@ -195,6 +197,10 @@ if (environment.THROTTLE_ENABLED) {
 
 @Module({
 	imports: [
+		ClsModule.forRoot({
+			global: true,
+			middleware: { mount: false }
+		}),
 		...(process.env.REDIS_ENABLED === 'true'
 			? [
 					CacheModule.registerAsync({
@@ -478,13 +484,19 @@ if (environment.THROTTLE_ENABLED) {
 	],
 	exports: []
 })
-export class AppModule {
-	constructor() {
+export class AppModule implements OnModuleInit {
+	constructor(private readonly clsService: ClsService) {
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
 			week: {
 				dow: 1
 			}
 		});
+	}
+
+	onModuleInit() {
+		// Set the ClsService in RequestContext one time on app start before any request
+		RequestContext.setClsService(this.clsService);
+		console.log('AppModule initialized, ClsService set in RequestContext.');
 	}
 }

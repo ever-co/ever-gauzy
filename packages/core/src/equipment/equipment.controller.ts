@@ -9,24 +9,20 @@ import {
 	Param,
 	Body,
 	Query,
-	Post,
-	UsePipes,
-	ValidationPipe
+	Post
 } from '@nestjs/common';
 import { IEquipment, IPagination } from '@gauzy/contracts';
 import { Equipment } from './equipment.entity';
 import { EquipmentService } from './equipment.service';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateEquipmentDTO, UpdateEquipmentDTO } from './dto';
 
 @ApiTags('Equipment')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class EquipmentController extends CrudController<Equipment> {
-	constructor(
-		private readonly equipmentService: EquipmentService
-	) {
+	constructor(private readonly equipmentService: EquipmentService) {
 		super(equipmentService);
 	}
 
@@ -43,10 +39,8 @@ export class EquipmentController extends CrudController<Equipment> {
 		description: 'Record not found'
 	})
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<Equipment>
-	): Promise<IPagination<IEquipment>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() filter: PaginationParams<Equipment>): Promise<IPagination<IEquipment>> {
 		return this.equipmentService.pagination(filter);
 	}
 
@@ -63,9 +57,7 @@ export class EquipmentController extends CrudController<Equipment> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IEquipment>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEquipment>> {
 		const { relations, findInput } = data;
 		return await this.equipmentService.findAll({
 			where: {
@@ -82,14 +74,11 @@ export class EquipmentController extends CrudController<Equipment> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async create(
-		@Body() entity: CreateEquipmentDTO,
-	): Promise<IEquipment> {
+	@UseValidationPipe({ transform: true })
+	async create(@Body() entity: CreateEquipmentDTO): Promise<IEquipment> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		return await this.equipmentService.create(entity);
@@ -106,15 +95,11 @@ export class EquipmentController extends CrudController<Equipment> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ transform : true }))
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateEquipmentDTO,
-	): Promise<IEquipment> {
+	@UseValidationPipe({ transform: true })
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateEquipmentDTO): Promise<IEquipment> {
 		//We are using create here because create calls the method save()
 		//We need save() to save ManyToMany relations
 		return await this.equipmentService.create({

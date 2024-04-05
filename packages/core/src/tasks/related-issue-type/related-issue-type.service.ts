@@ -94,7 +94,7 @@ export class TaskRelatedIssueTypeService extends TaskStatusPrioritySizeService<T
 				});
 				statuses.push(status);
 			}
-			return await this.repository.save(statuses);
+			return await this.typeOrmRepository.save(statuses);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

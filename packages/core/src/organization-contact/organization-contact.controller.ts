@@ -8,9 +8,7 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -33,14 +31,13 @@ import { OrganizationContactService } from './organization-contact.service';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dto';
 
 @ApiTags('OrganizationContact')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationContactController extends CrudController<OrganizationContact> {
-
 	constructor(
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly commandBus: CommandBus
@@ -62,9 +59,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 	@Get('count')
-	async getCount(
-		@Query() options: CountQueryDTO<OrganizationContact>
-	): Promise<number> {
+	async getCount(@Query() options: CountQueryDTO<OrganizationContact>): Promise<number> {
 		return await this.organizationContactService.countBy(options);
 	}
 
@@ -87,7 +82,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
+	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() filter: PaginationParams<OrganizationContact>
 	): Promise<IPagination<IOrganizationContact>> {
@@ -138,19 +133,14 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 	@Put('employee')
-	async updateByEmployee(
-		@Body() entity: IEditEntityByMemberInput
-	): Promise<any> {
-		return this.commandBus.execute(
-			new OrganizationContactEditByEmployeeCommand(entity)
-		);
+	async updateByEmployee(@Body() entity: IEditEntityByMemberInput): Promise<any> {
+		return this.commandBus.execute(new OrganizationContactEditByEmployeeCommand(entity));
 	}
 
 	/**
@@ -172,12 +162,8 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationContact>> {
-		return this.organizationContactService.findAllOrganizationContacts(
-			data
-		);
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationContact>> {
+		return this.organizationContactService.findAllOrganizationContacts(data);
 	}
 
 	/**
@@ -187,7 +173,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	 * @param data
 	 * @returns
 	 */
-	 @ApiOperation({
+	@ApiOperation({
 		summary: 'Get organization contacts by id.'
 	})
 	@ApiResponse({
@@ -204,11 +190,8 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IOrganizationContact> {
-		const {relations = []} = data;
-		return this.organizationContactService.findById(
-			id,
-			relations
-		);
+		const { relations = [] } = data;
+		return this.organizationContactService.findById(id, relations);
 	}
 
 	/**
@@ -220,13 +203,9 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Post()
-	@UsePipes(new ValidationPipe())
-	async create(
-		@Body() entity: CreateOrganizationContactDTO
-	): Promise<IOrganizationContact> {
-		return await this.commandBus.execute(
-			new OrganizationContactCreateCommand(entity)
-		);
+	@UseValidationPipe()
+	async create(@Body() entity: CreateOrganizationContactDTO): Promise<IOrganizationContact> {
+		return await this.commandBus.execute(new OrganizationContactCreateCommand(entity));
 	}
 
 	/**
@@ -240,13 +219,11 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
 	@Put(':id')
-	@UsePipes(new ValidationPipe())
+	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: IOrganizationContact['id'],
 		@Body() entity: UpdateOrganizationContactDTO
 	): Promise<IOrganizationContact> {
-		return await this.commandBus.execute(
-			new OrganizationContactUpdateCommand(id, entity)
-		);
+		return await this.commandBus.execute(new OrganizationContactUpdateCommand(id, entity));
 	}
 }

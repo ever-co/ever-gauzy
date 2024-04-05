@@ -11,39 +11,143 @@
 		[class.right]="position === 'inverse'"
 	></div>
 
-<div class="header-container">
-	<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
-		<nb-action
+	<div class="header-container">
+		<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
+			<nb-action
+				size="small"
+				[class.left]="position === 'normal'"
+				[class.right]="position === 'inverse'"
+				class="show-large-up"
+			>
+				<button
+					nbButton
+					class="button create"
+					status="warning"
+					size="small"
+					(click)="openQuickActions()"
+				>
+					+ {{ 'BUTTONS.CREATE' | translate }}
+				</button>
+			</nb-action>
+		</ng-template>
+		<div
+			class="actions"
 			size="small"
 			[class.left]="position === 'normal'"
 			[class.right]="position === 'inverse'"
-			class="show-large-up"
 		>
-			<button
-				nbButton
-				class="button create"
-				status="warning"
-				size="small"
-				(click)="openQuickActions()"
+			<nb-action
+				*ngIf="showProjectsSelector && !showExtraActions && selectorsVisibility?.project"
+				class="show-large-up"
 			>
-				+ {{ 'BUTTONS.CREATE' | translate }}
-			</button>
-		</nb-action>
-	</ng-template>
+				<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
+					<ga-project-selector
+						[shortened]="true"
+						class="header-selector project-selector"
+					></ga-project-selector>
+				</ng-template>
+				<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
+					<ga-project-selector
+						[employeeId]="employee?.id"
+						[shortened]="true"
+						class="header-selector project-selector"
+					></ga-project-selector>
+				</ng-template>
+			</nb-action>
+
+			<nb-action *ngIf="showTeamsSelector && !showExtraActions && selectorsVisibility?.team" class="show-large-up">
+				<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
+					<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
+				</ng-template>
+				<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
+					<ga-team-selector
+						[employeeId]="employee?.id"
+						[shortened]="true"
+						class="header-selector team-selector"
+					></ga-team-selector>
+				</ng-template>
+			</nb-action>
+
+			<nb-action
+				*ngIf="
+					showEmployeesSelector &&
+					!showExtraActions &&
+					selectorsVisibility?.employee
+				"
+				class="show-large-up"
+			>
+				<ga-employee-selector
+					class="header-selector employee-selector"
+				></ga-employee-selector>
+			</nb-action>
+
+			<nb-action
+				*ngIf="
+					showDateSelector &&
+					!showExtraActions &&
+					selectorsVisibility?.date
+				"
+			>
+				<ngx-date-range-picker
+					class="date-range-selector"
+				></ngx-date-range-picker>
+			</nb-action>
+
+			<nb-action
+				*ngIf="
+					showOrganizationsSelector && selectorsVisibility?.organization
+				"
+				class="show-large-up organization-selector-container"
+			>
+				<ga-organization-selector
+					class="header-selector organization-selector"
+				></ga-organization-selector>
+			</nb-action>
+
+			<nb-action
+				icon="options-2-outline"
+				class="toggle-layout"
+				class="show-large-down"
+				(click)="toggleExtraActions()"
+			></nb-action>
+			<nb-action
+				*ngIf="supportContextMenu"
+				icon="message-circle-outline"
+				class="toggle-layout help"
+				[nbContextMenu]="supportContextMenu"
+			></nb-action>
+
+			<nb-action
+				*ngIf="isEnabledTimeTracking()"
+				class="timer-action"
+				(click)="toggleTimerWindow()"
+			>
+				<nb-icon icon="clock-outline"></nb-icon>
+				<span>{{ timerDuration }}</span>
+				<ga-time-tracker-status class="status"></ga-time-tracker-status>
+			</nb-action>
+
+			<nb-action
+				*ngFor="
+					let action of navigationBuilderService.sidebarActions$ | async
+				"
+				[icon]="action.icon"
+				[class]="action.class"
+				(click)="toggleSidebarActions(action)"
+			>
+			</nb-action>
+		</div>
+	</div>
+
 	<div
-   		class="actions"
-		size="small"
-		[class.left]="position === 'normal'"
-		[class.right]="position === 'inverse'"
+		(window:resize)="closeExtraActionsIfLarge($event)"
+		class="extra-actions"
+		*ngIf="showExtraActions"
 	>
-		<nb-action
-			*ngIf="
-				showProjectsSelector &&
-				!showExtraActions &&
-				selectorsVisibility?.project
-			"
-			class="show-large-up"
-		>
+		<ng-container *ngIf="selectorsVisibility?.project">
+			<div>
+				<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
+			</div>
 			<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
 				<ga-project-selector
 					[shortened]="true"
@@ -52,167 +156,64 @@
 			</ng-template>
 			<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
 				<ga-project-selector
-					[employeeId]="user?.employeeId"
+					[employeeId]="employee?.id"
 					[shortened]="true"
 					class="header-selector project-selector"
 				></ga-project-selector>
 			</ng-template>
-		</nb-action>
+		</ng-container>
 
-		<nb-action *ngIf="
-														showTeamsSelector &&
-														!showExtraActions &&
-														selectorsVisibility?.team
-													" class="show-large-up">
+		<ng-container *ngIf="selectorsVisibility?.team">
+			<div>
+				<h6>{{ 'HEADER.SELECT_TEAM' | translate }}</h6>
+			</div>
 			<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
 				<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
 			</ng-template>
 			<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-				<ga-team-selector [employeeId]="user?.employeeId" [shortened]="true"
-					class="header-selector team-selector"></ga-team-selector>
+				<ga-team-selector
+					[employeeId]="employee?.id"
+					[shortened]="true"
+					class="header-selector team-selector"
+				></ga-team-selector>
 			</ng-template>
-		</nb-action>
+		</ng-container>
 
-		<nb-action
-			*ngIf="
-				showEmployeesSelector &&
-				!showExtraActions &&
-				selectorsVisibility?.employee
-			"
-			class="show-large-up"
-		>
+		<ng-container *ngIf="selectorsVisibility?.employee">
+			<div>
+				<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
+			</div>
 			<ga-employee-selector
+				*ngIf="showEmployeesSelector"
 				class="header-selector employee-selector"
 			></ga-employee-selector>
-		</nb-action>
+		</ng-container>
 
-		<nb-action
-			*ngIf="
-				showDateSelector &&
-				!showExtraActions &&
-				selectorsVisibility?.date
-			"
-		>
+		<ng-container *ngIf="selectorsVisibility?.date">
+			<div>
+				<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
+			</div>
 			<ngx-date-range-picker
+				*ngIf="showDateSelector"
 				class="date-range-selector"
 			></ngx-date-range-picker>
-		</nb-action>
+		</ng-container>
 
-		<nb-action
-			*ngIf="
-				showOrganizationsSelector && selectorsVisibility?.organization
-			"
-			class="show-large-up organization-selector-container"
-		>
+		<ng-container *ngIf="selectorsVisibility?.organization">
+			<div>
+				<h6>{{ 'HEADER.SELECT_AN_ORGANIZATION' | translate }}</h6>
+			</div>
 			<ga-organization-selector
+				*ngIf="showOrganizationsSelector"
 				class="header-selector organization-selector"
 			></ga-organization-selector>
-		</nb-action>
-
-		<nb-action
-			icon="options-2-outline"
-			class="toggle-layout"
-			class="show-large-down"
-			(click)="toggleExtraActions()"
-		></nb-action>
-		<nb-action
-      		*ngIf="supportContextMenu"
-			icon="message-circle-outline"
-			class="toggle-layout help"
-			[nbContextMenu]="supportContextMenu"
-		></nb-action>
-
-		<nb-action
-			*ngIf="isEnabledTimeTracking()"
-			class="timer-action"
-			(click)="toggleTimerWindow()"
-		>
-			<nb-icon icon="clock-outline"></nb-icon>
-			<span>{{ timerDuration }}</span>
-			<ga-time-tracker-status class="status"></ga-time-tracker-status>
-		</nb-action>
-
-		<nb-action
-			*ngFor="
-				let action of navigationBuilderService.sidebarActions$ | async
-			"
-			[icon]="action.icon"
-			[class]="action.class"
-			(click)="toggleSidebarActions(action)"
-		>
-		</nb-action>
+		</ng-container>
 	</div>
-</div>
 
-<div
-	(window:resize)="closeExtraActionsIfLarge($event)"
-	class="extra-actions"
-	*ngIf="showExtraActions"
->
-	<ng-container *ngIf="selectorsVisibility?.project">
-		<div>
-			<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
-		</div>
-		<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-			<ga-project-selector
-				[shortened]="true"
-				class="header-selector project-selector"
-			></ga-project-selector>
+	<ng-template [ngIf]="isEnabledTimeTracking()">
+		<ng-template ngxPermissionsOnly="TIME_TRACKER">
+			<ngx-web-time-tracker></ngx-web-time-tracker>
 		</ng-template>
-		<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-			<ga-project-selector
-				[employeeId]="user?.employeeId"
-				[shortened]="true"
-				class="header-selector project-selector"
-			></ga-project-selector>
-		</ng-template>
-	</ng-container>
-<ng-container *ngIf="selectorsVisibility?.team">
-	<div>
-		<h6>{{ 'HEADER.SELECT_TEAM' | translate }}</h6>
-	</div>
-	<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-		<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
 	</ng-template>
-	<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
-		<ga-team-selector [employeeId]="user?.employeeId" [shortened]="true"
-			class="header-selector team-selector"></ga-team-selector>
-	</ng-template>
-</ng-container>
-
-	<ng-container *ngIf="selectorsVisibility?.employee">
-		<div>
-			<h6>{{ 'HEADER.SELECT_EMPLOYEE' | translate }}</h6>
-		</div>
-		<ga-employee-selector
-			*ngIf="showEmployeesSelector"
-			class="header-selector employee-selector"
-		></ga-employee-selector>
-	</ng-container>
-	<ng-container *ngIf="selectorsVisibility?.date">
-		<div>
-			<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
-		</div>
-		<ngx-date-range-picker
-			*ngIf="showDateSelector"
-			class="date-range-selector"
-		></ngx-date-range-picker>
-	</ng-container>
-	<ng-container *ngIf="selectorsVisibility?.organization">
-		<div>
-			<h6>{{ 'HEADER.SELECT_AN_ORGANIZATION' | translate }}</h6>
-		</div>
-		<ga-organization-selector
-			*ngIf="showOrganizationsSelector"
-			class="header-selector organization-selector"
-		></ga-organization-selector>
-	</ng-container>
-</div>
-
-<ng-template [ngIf]="isEnabledTimeTracking()">
-	<ng-template ngxPermissionsOnly="TIME_TRACKER">
-		<ngx-web-time-tracker></ngx-web-time-tracker>
-	</ng-template>
-</ng-template>
 
 </div>

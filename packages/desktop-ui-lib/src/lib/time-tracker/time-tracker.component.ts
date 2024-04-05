@@ -398,8 +398,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					current,
 					updatedAtMoment.isAfter(current?.updatedAt)
 						? {
-								updatedAt: updatedAtMoment.toISOString()
-						  }
+							updatedAt: updatedAtMoment.toISOString()
+						}
 						: {}
 				);
 			} else {
@@ -574,9 +574,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
-									...lastTimer,
-									...params
-							  });
+								...lastTimer,
+								...params
+							});
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						this._loggerService.log.error(error);
@@ -589,13 +589,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					try {
 						timelog =
 							isRemote ||
-							this._remoteSleepLock ||
-							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
+								this._remoteSleepLock ||
+								(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
-										...lastTimer,
-										...params
-								  });
+									...lastTimer,
+									...params
+								});
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
 						this._loggerService.log.error(error);
@@ -736,8 +736,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelect
 				? {
-						projectId: this.projectSelect
-				  }
+					projectId: this.projectSelect
+				}
 				: {})
 		});
 	}
@@ -886,7 +886,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('timer_tracker_show', (event, arg) =>
 			this._ngZone.run(async () => {
-				if (!this._store.user?.employeeId) return;
+				if (!this._store.user?.employee) return;
 				this._isOffline$.next(arg.isOffline ? arg.isOffline : this._isOffline);
 				this._store.host = arg.apiHost;
 				this.apiHost = arg.apiHost;

@@ -29,7 +29,7 @@ import { TimeOffRequestService } from './time-off-request.service';
 import { TimeOffStatusCommand } from './commands';
 import { PermissionGuard, RoleGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions, Roles } from './../shared/decorators';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffRequest')
 @UseGuards(TenantPermissionGuard)
@@ -45,10 +45,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() options: PaginationParams<TimeOffRequest>
-	): Promise<IPagination<ITimeOffRequest>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() options: PaginationParams<TimeOffRequest>): Promise<IPagination<ITimeOffRequest>> {
 		return await this.timeOffRequestService.pagination(options);
 	}
 
@@ -73,12 +71,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('approval/:id')
-	async timeOffRequestApproved(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<ITimeOffRequest> {
-		return this.commandBus.execute(
-			new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED)
-		);
+	async timeOffRequestApproved(@Param('id', UUIDValidationPipe) id: string): Promise<ITimeOffRequest> {
+		return this.commandBus.execute(new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED));
 	}
 
 	/**
@@ -102,12 +96,8 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Put('denied/:id')
-	async timeOffRequestDenied(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<ITimeOffRequest> {
-		return this.commandBus.execute(
-			new TimeOffStatusCommand(id, StatusTypesEnum.DENIED)
-		);
+	async timeOffRequestDenied(@Param('id', UUIDValidationPipe) id: string): Promise<ITimeOffRequest> {
+		return this.commandBus.execute(new TimeOffStatusCommand(id, StatusTypesEnum.DENIED));
 	}
 
 	/**
@@ -129,14 +119,9 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<ITimeOffRequest>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ITimeOffRequest>> {
 		const { relations, findInput } = data;
-		return this.timeOffRequestService.getAllTimeOffRequests(
-			relations,
-			findInput
-		);
+		return this.timeOffRequestService.getAllTimeOffRequests(relations, findInput);
 	}
 
 	/**
@@ -155,9 +140,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	@UseGuards(PermissionGuard)
 	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
 	@Post()
-	async create(
-		@Body() entity: ITimeOffCreateInput
-	): Promise<ITimeOffRequest> {
+	async create(@Body() entity: ITimeOffCreateInput): Promise<ITimeOffRequest> {
 		return this.timeOffRequestService.create(entity);
 	}
 

@@ -23,6 +23,7 @@ import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import {
 	CrudActionEnum,
 	IDateRangePicker,
+	IEmployee,
 	IOrganization,
 	IUser,
 	PermissionsEnum,
@@ -60,12 +61,14 @@ import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/qu
 	templateUrl: './header.component.html'
 })
 export class HeaderComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+
 	isEmployee = false;
 	isElectron: boolean = environment.IS_ELECTRON;
 	isDemo: boolean = environment.DEMO;
 
 	@Input() position = 'normal';
 	user: IUser;
+	employee: IEmployee;
 
 	showEmployeesSelector: boolean;
 	showOrganizationsSelector: boolean;
@@ -192,10 +195,11 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
-				tap((user: IUser) => (this.isEmployee = !!user && !!user.employeeId)),
+				tap((user: IUser) => (this.employee = user?.employee)),
+				tap((user: IUser) => (this.isEmployee = !!user && !!user.employee?.id)),
 				untilDestroyed(this)
 			)
-			.subscribe(async (user) => {
+			.subscribe(async () => {
 				//check header selectors dropdown permissions
 				await this.checkOrganizationSelectorVisibility();
 				//check timer status for employee
@@ -1152,31 +1156,36 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.subscribe();
 	}
 
+	/**
+	 * Checks the timer status if time tracking is enabled.
+	 */
 	private async _checkTimerStatus() {
-		if (!this.organization) {
+		if (!this.organization || !this.isEnabledTimeTracking()) {
 			return;
 		}
-		if (this.isEnabledTimeTracking()) {
-			const { id: organizationId } = this.organization;
-			const { tenantId, employeeId } = this.user;
 
-			await this.timeTrackerService.checkTimerStatus({
-				organizationId,
-				tenantId,
-				employeeId,
-				source: TimeLogSourceEnum.WEB_TIMER
-			});
-		}
+		const { id: organizationId, tenantId } = this.organization;
+		const { id: employeeId } = this.employee;
+
+		// Check timer status using the TimeTrackerService
+		await this.timeTrackerService.checkTimerStatus({
+			organizationId,
+			tenantId,
+			employeeId,
+			source: TimeLogSourceEnum.WEB_TIMER
+		});
 	}
 
 	/**
-	 * Enabled/Disabled Web Timer
+	 * Checks if web timer is enabled.
+	 * @returns {boolean} - True if web timer is enabled, false otherwise.
 	 */
-	isEnabledTimeTracking() {
-		const { employee } = this.user;
+	isEnabledTimeTracking(): boolean {
+		const { employee, store, isElectron } = this;
 		const isTrackingEnabled = employee?.id && employee?.isTrackingEnabled;
-		const hasPermission = this.store.hasPermission(PermissionsEnum.TIME_TRACKER);
-		return isTrackingEnabled && hasPermission && !this.isElectron;
+		const hasPermission = store.hasPermission(PermissionsEnum.TIME_TRACKER);
+
+		return isTrackingEnabled && hasPermission && !isElectron;
 	}
 
 	onCollapse(event: boolean) {

@@ -19,17 +19,17 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async updateBulk(updateInput: IHelpCenter[]) {
-		return await this.repository.save(updateInput);
+		return await this.typeOrmRepository.save(updateInput);
 	}
 
 	async deleteBulkByBaseId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await this.repository.delete(ids);
+			return await this.typeOrmRepository.delete(ids);
 		}
 	}
 
 	async getCategoriesByBaseId(baseId: string): Promise<HelpCenter[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('knowledge_base')
 			.where('knowledge_base.parentId = :baseId', {
 				baseId
@@ -38,6 +38,6 @@ export class HelpCenterService extends TenantAwareCrudService<HelpCenter> {
 	}
 
 	async getAllNodes(): Promise<HelpCenter[]> {
-		return await this.repository.createQueryBuilder('knowledge_base').getMany();
+		return await this.typeOrmRepository.createQueryBuilder('knowledge_base').getMany();
 	}
 }

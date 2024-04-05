@@ -44,7 +44,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const members = [...managerIds, ...memberIds];
 		const tenantId = RequestContext.currentTenantId();
 
-		const teamMembers = await this.repository.find({
+		const teamMembers = await this.typeOrmRepository.find({
 			where: {
 				tenantId,
 				organizationId,
@@ -67,7 +67,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			.filter((employee) => members.includes(employee.employeeId))
 			.forEach(async (member: IOrganizationTeamEmployee) => {
 				const { id, employeeId } = member;
-				await this.repository.update(id, {
+				await this.typeOrmRepository.update(id, {
 					role: managerIds.includes(employeeId)
 						? role
 						: member.roleId !== role.id // Check if current member's role is not same as role(params)
@@ -99,7 +99,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 */
 	deleteMemberByIds(memberIds: string[]) {
 		memberIds.forEach(async (memberId) => {
-			await this.repository.delete(memberId);
+			await this.typeOrmRepository.delete(memberId);
 		});
 	}
 
@@ -154,7 +154,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 			// Admin, Super Admin can update activeTaskId of any Employee
 			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				const member = await this.repository.findOneOrFail({
+				const member = await this.typeOrmRepository.findOneOrFail({
 					where: {
 						id: memberId,
 						tenantId,
@@ -163,7 +163,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					}
 				});
 
-				return await this.repository.update(member.id, { activeTaskId: entity.activeTaskId });
+				return await this.typeOrmRepository.update(member.id, { activeTaskId: entity.activeTaskId });
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
 				if (employeeId) {
@@ -177,7 +177,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 								name: RolesEnum.MANAGER
 							}
 						});
-						member = await this.repository.findOneOrFail({
+						member = await this.typeOrmRepository.findOneOrFail({
 							where: {
 								id: memberId,
 								organizationId,
@@ -187,7 +187,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						});
 					} catch (error) {
 						/** If employee has member of the team, he/she should be able to remove own self from team */
-						member = await this.repository.findOneOrFail({
+						member = await this.typeOrmRepository.findOneOrFail({
 							where: {
 								employeeId,
 								organizationId,
@@ -196,7 +196,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 							}
 						});
 					}
-					return await this.repository.update(
+					return await this.typeOrmRepository.update(
 						{ id: member.id, organizationId, organizationTeamId },
 						{ activeTaskId: entity.activeTaskId }
 					);
@@ -224,7 +224,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			const tenantId = RequestContext.currentTenantId();
 
 			if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				const member = await this.repository.findOneOrFail({
+				const member = await this.typeOrmRepository.findOneOrFail({
 					where: {
 						id: memberId,
 						tenantId,
@@ -233,7 +233,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					}
 				});
 				await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
-				return await this.repository.remove(member);
+				return await this.typeOrmRepository.remove(member);
 			} else {
 				const employeeId = RequestContext.currentEmployeeId();
 				if (employeeId) {
@@ -247,7 +247,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 								name: RolesEnum.MANAGER
 							}
 						});
-						member = await this.repository.findOneOrFail({
+						member = await this.typeOrmRepository.findOneOrFail({
 							where: {
 								id: memberId,
 								organizationId,
@@ -257,7 +257,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						});
 					} catch (error) {
 						/** If employee has member of the team, he/she should be able to remove own self from team */
-						member = await this.repository.findOneOrFail({
+						member = await this.typeOrmRepository.findOneOrFail({
 							where: {
 								employeeId,
 								organizationId,
@@ -268,7 +268,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					}
 					/** Unassigned employee all tasks before remove from team  */
 					await this.taskService.unassignEmployeeFromTeamTasks(member.employeeId, organizationTeamId);
-					return await this.repository.remove(member);
+					return await this.typeOrmRepository.remove(member);
 				}
 				throw new ForbiddenException();
 			}

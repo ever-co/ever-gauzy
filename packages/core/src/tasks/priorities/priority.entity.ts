@@ -2,17 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
 import { IOrganizationProject, IOrganizationTeam, ITaskPriority } from '@gauzy/contracts';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	OrganizationProject,
-	OrganizationTeam,
-	TenantOrganizationBaseEntity,
-} from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../../core/decorators/entity';
+import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from './../../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { MikroOrmTaskPriorityRepository } from './repository/mikro-orm-task-priority.repository';
 
 @MultiORMEntity('task_priority', { mikroOrmRepository: () => MikroOrmTaskPriorityRepository })
 export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskPriority {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -44,6 +39,8 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 	/*
 	|--------------------------------------------------------------------------
@@ -59,7 +56,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -82,7 +79,7 @@ export class TaskPriority extends TenantOrganizationBaseEntity implements ITaskP
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 

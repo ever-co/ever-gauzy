@@ -18,15 +18,13 @@ import { CrudController, PaginationParams } from './../core/crud';
 import { OrganizationVendorService } from './organization-vendor.service';
 import { OrganizationVendor } from './organization-vendor.entity';
 import { TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 
 @ApiTags('OrganizationVendor')
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class OrganizationVendorController extends CrudController<OrganizationVendor> {
-	constructor(
-		private readonly organizationVendorService: OrganizationVendorService
-	) {
+	constructor(private readonly organizationVendorService: OrganizationVendorService) {
 		super(organizationVendorService);
 	}
 
@@ -49,9 +47,7 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IOrganizationVendor>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IOrganizationVendor>> {
 		const { relations, findInput, order } = data;
 		return this.organizationVendorService.findAll({
 			where: findInput,
@@ -61,10 +57,8 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 	}
 
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<OrganizationVendor>
-	): Promise<IPagination<IOrganizationVendor>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() filter: PaginationParams<OrganizationVendor>): Promise<IPagination<IOrganizationVendor>> {
 		return this.organizationVendorService.pagination(filter);
 	}
 
@@ -75,16 +69,16 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 	 * @param body
 	 * @returns
 	 */
-	 @Put(':id')
-	 async update(
+	@Put(':id')
+	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() body: OrganizationVendor
-	 ): Promise<IOrganizationVendor> {
-		 return this.organizationVendorService.create({
-			 id,
-			 ...body
-		 });
-	 }
+	): Promise<IOrganizationVendor> {
+		return this.organizationVendorService.create({
+			id,
+			...body
+		});
+	}
 
 	/**
 	 * DELETE organization vendor by id
@@ -103,14 +97,11 @@ export class OrganizationVendorController extends CrudController<OrganizationVen
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			"This Vendor can't be deleted because it is used in expense records"
+		description: "This Vendor can't be deleted because it is used in expense records"
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
 		return this.organizationVendorService.deleteVendor(id);
 	}
 }

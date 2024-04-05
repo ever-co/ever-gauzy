@@ -93,7 +93,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		findInput?: IProductFindInput,
 		options = { page: 1, limit: 10 }
 	): Promise<IPagination<Product | IProductTranslated>> {
-		const [items, total] = await this.repository.findAndCount({
+		const [items, total] = await this.typeOrmRepository.findAndCount({
 			// skip: (options.page - 1) * options.limit,
 			// take: options.limit,
 			relations: relations,
@@ -139,7 +139,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 				relations: ['gallery']
 			});
 			product.gallery = product.gallery.concat(images);
-			return await this.repository.save(product);
+			return await this.typeOrmRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -149,7 +149,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		try {
 			let product = await this.findOneByIdString(productId);
 			product.featuredImage = image;
-			return await this.repository.save(product);
+			return await this.typeOrmRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -166,7 +166,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 			}
 
 			product.gallery = product.gallery.filter((image) => image.id !== imageId);
-			return await this.repository.save(product);
+			return await this.typeOrmRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}
@@ -176,7 +176,7 @@ export class ProductService extends TenantAwareCrudService<Product> {
 		try {
 			let product = await this.findOneByIdString(productId);
 			product.featuredImage = null;
-			return await this.repository.save(product);
+			return await this.typeOrmRepository.save(product);
 		} catch (err) {
 			throw new BadRequestException(err);
 		}

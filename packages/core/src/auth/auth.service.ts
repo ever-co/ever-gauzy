@@ -9,7 +9,6 @@ import { pick } from 'underscore';
 import {
 	IUserRegistrationInput,
 	LanguagesEnum,
-	IRolePermission,
 	IAuthResponse,
 	IUser,
 	IChangePasswordRequest,
@@ -44,6 +43,7 @@ import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmUserRepository } from './../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
+import { EmployeeService } from '../employee/employee.service';
 
 @Injectable()
 export class AuthService extends SocialAuthService {
@@ -56,6 +56,7 @@ export class AuthService extends SocialAuthService {
 
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
+		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
@@ -67,61 +68,54 @@ export class AuthService extends SocialAuthService {
 	/**
 	 * User Login Request
 	 *
-	 * @param email
-	 * @param password
-	 * @returns
+	 * @param email The user's email address
+	 * @param password The user's password
+	 * @returns A Promise that resolves to the authentication response or null
 	 */
 	async login({ email, password }: IUserLoginInput): Promise<IAuthResponse | null> {
 		try {
+			// Find the user by email. Ensure the user is active, not archived, and has a hashed password.
 			const user = await this.userService.findOneByOptions({
-				where: [
-					{
-						email,
-						isActive: true,
-						isArchived: false,
-						hash: Not(IsNull()),
-						employee: {
-							id: IsNull()
-						}
-					},
-					{
-						email,
-						isActive: true,
-						isArchived: false,
-						hash: Not(IsNull()),
-						employee: {
-							isActive: true, // If employees are inactive
-							isArchived: false
-						}
-					}
-				],
-				relations: {
-					employee: true,
-					role: true
-				},
-				order: {
-					createdAt: 'DESC'
-				}
+				where: { email, isActive: true, isArchived: false, hash: Not(IsNull()) },
+				relations: { role: true }, // Include user's role in the response
+				order: { createdAt: 'DESC' } // Order by creation time, latest first
 			});
 
-			// If password is not matching with any user
-			if (!(await bcrypt.compare(password, user.hash))) {
+			// Verify the provided password. If no user is found or the password does not match, throw an error.
+			if (!user || !(await bcrypt.compare(password, user.hash))) {
+				throw new UnauthorizedException(); // Generic error for security purposes
+			}
+
+			// Retrieve the employee details associated with the user.
+			const employee = await this.employeeService.findOneByUserId(user.id);
+
+			// Check if the employee is active and not archived. If not, throw an error.
+			if (employee && (!employee.isActive || employee.isArchived)) {
 				throw new UnauthorizedException();
 			}
 
-			const access_token = await this.getJwtAccessToken(user);
-			const refresh_token = await this.getJwtRefreshToken(user);
+			// Generate both access and refresh tokens concurrently for efficiency.
+			const [access_token, refresh_token] = await Promise.all([
+				this.getJwtAccessToken(user),
+				this.getJwtRefreshToken(user)
+			]);
 
+			// Store the current refresh token with the user for later validation.
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
+			// Return the user object with user details, tokens, and optionally employee info if it exists.
 			return {
-				user,
+				user: {
+					...user,
+					...(employee && { employee })
+				},
 				token: access_token,
 				refresh_token: refresh_token
 			};
 		} catch (error) {
-			console.log(error);
-			throw new UnauthorizedException();
+			// Log the error with a timestamp and the error message for debugging.
+			console.error(`Login failed at ${new Date().toISOString()}: ${error.message}.`);
+			throw new UnauthorizedException(); // Throw a generic error to avoid exposing specific failure reasons.
 		}
 	}
 
@@ -138,6 +132,7 @@ export class AuthService extends SocialAuthService {
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { email, password } = input;
+
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
 			where: [
@@ -145,25 +140,11 @@ export class AuthService extends SocialAuthService {
 					email,
 					isActive: true,
 					isArchived: false,
-					hash: Not(IsNull()),
-					employee: {
-						id: IsNull()
-					}
-				},
-				{
-					email,
-					isActive: true,
-					isArchived: false,
-					hash: Not(IsNull()),
-					employee: {
-						isActive: true,
-						isArchived: false
-					}
+					hash: Not(IsNull())
 				}
 			],
 			relations: {
-				tenant: true,
-				employee: true
+				tenant: true
 			},
 			order: {
 				createdAt: 'DESC'
@@ -182,15 +163,19 @@ export class AuthService extends SocialAuthService {
 
 		// Update all users with a single query
 		const ids = users.map((user: IUser) => user.id);
-		await this.typeOrmUserRepository.update({
-			id: In(ids),
-			email,
-			isActive: true,
-			isArchived: false
-		}, {
-			code,
-			codeExpireAt
-		});
+
+		await this.typeOrmUserRepository.update(
+			{
+				id: In(ids),
+				email,
+				isActive: true,
+				isArchived: false
+			},
+			{
+				code,
+				codeExpireAt
+			}
+		);
 
 		// Determining the response based on the number of matching users
 		const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
@@ -451,6 +436,12 @@ export class AuthService extends SocialAuthService {
 		return user;
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param thirdPartyId
+	 * @returns
+	 */
 	async getAuthenticatedUser(id: string, thirdPartyId?: string): Promise<User> {
 		return thirdPartyId ? this.userService.getIfExistsThirdParty(thirdPartyId) : this.userService.getIfExists(id);
 	}
@@ -563,83 +554,93 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Get JWT access token
+	 * Generates a JWT access token for a given user.
 	 *
-	 * @param payload
-	 * @returns
+	 * This function takes a partial user object, primarily the user's ID,
+	 * and retrieves the user's details including their role and permissions.
+	 * It then constructs a JWT payload and generates a token.
+	 * If the user does not exist, an error is thrown.
+	 *
+	 * @param request A partial IUser object, mainly containing the user's ID.
+	 * @returns A Promise that resolves to a JWT access token string.
+	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
 	public async getJwtAccessToken(request: Partial<IUser>) {
 		try {
+			// Validate that the request contains a user ID
+			if (!request.id) {
+				throw new Error('User ID is missing in the request.');
+			}
+
+			console.log('Request getJwtAccessToken with Id: ', request.id);
+
 			// Extract the user ID from the request
 			const userId = request.id;
 
-			// Retrieve the user's data from the userService
+			// Retrieve the user's data, including role and permissions
 			const user = await this.userService.findOneByIdString(userId, {
-				relations: {
-					employee: true,
-					role: {
-						rolePermissions: true
-					}
-				},
-				order: {
-					createdAt: 'DESC'
-				}
+				relations: { role: { rolePermissions: true } },
+				order: { createdAt: 'DESC' }
 			});
+
+			// Throw an error if the user is not found
+			if (!user) {
+				console.error(`User not found: ${request.id}`);
+				throw new UnauthorizedException();
+			}
+
+			// Retrieve the employee details associated with the user.
+			const employee = await this.employeeService.findOneByUserId(user.id);
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
 				id: user.id,
 				tenantId: user.tenantId,
-				employeeId: user.employee ? user.employee.id : null
+				employeeId: employee ? employee.id : null,
+				role: user.role ? user.role.name : null,
+				permissions: user.role?.rolePermissions?.filter((rp) => rp.enabled).map((rp) => rp.permission) ?? null
 			};
 
-			// Check if the user has a role
-			if (user.role) {
-				payload.role = user.role.name;
-
-				// Check if the role has rolePermissions
-				if (user.role.rolePermissions) {
-					payload.permissions = user.role.rolePermissions
-						.filter((rolePermission: IRolePermission) => rolePermission.enabled)
-						.map((rolePermission: IRolePermission) => rolePermission.permission);
-				} else {
-					payload.permissions = null;
-				}
-			} else {
-				payload.role = null;
-			}
-
-			// Generate an access token using the payload and a secret
-			const accessToken = sign(payload, environment.JWT_SECRET, {});
-
-			// Return the generated access token
-			return accessToken;
+			// Generate the JWT access token using the payload
+			return sign(payload, environment.JWT_SECRET, {});
 		} catch (error) {
-			// Handle any errors that occur during the process
-			console.log('Error while getting jwt access token', error);
+			// Log and rethrow any errors encountered during the process
+			console.log('Error while generating JWT access token:', error);
+			throw new UnauthorizedException();
 		}
 	}
 
 	/**
-	 * Get JWT refresh token
+	 * Generates a JWT refresh token for a given user.
 	 *
-	 * @param user
-	 * @returns
+	 * This function takes a user object and constructs a JWT payload with the user's
+	 * ID, email, tenant ID, and role. It then generates a refresh token based on this payload.
+	 *
+	 * @param user A partial IUser object containing at least the user's ID, email, and role.
+	 * @returns A Promise that resolves to a JWT refresh token string.
+	 * @throws Logs an error and throws an exception if the token generation fails.
 	 */
 	public async getJwtRefreshToken(user: Partial<IUser>) {
 		try {
+			// Ensure the user object contains the necessary information
+			if (!user.id || !user.email) {
+				throw new Error('User ID or email is missing.');
+			}
+
+			// Construct the JWT payload
 			const payload: JwtPayload = {
 				id: user.id,
 				email: user.email,
 				tenantId: user.tenantId || null,
 				role: user.role ? user.role.name : null
 			};
-			const refreshToken = sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
+
+			// Generate the JWT refresh token
+			return sign(payload, environment.JWT_REFRESH_TOKEN_SECRET, {
 				expiresIn: `${environment.JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`
 			});
-			return refreshToken;
 		} catch (error) {
-			console.log('Error while getting jwt refresh token', error);
+			console.log('Error while generating JWT refresh token:', error);
 		}
 	}
 
@@ -649,6 +650,7 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async getAccessTokenFromRefreshToken() {
+		console.log('Get access token from refresh token');
 		try {
 			const user = RequestContext.currentUser();
 			return {
@@ -796,8 +798,7 @@ export class AuthService extends SocialAuthService {
 					isArchived: false
 				},
 				relations: {
-					tenant: true,
-					employee: true
+					tenant: true
 				}
 			});
 
@@ -837,6 +838,7 @@ export class AuthService extends SocialAuthService {
 			let payload: JwtPayload | string = this.verifyToken(token);
 			if (typeof payload === 'object') {
 				const { userId, tenantId, code } = payload;
+
 				const user = await this.typeOrmUserRepository.findOneOrFail({
 					where: {
 						id: userId,
@@ -848,7 +850,6 @@ export class AuthService extends SocialAuthService {
 						isArchived: false
 					},
 					relations: {
-						employee: true,
 						role: true
 					}
 				});
@@ -867,8 +868,12 @@ export class AuthService extends SocialAuthService {
 					}
 				);
 
+				const employee = await this.employeeService.findOneByOptions({
+					where: { userId: user.id }
+				});
+
 				// If employees are inactive
-				if (isNotEmpty(user.employee) && user.employee.isActive === false) {
+				if (employee && (employee.isActive === false || employee.isArchived === true)) {
 					throw new UnauthorizedException();
 				}
 
@@ -1005,10 +1010,10 @@ export class AuthService extends SocialAuthService {
 		code,
 		includeTeams
 	}: {
-		users: IUser[],
-		email: string,
-		code: string,
-		includeTeams: boolean
+		users: IUser[];
+		email: string;
+		code: string;
+		includeTeams: boolean;
 	}): Promise<IUserSigninWorkspaceResponse> {
 		const workspaces: IWorkspaceResponse[] = [];
 
@@ -1035,7 +1040,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
 		const tenantId = user.tenant ? user.tenantId : null;
-		const employeeId = user.employee ? user.employeeId : null;
+		const employeeId = user.employee ? user.employee?.id : null;
 
 		const workspace: IWorkspaceResponse = {
 			user: this.createUserObject(user),
@@ -1071,11 +1076,13 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
-			tenant: user.tenant ? new Tenant({
-				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-			}) : null // Sets tenant to null if user.tenant is undefined
+			tenant: user.tenant
+				? new Tenant({
+						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				  })
+				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}
 }

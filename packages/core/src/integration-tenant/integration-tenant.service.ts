@@ -122,16 +122,15 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 * @param input - The input options for finding the integration tenant settings.
 	 * @returns The integration tenant settings if found. null if not found or an error occurs.
 	 */
-	async getIntegrationTenantSettings(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant> {
+	async getIntegrationTenantSettings(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | null> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
 			const { organizationId, name } = input;
 
 			return await this.findOneByOptions({
 				where: {
-					organizationId,
 					tenantId,
+					organizationId,
 					name,
 					isActive: true,
 					isArchived: false,
@@ -145,7 +144,8 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 					settings: true
 				}
 			});
-		} catch {
+		} catch (error) {
+			console.error('Error occurred while retrieving integration tenant settings:', error);
 			return null;
 		}
 	}

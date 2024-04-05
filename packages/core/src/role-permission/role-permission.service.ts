@@ -268,7 +268,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * User try to delete permission for below role
 			 */
-			const { role: wantToDeletePermissionForRole } = await this.repository.findOne({
+			const { role: wantToDeletePermissionForRole } = await this.typeOrmRepository.findOne({
 				where: { id },
 				relations: ['role']
 			});
@@ -360,12 +360,12 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				}
 			}
 		}
-		await this.repository.save(rolesPermissions);
+		await this.typeOrmRepository.save(rolesPermissions);
 		return rolesPermissions;
 	}
 
 	public async migratePermissions(): Promise<IRolePermissionMigrateInput[]> {
-		const permissions: IRolePermission[] = await this.repository.find({
+		const permissions: IRolePermission[] = await this.typeOrmRepository.find({
 			where: {
 				tenantId: RequestContext.currentTenantId()
 			},
@@ -408,7 +408,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				const { permission, role: name } = item;
 				const role = roles.find((role: IRole) => role.name === name);
 
-				const destination = await this.repository.findOneBy({
+				const destination = await this.typeOrmRepository.findOneBy({
 					tenantId: RequestContext.currentTenantId(),
 					permission,
 					roleId: role.id
@@ -417,7 +417,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 					records.push(
 						await this._commandBus.execute(
 							new ImportRecordUpdateOrCreateCommand({
-								entityType: this.repository.metadata.tableName,
+								entityType: this.typeOrmRepository.metadata.tableName,
 								sourceId,
 								destinationId: destination.id,
 								tenantId: RequestContext.currentTenantId()
@@ -446,7 +446,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		switch (this.ormType) {
 			case MultiORMEnum.TypeORM:
 				// Create a query builder for the 'role_permission' entity
-				const query = this.repository.createQueryBuilder('rp');
+				const query = this.typeOrmRepository.createQueryBuilder('rp');
 				// Add the condition for the current tenant ID
 				query.where('rp.tenantId = :tenantId', { tenantId });
 
@@ -470,7 +470,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			// MikroORM implementation
 			case MultiORMEnum.MikroORM:
 				// Create a query builder for the 'RolePermission' entity
-				const totalCount = await this.mikroRepository.count({
+				const totalCount = await this.mikroOrmRepository.count({
 					tenantId,
 					...(includeRole ? { roleId } : {}),
 					permission: { $in: [...permissions] },

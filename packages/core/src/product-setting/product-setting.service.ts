@@ -22,7 +22,7 @@ export class ProductVariantSettingService extends TenantAwareCrudService<Product
 	 */
 	async createDefaultVariantSettings(): Promise<ProductVariantSetting> {
 		const newProductVariantSettings = new ProductVariantSetting();
-		return this.repository.save(newProductVariantSettings);
+		return this.typeOrmRepository.save(newProductVariantSettings);
 	}
 
 	/**
@@ -31,6 +31,6 @@ export class ProductVariantSettingService extends TenantAwareCrudService<Product
 	 * @returns
 	 */
 	async deleteMany(productVariantPrices: ProductVariantSetting[]): Promise<ProductVariantSetting[]> {
-		return this.repository.remove(productVariantPrices);
+		return this.typeOrmRepository.remove(productVariantPrices);
 	}
 }

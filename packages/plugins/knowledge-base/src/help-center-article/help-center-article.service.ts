@@ -15,7 +15,7 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 	}
 
 	async getArticlesByCategoryId(categoryId: string): Promise<HelpCenterArticle[]> {
-		return await this.repository
+		return await this.typeOrmRepository
 			.createQueryBuilder('knowledge_base_article')
 			.where('knowledge_base_article.categoryId = :categoryId', {
 				categoryId
@@ -25,11 +25,11 @@ export class HelpCenterArticleService extends TenantAwareCrudService<HelpCenterA
 
 	async deleteBulkByCategoryId(ids: string[]) {
 		if (isNotEmpty(ids)) {
-			return await this.repository.delete(ids);
+			return await this.typeOrmRepository.delete(ids);
 		}
 	}
 
 	public async updateArticleById(id: string, input: IHelpCenterArticleUpdate): Promise<void> {
-		await this.repository.update(id, input);
+		await this.typeOrmRepository.update(id, input);
 	}
 }

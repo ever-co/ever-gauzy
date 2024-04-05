@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
+import { v4 as uuidv4 } from 'uuid';
 import {
 	IOrganization,
 	IPagination,
@@ -17,9 +18,7 @@ import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
-import { MikroOrmTaskStatusRepository } from './repository/mikro-orm-task-status.repository';
-import { TypeOrmTaskStatusRepository } from './repository/type-orm-task-status.repository';
-import { v4 as uuidv4 } from 'uuid';
+import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
@@ -51,14 +50,8 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log(
-				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
-				error
-			);
-			throw new BadRequestException(
-				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
-				error
-			);
+			console.log('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
+			throw new BadRequestException('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
 		}
 	}
 
@@ -105,7 +98,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			}
 
 			// Save the created task statuses using the repository.
-			return await this.repository.save(statuses);
+			return await this.typeOrmRepository.save(statuses);
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
 			console.error('Error while creating task statuses', error.message);
@@ -159,7 +152,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			}
 
 			// Save the created task statuses using the repository.
-			return await this.repository.save(statuses);
+			return await this.typeOrmRepository.save(statuses);
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
 			console.error('Error while creating task statuses for organization', error.message);

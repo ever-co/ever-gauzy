@@ -41,7 +41,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	 */
 	async getHighestInvoiceNumber(): Promise<IInvoice> {
 		try {
-			const query = this.repository.createQueryBuilder(this.tableName);
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			return await query.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max').getRawOne();
 		} catch (error) {
 			throw new BadRequestException(error);

@@ -30,7 +30,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 	async findAll(
 		params: PaginationParams<EmailTemplate>
 	): Promise<IPagination<IEmailTemplate>> {
-		const query = this.repository.createQueryBuilder('email_template');
+		const query = this.typeOrmRepository.createQueryBuilder('email_template');
 		query.setFindOptions({
 			select: {
 				organization: {

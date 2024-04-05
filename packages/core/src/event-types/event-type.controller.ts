@@ -9,15 +9,13 @@ import {
 	Put,
 	Post,
 	Query,
-	UseGuards,
-	UsePipes,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { FindOptionsWhere } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from './../core/crud';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { EventTypeCreateCommand } from './commands';
 import { EventType } from './event-type.entity';
@@ -27,10 +25,7 @@ import { EventTypeService } from './event-type.service';
 @UseGuards(TenantPermissionGuard)
 @Controller()
 export class EventTypeController extends CrudController<EventType> {
-	constructor(
-		private readonly eventTypeService: EventTypeService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly eventTypeService: EventTypeService, private readonly commandBus: CommandBus) {
 		super(eventTypeService);
 	}
 
@@ -41,10 +36,8 @@ export class EventTypeController extends CrudController<EventType> {
 	 * @returns
 	 */
 	@Get('count')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async getCount(
-		@Query() options: FindOptionsWhere<EventType>
-	): Promise<number> {
+	@UseValidationPipe({ transform: true })
+	async getCount(@Query() options: FindOptionsWhere<EventType>): Promise<number> {
 		return this.eventTypeService.countBy(options);
 	}
 
@@ -55,10 +48,8 @@ export class EventTypeController extends CrudController<EventType> {
 	 * @returns
 	 */
 	@Get('pagination')
-	@UsePipes(new ValidationPipe({ transform: true }))
-	async pagination(
-		@Query() filter: PaginationParams<EventType>
-	): Promise<IPagination<IEventType>> {
+	@UseValidationPipe({ transform: true })
+	async pagination(@Query() filter: PaginationParams<EventType>): Promise<IPagination<IEventType>> {
 		return this.eventTypeService.paginate(filter);
 	}
 
@@ -79,9 +70,7 @@ export class EventTypeController extends CrudController<EventType> {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IEventType>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEventType>> {
 		const { relations, findInput } = data;
 		return this.eventTypeService.findAll({
 			where: findInput,
@@ -130,16 +119,11 @@ export class EventTypeController extends CrudController<EventType> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Post()
-	async create(
-		@Body() entity: IEventTypeCreateInput
-	): Promise<IEventType> {
-		return await this.commandBus.execute(
-			new EventTypeCreateCommand(entity)
-		);
+	async create(@Body() entity: IEventTypeCreateInput): Promise<IEventType> {
+		return await this.commandBus.execute(new EventTypeCreateCommand(entity));
 	}
 
 	/**
@@ -156,15 +140,11 @@ export class EventTypeController extends CrudController<EventType> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: EventType
-	): Promise<IEventType> {
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: EventType): Promise<IEventType> {
 		return this.eventTypeService.create({
 			id,
 			...entity

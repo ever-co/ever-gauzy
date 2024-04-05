@@ -21,8 +21,8 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	}
 
 	async getAllProposals(filter?: FindManyOptions<IProposal>, filterDate?: string): Promise<IPagination<IProposal>> {
-		const total = await this.repository.count(filter);
-		let items = await this.repository.find(filter);
+		const total = await this.typeOrmRepository.count(filter);
+		let items = await this.typeOrmRepository.find(filter);
 
 		if (filterDate) {
 			const dateObject = new Date(filterDate);
@@ -47,7 +47,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		proposal.jobPostContent = entity.jobPostContent;
 		proposal.proposalContent = entity.proposalContent;
 		proposal.employeeId = entity.employeeId;
-		return this.repository.save(proposal);
+		return this.typeOrmRepository.save(proposal);
 	}
 
 	public pagination(filter: FindManyOptions) {

@@ -5,8 +5,6 @@ import {
 	Query,
 	Param,
 	UseGuards,
-	UsePipes,
-	ValidationPipe,
 	InternalServerErrorException,
 	Put,
 	Body,
@@ -20,7 +18,7 @@ import { DeleteResult } from 'typeorm';
 import { IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from 'core/crud';
 import { TenantOrganizationBaseDTO } from 'core/dto';
-import { UUIDValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { RelationsQueryDTO } from './../shared/dto';
@@ -59,10 +57,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 		description: 'Invalid request'
 	})
 	@Get('integration')
-	@UsePipes(new ValidationPipe())
-	async getIntegrationByOptions(
-		@Query() options: IntegrationTenantQueryDTO
-	): Promise<IIntegrationTenant | boolean> {
+	@UseValidationPipe()
+	async getIntegrationByOptions(@Query() options: IntegrationTenantQueryDTO): Promise<IIntegrationTenant | boolean> {
 		return await this._integrationTenantService.getIntegrationByOptions(options);
 	}
 
@@ -72,10 +68,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @returns A paginated list of IntegrationTenant entities.
 	 */
 	@Get()
-	@UsePipes(new ValidationPipe())
-	async findAll(
-		@Query() params: PaginationParams<IntegrationTenant>
-	): Promise<IPagination<IntegrationTenant>> {
+	@UseValidationPipe()
+	async findAll(@Query() params: PaginationParams<IntegrationTenant>): Promise<IPagination<IntegrationTenant>> {
 		// Delegate the logic to your service
 		return await this._integrationTenantService.findAll(params);
 	}
@@ -115,16 +109,14 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @returns A response, typically the updated integration tenant or an error response.
 	 */
 	@Put(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
 		@Body() input: UpdateIntegrationTenantDTO
 	): Promise<IIntegrationTenant> {
 		try {
 			// Update the corresponding integration tenant with the new input data
-			return await this._commandBus.execute(
-				new IntegrationTenantUpdateCommand(id, input)
-			);
+			return await this._commandBus.execute(new IntegrationTenantUpdateCommand(id, input));
 		} catch (error) {
 			// Handle errors, e.g., return an error response.
 			throw new Error('Failed to update integration fields');
@@ -138,10 +130,10 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @returns {Promise<DeleteResult>} A Promise that resolves with the DeleteResult indicating the result of the deletion.
 	 */
 	@Delete(':id')
-	@UsePipes(new ValidationPipe({ whitelist: true }))
+	@UseValidationPipe({ whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
-		@Query() query: TenantOrganizationBaseDTO,
+		@Query() query: TenantOrganizationBaseDTO
 	): Promise<DeleteResult> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
@@ -150,9 +142,7 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 			}
 
 			// Execute a command to delete the resource using a command bus
-			return await this._commandBus.execute(
-				new IntegrationTenantDeleteCommand(id, query)
-			);
+			return await this._commandBus.execute(new IntegrationTenantDeleteCommand(id, query));
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Error while deleting integration: ${error.message}`, HttpStatus.BAD_REQUEST);
