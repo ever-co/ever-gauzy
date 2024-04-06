@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as _ from 'underscore';
@@ -45,7 +44,6 @@ export class StatisticService {
 	protected ormType: MultiORM = ormType;
 
 	constructor(
-		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
