@@ -41,6 +41,7 @@ export const getTasksTodayDurationQueryString = (dbType: string, queryAlias: str
         case DatabaseTypeEnum.postgres:
             return `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
         case DatabaseTypeEnum.mysql:
+            // Directly return the SQL string for MySQL, as MikroORM allows raw SQL.
             return p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${queryAlias}"."startedAt", COALESCE("${queryAlias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
         default:
             throw new Error(`Unsupported database type: ${dbType}`);
