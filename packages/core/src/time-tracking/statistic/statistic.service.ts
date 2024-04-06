@@ -47,13 +47,13 @@ export class StatisticService {
 	constructor(
 		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-		readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		readonly mikroEmployeeRepository: MikroOrmEmployeeRepository,
-		readonly typeOrmActivityRepository: TypeOrmActivityRepository,
-		readonly mikroOrmActivityRepository: MikroOrmActivityRepository,
+		private readonly mikroEmployeeRepository: MikroOrmEmployeeRepository,
+		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
+		private readonly mikroOrmActivityRepository: MikroOrmActivityRepository,
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
+		private readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly configService: ConfigService
 	) { }
 
@@ -1304,7 +1304,7 @@ export class StatisticService {
 				const totalDurationQuery = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
 
 				totalDurationQuery.select([
-					'COALESCE(ROUND(SUM(extract(epoch FROM (COALESCE(time_log.stoppedAt, NOW()) - time_log.startedAt)))), 0) AS duration'
+					`${getTasksDurationQueryString(dbType, totalDurationQuery.alias)} AS duration`
 				]);
 
 				totalDurationQuery.innerJoin(`${totalDurationQuery.alias}.task`, 'task');
