@@ -3,7 +3,7 @@ name: Deploy to CoreWeave Stage
 on:
   workflow_run:
     workflows: ['Build and Publish Docker Images Stage']
-    branches: [stage]
+    branches: [cw]
     types:
       - completed
 
