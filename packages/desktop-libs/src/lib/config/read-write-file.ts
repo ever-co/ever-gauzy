@@ -13,11 +13,13 @@ export class ReadWriteFile implements IReadWriteFile {
 			return;
 		}
 		try {
+			console.log(`Reading file ${this._path.gauzyUi}`);
 			return readFileSync(this._path.gauzyUi, 'utf8');
 		} catch (e) {
 			console.error('Cannot read file');
 		}
 	}
+
 	public get hasDirectoryAccess(): boolean {
 		try {
 			accessSync(this._path.dir, constants.W_OK);
@@ -27,11 +29,14 @@ export class ReadWriteFile implements IReadWriteFile {
 			return false;
 		}
 	}
+
 	public write(fileContent: string): void {
 		if (!this.hasDirectoryAccess) {
 			return;
 		}
+
 		try {
+			console.log(`Writing file ${this._path.gauzyUi}`);
 			writeFileSync(this._path.gauzyUi, fileContent);
 		} catch (error) {
 			console.log('Cannot change html file', error);
