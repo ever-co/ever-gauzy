@@ -27,6 +27,7 @@ export class SidebarMenuComponent implements AfterContentChecked {
 
 	public set selectedItem(value: IMenuItem) {
 		this._sidebarMenuService.selectedItem = value;
+		this._cdr.detectChanges();
 	}
 
 	public focusOn(event: IMenuItem) {
