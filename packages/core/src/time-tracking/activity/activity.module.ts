@@ -11,6 +11,7 @@ import { ActivityService } from './activity.service';
 import { Activity } from './activity.entity';
 import { ActivityMapService } from './activity.map.service';
 import { TimeSlotModule } from './../time-slot/time-slot.module';
+import { TypeOrmActivityRepository } from './repository';
 
 @Module({
 	controllers: [
@@ -28,8 +29,9 @@ import { TimeSlotModule } from './../time-slot/time-slot.module';
 	providers: [
 		ActivityService,
 		ActivityMapService,
+		TypeOrmActivityRepository,
 		...CommandHandlers
 	],
-	exports: [TypeOrmModule, MikroOrmModule, ActivityService, ActivityMapService]
+	exports: [TypeOrmModule, MikroOrmModule, ActivityService, ActivityMapService, TypeOrmActivityRepository]
 })
 export class ActivityModule { }

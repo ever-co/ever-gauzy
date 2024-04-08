@@ -239,9 +239,7 @@ export function getDateRangeFormat(
 				end: end.toDate()
 			};
 		default:
-			throw Error(
-				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
-			);
+			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`);
 	}
 }
 

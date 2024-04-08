@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { reduce, pluck, pick, mapObject, groupBy, chain } from 'underscore';
 import * as _ from 'underscore';
 import * as moment from 'moment';
+import * as chalk from 'chalk';
 import {
 	PermissionsEnum,
 	IGetActivitiesStatistics,
@@ -20,50 +20,40 @@ import {
 	IGetManualTimesStatistics,
 	IManualTimesStatistics,
 	TimeLogType,
-	ITask,
 	ITimeLog
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
-import { ConfigService, DatabaseTypeEnum, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
-import { concateUserNameExpression } from './statistic.helper';
+import { ConfigService, DatabaseTypeEnum, MultiORM, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
+import { concateUserNameExpression, getTasksDurationQueryString, getTasksTodayDurationQueryString, getTasksTotalDurationQueryString } from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
-import { Activity, Employee, TimeLog, TimeSlot } from './../../core/entities/internal';
-import { getDateRangeFormat } from './../../core/utils';
+import { TimeLog, TimeSlot } from './../../core/entities/internal';
+import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { MikroOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/mikro-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from '../../employee/repository/mikro-orm-employee.repository';
-import { TypeOrmActivityRepository } from '../activity/repository/type-orm-activity.repository';
-import { MikroOrmActivityRepository } from '../activity/repository/mikro-orm-activity.repository';
-import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
-import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
+import { MikroOrmActivityRepository, TypeOrmActivityRepository } from '../activity/repository';
+import { MikroOrmTimeLogRepository, TypeOrmTimeLogRepository } from '../time-log/repository';
+
+// Get the type of the Object-Relational Mapping (ORM) used in the application.
+const ormType: MultiORM = getORMType();
 
 @Injectable()
 export class StatisticService {
+	protected ormType: MultiORM = ormType;
+
 	constructor(
-		@InjectRepository(TimeSlot)
 		private readonly typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
-
-		readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
-
-		@InjectRepository(Employee)
+		private readonly mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
-		readonly mikroEmployeeRepository: MikroOrmEmployeeRepository,
-
-		@InjectRepository(Activity)
+		private readonly mikroEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly typeOrmActivityRepository: TypeOrmActivityRepository,
-
-		readonly mikroOrmActivityRepository: MikroOrmActivityRepository,
-
-		@InjectRepository(TimeLog)
+		private readonly mikroOrmActivityRepository: MikroOrmActivityRepository,
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-
-		readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
-
+		private readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly configService: ConfigService
-	) {}
+	) { }
 
 	/**
 	 * GET Time Tracking Dashboard Counts Statistics
@@ -732,10 +722,10 @@ export class StatisticService {
 						isSqlite() || isBetterSqlite3()
 							? `(strftime('%w', timeLogs.startedAt))`
 							: isPostgres()
-							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-							: isMySQL()
-							? p('DayOfWeek("timeLogs"."startedAt") - 1')
-							: '0',
+								? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+								: isMySQL()
+									? p('DayOfWeek("timeLogs"."startedAt") - 1')
+									: '0',
 						'day'
 					)
 					.andWhere(p(`"${weekHoursQuery.alias}"."id" = :memberId`), { memberId: member.id })
@@ -783,10 +773,10 @@ export class StatisticService {
 						isSqlite() || isBetterSqlite3()
 							? `(strftime('%w', timeLogs.startedAt))`
 							: isPostgres()
-							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-							: isMySQL()
-							? p('DayOfWeek("timeLogs"."startedAt") - 1')
-							: '0'
+								? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+								: isMySQL()
+									? p('DayOfWeek("timeLogs"."startedAt") - 1')
+									: '0'
 					);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
@@ -994,15 +984,8 @@ export class StatisticService {
 	 */
 	async getTasks(request: IGetTasksStatistics) {
 		const { organizationId, startDate, endDate, take, onlyMe = false, organizationTeamId } = request;
-		let {
-			employeeIds = [],
-			projectIds = [],
-			taskIds = [],
-			defaultRange,
-			unitOfTime,
-			todayEnd,
-			todayStart
-		} = request;
+		const { projectIds = [], taskIds = [], defaultRange, unitOfTime } = request;
+		let { employeeIds = [], todayEnd, todayStart } = request;
 
 		const user = RequestContext.currentUser();
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
@@ -1011,22 +994,20 @@ export class StatisticService {
 		let end: string | Date;
 
 		if (startDate && endDate) {
-			const range = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
+			const range = getDateRangeFormat(
+				moment.utc(startDate),
+				moment.utc(endDate)
+			);
 			start = range.start;
 			end = range.end;
-		} else {
-			if (typeof defaultRange === 'boolean' && defaultRange) {
-				const range = getDateRangeFormat(
-					moment()
-						.startOf(unitOfTime || 'week')
-						.utc(),
-					moment()
-						.endOf(unitOfTime || 'week')
-						.utc()
-				);
-				start = range.start;
-				end = range.end;
-			}
+		} else if (defaultRange) {
+			const unit = unitOfTime || 'week';
+			const range = getDateRangeFormat(
+				moment().startOf(unit).utc(),
+				moment().endOf(unit).utc()
+			);
+			start = range.start;
+			end = range.end;
 		}
 
 		/*
@@ -1048,270 +1029,331 @@ export class StatisticService {
 		}
 
 		if (todayStart && todayEnd) {
-			const range = getDateRangeFormat(moment.utc(todayStart), moment.utc(todayEnd));
+			const range = getDateRangeFormat(
+				moment.utc(todayStart),
+				moment.utc(todayEnd)
+			);
 			todayStart = range.start;
 			todayEnd = range.end;
-		} else {
-			if (typeof defaultRange === 'boolean' && defaultRange) {
-				const range = getDateRangeFormat(
-					moment()
-						.startOf(unitOfTime || 'week')
-						.utc(),
-					moment()
-						.endOf(unitOfTime || 'week')
-						.utc()
-				);
-				todayStart = range.start;
-				todayEnd = range.end;
-			}
-		}
-
-		const todayQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
-
-		let todayQueryString: string;
-		switch (this.configService.dbConnectionOptions.type) {
-			case DatabaseTypeEnum.sqlite:
-			case DatabaseTypeEnum.betterSqlite3:
-				todayQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${todayQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${todayQuery.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
-				break;
-			case DatabaseTypeEnum.postgres:
-				todayQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${todayQuery.alias}"."stoppedAt", NOW()) - "${todayQuery.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
-				break;
-			case DatabaseTypeEnum.mysql:
-				todayQueryString = p(
-					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${todayQuery.alias}"."startedAt", COALESCE("${todayQuery.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`
-				);
-				break;
-			default:
-				throw Error(
-					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-				);
-		}
-
-		todayQuery
-			.select(p(`"task"."title"`), 'title')
-			.addSelect(p(`"task"."id"`), 'taskId')
-			.addSelect(p(`"${todayQuery.alias}"."updatedAt"`), 'updatedAt')
-			.addSelect(todayQueryString, `today_duration`)
-			.innerJoin(`${todayQuery.alias}.task`, 'task')
-			.innerJoin(`${todayQuery.alias}.timeSlots`, 'time_slot')
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (todayStart && todayEnd) {
-						qb.andWhere(p(`"${todayQuery.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`), {
-							todayStart,
-							todayEnd
-						});
-						qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`), {
-							todayStart,
-							todayEnd
-						});
-					}
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${todayQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${todayQuery.alias}"."organizationId" = :organizationId`), { organizationId });
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"time_slot"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"time_slot"."organizationId" = :organizationId`), { organizationId });
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(p(`"${todayQuery.alias}"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
-						qb.andWhere(p(`"time_slot"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
-					}
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(p(`"${todayQuery.alias}"."projectId" IN (:...projectIds)`), {
-							projectIds
-						});
-					}
-					if (isNotEmpty(taskIds)) {
-						qb.andWhere(p(`"${todayQuery.alias}"."taskId" IN (:...taskIds)`), {
-							taskIds
-						});
-					}
-					if (isNotEmpty(organizationTeamId)) {
-						qb.andWhere(p(`"${todayQuery.alias}"."organizationTeamId" = :organizationTeamId`), {
-							organizationTeamId
-						});
-					}
-				})
-			)
-			.groupBy(p(`"${todayQuery.alias}"."id"`))
-			.addGroupBy(p(`"task"."id"`))
-			.orderBy(p(`"${todayQuery.alias}"."updatedAt"`), 'DESC');
-
-		const todayStatistics = await todayQuery.getRawMany();
-
-		const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-
-		let queryString: string;
-		switch (this.configService.dbConnectionOptions.type) {
-			case DatabaseTypeEnum.sqlite:
-			case DatabaseTypeEnum.betterSqlite3:
-				queryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${query.alias}"."stoppedAt", datetime('now'))) - julianday("${query.alias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
-				break;
-			case DatabaseTypeEnum.postgres:
-				queryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${query.alias}"."stoppedAt", NOW()) - "${query.alias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
-				break;
-			case DatabaseTypeEnum.mysql:
-				queryString = p(
-					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${query.alias}"."startedAt", COALESCE("${query.alias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`
-				);
-				break;
-			default:
-				throw Error(
-					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-				);
-		}
-
-		query
-			.select(p(`"task"."title"`), 'title')
-			.addSelect(p(`"task"."id"`), 'taskId')
-			.addSelect(p(`"${query.alias}"."updatedAt"`), 'updatedAt')
-			.addSelect(queryString, `duration`)
-			.innerJoin(`${query.alias}.task`, 'task')
-			.innerJoin(`${query.alias}.timeSlots`, 'time_slot')
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (start && end) {
-						qb.andWhere(p(`"${query.alias}"."startedAt" BETWEEN :start AND :end`), {
-							start,
-							end
-						});
-						qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :start AND :end`), {
-							start,
-							end
-						});
-					}
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"time_slot"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"time_slot"."organizationId" = :organizationId`), { organizationId });
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(p(`"${query.alias}"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
-						qb.andWhere(p(`"time_slot"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
-					}
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" IN (:...projectIds)`), {
-							projectIds
-						});
-					}
-					if (isNotEmpty(taskIds)) {
-						qb.andWhere(p(`"${query.alias}"."taskId" IN (:...taskIds)`), {
-							taskIds
-						});
-					}
-					if (isNotEmpty(organizationTeamId)) {
-						qb.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
-							organizationTeamId
-						});
-					}
-				})
-			)
-			.groupBy(p(`"${query.alias}"."id"`))
-			.addGroupBy(p(`"task"."id"`))
-			.orderBy(p(`"${todayQuery.alias}"."updatedAt"`), 'DESC');
-
-		const statistics = await query.getRawMany();
-
-		const totalDurationQuery = this.typeOrmTimeLogRepository.createQueryBuilder();
-
-		let totalDurationQueryString: string;
-		switch (this.configService.dbConnectionOptions.type) {
-			case DatabaseTypeEnum.sqlite:
-			case DatabaseTypeEnum.betterSqlite3:
-				totalDurationQueryString = `COALESCE(ROUND(SUM((julianday(COALESCE("${totalDurationQuery.alias}"."stoppedAt", datetime('now'))) - julianday("${totalDurationQuery.alias}"."startedAt")) * 86400)), 0)`;
-				break;
-			case DatabaseTypeEnum.postgres:
-				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
-				break;
-			case DatabaseTypeEnum.mysql:
-				totalDurationQueryString = p(
-					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`
-				);
-				break;
-			default:
-				throw Error(
-					`cannot create statistic query due to unsupported database type: ${this.configService.dbConnectionOptions.type}`
-				);
-		}
-
-		totalDurationQuery
-			.select(totalDurationQueryString, `duration`)
-			.innerJoin(`${totalDurationQuery.alias}.task`, 'task')
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (start && end) {
-						qb.andWhere(p(`"${totalDurationQuery.alias}"."startedAt" BETWEEN :start AND :end`), {
-							start,
-							end
-						});
-					}
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), {
-						organizationId
-					});
-				})
-			)
-			.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(p(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`), {
-							employeeIds
-						});
-					}
-					if (isNotEmpty(projectIds)) {
-						qb.andWhere(p(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`), {
-							projectIds
-						});
-					}
-					if (isNotEmpty(organizationTeamId)) {
-						qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationTeamId" = :organizationTeamId`), {
-							organizationTeamId
-						});
-					}
-				})
+		} else if (defaultRange) {
+			const unit = unitOfTime || 'day';
+			const range = getDateRangeFormat(
+				moment().startOf(unit).utc(),
+				moment().endOf(unit).utc()
 			);
+			todayStart = range.start;
+			todayEnd = range.end;
+		}
 
-		const totalDuration = await totalDurationQuery.getRawOne();
+		// Retrieves the database type from the configuration service.
+		const dbType = this.configService.dbConnectionOptions.type;
+
+		let todayStatistics: any[] = [];
+
+		/**
+		 * Get Today's Task Statistics
+		 */
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// Start building the MikroORM query
+				const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+
+				// Add the raw SQL snippet to the select
+				const raw = getTasksTodayDurationQueryString(dbType, qb.alias);
+
+				// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
+				let sq = knex(qb.alias).select([
+					`task.title AS title`,
+					`task.id AS taskId`,
+					`${qb.alias}.updatedAt AS updatedAt`,
+					knex.raw(`${raw} AS today_duration`),
+				]);
+
+				// Add join clauses
+				sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
+				sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
+				sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
+
+				// Add where clauses
+				sq.andWhere({
+					[`${qb.alias}.tenantId`]: tenantId,
+					[`${qb.alias}.organizationId`]: organizationId,
+					[`time_slot.tenantId`]: tenantId,
+					[`time_slot.organizationId`]: organizationId
+				});
+
+				if (todayStart && todayEnd) {
+					sq.whereBetween(`${qb.alias}.startedAt`, [todayStart, todayEnd]);
+					sq.whereBetween(`time_slot.startedAt`, [todayStart, todayEnd]);
+				}
+				if (isNotEmpty(employeeIds)) {
+					sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
+					sq.whereIn(`time_slot.employeeId`, employeeIds);
+				}
+				if (isNotEmpty(projectIds)) {
+					sq.whereIn(`${qb.alias}.projectId`, projectIds);
+				}
+				if (isNotEmpty(taskIds)) {
+					sq.whereIn(`${qb.alias}.taskId`, taskIds);
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					sq.andWhere(`${qb.alias}.organizationTeamId`, organizationTeamId);
+				}
+
+				sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
+				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
+				console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
+				// Execute the raw SQL query and get the results
+				todayStatistics = (await knex.raw(sq.toString())).rows || [];
+			}
+				break;
+
+			case MultiORMEnum.TypeORM: {
+				const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+
+				qb.select(p(`"task"."title"`), 'title')
+				qb.addSelect(p(`"task"."id"`), 'taskId')
+				qb.addSelect(p(`"${qb.alias}"."updatedAt"`), 'updatedAt')
+				qb.addSelect(getTasksTodayDurationQueryString(dbType, qb.alias), `today_duration`)
+
+				// Add join clauses
+				qb.innerJoin(`${qb.alias}.task`, 'task');
+				qb.innerJoin(`${qb.alias}.timeSlots`, 'time_slot');
+
+				// Combine tenant and organization ID conditions
+				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId`), { tenantId, organizationId });
+				qb.andWhere(p(`"time_slot"."tenantId" = :tenantId AND "time_slot"."organizationId" = :organizationId`), { tenantId, organizationId });
+
+				// Add conditions based on today's start and end time
+				if (todayStart && todayEnd) {
+					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`), { todayStart, todayEnd });
+					qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`), { todayStart, todayEnd });
+				}
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					qb.andWhere(p(`"time_slot"."employeeId" IN (:...employeeIds)`), { employeeIds });
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+				}
+				if (isNotEmpty(taskIds)) {
+					qb.andWhere(p(`"${qb.alias}"."taskId" IN (:...taskIds)`), { taskIds });
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					qb.andWhere(p(`"${qb.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
+				}
+
+				qb.groupBy(p(`"${qb.alias}"."id"`))
+				qb.addGroupBy(p(`"task"."id"`))
+				qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
+				console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
+				// Execute the SQL query and get the results
+				todayStatistics = await qb.getRawMany();
+			}
+				break;
+			default:
+				throw new Error(`Cannot create statistic query due to unsupported database type: ${dbType}`);
+		}
+
+		let statistics: any[] = [];
+
+		/**
+		 * Get Given Time Frame Task Statistics
+		 */
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				// Start building the MikroORM query
+				const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+
+				// Add the raw SQL snippet to the select
+				const raw = getTasksDurationQueryString(dbType, qb.alias);
+
+				// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
+				let sq = knex(qb.alias).select([
+					`task.title AS title`,
+					`task.id AS taskId`,
+					`${qb.alias}.updatedAt AS updatedAt`,
+					knex.raw(`${raw} AS duration`),
+				]);
+
+				// Add join clauses
+				sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
+				sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
+				sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
+
+				// Add where clauses
+				sq.andWhere({
+					[`${qb.alias}.tenantId`]: tenantId,
+					[`${qb.alias}.organizationId`]: organizationId,
+					[`time_slot.tenantId`]: tenantId,
+					[`time_slot.organizationId`]: organizationId
+				});
+
+				if (start && end) {
+					sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
+					sq.whereBetween(`time_slot.startedAt`, [start, end]);
+				}
+				if (isNotEmpty(employeeIds)) {
+					sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
+					sq.whereIn(`time_slot.employeeId`, employeeIds);
+				}
+				if (isNotEmpty(projectIds)) {
+					sq.whereIn(`${qb.alias}.projectId`, projectIds);
+				}
+				if (isNotEmpty(taskIds)) {
+					sq.whereIn(`${qb.alias}.taskId`, taskIds);
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					sq.andWhere(`${qb.alias}.organizationTeamId`, organizationTeamId);
+				}
+
+				sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
+				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
+				console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
+				// Execute the raw SQL query and get the results
+				statistics = (await knex.raw(sq.toString())).rows || [];
+			}
+				break;
+
+			case MultiORMEnum.TypeORM: {
+				/**
+				 * Get Time Range Statistics
+				 */
+				const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+				qb.select(p(`"task"."title"`), 'title')
+				qb.addSelect(p(`"task"."id"`), 'taskId')
+				qb.addSelect(p(`"${qb.alias}"."updatedAt"`), 'updatedAt')
+				qb.addSelect(getTasksDurationQueryString(dbType, qb.alias), `duration`)
+
+				// Add join clauses
+				qb.innerJoin(`${qb.alias}.task`, 'task');
+				qb.innerJoin(`${qb.alias}.timeSlots`, 'time_slot');
+
+				// Add join clauses
+				// Combine tenant and organization ID conditions for qb.alias
+				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId`), { tenantId, organizationId });
+				// Combine tenant and organization ID conditions for time_slot
+				qb.andWhere(p(`"time_slot"."tenantId" = :tenantId AND "time_slot"."organizationId" = :organizationId`), { tenantId, organizationId });
+
+				// Add conditions based on start and end time
+				if (start && end) {
+					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
+					qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :start AND :end`), { start, end });
+				}
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds) AND "time_slot"."employeeId" IN (:...employeeIds)`), { employeeIds });
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+				}
+				if (isNotEmpty(taskIds)) {
+					qb.andWhere(p(`"${qb.alias}"."taskId" IN (:...taskIds)`), { taskIds });
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					qb.andWhere(p(`"${qb.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
+				}
+
+				qb.groupBy(p(`"${qb.alias}"."id"`));
+				qb.addGroupBy(p(`"task"."id"`));
+				qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
+				console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
+				// Execute the raw SQL query and get the results
+				statistics = await qb.getRawMany();
+			}
+				break;
+			default:
+				throw new Error(`Cannot create statistic query due to unsupported database type: ${dbType}`);
+		}
+
+		let totalDuration: any;
+
+		/**
+		 * Get Total Task Statistics
+		 */
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
+				const knex = this.mikroOrmTimeLogRepository.getKnex();
+
+				// Add the raw SQL snippet to the select
+				const raw = getTasksTotalDurationQueryString(dbType, qb.alias);
+				// Construct your SQL query using knex
+				let sq = knex(qb.alias).select([
+					knex.raw(`${raw} AS duration`)
+				]);
+
+				// Add join clauses
+				sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
+				sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
+				sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
+
+				// Add where clauses
+				sq.andWhere({
+					[`${qb.alias}.tenantId`]: tenantId,
+					[`${qb.alias}.organizationId`]: organizationId
+				});
+
+				if (start && end) {
+					sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
+				}
+				if (isNotEmpty(employeeIds)) {
+					sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
+				}
+				if (isNotEmpty(projectIds)) {
+					sq.whereIn(`${qb.alias}.projectId`, projectIds);
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					sq.andWhere(`${qb.alias}.organizationTeamId`, organizationTeamId);
+				}
+
+				console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
+				// Execute the raw SQL query and get the results
+				[totalDuration] = (await knex.raw(sq.toString())).rows || [];
+			}
+
+				break;
+
+			case MultiORMEnum.TypeORM: {
+				const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+				qb.select(getTasksTotalDurationQueryString(dbType, qb.alias), 'duration');
+
+				// Add join clauses
+				qb.innerJoin(`${qb.alias}.task`, 'task');
+
+				// Add where clauses
+				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+
+				if (start && end) {
+					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
+				}
+				if (isNotEmpty(employeeIds)) {
+					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+				}
+				if (isNotEmpty(projectIds)) {
+					qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+				}
+				if (isNotEmpty(organizationTeamId)) {
+					qb.andWhere(p(`"${qb.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
+				}
+
+				console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
+				// Execute the raw SQL query and get the results
+				totalDuration = await qb.getRawOne();
+			}
+				break;
+
+			default:
+				throw new Error(`Cannot create statistic query due to unsupported database type: ${dbType}`);
+		}
 
 		// ------------------------------------------------
 
 		console.log('Find Statistics length: ', statistics.length);
 		console.log('Find Today Statistics length: ', todayStatistics.length);
-		console.log('Find Total Duration: ', totalDuration.duration);
+		console.log('Find Total Duration: ', totalDuration?.duration);
 
 		/* Code that cause issues... We try to optimize it using "hashing" approach etc
 
@@ -1354,7 +1396,7 @@ export class StatisticService {
 			tasks = tasks.splice(0, take);
 		}
 
-        tasks = tasks.map((task: any) => {
+		tasks = tasks.map((task: any) => {
 			task.durationPercentage = parseFloat(
 				parseFloat((task.duration * 100) / totalDuration.duration + '').toFixed(2)
 			);
@@ -1380,7 +1422,7 @@ export class StatisticService {
 			const taskId = stat.taskId;
 
 			if (!acc[taskId]) {
-				acc[taskId] = { duration: 0, todayDuration: 0, title: stat.title };
+				acc[taskId] = { duration: 0, todayDuration: 0, title: stat.title, updatedAt: stat.updatedAt };
 			}
 
 			// Convert stat.duration to a number before adding
