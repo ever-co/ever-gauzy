@@ -8,17 +8,14 @@
 	</nb-card-header>
 	<nb-card-body class="content">
 		<div *ngFor="let reportCategory of reportCategories">
-				<h5 class="report-category-name">
-					<span class="category-icon mr-2">
-						<i class="fa {{ reportCategory.iconClass }}"></i>
-					</span>
-					{{ reportCategory.name }}
-				</h5>
+			<h5 class="report-category-name">
+				<span class="category-icon mr-2">
+					<i class="fa {{ reportCategory.iconClass }}"></i>
+				</span>
+				{{ reportCategory.name }}
+			</h5>
 			<div class="card-grid">
-				<div
-					class="mb-0 card custom-view-report"
-					*ngFor="let report of reportCategory.reports"
-				>
+				<div class="mb-0 card custom-view-report" *ngFor="let report of reportCategory.reports">
 					<nb-card class="border-0 m-0 card-nb">
 						<nb-card-header>
 							<div class="row align-items-center">
@@ -27,24 +24,24 @@
 									<nb-toggle
 										(click)="$event.stopPropagation()"
 										[(ngModel)]="report.showInMenu"
-										(checkedChange)="
-											updateShowInMenu($event, report)
-										"
+										(checkedChange)="updateShowInMenu($event, report)"
 									></nb-toggle>
 								</div>
 							</div>
 						</nb-card-header>
 						<nb-card-body class="custom-view-report-content">
 							<div class="caption">{{ report?.description}}</div>
-							<div
-								class="image-container"
-								*ngIf="report.imageUrl"
-							>
+							<div class="image-container" *ngIf="report.imageUrl" >
 								<img [src]="report.imageUrl" />
 							</div>
-              <button nbButton [routerLink]="['/pages/reports', report.slug]" class="custom-button" status="primary">
-                {{'BUTTONS.VIEW_REPORT'| translate}}
-              </button>
+							<button
+								nbButton
+								[routerLink]="['/pages/reports', report.slug]"
+								class="custom-button"
+								status="primary"
+							>
+								{{'BUTTONS.VIEW_REPORT'| translate}}
+							</button>
 						</nb-card-body>
 					</nb-card>
 				</div>

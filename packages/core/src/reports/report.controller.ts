@@ -1,20 +1,21 @@
+import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	GetReportMenuItemsInput,
 	IPagination,
 	UpdateReportMenuInput,
 } from '@gauzy/contracts';
-import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FindManyOptions } from 'typeorm';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
+import { ReportOrganizationService } from './report-organization.service';
 
 @ApiTags('Report')
 @Controller()
 export class ReportController {
 
 	constructor(
-		private readonly reportService: ReportService
+		private readonly _reportService: ReportService,
+		private readonly _reportOrganizationService: ReportOrganizationService,
 	) { }
 
 	/**
@@ -29,12 +30,17 @@ export class ReportController {
 		description: 'Found records',
 	})
 	@Get()
-	async findAll(
-		@Query() options: FindManyOptions<Report>
+	async findAllMenus(
+		@Query() options: GetReportMenuItemsInput
 	): Promise<IPagination<Report>> {
-		return await this.reportService.findAll(options);
+		return await this._reportService.findAllMenus(options);
 	}
 
+	/**
+	 *
+	 * @param filter
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -44,9 +50,14 @@ export class ReportController {
 	async getMenuItems(
 		@Query() filter?: GetReportMenuItemsInput
 	): Promise<Report[]> {
-		return await this.reportService.getMenuItems(filter);
+		return await this._reportService.getMenuItems(filter);
 	}
 
+	/**
+	 *
+	 * @param input
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -54,6 +65,6 @@ export class ReportController {
 	})
 	@Post('menu-item')
 	async updateReportMenu(@Body() input?: UpdateReportMenuInput) {
-		return await this.reportService.updateReportMenu(input);
+		return await this._reportOrganizationService.updateReportMenu(input);
 	}
 }
