@@ -29,7 +29,7 @@ export class ReportService extends CrudService<Report> {
 	 * @param filter The filter containing organization ID and tenant ID for retrieving reports.
 	 * @returns A promise that resolves to an object containing paginated report items and total count.
 	 */
-	public async findAllMenus(filter?: any): Promise<IPagination<Report>> {
+	public async findAllReports(filter?: any): Promise<IPagination<Report>> {
 		console.time(`ReportService.findAll took seconds`);
 		// Extract organizationId and tenantId from filter
 		const { organizationId } = filter;
@@ -40,13 +40,13 @@ export class ReportService extends CrudService<Report> {
 		qb.setFindOptions({
 			...(filter.relations ? { relations: filter.relations } : {})
 		});
-		qb.leftJoinAndSelect('report.reportOrganizations', 'ro', 'ro.isEnabled = :isEnabled AND ro.isActive = :isActive AND ro.isArchived = :isArchived', {
+		qb.leftJoinAndSelect('report.reportOrganizations', 'ro', 'ro.organizationId = :organizationId AND ro.tenantId = :tenantId AND ro.isEnabled = :isEnabled AND ro.isActive = :isActive AND ro.isArchived = :isArchived', {
+			organizationId,
+			tenantId,
 			isEnabled: true,
 			isActive: true,
 			isArchived: false
 		});
-		qb.andWhere('ro.organizationId = :organizationId', { organizationId });
-		qb.andWhere('ro.tenantId = :tenantId', { tenantId });
 
 		// Execute the query
 		const [items, total] = await qb.getManyAndCount();

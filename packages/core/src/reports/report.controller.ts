@@ -30,10 +30,10 @@ export class ReportController {
 		description: 'Found records',
 	})
 	@Get()
-	async findAllMenus(
+	async findAllReports(
 		@Query() options: GetReportMenuItemsInput
 	): Promise<IPagination<Report>> {
-		return await this._reportService.findAllMenus(options);
+		return await this._reportService.findAllReports(options);
 	}
 
 	/**
