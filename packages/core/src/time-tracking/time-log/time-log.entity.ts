@@ -254,7 +254,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	 * TimeSlot
 	 */
 	@ApiProperty({ type: () => TimeSlot, isArray: true })
-	@MultiORMManyToMany(() => TimeSlot, (timeLogs) => timeLogs.timeLogs, {
+	@MultiORMManyToMany(() => TimeSlot, (it) => it.timeLogs, {
 		/** Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */
