@@ -1103,7 +1103,7 @@ export class StatisticService {
 
 				sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-				// console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
+				console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
 				// Execute the raw SQL query and get the results
 				todayStatistics = (await knex.raw(sq.toString())).rows || [];
 			}
@@ -1147,7 +1147,7 @@ export class StatisticService {
 				qb.groupBy(p(`"${qb.alias}"."id"`))
 				qb.addGroupBy(p(`"task"."id"`))
 				qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-				// console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
+				console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
 				// Execute the SQL query and get the results
 				todayStatistics = await qb.getRawMany();
 			}
@@ -1211,7 +1211,7 @@ export class StatisticService {
 
 				sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
 				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-				// console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
+				console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
 				// Execute the raw SQL query and get the results
 				statistics = (await knex.raw(sq.toString())).rows || [];
 			}
@@ -1258,7 +1258,7 @@ export class StatisticService {
 				qb.groupBy(p(`"${qb.alias}"."id"`));
 				qb.addGroupBy(p(`"task"."id"`));
 				qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-				// console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
+				console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
 				// Execute the raw SQL query and get the results
 				statistics = await qb.getRawMany();
 			}
@@ -1308,7 +1308,7 @@ export class StatisticService {
 					sq.andWhere(`${qb.alias}.organizationTeamId`, organizationTeamId);
 				}
 
-				// console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
+				console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
 				// Execute the raw SQL query and get the results
 				[totalDuration] = (await knex.raw(sq.toString())).rows || [];
 			}
@@ -1339,7 +1339,7 @@ export class StatisticService {
 					qb.andWhere(p(`"${qb.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
 				}
 
-				// console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
+				console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
 				// Execute the raw SQL query and get the results
 				totalDuration = await qb.getRawOne();
 			}
