@@ -1,5 +1,4 @@
 import { Injectable, Logger, } from '@nestjs/common';
-import { indexBy } from 'underscore';
 import {
 	GetReportMenuItemsInput,
 	IPagination,

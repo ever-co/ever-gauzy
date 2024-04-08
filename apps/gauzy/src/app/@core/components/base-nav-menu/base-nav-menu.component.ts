@@ -41,6 +41,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
             ),
             this._store.featureOrganizations$.pipe(
                 tap(() => this.defineBaseNavMenus()),
+            ),
+            this._store.userRolePermissions$.pipe(
+                tap(() => this.defineBaseNavMenus()),
             )
         ).pipe(
             untilDestroyed(this)

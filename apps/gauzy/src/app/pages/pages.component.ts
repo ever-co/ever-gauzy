@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { merge } from 'rxjs';
+import { merge, pairwise } from 'rxjs';
 import { filter, map, take, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -42,6 +42,7 @@ import { NavMenuBuilderService, NavMenuSectionItem } from '../@core/services/nav
 export class PagesComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
+	public previousOrganization: IOrganization;
 	public organization: IOrganization;
 	public user: IUser;
 	public menu: NbMenuItem[] = [];
@@ -81,11 +82,25 @@ export class PagesComponent extends TranslationBaseComponent
 			.subscribe();
 		await this._createEntryPoint();
 
+		this.store.selectedOrganization$.pipe(
+			filter((organization: IOrganization) => !!organization),
+			distinctUntilChange(),
+			pairwise(), // Pair each emitted value with the previous one
+			tap(([organization]: [IOrganization, IOrganization]) => {
+				// Remove the specified menu items for previous selected organization
+				this._navMenuBuilderService.removeNavMenuItems(
+					// Define the base item IDs
+					this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organization.id}`), 'reports'
+				);
+			}),
+			untilDestroyed(this)
+		).subscribe();
+
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => this.organization = organization),
 				tap(() => this.getReportsMenus()),
 				tap(() => this.getIntegrationEntitySettings()),
 				untilDestroyed(this)
@@ -94,45 +109,37 @@ export class PagesComponent extends TranslationBaseComponent
 
 		this.store.userRolePermissions$
 			.pipe(
-				filter((permissions: IRolePermission[]) =>
-					isNotEmpty(permissions)
-				),
-				map((permissions) =>
-					permissions.map(({ permission }) => permission)
-				),
-				tap((permissions) =>
-					this.ngxPermissionsService.loadPermissions(permissions)
-				),
+				filter((permissions: IRolePermission[]) => isNotEmpty(permissions)),
+				map((permissions) => permissions.map(({ permission }) => permission)),
+				tap((permissions) => this.ngxPermissionsService.loadPermissions(permissions)),
 				untilDestroyed(this)
 			)
-			.subscribe(() => {
-				// this.loadItems(
-				// 	this.selectorService.showSelectors(this.router.url).showOrganizationShortcuts
-				// );
-			});
-		this.reportService.menuItems$
-			.pipe(distinctUntilChange(), untilDestroyed(this))
-			.subscribe((menuItems) => {
-				if (menuItems) {
-					this.reportMenuItems = chain(menuItems)
-						.values()
-						.map((item) => {
-							return {
-								id: item.slug + `-${this.organization?.id}`,
-								title: item.name,
-								link: `/pages/reports/${item.slug}`,
-								icon: item.iconClass,
-								data: {
-									translationKey: `${item.name}`
-								}
-							};
-						})
-						.value();
-				} else {
-					this.reportMenuItems = [];
-				}
-				this.addOrganizationReportsMenuItems();
-			});
+			.subscribe();
+
+		this.reportService.menuItems$.pipe(
+			distinctUntilChange(),
+			untilDestroyed(this)
+		).subscribe((menuItems) => {
+			if (menuItems) {
+				this.reportMenuItems = chain(menuItems)
+					.values()
+					.map((item) => {
+						return {
+							id: item.slug + `-${this.organization?.id}`,
+							title: item.name,
+							link: `/pages/reports/${item.slug}`,
+							icon: item.iconClass,
+							data: {
+								translationKey: `${item.name}`
+							}
+						};
+					})
+					.value();
+			} else {
+				this.reportMenuItems = [];
+			}
+			this.addOrganizationReportsMenuItems();
+		});
 	}
 
 	/**
@@ -179,31 +186,19 @@ export class PagesComponent extends TranslationBaseComponent
 			console.warn('Organization not defined. Unable to add/remove menu items.');
 			return;
 		}
-
 		const { id: organizationId } = this.organization;
-		// Define the base item IDs
-		const baseItemIds = [
-			'amounts-owed',    // Outstanding amounts
-			'apps-urls',       // Applications and URLs
-			'client-budgets',  // Budgets per client
-			'daily-limits',    // Daily spending limits
-			'expense',         // Expense reports
-			'manual-time-edits', // Edits in time logs
-			'payments',        // Payment transactions
-			'project-budgets', // Budgets per project
-			'time-activity',   // Time-based activities
-			'weekly',          // Weekly summaries
-			'weekly-limits'    // Weekly spending limits
-		];
 
-		// Remove the specified menu items
-		this._navMenuBuilderService.removeNavMenuItems(baseItemIds.map(itemId => `${itemId}-${organizationId}`), 'reports');
+		// Remove the specified menu items for current selected organization
+		// Note: We need to remove old menus before constructing new menus for the organization.
+		this._navMenuBuilderService.removeNavMenuItems(
+			// Define the base item IDs
+			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}`), 'reports'
+		);
 
 		// Validate if reportMenuItems is an array and has elements
 		if (!Array.isArray(this.reportMenuItems) || this.reportMenuItems.length === 0) {
 			return;
 		}
-		console.log(this.reportMenuItems);
 
 		// Iterate over each report and add it to the navigation menu
 		try {
@@ -225,10 +220,31 @@ export class PagesComponent extends TranslationBaseComponent
 	}
 
 	/**
+	 * Retrieves the base item IDs for the report menu.
+	 * These IDs represent the default menu items that are available in the report menu.
+	 * @returns An array containing the base item IDs.
+	 */
+	public getReportMenuBaseItemIds() {
+		// Define the base item IDs
+		return [
+			'amounts-owed',    // Outstanding amounts
+			'apps-urls',       // Applications and URLs
+			'client-budgets',  // Budgets per client
+			'daily-limits',    // Daily spending limits
+			'expense',         // Expense reports
+			'manual-time-edits', // Edits in time logs
+			'payments',        // Payment transactions
+			'project-budgets', // Budgets per project
+			'time-activity',   // Time-based activities
+			'weekly',          // Weekly summaries
+			'weekly-limits'    // Weekly spending limits
+		];
+	}
+
+	/**
 	 * Adds navigation menu item for managing organization.
 	 */
 	private addOrganizationManageMenuItem(organization: IOrganization): void {
-		console.log(`/pages/organizations/edit/${organization?.id}`);
 		this._navMenuBuilderService.addNavMenuItem({
 			id: 'organization-manage', // Unique identifier for the menu item
 			title: 'Manage', // The title of the menu item
@@ -249,7 +265,6 @@ export class PagesComponent extends TranslationBaseComponent
 	 * Adds navigation menu items for tasks.
 	 */
 	private addTasksNavigationMenuItems(): void {
-		console.log(`Added Tasks Navigation Menu Items`);
 		this._navMenuBuilderService.addNavMenuItem({
 			id: 'tasks-my-tasks', // Unique identifier for the menu item
 			title: 'My Tasks', // The title of the menu item
@@ -339,6 +354,10 @@ export class PagesComponent extends TranslationBaseComponent
 		this._integrationEntitySettingServiceStoreService.updateAIJobMatchingEntity(integration$).subscribe();
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	async getReportsMenus() {
 		if (!this.organization) {
 			return;
