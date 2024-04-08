@@ -5,8 +5,7 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull } from 'typeorm';
-import { QueryOrder } from '@mikro-orm/knex';
+import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -23,7 +22,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -388,29 +387,42 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				const mikroOrmQueryBuilder = this.mikroOrmRepository.createQueryBuilder(this.tableName);
+				/**
+				 * Fetches distinct organization team IDs for a given employee.
+				 * Filters based on employee ID, tenant ID, and optionally organization ID.
+				 *
+				 * @param employeeId - The ID of the employee to filter the teams by.
+				 * @returns A Promise that resolves to an array of unique organization team IDs.
+				 */
+				const fetchDistinctOrgTeamIdsForEmployee = async (employeeId: string): Promise<string[]> => {
+					const knex = this.mikroOrmOrganizationTeamEmployeeRepository.getKnex();
 
+					// Construct your SQL query using knex
+					let sqlQuery = knex('organization_team_employee').select(
+						knex.raw(`
+							DISTINCT ON ("organization_team_employee"."organizationTeamId")
+							"organization_team_employee"."organizationTeamId"
+						`)
+					);
 
-
-				//
-				const mikroOrmSubQueryBuilder = (employeeId: string): string => {
-					// Create a separate query builder for the subquery
-					const subQuery = this.mikroOrmOrganizationTeamEmployeeRepository.createQueryBuilder('team');
-					// Start building the subquery
-					subQuery.select(['team.organizationTeamId']);
-					subQuery.andWhere({ 'team.tenantId': tenantId }); // Apply the tenant filter
-					subQuery.andWhere({ 'team.isActive': true });
-					subQuery.andWhere({ 'team.isArchived': false });
-					subQuery.andWhere({ 'team.employeeId': employeeId });
+					// Builds an SQL query with specific where clauses.
+					sqlQuery.andWhere({ tenantId });
+					sqlQuery.andWhere({ employeeId });
+					sqlQuery.andWhere({ isActive: true });
+					sqlQuery.andWhere({ isArchived: false });
 
 					// Apply the organization filter if available
 					if (options?.where?.organizationId) {
 						const { organizationId } = options.where;
-						subQuery.andWhere({ 'team.organizationId': organizationId });
+						sqlQuery.andWhere({ organizationId });
 					}
 
-					// Return the subquery as a string
-					return subQuery.getQuery();
+					// Execute the raw SQL query and get the results
+					const rawResults: OrganizationTeamEmployee[] = (await knex.raw(sqlQuery.toString())).rows || [];
+					const organizationTeamIds = rawResults.map((entry: OrganizationTeamEmployee) => entry.organizationTeamId);
+
+					// Convert to string for the subquery
+					return organizationTeamIds || [];
 				};
 
 				// If admin has login and doesn't have permission to change employee
@@ -421,46 +433,29 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					}
 					if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
 						const employeeId = members['employeeId'];
-
-						// Sub query to get only employee assigned teams
-						const subQuerySQL = mikroOrmSubQueryBuilder(employeeId);
-						mikroOrmQueryBuilder.andWhere(`${mikroOrmQueryBuilder.alias}.id in (${subQuerySQL})`);
+						// Fetches distinct organization team IDs for a given employee.
+						const organizationTeamIds = await fetchDistinctOrgTeamIdsForEmployee(employeeId);
+						options.where.id = In(organizationTeamIds);
 					}
 				} else {
 					// If employee has login and doesn't have permission to change employee
 					const employeeId = RequestContext.currentEmployeeId();
-
-					// Sub query to get only employee assigned teams
-					const subQuerySQL = mikroOrmSubQueryBuilder(employeeId);
-					mikroOrmQueryBuilder.andWhere(`${mikroOrmQueryBuilder.alias}.id in (${subQuerySQL})`);
+					// Fetches distinct organization team IDs for a given employee.
+					const organizationTeamIds = await fetchDistinctOrgTeamIdsForEmployee(employeeId);
+					options.where.id = In(organizationTeamIds);
 				}
 
-				// Set Query options
-				if (isNotEmpty(options)) {
-					const { select, where, order, skip, take } = options;
-
-					if (select) { mikroOrmQueryBuilder.select(select as any); }
-					if (skip) { mikroOrmQueryBuilder.offset(take * (skip - 1)); }
-					if (take) { mikroOrmQueryBuilder.limit(take); }
-					if (where) { mikroOrmQueryBuilder.where(where); }
-					if (order) {
-						const orderBy = Object.entries(order).reduce((acc, [field, direction]) => {
-							acc[field] = direction === 'ASC' ? QueryOrder.ASC : QueryOrder.DESC;
-							return acc;
-						}, {});
-						mikroOrmQueryBuilder.orderBy(orderBy);
-					}
-				}
-
-				// Add a condition for the tenant ID
-				mikroOrmQueryBuilder.andWhere({ tenantId });
-				// console.log(mikroOrmQueryBuilder.getQuery(), mikroOrmQueryBuilder.getParams(), 'Organization Team Mikro ORM Query');
-
+				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>(options as FindManyOptions);
 				// Retrieve the items and total count
-				[items, total] = await mikroOrmQueryBuilder.getResultAndCount();
+				const [entities, totalEntities] = await this.mikroOrmOrganizationTeamRepository.findAndCount(
+					enhanceWhereWithTenantId(tenantId, where), // Add a condition for the tenant ID
+					mikroOptions
+				);
 
 				// Optionally serialize the items
-				items = items.map((item: OrganizationTeam) => this.serialize(item));
+				items = entities.map((item: OrganizationTeam) => this.serialize(item)) as OrganizationTeam[];
+				total = totalEntities;
 				break;
 			case MultiORMEnum.TypeORM:
 				// Create a query builder for the OrganizationTeam entity

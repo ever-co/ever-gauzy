@@ -1,7 +1,9 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	RelationId,
 	JoinTable
 } from 'typeorm';
+import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	ITimeSlot,
 	ITimeSlotMinute,
@@ -10,8 +12,6 @@ import {
 	IEmployee,
 	ITimeLog
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsDateString, IsUUID, IsNotEmpty, IsOptional } from 'class-validator';
 import {
 	Activity,
 	Employee,
@@ -20,7 +20,7 @@ import {
 	TimeLog
 } from './../../core/entities/internal';
 import { TimeSlotMinute } from './time-slot-minute.entity';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../../core/decorators/entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
@@ -60,10 +60,17 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	@MultiORMColumn()
 	startedAt: Date;
 
-	/** Additional fields */
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	stoppedAt?: Date;
+
+	@VirtualMultiOrmColumn()
 	percentage?: number;
+
+	@VirtualMultiOrmColumn()
 	keyboardPercentage?: number;
+
+	@VirtualMultiOrmColumn()
 	mousePercentage?: number;
 	/*
 	|--------------------------------------------------------------------------
@@ -120,20 +127,23 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * TimeLog
 	 */
 	@MultiORMManyToMany(() => TimeLog, (it) => it.timeSlots, {
+		/**  Database cascade action on update. */
 		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true,
+		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'time_slot_time_logs',
+		/** Column in pivot table referencing 'time_slot' primary key. */
 		joinColumn: 'timeSlotId',
-		inverseJoinColumn: 'timeLogId',
+		/** Column in pivot table referencing 'time_logs' primary key. */
+		inverseJoinColumn: 'timeLogId'
 	})
-	@JoinTable({
-		name: 'time_slot_time_logs'
-	})
+	@JoinTable({ name: 'time_slot_time_logs' })
 	timeLogs?: ITimeLog[];
 }

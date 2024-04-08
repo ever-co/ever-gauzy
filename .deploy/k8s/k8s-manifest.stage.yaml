@@ -48,7 +48,7 @@ kind: Deployment
 metadata:
     name: gauzy-stage-api
 spec:
-    replicas: 3
+    replicas: 2
     selector:
         matchLabels:
             app: gauzy-stage-api
@@ -271,7 +271,7 @@ kind: Deployment
 metadata:
     name: gauzy-stage-webapp
 spec:
-    replicas: 3
+    replicas: 2
     selector:
         matchLabels:
             app: gauzy-stage-webapp

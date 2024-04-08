@@ -8,7 +8,7 @@ import { IReport, IReportCategory, IReportOrganization } from '@gauzy/contracts'
 import { BaseEntity } from '../core/entities/internal';
 import { ReportCategory } from './report-category.entity';
 import { ReportOrganization } from './report-organization.entity';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
 
 @MultiORMEntity('report', { mikroOrmRepository: () => MikroOrmReportRepository })
@@ -48,6 +48,8 @@ export class Report extends BaseEntity implements IReport {
 	@MultiORMColumn({ default: false })
 	showInMenu?: boolean;
 
+	/** Additional virtual columns */
+	@VirtualMultiOrmColumn()
 	imageUrl?: string;
 
 	/*

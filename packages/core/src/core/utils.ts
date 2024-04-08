@@ -10,7 +10,7 @@ import { sample } from 'underscore';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { IDateRange, IUser } from '@gauzy/contracts';
+import { DateRange, IDateRange, IUser } from '@gauzy/contracts';
 import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
@@ -214,10 +214,7 @@ export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
 export function getDateRangeFormat(
 	startDate: moment.Moment,
 	endDate: moment.Moment
-): {
-	start: string | Date;
-	end: string | Date;
-} {
+): DateRange {
 	let start = moment(startDate);
 	let end = moment(endDate);
 
@@ -242,9 +239,7 @@ export function getDateRangeFormat(
 				end: end.toDate()
 			};
 		default:
-			throw Error(
-				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
-			);
+			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`);
 	}
 }
 
@@ -492,6 +487,23 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
 		};
 	}
 	return where;
+}
+
+/**
+ * Adds 'tenantId' to a 'where' clause, supporting both objects and arrays.
+ *
+ * @param tenantId - The tenant ID to add.
+ * @param where - The current 'where' clause.
+ * @returns An updated 'where' clause including the 'tenantId'.
+ */
+export function enhanceWhereWithTenantId<T>(tenantId: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
+	if (Array.isArray(where)) {
+		// Merge tenantId into each object of the array
+		return where.map(condition => ({ ...condition, tenantId }));
+	} else {
+		// Merge where with tenantId if where is an object
+		return { ...where, tenantId };
+	}
 }
 
 /**

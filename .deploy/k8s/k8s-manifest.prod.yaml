@@ -48,7 +48,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-api
 spec:
-    replicas: 12
+    replicas: 6
     selector:
         matchLabels:
             app: gauzy-prod-api
@@ -283,7 +283,7 @@ kind: Deployment
 metadata:
     name: gauzy-prod-webapp
 spec:
-    replicas: 6
+    replicas: 3
     selector:
         matchLabels:
             app: gauzy-prod-webapp
