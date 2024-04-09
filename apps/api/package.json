@@ -45,6 +45,7 @@
 		"@gauzy/knowledge-base-plugin": "^0.1.0",
 		"@gauzy/jitsu-analytics-plugin": "^0.1.0",
 		"@gauzy/sentry-plugin": "^0.1.0",
+		"@gauzy/job-post-plugin": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},

@@ -1,0 +1,38 @@
+{
+	"name": "@gauzy/job-post-plugin",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Platform Job Post Plugin",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "dist",
+		"test": "__test__"
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
+	"scripts": {
+		"test:e2e": "jest --config ./jest.config.js",
+		"build": "rimraf dist && yarn run compile",
+		"compile": "tsc -p tsconfig.build.json"
+	},
+	"keywords": [],
+	"dependencies": {
+		"@gauzy/plugin": "^0.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.33",
+		"rimraf": "^3.0.2",
+		"typescript": "5.1.6"
+	}
+}
