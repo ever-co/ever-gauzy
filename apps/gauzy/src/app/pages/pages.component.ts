@@ -42,7 +42,6 @@ import { NavMenuBuilderService, NavMenuSectionItem } from '../@core/services/nav
 export class PagesComponent extends TranslationBaseComponent
 	implements AfterViewInit, OnInit, OnDestroy {
 
-	public previousOrganization: IOrganization;
 	public organization: IOrganization;
 	public user: IUser;
 	public menu: NbMenuItem[] = [];
