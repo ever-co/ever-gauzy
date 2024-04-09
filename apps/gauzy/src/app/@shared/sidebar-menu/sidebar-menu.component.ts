@@ -17,13 +17,9 @@ export class SidebarMenuComponent implements AfterContentChecked {
 	@Input() items: IMenuItem[] = [];
 
 	constructor(
-		private readonly cdr: ChangeDetectorRef,
+		private readonly _cdr: ChangeDetectorRef,
 		private readonly _sidebarMenuService: SidebarMenuService
-	) {}
-
-	ngAfterContentChecked(): void {
-		this.cdr.detectChanges();
-	}
+	) { }
 
 	public get selectedItem() {
 		return this._sidebarMenuService.selectedItem;
@@ -31,10 +27,15 @@ export class SidebarMenuComponent implements AfterContentChecked {
 
 	public set selectedItem(value: IMenuItem) {
 		this._sidebarMenuService.selectedItem = value;
+		this._cdr.detectChanges();
 	}
 
 	public focusOn(event: IMenuItem) {
 		this._sidebarMenuService.selectedItem = event;
-		this.cdr.detectChanges();
+		this._cdr.detectChanges();
+	}
+
+	ngAfterContentChecked(): void {
+		this._cdr.detectChanges();
 	}
 }

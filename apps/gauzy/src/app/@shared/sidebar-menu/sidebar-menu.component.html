@@ -1,10 +1,11 @@
 <div class="menu-container">
 	<ng-container *ngFor="let item of items">
-		<ga-menu-item
-			*ngIf="!item?.hidden"
-			(selectedChange)="focusOn($event)"
-			[item]="item"
-			[selected]="item === selectedItem"
-		></ga-menu-item>
+		<ng-container *ngIf="!item?.hidden">
+			<ga-menu-item
+				(selectedChange)="focusOn($event)"
+				[item]="item"
+				[selected]="item === selectedItem"
+			></ga-menu-item>
+		</ng-container>
 	</ng-container>
 </div>
