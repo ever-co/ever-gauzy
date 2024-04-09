@@ -163,7 +163,7 @@ export class PagesComponent extends TranslationBaseComponent
 			this.store.user$.pipe(
 				take(1),
 				distinctUntilChange(),
-				filter((user: IUser) => !!user && !!user.employeeId),
+				filter((user: IUser) => !!user && !!user.employee?.id),
 				tap(() => this.addTasksNavigationMenuItems())
 			),
 			this.store.selectedOrganization$.pipe(
