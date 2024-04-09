@@ -9,14 +9,17 @@ import {
 	IUpdateEmployeeJobPostAppliedResult,
 	IVisibilityJobPostInput
 } from '@gauzy/contracts';
-import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
 
 @ApiTags('EmployeeJobPost')
-@Controller()
+@Controller('/employee-job')
 export class EmployeeJobPostController {
-	constructor(private readonly employeeJobPostService: EmployeeJobPostService) { }
+
+	constructor(
+		private readonly _employeeJobPostService: EmployeeJobPostService
+	) { }
 
 	/**
 	 * Find all employee job posts.
@@ -35,8 +38,10 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(@Query() input: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
-		return this.employeeJobPostService.findAll(input);
+	async findAll(
+		@Query() input: IGetEmployeeJobPostInput
+	): Promise<IPagination<IEmployeeJobPost>> {
+		return await this._employeeJobPostService.findAll(input);
 	}
 
 	/**
@@ -57,10 +62,12 @@ export class EmployeeJobPostController {
 	})
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
 	@Post('apply')
-	async apply(@Body() input: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult | null> {
+	async apply(
+		@Body() input: IEmployeeJobApplication
+	): Promise<IEmployeeJobApplicationAppliedResult | null> {
 		try {
 			// Apply for the job using the service
-			const appliedJobPost = await this.employeeJobPostService.apply(input);
+			const appliedJobPost = await this._employeeJobPostService.apply(input);
 
 			// If needed, perform additional logic here
 			return appliedJobPost;
@@ -91,10 +98,12 @@ export class EmployeeJobPostController {
 	})
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
 	@Post('updateApplied')
-	async updateApplied(@Body() input: IEmployeeJobApplication): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
+	async updateApplied(
+		@Body() input: IEmployeeJobApplication
+	): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
 		try {
 			// Update the job application status using the service
-			const updatedJobPost = await this.employeeJobPostService.updateApplied(input);
+			const updatedJobPost = await this._employeeJobPostService.updateApplied(input);
 
 			// If needed, perform additional logic here
 
@@ -126,10 +135,12 @@ export class EmployeeJobPostController {
 	})
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
 	@Post('hide')
-	async updateVisibility(@Body() data: IVisibilityJobPostInput): Promise<boolean | null> {
+	async updateVisibility(
+		@Body() data: IVisibilityJobPostInput
+	): Promise<boolean | null> {
 		try {
 			// Update the job visibility status using the service
-			const updatedJobPost = await this.employeeJobPostService.updateVisibility(data);
+			const updatedJobPost = await this._employeeJobPostService.updateVisibility(data);
 
 			// If needed, perform additional logic here
 
@@ -158,7 +169,7 @@ export class EmployeeJobPostController {
 			// Validate the input structure if needed
 
 			// Create a preliminary employee job application record using the service
-			const createdJobApplication = await this.employeeJobPostService.preProcessEmployeeJobApplication(input);
+			const createdJobApplication = await this._employeeJobPostService.preProcessEmployeeJobApplication(input);
 
 			// If needed, perform additional logic here
 
@@ -187,7 +198,7 @@ export class EmployeeJobPostController {
 	): Promise<void | null> {
 		try {
 			// Retrieve AI-generated proposal for the employee job application using the service
-			const proposal = await this.employeeJobPostService.getEmployeeJobApplication(employeeJobApplicationId);
+			const proposal = await this._employeeJobPostService.getEmployeeJobApplication(employeeJobApplicationId);
 
 			// If needed, perform additional logic here
 
@@ -216,7 +227,7 @@ export class EmployeeJobPostController {
 	): Promise<void | null> {
 		try {
 			// Generate AI proposal for the employee job application using the service
-			const aiProposal = await this.employeeJobPostService.generateAIProposal(employeeJobApplicationId);
+			const aiProposal = await this._employeeJobPostService.generateAIProposal(employeeJobApplicationId);
 
 			// If needed, perform additional logic here
 

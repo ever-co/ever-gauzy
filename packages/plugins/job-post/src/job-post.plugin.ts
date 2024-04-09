@@ -1,8 +1,9 @@
 
 import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 
 @GauzyCorePlugin({
-	imports: [],
+	imports: [EmployeeJobPostModule],
 	entities: [],
 	providers: []
 })

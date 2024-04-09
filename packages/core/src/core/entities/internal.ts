@@ -36,8 +36,6 @@ export * from '../../employee-job-preset/job-preset-upwork-job-search-criterion.
 export * from '../../employee-job-preset/job-preset.entity';
 export * from '../../employee-job-preset/job-search-category/job-search-category.entity';
 export * from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
-export * from '../../employee-job/employee-job.entity';
-export * from '../../employee-job/jobPost.entity';
 export * from '../../employee-level/employee-level.entity';
 export * from '../../employee-phone/employee-phone.entity';
 export * from '../../employee-proposal-template/employee-proposal-template.entity';

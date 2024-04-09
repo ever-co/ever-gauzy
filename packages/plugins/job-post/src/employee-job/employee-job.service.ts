@@ -5,7 +5,6 @@ import { environment as env } from '@gauzy/config';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import {
 	IEmployeeJobApplication,
-	ICountry,
 	IEmployee,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostInput,
@@ -20,19 +19,15 @@ import {
 	IntegrationEnum,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { RequestContext } from './../core/context';
-import { IntegrationTenantService } from './../integration-tenant/integration-tenant.service';
-import { EmployeeService } from '../employee/employee.service';
-import { CountryService } from './../country/country.service';
+import { EmployeeService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import { EmployeeJobPost } from './employee-job.entity';
 import { JobPost } from './jobPost.entity';
 
 @Injectable()
 export class EmployeeJobPostService {
 	constructor(
-		private readonly employeeService: EmployeeService,
-		private readonly gauzyAIService: GauzyAIService,
-		private readonly countryService: CountryService,
+		private readonly _employeeService: EmployeeService,
+		private readonly _gauzyAIService: GauzyAIService,
 		private readonly _integrationTenantService: IntegrationTenantService,
 	) { }
 
@@ -45,7 +40,7 @@ export class EmployeeJobPostService {
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
 	 */
 	public async updateVisibility(input: IVisibilityJobPostInput): Promise<boolean> {
-		return await this.gauzyAIService.updateVisibility(input);
+		return await this._gauzyAIService.updateVisibility(input);
 	}
 
 	/**
@@ -56,13 +51,14 @@ export class EmployeeJobPostService {
 	 * @param providerJobId Unique job id in the provider, e.g. Job Id in Upwork
 	 */
 	public async updateApplied(input: IEmployeeJobApplication): Promise<IUpdateEmployeeJobPostAppliedResult> {
-		return await this.gauzyAIService.updateApplied(input);
+		return await this._gauzyAIService.updateApplied(input);
 	}
 
 	/**
-	 * Apply for a job
-	 * @param input
-	 * @returns
+	 * Applies for a job by converting HTML content to plain text and then forwarding the application to a service.
+	 *
+	 * @param input The input data for applying to the job, including the job application proposal.
+	 * @returns A promise that resolves to the result of the job application.
 	 */
 	public async apply(input: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult> {
 		try {
@@ -72,8 +68,10 @@ export class EmployeeJobPostService {
 			input.proposal = plainText;
 		} catch (error) {
 			console.log('Error while applying job', error);
+			// Handle the error here, you might want to throw it or return a specific error result
 		}
-		return await this.gauzyAIService.apply(input);
+		// Return the result of applying for the job
+		return await this._gauzyAIService.apply(input);
 	}
 
 	/**
@@ -81,7 +79,7 @@ export class EmployeeJobPostService {
 	 * @param data
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
-		const employees = await this.employeeService.findAllActive();
+		const employees = await this._employeeService.findAllActive();
 		let jobs: IPagination<IEmployeeJobPost>;
 
 		try {
@@ -109,7 +107,7 @@ export class EmployeeJobPostService {
 						entityType: IntegrationEntity.JOB_MATCHING
 					});
 
-					const result = await this.gauzyAIService.getEmployeesJobPosts(data);
+					const result = await this._gauzyAIService.getEmployeesJobPosts(data);
 					if (result === null) {
 						if (env.production) {
 							// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
@@ -119,16 +117,15 @@ export class EmployeeJobPostService {
 							};
 						} else {
 							// In development, even if connection failed, we want to show fake jobs in UI
-							jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+							jobs = await this.getRandomEmployeeJobPosts(employees, data.limit);
 						}
 					} else {
-						const jobsConverted = result.items.map((jo) => {
-							if (jo.employeeId) {
-								const employee = employees.find((emp) => emp.id === jo.employeeId);
-								jo.employee = employee;
+						const jobsConverted = result.items.map((job) => {
+							if (job.employeeId) {
+								const employee = employees.find((employee) => employee.id === job.employeeId);
+								job.employee = employee;
 							}
-
-							return jo;
+							return job;
 						});
 
 						jobs = {
@@ -138,12 +135,12 @@ export class EmployeeJobPostService {
 					}
 				} else {
 					// If integration not enabled, we want to show fake jobs in UI
-					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+					jobs = await this.getRandomEmployeeJobPosts(employees, data.limit);
 				}
 			} else {
 				// If it's production, we should return empty here because we don't want fake jobs in production
 				if (env.production === false) {
-					jobs = await this.getRandomEmployeeJobPosts(employees, data.page, data.limit);
+					jobs = await this.getRandomEmployeeJobPosts(employees, data.limit);
 				} else {
 					jobs = {
 						items: [],
@@ -168,7 +165,7 @@ export class EmployeeJobPostService {
 	 * @returns
 	 */
 	public async preProcessEmployeeJobApplication(params: IEmployeeJobApplication) {
-		return await this.gauzyAIService.preProcessEmployeeJobApplication(params);
+		return await this._gauzyAIService.preProcessEmployeeJobApplication(params);
 	}
 
 	/**
@@ -177,7 +174,7 @@ export class EmployeeJobPostService {
 	 * @param employeeJobApplicationId
 	 */
 	public async generateAIProposal(employeeJobApplicationId: string): Promise<void> {
-		return await this.gauzyAIService.generateAIProposalForEmployeeJobApplication(employeeJobApplicationId);
+		return await this._gauzyAIService.generateAIProposalForEmployeeJobApplication(employeeJobApplicationId);
 	}
 
 	/**
@@ -187,26 +184,27 @@ export class EmployeeJobPostService {
 	 * @returns
 	 */
 	public async getEmployeeJobApplication(employeeJobApplicationId: string) {
-		return await this.gauzyAIService.getEmployeeJobApplication(employeeJobApplicationId);
+		return await this._gauzyAIService.getEmployeeJobApplication(employeeJobApplicationId);
 	}
 
-	private async getRandomEmployeeJobPosts(
-		employees?: IEmployee[],
-		page = 0,
-		limit = 10
-	): Promise<IPagination<IEmployeeJobPost>> {
-		const { items: countries = [] as ICountry[] } = await this.countryService.findAll();
-
+	/**
+	 * Generates random employee job posts.
+	 *
+	 * @param employees The array of employees to assign to job posts.
+	 * @param limit The maximum number of job posts to generate.
+	 * @returns A promise that resolves to an object containing paginated employee job posts.
+	 */
+	private async getRandomEmployeeJobPosts(employees: IEmployee[] = [], limit = 10): Promise<IPagination<IEmployeeJobPost>> {
 		const employeesJobs: EmployeeJobPost[] = [];
+
 		for (let i = 0; i < limit; i++) {
 			const employee = faker.helpers.arrayElement(employees);
 			const jobPostEmployee = new EmployeeJobPost({
 				employeeId: employee ? employee.id : null,
 				employee: employee
 			});
-
 			const job = new JobPost({
-				country: faker.helpers.arrayElement(countries).isoCode,
+				country: faker.location.countryCode(),
 				category: faker.person.jobTitle(),
 				title: faker.lorem.sentence(),
 				description: faker.lorem.sentences(3),
@@ -215,7 +213,6 @@ export class EmployeeJobPostService {
 				jobSource: faker.helpers.arrayElement(Object.values(JobPostSourceEnum)),
 				jobType: faker.helpers.arrayElement(Object.values(JobPostTypeEnum))
 			});
-
 			jobPostEmployee.jobPost = job;
 			employeesJobs.push(jobPostEmployee);
 		}
