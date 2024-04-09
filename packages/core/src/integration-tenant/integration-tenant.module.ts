@@ -11,10 +11,13 @@ import { IntegrationEntitySettingModule } from './../integration-entity-setting/
 import { RoleModule } from '../role/role.module';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmIntegrationTenantRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/integration-tenant', module: IntegrationTenantModule }]),
+		RouterModule.register([
+			{ path: '/integration-tenant', module: IntegrationTenantModule }
+		]),
 		TypeOrmModule.forFeature([IntegrationTenant]),
 		MikroOrmModule.forFeature([IntegrationTenant]),
 		RoleModule,
@@ -23,8 +26,8 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		forwardRef(() => IntegrationEntitySettingModule),
 		CqrsModule
 	],
-	exports: [IntegrationTenantService],
 	controllers: [IntegrationTenantController],
-	providers: [IntegrationTenantService, ...CommandHandlers]
+	providers: [IntegrationTenantService, TypeOrmIntegrationTenantRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, IntegrationTenantService, TypeOrmIntegrationTenantRepository],
 })
 export class IntegrationTenantModule { }
