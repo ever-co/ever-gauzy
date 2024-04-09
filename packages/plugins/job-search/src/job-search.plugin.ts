@@ -7,7 +7,7 @@ import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 	entities: [],
 	providers: []
 })
-export class JobPostPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
+export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
@@ -19,7 +19,7 @@ export class JobPostPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${JobPostPlugin.name} is being bootstrapped...`);
+			console.log(`${JobSearchPlugin.name} is being bootstrapped...`);
 		}
 	}
 
@@ -28,7 +28,7 @@ export class JobPostPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${JobPostPlugin.name} is being destroyed...`);
+			console.log(`${JobSearchPlugin.name} is being destroyed...`);
 		}
 	}
 }
