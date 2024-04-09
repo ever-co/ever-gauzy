@@ -2,6 +2,7 @@ import { environment } from '@gauzy/config';
 import { ChangelogPlugin } from '@gauzy/changelog-plugin';
 import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
+import { JobSearchPlugin } from '@gauzy/job-search-plugin';
 import { SentryTracing as SentryPlugin } from './sentry';
 
 const { jitsu, sentry } = environment;
@@ -10,6 +11,8 @@ const { jitsu, sentry } = environment;
  * An array of plugins to be included or used in the codebase.
  */
 export const plugins = [
+    // Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
+    JobSearchPlugin,
     // Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
     ChangelogPlugin,
     // Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
