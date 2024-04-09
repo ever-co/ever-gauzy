@@ -31,15 +31,18 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 
     ngAfterViewInit() {
         merge(
+            this.translateService.onLangChange.pipe(
+                tap(() => this.defineBaseNavMenus()),
+            ),
             this._store.selectedOrganization$.pipe(
                 filter((organization: IOrganization) => !!organization),
                 distinctUntilChange(),
                 tap(() => this.defineBaseNavMenus())
             ),
-            this.translateService.onLangChange.pipe(
+            this._store.featureOrganizations$.pipe(
                 tap(() => this.defineBaseNavMenus()),
             ),
-            this._store.featureOrganizations$.pipe(
+            this._store.featureTenant$.pipe(
                 tap(() => this.defineBaseNavMenus()),
             ),
             this._store.userRolePermissions$.pipe(
