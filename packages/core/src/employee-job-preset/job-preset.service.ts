@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { SelectQueryBuilder } from 'typeorm';
+import { isNotEmpty } from 'class-validator';
 import {
 	IEmployeePresetInput,
 	IGetJobPresetCriterionInput,
@@ -13,17 +13,13 @@ import {
 import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
-import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-search-criterion.entity';
-import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
 import { JobPreset } from './job-preset.entity';
-import { Employee } from '../employee/employee.entity';
 import {
 	CreateJobPresetCommand,
 	SaveEmployeeCriterionCommand,
 	SaveEmployeePresetCommand,
 	SavePresetCriterionCommand
 } from './commands';
-import { isNotEmpty } from 'class-validator';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmJobPresetRepository } from './repository/type-orm-job-preset.repository';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
@@ -34,21 +30,12 @@ import { TypeOrmEmployeeRepository } from './../employee/repository/type-orm-emp
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	constructor(
+		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
+		private readonly mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
+		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
+		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly commandBus: CommandBus,
-
-		@InjectRepository(JobPreset)
-		typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-
-		mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
-
-		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
-
-		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-
-		@InjectRepository(Employee)
-		private typeOrmEmployeeRepository: TypeOrmEmployeeRepository
 	) {
 		super(typeOrmJobPresetRepository, mikroOrmJobPresetRepository);
 	}
@@ -62,7 +49,6 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
 		const { organizationId, search, employeeId } = request;
 		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
-
 
 		const query = this.typeOrmRepository.createQueryBuilder('job_preset');
 		query.setFindOptions({

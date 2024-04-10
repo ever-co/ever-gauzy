@@ -1,4 +1,4 @@
-import { RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
@@ -41,7 +41,11 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	/**
 	 *
 	 */
-	@MultiORMManyToOne(() => JobPreset, (it) => it.jobPresetCriterions)
+	@MultiORMManyToOne(() => JobPreset, (it) => it.jobPresetCriterions, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
+	@JoinColumn()
 	jobPreset?: IJobPreset;
 
 	@ApiProperty({ type: () => String })
@@ -54,7 +58,11 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	/**
 	 *
 	 */
-	@MultiORMManyToOne(() => JobSearchOccupation, (it) => it.jobPresetCriterions)
+	@MultiORMManyToOne(() => JobSearchOccupation, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
+	@JoinColumn()
 	occupation?: IJobSearchOccupation;
 
 	@ApiProperty({ type: () => String })
@@ -67,7 +75,11 @@ export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEnt
 	/**
 	 *
 	 */
-	@MultiORMManyToOne(() => JobSearchCategory, (it) => it.jobPresetCriterions)
+	@MultiORMManyToOne(() => JobSearchCategory, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
+	@JoinColumn()
 	category?: IJobSearchCategory;
 
 	@ApiProperty({ type: () => String })

@@ -1,4 +1,4 @@
-import { RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
@@ -43,7 +43,11 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	/**
 	 *
 	 */
-	@MultiORMManyToOne(() => JobPreset, (it) => it.employeeCriterions)
+	@MultiORMManyToOne(() => JobPreset, (it) => it.employeeCriterions, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
+	@JoinColumn()
 	jobPreset?: IJobPreset;
 
 	@ApiProperty({ type: () => String })
@@ -57,6 +61,7 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	 *
 	 */
 	@MultiORMManyToOne(() => Employee)
+	@JoinColumn()
 	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
@@ -69,7 +74,11 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	/**
 	 *
 	 */
-	@MultiORMManyToOne(() => JobSearchOccupation, (it) => it.employeeCriterions)
+	@MultiORMManyToOne(() => JobSearchOccupation, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
+	@JoinColumn()
 	occupation?: IJobSearchOccupation;
 
 	@ApiProperty({ type: () => String })
@@ -82,7 +91,11 @@ export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEnt
 	/**
 	 *
 	 */
-	@MultiORMManyToOne(() => JobSearchCategory, (it) => it.employeeCriterions)
+	@MultiORMManyToOne(() => JobSearchCategory, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
+	@JoinColumn()
 	category?: IJobSearchCategory;
 
 	@ApiProperty({ type: () => String })

@@ -1,18 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import {
-	JobPostSourceEnum,
-	IEmployeeUpworkJobsSearchCriterion,
-	IJobPresetUpworkJobSearchCriterion,
-	IJobSearchCategory
-} from '@gauzy/contracts';
+import { JobPostSourceEnum, IJobSearchCategory } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
-import {
-	EmployeeUpworkJobsSearchCriterion,
-	JobPresetUpworkJobSearchCriterion,
-	TenantOrganizationBaseEntity
-} from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../../core/decorators/entity';
+import { TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmJobSearchCategoryRepository } from './repository/mikro-orm-job-search-category.repository';
 
 @MultiORMEntity('job_search_category', { mikroOrmRepository: () => MikroOrmJobSearchCategoryRepository })
@@ -42,26 +33,4 @@ export class JobSearchCategory extends TenantOrganizationBaseEntity implements I
 		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
 	jobSource?: JobPostSourceEnum;
-
-	/*
-	|--------------------------------------------------------------------------
-	| @OneToMany
-	|--------------------------------------------------------------------------
-	*/
-
-	/**
-	 * EmployeeUpworkJobsSearchCriterion
-	 */
-	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.category, {
-		onDelete: 'CASCADE'
-	})
-	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
-
-	/**
-	 * JobPresetUpworkJobSearchCriterion
-	 */
-	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.category, {
-		onDelete: 'CASCADE'
-	})
-	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }

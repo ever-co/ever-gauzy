@@ -1,18 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import {
-	JobPostSourceEnum,
-	IJobSearchOccupation,
-	IJobPresetUpworkJobSearchCriterion,
-	IEmployeeUpworkJobsSearchCriterion
-} from '@gauzy/contracts';
+import { JobPostSourceEnum, IJobSearchOccupation } from '@gauzy/contracts';
 import { isMySQL } from "@gauzy/config";
-import {
-	EmployeeUpworkJobsSearchCriterion,
-	JobPresetUpworkJobSearchCriterion,
-	TenantOrganizationBaseEntity
-} from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMOneToMany } from './../../core/decorators/entity';
+import { TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity } from './../../core/decorators/entity';
 import { MikroOrmJobSearchOccupationRepository } from './repository/mikro-orm-job-search-occupation.repository';
 
 @MultiORMEntity('job_search_occupation', { mikroOrmRepository: () => MikroOrmJobSearchOccupationRepository })
@@ -42,28 +33,4 @@ export class JobSearchOccupation extends TenantOrganizationBaseEntity implements
 		...(isMySQL() ? { type: 'enum', enum: JobPostSourceEnum } : { type: 'text' })
 	})
 	jobSource?: JobPostSourceEnum;
-
-	/*
-	|--------------------------------------------------------------------------
-	| @OneToMany
-	|--------------------------------------------------------------------------
-	*/
-
-	/**
-	 * EmployeeUpworkJobsSearchCriterion
-	 */
-	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.occupation, {
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
-
-	/**
-	 * JobPresetUpworkJobSearchCriterion
-	 */
-	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.occupation, {
-		/** Database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }

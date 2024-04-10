@@ -21,7 +21,7 @@ import { UUIDValidationPipe } from './../shared/pipes';
 @ApiTags('EmployeeJobPreset')
 @Controller('employee')
 export class EmployeePresetController {
-	constructor(private readonly jobPresetService: JobPresetService) {}
+	constructor(private readonly jobPresetService: JobPresetService) { }
 
 	@ApiOperation({ summary: 'Save Employee preset' })
 	@ApiResponse({
