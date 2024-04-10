@@ -1,7 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { RequestContext } from '../../../core/context';
-import { Employee } from '../../../employee/employee.entity';
 import { JobPresetUpworkJobSearchCriterion } from '../../job-preset-upwork-job-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
 import { CreateJobPresetCommand } from '../create-job-preset.command';
@@ -13,13 +11,8 @@ import { TypeOrmEmployeeRepository } from '../../../employee/repository/type-orm
 export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCommand> {
 
 	constructor(
-		@InjectRepository(JobPreset)
 		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-
-		@InjectRepository(Employee)
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-
-		@InjectRepository(JobPresetUpworkJobSearchCriterion)
 		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository
 	) { }
 
