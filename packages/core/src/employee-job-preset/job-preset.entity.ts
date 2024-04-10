@@ -59,13 +59,15 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	 */
 	@MultiORMManyToMany(() => Employee, (it) => it.jobPresets, {
 		cascade: true,
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true,
+		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'employee_job_preset',
+		/** Column in pivot table referencing 'time_slot' primary key. */
 		joinColumn: 'jobPresetId',
+		/** Column in pivot table referencing 'time_logs' primary key. */
 		inverseJoinColumn: 'employeeId',
 	})
-	@JoinTable({
-		name: 'employee_job_preset'
-	})
+	@JoinTable({ name: 'employee_job_preset' })
 	employees?: Employee[];
 }
