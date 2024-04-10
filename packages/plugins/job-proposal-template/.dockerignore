@@ -1,0 +1,25 @@
+# Git
+.git
+.gitmodules
+.gitignore
+
+# README file containing information about the project
+README.md
+
+# Directory containing Docker-related files and configurations
+docker
+
+# Directory containing installed Node.js modules, managed by npm or yarn
+node_modules
+
+# Directory for temporary files
+tmp
+
+# Directory for build-related files
+build
+
+# Directory for distribution files, typically production-ready code
+dist
+
+# Environment variables configuration file (dotenv file)
+.env
