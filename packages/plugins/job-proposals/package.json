@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/job-proposal-template-plugin",
+	"name": "@gauzy/job-proposals-plugin",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Job Proposal Template Plugin",
+	"description": "Ever Gauzy Platform Job Proposals Plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
