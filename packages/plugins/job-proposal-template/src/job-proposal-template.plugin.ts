@@ -1,4 +1,6 @@
 
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { RolePermissionModule } from '@gauzy/core';
@@ -8,7 +10,12 @@ import { EmployeeProposalTemplateService } from './employee-proposal-template.se
 import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
 
 @GauzyCorePlugin({
-	imports: [RolePermissionModule, CqrsModule],
+	imports: [
+		TypeOrmModule.forFeature([EmployeeProposalTemplate]),
+		MikroOrmModule.forFeature([EmployeeProposalTemplate]),
+		RolePermissionModule,
+		CqrsModule
+	],
 	entities: [EmployeeProposalTemplate],
 	controllers: [EmployeeProposalTemplateController],
 	providers: [EmployeeProposalTemplateService, TypeOrmEmployeeProposalTemplateRepository]

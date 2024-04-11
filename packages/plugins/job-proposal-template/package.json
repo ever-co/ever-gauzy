@@ -31,8 +31,10 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@mikro-orm/nestjs": "^5.2.3",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/swagger": "^7.3.0",
+		"@nestjs/typeorm": "^10.0.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
