@@ -7,8 +7,8 @@ import { MikroOrmEmployeeProposalTemplateRepository, TypeOrmEmployeeProposalTemp
 @Injectable()
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
-		typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
-		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository
+		readonly typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
+		readonly mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository
 	) {
 		super(typeOrmEmployeeProposalTemplateRepository, mikroOrmEmployeeProposalTemplateRepository);
 	}
@@ -20,7 +20,7 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 	 * @returns The updated proposal template.
 	 */
 	async makeDefault(id: IEmployeeProposalTemplate['id']): Promise<IEmployeeProposalTemplate> {
-		const proposalTemplate = await this.findOneByIdString(id);
+		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
 		proposalTemplate.isDefault = !proposalTemplate.isDefault;
 
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
@@ -29,7 +29,7 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 			isDefault: false
 		});
 
-		return super.save(proposalTemplate);
+		return await super.save(proposalTemplate);
 	}
 
 	/**
@@ -39,6 +39,6 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 	 * @returns The list of proposal templates.
 	 */
 	async findAll(params?: PaginationParams<IEmployeeProposalTemplate>) {
-		return super.findAll(params);
+		return await super.findAll(params);
 	}
 }
