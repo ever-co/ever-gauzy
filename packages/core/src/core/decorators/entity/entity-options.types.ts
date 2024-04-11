@@ -1,6 +1,6 @@
 import { EntityOptions as TypeEntityOptions } from 'typeorm';
 import { EntityOptions as MikroEntityOptions } from '@mikro-orm/core';
-import { ConstructorType } from '@gauzy/common';
+import { Type } from '@gauzy/common';
 
 /**
  * Options for defining MikroORM entities.
@@ -11,7 +11,7 @@ export type MikroOrmEntityOptions<T> = MikroEntityOptions<T> & {
     /**
      * Optional function returning the repository constructor.
      */
-    mikroOrmRepository?: () => ConstructorType;
+    mikroOrmRepository?: () => Type;
 };
 
 /**
@@ -21,5 +21,5 @@ export type TypeOrmEntityOptions = TypeEntityOptions & {
     /**
      * Optional function returning the repository constructor.
      */
-    typeOrmRepository?: () => ConstructorType;
+    typeOrmRepository?: () => Type;
 };
