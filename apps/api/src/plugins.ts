@@ -12,6 +12,8 @@ const { jitsu, sentry } = environment;
  * An array of plugins to be included or used in the codebase.
  */
 export const plugins = [
+    // Includes the SentryPlugin based on the presence of Sentry configuration.
+    ...(sentry && sentry.dsn ? [SentryPlugin] : []),
     // Initializes the Jitsu Analytics Plugin by providing a configuration object.
     JitsuAnalyticsPlugin.init({
         config: {
@@ -21,14 +23,10 @@ export const plugins = [
             echoEvents: jitsu.echoEvents
         }
     }),
-    // Includes the SentryPlugin based on the presence of Sentry configuration.
-    ...(sentry && sentry.dsn ? [SentryPlugin] : []),
     // Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
     ChangelogPlugin,
     // Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
     KnowledgeBasePlugin,
-    // Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
-    JobSearchPlugin,
     // Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
     JobSearchPlugin,
     // Indicates the inclusion or intention to use the JobProposalTemplatePlugin in the codebase.
