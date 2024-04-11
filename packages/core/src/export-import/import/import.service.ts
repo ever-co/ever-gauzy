@@ -42,7 +42,6 @@ import {
 	EmployeeAppointment,
 	EmployeeAward,
 	EmployeeLevel,
-	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
 	EmployeeUpworkJobsSearchCriterion,
@@ -200,8 +199,6 @@ import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository
 import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { MikroOrmEmployeeLevelRepository } from '../../employee-level/repository/mikro-orm-employee-level.repository';
 import { TypeOrmEmployeeLevelRepository } from '../../employee-level/repository/type-orm-employee-level.repository';
-import { MikroOrmEmployeeProposalTemplateRepository } from '../../employee-proposal-template/repository/mikro-orm-employee-proposal-template.repository';
-import { TypeOrmEmployeeProposalTemplateRepository } from '../../employee-proposal-template/repository/type-orm-employee-proposal-template.repository';
 import { MikroOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/mikro-orm-employee-recurring-expense.repository';
 import { TypeOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/type-orm-employee-recurring-expense.repository';
 import { MikroOrmEmployeeSettingRepository } from '../../employee-setting/repository/mikro-orm-employee-setting.repository';
@@ -543,11 +540,6 @@ export class ImportService implements OnModuleInit {
 		private typeOrmEmployeeAwardRepository: TypeOrmEmployeeAwardRepository,
 
 		mikroOrmEmployeeAwardRepository: MikroOrmEmployeeAwardRepository,
-
-		@InjectRepository(EmployeeProposalTemplate)
-		private typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
-
-		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository,
 
 		@InjectRepository(EmployeeRecurringExpense)
 		private typeOrmEmployeeRecurringExpenseRepository: TypeOrmEmployeeRecurringExpenseRepository,
@@ -1369,9 +1361,7 @@ export class ImportService implements OnModuleInit {
 			const repository = this.dataSource.getRepository(entity);
 
 			this[className] = repository;
-			this.dynamicEntitiesClassMap.push({
-				repository
-			});
+			this.dynamicEntitiesClassMap.push({ repository });
 		}
 	}
 
@@ -1767,13 +1757,13 @@ export class ImportService implements OnModuleInit {
 					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
 				]
 			},
-			{
-				repository: this.typeOrmEmployeeProposalTemplateRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
-			},
+			// {
+			// 	repository: this.typeOrmEmployeeProposalTemplateRepository,
+			// 	isCheckRelation: true,
+			// 	foreignKeys: [
+			// 		{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
+			// 	]
+			// },
 			{
 				repository: this.typeOrmEmployeeRecurringExpenseRepository,
 				isCheckRelation: true,

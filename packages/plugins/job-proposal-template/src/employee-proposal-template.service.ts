@@ -1,29 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { IEmployeeProposalTemplate } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
-import { TypeOrmEmployeeProposalTemplateRepository } from './repository/type-orm-employee-proposal-template.repository';
-import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
+import { MikroOrmEmployeeProposalTemplateRepository, TypeOrmEmployeeProposalTemplateRepository } from './repository';
 
 @Injectable()
 export class EmployeeProposalTemplateService extends TenantAwareCrudService<EmployeeProposalTemplate> {
 	constructor(
-		@InjectRepository(EmployeeProposalTemplate)
 		typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
-
 		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository
 	) {
 		super(typeOrmEmployeeProposalTemplateRepository, mikroOrmEmployeeProposalTemplateRepository);
 	}
 
 	/**
+	 * Toggles the default status of a proposal template.
 	 *
-	 * @param id
-	 * @returns
+	 * @param id - The ID of the proposal template.
+	 * @returns The updated proposal template.
 	 */
 	async makeDefault(id: IEmployeeProposalTemplate['id']): Promise<IEmployeeProposalTemplate> {
-		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
+		const proposalTemplate = await this.findOneByIdString(id);
 		proposalTemplate.isDefault = !proposalTemplate.isDefault;
 
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
@@ -32,16 +29,16 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 			isDefault: false
 		});
 
-		return await super.save(proposalTemplate);
+		return super.save(proposalTemplate);
 	}
 
 	/**
 	 * Finds proposal templates entities that match given find options.
 	 *
-	 * @param params
-	 * @returns
+	 * @param params - Pagination parameters.
+	 * @returns The list of proposal templates.
 	 */
 	async findAll(params?: PaginationParams<IEmployeeProposalTemplate>) {
-		return await super.findAll(params);
+		return super.findAll(params);
 	}
 }

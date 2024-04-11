@@ -31,7 +31,6 @@ import {
 	EmployeeAppointment,
 	EmployeeAward,
 	EmployeeLevel,
-	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
 	Equipment,
@@ -148,8 +147,6 @@ import { MikroOrmJobPresetRepository } from '../../employee-job-preset/repositor
 import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository/type-orm-job-preset.repository';
 import { MikroOrmEmployeeLevelRepository } from '../../employee-level/repository/mikro-orm-employee-level.repository';
 import { TypeOrmEmployeeLevelRepository } from '../../employee-level/repository/type-orm-employee-level.repository';
-import { MikroOrmEmployeeProposalTemplateRepository } from '../../employee-proposal-template/repository/mikro-orm-employee-proposal-template.repository';
-import { TypeOrmEmployeeProposalTemplateRepository } from '../../employee-proposal-template/repository/type-orm-employee-proposal-template.repository';
 import { MikroOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/mikro-orm-employee-recurring-expense.repository';
 import { TypeOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/type-orm-employee-recurring-expense.repository';
 import { MikroOrmEmployeeSettingRepository } from '../../employee-setting/repository/mikro-orm-employee-setting.repository';
@@ -390,11 +387,6 @@ export class FactoryResetService {
 		private typeOrmEmployeeAwardRepository: TypeOrmEmployeeAwardRepository,
 
 		mikroOrmEmployeeAwardRepository: MikroOrmEmployeeAwardRepository,
-
-		@InjectRepository(EmployeeProposalTemplate)
-		private typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
-
-		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository,
 
 		@InjectRepository(EmployeeRecurringExpense)
 		private typeOrmEmployeeRecurringExpenseRepository: TypeOrmEmployeeRecurringExpenseRepository,
@@ -737,7 +729,7 @@ export class FactoryResetService {
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
 		private configService: ConfigService
-	) {}
+	) { }
 
 	async onModuleInit() {
 		this.registerCoreRepositories();
@@ -887,7 +879,6 @@ export class FactoryResetService {
 			this.typeOrmEmployeeAppointmentRepository,
 			this.typeOrmEmployeeAwardRepository,
 			this.typeOrmEmployeeLevelRepository,
-			this.typeOrmEmployeeProposalTemplateRepository,
 			this.typeOrmEmployeeRecurringExpenseRepository,
 			this.typeOrmEmployeeRepository,
 			this.typeOrmEmployeeSettingRepository,
