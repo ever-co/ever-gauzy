@@ -4,3 +4,4 @@ export * from './employee.entity';
 export * from './employee.module';
 export * from './employee.service';
 export * from './employee.seed';
+export * from './dto/employee-feature.dto';

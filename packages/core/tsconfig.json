@@ -9,7 +9,9 @@
 		"types": ["node", "jest"],
 		"paths": {
 			"rxjs": ["node_modules/rxjs"],
-			"rxjs/*": ["node_modules/rxjs/*"]
+			"rxjs/*": ["node_modules/rxjs/*"],
+			"@core/*": ["./core/*"],
+			"@shared/*": ["./shared/*"],
 		}
 	},
 	"include": ["./src/**/*"]

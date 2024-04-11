@@ -1,5 +1,4 @@
 import {
-	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -13,10 +12,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { IEmployeeProposalTemplate, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { Permissions } from './../shared/decorators';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, Permissions, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe, PaginationParams } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
 import { CreateProposalTemplateDTO, UpdateProposalTemplateDTO } from './dto';
@@ -24,7 +20,7 @@ import { CreateProposalTemplateDTO, UpdateProposalTemplateDTO } from './dto';
 @ApiTags('EmployeeProposalTemplate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT)
-@Controller()
+@Controller('/employee-proposal-template')
 export class EmployeeProposalTemplateController extends CrudController<EmployeeProposalTemplate> {
 	constructor(private readonly employeeProposalTemplateService: EmployeeProposalTemplateService) {
 		super(employeeProposalTemplateService);
@@ -78,11 +74,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	async findAll(
 		@Query() params?: PaginationParams<EmployeeProposalTemplate>
 	): Promise<IPagination<IEmployeeProposalTemplate>> {
-		try {
-			return await this.employeeProposalTemplateService.findAll(params);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await this.employeeProposalTemplateService.findAll(params);
 	}
 
 	/**

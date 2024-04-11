@@ -38,7 +38,8 @@
 			"../../../packages/plugins/changelog",
 			"../../../packages/plugins/jitsu-analytics",
 			"../../../packages/plugins/sentry-tracing",
-			"../../../packages/plugins/job-search"
+			"../../../packages/plugins/job-search",
+			"../../../packages/plugins/job-proposal-template"
 		]
 	},
 	"build": {
@@ -144,8 +145,9 @@
 		"@gauzy/desktop-libs": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@gauzy/jitsu-analytics-plugin": "^0.1.0",
-		"@gauzy/knowledge-base-plugin": "^0.1.0",
+		"@gauzy/job-proposal-template-plugin": "^0.1.0",
 		"@gauzy/job-search-plugin": "^0.1.0",
+		"@gauzy/knowledge-base-plugin": "^0.1.0",
 		"@gauzy/sentry-plugin": "^0.1.0",
 		"@nestjs/platform-express": "^10.3.7",
 		"@sentry/electron": "^4.18.0",
@@ -160,11 +162,14 @@
 		"electron-store": "^8.1.0",
 		"electron-updater": "^6.1.7",
 		"electron-util": "^0.17.2",
+		"embedded-queue": "^0.0.11",
 		"ffi-napi": "^4.0.3",
 		"form-data": "^3.0.0",
 		"htmlparser2": "^8.0.2",
 		"iconv": "^3.0.1",
 		"knex": "^3.1.0",
+		"locutus": "^2.0.30",
+		"mac-screen-capture-permissions": "^2.1.0",
 		"moment": "^2.29.4",
 		"node-fetch": "^2.6.7",
 		"node-notifier": "^8.0.0",
@@ -172,16 +177,13 @@
 		"pdfmake": "^0.2.0",
 		"pg-query-stream": "^4.5.4",
 		"pg": "^8.11.4",
+		"screenshot-desktop": "^1.15.0",
 		"sound-play": "1.1.0",
 		"sqlite3": "^5.1.7",
 		"squirrelly": "^8.0.8",
 		"tslib": "^2.3.0",
 		"twing": "^5.0.2",
-		"locutus": "^2.0.30",
 		"underscore": "^1.13.3",
-		"screenshot-desktop": "^1.15.0",
-		"mac-screen-capture-permissions": "^2.1.0",
-		"embedded-queue": "^0.0.11",
 		"undici": "^6.10.2"
 	},
 	"optionalDependencies": {

@@ -38,7 +38,6 @@ export * from '../../employee-job-preset/job-search-category/job-search-category
 export * from '../../employee-job-preset/job-search-occupation/job-search-occupation.entity';
 export * from '../../employee-level/employee-level.entity';
 export * from '../../employee-phone/employee-phone.entity';
-export * from '../../employee-proposal-template/employee-proposal-template.entity';
 export * from '../../employee-recurring-expense/employee-recurring-expense.entity';
 export * from '../../employee-setting/employee-setting.entity';
 export * from '../../employee/employee.entity';

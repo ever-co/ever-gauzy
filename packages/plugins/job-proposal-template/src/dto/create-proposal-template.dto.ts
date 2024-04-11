@@ -1,6 +1,6 @@
 import { IEmployeeProposalTemplate } from "@gauzy/contracts";
 import { IntersectionType } from "@nestjs/mapped-types";
-import { EmployeeFeatureDTO } from "./../../employee/dto";
+import { EmployeeFeatureDTO } from "@gauzy/core";
 import { ProposalTemplateDTO } from "./proposal-template.dto";
 
 /**
@@ -10,4 +10,4 @@ import { ProposalTemplateDTO } from "./proposal-template.dto";
 export class CreateProposalTemplateDTO extends IntersectionType(
     ProposalTemplateDTO,
     EmployeeFeatureDTO
-) implements IEmployeeProposalTemplate {}
+) implements IEmployeeProposalTemplate { }

@@ -7,5 +7,6 @@ export * from './repository';
 export * from './entities/internal';
 export * from './entities/subscribers';
 export * from './decorators';
+export * from './dto';
 export * from './orm-type';
 export * from './plugin-common.module';
