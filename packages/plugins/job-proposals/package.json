@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/job-proposal-template-plugin",
+	"name": "@gauzy/job-proposals-plugin",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Job Proposal Template Plugin",
+	"description": "Ever Gauzy Platform Job Proposals Plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -35,6 +35,7 @@
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
+		"moment": "^2.29.4",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {

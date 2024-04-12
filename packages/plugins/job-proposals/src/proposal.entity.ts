@@ -1,4 +1,3 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	JoinColumn,
 	RelationId,
@@ -9,21 +8,26 @@ import { IsOptional, IsUUID } from 'class-validator';
 import {
 	IProposal,
 	IEmployee,
+	ITag,
 	IOrganizationContact,
 	ProposalStatusEnum
 } from '@gauzy/contracts';
 import {
+	ColumnIndex,
 	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
 	OrganizationContact,
 	Tag,
 	TenantOrganizationBaseEntity
-} from '@core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '@core/decorators';
+} from '@gauzy/core';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
-import { Taggable } from '../tags/tag.types';
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
-export class Proposal extends TenantOrganizationBaseEntity implements IProposal, Taggable {
+export class Proposal extends TenantOrganizationBaseEntity
+	implements IProposal {
 
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
@@ -98,7 +102,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	/**
 	 * Tags
 	 */
-	@MultiORMManyToMany(() => Tag, (it: Tag) => it.proposals, {
+	@MultiORMManyToMany(() => Tag, {
 		/**  Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */
@@ -112,6 +116,8 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 		/** Column in pivot table referencing 'tag' primary key. */
 		inverseJoinColumn: 'tagId'
 	})
-	@JoinTable({ name: 'tag_proposal' })
-	tags?: Tag[];
+	@JoinTable({
+		name: 'tag_proposal'
+	})
+	tags?: ITag[];
 }

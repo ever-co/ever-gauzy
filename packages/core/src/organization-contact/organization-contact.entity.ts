@@ -30,7 +30,7 @@ import {
 	Invoice,
 	OrganizationProject,
 	Payment,
-	Proposal,
+	// Proposal,
 	Tag,
 	TenantOrganizationBaseEntity,
 	TimeLog

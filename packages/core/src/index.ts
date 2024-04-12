@@ -9,4 +9,5 @@ export * from './organization';
 export * from './integration-tenant'
 export * from './core/seeds';
 export * from './employee';
+export * from './tags';
 export * from './database/migration-executor';
