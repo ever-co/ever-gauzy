@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { EntityManager, EntitySchema, ObjectLiteral, ObjectType, Repository, } from 'typeorm';
+import {
+    DataSource,
+    EntityManager,
+    EntitySchema,
+    ObjectLiteral,
+    ObjectType,
+    Repository
+} from 'typeorm';
 
 @Injectable()
 export class TransactionalEntityManager {
@@ -16,6 +23,15 @@ export class TransactionalEntityManager {
      */
     get rawEntityManager(): EntityManager {
         return this.entityManager;
+    }
+
+    /**
+     * Retrieves the raw connection from the EntityManager.
+     *
+     * @returns The raw connection from the EntityManager.
+     */
+    get rawConnection(): DataSource {
+        return this.entityManager.connection;
     }
 
     /**
