@@ -1,9 +1,9 @@
-import { Body, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, Type, UsePipes } from '@nestjs/common';
+import { Body, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeepPartial, DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { IPagination } from '@gauzy/contracts';
-import { ConstructorType } from '@gauzy/common';
+import { Type } from '@gauzy/common';
 import { BaseEntity } from './../../core/entities/base.entity';
 import { AbstractValidationPipe, UUIDValidationPipe } from './../../shared/pipes';
 import { ICrudController } from './icrud.controller';
@@ -22,7 +22,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 	createDTO?: Type<CreateType>,
 	updateDTO?: Type<UpdateType>,
 	countQueryDTO?: Type<CountQueryType>
-): ConstructorType<ICrudController<BaseType>> {
+): Type<ICrudController<BaseType>> {
 	class BaseCrudController<BaseType extends BaseEntity> implements ICrudController<BaseType> {
 		constructor(public readonly crudService: ICrudService<BaseType>) { }
 

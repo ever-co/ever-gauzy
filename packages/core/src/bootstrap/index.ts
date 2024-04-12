@@ -51,6 +51,7 @@ import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from './../shared/shared.module';
+import { registerCustomEntityFields } from '@core/entities/custom-entity-fields/register-custom-entity-fields';
 
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time('Application Bootstrap Time');
@@ -329,16 +330,18 @@ export async function registerPluginConfig(pluginConfig: Partial<ApplicationPlug
 	});
 
 	let config = getConfig();
-	config = await applyPluginConfigurations(config);
+	config = await bootstrapPluginConfigurations(config);
+
+	await registerCustomEntityFields(config);
 	return config;
 }
 
 /**
- * Apply plugin configurations to the provided application configuration asynchronously.
- * @param config Initial application configuration.
- * @returns Updated application configuration after applying plugin configurations.
+ *
+ * @param config
+ * @returns
  */
-async function applyPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
+async function bootstrapPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
 	const pluginConfigurations = getPluginConfigurations(config.plugins);
 
 	for await (const pluginConfigurationFn of pluginConfigurations) {
