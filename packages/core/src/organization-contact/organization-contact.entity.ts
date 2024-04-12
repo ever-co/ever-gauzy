@@ -30,7 +30,7 @@ import {
 	Invoice,
 	OrganizationProject,
 	Payment,
-	Proposal,
+	// Proposal,
 	Tag,
 	TenantOrganizationBaseEntity,
 	TimeLog
@@ -180,12 +180,6 @@ export class OrganizationContact extends TenantOrganizationBaseEntity implements
 	})
 	@JoinColumn()
 	payments?: IPayment[];
-
-	// Organization Proposals
-	@ApiPropertyOptional({ type: () => Proposal, isArray: true })
-	@MultiORMOneToMany(() => Proposal, (it) => it.organizationContact)
-	@JoinColumn()
-	proposals?: IOrganizationProject[];
 
 	/**
 	 * Expense

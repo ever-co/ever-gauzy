@@ -13,12 +13,16 @@ import {
 	ProposalStatusEnum
 } from '@gauzy/contracts';
 import {
+	ColumnIndex,
 	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
 	OrganizationContact,
 	Tag,
 	TenantOrganizationBaseEntity
-} from '@core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '@core/decorators';
+} from '@gauzy/core';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
@@ -98,7 +102,7 @@ export class Proposal extends TenantOrganizationBaseEntity
 	/**
 	 * Tags
 	 */
-	@MultiORMManyToMany(() => Tag, (it: Tag) => it.proposals, {
+	@MultiORMManyToMany(() => Tag, {
 		/**  Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */
@@ -112,6 +116,8 @@ export class Proposal extends TenantOrganizationBaseEntity
 		/** Column in pivot table referencing 'tag' primary key. */
 		inverseJoinColumn: 'tagId'
 	})
-	@JoinTable({ name: 'tag_proposal' })
+	@JoinTable({
+		name: 'tag_proposal'
+	})
 	tags?: ITag[];
 }

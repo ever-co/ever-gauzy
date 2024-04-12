@@ -1,11 +1,24 @@
 
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { RolePermissionModule } from '@gauzy/core';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { Proposal } from './proposal.entity';
+import { ProposalController } from './proposal.controller';
+import { ProposalService } from './proposal.service';
+import { CommandHandlers } from './commands/handlers';
+import { TypeOrmProposalRepository } from 'repository';
 
-@GauzyCorePlugin({
-	imports: [],
-	entities: [],
-	controllers: [],
-	providers: []
+@Plugin({
+	imports: [
+		TypeOrmModule.forFeature([Proposal]),
+		MikroOrmModule.forFeature([Proposal]),
+		RolePermissionModule
+	],
+	entities: [Proposal],
+	controllers: [ProposalController],
+	providers: [ProposalService, TypeOrmProposalRepository, ...CommandHandlers],
+	exports: [ProposalService]
 })
 export class JobProposalsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 

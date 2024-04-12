@@ -35,6 +35,7 @@
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
+		"moment": "^2.29.4",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
