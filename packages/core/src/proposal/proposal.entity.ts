@@ -4,7 +4,6 @@ import {
 	RelationId,
 	JoinTable
 } from 'typeorm';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsUUID } from 'class-validator';
 import {
 	IProposal,
