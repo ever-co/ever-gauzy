@@ -65,6 +65,10 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 		...dbKnexConnectionConfig
 	},
 	plugins: [],
+	customFields: {
+		Tag: [],
+		Employee: []
+	},
 	authOptions: {
 		expressSessionSecret: process.env.EXPRESS_SESSION_SECRET || 'gauzy',
 		userPasswordBcryptSaltRounds: 12,

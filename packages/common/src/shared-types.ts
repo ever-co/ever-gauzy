@@ -10,9 +10,23 @@ export type DeepPartial<T> = {
 };
 
 /**
- * Represents a constructor function type.
+ * Represents a constructor function or class type.
  * @template T - Type to be instantiated.
  */
-export interface ConstructorType<T = any> extends Function {
+export interface Type<T = any> extends Function {
+    /**
+     * Constructor signature.
+     * Creates a new instance of type T with the provided arguments.
+     * @param {...any[]} args - Arguments to be passed to the constructor.
+     * @returns {T} - An instance of type T.
+     */
     new(...args: any[]): T;
+}
+
+/**
+ * Represents an object with custom fields.
+ * @template T - Type of the custom fields.
+ */
+export interface CustomFieldsObject<T = any> {
+    [key: string]: T;
 }

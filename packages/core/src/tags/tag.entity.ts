@@ -60,7 +60,7 @@ import {
 	User,
 	Warehouse
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
@@ -101,6 +101,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@MultiORMColumn({ default: false })
 	isSystem?: boolean;
 
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 
 	/*
@@ -368,4 +369,10 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		onDelete: 'CASCADE'
 	})
 	organizations?: IOrganization[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Custom Entity Fields
+	|--------------------------------------------------------------------------
+	*/
 }
