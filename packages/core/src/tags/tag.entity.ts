@@ -103,6 +103,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag, HasCustom
 	@MultiORMColumn({ default: false })
 	isSystem?: boolean;
 
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 
 	/*
@@ -376,7 +377,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag, HasCustom
 	| Custom Entity Fields
 	|--------------------------------------------------------------------------
 	*/
-	@VirtualMultiOrmColumn()
 	@Column(() => CustomTagFields)
 	customFields?: CustomFields;
 }
