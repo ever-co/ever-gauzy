@@ -4,6 +4,7 @@ import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { KnexModuleOptions } from 'nest-knexjs';
 import { PluginDefinition } from 'apollo-server-core';
 import { AbstractLogger } from './IAbstractLogger';
+import { CustomFields } from '../custom-field-types';
 
 /**
  * Configuration options for GraphQL.
@@ -149,6 +150,12 @@ export interface ApplicationPluginConfig {
 	 * @description Defines options for configuring the application logger.
 	 */
 	logger?: AbstractLogger;
+
+	/**
+	 * Custom fields configuration.
+	 * Defines custom fields for different entities in the application.
+	 */
+	customFields?: CustomFields;
 
 	/**
 	 * Authentication options.
