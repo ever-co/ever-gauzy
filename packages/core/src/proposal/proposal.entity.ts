@@ -16,8 +16,8 @@ import {
 	OrganizationContact,
 	Tag,
 	TenantOrganizationBaseEntity
-} from '@core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '@core/decorators';
+} from '../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from '../core/decorators';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { Taggable } from '../tags/tag.types';
 
