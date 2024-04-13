@@ -24,7 +24,7 @@ import {
 	UUIDValidationPipe,
 	OptionParams
 } from '@gauzy/core';
-import { ProposalCreateCommand } from './commands/proposal-create.command';
+import { ProposalCreateCommand, ProposalUpdateCommand } from './commands';
 import { ProposalService } from './proposal.service';
 import { Proposal } from './proposal.entity';
 import { CreateProposalDTO, UpdateProposalDTO } from './dto';
@@ -146,7 +146,9 @@ export class ProposalController extends CrudController<Proposal> {
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProposalDTO
-	): Promise<IProposal | UpdateResult> {
-		return await this._proposalService.update(id, entity);
+	): Promise<IProposal> {
+		return await this._commandBus.execute(
+			new ProposalUpdateCommand(id, entity)
+		);
 	}
 }

@@ -8,7 +8,6 @@ import { IsOptional, IsUUID } from 'class-validator';
 import {
 	IProposal,
 	IEmployee,
-	ITag,
 	IOrganizationContact,
 	ProposalStatusEnum
 } from '@gauzy/contracts';
@@ -21,14 +20,13 @@ import {
 	MultiORMManyToOne,
 	OrganizationContact,
 	Tag,
+	Taggable,
 	TenantOrganizationBaseEntity
 } from '@gauzy/core';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
-export class Proposal extends TenantOrganizationBaseEntity
-	implements IProposal {
-
+export class Proposal extends TenantOrganizationBaseEntity implements IProposal, Taggable {
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
@@ -119,5 +117,5 @@ export class Proposal extends TenantOrganizationBaseEntity
 	@JoinTable({
 		name: 'tag_proposal'
 	})
-	tags?: ITag[];
+	tags?: Tag[];
 }
