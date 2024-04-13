@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -31,7 +31,6 @@ import {
 	IUser,
 	IWarehouse
 } from '@gauzy/contracts';
-import { CustomFields, HasCustomFields } from '@gauzy/common';
 import {
 	Candidate,
 	Employee,
@@ -60,13 +59,12 @@ import {
 	TenantOrganizationBaseEntity,
 	User,
 	Warehouse
-} from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from './../core/decorators/entity';
+} from '@core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '@core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
-import { CustomTagFields } from '@core/entities/custom-entity-fields/custom-entity-fields';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
-export class Tag extends TenantOrganizationBaseEntity implements ITag, HasCustomFields {
+export class Tag extends TenantOrganizationBaseEntity implements ITag {
 
 	[EntityRepositoryType]?: MikroOrmTagRepository;
 
@@ -103,6 +101,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag, HasCustom
 	@MultiORMColumn({ default: false })
 	isSystem?: boolean;
 
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 
 	/*
@@ -370,13 +369,4 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag, HasCustom
 		onDelete: 'CASCADE'
 	})
 	organizations?: IOrganization[];
-
-	/*
-	|--------------------------------------------------------------------------
-	| Custom Entity Fields
-	|--------------------------------------------------------------------------
-	*/
-	@VirtualMultiOrmColumn()
-	@Column(() => CustomTagFields)
-	customFields?: CustomFields;
 }
