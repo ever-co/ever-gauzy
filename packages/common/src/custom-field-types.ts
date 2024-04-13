@@ -34,6 +34,7 @@ export type CustomFieldConfig = RelationCustomFieldConfig;
 export interface CustomFields {
     /** Custom fields for the Tag entity. */
     Tag?: CustomFieldConfig[];
+    Employee?: CustomFieldConfig[];
 }
 
 /**

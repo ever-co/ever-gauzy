@@ -3,16 +3,6 @@ import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
-	ColumnIndex,
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToMany,
-	MultiORMManyToOne,
-	MultiORMOneToMany,
-	MultiORMOneToOne,
-	VirtualMultiOrmColumn
-} from './../core/decorators/entity';
-import {
 	CurrenciesEnum,
 	IEmployee,
 	PayPeriodEnum,
@@ -43,6 +33,16 @@ import {
 	IEmployeePhone
 } from '@gauzy/contracts';
 import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	MultiORMOneToOne,
+	VirtualMultiOrmColumn
+} from '../core/decorators/entity';
+import {
 	Candidate,
 	Contact,
 	EmployeeAward,
@@ -72,7 +72,7 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
-import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })

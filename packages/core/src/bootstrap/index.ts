@@ -47,11 +47,12 @@ import { getConfig, setConfig, environment as env } from '@gauzy/config';
 import { getEntitiesFromPlugins, getPluginConfigurations, getSubscribersFromPlugins } from '@gauzy/plugin';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
+import { AuthGuard } from '../shared/guards';
+import { SharedModule } from '../shared/shared.module';
+import { registerCustomEntityFields } from '../core/entities/custom-entity-fields/register-custom-entity-fields';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
-import { AuthGuard } from '../shared/guards';
-import { SharedModule } from './../shared/shared.module';
-import { registerCustomEntityFields } from '@core/entities/custom-entity-fields/register-custom-entity-fields';
+
 
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
 	console.time('Application Bootstrap Time');
