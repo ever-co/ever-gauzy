@@ -24,7 +24,7 @@ import { ProposalCreateCommand, ProposalUpdateCommand } from './commands';
 @ApiTags('Proposal')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
-@Controller()
+@Controller('/proposal')
 export class ProposalController extends CrudController<Proposal> {
 
 	constructor(
