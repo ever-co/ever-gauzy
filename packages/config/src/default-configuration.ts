@@ -66,7 +66,8 @@ export const defaultConfiguration: ApplicationPluginConfig = {
 	},
 	plugins: [],
 	customFields: {
-		Tag: []
+		Tag: [],
+		Employee: []
 	},
 	authOptions: {
 		expressSessionSecret: process.env.EXPRESS_SESSION_SECRET || 'gauzy',

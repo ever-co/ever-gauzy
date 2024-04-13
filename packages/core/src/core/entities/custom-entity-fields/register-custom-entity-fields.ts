@@ -1,8 +1,8 @@
 import { JoinColumn } from 'typeorm';
 import { ApplicationPluginConfig, CustomFields, RelationCustomFieldConfig } from '@gauzy/common';
-import { MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '@core/decorators';
-import { ColumnDataType, ColumnOptions } from '@core/decorators/entity/column-options.types';
-import { CustomTagFields } from './custom-entity-fields';
+import { MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
+import { ColumnDataType, ColumnOptions } from '../../../core/decorators/entity/column-options.types';
+import { CustomEmployeeFields, CustomTagFields } from './custom-entity-fields';
 
 /**
  * Registers a custom column or relation for the entity based on the provided custom field configuration.
@@ -68,4 +68,5 @@ function registerCustomFieldsForEntity<T = any>(
  */
 export async function registerCustomEntityFields(config: ApplicationPluginConfig) {
     registerCustomFieldsForEntity(config, 'Tag', CustomTagFields);
+    registerCustomFieldsForEntity(config, 'Employee', CustomEmployeeFields);
 }
