@@ -1,24 +1,39 @@
 
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { RolePermissionModule } from '@gauzy/core';
+import { CqrsModule } from '@nestjs/cqrs';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { RolePermissionModule } from '@gauzy/core';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { Proposal } from './proposal.entity';
 import { ProposalController } from './proposal.controller';
 import { ProposalService } from './proposal.service';
 import { CommandHandlers } from './commands/handlers';
-import { TypeOrmProposalRepository } from 'repository';
+import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
 
 @Plugin({
 	imports: [
 		TypeOrmModule.forFeature([Proposal]),
 		MikroOrmModule.forFeature([Proposal]),
-		RolePermissionModule
+		RolePermissionModule,
+		CqrsModule
 	],
 	entities: [Proposal],
 	controllers: [ProposalController],
 	providers: [ProposalService, TypeOrmProposalRepository, ...CommandHandlers],
-	exports: [ProposalService]
+	exports: [ProposalService],
+	configuration: (config: ApplicationPluginConfig) => {
+		config.customFields.Tag.push(
+			{
+				name: 'proposals',
+				type: 'relation',
+				relation: 'many-to-many',
+				entity: Proposal,
+				inverseSide: (it: Proposal) => it.tags
+			}
+		);
+		return config;
+	}
 })
 export class JobProposalsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 
