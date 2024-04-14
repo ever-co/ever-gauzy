@@ -103,6 +103,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 
 			return saved;
 		} catch (error) {
+			console.log('Rollback Pipeline Transaction', error);
 			await queryRunner.rollbackTransaction();
 		} finally {
 			await queryRunner.release();
