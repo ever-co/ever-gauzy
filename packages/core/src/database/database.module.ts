@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { KnexModule } from 'nest-knexjs';
 import { ConfigModule, ConfigService } from '@gauzy/config';
-import { TransactionalEntityManager } from './transactional-entity-manager';
+import { ConnectionEntityManager } from './connection-entity-manager';
 
 /**
  * Import and provide base typeorm related classes.
@@ -54,7 +54,7 @@ import { TransactionalEntityManager } from './transactional-entity-manager';
 			}
 		})
 	],
-	providers: [TransactionalEntityManager],
-	exports: [TypeOrmModule, MikroOrmModule, TransactionalEntityManager]
+	providers: [ConnectionEntityManager],
+	exports: [TypeOrmModule, MikroOrmModule, ConnectionEntityManager]
 })
 export class DatabaseModule { }
