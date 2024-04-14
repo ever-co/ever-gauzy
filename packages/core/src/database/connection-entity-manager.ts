@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 
 @Injectable()
-export class TransactionalEntityManager {
+export class ConnectionEntityManager {
 
     constructor(
         @InjectEntityManager() private entityManager: EntityManager

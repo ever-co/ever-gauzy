@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +13,7 @@ import * as fse from 'fs-extra';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';
+import { ConnectionEntityManager } from '../../database/connection-entity-manager';
 import {
 	AccountingTemplate,
 	Activity,
@@ -1032,10 +1033,8 @@ export class ExportService implements OnModuleInit {
 
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
-		@InjectConnection()
-		private readonly dataSource: Connection,
-
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly _connectionEntityManager: ConnectionEntityManager
 	) { }
 
 	async onModuleInit() {
@@ -1395,7 +1394,7 @@ export class ExportService implements OnModuleInit {
 			}
 
 			const className = _.camelCase(entity.name);
-			const repository = this.dataSource.getRepository(entity);
+			const repository = this._connectionEntityManager.getRepository(entity);
 
 			this[className] = repository;
 			this.dynamicEntitiesClassMap.push({ repository });
