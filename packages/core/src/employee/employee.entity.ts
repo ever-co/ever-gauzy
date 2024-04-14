@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
@@ -32,6 +32,7 @@ import {
 	IEquipmentSharing,
 	IEmployeePhone
 } from '@gauzy/contracts';
+import { CustomFields, HasCustomFields } from '@gauzy/common';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -72,11 +73,13 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
+import { CustomEmployeeFields } from '../core/entities/custom-entity-fields/custom-entity-fields';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
+import { Taggable } from '../tags/tag.types';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
-export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
+export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
 	@ApiPropertyOptional({ type: () => Date })
@@ -545,7 +548,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@JoinTable({
 		name: 'tag_employee'
 	})
-	tags: ITag[];
+	tags: Tag[];
 
 	/**
 	 * Employee Skills
@@ -643,4 +646,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Custom Entity Fields
+	|--------------------------------------------------------------------------
+	*/
+	@Column(() => CustomEmployeeFields)
+	customFields?: CustomFields;
 }
