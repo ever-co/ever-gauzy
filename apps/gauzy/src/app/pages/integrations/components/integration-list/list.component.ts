@@ -227,16 +227,20 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	 * @param integration - The integration to be deleted.
 	 */
 	deleteIntegration(integration: IIntegrationTenant): void {
-		const confirmed$ = this.openConfirmationDialog();
-		confirmed$
-			.pipe(
-				filter((isConfirmed) => isConfirmed),
-				switchMap(() => this._integrationTenantService.delete(integration.id)),
-				tap(() => this.showDeletionSuccessMessage(integration)),
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		const dialog$ = this.openConfirmationDialog();
+		dialog$.pipe(
+			filter(isConfirmed => isConfirmed),
+			switchMap(() => this._integrationTenantService.delete(integration.id)),
+			tap(() => {
+				this.showDeletionSuccessMessage(integration);
+				this.subject$.next(true);
+
+				if (integration.name === IntegrationEnum.GAUZY_AI) {
+					this.updateAIJobMatchingEntity();
+				}
+			}),
+			untilDestroyed(this)
+		).subscribe();
 	}
 
 	/**
