@@ -28,15 +28,17 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"@faker-js/faker": "8.0.0-alpha.0",
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/integration-ai": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@mikro-orm/nestjs": "^5.2.3",
 		"@nestjs/common": "^10.3.7",
+		"@nestjs/core": "^10.3.7",
+		"@nestjs/cqrs": "^10.2.7",
 		"@nestjs/swagger": "^7.3.0",
-		"html-to-text": "^9.0.5",
+		"@nestjs/typeorm": "^10.0.2",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
