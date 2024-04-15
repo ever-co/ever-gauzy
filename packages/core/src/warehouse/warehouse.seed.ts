@@ -9,7 +9,8 @@ import {
     WarehouseProduct,
     WarehouseProductVariant,
     ImageAsset
-} from './../core/entities/internal';
+} from '../core/entities/internal';
+import { getEmailWithPostfix } from '../core/seeds/utils';
 
 
 export const createRandomWarehouses = async (
@@ -83,7 +84,7 @@ const applyRandomProperties = (
     const warehouse = new Warehouse()
     warehouse.name = faker.company.name();
     warehouse.code = faker.string.uuid();
-    warehouse.email = faker.internet.exampleEmail(warehouse.name);
+    warehouse.email = getEmailWithPostfix(faker.internet.exampleEmail(warehouse.name));
     warehouse.description = faker.lorem.words();
     warehouse.active = faker.datatype.boolean();
     warehouse.organization = organization;

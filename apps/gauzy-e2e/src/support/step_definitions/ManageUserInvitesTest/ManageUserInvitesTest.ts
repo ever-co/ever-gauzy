@@ -9,7 +9,7 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 
 // Login with email
 Given('Login with default credentials and visit Users page', () => {

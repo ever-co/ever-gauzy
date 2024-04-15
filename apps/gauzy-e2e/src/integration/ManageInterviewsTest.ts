@@ -16,7 +16,7 @@ let imgUrl = ' ';
 
 describe('Manage interviews test', () => {
 	before(() => {
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();

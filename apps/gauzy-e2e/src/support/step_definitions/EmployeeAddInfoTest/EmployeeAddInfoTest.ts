@@ -19,7 +19,7 @@ const firstName = faker.person.firstName();
 const lastName = faker.person.lastName();
 const username = faker.internet.userName();
 const password = faker.internet.password();
-const employeeEmail = faker.internet.email();
+const employeeEmail = faker.internet.exampleEmail();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 

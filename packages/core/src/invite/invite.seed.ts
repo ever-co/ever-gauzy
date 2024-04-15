@@ -5,7 +5,8 @@ import { sign } from 'jsonwebtoken';
 import { environment as env } from '@gauzy/config';
 import * as moment from 'moment';
 import { Invite } from './invite.entity';
-import { Role } from './../core/entities/internal';
+import { Role } from '../core/entities/internal';
+import { getEmailWithPostfix } from '../core/seeds/utils';
 
 export const createDefaultEmployeeInviteSent = async (
 	dataSource: DataSource,
@@ -22,7 +23,7 @@ export const createDefaultEmployeeInviteSent = async (
 	organizations.forEach((organization: IOrganization) => {
 		for (let i = 0; i < 10; i++) {
 			const invitee = new Invite();
-			invitee.email = faker.internet.exampleEmail();
+			invitee.email = getEmailWithPostfix(faker.internet.exampleEmail());
 			invitee.expireDate = faker.date.between({
 				from: new Date(),
 				to: moment(new Date()).add(30, 'days').toDate()
@@ -59,7 +60,7 @@ export const createRandomEmployeeInviteSent = async (
 		organizations.forEach((organization: IOrganization) => {
 			for (let i = 0; i < noOfInvitesPerOrganization; i++) {
 				const invitee = new Invite();
-				invitee.email = faker.internet.exampleEmail();
+				invitee.email = getEmailWithPostfix(faker.internet.exampleEmail());
 				invitee.expireDate = faker.date.between({
 					from: new Date(),
 					to: moment(new Date()).add(30, 'days').toDate()
