@@ -59,7 +59,7 @@ export class AlterEmployeeCustomEntityFields1713187612530 implements MigrationIn
     * @param queryRunner
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE "employee" ADD "customFields__fix_relational_custom_fields__" boolean`);
     }
 
     /**
@@ -68,7 +68,7 @@ export class AlterEmployeeCustomEntityFields1713187612530 implements MigrationIn
     * @param queryRunner
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE "employee" DROP COLUMN "customFields__fix_relational_custom_fields__"`);
     }
 
     /**
