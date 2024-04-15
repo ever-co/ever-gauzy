@@ -29,7 +29,7 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		const { employeeId } = input;
 
 		// Find the employee with related data
-		const employee = await this._typeOrmEmployeeRepository.findOne({
+		let employee = await this._typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
 			relations: ['user', 'organization', 'customFields.jobPresets']
 		});
@@ -58,6 +58,12 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		// Sync Gauzy employee job search criteria
 		this._gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, employeeCriterions);
 
-		return employeeCriterions;
+		// Find the employee with related data
+		employee = await this._typeOrmEmployeeRepository.findOne({
+			where: { id: employeeId },
+			relations: ['customFields.jobPresets']
+		});
+
+		return employee.customFields['jobPresets'];
 	}
 }
