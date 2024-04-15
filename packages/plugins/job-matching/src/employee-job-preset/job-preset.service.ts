@@ -162,7 +162,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveJobPresetCriterion(request: IMatchingCriterions) {
 		// Execute the SavePresetCriterionCommand with the provided criteria
-		return this.commandBus.execute(new SavePresetCriterionCommand(request));
+		return this.commandBus.execute(
+			new SavePresetCriterionCommand(request)
+		);
 	}
 
 	/**
@@ -172,7 +174,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveEmployeeCriterion(request: IMatchingCriterions) {
 		// Execute the SaveEmployeeCriterionCommand with the provided criteria
-		return this.commandBus.execute(new SaveEmployeeCriterionCommand(request));
+		return this.commandBus.execute(
+			new SaveEmployeeCriterionCommand(request)
+		);
 	}
 
 	/**
@@ -198,7 +202,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveEmployeePreset(request: IEmployeePresetInput) {
 		// Execute the SaveEmployeePresetCommand with the provided input
-		return this.commandBus.execute(new SaveEmployeePresetCommand(request));
+		return this.commandBus.execute(
+			new SaveEmployeePresetCommand(request)
+		);
 	}
 
 	/**

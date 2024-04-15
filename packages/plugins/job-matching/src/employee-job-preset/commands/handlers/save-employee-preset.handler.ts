@@ -10,6 +10,7 @@ import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../reposi
 
 @CommandHandler(SaveEmployeePresetCommand)
 export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePresetCommand> {
+
 	constructor(
 		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
@@ -17,51 +18,45 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		private readonly gauzyAIService: GauzyAIService
 	) { }
 
-	public async execute(
-		command: SaveEmployeePresetCommand
-	): Promise<JobPreset[]> {
+	/**
+	 * Saves employee presets and syncs job search criteria.
+	 *
+	 * @param command The SaveEmployeePresetCommand object containing input data.
+	 * @returns A Promise resolving to an array of JobPreset objects.
+	 */
+	public async execute(command: SaveEmployeePresetCommand): Promise<JobPreset[]> {
 		const { input } = command;
+		const { employeeId } = input;
+
+		// Find the employee with related data
 		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: {
-				id: input.employeeId
-			},
-			relations: {
-				jobPresets: true,
-				organization: true
-			}
+			where: { id: employeeId },
+			relations: ['customFields.jobPresets', 'organization']
 		});
+
+		// Find the job preset with related criteria
 		const jobPreset = await this.typeOrmJobPresetRepository.findOne({
-			where: {
-				id: In(input.jobPresetIds)
-			},
-			relations: {
-				jobPresetCriterions: true
-			}
-		});
-		const employeeCriterions = jobPreset.jobPresetCriterions.map((item) => {
-			return new EmployeeUpworkJobsSearchCriterion({
-				...item,
-				employeeId: input.employeeId
-			});
+			where: { id: In(input.jobPresetIds) },
+			relations: { jobPresetCriterions: true }
 		});
 
-		employee.jobPresets = input.jobPresetIds.map(
-			(id) => new JobPreset({ id })
-		);
-		this.typeOrmEmployeeRepository.save(employee);
-
-		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({
-			employeeId: input.employeeId
-		});
-
-		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(
-			employeeCriterions
+		// Map job preset criteria to employee criterions
+		const employeeCriterions = jobPreset.jobPresetCriterions.map(item =>
+			new EmployeeUpworkJobsSearchCriterion({ ...item, employeeId })
 		);
 
-		this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(
-			employee,
-			employeeCriterions
-		);
+		// Update employee custom fields with job presets
+		employee.customFields['jobPresets'] = input.jobPresetIds.map((id) => new JobPreset({ id }));
+		await this.typeOrmEmployeeRepository.save(employee);
+
+		// Delete existing employee job search criteria
+		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({ employeeId });
+
+		// Save new employee job search criteria
+		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(employeeCriterions);
+
+		// Sync Gauzy employee job search criteria
+		this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, employeeCriterions);
 
 		return employeeCriterions;
 	}
