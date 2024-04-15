@@ -184,10 +184,11 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		// Find the employee with the specified ID and include jobPresets relation
 		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
-			relations: { jobPresets: true }
+			relations: ['customFields.jobPresets']
 		});
+
 		// Return the job presets associated with the employee
-		return employee.jobPresets;
+		return employee.customFields['jobPresets'];
 	}
 
 	/**
