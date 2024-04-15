@@ -289,8 +289,8 @@ import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyres
 import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
 import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-template.seed';
 import { randomSeedConfig } from './random-seed-config';
-import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
-import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
+// import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
+// import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import {
 	createDefaultReport,
 	createRandomTenantOrganizationsReport,
@@ -564,23 +564,23 @@ export class SeedDataService {
 				)
 			);
 
-			await this.tryExecute(
-				'Default Job Search Categories',
-				createDefaultJobSearchCategories(
-					this.dataSource,
-					this.tenant,
-					this.defaultOrganization
-				)
-			);
+			// await this.tryExecute(
+			// 	'Default Job Search Categories',
+			// 	createDefaultJobSearchCategories(
+			// 		this.dataSource,
+			// 		this.tenant,
+			// 		this.defaultOrganization
+			// 	)
+			// );
 
-			await this.tryExecute(
-				'Default Job Search Occupations',
-				createDefaultJobSearchOccupations(
-					this.dataSource,
-					this.tenant,
-					this.defaultOrganization
-				)
-			);
+			// await this.tryExecute(
+			// 	'Default Job Search Occupations',
+			// 	createDefaultJobSearchOccupations(
+			// 		this.dataSource,
+			// 		this.tenant,
+			// 		this.defaultOrganization
+			// 	)
+			// );
 
 			this.log(
 				chalk.green(

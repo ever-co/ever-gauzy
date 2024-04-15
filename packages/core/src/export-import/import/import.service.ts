@@ -45,7 +45,6 @@ import {
 	EmployeeLevel,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
-	EmployeeUpworkJobsSearchCriterion,
 	Equipment,
 	EquipmentSharing,
 	EquipmentSharingPolicy,
@@ -74,10 +73,11 @@ import {
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
-	JobPreset,
-	JobPresetUpworkJobSearchCriterion,
-	JobSearchCategory,
-	JobSearchOccupation,
+	// JobPreset,
+	// EmployeeUpworkJobsSearchCriterion,
+	// JobPresetUpworkJobSearchCriterion,
+	// JobSearchCategory,
+	// JobSearchOccupation,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
@@ -188,16 +188,16 @@ import { MikroOrmEmployeeAppointmentRepository } from '../../employee-appointmen
 import { TypeOrmEmployeeAppointmentRepository } from '../../employee-appointment/repository/type-orm-employee-appointment.repository';
 import { MikroOrmEmployeeAwardRepository } from '../../employee-award/repository/mikro-orm-employee-award.repository';
 import { TypeOrmEmployeeAwardRepository } from '../../employee-award/repository/type-orm-employee-award.repository';
-import { MikroOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/mikro-orm-job-search-category.repository';
-import { TypeOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/type-orm-job-search-category.repository';
-import { MikroOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/mikro-orm-job-search-occupation.repository';
-import { TypeOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/type-orm-job-search-occupation.repository';
-import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
-import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
-import { MikroOrmJobPresetRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset.repository';
-import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/type-orm-job-preset-upwork-job-search-criterion.repository';
-import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository/type-orm-job-preset.repository';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
+// import { MikroOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/mikro-orm-job-search-category.repository';
+// import { TypeOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/type-orm-job-search-category.repository';
+// import { MikroOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/mikro-orm-job-search-occupation.repository';
+// import { TypeOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/type-orm-job-search-occupation.repository';
+// import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
+// import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
+// import { MikroOrmJobPresetRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset.repository';
+// import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/type-orm-job-preset-upwork-job-search-criterion.repository';
+// import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository/type-orm-job-preset.repository';
+// import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { MikroOrmEmployeeLevelRepository } from '../../employee-level/repository/mikro-orm-employee-level.repository';
 import { TypeOrmEmployeeLevelRepository } from '../../employee-level/repository/type-orm-employee-level.repository';
 import { MikroOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/mikro-orm-employee-recurring-expense.repository';
@@ -552,10 +552,10 @@ export class ImportService implements OnModuleInit {
 
 		mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository,
 
-		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
+		// @InjectRepository(EmployeeUpworkJobsSearchCriterion)
+		// private typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
 
-		mikroOrmEmployeeUpworkJobsSearchCriterionRepository: MikroOrmEmployeeUpworkJobsSearchCriterionRepository,
+		// mikroOrmEmployeeUpworkJobsSearchCriterionRepository: MikroOrmEmployeeUpworkJobsSearchCriterionRepository,
 
 		@InjectRepository(Equipment)
 		private typeOrmEquipmentRepository: TypeOrmEquipmentRepository,
@@ -692,25 +692,25 @@ export class ImportService implements OnModuleInit {
 
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
 
-		@InjectRepository(JobPreset)
-		private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
+		// @InjectRepository(JobPreset)
+		// private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 
-		mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
+		// mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
 
-		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
+		// @InjectRepository(JobPresetUpworkJobSearchCriterion)
+		// private typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
 
-		mikroOrmJobPresetUpworkJobSearchCriterionRepository: MikroOrmJobPresetUpworkJobSearchCriterionRepository,
+		// mikroOrmJobPresetUpworkJobSearchCriterionRepository: MikroOrmJobPresetUpworkJobSearchCriterionRepository,
 
-		@InjectRepository(JobSearchCategory)
-		private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
+		// @InjectRepository(JobSearchCategory)
+		// private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
 
-		mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
+		// mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
 
-		@InjectRepository(JobSearchOccupation)
-		private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
+		// @InjectRepository(JobSearchOccupation)
+		// private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
 
-		mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
+		// mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
 
 		@InjectRepository(KeyResult)
 		private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
@@ -1508,24 +1508,24 @@ export class ImportService implements OnModuleInit {
 					{ column: 'reportId', repository: this.typeOrmReportRepository }
 				]
 			},
-			{
-				repository: this.typeOrmJobPresetRepository
-			},
-			{
-				repository: this.typeOrmJobSearchCategoryRepository
-			},
-			{
-				repository: this.typeOrmJobSearchOccupationRepository
-			},
-			{
-				repository: this.typeOrmJobPresetUpworkJobSearchCriterionRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'jobPresetId', repository: this.typeOrmJobPresetRepository },
-					{ column: 'occupationId', repository: this.typeOrmJobSearchOccupationRepository },
-					{ column: 'categoryId', repository: this.typeOrmJobSearchCategoryRepository }
-				]
-			},
+			// {
+			// 	repository: this.typeOrmJobPresetRepository
+			// },
+			// {
+			// 	repository: this.typeOrmJobSearchCategoryRepository
+			// },
+			// {
+			// 	repository: this.typeOrmJobSearchOccupationRepository
+			// },
+			// {
+			// 	repository: this.typeOrmJobPresetUpworkJobSearchCriterionRepository,
+			// 	isCheckRelation: true,
+			// 	foreignKeys: [
+			// 		{ column: 'jobPresetId', repository: this.typeOrmJobPresetRepository },
+			// 		{ column: 'occupationId', repository: this.typeOrmJobSearchOccupationRepository },
+			// 		{ column: 'categoryId', repository: this.typeOrmJobSearchCategoryRepository }
+			// 	]
+			// },
 			/**
 			* These entities need TENANT, ORGANIZATION & USER
 			*/
@@ -1777,16 +1777,16 @@ export class ImportService implements OnModuleInit {
 					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
 				]
 			},
-			{
-				repository: this.typeOrmEmployeeUpworkJobsSearchCriterionRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
-					{ column: 'jobPresetId', repository: this.typeOrmJobPresetRepository },
-					{ column: 'occupationId', repository: this.typeOrmJobSearchOccupationRepository },
-					{ column: 'categoryId', repository: this.typeOrmJobSearchCategoryRepository }
-				]
-			},
+			// {
+			// 	repository: this.typeOrmEmployeeUpworkJobsSearchCriterionRepository,
+			// 	isCheckRelation: true,
+			// 	foreignKeys: [
+			// 		{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
+			// 		{ column: 'jobPresetId', repository: this.typeOrmJobPresetRepository },
+			// 		{ column: 'occupationId', repository: this.typeOrmJobSearchOccupationRepository },
+			// 		{ column: 'categoryId', repository: this.typeOrmJobSearchCategoryRepository }
+			// 	]
+			// },
 			{
 				repository: this.typeOrmEmployeeLevelRepository
 			},
