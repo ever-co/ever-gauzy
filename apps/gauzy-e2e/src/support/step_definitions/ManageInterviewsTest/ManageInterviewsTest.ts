@@ -13,7 +13,7 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
 let username = faker.internet.userName();
@@ -25,7 +25,7 @@ let empFirstName = faker.person.firstName();
 let empLastName = faker.person.lastName();
 let empUsername = faker.internet.userName();
 let empPassword = faker.internet.password();
-let employeeEmail = faker.internet.email();
+let employeeEmail = faker.internet.exampleEmail();
 let empImgUrl = faker.image.avatar();
 
 const createRandomInterviewTitleNumber = () => {

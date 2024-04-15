@@ -1,7 +1,8 @@
 import { DataSource } from 'typeorm';
-import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
 import { faker } from '@faker-js/faker';
 import { ICountry, IMerchant, IOrganization, ITenant } from '@gauzy/contracts';
+import { Merchant, Contact, ImageAsset, Country } from './../core/entities/internal';
+import { getEmailWithPostfix } from '../core/seeds/utils';
 
 export const createRandomMerchants = async (
     dataSource: DataSource,
@@ -56,7 +57,7 @@ const applyRandomProperties = (
     const merchant = new Merchant()
     merchant.name = faker.company.name();
     merchant.code = faker.string.alphanumeric();
-    merchant.email = faker.internet.exampleEmail(merchant.name);
+    merchant.email = getEmailWithPostfix(faker.internet.exampleEmail(merchant.name));
     merchant.description = faker.lorem.words();
     merchant.phone = faker.phone.number();
     merchant.organization = organization;

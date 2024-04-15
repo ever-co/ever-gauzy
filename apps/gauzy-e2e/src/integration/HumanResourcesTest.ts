@@ -20,7 +20,7 @@ describe('Human resources page test', () => {
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
+		employeeEmail = faker.internet.exampleEmail();
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);

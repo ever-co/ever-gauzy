@@ -11,8 +11,8 @@ let secEmail = ' ';
 
 describe('Invite user/s test', () => {
 	before(() => {
-		email = faker.internet.email();
-		secEmail = faker.internet.email();
+		email = faker.internet.exampleEmail();
+		secEmail = faker.internet.exampleEmail();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});
