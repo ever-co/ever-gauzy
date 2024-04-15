@@ -71,13 +71,20 @@ export async function cleanAssets(config: Partial<ApplicationPluginConfig>, dest
 }
 
 /**
- * Takes an email string, converts it to lowercase, and appends a postfix "_ever_testing".
+ * Takes an email string, converts it to lowercase, and appends a postfix "_ever_testing" before the "@" symbol.
  *
  * @param email The email address to modify.
  * @param postfix The postfix to append (default is "_ever_testing").
- * @returns The modified email address with the postfix appended.
+ * @returns The modified email address with the postfix appended before the "@" symbol.
  */
 export function getEmailWithPostfix(email: string, postfix = '_ever_testing'): string {
-	const lowercaseEmail = email.toLowerCase();
-	return lowercaseEmail + postfix;
+	const atIndex = email.indexOf('@');
+	if (atIndex === -1) {
+		// If "@" symbol not found, return original email
+		return email;
+	}
+	const localPart = email.slice(0, atIndex); // Extract local part before "@"
+	const domainPart = email.slice(atIndex); // Extract domain part including "@"
+	const lowercaseLocalPart = localPart.toLowerCase();
+	return lowercaseLocalPart + postfix + domainPart;
 }
