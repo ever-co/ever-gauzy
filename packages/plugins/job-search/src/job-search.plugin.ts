@@ -1,10 +1,24 @@
 
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { ApplicationPluginConfig } from '@gauzy/common';
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';
+import { EmployeeJobPresetModule, entities } from './employee-job-preset/employee-job-preset.module';
+import { JobPreset } from './employee-job-preset/job-preset.entity';
 
-@GauzyCorePlugin({
-	imports: [EmployeeJobPostModule],
-	entities: [],
+@Plugin({
+	imports: [EmployeeJobPostModule, EmployeeJobPresetModule],
+	entities: [...entities],
+	configuration: (config: ApplicationPluginConfig) => {
+		// Configuration object for custom fields in the Employee entity.
+		config.customFields.Employee.push({
+			propertyPath: 'jobPresets',
+			type: 'relation',
+			relationType: 'many-to-many',
+			entity: JobPreset,
+			inverseSide: (it: JobPreset) => it.employees
+		});
+		return config;
+	},
 	providers: []
 })
 export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy {

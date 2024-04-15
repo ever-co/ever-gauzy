@@ -24,7 +24,7 @@ import { TypeOrmJobPresetRepository } from './repository/type-orm-job-preset.rep
 import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/type-orm-job-preset-upwork-job-search-criterion.repository';
 
-export const forFeatureEntities = [
+export const entities = [
 	JobPreset,
 	JobPresetUpworkJobSearchCriterion,
 	EmployeeUpworkJobsSearchCriterion,
@@ -37,8 +37,8 @@ export const forFeatureEntities = [
 		RouterModule.register([
 			{ path: '/job-preset', module: EmployeeJobPresetModule }
 		]),
-		TypeOrmModule.forFeature([...forFeatureEntities]),
-		MikroOrmModule.forFeature([...forFeatureEntities]),
+		TypeOrmModule.forFeature([...entities]),
+		MikroOrmModule.forFeature([...entities]),
 		EmployeeModule,
 		CqrsModule,
 		GauzyAIModule.forRoot()
