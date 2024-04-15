@@ -1,4 +1,5 @@
 
+import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';
@@ -43,6 +44,34 @@ export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
 			console.log(`${JobSearchPlugin.name} is being destroyed...`);
+		}
+	}
+
+	/**
+	 * Seed default data using the Help Center seeder service.
+	 * This method is intended to be invoked during the default seed phase of the plugin lifecycle.
+	 */
+	async onPluginDefaultSeed() {
+		try {
+			if (this.logEnabled) {
+				console.log(chalk.green(`Default data seeded successfully for ${JobSearchPlugin.name}.`));
+			}
+		} catch (error) {
+			console.error(chalk.red(`Error seeding default data for ${JobSearchPlugin.name}:`, error));
+		}
+	}
+
+	/**
+	 * Seed random data using the Help Center seeder service.
+	 * This method is intended to be invoked during the random seed phase of the plugin lifecycle.
+	 */
+	async onPluginRandomSeed() {
+		try {
+			if (this.logEnabled) {
+				console.log(chalk.green(`Random data seeded successfully for ${JobSearchPlugin.name}.`));
+			}
+		} catch (error) {
+			console.error(chalk.red(`Error seeding random data for ${JobSearchPlugin.name}:`, error));
 		}
 	}
 }
