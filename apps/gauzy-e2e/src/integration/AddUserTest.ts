@@ -18,7 +18,7 @@ describe('Add user test', () => {
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 		password = faker.internet.password();
 		imgUrl = faker.image.avatar();
 

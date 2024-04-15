@@ -22,14 +22,14 @@ let imgUrl = ' ';
 
 describe('Organization departments test', () => {
 	before(() => {
-		email = faker.internet.email();
-		secEmail = faker.internet.email();
+		email = faker.internet.exampleEmail();
+		secEmail = faker.internet.exampleEmail();
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
+		employeeEmail = faker.internet.exampleEmail();
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);

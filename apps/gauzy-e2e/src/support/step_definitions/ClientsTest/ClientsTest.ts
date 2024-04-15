@@ -13,7 +13,7 @@ import * as logoutPage from '../../Base/pages/Logout.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 let inviteName = faker.person.firstName() + ' ' + faker.person.lastName();
 let deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
