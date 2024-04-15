@@ -69,3 +69,15 @@ export async function cleanAssets(config: Partial<ApplicationPluginConfig>, dest
 		);
 	});
 }
+
+/**
+ * Takes an email string, converts it to lowercase, and appends a postfix "_ever_testing".
+ *
+ * @param email The email address to modify.
+ * @param postfix The postfix to append (default is "_ever_testing").
+ * @returns The modified email address with the postfix appended.
+ */
+export function getEmailWithPostfix(email: string, postfix = '_ever_testing'): string {
+	const lowercaseEmail = email.toLowerCase();
+	return lowercaseEmail + postfix;
+}
