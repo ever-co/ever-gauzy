@@ -12,10 +12,10 @@ import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../reposi
 export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePresetCommand> {
 
 	constructor(
-		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-		private readonly gauzyAIService: GauzyAIService
+		private readonly _typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
+		private readonly _typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly _typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
+		private readonly _gauzyAIService: GauzyAIService
 	) { }
 
 	/**
@@ -29,13 +29,13 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		const { employeeId } = input;
 
 		// Find the employee with related data
-		const employee = await this.typeOrmEmployeeRepository.findOne({
+		const employee = await this._typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
-			relations: ['customFields.jobPresets', 'organization']
+			relations: ['user', 'organization', 'customFields.jobPresets']
 		});
 
 		// Find the job preset with related criteria
-		const jobPreset = await this.typeOrmJobPresetRepository.findOne({
+		const jobPreset = await this._typeOrmJobPresetRepository.findOne({
 			where: { id: In(input.jobPresetIds) },
 			relations: { jobPresetCriterions: true }
 		});
@@ -47,16 +47,16 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 
 		// Update employee custom fields with job presets
 		employee.customFields['jobPresets'] = input.jobPresetIds.map((id) => new JobPreset({ id }));
-		await this.typeOrmEmployeeRepository.save(employee);
+		await this._typeOrmEmployeeRepository.save(employee);
 
 		// Delete existing employee job search criteria
-		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({ employeeId });
+		await this._typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({ employeeId });
 
 		// Save new employee job search criteria
-		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(employeeCriterions);
+		await this._typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(employeeCriterions);
 
 		// Sync Gauzy employee job search criteria
-		this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, employeeCriterions);
+		this._gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, employeeCriterions);
 
 		return employeeCriterions;
 	}
