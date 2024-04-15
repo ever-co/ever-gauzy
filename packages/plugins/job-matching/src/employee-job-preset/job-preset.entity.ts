@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { JoinTable } from 'typeorm';
+import { DeepPartial, JoinTable } from 'typeorm';
 import { IsNotEmpty, IsString } from 'class-validator';
 import {
 	IEmployeeUpworkJobsSearchCriterion,
@@ -14,6 +14,10 @@ import { JobPresetUpworkJobSearchCriterion } from './job-preset-upwork-job-searc
 
 @MultiORMEntity('job_preset', { mikroOrmRepository: () => MikroOrmJobPresetRepository })
 export class JobPreset extends TenantOrganizationBaseEntity implements IJobPreset {
+
+	constructor(input?: DeepPartial<JobPreset>) {
+		super(input);
+	}
 
 	@ApiProperty({ type: () => String })
 	@IsString()
@@ -52,7 +56,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Job Preset Employees
 	 */
-	@MultiORMManyToMany(() => Employee, {
+	@MultiORMManyToMany(() => Employee, (it: Employee) => it.customFields['jobPresets'], {
 		cascade: true,
 		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true,

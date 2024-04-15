@@ -6,7 +6,6 @@ import {
 	CurrenciesEnum,
 	IEmployee,
 	PayPeriodEnum,
-	ITag,
 	IContact,
 	ISkill,
 	IUser,
@@ -32,7 +31,7 @@ import {
 	IEquipmentSharing,
 	IEmployeePhone
 } from '@gauzy/contracts';
-import { CustomFields, HasCustomFields } from '@gauzy/common';
+import { CustomEmbeddedFields, HasCustomFields } from '@gauzy/common';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -53,7 +52,6 @@ import {
 	Expense,
 	Goal,
 	InvoiceItem,
-	JobPreset,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
@@ -75,8 +73,8 @@ import {
 } from '../core/entities/internal';
 import { CustomEmployeeFields } from '../core/entities/custom-entity-fields/custom-entity-fields';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
-import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { Taggable } from '../tags/tag.types';
+import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
@@ -581,13 +579,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
 	/**
-	 * Employee Job Presets
-	 */
-	@ApiProperty({ type: () => JobPreset })
-	@MultiORMManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
-	jobPresets?: JobPreset[];
-
-	/**
 	 * Employee Organization Contacts
 	 */
 	@MultiORMManyToMany(() => OrganizationContact, (it) => it.members, {
@@ -653,5 +644,5 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	|--------------------------------------------------------------------------
 	*/
 	@Column(() => CustomEmployeeFields)
-	customFields?: CustomFields;
+	customFields?: CustomEmbeddedFields;
 }

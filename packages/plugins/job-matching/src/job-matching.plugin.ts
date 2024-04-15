@@ -10,9 +10,9 @@ import { JobPreset } from './employee-job-preset/job-preset.entity';
 	providers: [],
 	configuration: (config: ApplicationPluginConfig) => {
 		config.customFields.Employee.push({
-			name: 'jobPresets',
+			propertyPath: 'jobPresets',
 			type: 'relation',
-			relation: 'many-to-many',
+			relationType: 'many-to-many',
 			entity: JobPreset,
 			inverseSide: (it: JobPreset) => it.employees
 		});
