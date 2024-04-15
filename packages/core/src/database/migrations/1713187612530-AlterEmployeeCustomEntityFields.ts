@@ -128,12 +128,12 @@ export class AlterEmployeeCustomEntityFields1713187612530 implements MigrationIn
     }
 
     /**
-     * MySQL Up Migration
-     *
-     * @param queryRunner
-     */
+    * MySQL Up Migration
+    *
+    * @param queryRunner
+    */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE \`employee\` ADD \`customFields__fix_relational_custom_fields__\` tinyint NULL`);
     }
 
     /**
@@ -142,6 +142,6 @@ export class AlterEmployeeCustomEntityFields1713187612530 implements MigrationIn
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE \`employee\` DROP COLUMN \`customFields__fix_relational_custom_fields__\``);
     }
 }
