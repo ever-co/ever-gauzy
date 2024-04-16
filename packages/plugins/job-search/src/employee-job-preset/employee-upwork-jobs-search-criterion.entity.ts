@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId } from 'typeorm';
+import { DeepPartial, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
@@ -9,8 +9,7 @@ import {
 	IJobSearchOccupation,
 	JobPostTypeEnum
 } from '@gauzy/contracts';
-import { Employee, TenantOrganizationBaseEntity } from '@gauzy/core';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '@gauzy/core';
+import { Employee, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { JobPreset } from './job-preset.entity';
 import { JobSearchOccupation } from './job-search-occupation/job-search-occupation.entity';
 import { JobSearchCategory } from './job-search-category/job-search-category.entity';
@@ -18,6 +17,10 @@ import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from './repositor
 
 @MultiORMEntity('employee_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmEmployeeUpworkJobsSearchCriterionRepository })
 export class EmployeeUpworkJobsSearchCriterion extends TenantOrganizationBaseEntity implements IEmployeeUpworkJobsSearchCriterion {
+
+	constructor(input?: DeepPartial<EmployeeUpworkJobsSearchCriterion>) {
+		super(input);
+	}
 
 	@ApiProperty({ type: () => String })
 	@IsString()

@@ -106,11 +106,12 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 
 		// Left join employee criterions if employeeId is provided in the request
 		if (request?.employeeId) {
+			const { employeeId } = request;
 			query.leftJoinAndSelect(
 				`${query.alias}.employeeCriterions`,
 				'employeeCriterions',
 				'employeeCriterions.employeeId = :employeeId',
-				{ employeeId: request.employeeId }
+				{ employeeId }
 			);
 		}
 
@@ -118,7 +119,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		query.andWhere(`${query.alias}.id = :id`, { id });
 
 		// Execute the query and return the result
-		return query.getOne();
+		return await query.getOne();
 	}
 
 	/**
@@ -126,9 +127,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param presetId The ID of the job preset.
 	 * @returns A Promise that resolves to an array of job preset criterion.
 	 */
-	public getJobPresetCriterion(presetId: string) {
+	public async getJobPresetCriterion(presetId: string) {
 		// Use the job preset ID to find related job preset criterion
-		return this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findBy({ jobPresetId: presetId });
+		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findBy({ jobPresetId: presetId });
 	}
 
 
@@ -137,8 +138,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param input The input data for retrieving employee criteria.
 	 * @returns A Promise that resolves to the employee criteria matching the input.
 	 */
-	public getEmployeeCriterion(input: IGetMatchingCriterions) {
-		return this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({
+	public async getEmployeeCriterion(input: IGetMatchingCriterions) {
+		return await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({
 			...(input.jobPresetId ? { jobPresetId: input.jobPresetId } : {}),
 			employeeId: input.employeeId
 		});
@@ -202,7 +203,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveEmployeePreset(request: IEmployeePresetInput) {
 		// Execute the SaveEmployeePresetCommand with the provided input
-		return this.commandBus.execute(
+		return await this.commandBus.execute(
 			new SaveEmployeePresetCommand(request)
 		);
 	}
@@ -213,9 +214,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param employeeId The ID of the employee.
 	 * @returns A Promise that resolves to the result of the deletion operation.
 	 */
-	deleteEmployeeCriterion(creationId: string, employeeId: string) {
+	async deleteEmployeeCriterion(creationId: string, employeeId: string) {
 		// Delete the employee criterion with the specified ID associated with the employee ID
-		return this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({
+		return await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({
 			id: creationId,
 			employeeId: employeeId
 		});
@@ -226,8 +227,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param creationId The ID of the job preset criterion to be deleted.
 	 * @returns A Promise that resolves to the result of the deletion operation.
 	 */
-	deleteJobPresetCriterion(creationId: string) {
+	async deleteJobPresetCriterion(creationId: string) {
 		// Delete the job preset criterion with the specified ID
-		return this.typeOrmJobPresetUpworkJobSearchCriterionRepository.delete(creationId);
+		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.delete(creationId);
 	}
 }

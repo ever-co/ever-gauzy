@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId } from 'typeorm';
+import { DeepPartial, JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import {
@@ -16,6 +16,10 @@ import { JobSearchCategory } from './job-search-category/job-search-category.ent
 
 @MultiORMEntity('job_preset_upwork_job_search_criterion', { mikroOrmRepository: () => MikroOrmJobPresetUpworkJobSearchCriterionRepository })
 export class JobPresetUpworkJobSearchCriterion extends TenantOrganizationBaseEntity implements IJobPresetUpworkJobSearchCriterion {
+
+	constructor(input?: DeepPartial<JobPresetUpworkJobSearchCriterion>) {
+		super(input);
+	}
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
