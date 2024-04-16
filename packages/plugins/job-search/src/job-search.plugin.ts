@@ -1,6 +1,7 @@
 
 import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { SeederModule } from '@gauzy/core';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 import { EmployeeJobPresetModule, entities } from './employee-job-preset/employee-job-preset.module';
@@ -8,7 +9,7 @@ import { JobPreset } from './employee-job-preset/job-preset.entity';
 import { JobSeederService } from './employee-job-preset/job-seeder.service';
 
 @Plugin({
-	imports: [EmployeeJobPostModule, EmployeeJobPresetModule],
+	imports: [EmployeeJobPostModule, EmployeeJobPresetModule, SeederModule],
 	entities: [...entities],
 	configuration: (config: ApplicationPluginConfig) => {
 		// Configuration object for custom fields in the Employee entity.
