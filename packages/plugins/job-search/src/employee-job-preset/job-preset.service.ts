@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { SelectQueryBuilder } from 'typeorm';
+import { DeleteResult, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from 'class-validator';
 import {
 	IEmployeePresetInput,
@@ -185,7 +185,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param employeeId The ID of the employee.
 	 * @returns A Promise that resolves to the job presets associated with the employee.
 	 */
-	async getEmployeePreset(employeeId: string) {
+	async getEmployeePreset(employeeId: string): Promise<IJobPreset[]> {
 		// Find the employee with the specified ID and include jobPresets relation
 		const employee = await this.typeOrmEmployeeRepository.findOne({
 			where: { id: employeeId },
@@ -201,7 +201,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param request The input containing employee presets to be saved.
 	 * @returns A Promise that resolves to the result of the command execution.
 	 */
-	async saveEmployeePreset(request: IEmployeePresetInput) {
+	async saveEmployeePreset(request: IEmployeePresetInput): Promise<IJobPreset[]> {
 		// Execute the SaveEmployeePresetCommand with the provided input
 		return await this.commandBus.execute(
 			new SaveEmployeePresetCommand(request)
@@ -214,7 +214,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @param employeeId The ID of the employee.
 	 * @returns A Promise that resolves to the result of the deletion operation.
 	 */
-	async deleteEmployeeCriterion(creationId: string, employeeId: string) {
+	async deleteEmployeeCriterion(creationId: string, employeeId: string): Promise<DeleteResult> {
 		// Delete the employee criterion with the specified ID associated with the employee ID
 		return await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({
 			id: creationId,
