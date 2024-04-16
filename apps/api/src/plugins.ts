@@ -3,6 +3,7 @@ import { ChangelogPlugin } from '@gauzy/changelog-plugin';
 import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
 import { JobSearchPlugin } from '@gauzy/job-search-plugin';
+import { JobProposalPlugin } from '@gauzy/job-proposal-plugin';
 import { JobProposalTemplatePlugin } from '@gauzy/job-proposal-template-plugin';
 import { SentryTracing as SentryPlugin } from './sentry';
 
@@ -27,6 +28,8 @@ export const plugins = [
     ChangelogPlugin,
     // Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
     KnowledgeBasePlugin,
+    // Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.
+    JobProposalPlugin,
     // Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
     JobSearchPlugin,
     // Indicates the inclusion or intention to use the JobProposalTemplatePlugin in the codebase.
