@@ -288,7 +288,6 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	getCounter = (item: any): number => {
 		// Define the substring to identify counter properties
 		const substring = '_counter';
-		console.log(item);
 
 		// Initialize the counter to 0
 		let counter = 0;
