@@ -40,7 +40,7 @@
             "../../../packages/plugins/jitsu-analytics",
             "../../../packages/plugins/sentry-tracing",
             "../../../packages/plugins/job-search",
-            "../../../packages/plugins/job-proposal-template"
+            "../../../packages/plugins/job-proposal"
         ]
     },
     "build": {
@@ -143,7 +143,7 @@
         "@gauzy/desktop-libs": "^0.1.0",
         "@gauzy/desktop-window": "^0.1.0",
         "@gauzy/jitsu-analytics-plugin": "^0.1.0",
-        "@gauzy/job-proposal-template-plugin": "^0.1.0",
+        "@gauzy/job-proposal-plugin": "^0.1.0",
         "@gauzy/job-search-plugin": "^0.1.0",
         "@gauzy/knowledge-base-plugin": "^0.1.0",
         "@gauzy/sentry-plugin": "^0.1.0",

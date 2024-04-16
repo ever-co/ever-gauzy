@@ -3,10 +3,12 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { Proposal } from './proposal/proposal.entity';
 import { ProposalModule } from './proposal/proposal.moule';
+import { EmployeeProposalTemplateModule } from './proposal-template/employee-proposal-template.module';
+import { EmployeeProposalTemplate } from './proposal-template/employee-proposal-template.entity';
 
 @Plugin({
-	imports: [ProposalModule],
-	entities: [Proposal],
+	imports: [ProposalModule, EmployeeProposalTemplateModule],
+	entities: [Proposal, EmployeeProposalTemplate],
 	configuration: (config: ApplicationPluginConfig) => {
 		config.customFields.Tag.push({
 			propertyPath: 'proposals',
