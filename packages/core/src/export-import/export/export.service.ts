@@ -1,10 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import { camelCase } from 'lodash';
 import * as archiver from 'archiver';
 import * as csv from 'csv-writer';
 import * as fs from 'fs';

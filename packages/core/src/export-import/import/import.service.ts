@@ -2,12 +2,12 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Repository } from 'typeorm';
+import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
-import * as _ from 'lodash';
 import * as path from 'path';
 import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
@@ -1316,7 +1316,7 @@ export class ImportService implements OnModuleInit {
 				continue;
 			}
 
-			const className = _.camelCase(entity.name);
+			const className = camelCase(entity.name);
 			const repository = this._connectionEntityManager.getRepository(entity);
 
 			this[className] = repository;
