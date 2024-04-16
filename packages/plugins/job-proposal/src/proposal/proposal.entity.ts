@@ -100,7 +100,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	/**
 	 * Tags
 	 */
-	@MultiORMManyToMany(() => Tag, {
+	@MultiORMManyToMany(() => Tag, (it: Tag) => it.customFields['proposals'], {
 		/**  Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */

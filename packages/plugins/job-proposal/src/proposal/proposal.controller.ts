@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { UpdateResult } from 'typeorm';
 import { IProposal, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	CrudController,
@@ -43,12 +42,22 @@ export class ProposalController extends CrudController<Proposal> {
 	}
 
 	/**
-	 * GET proposal by pagination
+	 * Get proposals using pagination.
 	 *
-	 * @param params
-	 * @returns
+	 * @param params The pagination parameters.
+	 * @returns The paginated list of proposals.
 	 */
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
+	@ApiOperation({ summary: 'Get proposals by pagination' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Proposals retrieved successfully',
+		type: Proposal
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid pagination parameters provided',
+	})
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
@@ -56,20 +65,20 @@ export class ProposalController extends CrudController<Proposal> {
 	}
 
 	/**
-	 * GET proposal by find options
-	 *
-	 * @param data
-	 * @returns
-	 */
-	@ApiOperation({ summary: 'Find all proposals.' })
+	* Find all proposals based on the provided options.
+	*
+	* @param data The options for finding proposals.
+	* @returns The found proposals.
+	*/
+	@ApiOperation({ summary: 'Find all proposals' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found proposals',
+		description: 'Proposals found',
 		type: Proposal
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'No proposals found',
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
@@ -79,76 +88,80 @@ export class ProposalController extends CrudController<Proposal> {
 	}
 
 	/**
+	 * Find a single proposal by its ID.
 	 *
-	 * @param id
-	 * @param options
-	 * @returns
+	 * @param id The ID of the proposal to find.
+	 * @param options Additional options for the query.
+	 * @returns The found proposal.
 	 */
-	@ApiOperation({ summary: 'Find single proposal by id.' })
+	@ApiOperation({ summary: 'Find a single proposal by ID' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found proposal',
+		description: 'Proposal found',
 		type: Proposal
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Proposal not found',
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query() options: OptionParams<Proposal>
+		@Query() options: OptionParams<Proposal>,
 	): Promise<IProposal> {
 		return await this._proposalService.findOneByIdString(id, { relations: options.relations || [] });
 	}
 
 	/**
+	 * Create a new proposal record.
 	 *
-	 * @param entity
-	 * @returns
+	 * @param entity The data to create the proposal.
+	 * @returns The newly created proposal.
 	 */
-	@ApiOperation({ summary: 'Create new record' })
+	@ApiOperation({ summary: 'Create a new proposal record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.' /*, type: T*/
+		description: 'Proposal created successfully',
+		type: Proposal
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input. The response body may contain clues as to what went wrong',
 	})
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateProposalDTO): Promise<IProposal> {
 		return await this._commandBus.execute(
-			new ProposalCreateCommand(entity)
+			new ProposalCreateCommand(entity),
 		);
 	}
 
 	/**
+	 * Update a single proposal by its ID.
 	 *
-	 * @param id
-	 * @param entity
-	 * @returns
+	 * @param id The ID of the proposal to update.
+	 * @param entity The updated proposal data.
+	 * @returns The updated proposal.
 	 */
-	@ApiOperation({ summary: 'Update single proposal by id.' })
+	@ApiOperation({ summary: 'Update a single proposal by ID' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Updates proposal',
+		description: 'Proposal updated successfully',
 		type: Proposal
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'Proposal not found',
 	})
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateProposalDTO
+		@Body() entity: UpdateProposalDTO,
 	): Promise<IProposal> {
 		return await this._commandBus.execute(
-			new ProposalUpdateCommand(id, entity)
+			new ProposalUpdateCommand(id, entity),
 		);
 	}
 }

@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { CustomFields } from '@gauzy/common';
+import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ICandidate,
 	IEmployee,
@@ -378,5 +378,5 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	|--------------------------------------------------------------------------
 	*/
 	@Column(() => CustomTagFields)
-	customFields?: CustomFields;
+	customFields?: CustomEmbeddedFields;
 }
