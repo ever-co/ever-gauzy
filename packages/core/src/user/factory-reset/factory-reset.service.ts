@@ -55,9 +55,6 @@ import {
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
-	// JobPreset,
-	// JobSearchCategory,
-	// JobSearchOccupation,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
@@ -139,12 +136,6 @@ import { MikroOrmEmployeeAppointmentRepository } from '../../employee-appointmen
 import { TypeOrmEmployeeAppointmentRepository } from '../../employee-appointment/repository/type-orm-employee-appointment.repository';
 import { MikroOrmEmployeeAwardRepository } from '../../employee-award/repository/mikro-orm-employee-award.repository';
 import { TypeOrmEmployeeAwardRepository } from '../../employee-award/repository/type-orm-employee-award.repository';
-// import { MikroOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/mikro-orm-job-search-category.repository';
-// import { TypeOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/type-orm-job-search-category.repository';
-// import { MikroOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/mikro-orm-job-search-occupation.repository';
-// import { TypeOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/type-orm-job-search-occupation.repository';
-// import { MikroOrmJobPresetRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset.repository';
-// import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository/type-orm-job-preset.repository';
 import { MikroOrmEmployeeLevelRepository } from '../../employee-level/repository/mikro-orm-employee-level.repository';
 import { TypeOrmEmployeeLevelRepository } from '../../employee-level/repository/type-orm-employee-level.repository';
 import { MikroOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/mikro-orm-employee-recurring-expense.repository';
@@ -508,21 +499,6 @@ export class FactoryResetService {
 
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
 
-		// @InjectRepository(JobPreset)
-		// private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-
-		// mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
-
-		// @InjectRepository(JobSearchCategory)
-		// private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
-
-		// mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
-
-		// @InjectRepository(JobSearchOccupation)
-		// private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
-
-		// mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
-
 		@InjectRepository(KeyResult)
 		private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
 
@@ -873,9 +849,6 @@ export class FactoryResetService {
 			this.typeOrmInvoiceEstimateHistoryRepository,
 			this.typeOrmInvoiceRepository,
 			this.typeOrmFeatureOrganizationRepository,
-			// this.typeOrmJobPresetRepository,
-			// this.typeOrmJobSearchCategoryRepository,
-			// this.typeOrmJobSearchOccupationRepository,
 			this.typeOrmEmployeeAppointmentRepository,
 			this.typeOrmEmployeeAwardRepository,
 			this.typeOrmEmployeeLevelRepository,
