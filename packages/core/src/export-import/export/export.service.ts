@@ -1,10 +1,10 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import { BehaviorSubject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
-import * as _ from 'lodash';
 import * as archiver from 'archiver';
 import * as csv from 'csv-writer';
 import * as fs from 'fs';
@@ -45,7 +45,6 @@ import {
 	EmployeeLevel,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
-	EmployeeUpworkJobsSearchCriterion,
 	Equipment,
 	EquipmentSharing,
 	EquipmentSharingPolicy,
@@ -74,10 +73,6 @@ import {
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
-	JobPreset,
-	JobPresetUpworkJobSearchCriterion,
-	JobSearchCategory,
-	JobSearchOccupation,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
@@ -191,16 +186,6 @@ import { MikroOrmEmployeeAppointmentRepository } from '../../employee-appointmen
 import { TypeOrmEmployeeAppointmentRepository } from '../../employee-appointment/repository/type-orm-employee-appointment.repository';
 import { MikroOrmEmployeeAwardRepository } from '../../employee-award/repository/mikro-orm-employee-award.repository';
 import { TypeOrmEmployeeAwardRepository } from '../../employee-award/repository/type-orm-employee-award.repository';
-import { MikroOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/mikro-orm-job-search-category.repository';
-import { TypeOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/type-orm-job-search-category.repository';
-import { MikroOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/mikro-orm-job-search-occupation.repository';
-import { TypeOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/type-orm-job-search-occupation.repository';
-import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
-import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
-import { MikroOrmJobPresetRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset.repository';
-import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/type-orm-job-preset-upwork-job-search-criterion.repository';
-import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository/type-orm-job-preset.repository';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { MikroOrmEmployeeLevelRepository } from '../../employee-level/repository/mikro-orm-employee-level.repository';
 import { TypeOrmEmployeeLevelRepository } from '../../employee-level/repository/type-orm-employee-level.repository';
 import { MikroOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/mikro-orm-employee-recurring-expense.repository';
@@ -558,11 +543,6 @@ export class ExportService implements OnModuleInit {
 
 		mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository,
 
-		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-
-		mikroOrmEmployeeUpworkJobsSearchCriterionRepository: MikroOrmEmployeeUpworkJobsSearchCriterionRepository,
-
 		@InjectRepository(Equipment)
 		private typeOrmEquipmentRepository: TypeOrmEquipmentRepository,
 
@@ -697,26 +677,6 @@ export class ExportService implements OnModuleInit {
 		private typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
 
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
-
-		@InjectRepository(JobPreset)
-		private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-
-		mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
-
-		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
-
-		mikroOrmJobPresetUpworkJobSearchCriterionRepository: MikroOrmJobPresetUpworkJobSearchCriterionRepository,
-
-		@InjectRepository(JobSearchCategory)
-		private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
-
-		mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
-
-		@InjectRepository(JobSearchOccupation)
-		private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
-
-		mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
 
 		@InjectRepository(KeyResult)
 		private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
@@ -1393,7 +1353,7 @@ export class ExportService implements OnModuleInit {
 				continue;
 			}
 
-			const className = _.camelCase(entity.name);
+			const className = camelCase(entity.name);
 			const repository = this._connectionEntityManager.getRepository(entity);
 
 			this[className] = repository;
@@ -1503,15 +1463,11 @@ export class ExportService implements OnModuleInit {
 			{
 				repository: this.typeOrmEmployeeRepository,
 				relations: [
-					{ joinTableName: 'employee_job_preset' },
 					{ joinTableName: 'tag_employee' }
 				]
 			},
 			{
 				repository: this.typeOrmEmployeeSettingRepository
-			},
-			{
-				repository: this.typeOrmEmployeeUpworkJobsSearchCriterionRepository
 			},
 			{
 				repository: this.typeOrmEquipmentRepository,
@@ -1627,18 +1583,6 @@ export class ExportService implements OnModuleInit {
 				relations: [
 					{ joinTableName: 'tag_invoice' }
 				]
-			},
-			{
-				repository: this.typeOrmJobPresetRepository
-			},
-			{
-				repository: this.typeOrmJobPresetUpworkJobSearchCriterionRepository
-			},
-			{
-				repository: this.typeOrmJobSearchCategoryRepository
-			},
-			{
-				repository: this.typeOrmJobSearchOccupationRepository
 			},
 			{
 				repository: this.typeOrmKeyResultRepository
@@ -1861,10 +1805,7 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmTenantRepository,
-				condition: {
-					column: 'id',
-					replace: 'tenantId'
-				}
+				condition: { column: 'id', replace: 'tenantId' }
 			},
 			{
 				repository: this.typeOrmTenantSettingRepository

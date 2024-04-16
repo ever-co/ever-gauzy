@@ -5,4 +5,4 @@ export * from './guards';
 export * from './interfaces';
 export * from './utils';
 export * from './shared-types';
-export * from './custom-field-types';
+export * from './custom-embedded-field-types';
