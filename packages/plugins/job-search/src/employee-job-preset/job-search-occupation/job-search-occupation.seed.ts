@@ -3,54 +3,33 @@ import { IOrganization, ITenant, JobPostSourceEnum } from '@gauzy/contracts';
 import { JobSearchOccupation } from './job-search-occupation.entity';
 
 /**
+ * Creates default job search occupations.
  *
- * @param dataSource
- * @param tenant
- * @param organization
- * @returns
+ * @param connection The connection to the data source for database operations.
+ * @param tenant The tenant for which occupations are created.
+ * @param organization The organization for which occupations are created.
+ * @returns A Promise that resolves with the created job search occupations.
  */
 export const createDefaultJobSearchOccupations = async (
-	dataSource: DataSource,
+	connection: DataSource,
 	tenant: ITenant,
 	organization: IOrganization
 ): Promise<JobSearchOccupation[]> => {
-	const occupations: JobSearchOccupation[] = [];
-
 	const upworkOccupations = [
-		{
-			name: 'DevOps Engineering',
-			jobSourceOccupationId: '1110580753140797440'
-		},
-		{
-			name: 'Project Management',
-			jobSourceOccupationId: '1017484851352698979'
-		}
+		{ name: 'DevOps Engineering', jobSourceOccupationId: '1110580753140797440' },
+		{ name: 'Project Management', jobSourceOccupationId: '1017484851352698979' }
 	];
 
-	upworkOccupations.forEach((occupation) => {
+	const occupations: JobSearchOccupation[] = upworkOccupations.map(occupation => {
 		const occ = new JobSearchOccupation();
-
 		occ.jobSource = JobPostSourceEnum.UPWORK;
 		occ.organizationId = organization.id;
 		occ.tenantId = tenant.id;
 		occ.name = occupation.name;
 		occ.jobSourceOccupationId = occupation.jobSourceOccupationId;
-
-		occupations.push(occ);
+		return occ;
 	});
 
-	await insertOccupations(dataSource, occupations);
+	await connection.manager.save(occupations);
 	return occupations;
-};
-
-/**
- *
- * @param dataSource
- * @param occupations
- */
-const insertOccupations = async (
-	dataSource: DataSource,
-	occupations: JobSearchOccupation[]
-): Promise<void> => {
-	await dataSource.manager.save(occupations);
 };

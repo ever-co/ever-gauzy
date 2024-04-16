@@ -5,6 +5,7 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 import { EmployeeJobPresetModule, entities } from './employee-job-preset/employee-job-preset.module';
 import { JobPreset } from './employee-job-preset/job-preset.entity';
+import { JobSeederService } from './employee-job-preset/job-seeder.service';
 
 @Plugin({
 	imports: [EmployeeJobPostModule, EmployeeJobPresetModule],
@@ -20,14 +21,14 @@ import { JobPreset } from './employee-job-preset/job-preset.entity';
 		});
 		return config;
 	},
-	providers: []
+	providers: [JobSeederService]
 })
 export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
-	constructor() { }
+	constructor(private readonly jobSeederService: JobSeederService) { }
 
 	/**
 	 * Called when the plugin is being initialized.
@@ -53,6 +54,8 @@ export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 */
 	async onPluginDefaultSeed() {
 		try {
+			await this.jobSeederService.seedDefaultJobsData();
+
 			if (this.logEnabled) {
 				console.log(chalk.green(`Default data seeded successfully for ${JobSearchPlugin.name}.`));
 			}

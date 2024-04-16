@@ -289,8 +289,6 @@ import { createDefaultKeyResultTemplates } from '../../keyresult-template/keyres
 import { createDefaultEmployeeAwards } from '../../employee-award/employee-award.seed';
 import { createDefaultGoalKpiTemplate } from '../../goal-kpi-template/goal-kpi-template.seed';
 import { randomSeedConfig } from './random-seed-config';
-// import { createDefaultJobSearchCategories } from '../../employee-job-preset/job-search-category/job-search-category.seed';
-// import { createDefaultJobSearchOccupations } from '../../employee-job-preset/job-search-occupation/job-search-occupation.seed';
 import {
 	createDefaultReport,
 	createRandomTenantOrganizationsReport,
@@ -376,9 +374,6 @@ export class SeedDataService {
 
 			// Seed data with mock / fake data for random tenants
 			await this.seedRandomData();
-
-			// Seed jobs related data
-			await this.seedJobsData();
 
 			// Disconnect to database
 			await this.closeConnection();
@@ -493,9 +488,6 @@ export class SeedDataService {
 			// Seed random data
 			await this.seedRandomData();
 
-			// Seed jobs related data
-			await this.seedJobsData();
-
 			// Disconnect to database
 			await this.closeConnection();
 
@@ -541,53 +533,8 @@ export class SeedDataService {
 	 * Seed Default Job Data
 	 */
 	public async runJobsSeed() {
-		this.seedType = SeederTypeEnum.ALL;
 		try {
-			// Seed jobs related data
-			await this.seedJobsData();
-
-			console.log('Database Jobs Seed Completed');
-		} catch (error) {
-			this.handleError(error);
-		}
-	}
-
-	/**
-	 * Populate database with jobs related data
-	 */
-	private async seedJobsData() {
-		try {
-			this.log(
-				chalk.green(
-					`🌱 SEEDING ${env.production ? 'PRODUCTION' : ''
-					} JOBS DATABASE...`
-				)
-			);
-
-			// await this.tryExecute(
-			// 	'Default Job Search Categories',
-			// 	createDefaultJobSearchCategories(
-			// 		this.dataSource,
-			// 		this.tenant,
-			// 		this.defaultOrganization
-			// 	)
-			// );
-
-			// await this.tryExecute(
-			// 	'Default Job Search Occupations',
-			// 	createDefaultJobSearchOccupations(
-			// 		this.dataSource,
-			// 		this.tenant,
-			// 		this.defaultOrganization
-			// 	)
-			// );
-
-			this.log(
-				chalk.green(
-					`✅ SEEDED ${env.production ? 'PRODUCTION' : ''
-					} JOBS DATABASE`
-				)
-			);
+			this.seedType = SeederTypeEnum.ALL;
 		} catch (error) {
 			this.handleError(error);
 		}
