@@ -16,7 +16,7 @@ let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
-let employeeEmail = faker.internet.email();
+let employeeEmail = faker.internet.exampleEmail();
 let imgUrl = faker.image.avatar();
 
 // Login with email

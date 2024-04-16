@@ -124,7 +124,6 @@ import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.module';
-import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
 import { ReportModule } from './reports/report.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
@@ -361,7 +360,6 @@ if (environment.THROTTLE_ENABLED) {
 		ExportModule,
 		ImportModule,
 		EmployeeSettingModule,
-		EmployeeJobPresetModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,
 		AppointmentEmployeesModule,

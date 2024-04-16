@@ -1,42 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
-import { Connection, DeepPartial, FindManyOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
+import { DeepPartial, FindManyOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
+import { IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
+import { ConnectionEntityManager } from '../database/connection-entity-manager';
+import { prepareSQLQuery as p } from './../database/database.helper';
 import { Pipeline } from './pipeline.entity';
-import { Deal, PipelineStage, User } from './../core/entities/internal';
+import { PipelineStage } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
-import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmDealRepository } from '../deal/repository/type-orm-deal.repository';
-import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
-import { TypeOrmPipelineRepository } from './repository/type-orm-pipeline.repository';
-import { MikroOrmPipelineRepository } from './repository/mikro-orm-pipeline.repository';
+import { TypeOrmDealRepository } from '../deal/repository';
+import { TypeOrmUserRepository } from '../user/repository';
+import { MikroOrmPipelineRepository, TypeOrmPipelineRepository } from './repository';
 
 @Injectable()
 export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	public constructor(
-		@InjectRepository(Pipeline)
-		readonly typeOrmPipelineRepository: TypeOrmPipelineRepository,
-
-		readonly mikroOrmPipelineRepository: MikroOrmPipelineRepository,
-
-		@InjectRepository(Deal)
-		readonly typeOrmDealRepository: TypeOrmDealRepository,
-
-		@InjectRepository(User)
-		readonly typeOrmUserRepository: TypeOrmUserRepository,
-
-		@InjectConnection()
-		private readonly connection: Connection
+		private readonly typeOrmPipelineRepository: TypeOrmPipelineRepository,
+		private readonly mikroOrmPipelineRepository: MikroOrmPipelineRepository,
+		private readonly typeOrmDealRepository: TypeOrmDealRepository,
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly _connectionEntityManager: ConnectionEntityManager
 	) {
 		super(typeOrmPipelineRepository, mikroOrmPipelineRepository);
 	}
 
 	public async findDeals(pipelineId: string) {
 		const tenantId = RequestContext.currentTenantId();
-		const items: Deal[] = await this.typeOrmDealRepository
+		const items: IDeal[] = await this.typeOrmDealRepository
 			.createQueryBuilder('deal')
 			.leftJoin('deal.stage', 'pipeline_stage')
 			.where(p('pipeline_stage.pipelineId = :pipelineId'), { pipelineId })
@@ -69,7 +60,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 		id: string | number | FindOptionsWhere<Pipeline>,
 		entity: QueryDeepPartialEntity<Pipeline>
 	): Promise<UpdateResult | Pipeline> {
-		const queryRunner = this.connection.createQueryRunner();
+		const queryRunner = this._connectionEntityManager.rawConnection.createQueryRunner();
 
 		try {
 			/**
@@ -112,6 +103,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 
 			return saved;
 		} catch (error) {
+			console.log('Rollback Pipeline Transaction', error);
 			await queryRunner.rollbackTransaction();
 		} finally {
 			await queryRunner.release();

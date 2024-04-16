@@ -21,7 +21,7 @@ let website = ' ';
 
 describe('Clients test', () => {
 	before(() => {
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 		inviteName = faker.person.firstName() + ' ' + faker.person.lastName();
 		deleteName = faker.person.firstName() + ' ' + faker.person.lastName();

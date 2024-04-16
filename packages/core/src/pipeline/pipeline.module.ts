@@ -7,22 +7,24 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Pipeline } from './pipeline.entity';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { DealModule } from '../deal/deal.module';
-import { Deal } from '../deal/deal.entity';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { UserModule } from './../user/user.module';
+import { TypeOrmPipelineRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/pipelines', module: PipelineModule }]),
-		TypeOrmModule.forFeature([Pipeline, Deal]),
-		MikroOrmModule.forFeature([Pipeline, Deal]),
+		RouterModule.register([
+			{ path: '/pipelines', module: PipelineModule }
+		]),
+		TypeOrmModule.forFeature([Pipeline]),
+		MikroOrmModule.forFeature([Pipeline]),
 		StageModule,
 		DealModule,
 		RolePermissionModule,
 		UserModule
 	],
 	controllers: [PipelineController],
-	providers: [PipelineService],
-	exports: [PipelineService]
+	providers: [PipelineService, TypeOrmPipelineRepository],
+	exports: [PipelineService, TypeOrmPipelineRepository]
 })
 export class PipelineModule { }

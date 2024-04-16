@@ -1,12 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IEmployee,
 	PayPeriodEnum,
-	ITag,
 	IContact,
 	ISkill,
 	IUser,
@@ -32,6 +31,7 @@ import {
 	IEquipmentSharing,
 	IEmployeePhone
 } from '@gauzy/contracts';
+import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -52,7 +52,6 @@ import {
 	Expense,
 	Goal,
 	InvoiceItem,
-	JobPreset,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
@@ -72,11 +71,13 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
+import { CustomEmployeeFields, HasCustomFields } from '../core/entities/custom-entity-fields';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
+import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
-export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
+export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
 	@ApiPropertyOptional({ type: () => Date })
@@ -545,7 +546,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@JoinTable({
 		name: 'tag_employee'
 	})
-	tags: ITag[];
+	tags: Tag[];
 
 	/**
 	 * Employee Skills
@@ -576,13 +577,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE'
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
-
-	/**
-	 * Employee Job Presets
-	 */
-	@ApiProperty({ type: () => JobPreset })
-	@MultiORMManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
-	jobPresets?: JobPreset[];
 
 	/**
 	 * Employee Organization Contacts
@@ -643,4 +637,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Custom Entity Fields
+	|--------------------------------------------------------------------------
+	*/
+	@Column(() => CustomEmployeeFields)
+	customFields?: CustomEmbeddedFields;
 }

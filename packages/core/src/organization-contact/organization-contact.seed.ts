@@ -11,9 +11,10 @@ import {
 	OrganizationContactBudgetTypeEnum
 } from '@gauzy/contracts';
 import * as _ from 'underscore';
-import { getDummyImage } from '../core';
+import { getDummyImage } from '../core/utils';
 import { Organization, OrganizationContact, Tag } from './../core/entities/internal';
-import { getRandomContact } from 'contact/contact.seed';
+import { getEmailWithPostfix } from '../core/seeds/utils';
+import { getRandomContact } from '../contact/contact.seed';
 
 export const createDefaultOrganizationContact = async (
 	dataSource: DataSource,
@@ -103,7 +104,7 @@ const generateOrganizationContact = async (
 			? faker.number.int({ min: 500, max: 5000 })
 			: faker.number.int({ min: 40, max: 400 });
 
-	const email = faker.internet.exampleEmail(contact.firstName, contact.lastName);
+	const email = getEmailWithPostfix(faker.internet.exampleEmail(contact.firstName, contact.lastName));
 	orgContact.inviteStatus = faker.helpers.arrayElement(Object.values(ContactOrganizationInviteStatus));
 
 	const phone = faker.phone.number();

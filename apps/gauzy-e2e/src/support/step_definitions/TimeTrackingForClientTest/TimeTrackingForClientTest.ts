@@ -13,7 +13,7 @@ import { waitUntil } from '../../Base/utils/util';
 import { TimeTrackingForClientPageData } from '../../Base/pagedata/TimeTrackingForClientPageData';
 
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 let city = faker.location.city();
 let postcode = faker.location.zipCode();
@@ -26,7 +26,7 @@ let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
-let employeeEmail = faker.internet.email();
+let employeeEmail = faker.internet.exampleEmail();
 
 let employeeFullName = `${firstName} ${lastName}`;
 

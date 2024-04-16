@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/job-search-plugin",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Job Post Plugin",
+	"description": "Ever Gauzy Platform Job Search Plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -36,6 +36,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/swagger": "^7.3.0",
+		"chalk": "4.1.2",
 		"html-to-text": "^9.0.5",
 		"typeorm": "^0.3.20"
 	},

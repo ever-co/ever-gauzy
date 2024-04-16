@@ -2,7 +2,8 @@ import { DataSource, ILike, Not } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { EmailHistory } from './email-history.entity';
 import { IEmailHistory, IEmailTemplate, IOrganization, ITenant, IUser } from '@gauzy/contracts';
-import { EmailTemplate, User } from './../core/entities/internal';
+import { EmailTemplate, User } from '../core/entities/internal';
+import { getEmailWithPostfix } from '../core/seeds/utils';
 
 export const createDefaultEmailSent = async (
 	dataSource: DataSource,
@@ -60,6 +61,9 @@ export const createRandomEmailSent = async (
 	return sentEmails;
 };
 
+/**
+ *
+ */
 const dataOperation = async (
 	dataSource: DataSource,
 	sentEmails: IEmailHistory[],
@@ -72,7 +76,7 @@ const dataOperation = async (
 	for (let i = 0; i < noOfEmailsPerOrganization; i++) {
 		const sentEmail = new EmailHistory();
 		sentEmail.organization = organization;
-		sentEmail.email = faker.internet.exampleEmail();
+		sentEmail.email = getEmailWithPostfix(faker.internet.exampleEmail());
 		sentEmail.emailTemplate = faker.helpers.arrayElement(emailTemplates);
 		sentEmail.name = sentEmail.emailTemplate.name.split('/')[0];
 		sentEmail.content = sentEmail.emailTemplate.hbs;

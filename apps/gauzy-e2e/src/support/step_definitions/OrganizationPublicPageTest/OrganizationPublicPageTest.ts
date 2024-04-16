@@ -18,7 +18,7 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { faker } from '@faker-js/faker';
 import { OrganizationProjectsPageData } from '../../Base/pagedata/OrganizationProjectsPageData';
 
-const email = faker.internet.email();
+const email = faker.internet.exampleEmail();
 const fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 const city = faker.location.city();
 const postcode = faker.location.zipCode();
@@ -29,7 +29,7 @@ const firstName = faker.person.firstName();
 const lastName = faker.person.lastName();
 const username = faker.internet.userName();
 const password = faker.internet.password();
-const employeeEmail = faker.internet.email();
+const employeeEmail = faker.internet.exampleEmail();
 const imgUrl = faker.image.avatar();
 const employeeFullName = `${firstName} ${lastName}`;
 
