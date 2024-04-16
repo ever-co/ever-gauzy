@@ -54,7 +54,6 @@ import {
 	OrganizationVendor,
 	Payment,
 	Product,
-	Proposal,
 	RequestApproval,
 	Task,
 	TenantOrganizationBaseEntity,
@@ -209,15 +208,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		onDelete: 'CASCADE'
 	})
 	tasks?: ITask[];
-
-	/**
-	 * Proposal
-	 */
-	@MultiORMManyToMany(() => Proposal, (it) => it.tags, {
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	proposals?: IProposal[];
 
 	/**
 	 * OrganizationVendor

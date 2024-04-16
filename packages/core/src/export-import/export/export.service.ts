@@ -108,7 +108,6 @@ import {
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSetting,
-	Proposal,
 	Report,
 	ReportCategory,
 	ReportOrganization,
@@ -320,8 +319,6 @@ import { MikroOrmProductTranslationRepository } from '../../product/repository/m
 import { MikroOrmProductRepository } from '../../product/repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from '../../product/repository/type-orm-product-translation.repository';
 import { TypeOrmProductRepository } from '../../product/repository/type-orm-product.repository';
-import { MikroOrmProposalRepository } from '../../proposal/repository/mikro-orm-proposal.repository';
-import { TypeOrmProposalRepository } from '../../proposal/repository/type-orm-proposal.repository';
 import { MikroOrmReportCategoryRepository } from '../../reports/repository/mikro-orm-report-category.repository';
 import { MikroOrmReportOrganizationRepository } from '../../reports/repository/mikro-orm-report-organization.repository';
 import { MikroOrmReportRepository } from '../../reports/repository/mikro-orm-report.repository';
@@ -877,11 +874,6 @@ export class ExportService implements OnModuleInit {
 		private typeOrmWarehouseProductVariantRepository: TypeOrmWarehouseProductVariantRepository,
 
 		mikroOrmWarehouseProductVariantRepository: MikroOrmWarehouseProductVariantRepository,
-
-		@InjectRepository(Proposal)
-		private typeOrmProposalRepository: TypeOrmProposalRepository,
-
-		mikroOrmProposalRepository: MikroOrmProposalRepository,
 
 		@InjectRepository(Skill)
 		private typeOrmSkillRepository: TypeOrmSkillRepository,
@@ -1743,12 +1735,6 @@ export class ExportService implements OnModuleInit {
 			},
 			{
 				repository: this.typeOrmWarehouseProductVariantRepository
-			},
-			{
-				repository: this.typeOrmProposalRepository,
-				relations: [
-					{ joinTableName: 'tag_proposal' }
-				]
 			},
 			{
 				repository: this.typeOrmReportCategoryRepository,

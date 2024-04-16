@@ -171,10 +171,10 @@ import {
 	createDefaultEquipmentSharing,
 	createRandomEquipmentSharing,
 } from '../../equipment-sharing/equipment-sharing.seed';
-import {
-	createDefaultProposals,
-	createRandomProposals,
-} from '../../proposal/proposal.seed';
+// import {
+// 	createDefaultProposals,
+// 	createRandomProposals,
+// } from '../../proposal/proposal.seed';
 import {
 	createDefaultInvoiceItem,
 	createRandomInvoiceItem,
@@ -1103,16 +1103,16 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Default Proposals',
-			createDefaultProposals(
-				this.dataSource,
-				this.tenant,
-				this.defaultEmployees,
-				this.organizations,
-				randomSeedConfig.proposalsSharingPerOrganizations || 30
-			)
-		);
+		// await this.tryExecute(
+		// 	'Default Proposals',
+		// 	createDefaultProposals(
+		// 		this.dataSource,
+		// 		this.tenant,
+		// 		this.defaultEmployees,
+		// 		this.organizations,
+		// 		randomSeedConfig.proposalsSharingPerOrganizations || 30
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Default Organization Languages',
@@ -1748,16 +1748,16 @@ export class SeedDataService {
 			)
 		);
 
-		await this.tryExecute(
-			'Random Proposals',
-			createRandomProposals(
-				this.dataSource,
-				tenants,
-				tenantOrganizationsMap,
-				organizationEmployeesMap,
-				randomSeedConfig.proposalsSharingPerOrganizations || 30
-			)
-		);
+		// await this.tryExecute(
+		// 	'Random Proposals',
+		// 	createRandomProposals(
+		// 		this.dataSource,
+		// 		tenants,
+		// 		tenantOrganizationsMap,
+		// 		organizationEmployeesMap,
+		// 		randomSeedConfig.proposalsSharingPerOrganizations || 30
+		// 	)
+		// );
 
 		await this.tryExecute(
 			'Random Email Sent',

@@ -273,9 +273,9 @@ export class TagsComponent extends PaginationFilterBaseComponent
 					type: 'string',
 					width: '25%',
 					filter: false,
-					componentInitFunction: (instance: TagsColorComponent, cell: Cell) => {
+					valuePrepareFunction: (_: any, cell: Cell) => {
 						const item = cell.getRow().getData();
-						instance.value = this.getCounter(item);
+						return this.getCounter(item);
 					}
 				}
 			}
@@ -288,6 +288,7 @@ export class TagsComponent extends PaginationFilterBaseComponent
 	getCounter = (item: any): number => {
 		// Define the substring to identify counter properties
 		const substring = '_counter';
+		console.log(item);
 
 		// Initialize the counter to 0
 		let counter = 0;

@@ -75,11 +75,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			 * Defines a special criteria to find specific relations.
 			 */
 			query.setFindOptions({
-				...(relations
-					? {
-						relations: relations
-					}
-					: {})
+				...(relations ? { relations: relations } : {})
 			});
 			/**
 			 * Left join all relational tables with tag table
@@ -105,11 +101,16 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.leftJoin(`${query.alias}.organizationVendors`, 'organizationVendor');
 			query.leftJoin(`${query.alias}.payments`, 'payment');
 			query.leftJoin(`${query.alias}.products`, 'product');
-			query.leftJoin(`${query.alias}.proposals`, 'proposal');
 			query.leftJoin(`${query.alias}.requestApprovals`, 'requestApproval');
 			query.leftJoin(`${query.alias}.tasks`, 'task');
 			query.leftJoin(`${query.alias}.users`, 'user');
 			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
+
+			/**
+			 * Custom Entity Fields
+			 */
+			query.leftJoin(`${query.alias}.customFields.proposals`, 'proposal');
+
 			/**
 			 * Adds new selection to the SELECT query.
 			 */
