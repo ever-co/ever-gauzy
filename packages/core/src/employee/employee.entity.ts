@@ -31,7 +31,7 @@ import {
 	IEquipmentSharing,
 	IEmployeePhone
 } from '@gauzy/contracts';
-import { CustomEmbeddedFields, HasCustomFields } from '@gauzy/common';
+import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -71,7 +71,7 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
-import { CustomEmployeeFields } from '../core/entities/custom-entity-fields/custom-entity-fields';
+import { CustomEmployeeFields, HasCustomFields } from '../core/entities/custom-entity-fields';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';

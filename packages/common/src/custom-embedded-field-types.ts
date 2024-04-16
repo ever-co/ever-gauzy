@@ -34,11 +34,3 @@ export interface CustomEmbeddedFields {
     /** Custom fields for the Employee entity. */
     Employee?: CustomEmbeddedFieldConfig[];
 }
-
-/**
- * Interface for entities that may have custom embedded fields.
- */
-export interface HasCustomFields {
-    /** Custom fields for different entities. */
-    customFields?: CustomEmbeddedFields;
-}
