@@ -1,6 +1,6 @@
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithBasicSeed } from '@gauzy/plugin';
+import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { ChangelogModule } from './changelog.module';
 import { Changelog } from './changelog.entity';
 import { ChangelogSeederService } from './changelog-seeder.service';
@@ -10,7 +10,7 @@ import { ChangelogSeederService } from './changelog-seeder.service';
 	entities: [Changelog],
 	providers: [ChangelogSeederService]
 })
-export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithBasicSeed {
+export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
