@@ -442,13 +442,13 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async create(
 		partialEntity: IPartialEntity<T>,
-		createOptions: CreateOptions = {
+		createOptions: CreateOptions<boolean> = {
 			/** This option disables the strict typing which requires all mandatory properties to have value, it has no effect on runtime */
 			partial: true,
 			/** Creates a managed entity instance instead, bypassing the constructor call */
 			managed: true
 		},
-		assignOptions: AssignOptions = {
+		assignOptions: AssignOptions<boolean> = {
 			updateNestedEntities: false,
 			onlyOwnProperties: true
 		}
