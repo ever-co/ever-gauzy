@@ -106,7 +106,6 @@ export * from '../../product-variant-price/product-variant-price.entity';
 export * from '../../product-variant/product-variant.entity';
 export * from '../../product/product-translation.entity';
 export * from '../../product/product.entity';
-export * from '../../proposal/proposal.entity';
 export * from '../../reports/report-category.entity';
 export * from '../../reports/report-organization.entity';
 export * from '../../reports/report.entity';

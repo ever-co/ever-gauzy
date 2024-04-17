@@ -4,5 +4,5 @@ import { IProposalCreateInput } from '@gauzy/contracts';
 export class ProposalCreateCommand implements ICommand {
 	static readonly type = '[Proposal] Create Proposal';
 
-	constructor(public readonly input: IProposalCreateInput) {}
+	constructor(public readonly input: IProposalCreateInput) { }
 }

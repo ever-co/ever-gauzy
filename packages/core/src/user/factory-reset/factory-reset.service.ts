@@ -81,7 +81,6 @@ import {
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSetting,
-	Proposal,
 	RequestApproval,
 	Screenshot,
 	Skill,
@@ -240,8 +239,6 @@ import { MikroOrmProductVariantRepository } from '../../product-variant/reposito
 import { TypeOrmProductVariantRepository } from '../../product-variant/repository/type-orm-product-variant.repository';
 import { MikroOrmProductRepository } from '../../product/repository/mikro-orm-product.repository';
 import { TypeOrmProductRepository } from '../../product/repository/type-orm-product.repository';
-import { MikroOrmProposalRepository } from '../../proposal/repository/mikro-orm-proposal.repository';
-import { TypeOrmProposalRepository } from '../../proposal/repository/type-orm-proposal.repository';
 import { MikroOrmRequestApprovalRepository } from '../../request-approval/repository/mikro-orm-request-approval.repository';
 import { TypeOrmRequestApprovalRepository } from '../../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmSkillRepository } from '../../skills/repository/mikro-orm-skill.repository';
@@ -634,11 +631,6 @@ export class FactoryResetService {
 
 		mikroOrmProductVariantPriceRepository: MikroOrmProductVariantPriceRepository,
 
-		@InjectRepository(Proposal)
-		private typeOrmProposalRepository: TypeOrmProposalRepository,
-
-		mikroOrmProposalRepository: MikroOrmProposalRepository,
-
 		@InjectRepository(Skill)
 		private typeOrmSkillRepository: TypeOrmSkillRepository,
 
@@ -889,7 +881,6 @@ export class FactoryResetService {
 			this.typeOrmProductVariantSettingRepository,
 			this.typeOrmPaymentRepository,
 			this.typeOrmPipelineRepository,
-			this.typeOrmProposalRepository,
 			this.typeOrmRequestApprovalRepository,
 			this.typeOrmScreenshotRepository,
 			this.typeOrmSkillRepository,

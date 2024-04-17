@@ -75,11 +75,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			 * Defines a special criteria to find specific relations.
 			 */
 			query.setFindOptions({
-				...(relations
-					? {
-						relations: relations
-					}
-					: {})
+				...(relations ? { relations: relations } : {})
 			});
 			/**
 			 * Left join all relational tables with tag table
@@ -105,41 +101,47 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			query.leftJoin(`${query.alias}.organizationVendors`, 'organizationVendor');
 			query.leftJoin(`${query.alias}.payments`, 'payment');
 			query.leftJoin(`${query.alias}.products`, 'product');
-			query.leftJoin(`${query.alias}.proposals`, 'proposal');
 			query.leftJoin(`${query.alias}.requestApprovals`, 'requestApproval');
 			query.leftJoin(`${query.alias}.tasks`, 'task');
 			query.leftJoin(`${query.alias}.users`, 'user');
 			query.leftJoin(`${query.alias}.warehouses`, 'warehouse');
+
+			/**
+			 * Custom Entity Fields
+			 */
+			query.leftJoin(`${query.alias}.customFields.proposals`, 'proposal');
+
 			/**
 			 * Adds new selection to the SELECT query.
 			 */
 			query.select(`${query.alias}.*`);
-			query.addSelect(p(`COUNT("candidate"."id")`), `candidate_counter`);
-			query.addSelect(p(`COUNT("employee"."id")`), `employee_counter`);
-			query.addSelect(p(`COUNT("employeeLevel"."id")`), `employee_level_counter`);
-			query.addSelect(p(`COUNT("equipment"."id")`), `equipment_counter`);
-			query.addSelect(p(`COUNT("eventType"."id")`), `event_type_counter`);
-			query.addSelect(p(`COUNT("expense"."id")`), `expense_counter`);
-			query.addSelect(p(`COUNT("income"."id")`), `income_counter`);
-			query.addSelect(p(`COUNT("integration"."id")`), `integration_counter`);
-			query.addSelect(p(`COUNT("invoice"."id")`), `invoice_counter`);
-			query.addSelect(p(`COUNT("merchant"."id")`), `merchant_counter`);
-			query.addSelect(p(`COUNT("organization"."id")`), `organization_counter`);
-			query.addSelect(p(`COUNT("organizationContact"."id")`), `organization_contact_counter`);
-			query.addSelect(p(`COUNT("organizationDepartment"."id")`), `organization_department_counter`);
-			query.addSelect(p(`COUNT("organizationEmploymentType"."id")`), `organization_employment_type_counter`);
-			query.addSelect(p(`COUNT("expenseCategory"."id")`), `expense_category_counter`);
-			query.addSelect(p(`COUNT("organizationPosition"."id")`), `organization_position_counter`);
-			query.addSelect(p(`COUNT("organizationProject"."id")`), `organization_project_counter`);
-			query.addSelect(p(`COUNT("organizationTeam"."id")`), `organization_team_counter`);
-			query.addSelect(p(`COUNT("organizationVendor"."id")`), `organization_vendor_counter`);
-			query.addSelect(p(`COUNT("payment"."id")`), `payment_counter`);
-			query.addSelect(p(`COUNT("product"."id")`), `product_counter`);
-			query.addSelect(p(`COUNT("proposal"."id")`), `proposal_counter`);
-			query.addSelect(p(`COUNT("requestApproval"."id")`), `request_approval_counter`);
-			query.addSelect(p(`COUNT("task"."id")`), `task_counter`);
-			query.addSelect(p(`COUNT("user"."id")`), `user_counter`);
-			query.addSelect(p(`COUNT("warehouse"."id")`), `warehouse_counter`);
+			// Add the select statement for counting, and cast it to integer
+			query.addSelect(p(`CAST(COUNT("candidate"."id") AS INTEGER)`), `candidate_counter`);
+			query.addSelect(p(`CAST(COUNT("employee"."id") AS INTEGER)`), `employee_counter`);
+			query.addSelect(p(`CAST(COUNT("employeeLevel"."id") AS INTEGER)`), `employee_level_counter`);
+			query.addSelect(p(`CAST(COUNT("equipment"."id") AS INTEGER)`), `equipment_counter`);
+			query.addSelect(p(`CAST(COUNT("eventType"."id") AS INTEGER)`), `event_type_counter`);
+			query.addSelect(p(`CAST(COUNT("expense"."id") AS INTEGER)`), `expense_counter`);
+			query.addSelect(p(`CAST(COUNT("income"."id") AS INTEGER)`), `income_counter`);
+			query.addSelect(p(`CAST(COUNT("integration"."id") AS INTEGER)`), `integration_counter`);
+			query.addSelect(p(`CAST(COUNT("invoice"."id") AS INTEGER)`), `invoice_counter`);
+			query.addSelect(p(`CAST(COUNT("merchant"."id") AS INTEGER)`), `merchant_counter`);
+			query.addSelect(p(`CAST(COUNT("organization"."id") AS INTEGER)`), `organization_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationContact"."id") AS INTEGER)`), `organization_contact_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationDepartment"."id") AS INTEGER)`), `organization_department_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationEmploymentType"."id") AS INTEGER)`), `organization_employment_type_counter`);
+			query.addSelect(p(`CAST(COUNT("expenseCategory"."id") AS INTEGER)`), `expense_category_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationPosition"."id") AS INTEGER)`), `organization_position_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationProject"."id") AS INTEGER)`), `organization_project_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationTeam"."id") AS INTEGER)`), `organization_team_counter`);
+			query.addSelect(p(`CAST(COUNT("organizationVendor"."id") AS INTEGER)`), `organization_vendor_counter`);
+			query.addSelect(p(`CAST(COUNT("payment"."id") AS INTEGER)`), `payment_counter`);
+			query.addSelect(p(`CAST(COUNT("product"."id") AS INTEGER)`), `product_counter`);
+			query.addSelect(p(`CAST(COUNT("requestApproval"."id") AS INTEGER)`), `request_approval_counter`);
+			query.addSelect(p(`CAST(COUNT("task"."id") AS INTEGER)`), `task_counter`);
+			query.addSelect(p(`CAST(COUNT("user"."id") AS INTEGER)`), `user_counter`);
+			query.addSelect(p(`CAST(COUNT("warehouse"."id") AS INTEGER)`), `warehouse_counter`);
+			query.addSelect(p(`CAST(COUNT("proposal"."id") AS INTEGER)`), `proposal_counter`);
 			/**
 			 * Adds GROUP BY condition in the query builder.
 			 */

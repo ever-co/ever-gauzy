@@ -52,7 +52,6 @@ import { OrganizationTeamJoinRequestModule } from './organization-team-join-requ
 import { OrganizationAwardModule } from './organization-award/organization-award.module';
 import { OrganizationLanguageModule } from './organization-language/organization-language.module';
 import { OrganizationDocumentModule } from './organization-document/organization-document.module';
-import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { CurrencyModule } from './currency/currency.module';
 import { InviteModule } from './invite/invite.module';
@@ -383,7 +382,6 @@ if (environment.THROTTLE_ENABLED) {
 		OrganizationDocumentModule,
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
-		ProposalModule,
 		EmailHistoryModule,
 		EmailTemplateModule,
 		CountryModule,

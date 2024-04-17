@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RelationId } from 'typeorm';
+import { Column, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ICandidate,
 	IEmployee,
@@ -24,7 +25,6 @@ import {
 	IOrganizationVendor,
 	IPayment,
 	IProduct,
-	IProposal,
 	IRequestApproval,
 	ITag,
 	ITask,
@@ -53,13 +53,13 @@ import {
 	OrganizationVendor,
 	Payment,
 	Product,
-	Proposal,
 	RequestApproval,
 	Task,
 	TenantOrganizationBaseEntity,
 	User,
 	Warehouse
 } from '../core/entities/internal';
+import { CustomTagFields } from '../core/entities/custom-entity-fields/custom-entity-fields';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
@@ -207,15 +207,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		onDelete: 'CASCADE'
 	})
 	tasks?: ITask[];
-
-	/**
-	 * Proposal
-	 */
-	@MultiORMManyToMany(() => Proposal, (it) => it.tags, {
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	proposals?: IProposal[];
 
 	/**
 	 * OrganizationVendor
@@ -375,4 +366,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	| Custom Entity Fields
 	|--------------------------------------------------------------------------
 	*/
+	@Column(() => CustomTagFields)
+	customFields?: CustomEmbeddedFields;
 }

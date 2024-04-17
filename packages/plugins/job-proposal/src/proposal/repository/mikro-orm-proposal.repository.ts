@@ -1,4 +1,4 @@
-import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
+import { MikroOrmBaseEntityRepository } from '@gauzy/core';
 import { Proposal } from '../proposal.entity';
 
 export class MikroOrmProposalRepository extends MikroOrmBaseEntityRepository<Proposal> { }

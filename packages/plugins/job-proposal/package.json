@@ -1,7 +1,7 @@
 {
-	"name": "@gauzy/job-proposal-template-plugin",
+	"name": "@gauzy/job-proposal-plugin",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Job Post Plugin",
+	"description": "Ever Gauzy Platform Job Proposal Plugin",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -28,13 +28,17 @@
 	},
 	"keywords": [],
 	"dependencies": {
+		"@faker-js/faker": "8.0.0-alpha.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@mikro-orm/nestjs": "^5.2.3",
 		"@nestjs/common": "^10.3.7",
+		"@nestjs/mapped-types": "^2.0.5",
 		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
+		"class-validator": "^0.14.0",
+		"moment": "^2.29.4",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
