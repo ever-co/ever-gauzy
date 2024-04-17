@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
@@ -31,9 +31,9 @@ import {
 	IEquipmentSharing,
 	IEmployeePhone
 } from '@gauzy/contracts';
-import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ColumnIndex,
+	EmbeddedColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToMany,
@@ -640,9 +640,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 
 	/*
 	|--------------------------------------------------------------------------
-	| Custom Entity Fields
+	| Embeddable Columns
 	|--------------------------------------------------------------------------
 	*/
-	@Column(() => CustomEmployeeFields)
-	customFields?: CustomEmbeddedFields;
+	@EmbeddedColumn(() => CustomEmployeeFields, { prefix: false })
+	customFields?: CustomEmployeeFields;
 }

@@ -60,7 +60,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
     */
     public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "tag_proposal" DROP CONSTRAINT "FK_451853704de278eef61a37fa7a6"`);
-        await queryRunner.query(`ALTER TABLE "tag" ADD "customFields__fix_relational_custom_fields__" boolean`);
+        await queryRunner.query(`ALTER TABLE "tag" ADD "__fix_relational_custom_fields__" boolean`);
         await queryRunner.query(`ALTER TABLE "tag_proposal" ADD CONSTRAINT "FK_451853704de278eef61a37fa7a6" FOREIGN KEY ("tagId") REFERENCES "tag"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
@@ -71,7 +71,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
     */
     public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE "tag_proposal" DROP CONSTRAINT "FK_451853704de278eef61a37fa7a6"`);
-        await queryRunner.query(`ALTER TABLE "tag" DROP COLUMN "customFields__fix_relational_custom_fields__"`);
+        await queryRunner.query(`ALTER TABLE "tag" DROP COLUMN "__fix_relational_custom_fields__"`);
         await queryRunner.query(`ALTER TABLE "tag_proposal" ADD CONSTRAINT "FK_451853704de278eef61a37fa7a6" FOREIGN KEY ("tagId") REFERENCES "tag"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 
@@ -94,7 +94,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
         await queryRunner.query(`DROP INDEX "IDX_c2f6bec0b39eaa3a6d90903ae9"`);
         await queryRunner.query(`DROP INDEX "IDX_b08dd29fb6a8acdf83c83d8988"`);
         await queryRunner.query(`DROP INDEX "IDX_49746602acc4e5e8721062b69e"`);
-        await queryRunner.query(`CREATE TABLE "temporary_tag" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "description" varchar, "color" varchar NOT NULL, "isSystem" boolean NOT NULL DEFAULT (0), "icon" varchar, "organizationTeamId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime, "textColor" varchar, "customFields__fix_relational_custom_fields__" boolean, CONSTRAINT "FK_c2f6bec0b39eaa3a6d90903ae99" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_b08dd29fb6a8acdf83c83d8988f" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_49746602acc4e5e8721062b69ec" FOREIGN KEY ("organizationTeamId") REFERENCES "organization_team" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
+        await queryRunner.query(`CREATE TABLE "temporary_tag" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "organizationId" varchar, "name" varchar NOT NULL, "description" varchar, "color" varchar NOT NULL, "isSystem" boolean NOT NULL DEFAULT (0), "icon" varchar, "organizationTeamId" varchar, "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "deletedAt" datetime, "textColor" varchar, "__fix_relational_custom_fields__" boolean, CONSTRAINT "FK_c2f6bec0b39eaa3a6d90903ae99" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_b08dd29fb6a8acdf83c83d8988f" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_49746602acc4e5e8721062b69ec" FOREIGN KEY ("organizationTeamId") REFERENCES "organization_team" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
         await queryRunner.query(`INSERT INTO "temporary_tag"("id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "description", "color", "isSystem", "icon", "organizationTeamId", "isActive", "isArchived", "deletedAt", "textColor") SELECT "id", "createdAt", "updatedAt", "tenantId", "organizationId", "name", "description", "color", "isSystem", "icon", "organizationTeamId", "isActive", "isArchived", "deletedAt", "textColor" FROM "tag"`);
         await queryRunner.query(`DROP TABLE "tag"`);
         await queryRunner.query(`ALTER TABLE "temporary_tag" RENAME TO "tag"`);
@@ -156,7 +156,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE \`tag_proposal\` DROP FOREIGN KEY \`FK_451853704de278eef61a37fa7a6\``);
-        await queryRunner.query(`ALTER TABLE \`tag\` ADD \`customFields__fix_relational_custom_fields__\` tinyint NULL`);
+        await queryRunner.query(`ALTER TABLE \`tag\` ADD \`__fix_relational_custom_fields__\` tinyint NULL`);
         await queryRunner.query(`ALTER TABLE \`tag_proposal\` ADD CONSTRAINT \`FK_451853704de278eef61a37fa7a6\` FOREIGN KEY (\`tagId\`) REFERENCES \`tag\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
@@ -167,7 +167,7 @@ export class AlterTagCustomEntityFields1713275626299 implements MigrationInterfa
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query(`ALTER TABLE \`tag_proposal\` DROP FOREIGN KEY \`FK_451853704de278eef61a37fa7a6\``);
-        await queryRunner.query(`ALTER TABLE \`tag\` DROP COLUMN \`customFields__fix_relational_custom_fields__\``);
+        await queryRunner.query(`ALTER TABLE \`tag\` DROP COLUMN \`__fix_relational_custom_fields__\``);
         await queryRunner.query(`ALTER TABLE \`tag_proposal\` ADD CONSTRAINT \`FK_451853704de278eef61a37fa7a6\` FOREIGN KEY (\`tagId\`) REFERENCES \`tag\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
     }
 }
