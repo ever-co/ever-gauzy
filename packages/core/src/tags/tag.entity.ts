@@ -25,7 +25,6 @@ import {
 	IOrganizationVendor,
 	IPayment,
 	IProduct,
-	IProposal,
 	IRequestApproval,
 	ITag,
 	ITask,
