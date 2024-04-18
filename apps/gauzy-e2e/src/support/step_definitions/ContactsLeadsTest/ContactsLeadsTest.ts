@@ -14,7 +14,7 @@ import * as manageEmployeesPage from '../../Base/pages/ManageEmployees.po';
 
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 let deleteName = faker.person.firstName() + ' ' + faker.person.lastName();
 let inviteName = faker.person.firstName() + ' ' + faker.person.lastName();
@@ -27,7 +27,7 @@ let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
-let employeeEmail = faker.internet.email();
+let employeeEmail = faker.internet.exampleEmail();
 let imgUrl = faker.image.avatar();
 
 // Login with email

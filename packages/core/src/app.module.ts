@@ -35,7 +35,6 @@ import { OrganizationModule } from './organization/organization.module';
 import { IncomeModule } from './income/income.module';
 import { ExpenseModule } from './expense/expense.module';
 import { EmployeeSettingModule } from './employee-setting/employee-setting.module';
-import { EmployeeJobPostModule } from './employee-job/employee-job.module';
 import { EmployeeAppointmentModule } from './employee-appointment/employee-appointment.module';
 import { AuthModule } from './auth/auth.module';
 import { UserOrganizationModule } from './user-organization/user-organization.module';
@@ -53,7 +52,6 @@ import { OrganizationTeamJoinRequestModule } from './organization-team-join-requ
 import { OrganizationAwardModule } from './organization-award/organization-award.module';
 import { OrganizationLanguageModule } from './organization-language/organization-language.module';
 import { OrganizationDocumentModule } from './organization-document/organization-document.module';
-import { ProposalModule } from './proposal/proposal.module';
 import { CountryModule } from './country/country.module';
 import { CurrencyModule } from './currency/currency.module';
 import { InviteModule } from './invite/invite.module';
@@ -125,9 +123,7 @@ import { EmployeeAwardModule } from './employee-award/employee-award.module';
 import { InvoiceEstimateHistoryModule } from './invoice-estimate-history/invoice-estimate-history.module';
 import { GoalKpiTemplateModule } from './goal-kpi-template/goal-kpi-template.module';
 import { TenantSettingModule } from './tenant/tenant-setting/tenant-setting.module';
-import { EmployeeJobPresetModule } from './employee-job-preset/employee-job-preset.module';
 import { ReportModule } from './reports/report.module';
-import { EmployeeProposalTemplateModule } from './employee-proposal-template/employee-proposal-template.module';
 import { CustomSmtpModule } from './custom-smtp/custom-smtp.module';
 import { FeatureModule } from './feature/feature.module';
 import { ImageAssetModule } from './image-asset/image-asset.module';
@@ -203,84 +199,84 @@ if (environment.THROTTLE_ENABLED) {
 		}),
 		...(process.env.REDIS_ENABLED === 'true'
 			? [
-					CacheModule.registerAsync({
-						isGlobal: true,
-						useFactory: async () => {
-							const url =
-								process.env.REDIS_URL ||
-								(process.env.REDIS_TLS === 'true'
-									? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-									: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+				CacheModule.registerAsync({
+					isGlobal: true,
+					useFactory: async () => {
+						const url =
+							process.env.REDIS_URL ||
+							(process.env.REDIS_TLS === 'true'
+								? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+								: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
 
-							console.log('REDIS_URL: ', url);
+						console.log('REDIS_URL: ', url);
 
-							let host, port, username, password;
+						let host, port, username, password;
 
-							const isTls = url.startsWith('rediss://');
+						const isTls = url.startsWith('rediss://');
 
-							// Removing the protocol part
-							let authPart = url.split('://')[1];
+						// Removing the protocol part
+						let authPart = url.split('://')[1];
 
-							// Check if the URL contains '@' (indicating the presence of username/password)
-							if (authPart.includes('@')) {
-								// Splitting user:password and host:port
-								let [userPass, hostPort] = authPart.split('@');
-								[username, password] = userPass.split(':');
-								[host, port] = hostPort.split(':');
-							} else {
-								// If there is no '@', it means there is no username/password
-								[host, port] = authPart.split(':');
-							}
-
-							port = parseInt(port);
-
-							const storeOptions = {
-								url: url,
-								username: username,
-								password: password,
-								isolationPoolOptions: {
-									min: 1,
-									max: 100
-								},
-								socket: {
-									tls: isTls,
-									host: host,
-									port: port,
-									passphrase: password,
-									rejectUnauthorized: process.env.NODE_ENV === 'production'
-								},
-								ttl: 60 * 60 * 24 * 7 // 1 week,
-							};
-
-							const store = await redisStore(storeOptions);
-
-							store.client
-								.on('error', (err) => {
-									console.log('Redis Cache Client Error: ', err);
-								})
-								.on('connect', () => {
-									console.log('Redis Cache Client Connected');
-								})
-								.on('ready', () => {
-									console.log('Redis Cache Client Ready');
-								})
-								.on('reconnecting', () => {
-									console.log('Redis Cache Client Reconnecting');
-								})
-								.on('end', () => {
-									console.log('Redis Cache Client End');
-								});
-
-							// ping Redis
-							const res = await store.client.ping();
-							console.log('Redis Cache Client Cache Ping: ', res);
-
-							return {
-								store: () => store
-							};
+						// Check if the URL contains '@' (indicating the presence of username/password)
+						if (authPart.includes('@')) {
+							// Splitting user:password and host:port
+							let [userPass, hostPort] = authPart.split('@');
+							[username, password] = userPass.split(':');
+							[host, port] = hostPort.split(':');
+						} else {
+							// If there is no '@', it means there is no username/password
+							[host, port] = authPart.split(':');
 						}
-					})
-			  ]
+
+						port = parseInt(port);
+
+						const storeOptions = {
+							url: url,
+							username: username,
+							password: password,
+							isolationPoolOptions: {
+								min: 1,
+								max: 100
+							},
+							socket: {
+								tls: isTls,
+								host: host,
+								port: port,
+								passphrase: password,
+								rejectUnauthorized: process.env.NODE_ENV === 'production'
+							},
+							ttl: 60 * 60 * 24 * 7 // 1 week,
+						};
+
+						const store = await redisStore(storeOptions);
+
+						store.client
+							.on('error', (err) => {
+								console.log('Redis Cache Client Error: ', err);
+							})
+							.on('connect', () => {
+								console.log('Redis Cache Client Connected');
+							})
+							.on('ready', () => {
+								console.log('Redis Cache Client Ready');
+							})
+							.on('reconnecting', () => {
+								console.log('Redis Cache Client Reconnecting');
+							})
+							.on('end', () => {
+								console.log('Redis Cache Client End');
+							});
+
+						// ping Redis
+						const res = await store.client.ping();
+						console.log('Redis Cache Client Cache Ping: ', res);
+
+						return {
+							store: () => store
+						};
+					}
+				})
+			]
 			: [CacheModule.register({ isGlobal: true })]),
 		ServeStaticModule.forRootAsync({
 			useFactory: async (configService: ConfigService): Promise<ServeStaticModuleOptions[]> => {
@@ -326,18 +322,18 @@ if (environment.THROTTLE_ENABLED) {
 		}),
 		...(environment.THROTTLE_ENABLED
 			? [
-					ThrottlerModule.forRootAsync({
-						inject: [ConfigService],
-						useFactory: () => {
-							return [
-								{
-									ttl: environment.THROTTLE_TTL,
-									limit: environment.THROTTLE_LIMIT
-								}
-							];
-						}
-					})
-			  ]
+				ThrottlerModule.forRootAsync({
+					inject: [ConfigService],
+					useFactory: () => {
+						return [
+							{
+								ttl: environment.THROTTLE_TTL,
+								limit: environment.THROTTLE_LIMIT
+							}
+						];
+					}
+				})
+			]
 			: []),
 		HealthModule,
 		CoreModule,
@@ -363,9 +359,6 @@ if (environment.THROTTLE_ENABLED) {
 		ExportModule,
 		ImportModule,
 		EmployeeSettingModule,
-		EmployeeJobPresetModule,
-		EmployeeJobPostModule,
-		EmployeeProposalTemplateModule,
 		EmployeeStatisticsModule,
 		EmployeeAppointmentModule,
 		AppointmentEmployeesModule,
@@ -389,7 +382,6 @@ if (environment.THROTTLE_ENABLED) {
 		OrganizationDocumentModule,
 		RequestApprovalEmployeeModule,
 		RequestApprovalTeamModule,
-		ProposalModule,
 		EmailHistoryModule,
 		EmailTemplateModule,
 		CountryModule,
@@ -471,11 +463,11 @@ if (environment.THROTTLE_ENABLED) {
 		AppService,
 		...(environment.THROTTLE_ENABLED
 			? [
-					{
-						provide: APP_GUARD,
-						useClass: ThrottlerBehindProxyGuard
-					}
-			  ]
+				{
+					provide: APP_GUARD,
+					useClass: ThrottlerBehindProxyGuard
+				}
+			]
 			: []),
 		{
 			provide: APP_INTERCEPTOR,

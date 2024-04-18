@@ -20,7 +20,7 @@ let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
 let imgUrl = faker.image.avatar();
-let employeeEmail = faker.internet.email();
+let employeeEmail = faker.internet.exampleEmail();
 
 let projectName = faker.company.name()
 

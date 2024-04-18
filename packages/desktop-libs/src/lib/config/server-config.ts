@@ -10,14 +10,23 @@ export class ServerConfig implements IServerConfig {
 
 	public update(): void {
 		if (!this._readWriteFile) return;
-		// read original file
-		let fileContent = this._readWriteFile.read();
-		// replace all url in the file to normalize url file.
-		fileContent = this._replaceUrl(fileContent, this.apiUrl);
-		// remove duplicated content
-		fileContent = this._removeDuplicates(fileContent);
-		// override the original file
-		this._readWriteFile.write(fileContent);
+
+		try {
+			// read original file
+			let fileContent = this._readWriteFile.read();
+
+			// replace all url in the file to normalize url file.
+			fileContent = this._replaceUrl(fileContent, this.apiUrl);
+
+			// remove duplicated content
+			fileContent = this._removeDuplicates(fileContent);
+
+			// override the original file
+			this._readWriteFile.write(fileContent);
+		} catch (error) {
+			console.error('Cannot update initial Server file', error);
+			throw new Error(error);
+		}
 	}
 
 	private _replaceUrl(fileContent: string, newUrl: string): string {

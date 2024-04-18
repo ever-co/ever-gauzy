@@ -1,24 +1,14 @@
+import { Injectable, Logger, } from '@nestjs/common';
 import {
 	GetReportMenuItemsInput,
-	IOrganization,
 	IPagination,
-	IReport,
-	UpdateReportMenuInput,
+	IReport
 } from '@gauzy/contracts';
-import {
-	Injectable,
-	InternalServerErrorException,
-	Logger,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { indexBy } from 'underscore';
 import { CrudService } from '../core/crud';
 import { RequestContext } from './../core/context';
-import { ReportOrganization } from './report-organization.entity';
 import { Report } from './report.entity';
-import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
 import { MikroOrmReportRepository } from './repository/mikro-orm-report.repository';
-import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
+import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
 
 @Injectable()
 export class ReportService extends CrudService<Report> {
@@ -26,124 +16,70 @@ export class ReportService extends CrudService<Report> {
 	private readonly logger = new Logger(ReportService.name);
 
 	constructor(
-		@InjectRepository(Report)
-		typeOrmReportRepository: TypeOrmReportRepository,
-
-		mikroOrmReportRepository: MikroOrmReportRepository,
-
-		@InjectRepository(ReportOrganization)
-		readonly typeOrmReportOrganizationRepository: TypeOrmReportOrganizationRepository
+		readonly typeOrmReportRepository: TypeOrmReportRepository,
+		readonly mikroOrmReportRepository: MikroOrmReportRepository
 	) {
 		super(typeOrmReportRepository, mikroOrmReportRepository);
 	}
 
-	public async findAll(filter?: any): Promise<IPagination<Report>> {
-		const start = new Date();
+	/**
+	 * Retrieves all reports for the specified organization and tenant, including whether they should be shown in the menu.
+	 *
+	 * @param filter The filter containing organization ID and tenant ID for retrieving reports.
+	 * @returns A promise that resolves to an object containing paginated report items and total count.
+	 */
+	public async findAllReports(filter?: any): Promise<IPagination<Report>> {
+		console.time(`ReportService.findAll took seconds`);
+		// Extract organizationId and tenantId from filter
+		const { organizationId } = filter;
+		const tenantId = RequestContext.currentTenantId() || filter.tenantId;
 
-		const { items, total } = await super.findAll(filter);
-		const menuItems = await this.getMenuItems(filter);
+		// Fetch all reports and their associated organizations in a single query
+		const qb = this.typeOrmRepository.createQueryBuilder('report');
+		qb.setFindOptions({
+			...(filter.relations ? { relations: filter.relations } : {})
+		});
+		qb.leftJoinAndSelect('report.reportOrganizations', 'ro', 'ro.organizationId = :organizationId AND ro.tenantId = :tenantId AND ro.isEnabled = :isEnabled AND ro.isActive = :isActive AND ro.isArchived = :isArchived', {
+			organizationId,
+			tenantId,
+			isEnabled: true,
+			isActive: true,
+			isArchived: false
+		});
 
-		const orgMenuItems = indexBy(menuItems, 'id');
+		// Execute the query
+		const [items, total] = await qb.getManyAndCount();
 
-		const mapItems = items.map((item) => {
-			if (orgMenuItems[item.id]) {
-				item.showInMenu = true;
-			} else {
-				item.showInMenu = false;
-			}
+		// Map over items and set 'showInMenu' property based on menu item existence
+		const reports = items.map((item) => {
+			item.showInMenu = !!item.reportOrganizations.length; // true if there are reportOrganizations, false otherwise
+			delete item.reportOrganizations; // Remove reportOrganizations from the report object
 			return item;
 		});
 
-		const end = new Date();
-		const time = (end.getTime() - start.getTime()) / 1000;
-
-		this.logger.log(`ReportService.findAll took ${time} seconds`);
-		console.log(`ReportService.findAll took ${time} seconds`);
-
-		return { items: mapItems, total };
+		console.timeEnd(`ReportService.findAll took seconds`);
+		return { items: reports, total: total };
 	}
 
 	/**
-	 * Get reports menus
+	 * Retrieves report menu items based on the provided options.
 	 *
-	 * @param options
-	 * @returns
+	 * @param input The input containing the organization ID and tenant ID for filtering report menu items.
+	 * @returns A promise that resolves to an array of report menu items.
 	 */
-	public async getMenuItems(
-		options: GetReportMenuItemsInput
-	): Promise<IReport[]> {
-		const { organizationId } = options;
-		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+	public async getMenuItems(input: GetReportMenuItemsInput): Promise<IReport[]> {
+		const { organizationId } = input;
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-		return await this.typeOrmRepository.find({
-			join: {
-				alias: this.tableName,
-				innerJoin: {
-					reportOrganizations: `${this.tableName}.reportOrganizations`,
-				}
-			},
-			where: {
-				reportOrganizations: {
-					organizationId,
-					tenantId,
-					isEnabled: true
-				}
-			}
+		const qb = this.typeOrmRepository.createQueryBuilder('report');
+		qb.innerJoin('report.reportOrganizations', 'ro', 'ro.isEnabled = :isEnabled AND ro.isActive = :isActive AND ro.isArchived = :isArchived', {
+			isEnabled: true,
+			isActive: true,
+			isArchived: false
 		});
-	}
+		qb.andWhere('ro.organizationId = :organizationId', { organizationId });
+		qb.andWhere('ro.tenantId = :tenantId', { tenantId });
 
-	async updateReportMenu(
-		input: UpdateReportMenuInput
-	): Promise<ReportOrganization> {
-		let reportOrganization =
-			await this.typeOrmReportOrganizationRepository.findOne({
-				where: {
-					reportId: input.reportId,
-				},
-			});
-
-		if (!reportOrganization) {
-			reportOrganization = new ReportOrganization(input);
-		} else {
-			reportOrganization = new ReportOrganization(
-				Object.assign(reportOrganization, input)
-			);
-		}
-
-		this.typeOrmReportOrganizationRepository.save(reportOrganization);
-		return reportOrganization;
-	}
-
-	/**
-	 * Bulk create organization default reports menu.
-	 *
-	 * @param input - The organization input data.
-	 * @returns A promise that resolves to an array of created ReportOrganization instances.
-	 */
-	async bulkCreateOrganizationReport(input: IOrganization): Promise<ReportOrganization[]> {
-		try {
-			const { id: organizationId, tenantId } = input;
-
-			// Fetch reports from the database
-			const reports: IReport[] = await super.find(); // Replace 'super' with your appropriate superclass or service
-
-			// Create ReportOrganization instances based on fetched reports
-			const reportOrganizations: ReportOrganization[] = reports.map((report: IReport) =>
-				new ReportOrganization({
-					report,
-					organizationId,
-					tenantId
-				})
-			);
-
-			// Save the created ReportOrganization instances to the database
-			await this.typeOrmReportOrganizationRepository.save(reportOrganizations);
-
-			// Return the array of created ReportOrganization instances
-			return reportOrganizations;
-		} catch (error) {
-			// Throw InternalServerErrorException if an error occurs
-			throw new InternalServerErrorException(error);
-		}
+		return await qb.getMany();
 	}
 }

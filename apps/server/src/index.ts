@@ -99,16 +99,32 @@ const updater = new DesktopUpdater({
 	typeRelease: 'releases'
 });
 
+console.log('App is packaged', app.isPackaged);
+
+const gauzyUIPath = app.isPackaged
+	? path.join(__dirname, '../data/ui/index.html')
+	: path.join(__dirname, './data/ui/index.html');
+console.log('Gauzy UI path', gauzyUIPath);
+
+const uiPath = path.join(__dirname, 'index.html');
+console.log('UI path', uiPath);
+
+const dirPath = app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui');
+console.log('Dir path', dirPath);
+
+const timeTrackerUIPath = path.join(__dirname, 'index.html');
+
 const pathWindow: IPathWindow = {
-	gauzyUi: app.isPackaged
-		? path.join(__dirname, '../data/ui/index.html')
-		: path.join(__dirname, './data/ui/index.html'),
-	ui: path.join(__dirname, 'index.html'),
-	dir: app.isPackaged ? path.join(__dirname, '../data/ui') : path.join(__dirname, './data/ui'),
-	timeTrackerUi: path.join(__dirname, 'index.html')
+	gauzyUi: gauzyUIPath,
+	ui: uiPath,
+	dir: dirPath,
+	timeTrackerUi: timeTrackerUIPath
 };
 
-const serverConfig: IServerConfig = new ServerConfig(new ReadWriteFile(pathWindow));
+const readWriteFile = new ReadWriteFile(pathWindow);
+
+const serverConfig: IServerConfig = new ServerConfig(readWriteFile);
+
 const reverseProxy: ILocalServer = new ReverseProxy(serverConfig);
 const reverseUiProxy: ILocalServer = new ReverseUiProxy(serverConfig);
 
@@ -259,9 +275,15 @@ const initializeConfig = async (val) => {
 	try {
 		serverConfig.setting = val;
 		serverConfig.update();
+	} catch (error) {
+		console.error('Error in initializeConfig for Server Config', error);
+		throw new AppError('MAINWININIT', error);
+	}
+
+	try {
 		await runMainWindow();
 	} catch (error) {
-		console.error('Error in initializeConfig', error);
+		console.error('Error in initializeConfig for running Main Window', error);
 		throw new AppError('MAINWININIT', error);
 	}
 };

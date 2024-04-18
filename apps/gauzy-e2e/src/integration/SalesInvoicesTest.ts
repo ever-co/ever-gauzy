@@ -22,13 +22,13 @@ let sendEmail = ' ';
 
 describe('Sales invoices test', () => {
 	before(() => {
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 		city = faker.location.city();
 		postcode = faker.location.zipCode();
 		street = faker.location.streetAddress();
 		website = faker.internet.url();
-		sendEmail = faker.internet.email();
+		sendEmail = faker.internet.exampleEmail();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});

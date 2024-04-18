@@ -10,6 +10,9 @@ import { ReportCategoryController } from './report-category.controller';
 import { ReportCategoryService } from './report-category.service';
 import { ReportOrganization } from './report-organization.entity';
 import { CommandHandlers } from './commands/handlers';
+import { ReportOrganizationService } from './report-organization.service';
+import { TypeOrmReportOrganizationRepository } from './repository/type-orm-report-organization.repository';
+import { TypeOrmReportRepository } from './repository/type-orm-report.repository';
 
 @Module({
 	imports: [
@@ -23,6 +26,13 @@ import { CommandHandlers } from './commands/handlers';
 		MikroOrmModule.forFeature([Report, ReportCategory, ReportOrganization])
 	],
 	controllers: [ReportCategoryController, ReportController],
-	providers: [ReportService, ReportCategoryService, ...CommandHandlers]
+	providers: [
+		ReportService,
+		ReportCategoryService,
+		ReportOrganizationService,
+		TypeOrmReportRepository,
+		TypeOrmReportOrganizationRepository,
+		...CommandHandlers
+	]
 })
 export class ReportModule { }

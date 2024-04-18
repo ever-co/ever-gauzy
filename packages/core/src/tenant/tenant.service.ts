@@ -25,15 +25,12 @@ import { Tenant } from './tenant.entity';
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
 	constructor(
-		readonly typeOrmTenantRepository: TypeOrmTenantRepository,
-		readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
-
-		readonly typeOrmRoleRepository: TypeOrmRoleRepository,
-		readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
-
-		readonly typeOrmUserRepository: TypeOrmUserRepository,
-		readonly mikroOrmUserRepository: MikroOrmUserRepository,
-
+		private readonly typeOrmTenantRepository: TypeOrmTenantRepository,
+		private readonly mikroOrmTenantRepository: MikroOrmTenantRepository,
+		private readonly typeOrmRoleRepository: TypeOrmRoleRepository,
+		private readonly mikroOrmRoleRepository: MikroOrmRoleRepository,
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly commandBus: CommandBus,
 		private readonly configService: ConfigService
 	) {

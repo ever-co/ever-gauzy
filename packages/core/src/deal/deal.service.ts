@@ -1,4 +1,3 @@
-import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { TenantAwareCrudService } from './../core/crud';
 import { Deal } from './deal.entity';
@@ -8,10 +7,8 @@ import { MikroOrmDealRepository } from './repository/mikro-orm-deal.repository';
 @Injectable()
 export class DealService extends TenantAwareCrudService<Deal> {
 	constructor(
-		@InjectRepository(Deal)
-		typeOrmDealRepository: TypeOrmDealRepository,
-
-		mikroOrmDealRepository: MikroOrmDealRepository
+		readonly typeOrmDealRepository: TypeOrmDealRepository,
+		readonly mikroOrmDealRepository: MikroOrmDealRepository
 	) {
 		super(typeOrmDealRepository, mikroOrmDealRepository);
 	}

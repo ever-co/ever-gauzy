@@ -1,18 +1,19 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectConnection, InjectRepository } from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { Connection, IsNull, Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
+import { camelCase } from 'typeorm/util/StringUtils';
 import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata';
 import * as fs from 'fs';
 import * as unzipper from 'unzipper';
 import * as csv from 'csv-parser';
 import * as rimraf from 'rimraf';
-import * as _ from 'lodash';
 import * as path from 'path';
 import * as chalk from 'chalk';
 import { ConfigService } from '@gauzy/config';
 import { getEntitiesFromPlugins } from '@gauzy/plugin';
 import { isFunction, isNotEmpty } from '@gauzy/common';
+import { ConnectionEntityManager } from '../../database/connection-entity-manager';
 import { convertToDatetime } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
 import {
@@ -42,10 +43,8 @@ import {
 	EmployeeAppointment,
 	EmployeeAward,
 	EmployeeLevel,
-	EmployeeProposalTemplate,
 	EmployeeRecurringExpense,
 	EmployeeSetting,
-	EmployeeUpworkJobsSearchCriterion,
 	Equipment,
 	EquipmentSharing,
 	EquipmentSharingPolicy,
@@ -74,10 +73,6 @@ import {
 	Invoice,
 	InvoiceEstimateHistory,
 	InvoiceItem,
-	JobPreset,
-	JobPresetUpworkJobSearchCriterion,
-	JobSearchCategory,
-	JobSearchOccupation,
 	KeyResult,
 	KeyResultTemplate,
 	KeyResultUpdate,
@@ -113,7 +108,6 @@ import {
 	ProductVariant,
 	ProductVariantPrice,
 	ProductVariantSetting,
-	Proposal,
 	Report,
 	ReportCategory,
 	ReportOrganization,
@@ -188,20 +182,8 @@ import { MikroOrmEmployeeAppointmentRepository } from '../../employee-appointmen
 import { TypeOrmEmployeeAppointmentRepository } from '../../employee-appointment/repository/type-orm-employee-appointment.repository';
 import { MikroOrmEmployeeAwardRepository } from '../../employee-award/repository/mikro-orm-employee-award.repository';
 import { TypeOrmEmployeeAwardRepository } from '../../employee-award/repository/type-orm-employee-award.repository';
-import { MikroOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/mikro-orm-job-search-category.repository';
-import { TypeOrmJobSearchCategoryRepository } from '../../employee-job-preset/job-search-category/repository/type-orm-job-search-category.repository';
-import { MikroOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/mikro-orm-job-search-occupation.repository';
-import { TypeOrmJobSearchOccupationRepository } from '../../employee-job-preset/job-search-occupation/repository/type-orm-job-search-occupation.repository';
-import { MikroOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-employee-upwork-jobs-search-criterion.entity.repository';
-import { MikroOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset-upwork-job-search-criterion.repository';
-import { MikroOrmJobPresetRepository } from '../../employee-job-preset/repository/mikro-orm-job-preset.repository';
-import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../employee-job-preset/repository/type-orm-job-preset-upwork-job-search-criterion.repository';
-import { TypeOrmJobPresetRepository } from '../../employee-job-preset/repository/type-orm-job-preset.repository';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 import { MikroOrmEmployeeLevelRepository } from '../../employee-level/repository/mikro-orm-employee-level.repository';
 import { TypeOrmEmployeeLevelRepository } from '../../employee-level/repository/type-orm-employee-level.repository';
-import { MikroOrmEmployeeProposalTemplateRepository } from '../../employee-proposal-template/repository/mikro-orm-employee-proposal-template.repository';
-import { TypeOrmEmployeeProposalTemplateRepository } from '../../employee-proposal-template/repository/type-orm-employee-proposal-template.repository';
 import { MikroOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/mikro-orm-employee-recurring-expense.repository';
 import { TypeOrmEmployeeRecurringExpenseRepository } from '../../employee-recurring-expense/repository/type-orm-employee-recurring-expense.repository';
 import { MikroOrmEmployeeSettingRepository } from '../../employee-setting/repository/mikro-orm-employee-setting.repository';
@@ -334,8 +316,6 @@ import { MikroOrmProductTranslationRepository } from '../../product/repository/m
 import { MikroOrmProductRepository } from '../../product/repository/mikro-orm-product.repository';
 import { TypeOrmProductTranslationRepository } from '../../product/repository/type-orm-product-translation.repository';
 import { TypeOrmProductRepository } from '../../product/repository/type-orm-product.repository';
-import { MikroOrmProposalRepository } from '../../proposal/repository/mikro-orm-proposal.repository';
-import { TypeOrmProposalRepository } from '../../proposal/repository/type-orm-proposal.repository';
 import { MikroOrmReportCategoryRepository } from '../../reports/repository/mikro-orm-report-category.repository';
 import { MikroOrmReportOrganizationRepository } from '../../reports/repository/mikro-orm-report-organization.repository';
 import { MikroOrmReportRepository } from '../../reports/repository/mikro-orm-report.repository';
@@ -544,11 +524,6 @@ export class ImportService implements OnModuleInit {
 
 		mikroOrmEmployeeAwardRepository: MikroOrmEmployeeAwardRepository,
 
-		@InjectRepository(EmployeeProposalTemplate)
-		private typeOrmEmployeeProposalTemplateRepository: TypeOrmEmployeeProposalTemplateRepository,
-
-		mikroOrmEmployeeProposalTemplateRepository: MikroOrmEmployeeProposalTemplateRepository,
-
 		@InjectRepository(EmployeeRecurringExpense)
 		private typeOrmEmployeeRecurringExpenseRepository: TypeOrmEmployeeRecurringExpenseRepository,
 
@@ -558,11 +533,6 @@ export class ImportService implements OnModuleInit {
 		private typeOrmEmployeeSettingRepository: TypeOrmEmployeeSettingRepository,
 
 		mikroOrmEmployeeSettingRepository: MikroOrmEmployeeSettingRepository,
-
-		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		private typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-
-		mikroOrmEmployeeUpworkJobsSearchCriterionRepository: MikroOrmEmployeeUpworkJobsSearchCriterionRepository,
 
 		@InjectRepository(Equipment)
 		private typeOrmEquipmentRepository: TypeOrmEquipmentRepository,
@@ -698,26 +668,6 @@ export class ImportService implements OnModuleInit {
 		private typeOrmInvoiceItemRepository: TypeOrmInvoiceItemRepository,
 
 		mikroOrmInvoiceItemRepository: MikroOrmInvoiceItemRepository,
-
-		@InjectRepository(JobPreset)
-		private typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-
-		mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
-
-		@InjectRepository(JobPresetUpworkJobSearchCriterion)
-		private typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
-
-		mikroOrmJobPresetUpworkJobSearchCriterionRepository: MikroOrmJobPresetUpworkJobSearchCriterionRepository,
-
-		@InjectRepository(JobSearchCategory)
-		private typeOrmJobSearchCategoryRepository: TypeOrmJobSearchCategoryRepository,
-
-		mikroOrmJobSearchCategoryRepository: MikroOrmJobSearchCategoryRepository,
-
-		@InjectRepository(JobSearchOccupation)
-		private typeOrmJobSearchOccupationRepository: TypeOrmJobSearchOccupationRepository,
-
-		mikroOrmJobSearchOccupationRepository: MikroOrmJobSearchOccupationRepository,
 
 		@InjectRepository(KeyResult)
 		private typeOrmKeyResultRepository: TypeOrmKeyResultRepository,
@@ -919,11 +869,6 @@ export class ImportService implements OnModuleInit {
 
 		mikroOrmWarehouseProductVariantRepository: MikroOrmWarehouseProductVariantRepository,
 
-		@InjectRepository(Proposal)
-		private typeOrmProposalRepository: TypeOrmProposalRepository,
-
-		mikroOrmProposalRepository: MikroOrmProposalRepository,
-
 		@InjectRepository(Skill)
 		private typeOrmSkillRepository: TypeOrmSkillRepository,
 
@@ -1029,10 +974,8 @@ export class ImportService implements OnModuleInit {
 
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
-		@InjectConnection()
-		private dataSource: Connection,
-
 		private readonly configService: ConfigService,
+		private readonly _connectionEntityManager: ConnectionEntityManager,
 		private readonly commandBus: CommandBus
 	) { }
 
@@ -1365,13 +1308,11 @@ export class ImportService implements OnModuleInit {
 				continue;
 			}
 
-			const className = _.camelCase(entity.name);
-			const repository = this.dataSource.getRepository(entity);
+			const className = camelCase(entity.name);
+			const repository = this._connectionEntityManager.getRepository(entity);
 
 			this[className] = repository;
-			this.dynamicEntitiesClassMap.push({
-				repository
-			});
+			this.dynamicEntitiesClassMap.push({ repository });
 		}
 	}
 
@@ -1517,24 +1458,6 @@ export class ImportService implements OnModuleInit {
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'reportId', repository: this.typeOrmReportRepository }
-				]
-			},
-			{
-				repository: this.typeOrmJobPresetRepository
-			},
-			{
-				repository: this.typeOrmJobSearchCategoryRepository
-			},
-			{
-				repository: this.typeOrmJobSearchOccupationRepository
-			},
-			{
-				repository: this.typeOrmJobPresetUpworkJobSearchCriterionRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'jobPresetId', repository: this.typeOrmJobPresetRepository },
-					{ column: 'occupationId', repository: this.typeOrmJobSearchOccupationRepository },
-					{ column: 'categoryId', repository: this.typeOrmJobSearchCategoryRepository }
 				]
 			},
 			/**
@@ -1768,13 +1691,6 @@ export class ImportService implements OnModuleInit {
 				]
 			},
 			{
-				repository: this.typeOrmEmployeeProposalTemplateRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
-			},
-			{
 				repository: this.typeOrmEmployeeRecurringExpenseRepository,
 				isCheckRelation: true,
 				foreignKeys: [
@@ -1786,16 +1702,6 @@ export class ImportService implements OnModuleInit {
 				isCheckRelation: true,
 				foreignKeys: [
 					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository }
-				]
-			},
-			{
-				repository: this.typeOrmEmployeeUpworkJobsSearchCriterionRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
-					{ column: 'jobPresetId', repository: this.typeOrmJobPresetRepository },
-					{ column: 'occupationId', repository: this.typeOrmJobSearchOccupationRepository },
-					{ column: 'categoryId', repository: this.typeOrmJobSearchCategoryRepository }
 				]
 			},
 			{
@@ -2193,17 +2099,6 @@ export class ImportService implements OnModuleInit {
 					{ column: 'variantId', repository: this.typeOrmProductVariantRepository },
 					{ column: 'warehouseProductId', repository: this.typeOrmWarehouseProductRepository }
 				],
-			},
-			/*
-			* Proposal & Related Entities
-			*/
-			{
-				repository: this.typeOrmProposalRepository,
-				isCheckRelation: true,
-				foreignKeys: [
-					{ column: 'employeeId', repository: this.typeOrmEmployeeRepository },
-					{ column: 'organizationContactId', repository: this.typeOrmOrganizationContactRepository }
-				]
 			},
 			/*
 			* Payment & Related Entities

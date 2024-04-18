@@ -16,6 +16,7 @@ import {
 	IUser,
 	ComponentLayoutStyleEnum
 } from '@gauzy/contracts';
+import { getEmailWithPostfix } from '../core/seeds/utils';
 import { User } from './user.entity';
 import { getUserDummyImage, Role } from '../core';
 import { DEFAULT_EMPLOYEES, DEFAULT_EVER_EMPLOYEES } from '../employee/default-employees';
@@ -390,14 +391,14 @@ const generateRandomUser = async (
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
 	const username = faker.internet.userName(firstName, lastName);
-	const email = faker.internet.exampleEmail(firstName, lastName);
+	const email = getEmailWithPostfix(faker.internet.exampleEmail(firstName, lastName));
 	const avatar = faker.image.avatar();
 
 	const user = new User();
 	user.firstName = firstName;
 	user.lastName = lastName;
 	user.username = username;
-	user.email = email.toLowerCase();
+	user.email = email;
 	user.role = role;
 	user.imageUrl = avatar;
 	user.tenant = tenant;

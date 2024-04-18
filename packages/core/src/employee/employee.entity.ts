@@ -3,20 +3,9 @@ import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
-	ColumnIndex,
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToMany,
-	MultiORMManyToOne,
-	MultiORMOneToMany,
-	MultiORMOneToOne,
-	VirtualMultiOrmColumn
-} from './../core/decorators/entity';
-import {
 	CurrenciesEnum,
 	IEmployee,
 	PayPeriodEnum,
-	ITag,
 	IContact,
 	ISkill,
 	IUser,
@@ -43,6 +32,17 @@ import {
 	IEmployeePhone
 } from '@gauzy/contracts';
 import {
+	ColumnIndex,
+	EmbeddedColumn,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	MultiORMOneToOne,
+	VirtualMultiOrmColumn
+} from '../core/decorators/entity';
+import {
 	Candidate,
 	Contact,
 	EmployeeAward,
@@ -52,7 +52,6 @@ import {
 	Expense,
 	Goal,
 	InvoiceItem,
-	JobPreset,
 	OrganizationContact,
 	OrganizationDepartment,
 	OrganizationEmploymentType,
@@ -72,11 +71,13 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
-import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { CustomEmployeeFields, HasCustomFields } from '../core/entities/custom-entity-fields';
+import { ColumnNumericTransformerPipe } from '../shared/pipes';
+import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
-export class Employee extends TenantOrganizationBaseEntity implements IEmployee {
+export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
 	@ApiPropertyOptional({ type: () => Date })
@@ -545,7 +546,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 	@JoinTable({
 		name: 'tag_employee'
 	})
-	tags: ITag[];
+	tags: Tag[];
 
 	/**
 	 * Employee Skills
@@ -576,13 +577,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE'
 	})
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
-
-	/**
-	 * Employee Job Presets
-	 */
-	@ApiProperty({ type: () => JobPreset })
-	@MultiORMManyToMany(() => JobPreset, (jobPreset) => jobPreset.employees)
-	jobPresets?: JobPreset[];
 
 	/**
 	 * Employee Organization Contacts
@@ -643,4 +637,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee 
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Embeddable Columns
+	|--------------------------------------------------------------------------
+	*/
+	@EmbeddedColumn(() => CustomEmployeeFields, { prefix: false })
+	customFields?: CustomEmployeeFields;
 }

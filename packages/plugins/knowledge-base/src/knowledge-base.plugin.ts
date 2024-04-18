@@ -5,8 +5,7 @@ import {
 	GauzyCorePlugin,
 	IOnPluginBootstrap,
 	IOnPluginDestroy,
-	IOnPluginWithDefaultSeed,
-	IOnPluginWithRandomSeed
+	IOnPluginSeedable
 } from '@gauzy/plugin';
 import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
 import { HelpCenter, HelpCenterModule } from './help-center';
@@ -17,20 +16,11 @@ import {
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
 @GauzyCorePlugin({
-	imports: [
-		HelpCenterModule,
-		HelpCenterArticleModule,
-		HelpCenterAuthorModule,
-		SeederModule
-	],
-	entities: [
-		HelpCenter,
-		HelpCenterArticle,
-		HelpCenterAuthor
-	],
+	imports: [HelpCenterModule, HelpCenterArticleModule, HelpCenterAuthorModule, SeederModule],
+	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
 	providers: [HelpCenterSeederService]
 })
-export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginWithDefaultSeed, IOnPluginWithRandomSeed {
+export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;

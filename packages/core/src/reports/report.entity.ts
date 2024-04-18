@@ -57,8 +57,6 @@ export class Report extends BaseEntity implements IReport {
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
-	@ApiProperty({ type: () => ReportCategory })
 	@MultiORMManyToOne(() => ReportCategory, (it) => it.reports, {
 		onDelete: 'CASCADE'
 	})
@@ -74,11 +72,9 @@ export class Report extends BaseEntity implements IReport {
 
 	/*
 	|--------------------------------------------------------------------------
-	| @ManyToOne
+	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-
-	@ApiProperty({ type: () => ReportOrganization })
 	@MultiORMOneToMany(() => ReportOrganization, (it) => it.report, {
 		cascade: true
 	})

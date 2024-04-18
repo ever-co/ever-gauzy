@@ -31,7 +31,7 @@ let website = ' ';
 
 describe('Timesheets test', () => {
 	before(() => {
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 		fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 		city = faker.location.city();
 		postcode = faker.location.zipCode();
@@ -42,7 +42,7 @@ describe('Timesheets test', () => {
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();
 		password = faker.internet.password();
-		employeeEmail = faker.internet.email();
+		employeeEmail = faker.internet.exampleEmail();
 		imgUrl = faker.image.avatar();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);

@@ -16,25 +16,33 @@ export class SidebarMenuComponent implements AfterContentChecked {
 
 	@Input() items: IMenuItem[] = [];
 
-	constructor(
-		private readonly cdr: ChangeDetectorRef,
-		private readonly _sidebarMenuService: SidebarMenuService
-	) {}
-
-	ngAfterContentChecked(): void {
-		this.cdr.detectChanges();
-	}
-
 	public get selectedItem() {
 		return this._sidebarMenuService.selectedItem;
 	}
-
 	public set selectedItem(value: IMenuItem) {
 		this._sidebarMenuService.selectedItem = value;
+		this._cdr.detectChanges();
 	}
 
-	public focusOn(event: IMenuItem) {
+	constructor(
+		private readonly _cdr: ChangeDetectorRef,
+		private readonly _sidebarMenuService: SidebarMenuService
+	) { }
+
+	ngAfterContentChecked(): void {
+		this._cdr.detectChanges();
+	}
+
+	/**
+	 * Sets the selected item in the sidebar menu and triggers change detection.
+	 *
+	 * @param event The menu item to focus on.
+	 */
+	public focusOn(event: IMenuItem): void {
+		// Set the selected item in the sidebar menu
 		this._sidebarMenuService.selectedItem = event;
-		this.cdr.detectChanges();
+
+		// Trigger change detection
+		this._cdr.detectChanges();
 	}
 }

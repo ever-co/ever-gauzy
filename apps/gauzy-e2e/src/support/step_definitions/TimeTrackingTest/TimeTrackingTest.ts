@@ -18,7 +18,7 @@ import { AddTasksPageData } from '../../Base/pagedata/AddTasksPageData';
 import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 import { waitUntil } from '../../Base/utils/util';
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 let fullName = faker.person.firstName() + ' ' + faker.person.lastName();
 let city = faker.location.city();
 let postcode = faker.location.zipCode();
@@ -30,7 +30,7 @@ let firstName = faker.person.firstName();
 let lastName = faker.person.lastName();
 let username = faker.internet.userName();
 let password = faker.internet.password();
-let employeeEmail = faker.internet.email();
+let employeeEmail = faker.internet.exampleEmail();
 let imgUrl = faker.image.avatar();
 let employeeFullName = `${firstName} ${lastName}`;
 
