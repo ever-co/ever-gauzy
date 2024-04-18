@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganization, IPagination, ITenant, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
-import { OptionParams, TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Employee, Organization } from './../core/entities/internal';
 import { TypeOrmOrganizationRepository } from '../organization/repository';
 import { UserOrganization } from './user-organization.entity';
@@ -26,7 +26,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	 * @returns A promise resolving to an array of user organizations.
 	 */
 	async findAllUserOrganizations(
-		filter: OptionParams<UserOrganization>,
+		filter: PaginationParams<UserOrganization>,
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
 		// Call the base class method to find all user organizations

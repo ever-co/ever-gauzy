@@ -4,7 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Not } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
 import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination, IUser } from '@gauzy/contracts';
-import { CrudController, OptionParams } from './../core/crud';
+import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UserDecorator } from './../shared/decorators';
@@ -41,7 +41,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 	})
 	@Get()
 	async findAll(
-		@Query() params: OptionParams<UserOrganization>,
+		@Query() params: PaginationParams<UserOrganization>,
 		@Query() query: FindMeUserOrganizationDTO,
 	): Promise<IPagination<IUserOrganization>> {
 		return await this.userOrganizationService.findAllUserOrganizations(
