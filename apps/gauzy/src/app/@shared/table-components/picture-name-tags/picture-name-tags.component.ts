@@ -28,8 +28,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				[style.background]="background(tag?.color)"
 				[style.color]="backgroundContrast(tag?.color)"
 				[text]="tag?.name"
-			>
-			</nb-badge>
+			></nb-badge>
 		</div>
 	`,
 	styles: [
@@ -72,20 +71,21 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 	styleUrls: ['./picture-name-tags.component.scss']
 })
 export class PictureNameTagsComponent extends NotesWithTagsComponent {
-	@Input()
-	isTags = true;
+	/**
+	 * Returns the avatar data based on the properties of the current row data.
+	 *
+	 * @returns An object representing the avatar data.
+	 */
+	public get avatar(): any {
+		const { id, employeeId, fullName, name } = this.rowData;
+		const avatarId = employeeId === id ? id : employeeId;
 
-	public get avatar() {
-		const employeeId =
-			this.rowData.employeeId === this.rowData.id
-				? this.rowData.id
-				: this.rowData.employeeId;
 		return {
 			...this.rowData,
-			id: employeeId ? employeeId : null,
-			name: this.rowData.fullName
-				? this.rowData.fullName
-				: this.rowData.name,
+			id: avatarId || null,
+			name: fullName || name || null
 		};
 	}
+
+	@Input() isTags = true;
 }
