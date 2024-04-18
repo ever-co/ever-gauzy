@@ -271,7 +271,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      jaeger:
+      zipkin:
         condition: service_started
       redis:
         condition: service_started
