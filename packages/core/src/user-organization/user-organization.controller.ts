@@ -1,16 +1,17 @@
 import { Controller, HttpStatus, Get, Query, UseGuards, HttpCode, Delete, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
-import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination, IUser } from '@gauzy/contracts';
-import { UserOrganizationService } from './user-organization.services';
-import { UserOrganization } from './user-organization.entity';
-import { Not } from 'typeorm';
 import { CommandBus } from '@nestjs/cqrs';
-import { UserOrganizationDeleteCommand } from './commands';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Not } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { IUserOrganization, RolesEnum, LanguagesEnum, IPagination, IUser } from '@gauzy/contracts';
+import { CrudController, OptionParams } from './../core/crud';
+import { UUIDValidationPipe } from './../shared/pipes';
 import { TenantPermissionGuard } from './../shared/guards';
 import { UserDecorator } from './../shared/decorators';
+import { UserOrganizationService } from './user-organization.services';
+import { UserOrganization } from './user-organization.entity';
+import { UserOrganizationDeleteCommand } from './commands';
+import { FindMeUserOrganizationDTO } from './dto/find-me-user-organization.dto';
 
 @ApiTags('UserOrganization')
 @UseGuards(TenantPermissionGuard)
@@ -23,6 +24,11 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 		super(userOrganizationService);
 	}
 
+	/**
+	 *
+	 * @param params
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all UserOrganizations.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -34,12 +40,14 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 		description: 'Record not found'
 	})
 	@Get()
-	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IUserOrganization>> {
-		const { relations, findInput } = data;
-		return this.userOrganizationService.findAll({
-			where: findInput,
-			relations
-		});
+	async findAll(
+		@Query() params: OptionParams<UserOrganization>,
+		@Query() query: FindMeUserOrganizationDTO,
+	): Promise<IPagination<IUserOrganization>> {
+		return await this.userOrganizationService.findAllUserOrganizations(
+			params,
+			query.includeEmployee
+		);
 	}
 
 	@ApiOperation({ summary: 'Delete user from organization' })

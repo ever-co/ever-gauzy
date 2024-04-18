@@ -3,6 +3,7 @@ import {
 	Brackets,
 	FindManyOptions,
 	FindOneOptions,
+	In,
 	SelectQueryBuilder,
 	UpdateResult,
 	WhereExpressionBuilder
@@ -34,6 +35,38 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * Finds employees based on an array of user IDs.
+	 * @param userIds An array of user IDs.
+	 * @returns A promise resolving to an array of employees.
+	 */
+	async findEmployeesByUserIds(userIds: string[]): Promise<Employee[]> {
+		try {
+			// Get the tenant ID from the current request context
+			const tenantId = RequestContext.currentTenantId();
+
+			// Construct the where clause based on whether tenantId is available
+			const whereClause = tenantId ? { tenantId, userId: In(userIds) } : { userId: In(userIds) };
+
+			// Execute the query based on the ORM type
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>({ where: whereClause } as FindManyOptions);
+					const employees = await this.mikroOrmRepository.find(where, mikroOptions);
+					return employees.map((entity: Employee) => this.serialize(entity)) as Employee[];
+				}
+				case MultiORMEnum.TypeORM: {
+					return await this.typeOrmRepository.find({ where: whereClause });
+				}
+				default:
+					throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+			}
+		} catch (error) {
+			console.error(`Error finding employees by user IDs: ${error.message}`);
+			return []; // Return an empty array if an error occurs
+		}
+	}
+
+	/**
 	 * Finds the employeeId associated with a given userId.
 	 *
 	 * @param userId The ID of the user.
@@ -62,6 +95,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			return null;
 		}
 	}
+
+
 
 	/**
 	 * Finds an employee by user ID.
