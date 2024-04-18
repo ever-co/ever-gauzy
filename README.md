@@ -185,7 +185,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 ### With Docker Compose
 
 -   Clone repo.
--   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install).
+-   Make sure you have latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
 -   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuilt Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Run `docker-compose up`, if you want to run the platform in production configuration using our prebuilt Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Run `docker-compose -f docker-compose.build.yml up`, if you want to build everything (code and Docker images) locally. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
