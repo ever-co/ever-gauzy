@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsBoolean, IsUrl, ValidateIf } from 'class-validator';
 import { FileStorageProviderEnum, IDigitalOceanFileStorageProviderConfig } from '@gauzy/contracts';
 import { IsSecret } from '../../../core/decorators';
-import { Trimmed } from './trim.decorator';
+import { Trimmed } from '../../../shared/decorators/trim.decorator';
 
 /**
  * DigitalOcean S3 FileStorage Provider Configuration DTO validation

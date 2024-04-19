@@ -1,8 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsNotEmpty, IsOptional, ValidateIf } from "class-validator";
 import { FileStorageProviderEnum, ICloudinaryFileStorageProviderConfig } from "@gauzy/contracts";
-import { IsSecret } from "./../../../core/decorators";
-import { Trimmed } from "./trim.decorator";
+import { IsSecret } from "../../../core/decorators";
+import { Trimmed } from '../../../shared/decorators/trim.decorator';
 
 /**
  * Cloudinary FileStorage Provider Configuration DTO validation
