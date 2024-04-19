@@ -61,7 +61,7 @@ export const getDurationQueryString = (
  * @param queryAlias The alias used for the table in the SQL query.
  * @returns The SQL query string for calculating task total duration.
  */
-export const getTasksTotalDurationQueryString = (dbType: string, queryAlias: string): string => {
+export const getTotalDurationQueryString = (dbType: string, queryAlias: string): string => {
     switch (dbType) {
         case DatabaseTypeEnum.sqlite:
         case DatabaseTypeEnum.betterSqlite3:
@@ -74,3 +74,24 @@ export const getTasksTotalDurationQueryString = (dbType: string, queryAlias: str
             throw Error(`Unsupported database type: ${dbType}`);
     }
 };
+
+/**
+ * Generates the SQL query string for filtering activity duration based on database type.
+ *
+ * @param dbType The type of the database (e.g., sqlite, postgres, mysql).
+ * @param queryAlias The alias used for the query table in SQL.
+ * @returns The SQL query string for filtering activity duration.
+ */
+export const getActivityDurationQueryString = (dbType: string, queryAlias: string): string => {
+    switch (dbType) {
+        case DatabaseTypeEnum.sqlite:
+        case DatabaseTypeEnum.betterSqlite3:
+            return `datetime("${queryAlias}"."date" || ' ' || "${queryAlias}"."time") Between :start AND :end`;
+        case DatabaseTypeEnum.postgres:
+            return `CONCAT("${queryAlias}"."date", ' ', "${queryAlias}"."time")::timestamp Between :start AND :end`;
+        case DatabaseTypeEnum.mysql:
+            return p(`CONCAT("${queryAlias}"."date", ' ', "${queryAlias}"."time") BETWEEN :start AND :end`);
+        default:
+            throw Error(`cannot create statistic query due to unsupported database type: ${dbType}`);
+    }
+}
