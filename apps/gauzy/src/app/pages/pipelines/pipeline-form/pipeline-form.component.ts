@@ -1,14 +1,8 @@
 import { Component, Input, OnInit } from '@angular/core';
-import {
-	IOrganization,
-	IPipelineCreateInput,
-	IUserOrganization
-} from '@gauzy/contracts';
-import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
-import { Store } from '../../../@core/services/store.service';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { PipelinesService } from '../../../@core/services/pipelines.service';
 import { NbDialogRef } from '@nebular/theme';
+import { IOrganization, IPipeline, IPipelineCreateInput } from '@gauzy/contracts';
+import { PipelinesService } from '../../../@core/services/pipelines.service';
 
 @Component({
 	templateUrl: './pipeline-form.component.html',
@@ -16,37 +10,23 @@ import { NbDialogRef } from '@nebular/theme';
 	selector: 'ga-pipeline-form'
 })
 export class PipelineFormComponent implements OnInit {
-	@Input()
-	pipeline: IPipelineCreateInput & { id?: string };
+	@Input() pipeline: IPipelineCreateInput & { id?: string };
 
-	userOrganizations: IUserOrganization[];
 	form: UntypedFormGroup;
 	icon: string;
 	isActive: boolean;
 	organization: IOrganization;
 
 	constructor(
-		public dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
-		private usersOrganizationsService: UsersOrganizationsService,
-		private pipelinesService: PipelinesService,
-		private fb: UntypedFormBuilder,
-		private store: Store
+		public readonly dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
+		private readonly pipelinesService: PipelinesService,
+		private readonly fb: UntypedFormBuilder
 	) { }
 
 	ngOnInit(): void {
 		const { id, isActive } = this.pipeline;
-		const { userId } = this.store;
+		isActive === undefined ? (this.isActive = true) : (this.isActive = isActive);
 
-		isActive === undefined
-			? (this.isActive = true)
-			: (this.isActive = isActive);
-
-		this.usersOrganizationsService
-			.getAll(['organization'], {
-				userId,
-				tenantId: this.pipeline.tenantId
-			})
-			.then(({ items }) => (this.userOrganizations = items));
 		this.form = this.fb.group({
 			organizationId: [
 				this.pipeline.organizationId || '',
@@ -61,20 +41,32 @@ export class PipelineFormComponent implements OnInit {
 		});
 	}
 
+	/**
+	 *
+	 */
 	setIsActive() {
 		this.isActive = !this.isActive;
 	}
 
-	persist(): void {
-		const {
-			value,
-			value: { id }
-		} = this.form;
+	/**
+	 *
+	 */
+	async persist(): Promise<void> {
+		try {
+			const { value, value: { id } } = this.form;
+			let entity: IPipeline;
 
-		Promise.race([
-			id
-				? this.pipelinesService.update(id, value)
-				: this.pipelinesService.create(value)
-		]).then((entity) => this.dialogRef.close(entity));
+			// Determine whether to create or update based on the presence of an ID
+			if (id) {
+				entity = await this.pipelinesService.update(id, value);
+			} else {
+				entity = await this.pipelinesService.create(value);
+			}
+
+			// Close the dialog with the returned entity
+			this.dialogRef.close(entity);
+		} catch (error) {
+			console.error(`Error occurred while persisting data: ${error.message}`);
+		}
 	}
 }

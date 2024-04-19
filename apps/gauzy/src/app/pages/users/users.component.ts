@@ -18,14 +18,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
-import {
-	debounceTime,
-	firstValueFrom,
-	Subject,
-	of as observableOf,
-	map,
-	finalize
-} from 'rxjs';
+import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import {
@@ -46,9 +39,9 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
+import { EmailComponent, RoleComponent } from '../../@shared/table-components';
 import { monthNames } from '../../@core/utils/date';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
-import { EmailComponent, RoleComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -181,9 +174,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return (this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle);
 	}
 
 	selectUser({ isSelected, data }) {
@@ -197,9 +188,7 @@ export class UsersComponent extends PaginationFilterBaseComponent
 
 		if (data && data.role === RolesEnum.SUPER_ADMIN) {
 			this.disableButton = !this.hasSuperAdminPermission;
-			this.selectedUser = this.hasSuperAdminPermission
-				? this.selectedUser
-				: null;
+			this.selectedUser = this.hasSuperAdminPermission ? this.selectedUser : null;
 		}
 	}
 
@@ -211,13 +200,10 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			if (data.user.firstName || data.user.lastName) {
 				this.userName = data.user.firstName + ' ' + data.user.lastName;
 			}
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-				{
-					username: this.userName.trim(),
-					orgname: this.store.selectedOrganization.name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
+				username: this.userName.trim(),
+				orgname: this.store.selectedOrganization.name
+			});
 			this._refresh$.next(true);
 			this.subject$.next(true);
 		}
@@ -314,14 +300,8 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		 *	User belongs multiple organizations -> remove user from Organization
 		 *
 		 */
-		const count =
-			await this.userOrganizationsService.getUserOrganizationCount(
-				userOrganizationId
-			);
-		const confirmationMessage =
-			count === 1
-				? 'FORM.DELETE_CONFIRMATION.DELETE_USER'
-				: 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
+		const count = await this.userOrganizationsService.getUserOrganizationCount(userOrganizationId);
+		const confirmationMessage = count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
 
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
@@ -350,76 +330,115 @@ export class UsersComponent extends PaginationFilterBaseComponent
 			});
 	}
 
-	private async getUsers() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-
-		const organizations: IUserOrganization[] = [];
+	/**
+	 * Fetches users from user organizations, maps them to the required format, and loads them into the smart table.
+	 */
+	private async getUsers(): Promise<void> {
 		this.loading = true;
-		observableOf(
-			(
-				await this.userOrganizationsService.getAll(
-					['user', 'user.role', 'user.tags', 'user.employee'],
-					{ organizationId, tenantId }
-				)
-			).items
-		)
-			.pipe(
-				map((organizations: IUserOrganization[]) =>
-					organizations
-						.filter(
-							(organization: IUserOrganization) =>
-								organization.isActive
-						)
-						.filter(
-							(organization: IUserOrganization) =>
-								organization.user.role
-						)
-				),
-				tap((users: IUserOrganization[]) =>
-					organizations.push(...users)
-				),
-				untilDestroyed(this),
-				finalize(() => (this.loading = false))
-			)
-			.subscribe();
 
-		const users = [];
-		for (const {
-			id: userOrganizationId,
-			user,
-			isActive
-		} of organizations) {
-			users.push({
+		try {
+			const organizations = await this._fetchUserOrganizations();
+
+			// Mapping fetched organizations to required user format
+			const users = organizations.map(({ id: userOrganizationId, user, isActive }) => ({
 				id: user.id,
 				fullName: user.name,
 				email: user.email,
 				tags: user.tags,
 				imageUrl: user.imageUrl,
 				role: user.role,
-				isActive: isActive,
-				userOrganizationId: userOrganizationId,
+				isActive,
+				userOrganizationId,
 				...this.employeeMapper(user.employee)
-			});
+			}));
+
+			// Initialize Smart Table and load users
+			this.loadUsersToSmartTable(users);
+		} catch (error) {
+			console.error('Error while getting organization users', error?.message);
+			this.toastrService.danger(error);
+		} finally {
+			this.loading = false;
 		}
+	}
+
+	/**
+	 * Loads users into the smart table with pagination and updates pagination.
+	 *
+	 * @param users The array of users to load into the smart table.
+	 * @param activePage The active page for pagination.
+	 * @param itemsPerPage The number of items per page for pagination.
+	 */
+	private loadUsersToSmartTable(users: any[]): void {
+		const { activePage, itemsPerPage } = this.getPagination();
+
 		this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
 		this.sourceSmartTable.load(users);
+
+		// Load Grid Data
 		this._loadDataGridLayout();
+
+		// Updates pagination
+		this.updatePagination();
+	}
+
+	/**
+	 * Updates pagination information based on the current state of the smart table.
+	 */
+	private updatePagination(): void {
+		// Update pagination with total count of items in the smart table
 		this.setPagination({
 			...this.getPagination(),
 			totalItems: this.sourceSmartTable.count()
 		});
 	}
 
-	private async _loadDataGridLayout() {
-		if (this._isGridLayout) {
-			this.users.push(...(await this.sourceSmartTable.getElements()));
-			this.users = this.users.filter(
-				(user, index, self) =>
-					index === self.findIndex(({ id }) => user.id === id)
-			);
+	/**
+	 * Fetches user organizations with necessary relations.
+	 *
+	 * @returns A promise that resolves to an array of IUserOrganization.
+	 */
+	private async _fetchUserOrganizations(): Promise<IUserOrganization[]> {
+		// If organization is not available, return undefined
+		if (!this.organization) {
+			return;
 		}
+
+		// Destructure organization properties for readability
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Fetch user organizations with required relations
+		const userOrganizations = await this.userOrganizationsService.getAll(
+			['user', 'user.role', 'user.tags'],
+			{ organizationId, tenantId },
+			true
+		);
+
+		// Filter user organizations based on isActive and user role
+		return userOrganizations.items.filter(
+			(organization) => organization.isActive && organization.user.role
+		);
+	}
+
+	/**
+	 * Loads unique user data into the users array if the grid layout is enabled.
+	 */
+	private async _loadDataGridLayout(): Promise<void> {
+		// Check if grid layout is enabled
+		if (!this._isGridLayout) {
+			return; // Exit early if grid layout is disabled
+		}
+
+		// Retrieve elements from the source smart table
+		const elements = await this.sourceSmartTable.getElements();
+
+		// Filter unique users based on their IDs
+		const uniqueUsers = elements.filter((user, index, self) =>
+			index === self.findIndex(({ id }) => user.id === id)
+		);
+
+		// Add unique users to the users array
+		this.users.push(...uniqueUsers);
 	}
 
 	private _loadSmartTableSettings() {
@@ -495,7 +514,10 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		};
 	}
 
-	private _applyTranslationOnSmartTable() {
+	/**
+	 * Subscribes to language change events and reloads smart table settings accordingly.
+	 */
+	private _applyTranslationOnSmartTable(): void {
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => this._loadSmartTableSettings()),
@@ -514,26 +536,39 @@ export class UsersComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-
-	private employeeMapper(employee: IEmployee) {
-		if (employee) {
-			const { endWork, startedWorkOn, isTrackingEnabled, id } = employee;
-			return {
-				employeeId: id,
-				endWork: endWork ? new Date(endWork) : '',
-				workStatus: endWork
-					? new Date(endWork).getDate() +
-					' ' +
-					monthNames[new Date(endWork).getMonth()] +
-					' ' +
-					new Date(endWork).getFullYear()
-					: '',
-				startedWorkOn,
-				isTrackingEnabled
-			};
-		} else {
+	/**
+	 * Maps an employee object to a simplified format.
+	 *
+	 * @param employee The employee object to be mapped.
+	 * @returns An object containing mapped employee properties.
+	 */
+	private employeeMapper(employee: IEmployee): any {
+		if (!employee) {
 			return {};
 		}
+
+		const { endWork, startedWorkOn, isTrackingEnabled, id } = employee;
+
+		return {
+			employeeId: id,
+			endWork: endWork ? new Date(endWork) : null,
+			workStatus: endWork ? this.formatDate(new Date(endWork)) : '',
+			startedWorkOn,
+			isTrackingEnabled
+		};
+	}
+
+	/**
+	 * Formats a date in the format "DD Month YYYY".
+	 *
+	 * @param date The date object to be formatted.
+	 * @returns A string representing the formatted date.
+	 */
+	private formatDate(date: Date): string {
+		const day = date.getDate();
+		const month = monthNames[date.getMonth()];
+		const year = date.getFullYear();
+		return `${day} ${month} ${year}`;
 	}
 
 	ngOnDestroy() { }

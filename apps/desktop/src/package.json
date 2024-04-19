@@ -168,6 +168,7 @@
 		"htmlparser2": "^8.0.2",
 		"iconv": "^3.0.1",
 		"knex": "^3.1.0",
+		"libsql": "^0.3.16",
 		"locutus": "^2.0.30",
 		"mac-screen-capture-permissions": "^2.1.0",
 		"moment": "^2.29.4",

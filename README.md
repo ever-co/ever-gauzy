@@ -185,26 +185,32 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 ### With Docker Compose
 
 -   Clone repo.
--   Make sure you have Docker Compose [installed locally](https://docs.docker.com/compose/install).
--   Run `docker-compose up`, if you want to run the platform in production configuration using our prebuild Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
--   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuild Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
+-   Make sure you have latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
+-   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuilt Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
+-   Run `docker-compose up`, if you want to run the platform in production configuration using our prebuilt Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Run `docker-compose -f docker-compose.build.yml up`, if you want to build everything (code and Docker images) locally. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
--   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuild Docker images.
+-   :coffee: time... It might take some time for our API to seed fake data in the DB during the first Docker Compose run, even if you used prebuilt Docker images.
 -   Open <http://localhost:4200> in your browser.
 -   Login with email `admin@ever.co` and password: `admin` for Super Admin user.
 -   Login with email `employee@ever.co` and password: `123456` for Employee user.
 -   Enjoy!
 
-Together with Gauzy, Docker Compose will run the following:
+Notes:
+
+-   while demo `docker-compose.demo.yml` runs minimum amount of containers (API, Web UI and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
+-   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up` command. We already doing it using `include` in our main docker compose files.
+
+Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compose.build.yml`, not Demo `docker-compose.demo.yml`) will run the following:
 
 -   [PostgreSQL](https://www.postgresql.org) - Primary Database.
 -   [Pgweb](https://github.com/sosedoff/pgweb) - Cross-platform client for PostgreSQL DBs, available on <http://localhost:8081>.
 -   [ElasticSearch](https://github.com/elastic/elasticsearch) - Search Engine.
 -   [Dejavu](https://github.com/appbaseio/dejavu) - Web UI for ElasticSearch, available on <http://localhost:1358>.
 -   [MinIO](https://github.com/minio/minio) - Multi-Cloud ☁️ Object Storage (AWS S3 compatible).
--   [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative. Fully scriptable data ingestion engine for modern data teams.
+-   [Jitsu](https://github.com/jitsucom/jitsu) - Jitsu is an open-source Segment alternative (data ingestion engine).
 -   [Redis](https://github.com/redis/redis) - In-memory data store/caching (also used by Jitsu)
 -   [Cube](https://github.com/cube-js/cube) - "Semantic Layer" used for Reports, Dashboards, Analytics, and other BI-related features, with UI available on <http://localhost:4000>.
+-   [Zipkin](https://github.com/openzipkin/zipkin) - distributed tracing system.
 
 ### Manually
 
@@ -256,7 +262,7 @@ Notes:
 
 -   Another variant to deploy Gauzy is to use DigitalOcean Droplets or any other virtual instance (with Ubuntu OS) and deploy using SCP/SSH, for example, following [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-droplet-demo.yml)
 
-#### Pulumi 
+#### Pulumi
 
 -   In addition, check [Gauzy Pulumi](https://github.com/ever-co/ever-gauzy-pulumi) project (WIP), it makes complex Clouds deployments possible with a single command (`pulumi up`). Note: it currently supports AWS EKS (Kubernetes) for development and production with Application Load Balancers and AWS RDS Serverless PostgreSQL DB deployments. We also implemented deployments to ECS EC2 and Fargate Clusters in the same Pulumi project.
 
