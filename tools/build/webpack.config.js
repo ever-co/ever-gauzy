@@ -67,7 +67,8 @@ module.exports = (config) => {
 		'then-jade': 'then-jade',
 		jade: 'jade',
 		tinyliquid: 'tinyliquid',
-		nunjucks: 'nunjucks'
+		nunjucks: 'nunjucks',
+		'mariadb/callback': 'mariadb/callback'
 	};
 
 	return config;
