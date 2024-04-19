@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
+import { ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
 import { IsEnum, IsOptional } from "class-validator";
 import { Transform, TransformFnParams } from "class-transformer";
 import { IUserCreateInput, LanguagesEnum } from "@gauzy/contracts";
@@ -25,16 +25,16 @@ export class CreateUserDTO extends IntersectionType(
     /**
      * User's last name.
      */
-    @ApiProperty({ type: () => String })
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ type: () => String })
+    @IsOptional()
     @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
     readonly lastName?: string;
 
     /**
      * Optional: User's image URL.
      */
-    @ApiProperty({ type: () => String })
     @ApiPropertyOptional()
+    @IsOptional()
     readonly imageUrl?: string;
 
     /**
