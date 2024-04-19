@@ -27,43 +27,27 @@ export function concateUserNameExpression(dbType: string): string {
 }
 
 /**
- * Generates a SQL query string for calculating the total duration of tasks today.
+ * Generates a duration query string based on the provided database type, log query alias, and slot query alias.
  *
- * @param dbType The type of database (e.g., 'sqlite', 'postgres', 'mysql', etc.).
- * @param queryAlias The alias used for the table in the SQL query.
- * @returns The SQL query string for calculating task duration for Today.
+ * @param dbType The type of database (e.g., sqlite, postgres, mysql).
+ * @param logQueryAlias The alias used for the log query.
+ * @param slotQueryAlias The alias used for the slot query.
+ * @returns A string representing the duration query.
  */
-export const getTasksTodayDurationQueryString = (dbType: string, queryAlias: string) => {
+export const getDurationQueryString = (
+    dbType: string,
+    logQueryAlias: string,
+    slotQueryAlias: string
+): string => {
     switch (dbType) {
         case DatabaseTypeEnum.sqlite:
         case DatabaseTypeEnum.betterSqlite3:
-            return `COALESCE(ROUND(SUM((julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) - julianday("${queryAlias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
+            return `COALESCE(ROUND(SUM((julianday(COALESCE("${logQueryAlias}"."stoppedAt", datetime('now'))) - julianday("${logQueryAlias}"."startedAt")) * 86400) / COUNT("${slotQueryAlias}"."id")), 0)`;
         case DatabaseTypeEnum.postgres:
-            return `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
+            return `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${logQueryAlias}"."stoppedAt", NOW()) - "${logQueryAlias}"."startedAt"))) / COUNT("${slotQueryAlias}"."id")), 0)`;
         case DatabaseTypeEnum.mysql:
             // Directly return the SQL string for MySQL, as MikroORM allows raw SQL.
-            return p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${queryAlias}"."startedAt", COALESCE("${queryAlias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`);
-        default:
-            throw new Error(`Unsupported database type: ${dbType}`);
-    }
-};
-
-/**
- * Generates SQL query string for task duration based on database type and query variation.
- *
- * @param dbType The type of database (e.g., 'sqlite', 'postgres', 'mysql', etc.).
- * @param queryAlias The alias used for the table in the SQL query.
- * @returns The SQL query string for calculating task duration.
- */
-export const getTasksDurationQueryString = (dbType: string, queryAlias: string) => {
-    switch (dbType) {
-        case DatabaseTypeEnum.sqlite:
-        case DatabaseTypeEnum.betterSqlite3:
-            return `COALESCE(ROUND(SUM((julianday(COALESCE("${queryAlias}"."stoppedAt", datetime('now'))) - julianday("${queryAlias}"."startedAt")) * 86400) / COUNT("time_slot"."id")), 0)`;
-        case DatabaseTypeEnum.postgres:
-            return `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${queryAlias}"."stoppedAt", NOW()) - "${queryAlias}"."startedAt"))) / COUNT("time_slot"."id")), 0)`;
-        case DatabaseTypeEnum.mysql:
-            return `COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${queryAlias}"."startedAt", COALESCE("${queryAlias}"."stoppedAt", NOW()))) / COUNT("time_slot"."id")), 0)`;
+            return p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${logQueryAlias}"."startedAt", COALESCE("${logQueryAlias}"."stoppedAt", NOW()))) / COUNT("${slotQueryAlias}"."id")), 0)`);
         default:
             throw new Error(`Unsupported database type: ${dbType}`);
     }
@@ -77,7 +61,7 @@ export const getTasksDurationQueryString = (dbType: string, queryAlias: string) 
  * @param queryAlias The alias used for the table in the SQL query.
  * @returns The SQL query string for calculating task total duration.
  */
-export const getTasksTotalDurationQueryString = (dbType: string, queryAlias: string): string => {
+export const getTotalDurationQueryString = (dbType: string, queryAlias: string): string => {
     switch (dbType) {
         case DatabaseTypeEnum.sqlite:
         case DatabaseTypeEnum.betterSqlite3:
@@ -90,3 +74,24 @@ export const getTasksTotalDurationQueryString = (dbType: string, queryAlias: str
             throw Error(`Unsupported database type: ${dbType}`);
     }
 };
+
+/**
+ * Generates the SQL query string for filtering activity duration based on database type.
+ *
+ * @param dbType The type of the database (e.g., sqlite, postgres, mysql).
+ * @param queryAlias The alias used for the query table in SQL.
+ * @returns The SQL query string for filtering activity duration.
+ */
+export const getActivityDurationQueryString = (dbType: string, queryAlias: string): string => {
+    switch (dbType) {
+        case DatabaseTypeEnum.sqlite:
+        case DatabaseTypeEnum.betterSqlite3:
+            return `datetime("${queryAlias}"."date" || ' ' || "${queryAlias}"."time") Between :start AND :end`;
+        case DatabaseTypeEnum.postgres:
+            return `CONCAT("${queryAlias}"."date", ' ', "${queryAlias}"."time")::timestamp Between :start AND :end`;
+        case DatabaseTypeEnum.mysql:
+            return p(`CONCAT("${queryAlias}"."date", ' ', "${queryAlias}"."time") BETWEEN :start AND :end`);
+        default:
+            throw Error(`cannot create statistic query due to unsupported database type: ${dbType}`);
+    }
+}

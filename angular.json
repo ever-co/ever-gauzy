@@ -212,7 +212,7 @@
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"tsConfig": "apps/api/tsconfig.app.json"
 					},
 					"configurations": {
@@ -220,7 +220,7 @@
 							"optimization": true,
 							"extractLicenses": true,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/config/src/environments/environment.ts",
@@ -254,7 +254,7 @@
 					"builder": "@nrwl/node:webpack",
 					"options": {
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"outputPath": "dist/apps/api",
 						"main": "apps/api/src/seed.ts",
 						"showCircularDependencies": false,
@@ -266,7 +266,7 @@
 							"optimization": true,
 							"extractLicenses": true,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/config/src/environments/environment.ts",
@@ -280,7 +280,7 @@
 					"builder": "@nrwl/node:webpack",
 					"options": {
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"outputPath": "dist/apps/api",
 						"main": "apps/api/src/seed-all.ts",
 						"showCircularDependencies": false,
@@ -292,7 +292,7 @@
 							"optimization": true,
 							"extractLicenses": true,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/config/src/environments/environment.ts",
@@ -306,7 +306,7 @@
 					"builder": "@nrwl/node:webpack",
 					"options": {
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"outputPath": "dist/apps/api",
 						"main": "apps/api/src/seed-ever.ts",
 						"showCircularDependencies": false,
@@ -318,7 +318,7 @@
 							"optimization": true,
 							"extractLicenses": true,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/config/src/environments/environment.ts",
@@ -401,7 +401,7 @@
 							"optimization": true,
 							"outputHashing": "all",
 							"serviceWorker": true,
-							"sourceMap": false,
+							"sourceMap": true,
 							"namedChunks": false,
 							"ngswConfigPath": "apps/gauzy/ngsw-config.prod.json",
 							"aot": true,
@@ -448,7 +448,7 @@
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"tsConfig": "apps/api/tsconfig.app.json",
 						"assets": ["apps/api/src/assets"]
 					},
@@ -457,7 +457,7 @@
 							"optimization": true,
 							"extractLicenses": false,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/config/src/environments/environment.ts",
@@ -590,17 +590,17 @@
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"webpackConfig": "tools/build/webpack.config.js",
 						"tsConfig": "packages/desktop-api/tsconfig.app.json",
 						"assets": ["packages/desktop-api/src/assets"]
 					},
 					"configurations": {
 						"production": {
-							"optimization": true,
+							"optimization": false,
 							"extractLicenses": true,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/desktop-api/src/environments/environment.ts",
@@ -724,7 +724,7 @@
 							],
 							"optimization": true,
 							"outputHashing": "all",
-							"sourceMap": false,
+							"sourceMap": true,
 							"namedChunks": false,
 							"extractLicenses": true,
 							"vendorChunk": false,
@@ -843,7 +843,7 @@
 							],
 							"optimization": true,
 							"outputHashing": "all",
-							"sourceMap": false,
+							"sourceMap": true,
 							"namedChunks": false,
 							"extractLicenses": true,
 							"vendorChunk": false,
@@ -1004,7 +1004,7 @@
 						"showCircularDependencies": false,
 						"sourceMap": true,
 						"maxWorkers": 4,
-						"memoryLimit": 4000,
+						"memoryLimit": 7000,
 						"tsConfig": "apps/api/tsconfig.app.json",
 						"assets": ["apps/api/src/assets"]
 					},
@@ -1013,7 +1013,7 @@
 							"optimization": true,
 							"extractLicenses": false,
 							"inspect": false,
-							"sourceMap": false,
+							"sourceMap": true,
 							"fileReplacements": [
 								{
 									"replace": "packages/config/src/environments/environment.ts",

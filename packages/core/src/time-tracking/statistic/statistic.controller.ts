@@ -123,7 +123,9 @@ export class StatisticController {
 	})
 	@Get('/tasks')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async getTasksStatistics(@Query() request: TimeTrackingStatisticQueryDTO): Promise<ITask[]> {
+	async getTasksStatistics(
+		@Query() request: TimeTrackingStatisticQueryDTO
+	): Promise<ITask[]> {
 		return await this.statisticService.getTasks(request);
 	}
 

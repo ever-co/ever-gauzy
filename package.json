@@ -397,10 +397,10 @@
 		"tslint-language-service": "^0.9.9",
 		"typedoc": "^0.23.24",
 		"typescript": "5.1.6",
-		"webpack": "^5.58.1",
-		"webpack-bundle-analyzer": "^4.4.2",
+		"webpack": "^5.91.0",
+		"webpack-bundle-analyzer": "^4.10.2",
 		"webpack-cli": "^4.9.0",
-		"webpack-merge": "^5.8.0",
+		"webpack-merge": "^5.10.0",
 		"webpack-node-externals": "^3.0.0"
 	},
 	"overrides": {
