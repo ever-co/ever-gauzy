@@ -29,7 +29,11 @@ import { IGetConflictTimeLogCommand } from './commands';
 @Permissions(PermissionsEnum.TIME_TRACKER, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW)
 @Controller()
 export class TimeLogController {
-	constructor(private readonly timeLogService: TimeLogService, private readonly commandBus: CommandBus) {}
+
+	constructor(
+		private readonly timeLogService: TimeLogService,
+		private readonly commandBus: CommandBus
+	) { }
 
 	/**
 	 * Get conflicting timer logs based on the provided entity.

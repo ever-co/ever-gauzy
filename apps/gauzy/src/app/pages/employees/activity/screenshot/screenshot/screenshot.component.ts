@@ -240,7 +240,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 						fullUrl: screenshot.fullUrl
 					}))
 				);
-				console.log(this.screenshotsUrls);
+
 				return timeSlot;
 			})
 			.groupBy((timeSlot) => moment(timeSlot.localStartedAt).format('HH'))
