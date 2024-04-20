@@ -14,7 +14,7 @@ import { Given, Then, When, And } from 'cypress-cucumber-preprocessor/steps';
 
 const pageLoadTimeout = Cypress.config('pageLoadTimeout');
 
-let email = faker.internet.email();
+let email = faker.internet.exampleEmail();
 let website = faker.internet.url();
 let description = faker.lorem.text();
 let city = faker.location.city();

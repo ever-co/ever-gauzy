@@ -7,6 +7,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { UserModule } from './../user/user.module';
+import { EmployeeModule } from '../employee/employee.module';
 import { RoleModule } from './../role/role.module';
 import { UserOrganizationService } from './user-organization.services';
 import { UserOrganizationController } from './user-organization.controller';
@@ -25,6 +26,7 @@ import { CommandHandlers } from './commands/handlers';
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => OrganizationModule),
 		forwardRef(() => UserModule),
+		forwardRef(() => EmployeeModule),
 		forwardRef(() => RoleModule),
 		CqrsModule
 	],

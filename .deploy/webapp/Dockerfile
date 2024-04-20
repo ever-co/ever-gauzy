@@ -71,9 +71,11 @@ COPY --chown=node:node packages/plugins/integration-github/package.json ./packag
 COPY --chown=node:node packages/plugins/integration-jira/package.json ./packages/plugins/integration-jira/
 COPY --chown=node:node packages/plugins/jitsu-analytics/package.json ./packages/plugins/jitsu-analytics/
 COPY --chown=node:node packages/plugins/sentry-tracing/package.json ./packages/plugins/sentry-tracing/
+COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/product-reviews/package.json ./packages/plugins/product-reviews/
 COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/plugins/knowledge-base/
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
+COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/

@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ICandidate,
 	IEmployee,
@@ -24,7 +25,6 @@ import {
 	IOrganizationVendor,
 	IPayment,
 	IProduct,
-	IProposal,
 	IRequestApproval,
 	ITag,
 	ITask,
@@ -53,14 +53,14 @@ import {
 	OrganizationVendor,
 	Payment,
 	Product,
-	Proposal,
 	RequestApproval,
 	Task,
 	TenantOrganizationBaseEntity,
 	User,
 	Warehouse
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne } from './../core/decorators/entity';
+import { CustomTagFields } from '../core/entities/custom-entity-fields/custom-entity-fields';
+import { ColumnIndex, EmbeddedColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
@@ -101,6 +101,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	@MultiORMColumn({ default: false })
 	isSystem?: boolean;
 
+	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 
 	/*
@@ -206,15 +207,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		onDelete: 'CASCADE'
 	})
 	tasks?: ITask[];
-
-	/**
-	 * Proposal
-	 */
-	@MultiORMManyToMany(() => Proposal, (it) => it.tags, {
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	proposals?: IProposal[];
 
 	/**
 	 * OrganizationVendor
@@ -368,4 +360,12 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		onDelete: 'CASCADE'
 	})
 	organizations?: IOrganization[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Embeddable Columns
+	|--------------------------------------------------------------------------
+	*/
+	@EmbeddedColumn(() => CustomTagFields, { prefix: false })
+	customFields?: CustomEmbeddedFields;
 }

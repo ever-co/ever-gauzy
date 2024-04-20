@@ -14,14 +14,15 @@
 			[ngClass]="onCollapse ? 'collapsed' : ''"
 			(click)="redirectTo()"
 		>
-			<i [class]="item?.icon"></i
-			><span *ngIf="state"
-				><a
+			<i [class]="item?.icon"></i>
+			<span *ngIf="state">
+				<a
 					[href]="getExternalUrl(item?.link)"
 					onclick="return false;"
-					>{{ item?.title }}</a
-				></span
-			>
+				>
+					{{ item?.title }}
+				</a>
+			</span>
 		</nb-accordion-item-header>
 		<nb-accordion-item-header
 			[nbTooltip]="item?.title"

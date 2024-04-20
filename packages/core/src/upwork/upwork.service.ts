@@ -22,8 +22,8 @@ import {
 	RolesEnum,
 	ExpenseCategoriesEnum,
 	OrganizationVendorEnum,
-	IUpworkOfferStatusEnum,
-	IUpworkProposalStatusEnum,
+	// IUpworkOfferStatusEnum,
+	// IUpworkProposalStatusEnum,
 	IUpworkDateRange,
 	ContactType,
 	TimeLogSourceEnum,
@@ -67,12 +67,12 @@ import { IncomeCreateCommand } from '../income/commands';
 import { ExpenseCreateCommand } from '../expense/commands';
 import { OrganizationContactCreateCommand } from '../organization-contact/commands';
 import {
-	UpworkJobService,
-	UpworkOffersService,
+	// UpworkJobService,
+	// UpworkOffersService,
 	UpworkReportService
 } from '@gauzy/integration-upwork';
 import { TimeLogCreateCommand } from '../time-tracking/time-log/commands';
-import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
+// import { ProposalCreateCommand } from '../proposal/commands/proposal-create.command';
 import {
 	CreateTimeSlotMinutesCommand,
 	TimeSlotCreateCommand
@@ -95,8 +95,8 @@ export class UpworkService {
 		private readonly _organizationService: OrganizationService,
 		private readonly _timeSlotService: TimeSlotService,
 		private readonly _upworkReportService: UpworkReportService,
-		private readonly _upworkJobService: UpworkJobService,
-		private readonly _upworkOfferService: UpworkOffersService,
+		// private readonly _upworkJobService: UpworkJobService,
+		// private readonly _upworkOfferService: UpworkOffersService,
 		private readonly commandBus: CommandBus
 	) { }
 
@@ -745,13 +745,13 @@ export class UpworkService {
 							providerId,
 							entity.datePicker.selectedDate
 						);
-					case 'proposal':
-						return await this.syncProposalsOffers(
-							organizationId,
-							integrationId,
-							config,
-							employeeId
-						);
+					// case 'proposal':
+					// 	return await this.syncProposalsOffers(
+					// 		organizationId,
+					// 		integrationId,
+					// 		config,
+					// 		employeeId
+					// 	);
 					default:
 						return;
 				}
@@ -1422,196 +1422,196 @@ export class UpworkService {
 	/*
 	 * Sync upwork offers for freelancer
 	 */
-	async syncProposalsOffers(
-		organizationId: string,
-		integrationId: string,
-		config: IUpworkApiConfig,
-		employeeId: string
-	) {
-		const proposals = await this._getProposals(config);
-		const offers = await this._getOffers(config);
+	// async syncProposalsOffers(
+	// 	organizationId: string,
+	// 	integrationId: string,
+	// 	config: IUpworkApiConfig,
+	// 	employeeId: string
+	// ) {
+	// 	const proposals = await this._getProposals(config);
+	// 	const offers = await this._getOffers(config);
 
-		const syncedOffers = await this._syncOffers(
-			config,
-			offers,
-			organizationId,
-			integrationId,
-			employeeId
-		);
+	// 	const syncedOffers = await this._syncOffers(
+	// 		config,
+	// 		offers,
+	// 		organizationId,
+	// 		integrationId,
+	// 		employeeId
+	// 	);
 
-		const syncedProposals = await this._syncProposals(proposals);
-		return {
-			syncedOffers,
-			syncedProposals
-		};
-	}
-
-	/*
-	 * Sync upwork proposals for freelancer
-	 */
-	private async _getProposals(config: IUpworkApiConfig) {
-		try {
-			const promises = [];
-			for (const status in IUpworkProposalStatusEnum) {
-				if (isNaN(Number(status))) {
-					promises.push(
-						this._upworkOfferService
-							.getProposalLisByFreelancer(
-								config,
-								IUpworkProposalStatusEnum[status]
-							)
-							.then((response) => response)
-							.catch((error) => error)
-					);
-				}
-			}
-			return Promise.all(promises).then(async (results: any[]) => {
-				return results;
-			});
-		} catch (error) {
-			throw new BadRequestException('Cannot sync proposals');
-		}
-	}
-
-	/*
-	 * Sync upwork offers for freelancer
-	 */
-	private async _getOffers(config: IUpworkApiConfig) {
-		try {
-			const promises = [];
-			for (const status in IUpworkOfferStatusEnum) {
-				if (isNaN(Number(status))) {
-					promises.push(
-						this._upworkOfferService
-							.getOffersListByFreelancer(
-								config,
-								IUpworkOfferStatusEnum[status]
-							)
-							.then((response) => response)
-							.catch((error) => error)
-					);
-				}
-			}
-			return Promise.all(promises).then(async (results: any[]) => {
-				return results;
-			});
-		} catch (error) {
-			throw new BadRequestException('Cannot sync offers');
-		}
-	}
-
-	/*
-	 * Sync upwork offers for freelancer
-	 */
-	private async _syncOffers(
-		config: IUpworkApiConfig,
-		offers,
-		organizationId: string,
-		integrationId: string,
-		employeeId: string
-	) {
-		return await Promise.all(
-			offers
-				.filter(
-					(row) =>
-						row['offers'] && row['offers'].hasOwnProperty('offer')
-				)
-				.map((row) => row['offers'])
-				.map(async (row) => {
-					const { offer: items } = row;
-					let integratedOffers = [];
-
-					for await (const item of items) {
-						const {
-							title: proposalContent,
-							terms_data,
-							last_event_state,
-							job_posting_ref,
-							rid: sourceId
-						} = item;
-						let { title: jobPostContent } = item;
-						//find upwork job
-						const job = await this._upworkJobService
-							.getJobProfileByKey(config, job_posting_ref)
-							.then((response) => response)
-							.catch((error) => error);
-
-						//if job not found/closed
-						if (job.statusCode !== 400) {
-							const { profile } = job;
-							jobPostContent = profile['op_description'];
-						}
-
-						const tenantId = RequestContext.currentTenantId();
-						const integrationMap = await this._integrationMapService.findOneOrFailByOptions(
-							{
-								where: {
-									sourceId,
-									entity: IntegrationEntity.PROPOSAL,
-									organizationId,
-									tenantId
-								}
-							}
-						);
-
-						let integratedOffer;
-						if (
-							integrationMap &&
-							integrationMap['success'] === true
-						) {
-							integratedOffer = integrationMap.record;
-						} else {
-							const gauzyOffer = await this.commandBus.execute(
-								new ProposalCreateCommand({
-									employeeId,
-									organizationId,
-									valueDate: new Date(
-										unixTimestampToDate(
-											terms_data.start_date
-										)
-									),
-									status: last_event_state
-										.trim()
-										.toUpperCase(),
-									proposalContent,
-									jobPostContent,
-									jobPostUrl: job_posting_ref
-								})
-							);
-
-							integratedOffer = await this.commandBus.execute(
-								new IntegrationMapSyncEntityCommand({
-									gauzyId: gauzyOffer.id,
-									integrationId,
-									sourceId,
-									entity: IntegrationEntity.PROPOSAL,
-									organizationId
-								})
-							);
-						}
-
-						integratedOffers = integratedOffers.concat(
-							integratedOffer
-						);
-					}
-					return integratedOffers;
-				})
-		);
-	}
+	// 	const syncedProposals = await this._syncProposals(proposals);
+	// 	return {
+	// 		syncedOffers,
+	// 		syncedProposals
+	// 	};
+	// }
 
 	/*
 	 * Sync upwork proposals for freelancer
 	 */
-	private async _syncProposals(proposals) {
-		return await Promise.all(
-			proposals
-				.filter(
-					(row) =>
-						row['data'] &&
-						row['data'].hasOwnProperty('applications')
-				)
-				.map((row) => row.data.applications)
-				.map(async (row) => row)
-		);
-	}
+	// private async _getProposals(config: IUpworkApiConfig) {
+	// 	try {
+	// 		const promises = [];
+	// 		for (const status in IUpworkProposalStatusEnum) {
+	// 			if (isNaN(Number(status))) {
+	// 				promises.push(
+	// 					this._upworkOfferService
+	// 						.getProposalLisByFreelancer(
+	// 							config,
+	// 							IUpworkProposalStatusEnum[status]
+	// 						)
+	// 						.then((response) => response)
+	// 						.catch((error) => error)
+	// 				);
+	// 			}
+	// 		}
+	// 		return Promise.all(promises).then(async (results: any[]) => {
+	// 			return results;
+	// 		});
+	// 	} catch (error) {
+	// 		throw new BadRequestException('Cannot sync proposals');
+	// 	}
+	// }
+
+	/*
+	 * Sync upwork offers for freelancer
+	 */
+	// private async _getOffers(config: IUpworkApiConfig) {
+	// 	try {
+	// 		const promises = [];
+	// 		for (const status in IUpworkOfferStatusEnum) {
+	// 			if (isNaN(Number(status))) {
+	// 				promises.push(
+	// 					this._upworkOfferService
+	// 						.getOffersListByFreelancer(
+	// 							config,
+	// 							IUpworkOfferStatusEnum[status]
+	// 						)
+	// 						.then((response) => response)
+	// 						.catch((error) => error)
+	// 				);
+	// 			}
+	// 		}
+	// 		return Promise.all(promises).then(async (results: any[]) => {
+	// 			return results;
+	// 		});
+	// 	} catch (error) {
+	// 		throw new BadRequestException('Cannot sync offers');
+	// 	}
+	// }
+
+	/*
+	 * Sync upwork offers for freelancer
+	 */
+	// private async _syncOffers(
+	// 	config: IUpworkApiConfig,
+	// 	offers,
+	// 	organizationId: string,
+	// 	integrationId: string,
+	// 	employeeId: string
+	// ) {
+	// 	return await Promise.all(
+	// 		offers
+	// 			.filter(
+	// 				(row) =>
+	// 					row['offers'] && row['offers'].hasOwnProperty('offer')
+	// 			)
+	// 			.map((row) => row['offers'])
+	// 			.map(async (row) => {
+	// 				const { offer: items } = row;
+	// 				let integratedOffers = [];
+
+	// 				for await (const item of items) {
+	// 					const {
+	// 						title: proposalContent,
+	// 						terms_data,
+	// 						last_event_state,
+	// 						job_posting_ref,
+	// 						rid: sourceId
+	// 					} = item;
+	// 					let { title: jobPostContent } = item;
+	// 					//find upwork job
+	// 					const job = await this._upworkJobService
+	// 						.getJobProfileByKey(config, job_posting_ref)
+	// 						.then((response) => response)
+	// 						.catch((error) => error);
+
+	// 					//if job not found/closed
+	// 					if (job.statusCode !== 400) {
+	// 						const { profile } = job;
+	// 						jobPostContent = profile['op_description'];
+	// 					}
+
+	// 					const tenantId = RequestContext.currentTenantId();
+	// 					const integrationMap = await this._integrationMapService.findOneOrFailByOptions(
+	// 						{
+	// 							where: {
+	// 								sourceId,
+	// 								entity: IntegrationEntity.PROPOSAL,
+	// 								organizationId,
+	// 								tenantId
+	// 							}
+	// 						}
+	// 					);
+
+	// 					let integratedOffer;
+	// 					if (
+	// 						integrationMap &&
+	// 						integrationMap['success'] === true
+	// 					) {
+	// 						integratedOffer = integrationMap.record;
+	// 					} else {
+	// 						const gauzyOffer = await this.commandBus.execute(
+	// 							new ProposalCreateCommand({
+	// 								employeeId,
+	// 								organizationId,
+	// 								valueDate: new Date(
+	// 									unixTimestampToDate(
+	// 										terms_data.start_date
+	// 									)
+	// 								),
+	// 								status: last_event_state
+	// 									.trim()
+	// 									.toUpperCase(),
+	// 								proposalContent,
+	// 								jobPostContent,
+	// 								jobPostUrl: job_posting_ref
+	// 							})
+	// 						);
+
+	// 						integratedOffer = await this.commandBus.execute(
+	// 							new IntegrationMapSyncEntityCommand({
+	// 								gauzyId: gauzyOffer.id,
+	// 								integrationId,
+	// 								sourceId,
+	// 								entity: IntegrationEntity.PROPOSAL,
+	// 								organizationId
+	// 							})
+	// 						);
+	// 					}
+
+	// 					integratedOffers = integratedOffers.concat(
+	// 						integratedOffer
+	// 					);
+	// 				}
+	// 				return integratedOffers;
+	// 			})
+	// 	);
+	// }
+
+	/*
+	 * Sync upwork proposals for freelancer
+	 */
+	// private async _syncProposals(proposals) {
+	// 	return await Promise.all(
+	// 		proposals
+	// 			.filter(
+	// 				(row) =>
+	// 					row['data'] &&
+	// 					row['data'].hasOwnProperty('applications')
+	// 			)
+	// 			.map((row) => row.data.applications)
+	// 			.map(async (row) => row)
+	// 	);
+	// }
 }

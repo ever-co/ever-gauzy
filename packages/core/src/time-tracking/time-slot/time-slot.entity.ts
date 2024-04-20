@@ -131,12 +131,18 @@ export class TimeSlot extends TenantOrganizationBaseEntity
 	 * TimeLog
 	 */
 	@MultiORMManyToMany(() => TimeLog, (it) => it.timeSlots, {
+		/**  Database cascade action on update. */
 		onUpdate: 'CASCADE',
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
+		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true,
+		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'time_slot_time_logs',
+		/** Column in pivot table referencing 'time_slot' primary key. */
 		joinColumn: 'timeSlotId',
-		inverseJoinColumn: 'timeLogId',
+		/** Column in pivot table referencing 'time_logs' primary key. */
+		inverseJoinColumn: 'timeLogId'
 	})
 	@JoinTable({ name: 'time_slot_time_logs' })
 	timeLogs?: ITimeLog[];

@@ -41,28 +41,36 @@ export class AllReportComponent implements OnInit {
 			.subscribe();
 	}
 
-	updateShowInMenu(isEnabled: boolean, report): void {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		this.reportService
-			.updateReport({
+	/**
+	 * Updates the 'show in menu' status of a report.
+	 *
+	 * @param isEnabled Indicates whether the report should be shown in the menu.
+	 * @param report The report to update.
+	 */
+	async updateShowInMenu(isEnabled: boolean, report): Promise<void> {
+		try {
+			const { id: organizationId, tenantId } = this.organization;
+
+			await this.reportService.updateReport({
 				reportId: report.id,
 				organizationId,
 				tenantId,
 				isEnabled
-			})
-			.then(() => {
-				this.reportService.getReportMenuItems({
-					organizationId,
-					tenantId
-				});
 			});
+
+			await this.reportService.getReportMenuItems({
+				organizationId,
+				tenantId
+			});
+		} catch (error) {
+			console.error(`Error occurred while updating 'show in menu' status: ${error.message}`);
+		}
 	}
 
 	/**
-	 * Organization all reports
+	 * Retrieves all reports for the current organization.
 	 *
-	 * @returns
+	 * @returns A promise that resolves when reports are successfully retrieved.
 	 */
 	async getReports() {
 		if (!this.organization) {
@@ -81,12 +89,10 @@ export class AllReportComponent implements OnInit {
 			const { items = [] } = await this.reportService.getReports(request);
 
 			const categories = chain(items).groupBy('categoryId');
-			this.reportCategories = categories
-				.map((reports: IReport[]) => ({
-					...reports[0].category,
-					reports
-				}))
-				.value();
+			this.reportCategories = categories.map((reports: IReport[]) => ({
+				...reports[0].category,
+				reports
+			})).value();
 		} catch (error) {
 			console.log('Error while retrieving report with category', error);
 		} finally {

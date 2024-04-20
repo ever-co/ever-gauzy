@@ -17,8 +17,8 @@ let imgUrl = ' ';
 
 describe('Invite candidate test', () => {
 	before(() => {
-		email = faker.internet.email();
-		secondEmail = faker.internet.email();
+		email = faker.internet.exampleEmail();
+		secondEmail = faker.internet.exampleEmail();
 		firstName = faker.person.firstName();
 		lastName = faker.person.lastName();
 		username = faker.internet.userName();

@@ -41,7 +41,8 @@ export class TenantController {
 	})
 	@Get()
 	async findById(): Promise<ITenant> {
-		return await this.tenantService.findOneByIdString(RequestContext.currentTenantId());
+		const tenantId = RequestContext.currentTenantId();
+		return await this.tenantService.findOneByIdString(tenantId);
 	}
 
 	/**

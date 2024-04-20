@@ -273,9 +273,9 @@ export class TagsComponent extends PaginationFilterBaseComponent
 					type: 'string',
 					width: '25%',
 					filter: false,
-					componentInitFunction: (instance: TagsColorComponent, cell: Cell) => {
+					valuePrepareFunction: (_: any, cell: Cell) => {
 						const item = cell.getRow().getData();
-						instance.value = this.getCounter(item);
+						return this.getCounter(item);
 					}
 				}
 			}

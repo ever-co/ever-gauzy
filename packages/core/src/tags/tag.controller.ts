@@ -57,7 +57,9 @@ export class TagController extends CrudController<Tag> {
 	@Get()
 	@UseValidationPipe()
 	async findAll(@Query() options: PaginationParams<Tag>): Promise<any> {
-		return await this.commandBus.execute(new TagListCommand(options.where, options.relations));
+		return await this.commandBus.execute(
+			new TagListCommand(options.where, options.relations)
+		);
 	}
 
 	/**

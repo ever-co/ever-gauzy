@@ -25,145 +25,202 @@ import { IMenuItem } from '../../interface/menu-item.interface';
 	styleUrls: ['./menu-item.component.scss'],
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
-	private _state: boolean;
-	private _item: IMenuItem;
-	private _collapse = true;
-	private _selectedChildren: IMenuItem;
-	private _selected: boolean;
 	private _user: IUser;
+
+	/**
+	 *
+	 */
+	private _item: IMenuItem;
+	get item() {
+		return this._item;
+	}
+	@Input() set item(value: IMenuItem) {
+		this._item = value;
+	}
+
+	/**
+	 *
+	 */
+	private _collapse = true;
+	get collapse() {
+		return this._collapse; // Returns the current collapse state
+	}
+
+	@Input() set collapse(value) {
+		this._collapse = value; // Sets the collapse state to the provided value
+	}
+
+	/**
+	 *
+	 */
+	private _selected: boolean;
+	get selected() {
+		return this._selected;
+	}
+	@Input() set selected(value: boolean) {
+		this._selected = value;
+	}
+
+	/**
+	 *
+	 */
+	private _state: boolean;
+	public get state() {
+		return this._state;
+	}
+	public set state(value) {
+		this._state = value;
+	}
+
+	/**
+	 *
+	 */
+	private _selectedChildren: IMenuItem;
+	public get selectedChildren() {
+		return this._selectedChildren;
+	}
+	public set selectedChildren(value: IMenuItem) {
+		this._selectedChildren = value;
+	}
 
 	@Output() public collapsedChange: EventEmitter<any> = new EventEmitter();
 	@Output() public selectedChange: EventEmitter<any> = new EventEmitter();
 
 	constructor(
-		private readonly router: Router,
-		private readonly sidebarService: NbSidebarService,
-		private readonly cdr: ChangeDetectorRef,
-		private readonly location: Location,
-		private readonly jitsuService: JitsuService,
-		private readonly store: Store
-	) {}
+		private readonly _router: Router,
+		private readonly _sidebarService: NbSidebarService,
+		private readonly _cdr: ChangeDetectorRef,
+		private readonly _location: Location,
+		private readonly _jitsuService: JitsuService,
+		private readonly _store: Store
+	) { }
 
 	ngOnInit(): void {
-		this._user = this.store.user;
-		if (this.item.home) this.selectedChange.emit(this.item);
-	}
+		// Get the user data from the store
+		this._user = this._store.user;
 
-	public onCollapse(event: boolean) {
-		this.collapse = event;
-	}
-
-	public focusOn(event: any) {
-		this.selectedChildren = event.children;
-		if (this.collapse) this.collapse = !this.collapse;
-		this.selectedChange.emit(event.parent);
-		this.cdr.detectChanges();
+		// Check if the 'home' property of the 'item' object is truthy
+		if (this.item.home) {
+			// If 'home' is truthy, emit an event to notify the parent component
+			// This emits the 'selectedChange' event with the 'item' as the data
+			this.selectedChange.emit(this.item);
+		}
 	}
 
 	/**
-	 * Track a click event.
-	 * @param item The item that was clicked.
-	 * @param user The user who clicked the item.
+	 * Handles the collapse event.
+	 * @param event A boolean indicating whether the item should collapse or not.
 	 */
-	public async jitsuTrackClick() {
+	public onCollapse(event: boolean): void {
+		// Update the collapse state based on the event
+		this.collapse = event;
+	}
+
+	/**
+	 * Focuses on a specific item.
+	 * @param event The event containing information about the item to focus on.
+	 */
+	public focusOn(event: any): void {
+		// Set the selected children property to the children of the event
+		this.selectedChildren = event.children;
+
+		// Toggle the collapse state if it's currently collapsed
+		if (this.collapse) {
+			this.collapse = !this.collapse;
+		}
+
+		// Emit the selectedChange event with the parent of the event
+		this.selectedChange.emit(event.parent);
+
+		// Manually detect changes using ChangeDetectorRef
+		this._cdr.detectChanges();
+	}
+
+	/**
+	 * Track a click event using Jitsu analytics.
+	 */
+	public async jitsuTrackClick(): Promise<void> {
+		// Prepare the click event data
 		const clickEvent: JitsuAnalyticsEvents = {
 			eventType: JitsuAnalyticsEventsEnum.BUTTON_CLICKED,
-			url: this.item.url ?? this.item.link,
+			url: this.item.url ?? this.item.link, // Use either item.url or item.link
 			userId: this._user.id,
 			userEmail: this._user.email,
 			menuItemName: this.item.title,
 		};
 
-		// Identify the user
-		await this.jitsuService.identify(this._user.id, {
+		// Identify the user with Jitsu
+		await this._jitsuService.identify(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
 			timeZone: this._user.timeZone,
 		});
 
-		// Group the user
-		await this.jitsuService.group(this._user.id, {
+		// Group the user with Jitsu
+		await this._jitsuService.group(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
 			timeZone: this._user.timeZone,
 		});
 
-		// Track the click event
-		await this.jitsuService.trackEvents(clickEvent.eventType, clickEvent);
+		// Track the click event using Jitsu
+		await this._jitsuService.trackEvents(clickEvent.eventType, clickEvent);
 	}
 
-	public redirectTo() {
+	/**
+	 * Redirect to a specified URL and track the click event using Jitsu analytics.
+	 */
+	public redirectTo(): void {
+		// Track the click event using Jitsu analytics
 		// We don't await here because we don't want to wait for the analytics to complete before redirecting
 		this.jitsuTrackClick();
-		if (!this.item.children) this.router.navigateByUrl(this.item.link);
-		if (this.item.home) this.router.navigateByUrl(this.item.url);
+
+		// Redirect to the specified URL
+		if (!this.item.children) {
+			// If the item doesn't have children, navigate to its link
+			this._router.navigateByUrl(this.item.link);
+		}
+		if (this.item.home) {
+			// If the item represents the home page, navigate to its URL
+			this._router.navigateByUrl(this.item.url);
+		}
+
+		// Emit the selectedChange event to notify parent components
 		this.selectedChange.emit(this.item);
-		this.cdr.detectChanges();
+
+		// Manually detect changes using ChangeDetectorRef
+		this._cdr.detectChanges();
 	}
 
-	public toggleSidebar() {
-		if (!this.state && !this.item.home)
-			this.sidebarService.toggle(false, 'menu-sidebar');
+	/**
+	 * Toggle the sidebar and perform a redirection if necessary.
+	 */
+	public toggleSidebar(): void {
+		// Check if the sidebar is closed and the current item is not the home page
+		if (!this.state && !this.item.home) {
+			// If so, toggle the sidebar to open
+			this._sidebarService.toggle(false, 'menu-sidebar');
+		}
+
+		// Perform redirection
 		this.redirectTo();
 	}
 
+	/**
+	 * Prepare an external URL.
+	 * @param url The URL to prepare.
+	 * @returns The prepared external URL.
+	 */
 	public getExternalUrl(url: string): string {
-		return url ? this.location.prepareExternalUrl(url) : url;
+		return url ? this._location.prepareExternalUrl(url) : url;
 	}
 
+	/**
+	 *
+	 */
 	ngAfterViewChecked(): void {
-		this.sidebarService
-			.getSidebarState('menu-sidebar')
-			.pipe(
-				tap(
-					(state) =>
-						(this.state = state === 'expanded' ? true : false)
-				)
-			)
-			.subscribe();
-		this.cdr.detectChanges();
-	}
-
-	@Input()
-	public set collapse(value) {
-		this._collapse = value;
-	}
-
-	@Input()
-	public set item(value: IMenuItem) {
-		this._item = value;
-	}
-
-	@Input()
-	public set selected(value: boolean) {
-		this._selected = value;
-	}
-
-	public set state(value) {
-		this._state = value;
-	}
-
-	public set selectedChildren(value: IMenuItem) {
-		this._selectedChildren = value;
-	}
-
-	public get collapse() {
-		return this._collapse;
-	}
-
-	public get item() {
-		return this._item;
-	}
-
-	public get state() {
-		return this._state;
-	}
-
-	public get selectedChildren() {
-		return this._selectedChildren;
-	}
-
-	public get selected() {
-		return this._selected;
+		const state$ = this._sidebarService.getSidebarState('menu-sidebar');
+		state$.pipe(tap((state) => (this.state = state === 'expanded' ? true : false))).subscribe();
+		this._cdr.detectChanges();
 	}
 }

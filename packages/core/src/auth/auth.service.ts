@@ -1040,7 +1040,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
 		const tenantId = user.tenant ? user.tenantId : null;
-		const employeeId = user.employee ? user.employee?.id : null;
+		const employeeId = await this.employeeService.findEmployeeIdByUserId(user.id);
 
 		const workspace: IWorkspaceResponse = {
 			user: this.createUserObject(user),
@@ -1076,13 +1076,11 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
-			tenant: user.tenant
-				? new Tenant({
-						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				  })
-				: null // Sets tenant to null if user.tenant is undefined
+			tenant: user.tenant ? new Tenant({
+				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+			}) : null // Sets tenant to null if user.tenant is undefined
 		});
 	}
 }

@@ -9,7 +9,7 @@ let email = ' ';
 
 describe('Manage candidates invites test', () => {
 	before(() => {
-		email = faker.internet.email();
+		email = faker.internet.exampleEmail();
 
 		CustomCommands.login(loginPage, LoginPageData, dashboardPage);
 	});

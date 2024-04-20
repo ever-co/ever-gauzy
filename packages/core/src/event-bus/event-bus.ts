@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { Observable, Subject, filter, takeUntil } from "rxjs";
-import { isNotNullOrUndefined, ConstructorType } from '@gauzy/common';
+import { isNotNullOrUndefined, Type } from '@gauzy/common';
 import { BaseEvent } from "./base-event";
 
 @Injectable()
@@ -24,7 +24,7 @@ export class EventBus implements OnModuleDestroy {
      * @param event The type of events to subscribe to.
      * @returns An Observable of events with the specified type.
      */
-    ofType<T extends BaseEvent>(event: ConstructorType<T>): Observable<T> {
+    ofType<T extends BaseEvent>(event: Type<T>): Observable<T> {
         return this.event$.asObservable().pipe(
             takeUntil(this.onDestroy$), // Unsubscribe when the component is destroyed
             filter((item) => item.constructor === event), //

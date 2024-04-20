@@ -20,8 +20,15 @@ export class ReportCategory extends BaseEntity implements IReportCategory {
 	@MultiORMColumn({ nullable: true })
 	iconClass?: string;
 
-	@ApiProperty({ type: () => Report })
-	@MultiORMOneToMany(() => Report, (report) => report.category, {
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 *
+	 */
+	@MultiORMOneToMany(() => Report, (it) => it.category, {
 		cascade: true
 	})
 	reports: IReport[];

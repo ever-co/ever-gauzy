@@ -24,12 +24,11 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 	async afterEntityLoad(entity: Organization): Promise<void> {
 		try {
 			// Check if there's an existing image with a full URL
-			if (entity.image && entity.image.fullUrl) {
+			if (entity.image?.fullUrl) {
 				entity.imageUrl = entity.image.fullUrl;
 			}
 			// If not, and if the imageUrl is not already set, generate a dummy image URL
-			else if (!entity.imageUrl) {
-				console.log('OrganizationSubscriber: generate dummy image for entity.name', entity.name);
+			else if (!entity.imageUrl && (entity.name || entity.officialName)) {
 				entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
 			}
 		} catch (error) {

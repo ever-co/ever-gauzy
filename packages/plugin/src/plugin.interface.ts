@@ -49,40 +49,30 @@ export interface IOnPluginDestroy {
 }
 
 /**
- * Interface for plugins supporting basic seed operations.
+ * Interface for plugins supporting various seed operations.
  */
-export interface IOnPluginWithBasicSeed {
+export interface IOnPluginSeedable {
     /**
      * Invoked when seeding basic plugin data.
      * @returns A void or a Promise representing the completion of the operation.
      */
-    onPluginBasicSeed(): void | Promise<void>;
-}
+    onPluginBasicSeed?(): void | Promise<void>;
 
-/**
- * Interface for plugins supporting default seed operations.
- */
-export interface IOnPluginWithDefaultSeed {
     /**
      * Invoked when seeding default plugin data.
      * @returns A void or a Promise representing the completion of the operation.
      */
-    onPluginDefaultSeed(): void | Promise<void>;
-}
+    onPluginDefaultSeed?(): void | Promise<void>;
 
-/**
- * Interface for plugins supporting random seed operations.
- */
-export interface IOnPluginWithRandomSeed {
     /**
      * Invoked when seeding random plugin data.
      * @returns A void or a Promise representing the completion of the operation.
      */
-    onPluginRandomSeed(): void | Promise<void>;
+    onPluginRandomSeed?(): void | Promise<void>;
 }
 
 /**
  * Represents the combined lifecycle methods for a plugin.
  * This type combines interfaces for initializing and destroying a plugin.
  */
-export type PluginLifecycleMethods = IOnPluginBootstrap & IOnPluginDestroy & IOnPluginWithBasicSeed & IOnPluginWithDefaultSeed & IOnPluginWithRandomSeed;
+export type PluginLifecycleMethods = IOnPluginBootstrap & IOnPluginDestroy & IOnPluginSeedable;
