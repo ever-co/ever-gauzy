@@ -67,8 +67,17 @@ module.exports = (config) => {
 		'then-jade': 'then-jade',
 		jade: 'jade',
 		tinyliquid: 'tinyliquid',
-		nunjucks: 'nunjucks'
+		nunjucks: 'nunjucks',
+		'mariadb/callback': 'mariadb/callback',
+		'@opentelemetry/exporter-jaeger': '@opentelemetry/exporter-jaeger'
 	};
+
+	config.module = config.module || {};
+
+	config.module.noParse = [
+		// This will match any path containing `node_modules/@libsql`
+		/[\\/]node_modules[\\/]@libsql/
+	];
 
 	return config;
 };

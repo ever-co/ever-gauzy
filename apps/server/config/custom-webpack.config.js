@@ -25,6 +25,7 @@ module.exports = {
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,
 				terserOptions: {
+					ecma: 2020,
 					sourceMap: !isCircleEnv,
 					compress: true
 				},
@@ -33,7 +34,7 @@ module.exports = {
 		]
 	},
 	externals: {
-		'electron-log': 'electron-log',
+		'electron-log': 'electron-log'
 	}
 };
 

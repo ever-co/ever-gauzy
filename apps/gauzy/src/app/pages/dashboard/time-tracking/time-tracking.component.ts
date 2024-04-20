@@ -123,6 +123,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 	employeeIds: string[] = [];
 	projectIds: string[] = [];
+	teamIds: string[] = [];
 
 	private autoRefresh$: Subscription;
 	autoRefresh = true;
@@ -197,23 +198,25 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 	ngAfterViewInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeTeam$ = this.store.selectedTeam$;
 		const storeProject$ = this.store.selectedProject$;
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
 
-		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, storeProject$])
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, storeProject$, storeTeam$])
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(500),
 				filter(([organization, dateRange]) => !!organization && !!dateRange),
-				switchMap(([organization, dateRange, employee, project]) => {
+				switchMap(([organization, dateRange, employee, project, team]) => {
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
-					return combineLatest([of(employee), of(project)]);
+					return combineLatest([of(employee), of(project), of(team)]);
 				}),
 				filter(([employee]) => !!employee),
-				tap(([employee, project]) => {
+				tap(([employee, project, team]) => {
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
+					this.teamIds = team ? [team.id] : [];
 					this.widgetService.widgets.forEach((widget: GuiDrag) => {
 						if (widget.position === 0 && this.employeeIds[0]) {
 							widget.hide = true;
@@ -273,11 +276,8 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 		if (!this.organization) {
 			return;
 		}
-		const {
-			employeeIds,
-			projectIds,
-			selectedDateRange
-		} = this;
+
+		const { employeeIds, projectIds, teamIds, selectedDateRange } = this;
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
@@ -293,6 +293,7 @@ export class TimeTrackingComponent extends TranslationBaseComponent
 
 		if (isNotEmpty(employeeIds)) { request['employeeIds'] = employeeIds; }
 		if (isNotEmpty(projectIds)) { request['projectIds'] = projectIds; }
+		if (isNotEmpty(teamIds)) { request['teamIds'] = teamIds; }
 
 		this.payloads$.next(request);
 	}
