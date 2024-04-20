@@ -29,6 +29,7 @@ module.exports = {
 			new TerserPlugin({
 				parallel: isCircleEnv ? 2 : true,
 				terserOptions: {
+					ecma: 2020,
 					sourceMap: !isCircleEnv,
 					compress: true
 				},

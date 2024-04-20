@@ -27,7 +27,7 @@
 		"electron-packager": "^17.1.1",
 		"electron-reload": "~1.5.0",
 		"node-polyfill-webpack-plugin": "^1.1.4",
-		"terser-webpack-plugin": "^5.2.5"
+		"terser-webpack-plugin": "^5.3.10"
 	},
 	"dependencies": {
 		"@angular/animations": "^16.2.12",
@@ -72,6 +72,7 @@
 		"form-data": "^3.0.0",
 		"iconv": "^3.0.1",
 		"knex": "^3.1.0",
+		"libsql": "^0.3.16",
 		"mac-screen-capture-permissions": "^2.1.0",
 		"moment": "^2.29.4",
 		"moment-duration-format": "^2.3.2",
