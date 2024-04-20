@@ -1,7 +1,7 @@
 import { ApiPropertyOptional, IntersectionType, PartialType } from "@nestjs/swagger";
 import { IsEnum, IsOptional } from "class-validator";
-import { Transform, TransformFnParams } from "class-transformer";
 import { IUserCreateInput, LanguagesEnum } from "@gauzy/contracts";
+import { Trimmed } from "../../shared/decorators/trim.decorator";
 import { RoleFeatureDTO } from "./../../role/dto";
 import { UserEmailDTO } from "./user-email.dto";
 
@@ -19,7 +19,7 @@ export class CreateUserDTO extends IntersectionType(
      */
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
+    @Trimmed()
     readonly firstName?: string;
 
     /**
@@ -27,7 +27,7 @@ export class CreateUserDTO extends IntersectionType(
      */
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => params.value ? params.value.trim() : null)
+    @Trimmed()
     readonly lastName?: string;
 
     /**
