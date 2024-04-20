@@ -1043,19 +1043,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
-		// Additional conditions for filtering by tenantId and organizationId
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			})
-		);
-		query.andWhere(
-			new Brackets((qb: WhereExpressionBuilder) => {
-				qb.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
-				qb.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
-			})
-		);
+		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+		query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
+		query.andWhere(p(`"timeSlots"."organizationId" = :organizationId`), { organizationId });
 
 		return query;
 	}
