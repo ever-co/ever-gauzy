@@ -16,8 +16,7 @@ import { ITryRequest } from './try-request';
  */
 export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	extends CrudService<T>
-	implements ICrudService<T>
-{
+	implements ICrudService<T> {
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
@@ -37,13 +36,13 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			(
 				isNotEmpty(employeeId)
 					? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-					  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+						this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 						? {
-								employee: {
-									id: employeeId
-								},
-								employeeId: employeeId
-						  }
+							employee: {
+								id: employeeId
+							},
+							employeeId: employeeId
+						}
 						: {}
 					: {}
 			) as FindOptionsWhere<T>
@@ -60,11 +59,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return {
 			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-						tenant: {
-							id: user.tenantId
-						},
-						tenantId: user.tenantId
-				  }
+					tenant: {
+						id: user.tenantId
+					},
+					tenantId: user.tenantId
+				}
 				: {}),
 			...this.findConditionsWithEmployeeByUser()
 		} as FindOptionsWhere<T>;
@@ -94,12 +93,12 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 		return (
 			where
 				? {
-						...where,
-						...this.findConditionsWithTenantByUser(user)
-				  }
+					...where,
+					...this.findConditionsWithTenantByUser(user)
+				}
 				: {
-						...this.findConditionsWithTenantByUser(user)
-				  }
+					...this.findConditionsWithTenantByUser(user)
+				}
 		) as FindOptionsWhere<T>;
 	}
 
@@ -331,24 +330,24 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			...entity,
 			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-				  }
+					tenant: {
+						id: tenantId
+					},
+					tenantId
+				}
 				: {}),
 			/**
 			 * If employee has login & create data for self
 			 */
 			...(isNotEmpty(employeeId)
 				? !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-				  this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
+					this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('employeeId')
 					? {
-							employee: {
-								id: employeeId
-							},
-							employeeId: employeeId
-					  }
+						employee: {
+							id: employeeId
+						},
+						employeeId: employeeId
+					}
 					: {}
 				: {})
 		});
@@ -367,11 +366,11 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			...entity,
 			...(this.typeOrmRepository.metadata?.hasColumnWithPropertyPath('tenantId')
 				? {
-						tenant: {
-							id: tenantId
-						},
-						tenantId
-				  }
+					tenant: {
+						id: tenantId
+					},
+					tenantId
+				}
 				: {})
 		});
 	}
@@ -416,6 +415,43 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 			return await super.delete(criteria);
 		} catch (err) {
 			throw new NotFoundException(`The record was not found`, err);
+		}
+	}
+
+	/**
+	 * Softly deletes entities by a given criteria.
+	 * This method sets a flag or timestamp indicating the entity is considered deleted.
+	 * It does not actually remove the entity from the database, allowing for recovery or audit purposes.
+	 *
+	 * @param criteria - Entity ID or complex query to identify which entity to soft-delete.
+	 * @param options - Additional options for the operation.
+	 * @returns {Promise<DeleteResult>} - Result indicating success or failure.
+	 */
+	public async softDelete(
+		criteria: string | number | FindOptionsWhere<T>,
+		options?: FindOneOptions<T>
+	): Promise<UpdateResult | void> {
+		try {
+			let record: T | null;
+
+			// If the criteria is a string, assume it's an ID and find the record by ID.
+			if (typeof criteria === 'string') {
+				record = await this.findOneByIdString(criteria, options);
+			} else {
+				// Otherwise, consider it a more complex query and find the record by those options.
+				record = await this.findOneByWhereOptions(criteria as FindOptionsWhere<T>);
+			}
+
+			// If no record is found, throw a NotFoundException.
+			if (!record) {
+				throw new NotFoundException(`The requested record was not found`);
+			}
+
+			// Proceed with the soft-delete operation from the superclass.
+			return await super.softDelete(criteria);
+		} catch (err) {
+			// If any error occurs, rethrow it as a NotFoundException with additional context.
+			throw new NotFoundException(`The record was not found or could not be soft-deleted`, err);
 		}
 	}
 }

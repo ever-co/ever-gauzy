@@ -3,6 +3,7 @@ import * as chalk from 'chalk';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { MikroOrmModuleOptions } from '@mikro-orm/nestjs';
 import { EntityCaseNamingStrategy } from '@mikro-orm/core';
+import { SoftDeleteHandler } from "mikro-orm-soft-delete";
 import { SqliteDriver, Options as MikroOrmSqliteOptions } from '@mikro-orm/sqlite';
 import { BetterSqliteDriver, Options as MikroOrmBetterSqliteOptions } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver, Options as MikroOrmPostgreSqlOptions } from '@mikro-orm/postgresql';
@@ -102,6 +103,7 @@ switch (dbType) {
 				max: dbPoolSize
 			},
 			persistOnCreate: true,
+			extensions: [SoftDeleteHandler],
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -197,6 +199,7 @@ switch (dbType) {
 				acquireTimeoutMillis: dbConnectionTimeout
 			},
 			persistOnCreate: true,
+			extensions: [SoftDeleteHandler],
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -281,6 +284,7 @@ switch (dbType) {
 			driver: SqliteDriver,
 			dbName: dbPath,
 			persistOnCreate: true,
+			extensions: [SoftDeleteHandler],
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};
@@ -319,6 +323,7 @@ switch (dbType) {
 			driver: BetterSqliteDriver,
 			dbName: betterSqlitePath,
 			persistOnCreate: true,
+			extensions: [SoftDeleteHandler],
 			namingStrategy: EntityCaseNamingStrategy,
 			debug: getLoggingMikroOptions(process.env.DB_LOGGING) // by default set to false only
 		};

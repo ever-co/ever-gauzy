@@ -431,34 +431,40 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Soft Delete employee
+	 * Softly delete an employee by ID, with organization and tenant constraints.
 	 *
-	 * @param employeeId
-	 * @returns
+	 * @param employeeId - ID of the employee to delete.
+	 * @param options - Contains organizationId and possibly other per-tenant information.
+	 * @returns - UpdateResult or DeleteResult depending on the ORM type.
 	 */
-	async softDelete(
+	async softDeletedById(
 		employeeId: IEmployee['id'],
 		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<UpdateResult> {
+	): Promise<UpdateResult | void> {
 		try {
 			const { organizationId } = options;
-			await this.findOneByIdString(employeeId, {
-				where: {
-					organizationId
-				}
-			});
-			return await this.typeOrmRepository.softDelete({
-				id: employeeId,
-				organizationId,
-				tenantId: RequestContext.currentTenantId()
-			});
+
+			// Ensure the employee exists before attempting soft deletion
+			await this.findOneByIdString(employeeId, { where: { organizationId } });
+
+			// Obtain tenant ID from the current request context
+			const tenantId = RequestContext.currentTenantId();
+
+			// Perform the soft delete operation
+			return await super.softDelete({ id: employeeId, organizationId, tenantId });
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.error('Error during soft delete for employee', error);
+			throw new BadRequestException(error.message || 'Soft delete failed');
 		}
 	}
 
 	/**
-	 * Alternatively, You can recover the soft deleted rows by using the restore() method:
+	 * Restores a previously soft-deleted employee, based on their ID, with constraints for organization and tenant.
+	 * This effectively reverses a soft-delete operation, making the employee record active again.
+	 *
+	 * @param employeeId - ID of the employee to restore.
+	 * @param options - Contains the organizationId and potentially other context for per-tenant operations.
+	 * @returns {Promise<UpdateResult>} - The result of the restore operation.
 	 */
 	async restoreSoftDelete(
 		employeeId: IEmployee['id'],
@@ -466,13 +472,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	): Promise<UpdateResult> {
 		try {
 			const { organizationId } = options;
-			return await this.typeOrmRepository.restore({
-				id: employeeId,
-				organizationId,
-				tenantId: RequestContext.currentTenantId()
-			});
+			// Obtain tenant ID from the current request context
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
+			// Restore the soft-deleted employee
+			return await this.typeOrmRepository.restore({ id: employeeId, organizationId, tenantId });
 		} catch (error) {
-			throw new BadRequestException(error);
+			console.error('Error during restore operation for employee:', error);
+			throw new BadRequestException(error.message || 'Failed to restore soft-deleted employee');
 		}
 	}
 }

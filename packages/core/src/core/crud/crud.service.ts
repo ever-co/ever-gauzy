@@ -580,6 +580,39 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
+	 * Softly deletes entities by a given criteria.
+	 * This method sets a flag or timestamp indicating the entity is considered deleted.
+	 * It does not actually remove the entity from the database, allowing for recovery or audit purposes.
+	 *
+	 * @param criteria - Entity ID or condition to identify which entities to soft-delete.
+	 * @param options - Additional options for the operation.
+	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
+	 */
+	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | void> {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					let where: MikroFilterQuery<T>;
+					if (typeof criteria === 'string' || typeof criteria === 'number') {
+						where = { id: criteria } as any;
+					} else if (typeof criteria === 'object') {
+						where = criteria as MikroFilterQuery<T>;
+					} else {
+						throw new Error(`Unsupported criteria type for MikroORM: ${typeof criteria}`);
+					}
+					const entity = await this.mikroOrmRepository.findOneOrFail(where);
+					return await this.mikroOrmRepository.removeAndFlush(entity);
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.softDelete(criteria);
+				default:
+					throw new Error(`Soft delete not implemented for ORM type: ${this.ormType}`);
+			}
+		} catch (error) {
+			throw new NotFoundException(`The record was not found or could not be soft-deleted`, error);
+		}
+	}
+
+	/**
 	 * Serializes the provided entity based on the ORM type.
 	 * @param entity The entity to be serialized.
 	 * @returns The serialized entity.
